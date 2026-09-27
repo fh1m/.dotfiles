@@ -65,4 +65,8 @@ The actual migration preserved browser profiles and GNOME Keyring. Automatic log
 
 ## Other laptop checklist
 
+### Logitech LIFT wake investigation
+
+The LIFT uses Bluetooth Low Energy on the AX200 adapter. Host USB autosuspend is disabled, BlueZ's HID idle timeout defaults to off, and the test trace showed mouse reports without a link disconnect. Its signal was strong during the test. A one-minute idle test woke normally, so the intermittent multi-second lag was **not reproduced**. The stored LE connection latency was 44; an experimental per-device reduction to 4 was overwritten by BlueZ when the mouse reconnected. The mouse and headset both reconnected after the test, and the original bond remains intact. Do not claim a latency fix based on this test. If the lag recurs, capture `btmon` and input-event timestamps at the same moment before altering radio parameters or buying a Bolt receiver.
+
 Replace output names/modes/scale, power backend, fan interfaces, touchpad name, special keycodes, render PCI addresses, Bluetooth headset match and phone identity. Test suspend/resume, Wi-Fi reconnect, battery policy, camera/microphone and charging controls before making the desktop your only session.
