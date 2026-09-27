@@ -1,0 +1,20 @@
+#!/usr/bin/python3
+"""Per-application graphics offload. Training keeps graphics on Intel, not CUDA."""
+import os,sys,json
+from pathlib import Path
+args=sys.argv[1:]
+if len(args)<2 or args[0] not in ['intel','nvidia']:
+ print('Usage: sensei-gpu-run intel|nvidia COMMAND [ARGS...]',file=sys.stderr);sys.exit(2)
+mode=args.pop(0);env=dict(os.environ)
+try:training=json.loads((Path.home()/'.config/hypr/zenbook-controls.json').read_text()).get('training',False)
+except (OSError,ValueError):training=False
+if training:mode='intel'
+if mode=='nvidia' and os.uname().release=='7.2.5-1-cachyos':
+ print('Sensei, reboot into the installed kernel before Nvidia graphics offload.',file=sys.stderr);sys.exit(1)
+for key in ['__NV_PRIME_RENDER_OFFLOAD','__GLX_VENDOR_LIBRARY_NAME','__EGL_VENDOR_LIBRARY_FILENAMES','__VK_LAYER_NV_optimus','VK_ICD_FILENAMES','NVD_BACKEND','DRI_PRIME']:env.pop(key,None)
+if mode=='nvidia':
+ env.update(GDK_BACKEND='x11',QT_QPA_PLATFORM='xcb')
+ env.pop('WAYLAND_DISPLAY',None)
+ env.update(__NV_PRIME_RENDER_OFFLOAD='1',__GLX_VENDOR_LIBRARY_NAME='nvidia',__EGL_VENDOR_LIBRARY_FILENAMES='/usr/share/glvnd/egl_vendor.d/10_nvidia.json')
+else:env.update(DRI_PRIME='pci-0000_00_02_0',__EGL_VENDOR_LIBRARY_FILENAMES='/usr/share/glvnd/egl_vendor.d/50_mesa.json')
+os.execvpe(args[0],args,env)

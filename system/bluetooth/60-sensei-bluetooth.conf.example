@@ -1,0 +1,3 @@
+# Replace AA_BB_CC_DD_EE_FF with your headset address; opt-in per headset.
+monitor.bluez.rules = [{ matches = [{ device.name = "bluez_card.AA_BB_CC_DD_EE_FF" }] actions = { update-props = { bluez5.auto-connect = [ a2dp_sink ] } } }]
+wireplumber.settings = { bluetooth.autoswitch-to-headset-profile = false }

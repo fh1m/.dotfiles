@@ -1,0 +1,277 @@
+#!/usr/bin/python3
+"""Sensei Spotify: loopback player control, cached Spotify library and album art."""
+import os,sys
+if __name__=='__main__' and not os.environ.get('SENSEI_SPOTIFY_REMOTE') and len(sys.argv)>1 and sys.argv[1] in ('status','play','pause','toggle','next','previous','volume','seek','seek-to','shuffle','repeat','play-list','play-track','play-context','play-context-track'):
+ native=os.path.expanduser('~/.local/bin/sensei-spotify-transport')
+ if os.path.exists(native):os.execv(native,[native]+sys.argv[1:])
+import json,sys,os,socket,time,re,hashlib,datetime,urllib.request,urllib.parse,urllib.error,fcntl,tomllib,subprocess
+from pathlib import Path
+os.umask(0o077)
+HOME=Path.home();STORE=HOME/'.cache/sensei-spotify';STORE.mkdir(mode=0o700,parents=True,exist_ok=True)
+CONFIG=tomllib.loads((HOME/'.config/spotify-player/app.toml').read_text());PORT=int(CONFIG.get('client_port',8089));CLIENT=CONFIG['client_id']
+TOKEN=HOME/'.cache/spotify-player'/f'{CLIENT}_token.json'
+class MusicError(Exception):pass
+def put(path,value):
+ temp=path.with_suffix('.tmp');temp.write_text(json.dumps(value,ensure_ascii=False));temp.chmod(0o600);temp.replace(path)
+def rpc(request):
+ with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as s:
+  s.settimeout(10);s.connect(('127.0.0.1',PORT));s.send(json.dumps(request).encode());parts=[];size=0
+  try:
+   while True:
+    chunk=s.recv(65535)
+    if not chunk:break
+    size+=len(chunk)
+    if size>16*1024*1024:raise MusicError('Spotify response is too large.')
+    parts.append(chunk)
+  except socket.timeout:raise MusicError('Sensei, the Spotify player is not ready. Open Account to sign in or restart the music service.')
+  except OSError:raise MusicError('Sensei, the Spotify player is offline. Open Account to start it.')
+  result=json.loads(b''.join(parts))
+  if 'Err' in result:raise MusicError(bytes(result['Err']).decode(errors='replace')[:400])
+  raw=bytes(result.get('Ok',[])).decode()
+  try:return json.loads(raw) if raw else None
+  except ValueError:return raw
+
+def token(force=False):
+ if not TOKEN.exists():raise MusicError('Sensei, sign in to Spotify once from Account. Your password stays in Spotify’s browser login.')
+ with (STORE/'token.lock').open('a') as lock:
+  fcntl.flock(lock,fcntl.LOCK_EX);d=json.loads(TOKEN.read_text())
+  expires=d.get('expires_at','')
+  try:expired=datetime.datetime.fromisoformat(expires.replace('Z','+00:00')).timestamp()<time.time()+45
+  except Exception:expired=True
+  if expired or force:
+   form=urllib.parse.urlencode({'grant_type':'refresh_token','refresh_token':d.get('refresh_token',''),'client_id':CLIENT}).encode()
+   try:
+    with urllib.request.urlopen(urllib.request.Request('https://accounts.spotify.com/api/token',data=form),timeout=12) as r:fresh=json.load(r)
+   except urllib.error.HTTPError:raise MusicError('Sensei, Spotify needs you to sign in again. Use Account → Sign in.')
+   d.update(fresh);d['expires_at']=datetime.datetime.fromtimestamp(time.time()+fresh.get('expires_in',3600),datetime.timezone.utc).isoformat().replace('+00:00','Z');put(TOKEN,d)
+  return d['access_token']
+def api(path,method='GET',body=None,retry=True):
+ cooldown=STORE/'cooldown.json'
+ if cooldown.exists():
+  until=json.loads(cooldown.read_text()).get('until',0)
+  if until>time.time():raise MusicError('Sensei, Spotify is limiting requests. Retry in '+str(int(until-time.time())+1)+' seconds; playback controls remain available.')
+ if path.startswith('https://'):
+  if not path.startswith('https://api.spotify.com/v1/'):raise MusicError('Unexpected Spotify endpoint')
+  url=path
+ else:url='https://api.spotify.com/v1/'+path.lstrip('/')
+ req=urllib.request.Request(url,headers={'Authorization':'Bearer '+token(),'Content-Type':'application/json'},data=json.dumps(body).encode() if body is not None else None,method=method)
+ try:
+  with urllib.request.urlopen(req,timeout=12) as r:
+   raw=r.read()
+   if not raw:return None
+   try:return json.loads(raw)
+   except ValueError:
+    if method!='GET':return None
+    raise MusicError('Spotify returned an unreadable response.')
+ except urllib.error.HTTPError as e:
+  if e.code==401 and retry:token(True);return api(path,method,body,False)
+  if e.code==429:
+   wait=int(e.headers.get('Retry-After','60'));put(cooldown,{'until':time.time()+wait});raise MusicError(f'Sensei, Spotify requested a {wait}-second pause in library requests.')
+  try:message=json.load(e).get('error',{}).get('message','Request refused')
+  except Exception:message='Request refused'
+  raise MusicError(f'Spotify {e.code}: {message}')
+def pages(endpoint,max_rows=100):
+ rows=[];d=api(endpoint)
+ while d:
+  rows.extend(d.get('items',[]))
+  if not d.get('next') or len(rows)>=max_rows:break
+  d=api(d['next'])
+ return rows[:max_rows]
+def cached(key,ttl,fetch,force=False):
+ p=STORE/(hashlib.sha256(key.encode()).hexdigest()+'.json')
+ if not force and p.exists() and time.time()-p.stat().st_mtime<ttl:return json.loads(p.read_text())
+ try:d=fetch();put(p,d);return d
+ except Exception:
+  if p.exists():return {'stale':True,'rows':json.loads(p.read_text()),'error':'Sensei, showing your cached library while Spotify is unavailable.'}
+  raise
+
+def duration(d):
+ if isinstance(d,dict):return int(d.get('secs',0)*1000+d.get('nanos',0)/1e6)
+ return int(d or 0)
+def row(item,kind='track'):
+ if not isinstance(item,dict) or not item:return {}
+ item=item.get('item') or item.get('track') or item.get('album') if ('item' in item or 'track' in item or ('album' in item and 'id' not in item)) else item
+ if not isinstance(item,dict):return {}
+ for k in ('Playlist','Track','Album','Artist'):
+  if k in item:return row(item[k],k.lower())
+ kind=item.get('type',kind);album=item.get('album') or {};imgs=item.get('images') or album.get('images') or [];artist=', '.join(a.get('name','') for a in item.get('artists',[]));owner=item.get('owner',{})
+ if isinstance(owner,list):owner=owner[0] if owner else ''
+ elif isinstance(owner,dict):owner=owner.get('display_name') or owner.get('id','')
+ return {'id':item.get('id',''),'uri':item.get('uri') or 'spotify:'+kind+':'+item.get('id',''),'kind':kind,'title':item.get('name','Untitled'),'artist':artist or owner or kind.capitalize(),'album':album.get('name',''),'albumId':album.get('id',''),'art':imgs[0].get('url','') if imgs else '', 'duration':duration(item.get('duration_ms',item.get('duration',0))),'explicit':item.get('explicit',False),'description':re.sub('<[^>]+>','',item.get('description',item.get('desc',''))),'count':(item.get('tracks') or {}).get('total',0) if isinstance(item.get('tracks'),dict) else 0,'release':item.get('release_date','')}
+def rows(items,kind='track'):
+ result=[];seen=set()
+ for item in items:
+  r=row(item,kind);key=r.get('uri')
+  if r.get('id') and key not in seen:result.append(r);seen.add(key)
+ return result
+def library(kind,force=False):
+ endpoint={'playlists':'me/playlists?limit=50','liked':'me/tracks?limit=50','albums':'me/albums?limit=50','artists':'me/following?type=artist&limit=50','recent':'me/player/recently-played?limit=50','top':'me/top/tracks?limit=50&time_range=medium_term'}[kind]
+ typ='playlist' if kind=='playlists' else 'album' if kind=='albums' else 'artist' if kind=='artists' else 'track'
+ def load():
+  d=api(endpoint)
+  if kind=='artists':d=d['artists']
+  return {'rows':rows(d.get('items',[]),typ),'next':d.get('next') or '', 'total':d.get('total',len(d.get('items',[])))}
+ d=cached('library-v2-'+kind,900,load,force)
+ if isinstance(d,list):d={'rows':d,'next':'','total':len(d)}
+ if d.get('stale'):
+  inner=d['rows'];inner={'rows':inner,'next':'','total':len(inner)} if isinstance(inner,list) else inner
+  return {'kind':kind,**inner,'warning':d['error'],'stale':True}
+ return {'kind':kind,**d,'warning':'','stale':False}
+def context(kind,id,force=False):
+ if kind not in ('playlist','album','artist') or not re.fullmatch('[A-Za-z0-9]{22}',id):raise MusicError('Invalid Spotify item')
+ def load():
+  if kind=='artist':
+   info=api('artists/'+id);items=api('artists/'+id+'/top-tracks?market=from_token')['tracks']
+  else:
+   info=api(kind+'s/'+id);d=api(kind+'s/'+id+('/items?limit=100' if kind=='playlist' else '/tracks?limit=50'));items=d.get('items',[])
+  return {'item':row(info,kind),'rows':rows(items),'next':d.get('next') or '' if kind!='artist' else '', 'total':d.get('total',len(items)) if kind!='artist' else len(items)}
+ d=cached(kind+'-v2-'+id,900,load,force)
+ return d if not d.get('stale') else {**d['rows'],'warning':d['error']}
+def status():
+ native=HOME/'.local/bin/sensei-spotify-transport'
+ if native.exists():return json.loads(subprocess.check_output([str(native),'status'],text=True))
+ d=rpc({'Get':{'Key':'Playback'}}) or {};item=d.get('item') or {};track=row(item);device=d.get('device') or {}
+ # Native events bypass delayed Web API track/progress metadata while switching.
+ try:
+  event=json.loads((STORE/'native-event.json').read_text());age=time.time()-event['time']
+  if device.get('name')=='Sensei · ZenBook Duo' and 0<=age<8 and event.get('track'):
+   if track.get('uri')!=event['uri'] or event.get('seek'):d['progress_ms']=event['progress']+int(age*1000 if event['playing'] else 0)
+   track=event['track'];d['is_playing']=event['playing']
+ except (OSError,ValueError,KeyError):pass
+ return {'ready':True,'playing':d.get('is_playing',False),'track':track,'progress':d.get('progress_ms',0) or 0,'volume':device.get('volume_percent',0),'device':device.get('name','Sensei · ZenBook Duo'),'deviceId':device.get('id',''),'shuffle':d.get('shuffle_state',False),'repeat':d.get('repeat_state','off'),'context':d.get('context') or {}}
+def synced_lyrics(track):
+ title=str(track.get('title','')).strip();artist=str(track.get('artist','')).split(',')[0].strip()
+ if not title or not artist:return {'lines':[],'plain':'','synced':False,'notice':'Start a song to follow its lyrics.'}
+ key='lyrics-'+hashlib.sha256((title+'|'+artist+'|'+str(track.get('duration',0))).encode()).hexdigest()
+ path=STORE/(key+'.json')
+ if path.exists():
+  saved=json.loads(path.read_text());ttl=30*86400 if saved.get('synced') else 86400
+  if time.time()-path.stat().st_mtime<ttl:return saved
+ query=urllib.parse.urlencode({'track_name':title,'artist_name':artist,'album_name':track.get('album',''),'duration':round(float(track.get('duration',0))/1000)})
+ req=urllib.request.Request('https://lrclib.net/api/get?'+query,headers={'User-Agent':'SenseiDesktop/1.0 (personal desktop lyrics follower)'})
+ try:
+  with urllib.request.urlopen(req,timeout=10) as response:data=json.load(response)
+ except urllib.error.HTTPError as e:
+  if e.code!=404:raise MusicError('Sensei, the lyrics provider is temporarily unavailable.')
+  result={'lines':[],'plain':'','synced':False,'notice':'No lyrics matched this song and duration.','provider':'LRCLIB'};put(path,result);return result
+ lines=[];raw=data.get('syncedLyrics') or '';offset=re.search(r'\[offset:([+-]?\d+)\]',raw);shift=int(offset.group(1)) if offset else 0
+ for line in raw.splitlines():
+  stamps=re.findall(r'\[(\d+):(\d+(?:\.\d+)?)\]',line)
+  words=re.sub(r'\[[^]]*\]','',line).strip()
+  for minute,second in stamps:lines.append({'time':max(0,round((int(minute)*60+float(second))*1000)+shift),'text':words})
+ lines.sort(key=lambda v:v['time'])
+ result={'lines':lines,'plain':data.get('plainLyrics') or '', 'synced':bool(lines),'instrumental':bool(data.get('instrumental')),'provider':'LRCLIB','notice':'Instrumental track' if data.get('instrumental') else ''}
+ put(path,result);return result
+def recover_local_device():
+ raise MusicError('Sensei, choose your playback device in Spotify → Devices. Automatic transfers are disabled.')
+def action(name,args):
+ controls=('toggle','play','pause','next','previous','shuffle','repeat','volume','seek','seek-to','play-track','play-context','play-context-track','play-list','liked-play')
+ if name in controls:
+  d=status()
+  if d.get('device')=='Sensei · ZenBook Duo' and name in ('play-track','play-list','play-context','play-context-track'):
+   return json.loads(subprocess.check_output([str(HOME/'.local/bin/sensei-spotify-transport'),name]+args,text=True))
+  if not d.get('deviceId'):d=recover_local_device()
+  device=d.get('deviceId','');suffix=('&device_id='+urllib.parse.quote(device)) if device else ''
+  if d.get('device')=='Sensei · ZenBook Duo' and name in ('toggle','play','pause','next','previous','shuffle','repeat','volume','seek','seek-to'):
+   commands={'toggle':'PlayPause','play':'Play','pause':'Pause','next':'Next','previous':'Previous','shuffle':'Shuffle','repeat':'Repeat'}
+   command=commands.get(name)
+   if name=='volume':command={'Volume':{'percent':max(0,min(100,int(args[0]))),'is_offset':False}}
+   if name in ('seek','seek-to'):command={'Seek':int(args[0])-(d['progress'] if name=='seek-to' else 0)}
+   try:
+    result=rpc({'Playback':command})
+    if name in ('seek','seek-to'):
+     position=max(0,min(int(args[0])+(d['progress'] if name=='seek' else 0),max(0,d['track'].get('duration',0)-1000)))
+     put(STORE/'native-event.json',{'uri':d['track'].get('uri'),'time':time.time(),'track':d['track'],'playing':d['playing'],'progress':position,'seek':True})
+    if name in ('next','previous'):
+     playing=(args[0]=='playing') if args and args[0] in ('playing','paused') else d['playing']
+     rpc({'Playback':'Play' if playing else 'Pause'})
+    return result
+   except MusicError as e:
+    if 'no active playback' not in str(e):raise
+    recover_local_device();return rpc({'Playback':command})
+  def endpoint(path,query=''):return 'me/player/'+path+'?'+query+suffix
+  if name=='toggle':name='pause' if d['playing'] else 'play'
+  if name in ('play','pause'):return api(endpoint(name),'PUT',{} if name=='play' else None)
+  if name in ('next','previous'):return api(endpoint(name),'POST')
+  if name=='shuffle':return api(endpoint('shuffle','state='+str(not d['shuffle']).lower()),'PUT')
+  if name=='repeat':return api(endpoint('repeat','state='+{'off':'track','track':'context','context':'off'}.get(d['repeat'],'off')),'PUT')
+  if name=='volume':return api(endpoint('volume','volume_percent='+str(max(0,min(100,int(args[0]))))),'PUT')
+  if name in ('seek','seek-to'):
+   position=int(args[0])+(d['progress'] if name=='seek' else 0);position=max(0,min(position,max(0,d.get('track',{}).get('duration',0)-1000)))
+   result=api(endpoint('seek','position_ms='+str(position)),'PUT')
+   # Seeked is omitted by the daemon's event adapter. A same-state control
+   # schedules its normal cache refresh without changing playback intent.
+   if d.get('device')=='Sensei · ZenBook Duo':rpc({'Playback':'Play' if d['playing'] else 'Pause'})
+   return result
+  if name=='play-track':return api(endpoint('play'),'PUT',{'uris':['spotify:track:'+args[0]]})
+  if name=='play-list':
+   playlist=json.loads(args[0]);uris=playlist.get('uris',[])
+   if not uris or len(uris)>100 or any(not re.fullmatch(r'spotify:track:[A-Za-z0-9]{22}',uri) for uri in uris):raise MusicError('Invalid playback list')
+   offset=max(0,min(len(uris)-1,int(playlist.get('offset',0))))
+   return api(endpoint('play'),'PUT',{'uris':uris,'offset':{'position':offset}})
+  if name=='play-context-track':return api(endpoint('play'),'PUT',{'context_uri':'spotify:'+args[0]+':'+args[1],'offset':{'uri':args[2]}})
+  if name=='play-context':return api(endpoint('play'),'PUT',{'context_uri':'spotify:'+args[0]+':'+args[1]})
+  if name=='liked-play':
+   tracks=library('liked')['rows'];return action('play-list',[json.dumps({'uris':[t['uri'] for t in tracks[:100]],'tracks':tracks[:100],'offset':0})])
+ if name=='connect':
+  devices=rpc({'Get':{'Key':'Devices'}}) or []
+  chosen=next((v for v in devices if v.get('id')==args[0]),None)
+  if not chosen:raise MusicError('Sensei, this device is no longer available. Refresh Devices.')
+  result=api('me/player','PUT',{'device_ids':[args[0]],'play':False})
+  put(STORE/'selected-device.json',{'id':chosen['id'],'name':chosen.get('name',''),'time':time.time()})
+  return result
+ if name in ('like','unlike'):
+  id=status().get('track',{}).get('id','')
+  if not id:raise MusicError('Sensei, start a song first.')
+  return api('me/tracks?ids='+id,'DELETE' if name=='unlike' else 'PUT')
+ if name=='enqueue':return api('me/player/queue?'+urllib.parse.urlencode({'uri':args[0]}),'POST')
+ if name=='playlist-add':return api('playlists/'+args[0]+'/tracks','POST',{'uris':[args[1]]})
+ if name=='playlist-create':
+  user=api('me');return api('users/'+user['id']+'/playlists','POST',{'name':args[0],'public':False,'description':'Sensei’s music on the ZenBook Duo'})
+ raise MusicError('Unknown Spotify action')
+def main(a):
+ if not a:raise MusicError('Choose a music operation')
+ cmd=a[0]
+ if cmd=='status':return status()
+ if cmd=='library':return library(a[1],len(a)>2 and a[2]=='refresh')
+ if cmd=='home':return library('recent')
+ if cmd=='context':return context(a[1],a[2],len(a)>3 and a[3]=='refresh')
+ if cmd=='more':
+  d=api(a[1]);d=d.get('artists',d);return {'rows':rows(d.get('items',[]),a[2]),'next':d.get('next') or '', 'target':a[3],'contextId':a[4] if len(a)>4 else ''}
+ if cmd=='queue':
+  d=rpc({'Get':{'Key':'Queue'}}) or {};server_rows=rows(d.get('queue',[]));current=status().get('track',{})
+  try:
+   local=json.loads((STORE/'local-queue.json').read_text());uris=local.get('uris',[]);index=uris.index(current.get('uri'))
+   cached_rows={r['uri']:r for r in local.get('tracks',[]) if r.get('uri')};upcoming=[]
+   for uri in uris[index+1:]:
+    r=cached_rows.get(uri)
+    if not r:
+     path=STORE/('native-track-'+uri.rsplit(':',1)[-1]+'.json');r=json.loads(path.read_text()) if path.exists() else None
+    if r:upcoming.append(r)
+   if upcoming:return {'rows':upcoming,'current':current,'source':'local queue'}
+  except (OSError,ValueError,KeyError):pass
+  return {'rows':server_rows,'current':current}
+
+ if cmd=='devices':return {'rows':rpc({'Get':{'Key':'Devices'}}) or []}
+ if cmd=='search':
+  q=a[1].strip()
+  if len(q)<2:return {'tracks':[],'albums':[],'artists':[],'playlists':[]}
+  d=api('search?'+urllib.parse.urlencode({'q':q,'type':'track,album,artist,playlist','limit':20}));return {k:rows(d.get(k,{}).get('items',[]),k[:-1]) for k in ('tracks','albums','artists','playlists')}
+ if cmd=='synced-lyrics':return synced_lyrics(json.loads(a[1]))
+ if cmd=='lyrics':return {'text':rpc({'Lyrics':{'id_or_name':None}}) or 'No lyrics are available for this track.'}
+ if cmd=='art':
+  url=a[1]
+  if url.startswith('https://i.scdn.co/image/ab67616d00004851'):url=url.replace('ab67616d00004851','ab67616d0000b273',1)
+  if not url.startswith(('https://i.scdn.co/','https://mosaic.scdn.co/','https://image-cdn-ak.spotifycdn.com/','https://image-cdn-fa.spotifycdn.com/')):return {'path':url if url.startswith('file://') else ''}
+  path=STORE/(hashlib.sha256(url.encode()).hexdigest()+'.jpg')
+  if not path.exists():
+   with urllib.request.urlopen(url,timeout=8) as r:raw=r.read(5*1024*1024)
+   temp=path.with_name(path.name+f'.{os.getpid()}.tmp');temp.write_bytes(raw);temp.replace(path)
+  return {'path':path.as_uri()}
+ if cmd=='account':return {'cachedLogin':TOKEN.exists(),'service':subprocess.run(['systemctl','--user','is-active','sensei-spotify.service'],capture_output=True,text=True).stdout.strip(),'version':'0.25.1','device':'Sensei · ZenBook Duo'}
+ action(cmd,a[1:]);return {'ok':True}
+if __name__=='__main__':
+ try:print(json.dumps(main(sys.argv[1:]),ensure_ascii=False))
+ except Exception as e:
+  msg=str(e) if isinstance(e,(MusicError,ValueError)) else 'Sensei, the music request could not complete. Check your connection or sign in from Account.'
+  print(json.dumps({'error':msg},ensure_ascii=False));sys.exit(1)

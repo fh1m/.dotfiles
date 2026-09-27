@@ -1,0 +1,100 @@
+#!/usr/bin/python3
+"""Persistent per-app GPU choice and profile-safe, explicit Chrome restart."""
+import os,sys,json,subprocess,time,shutil,signal
+from pathlib import Path
+os.umask(0o077)
+home=Path.home();state=home/'.config/hypr/chrome-gpu.json';data=home/'.config/google-chrome';backup=home/'.local/state/lean-desktop-20260927/chrome-profile';probe=home/'.local/state/lean-desktop-20260927/chrome-media-probe.json'
+def browsers():
+ found=[]
+ for p in Path('/proc').glob('[0-9]*'):
+  try:
+   if p.stat().st_uid!=os.getuid():continue
+   args=(p/'cmdline').read_bytes().split(b'\0')
+   if (p/'comm').read_text().strip()=='chrome' and not any(a.startswith((b'--type=',b'--user-data-dir=')) for a in args):found.append(int(p.name))
+  except OSError:pass
+ return found
+def config():
+ try:return json.loads(state.read_text())
+ except (OSError,ValueError):return {'mode':'auto'}
+def training():
+ try:return bool(json.loads((home/'.config/hypr/zenbook-controls.json').read_text()).get('training',False))
+ except (OSError,ValueError):return False
+def availability():
+ d=config()
+ try:
+  driver=subprocess.check_output(['nvidia-smi','--query-gpu=driver_version','--format=csv,noheader'],text=True,timeout=3).strip().splitlines()[0]
+  return bool(d.get('validatedHybrid')) and d.get('validatedKernel')==os.uname().release and d.get('validatedDriver')==driver and all((Path('/dev/dri/by-path')/('pci-'+d.get(key,default)+'-render')).exists() for key,default in [('intelPCI','0000:00:02.0'),('nvidiaPCI','0000:01:00.0')])
+ except (OSError,subprocess.SubprocessError,IndexError):return False
+def hardware_available():return availability()
+def status():
+ actual='closed'
+ for p in Path('/proc').glob('[0-9]*'):
+  try:
+   if (p/'comm').read_text().strip()!='chrome':continue
+   args=(p/'cmdline').read_bytes()
+   if b'--type=gpu-process' not in args or b'--user-data-dir=' in args:continue
+   for fd in (p/'fd').iterdir():
+    try:
+     target=os.readlink(fd)
+     if target==str(Path('/dev/dri/by-path/pci-'+config().get('intelPCI','0000:00:02.0')+'-render').resolve()) and actual!='NVIDIA':actual='Intel'
+     elif target==str(Path('/dev/dri/by-path/pci-'+config().get('nvidiaPCI','0000:01:00.0')+'-render').resolve()):actual='NVIDIA'
+    except OSError:pass
+  except OSError:pass
+ return {**config(),'actual':actual,'running':bool(browsers()),'nvidiaAvailable':availability(),'settingsPending':not (backup/'applied.json').exists(),'note':('Nvidia is blocked on this kernel after driver errors. Reboot validation is still required.' if os.uname().release=='7.2.5-1-cachyos' else 'Hybrid: NVIDIA Vulkan rendering + Intel hardware video decode through XWayland. Training uses native Intel Wayland.')}
+def prepare():
+ if browsers():return
+ if not (backup/'applied.json').exists():
+  backup.mkdir(parents=True,exist_ok=True)
+  if data.exists() and not (backup/'profiles').exists():shutil.copytree(data,backup/'profiles',symlinks=True,ignore=shutil.ignore_patterns('Singleton*'))
+  p=data/'Local State'
+  if p.exists():
+   d=json.loads(p.read_text());perf=d.setdefault('performance_tuning',{});eff=perf.setdefault('high_efficiency_mode',{});eff.update(state=2,aggressiveness=1)
+   d.setdefault('hardware_acceleration_mode',{})['enabled']=True
+   t=p.with_suffix('.sensei.tmp');t.write_text(json.dumps(d));t.replace(p)
+  for p in data.glob('*/Preferences'):
+   d=json.loads(p.read_text());d.setdefault('net',{})['network_prediction_options']=2
+   perf=d.setdefault('performance_tuning',{});entries=perf.setdefault('tab_discarding',{}).setdefault('exceptions',[])
+   # Existing exception lists stay intact; protected origins use Chrome patterns.
+   for pattern in ['localhost','127.0.0.1','[*.]colab.research.google.com']:
+    if pattern not in entries:entries.append(pattern)
+   t=p.with_suffix('.sensei.tmp');t.write_text(json.dumps(d));t.replace(p)
+  (backup/'applied.json').write_text(json.dumps({'time':time.time(),'memorySaver':'balanced','preloading':False}))
+def launch(args):
+ prepare();env=dict(os.environ);mode='intel' if training() else config().get('mode','auto');flags=['--password-store=gnome-libsecret','--ozone-platform=wayland']
+ if mode=='nvidia' and availability():
+  flags[1]='--ozone-platform=x11'
+  env.update(GDK_BACKEND='x11',LIBVA_DRIVER_NAME='iHD',__NV_PRIME_RENDER_OFFLOAD='1',__GLX_VENDOR_LIBRARY_NAME='nvidia',VK_DRIVER_FILES='/usr/share/vulkan/icd.d/nvidia_icd.json',__VK_LAYER_NV_optimus='NVIDIA_only')
+  for key in ['__EGL_VENDOR_LIBRARY_FILENAMES','LIBVA_DRIVERS_PATH','NVD_BACKEND']:env.pop(key,None)
+  node=str(Path('/dev/dri/by-path/pci-'+config().get('nvidiaPCI','0000:01:00.0')+'-render').resolve())
+  flags+=['--render-node-override='+node,'--hardware-video-device-path='+str(Path('/dev/dri/by-path/pci-'+config().get('intelPCI','0000:00:02.0')+'-render').resolve()),'--use-gl=angle','--use-angle=vulkan','--ignore-gpu-blocklist','--enable-features=AcceleratedVideoDecodeLinuxGL,VaapiOnNvidiaGPUs,VaapiIgnoreDriverChecks,Vulkan,DefaultANGLEVulkan,VulkanFromANGLE','--disable-features=AcceleratedVideoDecodeLinuxZeroCopyGL']
+ else:
+  for key in ['__NV_PRIME_RENDER_OFFLOAD','__GLX_VENDOR_LIBRARY_NAME','__EGL_VENDOR_LIBRARY_FILENAMES','__VK_LAYER_NV_optimus','VK_ICD_FILENAMES','VK_DRIVER_FILES','LIBVA_DRIVERS_PATH','GDK_BACKEND','NVD_BACKEND']:env.pop(key,None)
+  env['LIBVA_DRIVER_NAME']='iHD'
+ os.execvpe('/usr/bin/google-chrome-stable',['/usr/bin/google-chrome-stable',*flags,*args],env)
+a=sys.argv[1:];action=a[0] if a else 'launch'
+try:
+ if action=='status':print(json.dumps(status()))
+ elif action=='mode':
+  mode=a[1]
+  if mode not in ['auto','intel','nvidia']:raise ValueError('Unknown GPU choice')
+  if mode=='nvidia' and training():raise ValueError('Turn Training mode off before assigning Chrome to Nvidia')
+  if mode=='nvidia' and not hardware_available():raise ValueError('NVIDIA Chrome rendering has not passed testing on this setup')
+  state.write_text(json.dumps({**config(),'mode':mode}));print(json.dumps(status()))
+ elif action=='restart':
+  if browsers():
+   for pid in browsers():
+    try:os.kill(pid,signal.SIGTERM)
+    except ProcessLookupError:pass
+   for _ in range(150):
+    if not browsers():break
+    time.sleep(.1)
+   if browsers():raise RuntimeError('Chrome did not close. Close it normally, then launch it again; nothing was forced.')
+  log=home/'.local/state/lean-desktop-20260927/chrome-launch.log';log.parent.mkdir(parents=True,exist_ok=True)
+  with log.open('a') as output:subprocess.Popen([str(home/'.local/bin/sensei-chrome'),'launch','--restore-last-session'],stdin=subprocess.DEVNULL,stdout=output,stderr=output,start_new_session=True)
+  for _ in range(50):
+   if browsers():break
+   time.sleep(.1)
+  print(json.dumps(status()))
+ elif action=='launch':launch(a[1:])
+ else:raise ValueError('Unknown action')
+except Exception as e:print(json.dumps({'error':'Sensei, '+str(e)}));sys.exit(1)

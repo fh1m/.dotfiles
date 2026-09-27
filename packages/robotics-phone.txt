@@ -1,0 +1,14 @@
+docker
+docker-compose
+docker-buildx
+nvidia-container-toolkit
+qemu-user-static
+qemu-user-static-binfmt
+kdeconnect
+tailscale
+syncthing
+openssh
+sshfs
+rsync
+scrcpy
+android-tools

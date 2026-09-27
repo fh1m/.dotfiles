@@ -1,0 +1,4 @@
+#!/usr/bin/python3 -I
+import sys,subprocess
+if len(sys.argv)!=2 or sys.argv[1] not in ('start','stop'):raise SystemExit('Use start or stop')
+subprocess.run(['systemctl',sys.argv[1],'nxserver.service'],check=True)

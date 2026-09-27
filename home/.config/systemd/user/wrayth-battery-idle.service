@@ -1,0 +1,7 @@
+[Unit]
+Description=Battery-only suspend after Hyprland idle timeout
+PartOf=graphical-session.target hypridle.service
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/wrayth-battery-idle

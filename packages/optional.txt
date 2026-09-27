@@ -1,0 +1,7 @@
+# Check availability; these may require paru / AUR on vanilla Arch.
+google-chrome
+system76-power
+asusctl
+# UX581 ScreenPad module: install from Plippo/asus-wmi-screenpad upstream.
+# NVIDIA kernel module must match your GPU generation and installed kernel.
+# Intel media driver: intel-media-driver; Vulkan: vulkan-intel / nvidia-utils.

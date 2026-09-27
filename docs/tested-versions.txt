@@ -1,0 +1,14 @@
+hyprland 0.56.2-3.1
+noctalia-qs 0.0.12-2
+linux-cachyos 7.2.8-1
+nvidia-utils 615.71.09-1
+mesa 2:26.1.1-1
+aquamarine 0.15.1-1.1
+pipewire 1:1.6.9-1
+wireplumber 0.5.17-2.1
+bluez-git 1:5.87.r277.g8b4a41760-1
+docker 1:29.8.1-1.1
+docker-compose 5.5.1-1.1
+nvidia-container-toolkit 1.20.0-1.1
+qemu-user-static 11.1.1-4
+qemu-user-static-binfmt 11.1.1-4

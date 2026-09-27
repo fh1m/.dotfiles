@@ -1,0 +1,21 @@
+#!/usr/bin/python3 -I
+"""Privacy switch for the UX581GV's 13d3:56e4 built-in RGB/IR webcam only."""
+import os,sys
+from pathlib import Path
+if os.geteuid()!=0 or len(sys.argv)!=2 or sys.argv[1] not in ('on','off','toggle'):sys.exit('Only on/off/toggle are supported')
+if 'UX581GV' not in Path('/sys/class/dmi/id/product_name').read_text():sys.exit('Unsupported laptop')
+def read(path):
+ try:return path.read_text().strip()
+ except OSError:return ''
+interfaces=[]
+for usb in Path('/sys/bus/usb/devices').iterdir():
+ if read(usb/'idVendor')!='13d3' or read(usb/'idProduct')!='56e4':continue
+ for interface in Path('/sys/bus/usb/devices').glob(usb.name+':*'):
+  if read(interface/'bInterfaceClass')=='0e' and read(interface/'bInterfaceSubClass')=='01':interfaces.append(interface)
+if not interfaces:sys.exit('Built-in camera not found')
+active=any((interface/'driver').exists() for interface in interfaces)
+enable=(not active) if sys.argv[1]=='toggle' else sys.argv[1]=='on'
+for interface in interfaces:
+ if enable and not (interface/'driver').exists():Path('/sys/bus/usb/drivers/uvcvideo/bind').write_text(interface.name)
+ elif not enable and (interface/'driver').resolve().name=='uvcvideo':Path('/sys/bus/usb/drivers/uvcvideo/unbind').write_text(interface.name)
+print('Built-in camera: '+('on' if enable else 'off'))

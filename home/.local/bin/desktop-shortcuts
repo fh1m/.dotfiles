@@ -1,0 +1,5 @@
+#!/usr/bin/python3
+from pathlib import Path
+import subprocess
+p=Path('@HOME@/.local/state/hyprland-repair-20260926/SHORTCUTS.txt')
+subprocess.run(['zenity','--text-info','--title=Keyboard shortcuts','--filename='+str(p),'--width=850','--height=700'])

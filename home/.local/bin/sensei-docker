@@ -1,0 +1,148 @@
+#!/usr/bin/python3
+"""Docker Lab: bounded JSON inventory, explicit actions and detached task logs."""
+import os,json,sys,subprocess,time,shlex,re,signal,concurrent.futures
+from pathlib import Path
+os.umask(0o077)
+STATE=Path.home()/'.local/state/sensei-docker';STATE.mkdir(parents=True,exist_ok=True)
+JOBS=STATE/'jobs';JOBS.mkdir(exist_ok=True)
+def run(args,timeout=10,merge=False):
+ r=subprocess.run(args,capture_output=True,text=True,timeout=timeout)
+ if r.returncode:raise RuntimeError((r.stderr or r.stdout).strip()[-2500:])
+ return r.stdout+(r.stderr if merge else "")
+def lines(args):
+ return [json.loads(line) for line in run(['docker',*args,'--format','{{json .}}']).splitlines() if line.strip()]
+def atomic(path,data):
+ t=path.with_name(path.name+'.'+str(os.getpid())+'.tmp');t.write_text(json.dumps(data));t.replace(path)
+def tasks():
+ out=[]
+ for p in sorted(JOBS.glob('*.json'),key=lambda p:p.stat().st_mtime,reverse=True)[:12]:
+  try:
+   d=json.loads(p.read_text());d.pop('args',None);log=Path(d.pop('log'))
+   if log.exists():
+    with log.open('rb') as f:f.seek(max(0,log.stat().st_size-5000));d['output']=f.read().decode(errors='replace')
+   out.append(d)
+  except (OSError,ValueError):pass
+ return out
+def job(args,label):
+ id=str(time.time_ns());p=JOBS/(id+'.json');atomic(p,{'id':id,'label':label,'args':args,'state':'queued','created':time.time(),'log':str(JOBS/(id+'.log'))})
+ subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'--job',str(p)],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+ return {'ok':True,'output':label+' started; progress is in Tasks.'}
+def worker(p):
+ p=Path(p);d=json.loads(p.read_text());d.update(state='running',pid=os.getpid());atomic(p,d)
+ try:
+  with open(d['log'],'w') as log:r=subprocess.run(d['args'],stdout=log,stderr=subprocess.STDOUT)
+  d.update(state='finished' if r.returncode==0 else 'failed',exitCode=r.returncode)
+ except Exception as e:d.update(state='failed',error=str(e))
+ d['finished']=time.time();atomic(p,d)
+def sessions():
+ try:return run(['tmux','list-sessions','-F','#{session_name}']).splitlines()
+ except Exception:return []
+def status():
+ commands={'containers':['ps','-a','--no-trunc'],'images':['image','ls'],'networks':['network','ls'],'volumes':['volume','ls'],'disk':['system','df']}
+ out={'tasks':tasks(),'sessions':sessions(),'serial':sorted([str(p) for pat in ['ttyUSB*','ttyACM*'] for p in Path('/dev').glob(pat)]),'arm':[p.name for p in Path('/proc/sys/fs/binfmt_misc').glob('qemu-*')],'kvm':os.access('/dev/kvm',os.R_OK|os.W_OK)}
+ with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
+  futures={k:pool.submit(lines,v) for k,v in commands.items()}
+  for k,f in futures.items():
+   try:out[k]=f.result()
+   except Exception as e:out[k]=[];out['error']=str(e)
+ try:
+  d=json.loads(run(['docker','info','--format','{{json .}}']));out['engine']={k:d.get(k) for k in ['ServerVersion','Driver','DockerRootDir','Architecture','NCPU','MemTotal','CgroupVersion','OSType','OperatingSystem']};out['gpu']='nvidia' in d.get('Runtimes',{})
+  out['compose']=json.loads(run(['docker','compose','ls','--all','--format','json']))
+ except Exception as e:out['error']=str(e)
+ return out
+def identifier(s):
+ if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.:/@+-]{0,255}',s):raise ValueError('Invalid Docker identifier.')
+ return s
+def inspect(kind,id):
+ identifier(id);d=json.loads(run(['docker',kind,'inspect',id]))[0]
+ # Config environment can contain credentials: show names rather than values.
+ if kind=='container':
+  cfg=d.get('Config',{});cfg['Env']=[x.split('=',1)[0]+'=•••' for x in cfg.get('Env',[])];d['Config']=cfg
+  out={'inspect':d}
+  if d.get('State',{}).get('Running'):
+   for key,args in [('processes',['docker','top',id]),('stats',['docker','stats','--no-stream','--format','{{json .}}',id]),('changes',['docker','diff',id])]:
+    try:out[key]=run(args,5)[-18000:]
+    except Exception as e:out[key]=str(e)
+  try:out['logs']=run(['docker','logs','--tail','100',id],5,True)[-24000:]
+  except Exception as e:out['logs']=str(e)
+  return out
+ return {'inspect':d}
+def tmux_launch(command,session,window):
+ if not re.fullmatch(r'[A-Za-z0-9_-]{1,48}',session):raise ValueError('Use a simple tmux session name.')
+ if session not in sessions():run(['tmux','new-session','-d','-s',session,'-n',window,shlex.join(command)])
+ else:run(['tmux','new-window','-t',session,'-n',window,shlex.join(command)])
+ subprocess.Popen(['kitty','--title','Robotics · '+session,'-e','tmux','attach-session','-t',session],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+ return {'ok':True,'output':'Opened '+window+' in tmux session '+session+'.'}
+def action(name,a):
+ if name in ['start','stop','restart','pause','unpause','kill','remove']:
+  id=identifier(a[0]);verb='rm' if name=='remove' else name
+  return job(['docker',verb,id],name+' '+id[:16])
+ if name=='inspect':return inspect(a[0],a[1])
+ if name=='logs':return {'ok':True,'output':run(['docker','logs','--tail','150',identifier(a[0])],5,True)[-24000:]}
+ if name=='tmux':
+  id=identifier(a[0]);d=json.loads(run(['docker','inspect',id]))[0]
+  if not d['State']['Running']:run(['docker','start',id])
+  return tmux_launch(['docker','exec','-it',id,a[2] if len(a)>2 else '/bin/sh'],a[1] or 'robotics','docker-'+d['Name'].strip('/')[:28])
+ if name=='pull':return job(['docker','pull',identifier(a[0])],'Pull '+a[0])
+ if name in ['image-remove','volume-remove','network-remove']:
+  kind=name.split('-')[0];return job(['docker',kind,'rm',identifier(a[0])],name+' '+a[0][:24])
+ if name in ['save','load','export','import']:
+  path=str(Path(a[1] if name in ['save','export'] else a[0]).expanduser().resolve())
+  if name in ['save','export']:
+   Path(path).parent.mkdir(parents=True,exist_ok=True)
+   if Path(path).exists():raise ValueError('Choose a new archive filename to preserve existing files.')
+   args=['docker',name,'-o',path,identifier(a[0])]
+  elif name=='load':args=['docker','load','-i',path]
+  else:args=['docker','import',path,identifier(a[1])]
+  return job(args,name+' archive')
+ if name=='copy':
+  id=identifier(a[0]);local=str(Path(a[2]).expanduser().resolve());remote=a[1]
+  if not remote.startswith('/') or '\n' in remote:raise ValueError('Use an absolute container path.')
+  source,dest=(id+':'+remote,local) if a[3]=='out' else (local,id+':'+remote)
+  return job(['docker','cp',source,dest],'Copy '+('from' if a[3]=='out' else 'to')+' container')
+ if name=='run':
+  cfg=json.loads(a[0]);image=identifier(cfg['image']);platform=cfg.get('platform','linux/amd64');gpu=cfg.get('gpu',False)
+  if platform not in ['linux/amd64','linux/arm64','linux/arm/v7']:raise ValueError('Select a supported platform.')
+  if gpu and platform!='linux/amd64':raise ValueError('Host NVIDIA CUDA works in native amd64 containers; ARM emulation is CPU-only.')
+  args=['docker','run','-it','--platform',platform,'--name',identifier(cfg['name'])]
+  if gpu:args+=['--gpus','all']
+  if cfg.get('hostNetwork'):args+=['--network','host']
+  if cfg.get('hostIPC'):args+=['--ipc','host']
+  if cfg.get('workspace'):
+   path=Path(cfg['workspace']).expanduser().resolve()
+   if not path.is_dir():raise ValueError('Choose an existing workspace directory.')
+   args+=['--mount','type=bind,src='+str(path)+',dst=/workspace','-w','/workspace']
+  for device in cfg.get('devices',[]):
+   if not re.fullmatch(r'/dev/tty(?:USB|ACM)[0-9]+',device) or not Path(device).exists():raise ValueError('Choose a current serial device.')
+   args+=['--device',device]
+  args+=['-e','ROS_DOMAIN_ID='+str(int(cfg.get('rosDomain',0))),image]+shlex.split(cfg.get('command') or '/bin/sh')
+  return tmux_launch(args,cfg.get('session') or 'robotics',cfg['name'])
+ if name=='compose':
+  path=Path(a[0]).expanduser().resolve();verb=a[1]
+  if not path.is_file() or verb not in ['up','down','start','stop','restart','pull','build','ps','logs']:raise ValueError('Choose a Compose file and supported action.')
+  cmd=['docker','compose','-f',str(path),verb]
+  if verb=='up':cmd+=['-d']
+  if verb=='logs':cmd+=['--tail','100','--no-color']
+  if len(a)>2 and a[2]:cmd+=[identifier(a[2])]
+  return job(cmd,'Compose '+verb)
+ if name=='build':
+  path=Path(a[0]).expanduser().resolve()
+  if not path.is_dir():raise ValueError('Choose a build directory.')
+  return job(['docker','buildx','build','--platform',a[2],'--load','-t',identifier(a[1]),str(path)],'Build '+a[1])
+ if name=='cancel':
+  p=JOBS/(a[0]+'.json');d=json.loads(p.read_text());pid=d.get('pid',0)
+  if d['state']=='running' and str(p) in Path(f'/proc/{pid}/cmdline').read_text():os.killpg(pid,signal.SIGTERM);d['state']='cancelled';atomic(p,d)
+  return {'ok':True,'output':'Task cancelled.'}
+ if name=='cli':
+  args=shlex.split(a[0]);args=args[1:] if args and args[0]=='docker' else args
+  if not args:raise ValueError('Enter Docker arguments; shell operators are not evaluated.')
+  return job(['docker',*args],'Docker '+args[0])
+ if name=='gpu-check':return job(['docker','run','--rm','--network','none','--gpus','all',a[0],'nvidia-smi'],'NVIDIA container check')
+ if name=='arm-check':return job(['docker','run','--rm','--platform','linux/arm64','alpine:latest','uname','-m'],'ARM64 QEMU check')
+ raise ValueError('Unknown Docker action.')
+if __name__=='__main__':
+ try:
+  if len(sys.argv)>2 and sys.argv[1]=='--job':worker(sys.argv[2]);sys.exit(0)
+  out=action(sys.argv[2],json.loads(sys.argv[3])) if len(sys.argv)>2 and sys.argv[1]=='action' else status()
+ except Exception as e:out={'error':str(e),'ok':False,'output':str(e)}
+ print(json.dumps(out))

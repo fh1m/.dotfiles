@@ -1,0 +1,180 @@
+#!/usr/bin/python3
+import os,sys,json,sqlite3,datetime as D,time,subprocess,calendar,uuid,re
+from pathlib import Path
+os.umask(0o077);root=Path(os.environ.get('SENSEI_CALENDAR_DIR',Path.home()/'.local/share/sensei-calendar'));root.mkdir(parents=True,exist_ok=True);c=sqlite3.connect(root/'calendar.sqlite',timeout=15);c.row_factory=sqlite3.Row
+c.execute('pragma journal_mode=WAL');c.execute('pragma synchronous=FULL')
+c.execute('create table if not exists events (id integer primary key, uid text unique, title text, start real, duration integer, lead integer, repeat text, location text, notes text, done integer default 0, category text default "Personal", all_day integer default 0)')
+c.execute('create table if not exists delivered (event integer, occurrence real, primary key(event,occurrence))')
+from zoneinfo import ZoneInfo
+from dateutil.rrule import rrulestr
+for col,definition in [('rrule',"text default ''"),('timezone',"text default 'Asia/Dhaka'")]:
+ if col not in [r['name'] for r in c.execute('pragma table_info(events)')]:c.execute(f'alter table events add column {col} {definition}')
+c.execute('create table if not exists exceptions(event integer, occurrence real, primary key(event,occurrence))');c.commit()
+c.execute('create table if not exists tasks(id integer primary key,title text,date text,project text,priority integer,estimate integer,done integer default 0,archived integer default 0,minutes integer default 0)')
+c.execute('create table if not exists settings(key text primary key,value text)');c.commit()
+a=sys.argv[1:];cmd=a[0] if a else 'list';now=time.time()
+if cmd=='due':
+ import fcntl
+ due_lock=open(root/'.reminder.lock','a')
+ try:fcntl.flock(due_lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+ except BlockingIOError:raise SystemExit(0)
+def occurrences(e,begin,end):
+ zone=ZoneInfo(e.get('timezone') or 'Asia/Dhaka');start=D.datetime.fromtimestamp(e['start'],zone)
+ rule=e.get('rrule') or {'daily':'FREQ=DAILY','weekly':'FREQ=WEEKLY','monthly':'FREQ=MONTHLY'}.get(e['repeat'],'')
+ stamps=[d.timestamp() for d in rrulestr(rule,dtstart=start).between(D.datetime.fromtimestamp(begin,zone),D.datetime.fromtimestamp(end,zone),inc=True)] if rule else ([e['start']] if begin<=e['start']<=end else [])
+ excluded={r[0] for r in c.execute('select occurrence from exceptions where event=?',(e['id'],))}
+ return [stamp for stamp in stamps if stamp not in excluded]
+def parse_ics_date(key,raw):
+ dt=D.datetime.strptime(raw.rstrip('Z'),'%Y%m%dT%H%M%S' if 'T' in raw else '%Y%m%d')
+ zone=D.timezone.utc if raw.endswith('Z') else ZoneInfo(key.split('TZID=')[1].split(';')[0].strip('"')) if 'TZID=' in key else ZoneInfo('Asia/Dhaka')
+ return dt.replace(tzinfo=zone)
+def unescape(t):return re.sub(r'\\([nN,;\\])',lambda m:'\n' if m[1] in 'nN' else m[1],t)
+def seconds(t):
+ m=re.fullmatch(r'(-?)P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?',t)
+ if not m:return 0
+ return (-1 if m[1] else 1)*sum(int(v or 0)*scale for v,scale in zip(m.groups()[1:],[604800,86400,3600,60,1]))
+def focus_state():
+ row=c.execute("select value from settings where key='focus'").fetchone()
+ return json.loads(row[0]) if row else {'phase':'focus','running':False,'remaining':1500,'ends':0,'focus':25,'short':5,'long':15,'cycles':4,'completed':0,'task':0,'auto':True,'event':0}
+def store_focus(f):c.execute("insert or replace into settings values('focus',?)",(json.dumps(f),));c.commit()
+def focus_event(f):
+ title='Focus session' if f['phase']=='focus' else 'Long break' if f['phase']=='long' else 'Short break'
+ task=c.execute('select title from tasks where id=?',(f.get('task',0),)).fetchone()
+ if task and f['phase']=='focus':title+=' · '+task[0]
+ cur=c.execute('insert into events(uid,title,start,duration,lead,repeat,location,notes,category) values(?,?,?,0,0,"none","","","Pomodoro")',(str(uuid.uuid4())+'@sensei.local',title+' complete',f['ends']))
+ f['event']=cur.lastrowid
+ return f
+def retire_focus(f):
+ if f.get('event'):c.execute('update events set done=1 where id=?',(f['event'],))
+ f['event']=0
+ return f
+def advance_focus(f,completed=True):
+ phase=f['phase']
+ if phase=='focus':
+  f['completed']+=int(completed)
+  if completed and f.get('task'):c.execute('update tasks set minutes=minutes+? where id=?',(f['focus'],f['task']))
+  f['phase']='long' if completed and f['completed']%f['cycles']==0 else 'short'
+ else:f['phase']='focus'
+ retire_focus(f);f['remaining']=f[f['phase']]*60;f['running']=bool(f.get('auto',True));f['ends']=now+f['remaining'] if f['running'] else 0
+ if f['running']:focus_event(f)
+ store_focus(f)
+ return f
+try:
+ if cmd=='list':
+  begin=D.datetime.fromisoformat(a[1]).timestamp() if len(a)>1 else now-86400*31;begin-=86400*7;end=begin+86400*107
+  rows=[]
+  for e in c.execute('select * from events where done=0'):
+   e=dict(e)
+   for stamp in occurrences(e,begin,end):rows.append(dict(e,occurrence=stamp,date=D.datetime.fromtimestamp(stamp).strftime('%Y-%m-%d'),time=D.datetime.fromtimestamp(stamp).strftime('%H:%M')))
+  from zoneinfo import ZoneInfo
+  clocks=[{'name':name,'time':D.datetime.now(ZoneInfo(zone)).strftime('%a %d %b · %I:%M %p %Z')} for name,zone in [('Dhaka','Asia/Dhaka'),('UTC','UTC'),('Tokyo','Asia/Tokyo'),('Berlin','Europe/Berlin'),('London','Europe/London'),('New York','America/New_York')]]
+  upcoming=[]
+  for event in c.execute('select * from events where done=0'):
+   e=dict(event)
+   if e['category']=='Pomodoro':continue
+   for stamp in occurrences(e,now-86400,now+86400*7):
+    if stamp>=now:upcoming.append(dict(e,occurrence=stamp,time=D.datetime.fromtimestamp(stamp).strftime('%H:%M'),date=D.datetime.fromtimestamp(stamp).strftime('%Y-%m-%d')))
+  print(json.dumps({'clocks':clocks,'events':sorted(rows,key=lambda e:e['occurrence']),'total':c.execute('select count(*) from events where done=0').fetchone()[0],'tasks':[dict(t) for t in c.execute('select * from tasks order by archived,done,priority desc,date,id desc')],'focus':focus_state(),'upcoming':sorted(upcoming,key=lambda e:e['occurrence'])[:32]}))
+ elif cmd=='save':
+  d=json.loads(a[1]);start=D.datetime.fromisoformat(d['date']+'T'+d.get('time','09:00')).timestamp();values=(d['title'].strip(),start,int(d.get('duration',30)),int(d.get('lead',10)),d.get('repeat','none'),d.get('location',''),d.get('notes',''),d.get('category','Personal'),int(d.get('all_day',False)))
+  if not values[0]:raise SystemExit('Sensei, give your event a title.')
+  if values[4]=='custom' and (not d.get('id') or not c.execute('select rrule from events where id=?',(int(d['id']),)).fetchone()[0]):raise SystemExit('Sensei, custom recurrence is retained only when editing an imported event.')
+  if values[2]<1 or values[3]<0:raise SystemExit('Sensei, check event duration and reminder time.')
+  if d.get('id'):c.execute('update events set title=?,start=?,duration=?,lead=?,repeat=?,location=?,notes=?,category=?,all_day=? where id=?',values+(int(d['id']),))
+  else:c.execute('insert into events(title,start,duration,lead,repeat,location,notes,category,all_day,uid) values(?,?,?,?,?,?,?,?,?,?)',values+(str(uuid.uuid4())+'@sensei.local',))
+  if d.get('id') and d.get('repeat')!='custom':c.execute("update events set rrule='', timezone='Asia/Dhaka' where id=?",(int(d['id']),))
+  c.commit()
+ elif cmd in ('done','delete'):
+  # Delete is a soft removal, preserving local calendar records.
+  c.execute('update events set done=1 where id=?',(int(a[1]),));c.commit()
+ elif cmd=='skip':
+  ident,stamp=a[1].split(':',1);c.execute('insert or ignore into exceptions values(?,?)',(int(ident),float(stamp)));c.commit()
+ elif cmd=='timer':
+  seconds=max(1,int(a[1]));c.execute('insert into events(uid,title,start,duration,lead,repeat,location,notes,category) values(?,?,?,0,0,"none","","","Timer")',(str(uuid.uuid4())+'@sensei.local',a[2] if len(a)>2 else 'Timer finished',now+seconds));c.commit()
+ elif cmd=='task-save':
+  d=json.loads(a[1]);title=d.get('title','').strip()
+  if not title:raise ValueError('Give the task a title.')
+  date=d.get('date',D.datetime.now().strftime('%Y-%m-%d'));D.date.fromisoformat(date)
+  values=(title,date,d.get('project','Robotics'),max(0,min(2,int(d.get('priority',1)))),max(1,int(d.get('estimate',25))))
+  if d.get('id'):c.execute('update tasks set title=?,date=?,project=?,priority=?,estimate=? where id=?',values+(int(d['id']),))
+  else:c.execute('insert into tasks(title,date,project,priority,estimate) values(?,?,?,?,?)',values)
+  c.commit()
+ elif cmd in ('task-done','task-restore','task-archive'):
+  column='archived' if cmd=='task-archive' else 'done';value=0 if cmd=='task-restore' else 1
+  if cmd=='task-restore':c.execute('update tasks set done=0,archived=0 where id=?',(int(a[1]),))
+  else:c.execute(f'update tasks set {column}=? where id=?',(value,int(a[1])))
+  c.commit()
+ elif cmd=='focus':
+  f=focus_state();action=a[1];d=json.loads(a[2]) if len(a)>2 else {}
+  if action=='settings':
+   for k in ('focus','short','long','cycles'):f[k]=max(1,min(240 if k!='cycles' else 12,int(d.get(k,f[k]))))
+   f['task']=int(d.get('task',f.get('task',0)));f['auto']=bool(d.get('auto',f.get('auto',True)))
+   if not f['running']:f['remaining']=f[f['phase']]*60
+  elif action in ('start','resume'):
+   if not f['running']:
+    if action=='start':f['phase']='focus';f['remaining']=f['focus']*60
+    f['running']=True;f['ends']=now+max(1,f['remaining']);focus_event(f)
+  elif action=='pause':
+   if f['running']:f['remaining']=max(0,f['ends']-now);f['running']=False;f['ends']=0;retire_focus(f)
+  elif action=='reset':retire_focus(f);f['running']=False;f['phase']='focus';f['remaining']=f['focus']*60;f['completed']=0;f['ends']=0
+  elif action=='skip':advance_focus(f,completed=False)
+  else:raise ValueError('Unknown focus action.')
+  store_focus(f);print(json.dumps(f))
+ elif cmd=='due':
+  pending=[]
+  for row in c.execute('select * from events where done=0'):
+   e=dict(row)
+   for stamp in occurrences(e,now-86400,now+e['lead']*60):
+    due=stamp-e['lead']*60
+    if due>now or c.execute('select 1 from delivered where event=? and occurrence=?',(e['id'],stamp)).fetchone():continue
+    pending.append((e,stamp))
+  for e,stamp in pending:
+   when=D.datetime.fromtimestamp(stamp).strftime('%a %d %b · %I:%M %p');body=when+(' · '+e['location'] if e['location'] else '')+('\n'+e['notes'] if e['notes'] else '')
+   result=subprocess.run(['notify-send','--app-name=Sensei Calendar','--urgency=critical','--icon=appointment-soon',e['title'],body],capture_output=True,timeout=5)
+   if result.returncode==0:c.execute('insert or ignore into delivered values(?,?)',(e['id'],stamp));c.commit()
+  f=focus_state()
+  if f['running'] and f['ends']<=now and c.execute('select 1 from delivered where event=?',(f.get('event',0),)).fetchone():advance_focus(f)
+  print(json.dumps({'due':len(pending)}))
+ elif cmd=='export':
+  def esc(t):return str(t).replace('\\','\\\\').replace('\n','\\n').replace(',','\\,').replace(';','\\;')
+  lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Sensei//Local Calendar//EN']
+  for row in c.execute('select * from events where done=0'):
+   e=dict(row);stamp=D.datetime.fromtimestamp(e['start'],ZoneInfo(e['timezone'] or 'Asia/Dhaka'));end=stamp+D.timedelta(minutes=e['duration'])
+   lines+=['BEGIN:VEVENT','UID:'+e['uid'],'DTSTAMP:'+D.datetime.now(D.timezone.utc).strftime('%Y%m%dT%H%M%SZ')]
+   if e['all_day']:lines+=['DTSTART;VALUE=DATE:'+stamp.strftime('%Y%m%d'),'DTEND;VALUE=DATE:'+(stamp+D.timedelta(days=max(1,(e['duration']+1439)//1440))).strftime('%Y%m%d')]
+   else:lines+=['DTSTART;TZID='+e['timezone']+':'+stamp.strftime('%Y%m%dT%H%M%S'),'DTEND;TZID='+e['timezone']+':'+end.strftime('%Y%m%dT%H%M%S')]
+   lines+=['SUMMARY:'+esc(e['title']),'LOCATION:'+esc(e['location']),'DESCRIPTION:'+esc(e['notes'])]
+   rule=e['rrule'] or {'daily':'FREQ=DAILY','weekly':'FREQ=WEEKLY','monthly':'FREQ=MONTHLY'}.get(e['repeat'],'')
+   if rule:lines+=['RRULE:'+rule]
+   excluded=[r[0] for r in c.execute('select occurrence from exceptions where event=?',(e['id'],))]
+   if excluded:lines+=['EXDATE:'+','.join(D.datetime.fromtimestamp(v,D.timezone.utc).strftime('%Y%m%dT%H%M%SZ') for v in excluded)]
+   lines+=['BEGIN:VALARM','TRIGGER:-PT'+str(e['lead'])+'M','ACTION:DISPLAY','DESCRIPTION:Reminder','END:VALARM','END:VEVENT']
+  lines+=['END:VCALENDAR'];target=Path(a[1]) if len(a)>1 else root/'calendar.ics';target.write_text('\r\n'.join(lines)+'\r\n');print(str(target))
+ elif cmd=='import':
+  text=re.sub(r'\r?\n[ \t]','',Path(a[1]).read_text());count=0
+  for block in text.split('BEGIN:VEVENT')[1:]:
+   fields={}
+   for line in block.split('END:VEVENT')[0].splitlines():
+    if ':' in line:
+     key,value=line.split(':',1);fields[key]=value
+   datekey=next((k for k in fields if k.startswith('DTSTART')),None)
+   if not datekey:continue
+   if any(k.startswith('RECURRENCE-ID') for k in fields):raise SystemExit('Sensei, edited occurrences in this file need separate events; import cancelled without changes.')
+   raw=fields[datekey];dt=parse_ics_date(datekey,raw);rule=fields.get('RRULE','')
+   if rule:rrulestr(rule,dtstart=dt)
+   endkey=next((k for k in fields if k.startswith('DTEND')),None)
+   length=(parse_ics_date(endkey,fields[endkey])-dt).total_seconds() if endkey else seconds(fields.get('DURATION','PT30M'))
+   lead=max(0,-seconds(fields.get('TRIGGER','-PT10M'))//60)
+   recurrence={'FREQ=DAILY':'daily','FREQ=WEEKLY':'weekly','FREQ=MONTHLY':'monthly'}.get(rule,'custom' if rule else 'none')
+   title=unescape(fields.get('SUMMARY','Imported event'));uid=fields.get('UID',str(uuid.uuid4()));before=c.total_changes
+   c.execute('insert or ignore into events(uid,title,start,duration,lead,repeat,location,notes,category,all_day,rrule,timezone) values(?,?,?,?,?,?,?,?,"Imported",?,?,?)',(uid,title,dt.timestamp(),max(1,int(length//60)),int(lead),recurrence,unescape(fields.get('LOCATION','')),unescape(fields.get('DESCRIPTION','')),int('T' not in raw),rule,getattr(dt.tzinfo,'key','UTC')));count+=int(c.total_changes>before)
+   ident=c.execute('select id from events where uid=?',(uid,)).fetchone()[0]
+   for key,value in fields.items():
+    if key.startswith('EXDATE'):
+     for stamp in value.split(','):c.execute('insert or ignore into exceptions values(?,?)',(ident,parse_ics_date(key,stamp).timestamp()))
+  c.commit();print(json.dumps({'imported':count}))
+except (ValueError,KeyError,IndexError,OSError) as error:
+ c.rollback();print('Sensei, '+str(error),file=sys.stderr);sys.exit(1)
+
+if cmd not in ("list","export","due"):
+ revision=root/"revision.tmp";revision.write_text(str(time.time_ns()));revision.replace(root/"revision")

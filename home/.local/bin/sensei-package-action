@@ -1,0 +1,17 @@
+#!/usr/bin/python3
+import sys,os,re,subprocess
+op=sys.argv[1];name=sys.argv[2] if len(sys.argv)>2 else ''
+if op in ['selected','install','remove','info'] and not re.fullmatch(r'[A-Za-z0-9@+_.:-]+',name):raise SystemExit('Choose a valid package name')
+actions={'all':['paru','-Syu'],'repo':['paru','-Syu','--repo'],'aur':['paru','-Sua'],'selected':['paru','-S','--needed',name],'install':['paru','-S',name],'remove':['paru','-Rns',name],'orphans':['paru','-Qtd'],'clean':['paru','-Sc'],'info':['paru','-Si',name],'log':['less','/var/log/pacman.log']}
+if op=='orphan-clean':
+ result=subprocess.run(['pacman','-Qtdq'],capture_output=True,text=True)
+ names=result.stdout.split()
+ if names:actions[op]=['paru','-Rns',*names]
+ else:print('Sensei, no orphan packages found.');input('Press Enter to close…');raise SystemExit(0)
+if op not in actions:raise SystemExit('Unknown package operation')
+if op=='selected' and subprocess.run(['pacman','-Qn',name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0:
+ print('Repository packages update together: this will perform a full repository upgrade including '+name+'.',flush=True)
+ actions[op]=['paru','-Syu','--repo',name]
+
+print('Sensei, review the package operation below.\n',flush=True)
+r=subprocess.run(actions[op]);print('\nOperation finished with status',r.returncode);input('Press Enter to close…')

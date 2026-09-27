@@ -1,0 +1,4 @@
+# UX581GV NVIDIA HDMI: identify the device by PCI ancestry, not card numbering.
+ACTION=="change", SUBSYSTEM=="drm", KERNEL=="card*-HDMI-A-*", KERNELS=="0000:01:00.0", ATTR{status}=="connected", RUN+="/bin/sh -c 'echo on > /sys/bus/pci/devices/0000:01:00.0/power/control'"
+ACTION=="change", SUBSYSTEM=="drm", KERNEL=="card*-HDMI-A-*", KERNELS=="0000:01:00.0", ATTR{status}=="disconnected", RUN+="/bin/sh -c 'echo auto > /sys/bus/pci/devices/0000:01:00.0/power/control'"
+ACTION=="add", SUBSYSTEM=="pci", KERNEL=="0000:01:00.[0-3]", TEST=="power/control", ATTR{power/control}="auto"

@@ -1,0 +1,13 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = nvidia-utils
+Target = egl-wayland
+Target = egl-wayland2
+Target = nvidia-container-toolkit
+
+[Action]
+Description = Refresh NVIDIA container device paths
+When = PostTransaction
+Exec = /usr/bin/nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml

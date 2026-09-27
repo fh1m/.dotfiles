@@ -1,0 +1,10 @@
+[Unit]
+Description=Sensei USB event history (udev push events)
+[Service]
+ExecStart=@HOME@/.local/bin/sensei-usb --watch
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+UMask=0077
+[Install]
+WantedBy=default.target

@@ -1,0 +1,314 @@
+#!/usr/bin/python3
+"""Phone bridge: explicit actions, KDE Connect push state, private mesh status."""
+import json, os, re, sys, subprocess, time, urllib.request, xml.etree.ElementTree as ET, signal
+from pathlib import Path
+import dbus
+
+BASE='/modules/kdeconnect'; NAME='org.kde.kdeconnect'
+STATE=Path.home()/'.local/state/sensei-phone';STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+CFG=Path.home()/'.config/sensei-phone.json'
+INPUT_GATE=Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'sensei-phone-input-enabled'
+SSH_KEY=Path.home()/'.ssh/sensei_phone'
+def plain(x):
+    if isinstance(x,dbus.Boolean):return bool(x)
+    if isinstance(x,dict):return {str(k):plain(v) for k,v in x.items()}
+    if isinstance(x,(list,tuple)):return [plain(v) for v in x]
+    if isinstance(x,dbus.ByteArray):return bytes(x).decode(errors='replace')
+    if isinstance(x,(dbus.Int32,dbus.UInt32,dbus.Int64,dbus.UInt64,dbus.Byte)):return int(x)
+    if isinstance(x,(dbus.String,dbus.ObjectPath)):return str(x)
+    return x
+def save_json(path,value):
+    temporary=path.with_name(path.name+'.'+str(os.getpid())+'.tmp')
+    temporary.write_text(json.dumps(value));temporary.chmod(0o600);temporary.replace(path)
+def phone_mounted():
+    # Read kernel mount metadata; never stat a remote FUSE path during telemetry.
+    target=str(Path.home()/'Phone/Browse')
+    return any(line.split()[4]==target for line in Path('/proc/self/mountinfo').read_text().splitlines())
+def config():
+    try:return json.loads(CFG.read_text())
+    except (OSError,ValueError):return {'host':'','user':'','port':8022}
+def iface(path,name):return dbus.Interface(dbus.SessionBus().get_object(NAME,path,introspect=False),name)
+def props(path,name):
+    try:return plain(iface(path,'org.freedesktop.DBus.Properties').GetAll(name,timeout=2))
+    except dbus.DBusException:return {}
+def run(args,timeout=8):
+    try:
+        r=subprocess.run(args,capture_output=True,text=True,timeout=timeout);return {'ok':r.returncode==0,'output':(r.stdout+'\n'+r.stderr).strip()[-14000:]}
+    except subprocess.TimeoutExpired as e:return {'ok':False,'output':((e.stdout or b'').decode() if isinstance(e.stdout,bytes) else e.stdout or '')+'\nStill waiting or timed out. Refresh status before retrying.'}
+def job_start(args,label):
+    folder=STATE/'jobs';folder.mkdir(exist_ok=True,mode=0o700);path=folder/(str(time.time_ns())+'.json')
+    path.write_text(json.dumps({'label':label,'args':args,'state':'starting','created':time.time(),'log':str(path.with_suffix('.log'))}));path.chmod(0o600)
+    subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'--job',str(path)],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    return {'ok':True,'output':label+' started. Progress and result are shown in Files; you can close Phone while it runs.'}
+def job_worker(path):
+    path=Path(path);j=json.loads(path.read_text());j.update(pid=os.getpid(),state='running');path.write_text(json.dumps(j))
+    try:
+        with open(j['log'],'w') as log:
+            os.chmod(j['log'],0o600);r=subprocess.run(j['args'],stdout=log,stderr=subprocess.STDOUT);j.update(state='finished' if r.returncode==0 else 'failed',exitCode=r.returncode,finished=time.time())
+    except Exception as e:j.update(state='failed',error=str(e),finished=time.time())
+    path.write_text(json.dumps(j))
+def jobs():
+    out=[]
+    for p in sorted((STATE/'jobs').glob('*.json'),reverse=True)[:20]:
+        try:
+            j=json.loads(p.read_text());j['id']=p.name;j.pop('args',None)
+            log=Path(j['log']);
+            if log.exists():
+                with log.open('rb') as stream:
+                    stream.seek(max(0,log.stat().st_size-4000));j['output']=stream.read().decode(errors='replace')
+            else:j['output']=''
+            out.append(j)
+        except (OSError,ValueError):pass
+    return out
+def kd():
+    out={'devices':[]}
+    try:ids=iface(BASE,NAME+'.daemon').devices(False,False,timeout=3)
+    except dbus.DBusException as e:return dict(out,error=str(e))
+    for id in ids:
+        p=BASE+'/devices/'+str(id);d=props(p,NAME+'.device');d['id']=str(id)
+        try:d['plugins']=plain(iface(p,NAME+'.device').loadedPlugins(timeout=2))
+        except dbus.DBusException:d['plugins']=[]
+        d['battery']=props(p+'/battery',NAME+'.device.battery');d['connectivity']=props(p+'/connectivity_report',NAME+'.device.connectivity_report');d['media']=props(p+'/mprisremote',NAME+'.device.mprisremote');d['notifications']=[];d['commands']=[];d['directories']={}
+        if d.get('isPaired') and d.get('isReachable'):
+            try:
+                for n in iface(p+'/notifications',NAME+'.device.notifications').activeNotifications(timeout=2):
+                    np=p+'/notifications/'+str(n);note=props(np,NAME+'.device.notifications.notification');note['path']=np;d['notifications'].append(note)
+            except dbus.DBusException:pass
+            try:
+                raw=iface(p+'/remotecommands','org.freedesktop.DBus.Properties').Get(NAME+'.device.remotecommands','commands',timeout=2)
+                raw=bytes(raw).decode() if not isinstance(raw,str) else raw
+                d['commands']=[dict(v,id=k) for k,v in json.loads(raw).items()]
+            except (dbus.DBusException,ValueError,TypeError):pass
+            try:d['directories']=plain(iface(p+'/sftp',NAME+'.device.sftp').getDirectories(timeout=2))
+            except dbus.DBusException:pass
+        out['devices'].append(d)
+    return out
+def sync_request(endpoint,method='GET',payload=None):
+    path=Path.home()/'.local/state/syncthing/config.xml'
+    tree=ET.parse(path);key=tree.findtext('gui/apikey');address=tree.findtext('gui/address') or '127.0.0.1:8384'
+    # Never publish GUI or API key to a network address or the shell UI.
+    if address not in ('127.0.0.1:8384','localhost:8384'):raise ValueError('Syncthing GUI must remain loopback-only.')
+    req=urllib.request.Request('http://127.0.0.1:8384/rest/'+endpoint,data=json.dumps(payload).encode() if payload is not None else None,method=method,headers={'X-API-Key':key,'Content-Type':'application/json'})
+    with urllib.request.urlopen(req,timeout=3) as r:return json.loads(r.read() or '{}')
+def full():
+    try:
+        cached=json.loads((STATE/'kde-snapshot.json').read_text());pid=int(cached.pop('watchPid'));os.kill(pid,0)
+        if 'sensei-phone' not in Path(f'/proc/{pid}/cmdline').read_text():raise ValueError('Watcher stopped')
+        out=cached
+    except (OSError,ValueError,KeyError):out=kd()
+    out['config']=config();out['remoteInput']=INPUT_GATE.exists();out['jobs']=jobs();out['sshKeyExists']=SSH_KEY.exists();out['sshMounted']=phone_mounted();out['phoneSync']=json.loads((STATE/'phone-sync.json').read_text()) if (STATE/'phone-sync.json').exists() else {'folders':[]}
+    result=subprocess.run(['tailscale','status','--json'],capture_output=True,text=True,timeout=5);r={'output':result.stdout,'ok':result.returncode==0}
+    try:
+        j=json.loads(r['output']);out['vpn']={'state':j.get('BackendState'),'ips':j.get('TailscaleIPs') or [],'authUrl':j.get('AuthURL') or '', 'peers':[{'name':v.get('HostName'),'os':v.get('OS'),'online':v.get('Online'),'ips':v.get('TailscaleIPs') or [],'relay':v.get('Relay'),'address':v.get('CurAddr'),'lastSeen':v.get('LastSeen')} for v in (j.get('Peer') or {}).values()]}
+        android=[ip for p in out['vpn']['peers'] if p['os']=='android' for ip in p['ips'] if ':' not in ip]
+        if android:
+            properties=iface(BASE,'org.freedesktop.DBus.Properties');existing=list(properties.Get(NAME+'.daemon','customDevices',timeout=2));merged=list(dict.fromkeys([*map(str,existing),*android]))
+            if merged!=list(map(str,existing)):properties.Set(NAME+'.daemon','customDevices',dbus.Array(merged,signature='s',variant_level=1),timeout=2);iface(BASE,NAME+'.daemon').forceOnNetworkChange(timeout=2)
+    except (ValueError,dbus.DBusException) as e:
+        if out.get('vpn'):out['vpn']['discoveryError']=str(e)
+        else:out['vpn']={'state':'Unavailable','ips':[],'peers':[],'error':str(e)}
+    try:
+        system=sync_request('system/status');connections=sync_request('system/connections');folders=sync_request('config/folders')
+        out['sync']={'deviceId':system.get('myID'),'connections':[{'id':k,'connected':v.get('connected'),'address':v.get('address'),'type':v.get('type'),'inBytesTotal':v.get('inBytesTotal'),'outBytesTotal':v.get('outBytesTotal')} for k,v in connections.get('connections',{}).items()],'folders':[]}
+        for f in folders:
+            from urllib.parse import urlencode
+            status=sync_request('db/status?'+urlencode({'folder':f['id']}));out['sync']['folders'].append({'id':f['id'],'label':f['label'],'path':f['path'],'paused':f.get('paused',False),'state':status.get('state'),'files':status.get('localFiles'),'bytes':status.get('localBytes'),'needBytes':status.get('needBytes'),'errors':status.get('pullErrors')})
+    except Exception as e:out['sync']={'error':str(e),'folders':[],'connections':[]}
+    a=run(['adb','devices','-l']);out['adb']=[{'serial':s.split()[0],'state':s.split()[1],'detail':s} for s in a['output'].splitlines() if len(s.split())>=2 and not s.startswith(('List','*','adb:'))]
+    return out
+def remote_sync_request(endpoint,method='GET',payload=None):
+    import socket
+    c=config()
+    if not SSH_KEY.exists() or not c['host'] or not c['user']:raise ValueError('Phone SSH is not configured.')
+    base=['ssh','-p',str(c['port']),'-i',str(SSH_KEY),'-o','BatchMode=yes','-o','StrictHostKeyChecking=yes','-o','ConnectTimeout=5',c['user']+'@'+c['host']]
+    raw=subprocess.check_output(base+['cat ~/.local/state/syncthing/config.xml'],timeout=8)
+    key=ET.fromstring(raw).findtext('gui/apikey')
+    with socket.socket() as reserve:reserve.bind(('127.0.0.1',0));port=reserve.getsockname()[1]
+    tunnel=subprocess.Popen(base[:-1]+['-N','-o','ExitOnForwardFailure=yes','-L',f'127.0.0.1:{port}:127.0.0.1:8384']+base[-1:],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    try:
+        deadline=time.monotonic()+6
+        while True:
+            try:
+                with socket.create_connection(('127.0.0.1',port),timeout=.2):break
+            except OSError:
+                if tunnel.poll() is not None or time.monotonic()>deadline:raise ValueError('Phone private API tunnel is unavailable.')
+                time.sleep(.05)
+        req=urllib.request.Request(f'http://127.0.0.1:{port}/rest/'+endpoint,headers={'X-API-Key':key,'Content-Type':'application/json'},method=method,data=json.dumps(payload).encode() if payload is not None else None)
+        with urllib.request.urlopen(req,timeout=5) as r:return json.loads(r.read() or '{}')
+    finally:
+        tunnel.terminate()
+        try:tunnel.wait(timeout=2)
+        except subprocess.TimeoutExpired:tunnel.kill();tunnel.wait()
+
+def action(a,id='',args=None):
+    args=args or [];p=BASE+'/devices/'+id
+    if a=='ssh-mount':
+        c=config();mount=Path.home()/'Phone/Browse';mount.mkdir(parents=True,exist_ok=True)
+        if phone_mounted():return {'ok':True,'output':'Phone filesystem is already mounted in ~/Phone/Browse.'}
+        if not SSH_KEY.exists() or not c['host'] or not c['user']:raise ValueError('Configure Phone SSH first.')
+        return run(['sshfs',c['user']+'@'+c['host']+':/storage/emulated/0',str(mount),'-p',str(c['port']),'-o','IdentityFile='+str(SSH_KEY)+',BatchMode=yes,StrictHostKeyChecking=yes,reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ConnectTimeout=5'],timeout=10)
+    if a=='ssh-unmount':return run(['fusermount3','-u',str(Path.home()/'Phone/Browse')])
+    if a=='phone-sync-status':
+        folders=remote_sync_request('config/folders');status=remote_sync_request('system/connections');data={'folders':[{'id':f['id'],'label':f['label'],'path':f['path'],'paused':f.get('paused',False),'type':f['type'],'reserve':f.get('minDiskFree')} for f in folders if f['id'] in ('sensei-phone-models','sensei-phone-transfers')],'connected':any(v.get('connected') for v in status.get('connections',{}).values()),'updated':time.time()}
+        snapshot=STATE/'phone-sync.json';save_json(snapshot,data);return {'ok':True,'output':'Phone sync status refreshed. Storage reserve: 100 MB.'}
+    if a=='phone-sync-pause':
+        if args[0] not in ('sensei-phone-models','sensei-phone-transfers'):raise ValueError('Unknown Phone sync folder.')
+        folder=remote_sync_request('config/folders/'+args[0]);folder['paused']=args[1]=='true';remote_sync_request('config/folders/'+args[0],'PUT',folder)
+        try:
+            snapshot=STATE/'phone-sync.json';data=json.loads(snapshot.read_text())
+            for f in data['folders']:
+                if f['id']==args[0]:f['paused']=folder['paused']
+            save_json(snapshot,data)
+        except (OSError,ValueError):pass
+        return {'ok':True,'output':'Phone sync folder '+('paused.' if args[1]=='true' else 'resumed.')}
+    if a=='refresh':return run(['kdeconnect-cli','--refresh'])
+    if a=='remote-input':
+        if args[0]=='on':
+            INPUT_GATE.write_text('Explicitly enabled by Sensei in Phone\n');INPUT_GATE.chmod(0o600)
+            return run(['systemctl','--user','start','hypr-kdeconnect-portal.service'])
+        INPUT_GATE.unlink(missing_ok=True)
+        return run(['systemctl','--user','stop','hypr-kdeconnect-portal.service'])
+    if a in ('pair','ring','clipboard','ping','unpair','accept'):
+        if a=='accept':iface(p,NAME+'.device').acceptPairing(timeout=3);return {'ok':True,'output':'Pairing accepted.'}
+        flag={'pair':'--pair','ring':'--ring','clipboard':'--send-clipboard','ping':'--ping','unpair':'--unpair'}[a];return run(['kdeconnect-cli','-d',id,flag])
+    if a=='send-text':return run(['kdeconnect-cli','-d',id,'--share-text',args[0]])
+    if a=='send-url':
+        if not re.match(r'https?://',args[0]):raise ValueError('Use an http:// or https:// link.')
+        return run(['kdeconnect-cli','-d',id,'--share',args[0]])
+    if a=='send-file':
+        f=Path(args[0]).expanduser().resolve()
+        if not f.is_file():raise ValueError('Choose an existing file.')
+        return run(['kdeconnect-cli','-d',id,'--share',str(f)])
+    if a=='taildrop-send':
+        f=Path(args[0]).expanduser().resolve()
+        if not f.is_file():raise ValueError('Choose an existing file.')
+        import ipaddress
+        address=str(ipaddress.ip_address(args[1]));j=json.loads(subprocess.run(['tailscale','status','--json'],capture_output=True,text=True,timeout=5).stdout);allowed=[ip for d in (j.get('Peer') or {}).values() if d.get('OS')=='android' for ip in d.get('TailscaleIPs',[])]
+        if address not in allowed:raise ValueError('Choose an Android peer in your tailnet.')
+        return job_start(['tailscale','file','cp',str(f),address+':'],'Taildrop · '+f.name)
+    if a=='taildrop-receive':return run(['tailscale','file','get',str(Path.home()/'Phone/Transfers')],timeout=12)
+    if a=='rsync-send':
+        c=config();f=Path(args[0]).expanduser().resolve();dest=args[1]
+        if dest=='~':dest='/data/data/com.termux/files/home'
+        elif dest.startswith('~/'):dest='/data/data/com.termux/files/home/'+dest[2:]
+        if not c.get('host') or not c.get('user'):raise ValueError('Save and verify the Termux SSH target first.')
+        if not f.is_file() or not dest or '\n' in dest:raise ValueError('Choose a file and remote directory.')
+        shell='ssh -p '+str(c['port'])+' -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=8'+(' -i '+str(SSH_KEY) if SSH_KEY.exists() else '')
+        host='['+c['host']+']' if ':' in c['host'] else c['host']
+        return job_start(['rsync','-a','--protect-args','--info=progress2','-e',shell,str(f),c['user']+'@'+host+':'+dest],'Rsync · '+f.name)
+    if a=='cancel-transfer':
+        name=args[0]
+        if not re.fullmatch(r'[0-9]+\.json',name):raise ValueError('Invalid transfer ID.')
+        path=STATE/'jobs'/name;j=json.loads(path.read_text());pid=j.get('pid',0)
+        cmd=Path('/proc')/str(pid)/'cmdline'
+        if j['state']=='running' and cmd.exists() and b'--job' in cmd.read_bytes() and str(path).encode() in cmd.read_bytes():os.killpg(pid,signal.SIGTERM);j['state']='cancelled';path.write_text(json.dumps(j))
+        return {'ok':True,'output':'Transfer cancelled.'}
+    if a=='phone-media':
+        command=args[0]
+        if command not in ('PlayPause','Next','Previous','Stop'):raise ValueError('Unknown media action.')
+        iface(p+'/mprisremote',NAME+'.device.mprisremote').sendAction(command,timeout=3);return {'ok':True,'output':'Phone media command submitted.'}
+    if a=='phone-player':iface(p+'/mprisremote','org.freedesktop.DBus.Properties').Set(NAME+'.device.mprisremote','player',dbus.String(args[0],variant_level=1),timeout=3);return {'ok':True,'output':'Phone player selected.'}
+    if a=='phone-volume':iface(p+'/mprisremote','org.freedesktop.DBus.Properties').Set(NAME+'.device.mprisremote','volume',dbus.Int32(max(0,min(100,int(args[0]))),variant_level=1),timeout=3);return {'ok':True,'output':'Phone player volume changed.'}
+    if a=='browse':
+        i=iface(p+'/sftp',NAME+'.device.sftp');i.mount(timeout=3);return {'ok':True,'output':'Mount requested. Refresh Files when ready.'}
+    if a=='directories':return {'ok':True,'output':json.dumps(plain(iface(p+'/sftp',NAME+'.device.sftp').getDirectories(timeout=3)))}
+    if a=='command':return run(['kdeconnect-cli','-d',id,'--execute-command',args[0]])
+    if a=='notification-dismiss':
+        n=args[0]
+        if not n.startswith(p+'/notifications/'):raise ValueError('Invalid notification path.')
+        iface(n,NAME+'.device.notifications.notification').dismiss(timeout=3);return {'ok':True,'output':'Dismissed on phone.'}
+    if a=='notification-reply':
+        n=args[0]
+        if not n.startswith(p+'/notifications/'):raise ValueError('Invalid notification path.')
+        iface(n,NAME+'.device.notifications.notification').sendReply(args[1],timeout=3);return {'ok':True,'output':'Reply submitted.'}
+    if a=='vpn-login':return run(['tailscale','up','--accept-dns=false','--timeout=12s'],timeout=16)
+    if a=='vpn-connect':return run(['tailscale','set','--accept-dns=false']);
+    if a=='vpn-disconnect':return run(['tailscale','down'])
+    if a=='vpn-test':
+        j=json.loads(subprocess.run(['tailscale','status','--json'],capture_output=True,text=True,timeout=5).stdout)
+        peers=[ip for d in (j.get('Peer') or {}).values() if d.get('OS')=='android' for ip in d.get('TailscaleIPs',[]) if ':' not in ip]
+        if not peers:raise ValueError('No Android device in this tailnet yet.')
+        return run(['tailscale','ping','--c=2','--timeout=3s',peers[0]],timeout=8)
+    if a=='vpn-ssh':return run(['tailscale','set','--ssh='+('true' if args[0]=='on' else 'false')])
+    if a=='add-address':
+        import ipaddress
+        addr=str(ipaddress.ip_address(args[0]));o=iface(BASE,'org.freedesktop.DBus.Properties');old=list(o.Get(NAME+'.daemon','customDevices',timeout=3));o.Set(NAME+'.daemon','customDevices',dbus.Array(list(dict.fromkeys([*map(str,old),addr])),signature='s',variant_level=1),timeout=3);iface(BASE,NAME+'.daemon').forceOnNetworkChange(timeout=3);return {'ok':True,'output':'Private address added. Add this laptop’s Tailscale IP in Android KDE Connect → Add devices by IP.'}
+    if a=='save-ssh':
+        host,user,port=args
+        if not re.fullmatch(r'[a-zA-Z0-9.:-]+',host) or not re.fullmatch(r'[a-zA-Z0-9_-]+',user) or not 1<=int(port)<=65535:raise ValueError('Check hostname, username and port.')
+        save_json(CFG,{'host':host,'user':user,'port':int(port)});return {'ok':True,'output':'SSH target saved. Use Trust / shell to verify its host key and install your public key before widget commands.'}
+    if a=='ssh-key':
+        if SSH_KEY.exists():return {'ok':True,'output':'Dedicated Phone SSH key already exists.'}
+        SSH_KEY.parent.mkdir(exist_ok=True,mode=0o700)
+        return run(['ssh-keygen','-q','-t','ed25519','-f',str(SSH_KEY),'-N','','-C','Sensei Phone'])
+    if a=='ssh-install-key':
+        c=config()
+        if not SSH_KEY.exists() or not c['host'] or not c['user']:raise ValueError('Create the Phone key and save the SSH target first.')
+        subprocess.Popen(['kitty','--title','Phone SSH key setup','ssh-copy-id','-i',str(SSH_KEY)+'.pub','-p',str(c['port']),c['user']+'@'+c['host']],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        return {'ok':True,'output':'Key setup opened. Verify the host fingerprint and enter the Termux password there. Only the public key is copied.'}
+    if a in ('ssh-trust','ssh-run'):
+        c=config()
+        if not c['host'] or not c['user']:raise ValueError('Save a Termux SSH target first.')
+        target=c['user']+'@'+c['host'];base=['ssh','-p',str(c['port']),'-o','ConnectTimeout=8']+(['-i',str(SSH_KEY)] if SSH_KEY.exists() else [])
+        if a=='ssh-trust':subprocess.Popen(['kitty','--title','Phone SSH',*base,target],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);return {'ok':True,'output':'SSH shell opened. Verify the host fingerprint and authenticate there.'}
+        return run([*base,'-o','BatchMode=yes','-o','StrictHostKeyChecking=yes',target,args[0]],timeout=15)
+    if a=='mirror':
+        serial=args[0] if args else ''
+        if not serial:raise ValueError('Select an authorized ADB device. USB debugging permission is required.')
+        subprocess.Popen(['scrcpy','--serial',serial,'--window-title=Phone · Sensei','--max-size=1600','--max-fps=60','--video-bit-rate=8M']+([] if len(args)>1 and args[1]=='audio' else ['--no-audio']),start_new_session=True,stdout=open(STATE/'scrcpy.log','w'),stderr=subprocess.STDOUT);return {'ok':True,'output':'Screen control launched; Android may ask for permission. Details: ~/.local/state/sensei-phone/scrcpy.log'}
+    if a=='adb-connect':
+        if not re.fullmatch(r'[a-zA-Z0-9.:-]+',args[0]) or ':' not in args[0]:raise ValueError('Enter a private host:port shown by Android Wireless debugging.')
+        return run(['adb','connect',args[0]])
+    if a=='adb-pair':
+        if not re.fullmatch(r'[a-zA-Z0-9.:-]+',args[0]) or not re.fullmatch(r'[0-9]{6}',args[1]):raise ValueError('Enter pairing host:port and the six-digit Android code.')
+        return run(['adb','pair',args[0],args[1]])
+    if a=='sync-folder':
+        folder=args[0]
+        if folder not in ('models','transfers'):raise ValueError('Unknown Phone folder.')
+        path=Path.home()/'Phone'/folder.title();path.mkdir(parents=True,exist_ok=True)
+        template=sync_request('config/defaults/folder');template.update({'id':'sensei-phone-'+folder,'label':'Phone '+folder.title(),'path':str(path),'type':'sendreceive','devices':[{'deviceID':sync_request('system/status')['myID']}],'fsWatcherEnabled':True,'rescanIntervalS':3600,'versioning':{'type':'simple','params':{'keep':'10'}}});sync_request('config/folders','POST',template);return {'ok':True,'output':'Folder created with ten versions retained. Pair the Android Syncthing ID and choose this folder in Sync settings; no existing home folders are shared.'}
+    if a=='sync-pause':sync_request('config/folders/'+args[0],'PATCH',{'paused':args[1]=='true'});return {'ok':True,'output':'Sync state changed.'}
+    if a=='plugin':iface(p,NAME+'.device').setPluginEnabled(args[0],args[1]=='true',timeout=3);return {'ok':True,'output':'Laptop plugin changed. Android permissions are managed on your phone.'}
+    raise ValueError('Unknown Phone action.')
+def watch():
+    from dbus.mainloop.glib import DBusGMainLoop
+    from gi.repository import GLib
+    DBusGMainLoop(set_as_default=True);bus=dbus.SessionBus();pending=[False];retry=[0];last_refresh=[0.0]
+    def emit():
+        pending[0]=False
+        snapshot=kd();cache=dict(snapshot,watchPid=os.getpid());temp=STATE/('kde-snapshot-'+str(os.getpid())+'.tmp');temp.write_text(json.dumps(cache));temp.chmod(0o600);temp.replace(STATE/'kde-snapshot.json');print(json.dumps(snapshot),flush=True)
+        offline=any(d.get('isPaired') and not d.get('isReachable') for d in snapshot.get('devices',[]))
+        if offline and not retry[0]:retry[0]=GLib.timeout_add_seconds(15,reconnect)
+        return False
+    def reconnect():
+        retry[0]=0
+        if time.monotonic()-last_refresh[0]<5:return False
+        last_refresh[0]=time.monotonic()
+        try:iface(BASE,NAME+'.daemon').forceOnNetworkChange(timeout=2)
+        except dbus.DBusException:pass
+        if not pending[0]:pending[0]=True;GLib.timeout_add(300,emit)
+        return False
+    def network_changed(*args,**kwargs):
+        if retry[0]:GLib.source_remove(retry[0]);retry[0]=0
+        retry[0]=GLib.timeout_add_seconds(2,reconnect)
+    system_bus=dbus.SystemBus()
+    system_bus.add_signal_receiver(network_changed,signal_name='StateChanged',dbus_interface='org.freedesktop.NetworkManager',path='/org/freedesktop/NetworkManager')
+    def changed(*args,**kwargs):
+        if kwargs.get('interface') not in (NAME+'.daemon',NAME+'.device',NAME+'.device.battery',NAME+'.device.connectivity_report',NAME+'.device.sftp',NAME+'.device.notifications',NAME+'.device.notifications.notification',NAME+'.device.remotecommands',NAME+'.device.mprisremote','org.freedesktop.DBus.Properties'):return
+        if str(kwargs.get('path','')).endswith('/mprisremote'):
+            if str(kwargs.get('member','')).lower().startswith(('position','progress')):return
+            if kwargs.get('interface')=='org.freedesktop.DBus.Properties' and len(args)>1 and isinstance(args[1],dict) and not (set(map(str,args[1]))-{'position','progress','length','duration'}):return
+        if not pending[0]:pending[0]=True;GLib.timeout_add(350,emit)
+    bus.add_signal_receiver(changed,bus_name=NAME,path_keyword='path',interface_keyword='interface',member_keyword='member')
+    emit();GLib.MainLoop().run()
+if __name__=='__main__':
+    if '--watch' in sys.argv:watch()
+    elif len(sys.argv)>2 and sys.argv[1]=='--job':job_worker(sys.argv[2])
+    else:
+        try:
+            if len(sys.argv)>1 and sys.argv[1]=='action':out=action(sys.argv[2],sys.argv[3],json.loads(sys.argv[4]) if len(sys.argv)>4 else [])
+            else:
+                out=full()
+                if '--telemetry' in sys.argv:out.pop('devices',None)
+        except Exception as e:out={'ok':False,'output':str(e),'error':str(e)}
+        print(json.dumps(out))

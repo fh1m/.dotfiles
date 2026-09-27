@@ -1,0 +1,121 @@
+#!/usr/bin/python3
+import os,sys,json,sqlite3,hashlib,time,subprocess,signal,fcntl,html,argparse
+from pathlib import Path
+ROOT=Path.home()/'.clipboard'; ROOT.mkdir(mode=0o700,exist_ok=True); os.chmod(ROOT,0o700)
+os.umask(0o077)
+(ROOT/'items').mkdir(exist_ok=True)
+c=sqlite3.connect(ROOT/'history.sqlite',timeout=30)
+c.execute('pragma journal_mode=WAL'); c.execute('pragma synchronous=FULL')
+c.execute('create table if not exists items (id integer primary key, hash text unique, kind text, mime text, path text, content text, title text, created real, last real, copies integer default 1, pinned integer default 0, archived integer default 0)')
+c.execute('create table if not exists events (id integer primary key, item integer, time real)')
+c.execute('create virtual table if not exists search using fts5(content)')
+def revision():
+    t=ROOT/'revision.tmp'; t.write_text(str(time.time_ns())); t.replace(ROOT/'revision')
+def store(kind,data):
+    if not data or os.environ.get('CLIPBOARD_STATE') in ('nil','clear'): return
+    digest=hashlib.sha256(data).hexdigest(); now=time.time()
+    row=c.execute('select id from items where hash=?',(digest,)).fetchone()
+    if row:
+        ident=row[0]; c.execute('update items set last=?, copies=copies+1 where id=?',(now,ident))
+    else:
+        mime='text/plain;charset=utf-8'; ext='txt'
+        if kind=='image':
+            mime,ext=('image/svg+xml','svg') if b'<svg' in data[:1000] else ('image/bmp','bmp') if data.startswith(b'BM') else ('image/tiff','tiff') if data.startswith((b'II*',b'MM\x00*')) else ('image/png','png') if data.startswith(b'\x89PNG') else (('image/jpeg','jpg') if data.startswith(b'\xff\xd8') else (('image/webp','webp') if data[8:12]==b'WEBP' else ('image/gif','gif')))
+        path=ROOT/'items'/f'{digest}.{ext}'
+        with open(path,'wb') as f: f.write(data); f.flush(); os.fsync(f.fileno())
+        content=data.decode('utf-8',errors='replace') if kind=='text' else ''
+        title=(' '.join(content.split())[:100] or 'Empty text') if kind=='text' else f'Screenshot / image · {ext.upper()}'
+        ident=c.execute('insert into items(hash,kind,mime,path,content,title,created,last) values(?,?,?,?,?,?,?,?)',(digest,kind,mime,str(path),content,title,now,now)).lastrowid
+        c.execute('insert into search(rowid,content) values(?,?)',(ident,content))
+    c.execute('insert into events(item,time) values(?,?)',(ident,now)); c.commit(); revision()
+    backups=ROOT/'backups';backups.mkdir(exist_ok=True)
+    snapshot=backups/(time.strftime('%Y-%m-%d')+'.sqlite')
+    if not snapshot.exists():
+        target=sqlite3.connect(str(snapshot));c.backup(target);target.close()
+def item(ident):
+    c.row_factory=sqlite3.Row
+    row=c.execute('select * from items where id=?',(ident,)).fetchone()
+    if not row: raise ValueError('Item not found')
+    return dict(row)
+def listing(query='',kind='all',limit=150):
+    c.row_factory=sqlite3.Row
+    where=['1=1']; args=[]
+    if kind=='archived': where.append('archived=1')
+    else: where.append('archived=0')
+    if kind=='pinned': where.append('pinned=1')
+    if kind in ('text','image'): where.append('kind=?');args.append(kind)
+    if query: where.append('(content like ? or title like ?)');args.extend(['%'+query+'%']*2)
+    rows=c.execute('select id,kind,mime,path,title,last,copies,pinned,archived,length(content) as chars from items where '+' and '.join(where)+' order by pinned desc,last desc limit ?',args+[min(10000,max(150,limit))]).fetchall()
+    return {'items':[dict(r) for r in rows],'count':c.execute('select count(*) from items').fetchone()[0], 'bytes':sum(p.stat().st_size for p in (ROOT/'items').iterdir()),'events':c.execute('select count(*) from events').fetchone()[0]}
+a=sys.argv[1:]
+if not a: a=['list']
+cmd=a[0]
+if cmd=='store': store(a[1],sys.stdin.buffer.read())
+elif cmd=='watch':
+    lock=open(ROOT/'watch.lock','w');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    children=[]
+    def stop(*_):
+        for child in children: child.terminate()
+        sys.exit(0)
+    signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop)
+    import select,time
+    delay=0.5
+    while True:
+        started=time.monotonic();descriptors=[]
+        children=[subprocess.Popen(['wl-paste','--type',kind,'--no-newline','--watch',str(Path(__file__).resolve()),'store',kind]) for kind in ('text','image')]
+        try:
+            for child in children:descriptors.append(os.pidfd_open(child.pid))
+            select.select(descriptors,[],[])
+        except ProcessLookupError:pass
+        finally:
+            for fd in descriptors:os.close(fd)
+            for child in children:
+                if child.poll() is None:child.terminate()
+            for child in children:child.wait()
+        if time.monotonic()-started<5:
+            time.sleep(delay);delay=min(30,delay*2)
+        else:delay=0.5
+elif cmd=='list': print(json.dumps(listing(a[1] if len(a)>1 else '',a[2] if len(a)>2 else 'all',int(a[3]) if len(a)>3 else 150)))
+elif cmd=='detail':
+    row=item(int(a[1])); text=row.pop('content'); row['bytes']=Path(row['path']).stat().st_size; row['preview']=text[:40000];row['truncated']=len(text)>40000;row['lexer']='Text'
+    if row['kind']=='text':
+        from pygments import highlight
+        from pygments.lexers import guess_lexer, get_lexer_by_name
+        from pygments.formatters import HtmlFormatter
+        from pygments.lexers.special import TextLexer
+        try:
+            lang='text'
+            stripped=text.strip()
+            if stripped.startswith(('{','[')):
+                try: json.loads(text);lang='json'
+                except Exception: pass
+            elif text.startswith('#!') and 'python' in text[:100]:lang='python'
+            elif text.startswith('#!') and ('bash' in text[:100] or 'sh' in text[:100]):lang='bash'
+            elif any(token in text for token in ('#include ', 'int main(', 'std::', 'void setup(')):lang='cpp'
+            elif any(token in text for token in ('def ', 'import ', 'from ')) and ('\n' in text):lang='python'
+            elif text.startswith('<?xml') or '<robot ' in text or '<launch>' in text:lang='xml'
+            elif '\n' in text and ': ' in text and not '. ' in text:lang='yaml'
+            lexer=get_lexer_by_name(a[2] if len(a)>2 else lang)
+        except Exception: lexer=TextLexer()
+        row['lexer']=lexer.name
+        row['rich']=highlight(text[:40000],lexer,HtmlFormatter(noclasses=True,nowrap=True,style='monokai'))
+    print(json.dumps(row))
+elif cmd in ('pin','archive'):
+    field='pinned' if cmd=='pin' else 'archived'; c.execute('update items set '+field+'=1-'+field+' where id=?',(int(a[1]),));c.commit();revision()
+elif cmd=='rename':
+    c.execute('update items set title=? where id=?',(a[2][:100],int(a[1])));c.commit();revision()
+elif cmd in ('copy','quote','pretty'):
+    row=item(int(a[1])); data=Path(row['path']).read_bytes();mime=row['mime']
+    if cmd=='quote':
+        import shlex
+        data=shlex.quote(data.decode('utf-8')).encode();mime='text/plain;charset=utf-8'
+    if cmd=='pretty':data=json.dumps(json.loads(data),indent=2,ensure_ascii=False).encode();mime='text/plain;charset=utf-8'
+    subprocess.run(['wl-copy','--type',mime],input=data,check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+elif cmd=='import':
+    result=subprocess.run(['cliphist','list'],capture_output=True)
+    imported=0
+    for line in result.stdout.splitlines():
+        decoded=subprocess.run(['cliphist','decode'],input=line+b'\n',capture_output=True)
+        if decoded.returncode==0 and decoded.stdout:
+            data=decoded.stdout;kind='image' if data.startswith((b'\x89PNG',b'\xff\xd8',b'GIF8')) or data[8:12]==b'WEBP' else 'text';store(kind,data);imported+=1
+    print(json.dumps({'imported':imported}))

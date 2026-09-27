@@ -1,0 +1,7 @@
+# wrayth runner identity
+# code:   exactly two characters, A-Z or 0-9. The bar's ID block, before the //.
+# suffix: exactly two characters, A-Z or 0-9. The bar's ID block, after the //.
+# handle: the name the deck terminal greets. Never shown on the bar.
+code=FH
+suffix=01
+handle=Fh1m

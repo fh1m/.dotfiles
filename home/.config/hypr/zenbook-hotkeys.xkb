@@ -1,0 +1,12 @@
+xkb_keymap {
+    xkb_keycodes { include "evdev+aliases(qwerty)" };
+    xkb_types { include "complete" };
+    xkb_compatibility { include "complete" };
+    xkb_symbols {
+        include "pc+us+inet(evdev)"
+        // ASUS WMI: captured fan 490, screen swap 193, ScreenPad 194.
+        key <I490> { [ XF86Launch8 ] };
+        key <FK15> { [ XF86Launch6 ] };
+        key <FK16> { [ XF86Launch7 ] };
+    };
+};

@@ -1,0 +1,15 @@
+#!/usr/bin/python3
+"""Hardware media playback; desktop remains on Intel, Training reserves CUDA."""
+import os,sys,json
+from pathlib import Path
+env=dict(os.environ)
+for k in ['__NV_PRIME_RENDER_OFFLOAD','__GLX_VENDOR_LIBRARY_NAME','__EGL_VENDOR_LIBRARY_FILENAMES','__VK_LAYER_NV_optimus','VK_DRIVER_FILES','VK_ICD_FILENAMES','LIBVA_DRIVERS_PATH','NVD_BACKEND','GBM_BACKEND']:env.pop(k,None)
+try:training=json.loads((Path.home()/'.config/hypr/zenbook-controls.json').read_text()).get('training',False)
+except (OSError,ValueError):training=False
+if training:
+ env['LIBVA_DRIVER_NAME']='iHD';flags=['--hwdec=vaapi','--vo=gpu','--gpu-api=opengl','--gpu-context=wayland','--vaapi-device=/dev/dri/by-path/pci-0000:00:02.0-render']
+else:
+ env.update(__NV_PRIME_RENDER_OFFLOAD='1',__GLX_VENDOR_LIBRARY_NAME='nvidia',GDK_BACKEND='x11');flags=['--hwdec=nvdec','--vo=gpu','--gpu-api=opengl','--gpu-context=x11']
+# Prefer hardware-supported codecs for online streams, retaining AV1 fallback.
+flags+=['--ytdl-format=bestvideo[vcodec!^=av01]+bestaudio/best']
+os.execvpe('/usr/bin/mpv',['/usr/bin/mpv',*flags,*sys.argv[1:]],env)

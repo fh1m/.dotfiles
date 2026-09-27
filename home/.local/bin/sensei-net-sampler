@@ -1,0 +1,28 @@
+#!/usr/bin/python3
+"""One atomic /proc sample per second; physical uplinks exclude VPN double count."""
+import json,time,sys
+from pathlib import Path
+previous={};stamp=0
+while True:
+ try:
+  counters={}
+  for line in Path('/proc/net/dev').read_text().splitlines()[2:]:
+   iface,values=line.split(':',1);v=values.split();counters[iface.strip()]=(int(v[0]),int(v[8]))
+  routes=[]
+  for line in Path('/proc/net/route').read_text().splitlines()[1:]:
+   v=line.split()
+   if v[1]=='00000000' and int(v[3],16)&1:routes.append((int(v[6]),v[0]))
+  physical=[name for _,name in sorted(routes) if (Path('/sys/class/net')/name/'device').exists()]
+  if not physical:physical=[n for n in counters if (Path('/sys/class/net')/n/'device').exists() and (Path('/sys/class/net')/n/'operstate').read_text().strip()=='up']
+  interfaces=sorted(set(physical));now=time.monotonic();elapsed=now-stamp;rx=tx=0;valid=False
+  for name in interfaces:
+   if name in previous and elapsed>0:
+    a,b=counters[name];old_a,old_b=previous[name]
+    if a>=old_a and b>=old_b:rx+=(a-old_a)/elapsed;tx+=(b-old_b)/elapsed;valid=True
+  print(json.dumps({'interfaces':interfaces,'rx':rx,'tx':tx,'valid':valid,'stamp':now}),flush=True)
+  previous={n:counters[n] for n in interfaces};stamp=now
+  if '--once' in sys.argv:break
+  time.sleep(1)
+ except BrokenPipeError:break
+ except Exception as e:
+  print(json.dumps({'interfaces':[],'rx':0,'tx':0,'valid':False,'error':str(e)}),flush=True);time.sleep(2)

@@ -1,0 +1,1 @@
+@USER@ ALL=(root) NOPASSWD: /usr/local/libexec/fh1m-zenbook-camera on, /usr/local/libexec/fh1m-zenbook-camera off, /usr/local/libexec/fh1m-zenbook-camera toggle

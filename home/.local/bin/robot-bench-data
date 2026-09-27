@@ -1,0 +1,198 @@
+#!/usr/bin/python3
+"""Read-only hardware and simulator telemetry for fh1m's UX581GV robotics bench."""
+import ctypes
+import shutil
+import json
+import os
+import re
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+def read(path, default=''):
+    try:return Path(path).read_text().strip()
+    except OSError:return default
+
+def intel_activity():
+    clients = {}
+    for process in Path('/proc').iterdir():
+        if not process.name.isdigit() or read(process/'comm') != 'Hyprland':continue
+        try:
+            for fd in (process/'fdinfo').iterdir():
+                text = read(fd)
+                if 'drm-driver:\ti915' not in text:continue
+                client = re.search(r'drm-client-id:\s*(\d+)',text)
+                busy = re.search(r'drm-engine-render:\s*(\d+) ns',text)
+                if client and busy:clients[client[1]] = int(busy[1])
+        except OSError:pass
+    if not clients:return None
+    cache=Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'robot-intel-sample.json'
+    now=time.monotonic();usage=None
+    try:
+        previous=json.loads(cache.read_text());elapsed=now-previous['time']
+        if elapsed>0:
+            delta=sum(max(0,value-previous['clients'][key]) for key,value in clients.items() if key in previous['clients'])
+            usage=round(min(100,delta/(elapsed*1e9)*100),1)
+    except (OSError,ValueError,KeyError):pass
+    try:cache.write_text(json.dumps({'time':now,'clients':clients}))
+    except OSError:pass
+    return usage
+
+def collect():
+    boards=sorted(p.name for p in Path('/dev/serial/by-id').glob('*'))
+    if not boards:boards=sorted(p.name for pattern in ['ttyACM*','ttyUSB*'] for p in Path('/dev').glob(pattern))
+    names=[];recorders=[]
+    proc_cache=Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'robot-process-sample.json'
+    cached=None
+    try:
+        d=json.loads(proc_cache.read_text())
+        if time.time()-d['time'] < (2 if os.environ.get('SENSEI_MONITOR_OPEN')=='1' else 15):cached=d
+    except (OSError,ValueError,KeyError):pass
+    for p in ([] if cached else Path('/proc').iterdir()):
+        if p.name.isdigit():
+            name=read(p/'comm')
+            if name=='wf-recorder':recorders.append(read(p/'cmdline'))
+            if name in ['gz','gz-sim','gz-server','gazebo','gzserver','gzclient','px4','rviz2','mavros_node']:names.append(name)
+    if cached:names=cached['names'];recorders=cached['recorders']
+    else:proc_cache.write_text(json.dumps({'time':time.time(),'names':names,'recorders':recorders}))
+    maximum=float(read('/sys/class/backlight/asus_screenpad/max_brightness','255') or 255)
+    brightness=round(float(read('/sys/class/backlight/asus_screenpad/brightness','0'))/maximum*100) if maximum else 0
+    mainmax=float(read('/sys/class/backlight/intel_backlight/max_brightness','1') or 1)
+    mainbrightness=round(float(read('/sys/class/backlight/intel_backlight/brightness','0'))/mainmax*100)
+    try:
+        mic_text=subprocess.check_output(['wpctl','get-volume','@DEFAULT_AUDIO_SOURCE@'],text=True,timeout=1,stderr=subprocess.DEVNULL)
+        mic_muted='MUTED' in mic_text
+        mic_volume=round(float(mic_text.split()[1])*100)
+    except (OSError,ValueError,IndexError,subprocess.SubprocessError):mic_muted=True;mic_volume=0
+    gpu={'state':'unavailable','usage':None,'temperature':None,'memory':None}
+    status=read('/sys/bus/pci/devices/0000:01:00.0/power/runtime_status')
+    if status in ['suspended','suspending']:
+        gpu.update(state='sleep',usage=0,processes=[],computeCount=0,graphicsCount=0,processesKnown=True)
+    elif status=='active':
+        cache = Path(os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}')) / 'robot-bench-gpu.json'
+        cached = None
+        try:
+            saved = json.loads(cache.read_text())
+            if 0 <= time.time() - saved['time'] < 1:
+                cached = saved['gpu']
+        except (OSError, ValueError, KeyError):pass
+        if cached is not None:
+            gpu = cached
+        else:
+            gpu = query_gpu(cache)
+    try:
+        recording_state=json.loads((Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'desktop-recording.json').read_text())
+        recording=not recording_state.get('completed',False) and any(recording_state.get('file','NO-FILE') in command for command in recorders)
+    except (OSError,ValueError):recording=False
+    return {'recording':recording,'boards':boards,'boardCount':len(boards),'simulators':sorted(set(names)),'simCount':len(set(names) - {'rviz2','mavros_node'}),'brightness':brightness,'mainBrightness':mainbrightness,'micMuted':mic_muted,'micVolume':mic_volume,'intelUsage':intel_activity(),'gpu':gpu,**hardware()}
+
+def gpu_processes(lib=None,handle=None):
+    """NVML v2 process lists: C contexts and graphics contexts, no process killing."""
+    class ProcessInfo(ctypes.Structure):
+        _fields_=[('pid',ctypes.c_uint),('usedGpuMemory',ctypes.c_ulonglong),('gpuInstanceId',ctypes.c_uint),('computeInstanceId',ctypes.c_uint)]
+    owned=lib is None
+    if owned:
+        lib=ctypes.CDLL('libnvidia-ml.so.1')
+        if lib.nvmlInit_v2()!=0:raise RuntimeError('NVML initialization failed')
+    try:
+        if handle is None:
+            handle=ctypes.c_void_p()
+            if lib.nvmlDeviceGetHandleByIndex_v2(0,ctypes.byref(handle))!=0:raise RuntimeError('NVML device unavailable')
+        processes={};known=True
+        for mode,name in [('C','nvmlDeviceGetComputeRunningProcesses_v2'),('G','nvmlDeviceGetGraphicsRunningProcesses_v2')]:
+            func=getattr(lib,name);count=ctypes.c_uint(256);entries=(ProcessInfo*256)()
+            result=func(handle,ctypes.byref(count),entries)
+            if result!=0:known=False;continue
+            for entry in entries[:count.value]:
+                pid=int(entry.pid)
+                if not pid:continue
+                item=processes.setdefault(pid,{'pid':pid,'name':read(f'/proc/{pid}/comm','process')[:48],'type':'','memoryMiB':None})
+                item['type']+=mode
+                if entry.usedGpuMemory < 2**63:item['memoryMiB']=round(entry.usedGpuMemory/1048576)
+        values=sorted(processes.values(),key=lambda item:(not ('C' in item['type']),item['pid']))
+        return {'processes':values,'computeCount':sum('C' in item['type'] for item in values),'graphicsCount':sum('G' in item['type'] for item in values),'processesKnown':known}
+    finally:
+        if owned:lib.nvmlShutdown()
+
+def query_gpu(cache):
+    gpu={'state':'active','usage':None,'temperature':None,'memory':None,'processes':[],'computeCount':0,'graphicsCount':0,'processesKnown':False}
+    class Utilization(ctypes.Structure):
+        _fields_=[('gpu',ctypes.c_uint),('memory',ctypes.c_uint)]
+    class Memory(ctypes.Structure):
+        _fields_=[('total',ctypes.c_ulonglong),('free',ctypes.c_ulonglong),('used',ctypes.c_ulonglong)]
+    lib=None;initialized=False
+    try:
+        lib=ctypes.CDLL('libnvidia-ml.so.1')
+        if lib.nvmlInit_v2()!=0:raise RuntimeError('NVML initialization failed')
+        initialized=True;handle=ctypes.c_void_p()
+        if lib.nvmlDeviceGetHandleByIndex_v2(0,ctypes.byref(handle))!=0:raise RuntimeError('NVML device unavailable')
+        utilization=Utilization();memory=Memory();temperature=ctypes.c_uint()
+        if lib.nvmlDeviceGetUtilizationRates(handle,ctypes.byref(utilization))==0:gpu['usage']=utilization.gpu
+        if lib.nvmlDeviceGetTemperature(handle,0,ctypes.byref(temperature))==0:gpu['temperature']=temperature.value
+        if lib.nvmlDeviceGetMemoryInfo(handle,ctypes.byref(memory))==0:
+            gpu.update(memory=round(memory.used/memory.total*100) if memory.total else None,memoryUsedMiB=round(memory.used/1048576),memoryTotalMiB=round(memory.total/1048576))
+        gpu.update(gpu_processes(lib,handle))
+        try:cache.write_text(json.dumps({'time':time.time(),'gpu':gpu}))
+        except OSError:pass
+    except (OSError,AttributeError,RuntimeError) as error:gpu['error']=str(error)
+    finally:
+        if initialized:lib.nvmlShutdown()
+    return gpu
+
+def screenpad_on():
+    try:
+        monitors=json.loads(subprocess.check_output(['hyprctl','monitors','-j'],text=True,timeout=1,stderr=subprocess.DEVNULL))
+        return next(m for m in monitors if m['name']=='DP-2').get('dpmsStatus',True)
+    except (OSError,ValueError,StopIteration,subprocess.SubprocessError):return True
+
+def camera_enabled():
+    for device in Path('/sys/bus/usb/devices').iterdir():
+        if read(device/'idVendor')=='13d3' and read(device/'idProduct')=='56e4':
+            return any((i/'driver').exists() for i in Path('/sys/bus/usb/devices').glob(device.name+':*') if read(i/'bInterfaceClass')=='0e' and read(i/'bInterfaceSubClass')=='01')
+    return False
+
+def hardware():
+    temps=[];fans=[];fan_mode=None
+    for base in Path('/sys/class/hwmon').iterdir():
+        name=read(base/'name')
+        if name=='coretemp':
+            for sensor in base.glob('temp*_input'):
+                try:temps.append(float(read(sensor))/1000)
+                except ValueError:pass
+        if name=='asus':
+            for sensor in sorted(base.glob('fan*_input')):
+                try:fans.append(int(read(sensor)))
+                except ValueError:pass
+            value=read(base/'pwm1_enable')
+            fan_mode=int(value) if value.isdigit() else None
+    led=Path('/sys/class/leds/asus::kbd_backlight')
+    disk=shutil.disk_usage(Path.home())
+    try:settings=json.loads((Path.home()/'.config/hypr/zenbook-controls.json').read_text())
+    except (OSError,ValueError):settings={}
+    return {'cpuTemperature':round(max(temps)) if temps else None,'fans':fans,'fanMode':fan_mode,
+        'keyboardBrightness':int(read(led/'brightness','0')),'keyboardMaximum':int(read(led/'max_brightness','3')),
+        'chargeLimit':int(read('/sys/class/power_supply/BAT0/charge_control_end_threshold','100')),
+        'diskFreeGiB':round(disk.free/2**30,1),'diskUsedPercent':round(disk.used/disk.total*100),
+        'touchpadEnabled':settings.get('touchpad',True),'naturalScroll':settings.get('natural',True),
+        'animationsEnabled':settings.get('animations',True),'cudaToolkit':Path('/opt/cuda/bin/nvcc').exists(),
+        'rosInstalled':shutil.which('ros2') is not None,'cameraCount':len(set((p/'device').resolve().parent for p in Path('/sys/class/video4linux').glob('video*'))),'cameraEnabled':camera_enabled(),
+        'cameraControlAvailable':Path('/usr/local/libexec/fh1m-zenbook-camera').exists(),
+        'airplaneMode':(Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'zenbook-airplane.json').exists(),
+        'trainingMode':settings.get('training',False),'screenpadOn':screenpad_on(),
+        'fanControlAvailable':Path('/usr/local/libexec/fh1m-zenbook-fan').exists()}
+
+if __name__=='__main__':
+    if '--watch' not in sys.argv:print(json.dumps(collect(),ensure_ascii=False))
+    else:
+        try:
+            while True:
+                data=collect();print('\033[2J\033[H',end='')
+                print('FH1M // DEVICE TELEMETRY — UX581GV\nUSB / SIM / GPU status\n')
+                print('USB serial boards:', '\n  '.join(data['boards']) or 'No board connected')
+                print('Robotics processes:', ', '.join(data['simulators']) or 'No simulator / visualization process detected')
+                print('ScreenPad brightness:',str(data['brightness'])+'%')
+                print('NVIDIA:',json.dumps(data['gpu']))
+                print('\nRefresh: 5s. Ctrl+C exits. Serial boards remain usable by your tools; this monitor never opens the ports.')
+                time.sleep(5)
+        except KeyboardInterrupt:pass

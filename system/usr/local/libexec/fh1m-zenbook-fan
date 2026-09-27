@@ -1,0 +1,12 @@
+#!/usr/bin/python3 -I
+"""UX581GV CPU fan control: firmware automatic or full-speed cooling only."""
+import os,sys
+from pathlib import Path
+if os.geteuid()!=0 or len(sys.argv)!=2 or sys.argv[1] not in ('auto','boost'):
+    sys.exit('Only auto and boost are supported')
+if 'UX581GV' not in Path('/sys/class/dmi/id/product_name').read_text():sys.exit('Unsupported laptop')
+for base in Path('/sys/devices/platform/asus-nb-wmi/hwmon').glob('hwmon*'):
+    if (base/'name').read_text().strip()=='asus' and (base/'pwm1_enable').exists():
+        (base/'pwm1_enable').write_text('2' if sys.argv[1]=='auto' else '0')
+        print('CPU fan: '+sys.argv[1]);break
+else:sys.exit('ASUS CPU fan interface unavailable')

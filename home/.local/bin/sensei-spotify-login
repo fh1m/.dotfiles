@@ -1,0 +1,13 @@
+#!/bin/sh
+printf 'Sensei, approve the Spotify login in your browser. Spotify may request separate permissions for library access and streaming.\n\n'
+@HOME@/.local/share/sensei-spotify-client/bin/spotify_player authenticate
+result=$?
+if [ "$result" -eq 0 ]; then
+ systemctl --user restart sensei-spotify.service
+ printf '\nSensei, your music player is ready. Return to the Spotify widget.\n'
+else
+ printf '\nSensei, sign-in did not finish. You can retry from Account.\n'
+fi
+printf 'Press Enter to close this window.'
+read reply
+exit "$result"

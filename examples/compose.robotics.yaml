@@ -1,0 +1,22 @@
+# Native x86 CUDA development; select a serial device explicitly when needed.
+services:
+  robotics:
+    image: nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04
+    platform: linux/amd64
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+    working_dir: /workspace
+    volumes:
+      - ../examples:/workspace:rw
+    environment:
+      ROS_DOMAIN_ID: "42"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+# CUDA image is a build environment, not a preinstalled ROS distribution.
+# Host network/IPC and serial passthrough are opt-in, not blanket privileges.

@@ -1,0 +1,15 @@
+name: Validate portable dotfiles
+on:
+  push:
+  pull_request:
+jobs:
+  install-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Python scripts
+        run: python3 -m py_compile scripts/*.py
+      - name: Test backup, generic monitor rendering and idempotence
+        run: python3 scripts/test-install.py
+      - name: Check shell syntax
+        run: bash -n scripts/build-native.sh scripts/build-spotify.sh

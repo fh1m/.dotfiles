@@ -1,0 +1,1 @@
+KERNEL=="AC0", SUBSYSTEM=="power_supply", ACTION=="change", RUN+="/usr/local/bin/power-profile-auto.sh"

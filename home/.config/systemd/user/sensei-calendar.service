@@ -1,0 +1,11 @@
+[Unit]
+Description=Sensei calendar deadline scheduler
+After=graphical-session.target
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/sensei-calendar-scheduler
+Restart=on-failure
+RestartSec=5
+UMask=0077
+[Install]
+WantedBy=default.target

@@ -1,0 +1,23 @@
+#!/usr/bin/python3
+import json,subprocess,sys,os,time
+from pathlib import Path
+state=Path.home()/'.config/hypr/power-state.json'
+def call(*a):return subprocess.check_output(a,text=True,stderr=subprocess.STDOUT,timeout=20).strip()
+def current():
+ text=call('system76-power','profile');return next((n for n in ('performance','balanced','battery') if 'Power Profile: '+n.title() in text),'balanced')
+def publish(name):
+ d={'name':'power-saver' if name=='battery' else name,'backend':'system76-power','time':time.time()};tmp=state.with_suffix('.tmp');tmp.write_text(json.dumps(d));tmp.replace(state);return d
+try:
+ action=sys.argv[1] if len(sys.argv)>1 else 'get'
+ if action=='set':
+  name=sys.argv[2];native={'power-saver':'battery','balanced':'balanced','performance':'performance'}[name]
+  # The battery backend may dim displays; preserve the user's chosen levels.
+  levels={p:int((p/'brightness').read_text()) for p in Path('/sys/class/backlight').iterdir()}
+  call('system76-power','profile',native)
+  for p,v in levels.items():
+   if int((p/'brightness').read_text())!=v:call('brightnessctl','-d',p.name,'set',str(v))
+  call('sudo','-n','/usr/local/libexec/fh1m-zenbook-fan','boost' if name=='performance' else 'auto')
+  d=publish(current())
+ else:d=publish(current())
+ print(d['name'] if action=='name' else json.dumps(d))
+except Exception as e:print(json.dumps({'error':'Sensei, power control failed: '+str(e)}));sys.exit(1)

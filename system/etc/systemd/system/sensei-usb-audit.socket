@@ -1,0 +1,10 @@
+[Unit]
+Description=On-demand read-only USB process audit
+[Socket]
+ListenStream=/run/sensei-usb-audit.sock
+SocketUser=@USER@
+SocketMode=0600
+Accept=yes
+RemoveOnStop=yes
+[Install]
+WantedBy=sockets.target

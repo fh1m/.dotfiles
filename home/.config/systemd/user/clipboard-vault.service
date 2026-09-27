@@ -1,0 +1,11 @@
+[Unit]
+Description=Persistent local clipboard archive
+After=graphical-session.target
+PartOf=graphical-session.target
+[Service]
+ExecStart=@HOME@/.local/bin/clipboard-vault watch
+Restart=on-failure
+RestartSec=3
+UMask=0077
+[Install]
+WantedBy=default.target

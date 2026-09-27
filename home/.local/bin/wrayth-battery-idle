@@ -1,0 +1,33 @@
+#!/usr/bin/python3
+"""Called only after Hypridle's ten-minute idle threshold."""
+from pathlib import Path
+import json
+import subprocess
+import sys
+import time
+
+def power_state(root=Path('/sys/class/power_supply')):
+    online = []
+    batteries = []
+    try:
+        for supply in root.iterdir():
+            kind = (supply / 'type').read_text().strip()
+            if kind == 'Battery':
+                batteries.append((supply / 'status').read_text().strip())
+            elif (supply / 'online').exists():
+                online.append((supply / 'online').read_text().strip() == '1')
+    except (OSError, ValueError):
+        return {'on_battery': False, 'reason': 'power source unavailable'}
+    # Positive external-power evidence always prevents automatic suspend.
+    on_battery = bool(batteries) and not any(online) and (bool(online) or 'Discharging' in batteries)
+    return {'on_battery': on_battery, 'external_online': any(online), 'battery_status': batteries}
+
+if __name__ == '__main__':
+    if '--check' in sys.argv:
+        print(json.dumps(power_state()))
+        sys.exit(0)
+    while True:
+        if power_state()['on_battery'] and not ((Path.home()/'.local/state/wrayth/idle').exists() and (Path.home()/'.local/state/wrayth/idle').read_text().strip()=='hold'):
+            subprocess.run(['/usr/bin/systemctl', 'suspend'], check=True)
+            break
+        time.sleep(5)

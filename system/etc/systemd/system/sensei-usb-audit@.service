@@ -1,0 +1,16 @@
+[Unit]
+Description=USB-scoped process ownership snapshot
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/libexec/sensei-usb-audit.py
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
+RuntimeMaxSec=10
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_DAC_OVERRIDE
+RestrictSUIDSGID=true
+LockPersonality=true

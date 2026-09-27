@@ -1,0 +1,19 @@
+[Unit]
+Description=Sensei Spotify background player
+After=graphical-session.target pipewire.service network-online.target
+Wants=network-online.target
+PartOf=graphical-session.target
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+[Service]
+Type=forking
+ExecStart=@HOME@/.local/share/sensei-spotify-client/bin/spotify_player --daemon
+Restart=on-failure
+RestartSec=15
+TimeoutStartSec=20
+UMask=0077
+Nice=0
+
+[Install]
+WantedBy=graphical-session.target

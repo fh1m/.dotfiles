@@ -1,0 +1,43 @@
+#!/usr/bin/python3
+"""Sleep on calendar edits and absolute realtime deadlines; no short polling loop."""
+import ctypes,os,select,json,sqlite3,time,datetime as D,subprocess,sys
+from pathlib import Path
+from zoneinfo import ZoneInfo
+from dateutil.rrule import rrulestr
+root=Path.home()/'.local/share/sensei-calendar';root.mkdir(parents=True,exist_ok=True)
+lib=ctypes.CDLL(None,use_errno=True)
+class TS(ctypes.Structure):_fields_=[('sec',ctypes.c_long),('nsec',ctypes.c_long)]
+class ITS(ctypes.Structure):_fields_=[('interval',TS),('value',TS)]
+def deadline():
+ now=time.time();c=sqlite3.connect(f'file:{root}/calendar.sqlite?mode=ro',uri=True);c.row_factory=sqlite3.Row
+ result=D.datetime.combine(D.datetime.now(ZoneInfo('Asia/Dhaka')).date()+D.timedelta(days=1),D.time(),ZoneInfo('Asia/Dhaka')).timestamp()
+ for row in c.execute('select * from events where done=0'):
+  e=dict(row);lead=e['lead']*60;zone=ZoneInfo(e.get('timezone') or 'Asia/Dhaka');start=D.datetime.fromtimestamp(e['start'],zone)
+  rule=e.get('rrule') or {'daily':'FREQ=DAILY','weekly':'FREQ=WEEKLY','monthly':'FREQ=MONTHLY'}.get(e['repeat'],'')
+  if rule:
+   r=rrulestr(rule,dtstart=start);nextdate=r.after(D.datetime.fromtimestamp(now+lead,zone),inc=True)
+   for _ in range(366):
+    if nextdate is None:break
+    stamp=nextdate.timestamp()
+    if not c.execute('select 1 from exceptions where event=? and occurrence=?',(e['id'],stamp)).fetchone() and not c.execute('select 1 from delivered where event=? and occurrence=?',(e['id'],stamp)).fetchone():result=min(result,stamp-lead);break
+    nextdate=r.after(nextdate)
+  elif e['start']>=now and not c.execute('select 1 from delivered where event=? and occurrence=?',(e['id'],e['start'])).fetchone():result=min(result,max(now+1,e['start']-lead))
+ c.close();return max(now+1,result)
+if '--inspect' in sys.argv:print(json.dumps({'next':deadline(),'polling':False}));raise SystemExit
+fd=lib.inotify_init1(os.O_CLOEXEC|os.O_NONBLOCK);assert fd>=0
+assert lib.inotify_add_watch(fd,os.fsencode(root),0x8|0x80)>=0
+clock=lib.timerfd_create(0,os.O_CLOEXEC|os.O_NONBLOCK);assert clock>=0
+while True:
+ r=subprocess.run([str(Path.home()/'.local/bin/sensei-calendar'),'due'],capture_output=True,text=True,timeout=30)
+ try:
+  if json.loads(r.stdout).get('due',0):p=root/'revision.tmp';p.write_text(str(time.time_ns()));p.replace(root/'revision')
+ except ValueError:pass
+ value=ITS(TS(0,0),TS(int(deadline())+1,0));assert lib.timerfd_settime(clock,3,ctypes.byref(value),None)==0
+ while True:
+  ready,_,_=select.select([fd,clock],[],[])
+  if clock in ready:
+   try:os.read(clock,8)
+   except OSError:pass
+   break
+  raw=os.read(fd,65536)
+  if b'revision\0' in raw:break

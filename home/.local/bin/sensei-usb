@@ -1,0 +1,145 @@
+#!/usr/bin/python3
+"""USB inventory and event journal. No device reset, claim, or permission changes."""
+import json, os, sys, time, sqlite3, stat, pwd, grp, subprocess, warnings, socket
+from pathlib import Path
+import pyudev
+
+STATE = Path.home()/'.local/state/sensei-usb'
+STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
+CTX = pyudev.Context()
+warnings.filterwarnings('ignore',category=DeprecationWarning,module=__name__)
+def read(p, default=''):
+    try: return Path(p).read_text().strip()
+    except (OSError, UnicodeError): return default
+def db():
+    c=sqlite3.connect(STATE/'history.sqlite');c.execute('CREATE TABLE IF NOT EXISTS events (time REAL, action TEXT, port TEXT, name TEXT, subsystem TEXT, node TEXT)');return c
+def record(d, action=None):
+    if d.subsystem=='usb' and d.device_type!='usb_device':return
+    if d.subsystem!='usb' and not d.find_parent('usb','usb_device'):return
+    u=d if d.subsystem=='usb' else d.find_parent('usb','usb_device')
+    name=d.properties.get('ID_MODEL_FROM_DATABASE') or d.properties.get('ID_MODEL') or (read(Path(u.sys_path)/'product') if u else '') or d.sys_name
+    with db() as c:c.execute('INSERT INTO events VALUES (?,?,?,?,?,?)',(time.time(),action or d.action or 'seen',u.sys_name if u else d.sys_name,name,d.subsystem,d.device_node or ''))
+def watch():
+    monitor=pyudev.Monitor.from_netlink(CTX);monitor.start()
+    def publish():
+        devices=[d for d in CTX.list_devices(subsystem='usb',DEVTYPE='usb_device') if read(Path(d.sys_path)/'bDeviceClass')!='09' and not d.sys_name.startswith('usb')]
+        tmp=STATE/'presence.tmp';tmp.write_text(json.dumps({'count':len(devices),'devices':[read(Path(d.sys_path)/'product') or d.sys_name for d in devices]}));tmp.replace(STATE/'presence.json')
+    for d in CTX.list_devices(subsystem='usb',DEVTYPE='usb_device'):record(d,'present at service start')
+    publish()
+    for d in iter(monitor.poll,None):
+        if d.subsystem in ('usb','block','tty','video4linux','sound','hidraw'):
+            record(d)
+            if d.subsystem=='usb' and d.device_type=='usb_device':publish()
+def inventory():
+    block=json.loads(subprocess.run(['lsblk','-J','-b','-O'],capture_output=True,text=True,timeout=5).stdout or '{}')
+    blocks=[]
+    def flatten(nodes):
+        for n in nodes:blocks.append(n);flatten(n.get('children',[]))
+    flatten(block.get('blockdevices',[]))
+    children={}
+    for d in CTX.list_devices():
+        if not d.device_node:continue
+        u=d.find_parent('usb','usb_device')
+        if u:children.setdefault(u.sys_name,[]).append(d)
+    devices=[];prior=json.loads(read(STATE/'usb-activity.json','{}'));stamp=time.monotonic();activity={}
+    for d in CTX.list_devices(subsystem='usb',DEVTYPE='usb_device'):
+        p=Path(d.sys_path);nodes=[];mounts=[];interfaces=[]
+        for child in [d,*children.get(d.sys_name,[])]:
+            n=child.device_node
+            if not n:continue
+            try:
+                st=os.stat(n);owner=pwd.getpwuid(st.st_uid).pw_name;group=grp.getgrgid(st.st_gid).gr_name
+                perms=stat.filemode(st.st_mode)
+            except OSError:owner=group=perms='unavailable'
+            nodes.append({'path':n,'subsystem':child.subsystem,'owner':owner,'group':group,'permissions':perms,'canRead':os.access(n,os.R_OK),'canWrite':os.access(n,os.W_OK)})
+            for b in blocks:
+                if b.get('path')!=n:continue
+                for m in b.get('mountpoints',[]) or []:
+                    if not m:continue
+                    try:
+                        v=os.statvfs(m);total=v.f_blocks*v.f_frsize;free=v.f_bavail*v.f_frsize
+                    except OSError:total=free=None
+                    mounts.append({'path':m,'device':n,'filesystem':b.get('fstype'),'label':b.get('label'),'size':b.get('size'),'total':total,'free':free,'readOnly':b.get('ro')})
+        for i in p.glob(d.sys_name+':*'):
+            driver=i/'driver';interfaces.append({'interface':i.name,'class':read(i/'bInterfaceClass'),'driver':driver.resolve().name if driver.exists() else 'none'})
+        urbs=int(read(p/'urbnum','0'));activity[d.sys_name]=urbs;old=prior.get('devices',{}).get(d.sys_name,urbs);rate=max(0,urbs-old)/max(.01,stamp-prior.get('time',stamp))
+        devices.append({'port':d.sys_name,'name':read(p/'product') or d.properties.get('ID_MODEL_FROM_DATABASE') or 'USB hub/controller','manufacturer':read(p/'manufacturer'),'vendor':read(p/'idVendor'),'product':read(p/'idProduct'),'serial':read(p/'serial'),'speed':read(p/'speed'),'version':read(p/'version'),'authorized':read(p/'authorized'),'power':read(p/'bMaxPower'),'runtime':read(p/'power/runtime_status'),'control':read(p/'power/control'),'bus':read(p/'busnum'),'device':read(p/'devnum'),'urbTotal':urbs,'urbRate':round(rate,1),'nodes':nodes,'mounts':mounts,'interfaces':interfaces,'processes':[],'warnings':[]})
+    (STATE/'usb-activity.json').write_text(json.dumps({'time':stamp,'devices':activity}))
+    devices.sort(key=lambda d:(d['port'].startswith('usb'),d['name'].lower().endswith('hub'),d['port']))
+    # Open descriptors identify users, not device-specific throughput. Process I/O
+    # deltas are labelled as process-wide, including unrelated disks.
+    previous=json.loads(read(STATE/'io.json','{}'));now=time.monotonic();sample={};denied=0
+    privileged=None
+    try:
+        with socket.socket(socket.AF_UNIX) as sock:
+            sock.settimeout(4);sock.connect('/run/sensei-usb-audit.sock');chunks=[]
+            while True:
+                chunk=sock.recv(65536)
+                if not chunk:break
+                chunks.append(chunk)
+                if sum(map(len,chunks))>4194304:raise ValueError('Audit output exceeded its bound.')
+        privileged=json.loads(b''.join(chunks))
+    except (OSError,ValueError):pass
+    for proc in ([] if privileged is not None else Path('/proc').iterdir()):
+        if not proc.name.isdigit():continue
+        try:fds=list((proc/'fd').iterdir())
+        except OSError:denied+=1;continue
+        matches={}
+        for fd in fds:
+            try:target=os.readlink(fd)
+            except OSError:continue
+            for d in devices:
+                if target in [n['path'] for n in d['nodes']] or any(target==m['path'] or target.startswith(m['path'].rstrip('/')+'/') for m in d['mounts']):
+                    flags=next((line.split(':',1)[1].strip() for line in read(proc/'fdinfo'/fd.name).splitlines() if line.startswith('flags:')),'0')
+                    access={0:'read',1:'write',2:'read/write'}.get(int(flags,8)&3,'unknown')
+                    matches.setdefault(d['port'],[]).append({'path':target,'access':access})
+        if not matches:continue
+        io={line.split(':')[0]:int(line.split(':')[1]) for line in read(proc/'io').splitlines() if ':' in line}
+        sample[proc.name]=io;old=previous.get('processes',{}).get(proc.name,{});dt=max(.01,now-previous.get('time',now))
+        entry={'pid':int(proc.name),'name':read(proc/'comm'),'user':'unknown','handles':[],'readBps':max(0,io.get('read_bytes',0)-old.get('read_bytes',io.get('read_bytes',0)))/dt,'writeBps':max(0,io.get('write_bytes',0)-old.get('write_bytes',io.get('write_bytes',0)))/dt}
+        try:entry['user']=pwd.getpwuid(proc.stat().st_uid).pw_name
+        except (OSError,KeyError):pass
+        for d in devices:
+            if d['port'] in matches:d['processes'].append(dict(entry,handles=matches[d['port']]))
+    audit='User-scoped snapshot; some system processes are restricted.'
+    try:
+        if privileged is None:raise ValueError('Privileged reader unavailable')
+        denied=privileged['restricted']
+        for d in devices:
+            entries=[]
+            for entry in privileged['ports'].get(d['port'],[]):
+                io=entry.pop('io',{});pid=str(entry['pid']);old=previous.get('processes',{}).get(pid,{});dt=max(.01,now-previous.get('time',now));sample[pid]=io
+                entry['readBps']=max(0,io.get('read_bytes',0)-old.get('read_bytes',io.get('read_bytes',0)))/dt
+                entry['writeBps']=max(0,io.get('write_bytes',0)-old.get('write_bytes',io.get('write_bytes',0)))/dt
+                entries.append(entry)
+            d['processes']=entries
+        audit='Privileged USB-only snapshot · read-only · socket-activated; no root idle poller.'
+    except (OSError,ValueError,KeyError):pass
+    (STATE/'io.json').write_text(json.dumps({'time':now,'processes':sample}))
+    for d in devices:
+        if d['authorized']=='0':d['warnings'].append('Device is not authorized by the kernel.')
+        try:
+            if float(d['version'])>=3 and float(d['speed'])<5000:d['warnings'].append('USB 3.x device is negotiating below SuperSpeed. Check the cable, hub and port; this is not a cable-quality measurement.')
+        except ValueError:pass
+        if any(n['subsystem']=='tty' and not n['canWrite'] for n in d['nodes']):d['warnings'].append('Your user cannot write to the serial device; check group membership and udev rules.')
+        if any(i['driver']=='none' and i['class'] not in ('ff','00') for i in d['interfaces']):d['warnings'].append('An interface has no bound driver; inspect its class and kernel log.')
+    with db() as c:history=[dict(zip(['time','action','port','name','subsystem','node'],r)) for r in c.execute('SELECT * FROM events ORDER BY time DESC LIMIT 200')]
+    logs=subprocess.run(['journalctl','-k','-b','--no-pager','-g','usb|xhci|ttyUSB|ttyACM|uvcvideo','--case-sensitive=no','-n','150','-o','short-iso'],capture_output=True,text=True,timeout=4)
+    lines=[s for s in logs.stdout.splitlines() if any(w in s.lower() for w in ('usb','xhci','ttyusb','ttyacm','uvcvideo'))][-70:]
+    return {'devices':devices,'history':history,'logs':lines,'processesRestricted':denied,'audit':audit,'notes':'Open handles do not prove active transfer. I/O rates are process-wide; first sample establishes a baseline. Kernel-owned camera/audio/HID usage may not appear as a device fd. Cable quality cannot be inferred from speed alone. History is retained in SQLite from installation; use History search and pagination for older events.'}
+if __name__=='__main__':
+    if '--watch' in sys.argv:watch()
+    elif '--history' in sys.argv:
+        query=sys.argv[2] if len(sys.argv)>2 else '';offset=max(0,int(sys.argv[3])) if len(sys.argv)>3 else 0
+        with db() as c:
+            pattern='%'+query+'%';count=c.execute('SELECT COUNT(*) FROM events WHERE port LIKE ? OR name LIKE ? OR node LIKE ?',(pattern,)*3).fetchone()[0]
+            rows=c.execute('SELECT * FROM events WHERE port LIKE ? OR name LIKE ? OR node LIKE ? ORDER BY time DESC LIMIT 100 OFFSET ?',(*((pattern,)*3),offset))
+            print(json.dumps({'events':[dict(zip(['time','action','port','name','subsystem','node'],r)) for r in rows],'total':count,'offset':offset}))
+    elif '--export' in sys.argv:
+        dest=Path.home()/'Documents'/('USB-Lab-'+time.strftime('%Y%m%d-%H%M%S')+'.json');dest.parent.mkdir(exist_ok=True)
+        data=inventory()
+        with db() as c:data['history']=[dict(zip(['time','action','port','name','subsystem','node'],r)) for r in c.execute('SELECT * FROM events ORDER BY time DESC')]
+        dest.write_text(json.dumps(data,indent=2));dest.chmod(0o600);print(json.dumps({'path':str(dest)}))
+    else:
+        try:print(json.dumps(inventory()))
+        except Exception as e:print(json.dumps({'devices':[],'history':[],'logs':[],'error':str(e)}))

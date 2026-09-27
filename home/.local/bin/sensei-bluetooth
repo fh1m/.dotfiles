@@ -1,0 +1,51 @@
+#!/usr/bin/python3
+"""On-demand Bluetooth/codec inspection. Never scans or polls in the background."""
+import json,sys,subprocess,time
+
+def run(args):
+ r=subprocess.run(args,text=True,capture_output=True,timeout=12)
+ if r.returncode:raise RuntimeError(r.stderr.strip() or r.stdout.strip() or 'Bluetooth request failed')
+ return r.stdout
+
+def objects():
+ raw=json.loads(run(['busctl','--system','--json=short','call','org.bluez','/','org.freedesktop.DBus.ObjectManager','GetManagedObjects']))['data'][0]
+ return {p:{i:{k:v['data'] for k,v in props.items()} for i,props in interfaces.items()} for p,interfaces in raw.items()}
+
+def snapshot():
+ obj=objects();devices=[];adapters=[]
+ for path,i in obj.items():
+  if 'org.bluez.Adapter1' in i:adapters.append(dict(i['org.bluez.Adapter1'],path=path))
+  if 'org.bluez.Device1' in i:
+   d=dict(i['org.bluez.Device1'],path=path);d['battery']=i.get('org.bluez.Battery1',{}).get('Percentage');devices.append(d)
+ audio=json.loads(run(['pactl','-f','json','list']));nodes=json.loads(run(['pw-dump']));codecs={}
+ for n in nodes:
+  p=n.get('info',{}).get('props',{});addr=p.get('api.bluez5.address')
+  if addr and p.get('media.class')=='Audio/Sink':
+   formats=n.get('info',{}).get('params',{}).get('EnumFormat',[]);codecs[addr]={'codec':p.get('api.bluez5.codec'),'profile':p.get('api.bluez5.profile'),'node':p.get('node.name'),'formats':formats}
+ cards=[c for c in audio.get('cards',[]) if c['name'].startswith('bluez_card.')];sinks=[s for s in audio.get('sinks',[]) if s['name'].startswith('bluez_output.')]
+ return {'devices':devices,'adapters':adapters,'cards':cards,'sinks':sinks,'codecs':codecs,'streams':audio.get('sink-inputs',[]),'time':time.time()}
+
+def main():
+ command=sys.argv[1] if len(sys.argv)>1 else 'snapshot'
+ if command=='snapshot':return snapshot()
+ if command=='quality':run(['wpctl','settings','--save','bluetooth.profile-preference','quality']);return {'ok':True}
+ if command=='profile':
+  addr,profile=sys.argv[2:4];d=snapshot();card=next(c for c in d['cards'] if c['properties'].get('api.bluez5.address')==addr)
+  if profile not in card['profiles']:raise RuntimeError('This device does not support that profile')
+  player='@HOME@/.local/bin/sensei-spotify-transport';old={}
+  try:old=json.loads(run([player,'status']))
+  except Exception:pass
+  run(['pactl','set-card-profile',card['name'],profile]);time.sleep(.6)
+  if old.get('playing'):run([player,'play'])
+  return {'ok':True}
+ if command in ['alias','wake','block','trust']:
+  addr,value=sys.argv[2:4];o=objects();path=next(p for p,i in o.items() if i.get('org.bluez.Device1',{}).get('Address')==addr)
+  prop={'alias':'Alias','wake':'WakeAllowed','block':'Blocked','trust':'Trusted'}[command]
+  if command=='alias':kind='s';value=value.strip()[:64]
+  else:
+   if value not in ['true','false']:raise ValueError('Invalid switch value')
+   kind='b'
+  run(['busctl','--system','set-property','org.bluez',path,'org.bluez.Device1',prop,kind,value]);return {'ok':True}
+ raise ValueError('Unknown Bluetooth action')
+try:print(json.dumps(main(),ensure_ascii=False))
+except Exception as e:print(json.dumps({'error':'Sensei, '+str(e)}));sys.exit(1)

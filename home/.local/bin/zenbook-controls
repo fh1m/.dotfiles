@@ -1,0 +1,99 @@
+#!/usr/bin/python3
+"""Supported ZenBook/Hyprland controls; reports failures instead of silent toggles."""
+import fcntl,json,os,subprocess,sys,time
+from pathlib import Path
+TOUCHPAD='elan1406:00-04f3:3101-touchpad'
+STATE=Path.home()/'.config/hypr/zenbook-controls.json'
+RUNTIME=Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))
+def run(*args,timeout=15):return subprocess.check_output(args,text=True,stderr=subprocess.STDOUT,timeout=timeout).strip()
+def notify(title,message):
+ subprocess.run(['notify-send','-a','ZenBook','-t','2200',title,message],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+def load():
+ try:return json.loads(STATE.read_text())
+ except (OSError,ValueError):return {}
+def save(state):
+ temp=STATE.with_suffix('.tmp');temp.write_text(json.dumps(state));temp.replace(STATE)
+def eval(code):
+ result=run('hyprctl','eval',code)
+ if result and ('error' in result.lower() or 'unknown' in result.lower()):raise RuntimeError(result)
+ return result
+def apply(name,value):
+ flag='true' if value else 'false'
+ if name=='touchpad':eval(f'hl.device({{name="{TOUCHPAD}", enabled={flag}}})')
+ elif name=='natural':eval(f'hl.config({{input={{touchpad={{natural_scroll={flag}}}}}}})')
+ elif name=='animations':eval('hl.config({animations={enabled='+flag+'}})')
+def main():
+ command=sys.argv[1] if len(sys.argv)>1 else 'system';argument=sys.argv[2] if len(sys.argv)>2 else ''
+ state=load()
+ if command=='restore':
+  for name in ['touchpad','natural','animations']:
+   if name in state:apply(name,state[name])
+  return
+ if command in ['touchpad','natural','animations']:
+  default={'touchpad':True,'natural':True,'animations':True}[command]
+  value=not state.get(command,default) if argument not in ['on','off'] else argument=='on'
+  apply(command,value);state[command]=value;save(state);notify(command.title(),'On' if value else 'Off')
+ elif command=='keyboard':
+  path=Path('/sys/class/leds/asus::kbd_backlight');current=int((path/'brightness').read_text());maximum=int((path/'max_brightness').read_text())
+  value=(current+1)%(maximum+1) if argument=='cycle' or not argument else (max(0,min(maximum,current+(1 if argument=='up' else -1))) if argument in ['up','down'] else max(0,min(maximum,int(argument))))
+  run('brightnessctl','-d','asus::kbd_backlight','set',str(value));notify('Keyboard backlight',f'{value}/{maximum}')
+ elif command=='fan':
+  if argument not in ['auto','boost']:
+   paths=list(Path('/sys/devices/platform/asus-nb-wmi/hwmon').glob('hwmon*/pwm1_enable'))
+   argument='auto' if paths and paths[0].read_text().strip()=='0' else 'boost'
+  run('sudo','-n','/usr/local/libexec/fh1m-zenbook-fan',argument);notify('CPU cooling','Firmware automatic' if argument=='auto' else 'Full-speed fan boost')
+ elif command=='camera':
+  result=run('sudo','-n','/usr/local/libexec/fh1m-zenbook-camera',argument if argument in ['on','off'] else 'toggle');notify('Built-in RGB / IR camera',result)
+ elif command=='profile':
+  if argument not in ['power-saver','balanced','performance']:
+   current=run('@HOME@/.local/bin/sensei-power','name');profiles=['power-saver','balanced','performance'];argument=profiles[(profiles.index(current)+1)%3]
+  run('@HOME@/.local/bin/sensei-power','set',argument);notify('CPU power profile',argument)
+ elif command=='charge':run('asusctl','battery','limit',argument);notify('Charge limit',argument+'%')
+ elif command=='screenpad':
+  monitor=next(m for m in json.loads(run('hyprctl','monitors','-j')) if m['name']=='DP-2')
+  target=not monitor.get('dpmsStatus',True) if argument not in ['on','off'] else argument=='on'
+  time.sleep(.2);run('hyprctl','dispatch','hl.dsp.dpms({monitor="DP-2",action="'+('on' if target else 'off')+'"})');notify('ScreenPad','On' if target else 'Off — toggle again to restore')
+ elif command=='swap':run('hyprctl','dispatch','hl.dsp.workspace.swap_monitors({monitor1="eDP-1",monitor2="DP-2"})')
+ elif command=='wifi':
+  run('nmcli','radio','wifi','off' if run('nmcli','radio','wifi')=='enabled' else 'on')
+ elif command=='airplane':
+  cache=RUNTIME/'zenbook-airplane.json'
+  if cache.exists():
+   previous=json.loads(cache.read_text());run('rfkill','unblock','wlan');run('rfkill','unblock','bluetooth')
+   run('nmcli','radio','wifi','on' if previous['wifi'] else 'off')
+   if previous['bluetooth']:run('bluetoothctl','power','on')
+   cache.unlink();notify('Airplane mode','Off')
+  else:
+   previous={'wifi':run('nmcli','radio','wifi')=='enabled','bluetooth':'Powered: yes' in run('bluetoothctl','show')}
+   run('nmcli','radio','wifi','off');run('bluetoothctl','power','off');cache.write_text(json.dumps(previous));notify('Airplane mode','On — Wi-Fi and Bluetooth disabled')
+ elif command=='training':
+  chrome=json.loads(run('@HOME@/.local/bin/sensei-chrome','status'))
+  if argument=='on':
+   if not state.get('training',False):state['trainingBefore']={'profile':run('@HOME@/.local/bin/sensei-power','name'),'hold':run('qs','-c','wrayth','ipc','call','idle','state')=='HOLD','chromeGpu':chrome.get('mode','nvidia')}
+   run('systemctl','--user','stop','wrayth-battery-idle.service');run('@HOME@/.local/bin/sensei-power','set','performance');run('qs','-c','wrayth','ipc','call','idle','hold','on');state['training']=True;save(state)
+   result=json.loads(run('@HOME@/.local/bin/sensei-chrome','mode','intel'))
+   if result.get('error'):raise RuntimeError(result['error'])
+   if chrome.get('running') and (chrome.get('actual')!='Intel' or chrome.get('mode')=='nvidia'):
+    notify('Sensei, Training mode','Moving Chrome to Intel; saved tabs will reopen.')
+    result=json.loads(run('@HOME@/.local/bin/sensei-chrome','restart',timeout=30))
+    if result.get('error'):raise RuntimeError(result['error'])
+  else:
+   previous=state.pop('trainingBefore',{'profile':'performance','hold':False,'chromeGpu':'nvidia'})
+   run('@HOME@/.local/bin/sensei-power','set',previous['profile']);run('qs','-c','wrayth','ipc','call','idle','hold','on' if previous['hold'] else 'off');state['training']=False;save(state)
+   choice=previous.get('chromeGpu','nvidia');result=json.loads(run('@HOME@/.local/bin/sensei-chrome','mode',choice))
+   if result.get('error'):raise RuntimeError(result['error'])
+   desired='NVIDIA' if choice=='nvidia' else 'Intel'
+   if chrome.get('running') and chrome.get('actual')!=desired and (desired=='Intel' or chrome.get('nvidiaAvailable')):
+    notify('Sensei, Desktop mode','Restoring Chrome GPU choice; saved tabs will reopen.')
+    result=json.loads(run('@HOME@/.local/bin/sensei-chrome','restart',timeout=30))
+    if result.get('error'):raise RuntimeError(result['error'])
+  notify('Sensei, Training mode','Chrome on Intel + Performance + Keep Awake. Other GPU apps may need relaunching.' if state['training'] else 'Previous GPU, power and idle choices restored.')
+ elif command=='system':run('qs','-c','wrayth','ipc','call','dropdown','open','system')
+ else:raise ValueError('Unknown control: '+command)
+if __name__=='__main__':
+ try:
+  RUNTIME.mkdir(exist_ok=True)
+  with (RUNTIME/'zenbook-controls.lock').open('w') as lock:
+   fcntl.flock(lock,fcntl.LOCK_EX);main()
+ except (OSError,ValueError,RuntimeError,StopIteration,subprocess.SubprocessError) as error:
+  notify('ZenBook control failed',str(error));print(error,file=sys.stderr);sys.exit(1)

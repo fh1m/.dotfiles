@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+import sys,subprocess,os
+from pathlib import Path
+
+def safe(s):return ''.join(c for c in str(s) if c.isprintable()).replace('#','##')[:32]
+def git(*args):
+ try:return subprocess.run(['git','--no-optional-locks','-C',cwd,*args],capture_output=True,text=True,timeout=.8).stdout.strip()
+ except (OSError,subprocess.TimeoutExpired):return ''
+def section(text,bg='#002766',fg='#8bb9f6'):
+ return f'#[bg=#000000,fg={bg}]#[bg={bg},fg={fg},nobold] {text} #[bg=#000000,fg={bg}] '
+if len(sys.argv)>1 and sys.argv[1]=='sessions':
+ current=sys.argv[2] if len(sys.argv)>2 else '';width=int(sys.argv[3] or 120) if len(sys.argv)>3 else 120
+ r=subprocess.run(['tmux','list-sessions','-F','#{session_id}\t#{session_name}\t#{session_created}'],capture_output=True,text=True)
+ sessions=[line.split('\t') for line in r.stdout.splitlines()];sessions.sort(key=lambda row:(int(row[2]),int(row[0][1:])))
+ shown=[(i+1,row) for i,row in enumerate(sessions) if width>=160 or row[0]==current]
+ if len(shown)>3:shown=[(i,row) for i,row in shown if row[0]==current]+[(i,row) for i,row in shown if row[0]!=current][:2]
+ print(''.join(section(('● ' if row[0]==current else '󰒋 ')+str(i)+' · '+safe(row[1][:12]),'#D8054A','#000000') for i,row in shown),end='');sys.exit(0)
+cwd=sys.argv[1] if len(sys.argv)>1 else str(Path.home())
+try:width=int(sys.argv[2])
+except (IndexError,ValueError):width=120
+parts=[]
+if width>=115:
+ branch=git('symbolic-ref','--short','HEAD') or git('rev-parse','--short','HEAD')
+ if branch:
+  changes=git('status','--porcelain','--untracked-files=no')
+  parts.append(section(' '+safe(branch[:16])+(' ●' if changes else ''),'#002766','#8bb9f6'))
+if width>=155:
+ try:
+  mem={a.split(':')[0]:int(a.split()[1]) for a in Path('/proc/meminfo').read_text().splitlines() if ':' in a}
+  parts.append(section('󰍛 '+str(round((mem['MemTotal']-mem['MemAvailable'])/1048576,1))+'G','#002766'))
+ except (OSError,ValueError,KeyError):pass
+if width>=115:
+ for bat in Path('/sys/class/power_supply').glob('BAT*'):
+  try:parts.append(section(('󰂄' if (bat/'status').read_text().strip()=='Charging' else '󰁹')+' '+(bat/'capacity').read_text().strip()+'%'))
+  except OSError:pass
+print(''.join(parts),end='')
