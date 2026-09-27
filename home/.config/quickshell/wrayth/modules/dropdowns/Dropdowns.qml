@@ -48,6 +48,7 @@ Variants {
         property real reveal: 0
         property real measuredHeight: 0
         property int stableFrames: 0
+        property bool surfaceReady: false
 
         // Hyprland refocuses the pointer the moment a focus grab starts. When
         // that lands with the pointer still on the bar, the bar loses its hover
@@ -60,11 +61,11 @@ Variants {
         // is still behind the bar at the start of the slide.
         readonly property real slide: 12
 
-        IpcHandler {target:"popupmotion-"+popup.modelData.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
+        IpcHandler {target:"popupmotion-"+popup.modelData.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,ready:popup.surfaceReady,width:popup.width,height:popup.height,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
         screen: modelData
         color: "transparent"
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }
-        visible: current !== "" && !ShellState.externalDialogOpen
+        visible: current !== "" && surfaceReady && !ShellState.externalDialogOpen
 
         implicitWidth: 2 * surfaceInset + (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" ? 1040 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "system" || current === "ident" ? 596 : 380)
         // Fixed to the panel. Animating this instead would reconfigure the layer
@@ -120,10 +121,12 @@ Variants {
             onTriggered: {
                 if (popup.current === "" || ShellState.dropdown !== popup.current) return;
                 // Wait for the compositor to acknowledge the newly sized surface.
-                if (!content.item || content.status !== Loader.Ready || Math.round(popup.width) !== Math.round(popup.implicitWidth) || Math.round(popup.height) !== Math.round(popup.implicitHeight)) { restart(); return; }
+                if (!content.item || content.status !== Loader.Ready || popup.panelHeight <= 0) { restart(); return; }
                 const h = Math.round(popup.panelHeight);
                 if (h !== popup.measuredHeight) { popup.measuredHeight=h; popup.stableFrames=0; restart(); return; }
                 if (++popup.stableFrames < 3) { restart(); return; }
+                if (!popup.surfaceReady) { popup.surfaceReady=true; restart(); return; }
+                if (Math.round(popup.width) !== Math.round(popup.implicitWidth) || Math.round(popup.height) !== Math.round(popup.implicitHeight)) { restart(); return; }
                 openAnim.start();
             }
         }
@@ -131,7 +134,7 @@ Variants {
         SequentialAnimation {
             id: closeAnim
             NumberAnimation { target: popup; property: "reveal"; to: 0; duration: 170; easing.type: Easing.InCubic }
-            ScriptAction { script: popup.current = "" }
+            ScriptAction { script: { popup.current = ""; popup.surfaceReady=false; } }
         }
 
         SequentialAnimation {
@@ -152,6 +155,7 @@ Variants {
             ScriptAction {
                 script: {
                     popup.anchorX = swapAnim.nextX;
+                    popup.surfaceReady=false;
                     popup.current = swapAnim.next;
                 }
             }
@@ -189,7 +193,7 @@ Variants {
                 } else if (popup.current === "" || popup.current === want) {
                     // Nothing showing, or the same panel caught mid-close.
                     popup.anchorX = ShellState.dropdownAnchorX;
-                    if (popup.current === "") popup.reveal = 0;
+                    if (popup.current === "") {popup.reveal = 0; popup.surfaceReady=false;}
                     popup.current = want;
                     // Let the new surface and loader acquire their final size first.
                     presentTimer.restart();
