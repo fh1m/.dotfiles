@@ -15,7 +15,7 @@ Item {
  PathLine {x:14;y:.5}
  }
  }
- RoundedArtwork {id:art;cornerRadius:15;anchors.left:parent.left;anchors.leftMargin:22;anchors.verticalCenter:parent.verticalCenter;width:30;height:30;RotationAnimator on rotation {id:artSpin;from:0;to:360;duration:12000;loops:Animation.Infinite;running:true;paused:artSpin.running&&(!SpotifyDesk.playing||!art.visible)}
+ RoundedArtwork {id:art;cornerRadius:15;anchors.left:parent.left;anchors.leftMargin:22;anchors.verticalCenter:parent.verticalCenter;width:30;height:30;rotation:SpotifyDesk.playing&&visible?(MotionClock.ms%12000)*.03:0
  source:SpotifyDesk.albumArt;sourceSize:Qt.size(120,120);fillMode:Image.PreserveAspectCrop;asynchronous:true;visible:status===Image.Ready}
  Text { renderType: Text.QtRendering; renderTypeQuality: 104;anchors.centerIn:art;visible:!art.visible;text:"\uf001";font.family:Appearance.font.icons;font.pixelSize:16;color:Theme.dim}
  Ticker {anchors.left:art.right;anchors.leftMargin:12;anchors.right:parent.right;anchors.rightMargin:20;anchors.verticalCenter:parent.verticalCenter;height:24;scrollOnlyOverflow:true;loopGap:28;scrollEnabled:SpotifyDesk.playing;text:SpotifyDesk.title==='Spotify'?'Spotify · Sensei’s soundtrack':SpotifyDesk.title+' - '+SpotifyDesk.artist;foreground:SpotifyDesk.playing?Theme.spotifyGreen:Theme.dim;pixelSize:13;speed:25;fade:8}

@@ -26,7 +26,9 @@ Variants {
         }
 
         Wallpaper {
-            source: Wallpapers.displaySource(modelData.name)
+            // The saved per-display choices arrive asynchronously. Never show
+            // a bundled theme wallpaper in the gap before that file is read.
+            source: Wallpapers.loaded ? Wallpapers.displaySource(modelData.name) : Wallpapers.startupSource(modelData.name)
             imageFillMode: Wallpapers.displayMode(modelData.name)
             anchors.fill: parent
 

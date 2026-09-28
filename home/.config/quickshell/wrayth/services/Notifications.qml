@@ -91,9 +91,28 @@ Singleton {
         return y;
     }
 
+    // Browsers and chat bridges sometimes escape markup once or twice before
+    // sending it. Decode entities first, then whitelist formatting below.
+    function decodeEntities(value): string {
+        let text=String(value??"");
+        for(let pass=0;pass<2;pass++) text=text.replace(/&(#(?:x[0-9a-f]+|\d+)|amp|lt|gt|quot|apos|nbsp);/gi,(all,key)=>{
+            const named={amp:"&",lt:"<",gt:">",quot:'"',apos:"'",nbsp:"\u00a0"};
+            const lower=key.toLowerCase();
+            if(Object.prototype.hasOwnProperty.call(named,lower))return named[lower];
+            const hex=lower.startsWith("#x");
+            const code=parseInt(lower.slice(hex?2:1),hex?16:10);
+            return code>0&&code<=0x10ffff?String.fromCodePoint(code):all;
+        });
+        return text;
+    }
+
+    function plainSummary(value): string {
+        return decodeEntities(value).replace(/<\/?br\s*\/?\s*>/gi," · ").replace(/<[^>]*>/g,"").replace(/\s+/g," ").trim();
+    }
+
     // Allow formatting only; never render remote images, styles or active links.
     function safeBody(value): string {
-        let text=String(value||"").replace(/<(script|style)[^>]*>[\s\S]*?<\/\1\s*>/gi, "");
+        let text=decodeEntities(value).replace(/<(script|style)[^>]*>[\s\S]*?<\/\1\s*>/gi, "");
         text=text.replace(/<\/br\s*>/gi, "").replace(/<\/?br\s*\/?\s*>/gi, "\n").replace(/<\/(p|div|li)\s*>/gi,"\n");
         let parts=text.split(/(<[^>]*>)/g);
         return parts.map(part=>{
@@ -101,7 +120,7 @@ Singleton {
                 const tag=part.match(/^<\s*(\/?)\s*(b|strong|i|em|u)\s*>$/i);
                 return tag ? "<"+tag[1]+tag[2].toLowerCase()+">" : "";
             }
-            return part.replace(/&(?!(?:amp|lt|gt|quot|apos|nbsp|#\d+|#x[0-9a-f]+);)/gi,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");
+            return part.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");
         }).join("");
     }
 

@@ -150,7 +150,7 @@ ChamferPanel {
             renderType: Text.NativeRendering
             width: parent.width
 
-            text: "Sensei, " + (root.notification?.summary ?? "you have a notification")
+            text: "Sensei, " + Notifications.plainSummary(root.notification?.summary ?? "you have a notification")
             textFormat: Text.PlainText
             color: Theme.bright
             elide: Text.ElideRight

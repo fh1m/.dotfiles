@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""Keep a small, quick-to-decode first frame for each chosen display wallpaper."""
+import os
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+if len(sys.argv) != 3:
+    raise SystemExit('usage: wrayth-startup-wallpaper IMAGE OUTPUT')
+source = Path(sys.argv[1]) if sys.argv[1] else None
+output = re.sub(r'[^a-zA-Z0-9_-]', '_', sys.argv[2])
+if not output:
+    raise SystemExit('empty display name')
+folder = Path.home() / '.config/wrayth'
+folder.mkdir(mode=0o700, parents=True, exist_ok=True)
+cache = folder / f'startup-wallpaper-{output}.jpg'
+marker = folder / f'startup-wallpaper-{output}.source'
+if source is None or not source.is_file():
+    cache.unlink(missing_ok=True)
+    marker.unlink(missing_ok=True)
+    raise SystemExit(0)
+if cache.is_file() and marker.is_file() and marker.read_text() == str(source) and cache.stat().st_mtime_ns >= source.stat().st_mtime_ns:
+    raise SystemExit(0)
+with tempfile.NamedTemporaryFile(dir=folder, suffix='.jpg', delete=False) as tmp:
+    name = tmp.name
+try:
+    subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y', '-i', str(source),
+                    '-vf', 'scale=1920:-2', '-frames:v', '1', '-q:v', '3', name], check=True,
+                   stdout=subprocess.DEVNULL)
+    os.replace(name, cache)
+    marker.write_text(str(source))
+except Exception:
+    Path(name).unlink(missing_ok=True)
+    raise

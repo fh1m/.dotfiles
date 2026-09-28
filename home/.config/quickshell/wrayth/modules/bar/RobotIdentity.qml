@@ -11,8 +11,7 @@ SlantBlock {
     Canvas {
         id: robotArt
         x: 8; y: 3; width: 44; height: 38
-        SequentialAnimation on scale { running: SpotifyDesk.playing; loops: Animation.Infinite; NumberAnimation {to:1.045;duration:650;easing.type:Easing.InOutSine} NumberAnimation {to:1;duration:650;easing.type:Easing.InOutSine} }
-        Connections {target:SpotifyDesk;function onPlayingChanged(){if(!SpotifyDesk.playing)robotArt.scale=1;}}
+        scale: SpotifyDesk.playing ? 1.0225 - .0225 * Math.cos(MotionClock.ms * Math.PI * 2 / 1300) : 1
         property color ink: Theme.ground
         onInkChanged: requestPaint()
         onPaint: {

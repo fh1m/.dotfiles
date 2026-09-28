@@ -4,13 +4,18 @@
 
 **Two screens. Two GPUs. One rather opinionated workbench.**
 
-[![Hyprland](https://img.shields.io/badge/Hyprland-0.56%2B-004eff?style=flat-square)](docs/installation.md) [![Quickshell](https://img.shields.io/badge/Quickshell-0.3-f04b60?style=flat-square)](home/.config/quickshell/wrayth) [![Panels](https://img.shields.io/badge/displays-2-17131a?style=flat-square)](docs/hardware-and-boot.md) [![Spaces](https://img.shields.io/badge/workspaces-6-004eff?style=flat-square)](docs/keybindings.md) [![GPU](https://img.shields.io/badge/RTX-2060-f04b60?style=flat-square)](docs/gpu-and-chrome.md) [![Lab](https://img.shields.io/badge/lab-Docker_%2B_ARM-17131a?style=flat-square)](docs/robotics.md) [![License](https://img.shields.io/badge/license-GPL--3.0-f04b60?style=flat-square)](LICENSE)
+[![Hyprland](https://img.shields.io/badge/Hyprland-0.56%2B-004eff?style=flat-square)](docs/installation.md) [![Quickshell](https://img.shields.io/badge/Quickshell-0.3-f04b60?style=flat-square)](home/.config/quickshell/wrayth) [![Panels](https://img.shields.io/badge/displays-2-17131a?style=flat-square)](docs/hardware-and-boot.md) [![Spaces](https://img.shields.io/badge/workspaces-6-004eff?style=flat-square)](docs/keybindings.md)
+
+[![GPU](https://img.shields.io/badge/RTX-2060-f04b60?style=flat-square)](docs/gpu-and-chrome.md) [![Lab](https://img.shields.io/badge/lab-Docker_%2B_ARM-17131a?style=flat-square)](docs/robotics.md) [![Phone](https://img.shields.io/badge/phone-Tailscale_%2B_KDE_Connect-004eff?style=flat-square)](docs/phone.md) [![License](https://img.shields.io/badge/license-GPL--3.0-f04b60?style=flat-square)](LICENSE)
+
+| Start here | Make it yours | Keep it running |
+|:---:|:---:|:---:|
+| [Install](docs/installation.md) · [Gallery](docs/gallery.md) · [Keys](docs/keybindings.md) | [Design](docs/design-story.md) · [GPU + Chrome](docs/gpu-and-chrome.md) · [Robotics](docs/robotics.md) | [Hardware](docs/hardware-and-boot.md) · [Performance](docs/performance.md) · [Recovery](docs/operations.md) |
+| [Validation](docs/validation.md) | [Audio](docs/audio-and-spotify.md) · [Phone](docs/phone.md) | [Version baseline](docs/tested-versions.txt) |
 
 <img src="docs/assets/flight-deck.gif" alt="Real Hyprland desktop opening the System and Spotify panels" width="100%">
 
 <sub>Real desktop · real windows · real widgets · [watch the smoother MP4](docs/assets/flight-deck.mp4)</sub>
-
-[Install](docs/installation.md) · [Gallery](docs/gallery.md) · [Keys](docs/keybindings.md) · [Hardware](docs/hardware-and-boot.md) · [Recovery](docs/operations.md)
 
 </div>
 
@@ -58,7 +63,7 @@ The main bar carries identity, music, time, sound and controls. The lower bar ca
 | Clock: left / right click | Time manager / weather. |
 | Training mode | Move managed graphics launches to Intel; leave the RTX to CUDA. |
 
-The launcher keeps native app icons. Search finds open windows **and** installed apps. The clipboard remembers text and screenshots locally; its contents never enter this repo.
+The launcher keeps native app icons. Search finds open windows **and** installed apps. The clipboard remembers text, screenshots and copied file paths locally, with image previews; its contents never enter this repo.
 
 ## Under the glass
 
@@ -81,5 +86,3 @@ python3 scripts/doctor.py
 ```
 
 Read the [installation guide](docs/installation.md) first. The dual-display preset is **UX581GV-specific**; the generic install does not impose its monitor geometry. Spotify login, driver setup and privileged `system/` examples need separate attention. Your browser profiles, credentials, pairing identities and clipboard history stay yours.
-
-[Gallery](docs/gallery.md) · [Design decisions](docs/design-story.md) · [GPU + Chrome](docs/gpu-and-chrome.md) · [Audio](docs/audio-and-spotify.md) · [Robotics](docs/robotics.md) · [Phone](docs/phone.md) · [Boot + hardware](docs/hardware-and-boot.md) · [Troubleshooting](docs/operations.md) · [Validation](docs/validation.md)

@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os,sys,json,sqlite3,hashlib,time,subprocess,signal,fcntl,html,argparse
+from urllib.parse import unquote, urlsplit
 from pathlib import Path
 ROOT=Path.home()/'.clipboard'; ROOT.mkdir(mode=0o700,exist_ok=True); os.chmod(ROOT,0o700)
 os.umask(0o077)
@@ -11,20 +12,37 @@ c.execute('create table if not exists events (id integer primary key, item integ
 c.execute('create virtual table if not exists search using fts5(content)')
 def revision():
     t=ROOT/'revision.tmp'; t.write_text(str(time.time_ns())); t.replace(ROOT/'revision')
+def files_from(data):
+    paths=[]
+    for line in data.decode('utf-8',errors='replace').replace('\0','\n').splitlines():
+        line=line.strip()
+        if not line or line.lower() in ('copy','cut') or line.startswith('#'): continue
+        parsed=urlsplit(line)
+        if parsed.scheme!='file' or parsed.netloc not in ('','localhost'): return []
+        path=Path(unquote(parsed.path))
+        if not path.is_absolute(): return []
+        paths.append(path)
+    return paths
 def store(kind,data):
     if not data or os.environ.get('CLIPBOARD_STATE') in ('nil','clear'): return
+    files=files_from(data) if kind in ('files','files-gnome') or (kind=='text' and data.lstrip().startswith(b'file://')) else []
+    if kind in ('files','files-gnome') and not files: return
+    if files:
+        kind='files'
+        data=('\r\n'.join(p.as_uri() for p in files)+'\r\n').encode()
     digest=hashlib.sha256(data).hexdigest(); now=time.time()
     row=c.execute('select id from items where hash=?',(digest,)).fetchone()
     if row:
         ident=row[0]; c.execute('update items set last=?, copies=copies+1 where id=?',(now,ident))
     else:
         mime='text/plain;charset=utf-8'; ext='txt'
+        if kind=='files': mime,ext='text/uri-list','uri'
         if kind=='image':
             mime,ext=('image/svg+xml','svg') if b'<svg' in data[:1000] else ('image/bmp','bmp') if data.startswith(b'BM') else ('image/tiff','tiff') if data.startswith((b'II*',b'MM\x00*')) else ('image/png','png') if data.startswith(b'\x89PNG') else (('image/jpeg','jpg') if data.startswith(b'\xff\xd8') else (('image/webp','webp') if data[8:12]==b'WEBP' else ('image/gif','gif')))
         path=ROOT/'items'/f'{digest}.{ext}'
         with open(path,'wb') as f: f.write(data); f.flush(); os.fsync(f.fileno())
-        content=data.decode('utf-8',errors='replace') if kind=='text' else ''
-        title=(' '.join(content.split())[:100] or 'Empty text') if kind=='text' else f'Screenshot / image · {ext.upper()}'
+        content=data.decode('utf-8',errors='replace') if kind=='text' else '\n'.join(p.name for p in files) if files else ''
+        title=(' '.join(content.split())[:100] or 'Empty text') if kind=='text' else ((files[0].name if len(files)==1 else f'{len(files)} files · {files[0].name}')[:100] if files else f'Screenshot / image · {ext.upper()}')
         ident=c.execute('insert into items(hash,kind,mime,path,content,title,created,last) values(?,?,?,?,?,?,?,?)',(digest,kind,mime,str(path),content,title,now,now)).lastrowid
         c.execute('insert into search(rowid,content) values(?,?)',(ident,content))
     c.execute('insert into events(item,time) values(?,?)',(ident,now)); c.commit(); revision()
@@ -43,7 +61,7 @@ def listing(query='',kind='all',limit=150):
     if kind=='archived': where.append('archived=1')
     else: where.append('archived=0')
     if kind=='pinned': where.append('pinned=1')
-    if kind in ('text','image'): where.append('kind=?');args.append(kind)
+    if kind in ('text','image','files'): where.append('kind=?');args.append(kind)
     if query: where.append('(content like ? or title like ?)');args.extend(['%'+query+'%']*2)
     rows=c.execute('select id,kind,mime,path,title,last,copies,pinned,archived,length(content) as chars from items where '+' and '.join(where)+' order by pinned desc,last desc limit ?',args+[min(10000,max(150,limit))]).fetchall()
     return {'items':[dict(r) for r in rows],'count':c.execute('select count(*) from items').fetchone()[0], 'bytes':sum(p.stat().st_size for p in (ROOT/'items').iterdir()),'events':c.execute('select count(*) from events').fetchone()[0]}
@@ -62,7 +80,7 @@ elif cmd=='watch':
     delay=0.5
     while True:
         started=time.monotonic();descriptors=[]
-        children=[subprocess.Popen(['wl-paste','--type',kind,'--no-newline','--watch',str(Path(__file__).resolve()),'store',kind]) for kind in ('text','image')]
+        children=[subprocess.Popen(['wl-paste','--type',mime,'--no-newline','--watch',str(Path(__file__).resolve()),'store',kind]) for mime,kind in [('text','text'),('image','image'),('text/uri-list','files'),('x-special/gnome-copied-files','files-gnome')]]
         try:
             for child in children:descriptors.append(os.pidfd_open(child.pid))
             select.select(descriptors,[],[])
@@ -78,6 +96,10 @@ elif cmd=='watch':
 elif cmd=='list': print(json.dumps(listing(a[1] if len(a)>1 else '',a[2] if len(a)>2 else 'all',int(a[3]) if len(a)>3 else 150)))
 elif cmd=='detail':
     row=item(int(a[1])); text=row.pop('content'); row['bytes']=Path(row['path']).stat().st_size; row['preview']=text[:40000];row['truncated']=len(text)>40000;row['lexer']='Text'
+    if row['kind']=='files':
+        paths=files_from(Path(row['path']).read_bytes())
+        row['files']=[{'name':p.name,'path':str(p),'exists':p.exists(),'image':p.suffix.lower() in ('.png','.jpg','.jpeg','.webp','.gif','.bmp','.svg')} for p in paths[:100]]
+        row['fileCount']=len(paths)
     if row['kind']=='text':
         from pygments import highlight
         from pygments.lexers import guess_lexer, get_lexer_by_name

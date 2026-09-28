@@ -33,6 +33,7 @@ Variants {
         // on screen — binding it straight to ShellState.dropdownAnchorX made a
         // swap teleport the outgoing panel to the incoming readout first.
         property string current: ""
+        property real cachedHeight: 0
         property real anchorX: ShellState.dropdownAnchorX
         // The surface is sized to the panel, but a panel that animates its own
         // height between two inner views exposes a stable `surfaceHeight` (the
@@ -113,18 +114,19 @@ Variants {
             to: 1
             duration: 260
             easing.type: Easing.OutCubic
+            onFinished: popup.cachedHeight = popup.panelHeight
         }
 
         Timer {
             id: presentTimer
-            interval: 32
+            interval: 16
             onTriggered: {
                 if (popup.current === "" || ShellState.dropdown !== popup.current) return;
                 // Wait for the compositor to acknowledge the newly sized surface.
                 if (!content.item || content.status !== Loader.Ready || popup.panelHeight <= 0) { restart(); return; }
                 const h = Math.round(popup.panelHeight);
                 if (h !== popup.measuredHeight) { popup.measuredHeight=h; popup.stableFrames=0; restart(); return; }
-                if (++popup.stableFrames < 3) { restart(); return; }
+                if (++popup.stableFrames < 2) { restart(); return; }
                 if (!popup.surfaceReady) { popup.surfaceReady=true; restart(); return; }
                 if (Math.round(popup.width) !== Math.round(popup.implicitWidth) || Math.round(popup.height) !== Math.round(popup.implicitHeight)) { restart(); return; }
                 openAnim.start();
@@ -134,7 +136,9 @@ Variants {
         SequentialAnimation {
             id: closeAnim
             NumberAnimation { target: popup; property: "reveal"; to: 0; duration: 170; easing.type: Easing.InCubic }
-            ScriptAction { script: { popup.current = ""; popup.surfaceReady=false; } }
+            // Keep the last panel instantiated: rebuilding a large QML tree on
+            // every click was costing hundreds of milliseconds.
+            ScriptAction { script: popup.surfaceReady=false }
         }
 
         SequentialAnimation {
@@ -156,6 +160,7 @@ Variants {
                 script: {
                     popup.anchorX = swapAnim.nextX;
                     popup.surfaceReady=false;
+                    popup.cachedHeight=0;
                     popup.current = swapAnim.next;
                 }
             }
@@ -190,10 +195,18 @@ Variants {
                 if (want === "") {
                     // Complete the content transition before unmapping its surface.
                     if (popup.current !== "") closeAnim.start();
-                } else if (popup.current === "" || popup.current === want) {
+                } else if (popup.current === want && !popup.surfaceReady && popup.cachedHeight > 0 && Math.abs(popup.panelHeight - popup.cachedHeight) < 1) {
+                    // The cached panel already has geometry. Map it and start
+                    // moving on the next scene-graph turn instead of loading it.
+                    popup.anchorX = ShellState.dropdownAnchorX;
+                    popup.reveal = 0;
+                    popup.surfaceReady = true;
+                    Qt.callLater(() => { if (ShellState.dropdown === popup.current) openAnim.start(); });
+                } else if (popup.current === "" || popup.current === want || !popup.surfaceReady) {
                     // Nothing showing, or the same panel caught mid-close.
                     popup.anchorX = ShellState.dropdownAnchorX;
-                    if (popup.current === "") {popup.reveal = 0; popup.surfaceReady=false;}
+                    if (popup.current !== want) popup.cachedHeight = 0;
+                    if (popup.current === "" || !popup.surfaceReady) {popup.reveal = 0; popup.surfaceReady=false;}
                     popup.current = want;
                     // Let the new surface and loader acquire their final size first.
                     presentTimer.restart();
@@ -269,7 +282,7 @@ Variants {
 
             Loader {
                 id: content
-                asynchronous: true
+                asynchronous: false
 
                 width: parent.width
                 active: popup.current !== ""

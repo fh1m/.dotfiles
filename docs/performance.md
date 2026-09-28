@@ -16,6 +16,7 @@ The target is a smooth useful machine, not an empty task manager screenshot. A b
 | Spotify | Native events and local transport; catalogue workers separate; bounded cache/next-track preload |
 | Audio visualization | Follows actual active audio; unused processing stops; compact output has a lower frame rate |
 | Wallpapers / theme picker | Expensive picker constructed on demand |
+| Wallpaper startup | A small cached JPEG of each chosen display image loads first; the full-resolution image follows after settings load. The bundled preset never flashes over a custom choice. |
 | Monitor | Fast live sampling while visible; stable delegates and retained graph history |
 | Switcher | Captures only while open; selected previews faster; optional preview pause |
 
@@ -36,7 +37,11 @@ python3 scripts/doctor.py
 
 ## Rendering is not free
 
-Two high-resolution 60 Hz panels plus blur and live content keep the Intel compositor busy. Samples showed substantial render-engine use. Reduced blur, 30 Hz ticker and precision experiments did not sufficiently solve that overall cost and were reverted to preserve the preferred appearance. New render scheduling and eligible direct scanout were retained, but the tested NVIDIA XWayland window did not qualify for scanout.
+Two high-resolution 60 Hz panels plus blur and live content keep the Intel compositor busy. On 2026-09-28, `intel_gpu_top` showed 92–100% Render/3D use during the user's normal Kitty/music desktop: roughly 74–77% Hyprland and 17–20% Kitty in samples. CPU and memory had headroom (about 8 GiB MemAvailable, near-zero memory pressure), and NVIDIA was idle. On an empty main workspace the render engine still used about 52–55%; disabling blur temporarily reduced it to about 40–41%. Blur alone was not the whole cause.
+
+The bar had several independent, perpetual 60 Hz animations: the scrolling ticker, rotating album art, robot badge, sound pulse and Bluetooth pulse. They now use one shared 30 Hz clock. In a later sample of the same Kitty desktop, render use was roughly 46–60%, with Hyprland around 26–42% and Kitty around 16–22%. The workload changed between samples, so these numbers are evidence of a strong improvement, not a fixed percentage saving. Blur stayed enabled at its preferred settings. New render scheduling and eligible direct scanout were retained, but the tested NVIDIA XWayland window did not qualify for scanout.
+
+Popup QML trees are now kept after closing for fast repeat opens. A shorter surface-settle gate starts the reveal sooner, and the clipboard vault no longer reloads an unchanged list on every open. The first cold open of large panels still has a construction cost; the cache removes that cost from repeat use without keeping every panel alive all session.
 
 Do not claim “GPU offload fixes all desktop lag.” NVIDIA application rendering still reaches Intel composition and Intel-wired panels. Hardware decode reduces decode CPU, while JavaScript and many tab allocations remain CPU/RAM work.
 

@@ -33,9 +33,13 @@ Singleton {
     // restart does not quietly re-attach the wallpaper to the profile.
     property string lockedFile: ""
     property var displays: ({})
+    function startupSource(output: string): url { return Paths.url(`${Paths.configDir}/startup-wallpaper-${output.replace(/[^a-zA-Z0-9_-]/g,"_")}.jpg`); }
+    function syncStartup(output: string, path: string): void {
+        Quickshell.execDetached([`${Paths.home}/.local/bin/wrayth-startup-wallpaper`,path||"",output]);
+    }
     function displaySource(output: string): url { const path=displays[output]?.file; return path ? Paths.url(path) : displayed; }
     function displayMode(output: string): int { return displays[output]?.mode ?? Image.PreserveAspectCrop; }
-    function setDisplay(output: string, path: string, mode: int): void { const next=Object.assign({},displays); next[output]={file:path,mode:mode};displays=next;write(); }
+    function setDisplay(output: string, path: string, mode: int): void { const next=Object.assign({},displays); next[output]={file:path,mode:mode};displays=next;syncStartup(output,path);write(); }
 
     // name -> { mode, every, fade, items: [{ file, on, star }] }
     property var pools: ({})
@@ -545,6 +549,7 @@ Singleton {
             dynamic = typeof parsed.dynamic === "boolean" ? parsed.dynamic : true;
             folder = typeof parsed.folder === "string" ? parsed.folder : "";
             displays = parsed.displays && typeof parsed.displays === "object" ? parsed.displays : ({});
+            for(const output of Object.keys(displays)) syncStartup(output,displays[output]?.file??"");
             lockedFile = typeof parsed.lockedFile === "string" ? parsed.lockedFile : "";
             pools = parsed.pools && typeof parsed.pools === "object" && !Array.isArray(parsed.pools) ? parsed.pools : ({});
             loaded = true;

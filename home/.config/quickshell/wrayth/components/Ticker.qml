@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import qs.config
+import qs.services
 
 // A seamless horizontal marquee. Two copies of the text chase each other so the
 // loop has no seam, and the alpha is masked at both ends to fade the text out.
@@ -41,7 +42,8 @@ Item {
 
             // Scrolls the width of one copy, then loops; the second copy is
             // exactly where the first started, so the seam never shows.
-            property real offset: 0
+            property real epoch: MotionClock.ms
+            readonly property real offset: scrollActive ? ((MotionClock.ms - epoch) * root.speed / 1000) % Math.max(1, root.contentWidth + root.loopGap) : 0
 
             Text {
                 id: first
@@ -82,20 +84,9 @@ Item {
         }
     }
 
-    NumberAnimation {
-        id: scroll
-
-        target: strip
-        property: "offset"
-        from: 0
-        to: root.contentWidth + root.loopGap
-        duration: Math.max(1, (root.contentWidth+root.loopGap) / root.speed * 1000)
-        loops: Animation.Infinite
-        running: root.visible && root.scrollEnabled && root.contentWidth > 0 && (!root.scrollOnlyOverflow || root.contentWidth > root.width)
-    }
-
-    onTextChanged: strip.offset=0
-    onScrollEnabledChanged: if(!scrollEnabled)strip.offset=0
+    readonly property bool scrollActive: root.visible && root.scrollEnabled && root.contentWidth > 0 && (!root.scrollOnlyOverflow || root.contentWidth > root.width)
+    onTextChanged: strip.epoch = MotionClock.ms
+    onScrollEnabledChanged: strip.epoch = MotionClock.ms
 
     // Drawn at zero opacity rather than visible: false -- an invisible item
     // never renders into its layer, so it would hand MultiEffect an empty mask.

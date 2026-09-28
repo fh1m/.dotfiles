@@ -181,6 +181,7 @@ Scope {
         target: "clipboard"
         function select(id: string): void { ClipboardVault.select(parseInt(id)); ShellState.dropdown = "clipboard"; }
         function filter(kind: string): void { ClipboardVault.filter = kind; ShellState.dropdown = "clipboard"; }
+        function state(): string { return JSON.stringify({count:ClipboardVault.count,selected:ClipboardVault.selected,kind:ClipboardVault.detail.kind??"",ready:!!ClipboardVault.detail.id,error:ClipboardVault.error}); }
     }
     IpcHandler {
         target: "switcher"
