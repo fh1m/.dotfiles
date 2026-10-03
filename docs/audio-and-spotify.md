@@ -70,6 +70,8 @@ The 2026-09-28 Spotify skip test found a separate, digital gap before Bluetooth:
 
 The bar now shows a loading spinner and holds the album art still while the player loads a track. Rotation resumes on the player's `Playing` event. This makes an unavoidable uncached-track wait visible instead of implying that audio has already started.
 
+On 2026-10-03, a long-lived player lost its streaming channel after a DNS disruption. Its process and local control socket remained up, but `StartUris` returned `channel closed` and the headset monitor stayed digitally silent. Restarting only `sensei-spotify.service` rebuilt the session and a new capture confirmed nonzero PCM at the Bluetooth output. The local transport now detects this specific error, restarts the player once and retries the requested control. Other Spotify errors still surface normally; repeated session loss needs a network/account investigation, not an endless restart loop.
+
 `pw-top` showed no graph underruns even when listening still jittered. HCI timing revealed a more specific issue: short stalls caused an outgoing L2CAP socket to hit queue pressure, and PipeWire’s sink could drop packets. A headset-only `SO_SNDBUF` interceptor increased queue headroom. A larger-buffer trace recorded 3,375 packets over 44.99 seconds with zero sequence gaps; SBC-XQ comparison recorded 20 gaps in 45 seconds. Those samples support the change, not a promise of zero radio interruptions forever.
 
 ## Optional socket workaround on a new machine

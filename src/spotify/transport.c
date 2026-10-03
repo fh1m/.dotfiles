@@ -14,7 +14,9 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/wait.h>
 typedef struct json_object J;
+static int recovered_closed_channel;
 static char store[4096], home[2048];
 static J *get(J *o, const char *k) {
   J *v = NULL;
@@ -141,6 +143,32 @@ static J *rpc(J *request) {
   if (!envelope)
     fail("Spotify returned an invalid response");
   J *err = get(envelope, "Err");
+  char error_text[4096] = "";
+  if (err && json_object_is_type(err, json_type_array)) {
+    size_t count = json_object_array_length(err);
+    if (count >= sizeof error_text)
+      count = sizeof error_text - 1;
+    for (size_t i = 0; i < count; i++)
+      error_text[i] = (char)json_object_get_int(json_object_array_get_idx(err, i));
+  }
+  if (err && !recovered_closed_channel &&
+      strstr(error_text, "channel closed")) {
+    recovered_closed_channel = 1;
+    json_object_put(envelope);
+    pid_t child = fork();
+    if (child == 0) {
+      execlp("systemctl", "systemctl", "--user", "restart",
+             "sensei-spotify.service", (char *)NULL);
+      _exit(127);
+    }
+    int result = 0;
+    if (child > 0 && waitpid(child, &result, 0) == child &&
+        WIFEXITED(result) && WEXITSTATUS(result) == 0) {
+      usleep(500000);
+      return rpc(request);
+    }
+    fail("Sensei, the Spotify player lost its session and could not restart.");
+  }
   if (err)
     fail("Sensei, Spotify rejected that control. Check the player in Account.");
   J *bytes = get(envelope, "Ok");
