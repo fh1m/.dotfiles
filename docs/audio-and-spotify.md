@@ -46,6 +46,8 @@ Bridge status calls measured roughly 2–4 ms in short local samples. Cold audio
 
 The Sound panel reports active output/source, devices/profiles and per-application streams. Volume acknowledgement is separate from delayed catalogue requests, so a slider does not snap back to an old server value. Detailed subscriptions run while the panel is open; native PipeWire controls provide immediate feedback.
 
+The system output slider and sound-badge wheel allow up to 150% gain. Spotify Connect's own volume remains 0–100%; use the system output for extra gain. Values above 100% can clip a loud recording.
+
 The experiment with an aggressive Spotify client latency override made listening less robust. It was removed. Normal client buffering (~145 ms observed in one sample) and normal CPU priority provide scheduling headroom without slowing UI command dispatch. Global PipeWire quantum/sample rate were not broadly changed.
 
 ## Bluetooth investigation
@@ -53,6 +55,20 @@ The experiment with an aggressive Spotify client latency override made listening
 The reference headset exposed SBC, SBC-XQ and hands-free CVSD, but not AAC/aptX/LDAC. A setting cannot invent a codec the devices do not negotiate. Regular SBC at tested bitpool 53 was more stable than XQ in the captured comparison.
 
 Moving Wi-Fi to 5 GHz reduced 2.4 GHz coexistence pressure. Discovery stops when the widget closes and expires after 20 seconds; paired devices appear from cached state immediately. Automatic hands-free switching is disabled for the music policy so microphone use does not unexpectedly replace stereo playback. Hands-free remains manually selectable.
+
+On the UX581GV the AX200 Wi-Fi interface still had power saving enabled on 5 GHz. The following disables it for the active NetworkManager connection, removing one possible sleep/wake contributor to headset stalls:
+
+```sh
+nmcli connection modify YOUR_WIFI_CONNECTION 802-11-wireless.powersave 2
+sudo iw dev YOUR_WIFI_INTERFACE set power_save off
+iw dev YOUR_WIFI_INTERFACE get power_save
+```
+
+Use the actual connection/interface names on another machine. The NetworkManager setting persists; the `iw` command applies it immediately. This can cost some battery power.
+
+The 2026-09-28 Spotify skip test found a separate, digital gap before Bluetooth: 1.05 seconds of silence on two early skips. Preloading the next URI immediately when the local queue is accepted reduced an early Next sample to 0.15 seconds of silence. This does not prove the radio is always clear; PipeWire also logged missing AX200 packet-completion reports during a local tone test. Steady Spotify audio showed zero PipeWire graph errors in a 24-second sample.
+
+The bar now shows a loading spinner and holds the album art still while the player loads a track. Rotation resumes on the player's `Playing` event. This makes an unavoidable uncached-track wait visible instead of implying that audio has already started.
 
 `pw-top` showed no graph underruns even when listening still jittered. HCI timing revealed a more specific issue: short stalls caused an outgoing L2CAP socket to hit queue pressure, and PipeWire’s sink could drop packets. A headset-only `SO_SNDBUF` interceptor increased queue headroom. A larger-buffer trace recorded 3,375 packets over 44.99 seconds with zero sequence gaps; SBC-XQ comparison recorded 20 gaps in 45 seconds. Those samples support the change, not a promise of zero radio interruptions forever.
 

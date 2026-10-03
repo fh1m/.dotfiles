@@ -50,6 +50,10 @@ For more information, visit https://github.com/aome510/spotify-player?tab=readme
 
 #[derive(Debug, Serialize)]
 enum PlayerEvent {
+    Loading {
+        playable_id: PlayableId<'static>,
+        position_ms: u32,
+    },
     Changed {
         playable_id: PlayableId<'static>,
     },
@@ -70,6 +74,9 @@ impl PlayerEvent {
     /// gets the event's arguments
     pub fn args(&self) -> Vec<String> {
         match self {
+            PlayerEvent::Loading { playable_id, position_ms } => {
+                vec!["Loading".to_string(), playable_id.uri(), position_ms.to_string()]
+            }
             PlayerEvent::Changed { playable_id } => {
                 vec!["Changed".to_string(), playable_id.uri()]
             }
@@ -113,6 +120,9 @@ fn spotify_id_to_playable_id(uri: &spotify_uri::SpotifyUri) -> anyhow::Result<Pl
 impl PlayerEvent {
     pub fn from_librespot_player_event(e: player::PlayerEvent) -> anyhow::Result<Option<Self>> {
         Ok(match e {
+            player::PlayerEvent::Loading { track_id, position_ms, .. } => Some(PlayerEvent::Loading {
+                playable_id: spotify_id_to_playable_id(&track_id)?, position_ms,
+            }),
             player::PlayerEvent::TrackChanged { audio_item } => Some(PlayerEvent::Changed {
                 playable_id: spotify_id_to_playable_id(&audio_item.track_id)?,
             }),

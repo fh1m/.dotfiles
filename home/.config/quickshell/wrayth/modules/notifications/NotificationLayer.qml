@@ -4,7 +4,7 @@ import Quickshell.Wayland
 import qs.config
 import qs.services
 
-// The notification stack: top-right, newest on top, one layer surface per card.
+// The notification stack lives above the ScreenPad bar, newest at the bottom.
 // Separate surfaces rather than one column because the blur layer rule ignores
 // alpha, and a single surface would frost the gaps between cards too.
 Variants {
@@ -25,10 +25,10 @@ Variants {
 
         property real reveal: 0
 
-        screen: ShellState.barScreens[0] ?? null
+        screen: ShellState.bottomBarScreens[0] ?? ShellState.barScreens[0] ?? null
         color: "transparent"
 
-        implicitWidth: 400
+        implicitWidth: 480
         implicitHeight: content.implicitHeight
 
         WlrLayershell.layer: WlrLayer.Overlay
@@ -42,19 +42,12 @@ Variants {
         exclusiveZone: 0
 
         anchors {
-            top: true
+            bottom: true
             right: true
         }
 
-        // Tucked exactly inside the active window's top-right corner. Hyprland
-        // reports `at` as the content origin with the border drawn outside it,
-        // so sitting on `at` already leaves the window's border visible around
-        // the card. With nothing open on the workspace there is no corner to sit
-        // in, and it falls back to the screen's top right under the bar.
-        readonly property bool inWindow: ActiveWindow.present && ShellState.focusedScreenName() === screen?.name
-
-        margins.top: (inWindow ? ActiveWindow.y + ActiveWindow.borderSize : Appearance.metrics.barHeight + 16) + Notifications.offsetOf(index)
-        margins.right: inWindow ? Math.max(0, (screen?.width ?? 0) - (ActiveWindow.x + ActiveWindow.width) + ActiveWindow.borderSize) : 24
+        margins.bottom: Appearance.metrics.barHeight + 16 + Notifications.offsetOf(index)
+        margins.right: 24
 
         onImplicitHeightChanged: Notifications.setHeight(modelData.id, implicitHeight)
         Component.onCompleted: {
@@ -62,7 +55,7 @@ Variants {
             entry.start();
         }
 
-        Behavior on margins.top {
+        Behavior on margins.bottom {
             NumberAnimation {
                 duration: Appearance.duration.panel
                 easing.type: Easing.OutCubic

@@ -233,6 +233,7 @@ static J *status(J *d) {
   J *event = readfile("native-event.json");
   double age = now() - num(get(event, "time"));
   J *et = get(event, "track"), *selection = readfile("selected-device.json");
+  int loading = yes(get(event, "loading")) && age >= 0 && age < 30;
   int native_playing = yes(get(event, "playing"));
   long long native_progress = num(get(event, "progress")) + (native_playing ? (long long)(age * 1000) : 0);
   int local_selection = !strlen(str(get(selection, "name"))) || !strcmp(str(get(selection, "name")), "Sensei · ZenBook Duo");
@@ -253,6 +254,8 @@ static J *status(J *d) {
   }
   boolean(o, "ready", d != NULL || native_owner || (local_selection && num(get(event, "player_pid")) > 0 && kill((pid_t)num(get(event, "player_pid")), 0) == 0));
   boolean(o, "playing", playing);
+  boolean(o, "loading", loading);
+  copy(o, "eventUri", get(event, "uri"));
   add(o, "track", track);
   integer(o, "progress", progress);
   copy(o, "volume", get(device, "volume_percent"));
@@ -278,7 +281,7 @@ static void event(int argc, char **argv) {
   if (argc < 4)
     exit(0);
   const char *kind = argv[2], *uri = argv[3];
-  if (strcmp(kind, "Changed") && strcmp(kind, "Playing") &&
+  if (strcmp(kind, "Loading") && strcmp(kind, "Changed") && strcmp(kind, "Playing") &&
       strcmp(kind, "Paused"))
     exit(0);
   const char *id = strrchr(uri, ':');
@@ -300,6 +303,7 @@ static void event(int argc, char **argv) {
     track = get(old, "track") ? json_object_get(get(old, "track")) : NULL;
   J *o = json_object_new_object();
   text(o, "uri", uri);
+  boolean(o, "loading", !strcmp(kind, "Loading") || !strcmp(kind, "Changed"));
   integer(o, "player_pid", getppid());
   for (int i = 4; i + 1 < argc; ++i)
     if (!strcmp(argv[i], "--device-id")) text(o, "deviceId", argv[i + 1]);
@@ -408,7 +412,14 @@ static void cache_rows(J *rows) {
 }
 static void music_start(int argc, char **argv) {
   const char *name = argv[1];
-  J *d = playback();
+  // The local player accepts these commands directly. A Web API playback
+  // snapshot can sit behind Spotify's rate limit for seconds even while the
+  // local socket is ready, so only consult it when a remote device was chosen.
+  J *selection = readfile("selected-device.json");
+  int selected_local = !selection || !strlen(str(get(selection, "name"))) ||
+      !strcmp(str(get(selection, "name")), "Sensei · ZenBook Duo");
+  if (selection) json_object_put(selection);
+  J *d = selected_local ? NULL : playback();
   const char *device = str(get(get(d, "device"), "name"));
   if (*device && strcmp(device, "Sensei · ZenBook Duo")) {
     char exe[4096];
@@ -463,6 +474,14 @@ static void music_start(int argc, char **argv) {
     control(request);
     add(list, "time", json_object_new_double(now()));
     writefile("local-queue.json", list);
+    // Start fetching the next song as soon as the queue is accepted. Waiting
+    // for the Playing event loses several seconds of useful preload time and
+    // makes an early Next leave a second of digital silence.
+    if (offset + 1 < (long long)json_object_array_length(uris)) {
+      J *q = json_object_new_object();
+      copy(q, "PreloadTrack", json_object_array_get_idx(uris, offset + 1));
+      control(q);
+    }
     json_object_put(list);
   } else {
     if (argc < 4 || (!strcmp(argv[2], "playlist") && !strlen(argv[3])) ||

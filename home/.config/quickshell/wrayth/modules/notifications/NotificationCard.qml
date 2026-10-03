@@ -155,7 +155,7 @@ ChamferPanel {
             color: Theme.bright
             elide: Text.ElideRight
             font.family: Appearance.font.data
-            font.pixelSize: Appearance.size.body
+            font.pixelSize: 16
             font.weight: Appearance.font.weightSemi
         }
 
@@ -166,7 +166,7 @@ ChamferPanel {
             text: Notifications.safeBody(root.notification?.body)
             color: Theme.text
             font.family: Appearance.font.data
-            font.pixelSize: 13
+            font.pixelSize: 15
             wrapMode: Text.Wrap
             maximumLineCount: 6
             elide: Text.ElideRight
