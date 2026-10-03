@@ -43,7 +43,7 @@ DropdownFrame {
  Column {x:12;y:10;spacing:7;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Memory breakdown";color:Theme.widgetAccent;pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Available "+root.size(root.d.memory.available)+"   Cache "+root.size(root.d.memory.cache);pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Swap "+root.size(root.d.memory.swapUsed)+" / "+root.size(root.d.memory.swapTotal);pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Cache is reclaimable; used = total − available";pixelSize:10;color:Theme.widgetMuted}}
  }
  Rectangle {width:(overview.width-12)/2;height:94;color:Theme.alpha(Theme.widgetSurface,.6);border.color:Theme.widgetBorder
- Column {x:12;y:10;spacing:7;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Thermals / session";color:Theme.widgetAccent;pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"CPU "+(RobotBench.data.cpuTemperature??"—")+" °C   Load "+root.d.load.map(v=>v.toFixed(2)).join(" / ");pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Uptime "+Math.floor(root.d.uptime/3600)+"h "+Math.floor(root.d.uptime/60%60)+"m   "+root.d.processes.length+" processes";pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:Machine.cpuModel+" · "+root.d.cores.length+" threads";pixelSize:10;color:Theme.widgetMuted}}
+ Column {x:12;y:10;spacing:7;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Thermals / session";color:Theme.widgetAccent;pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"CPU "+(RobotBench.data.cpuTemperature??"—")+" °C   Load "+root.d.load.map(v=>v.toFixed(2)).join(" / ");pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Uptime "+Math.floor(root.d.uptime/3600)+"h "+Math.floor(root.d.uptime/60%60)+"m   "+(root.d.processCount??root.d.processes.length)+" processes";pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:Machine.cpuModel+" · "+root.d.cores.length+" threads";pixelSize:10;color:Theme.widgetMuted}}
  }
  }
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"CPU threads · each core 0–100%";pixelSize:11;color:Theme.widgetMuted}
@@ -104,7 +104,7 @@ DropdownFrame {
  }
 
  }
- Row {spacing:12;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:Demo.active ? ("Private host / addresses hidden · "+root.d.kernel) : (root.processCommand || (root.d.host+" · "+root.d.kernel+" · "+root.d.ips.join(" / ")));width:790;elide:Text.ElideRight;pixelSize:10;color:Theme.widgetMuted}ControlTile {implicitWidth:190;implicitHeight:25;label:"Open btop";onActivated:Quickshell.execDetached(["kitty","btop"])}}
+ Row {spacing:8;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:Demo.active ? ("Private host / addresses hidden · "+root.d.kernel) : (root.processCommand || (root.d.host+" · "+root.d.kernel+" · "+root.d.ips.join(" / ")));width:660;elide:Text.ElideRight;pixelSize:10;color:Theme.widgetMuted}ControlTile {implicitWidth:190;implicitHeight:25;label:"Capture 15s stall";onActivated:Quickshell.execDetached(["kitty","--hold","--title","Sensei · stall capture","-e","/home/fh1m/.local/bin/sensei-health"])}ControlTile {implicitWidth:150;implicitHeight:25;label:"Open btop";onActivated:Quickshell.execDetached(["kitty","btop"])}}
  }
  property string processCommand:""
 }

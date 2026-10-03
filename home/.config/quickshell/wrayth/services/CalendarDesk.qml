@@ -21,7 +21,8 @@ Singleton {
  function formatSeconds(value){const s=Math.max(0,Math.ceil(value));return String(Math.floor(s/60)).padStart(2,'0')+":"+String(s%60).padStart(2,'0');}
  function focusRemaining(now){return focusState.running?Math.max(0,focusState.ends-now/1000):focusState.remaining;}
  SystemClock {id:dayClock;precision:root.focusState.running?SystemClock.Seconds:SystemClock.Minutes}
- readonly property string barSummary:{const d=Qt.formatDateTime(dayClock.date,'yyyy-MM-dd');const todo=tasks.filter(t=>!t.archived&&!t.done&&t.date<=d).length;let items=['DHAKA · UTC+06',todo+' tasks'];if(focusState.running)items.push((focusState.phase==='focus'?'Focus':'Break')+' '+formatSeconds(focusRemaining(dayClock.date.getTime())));if(upcoming.length)items.push('Next '+upcoming[0].time+' '+upcoming[0].title);else items.push('Agenda clear');return items.join('  /  ');}
+ readonly property string barSummary:{const d=Qt.formatDateTime(dayClock.date,'yyyy-MM-dd');const todo=tasks.filter(t=>!t.archived&&!t.done&&t.date<=d).length;let items=['DHAKA · UTC+06',todo+' tasks'];if(upcoming.length)items.push('Next '+upcoming[0].time+' '+upcoming[0].title);else items.push('Agenda clear');return items.join('  /  ');}
+ readonly property string focusReadout:focusState.running?(focusState.phase==='focus'?'FOCUS ':'BREAK ')+formatSeconds(focusRemaining(dayClock.date.getTime())):''
  function timer(seconds,title){dispatch(["@HOME@/.local/bin/sensei-calendar","timer",String(seconds),title]);}
  onMonthChanged:refresh()
  Process {id:list;command:["@HOME@/.local/bin/sensei-calendar","list",root.month];stdout:StdioCollector {onStreamFinished:{try{let d=JSON.parse(text);root.events=d.events;root.clocks=d.clocks;root.tasks=d.tasks||[];root.upcoming=d.upcoming||[];root.focusState=d.focus||root.focusState;}catch(e){}}}}

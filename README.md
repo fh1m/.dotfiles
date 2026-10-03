@@ -11,7 +11,7 @@
 | Start here | Make it yours | Keep it running |
 |:---:|:---:|:---:|
 | [Install](docs/installation.md) · [Gallery](docs/gallery.md) · [Keys](docs/keybindings.md) | [Design](docs/design-story.md) · [GPU + Chrome](docs/gpu-and-chrome.md) · [Robotics](docs/robotics.md) | [Hardware](docs/hardware-and-boot.md) · [Performance](docs/performance.md) · [Recovery](docs/operations.md) |
-| [Validation](docs/validation.md) | [Audio](docs/audio-and-spotify.md) · [Phone](docs/phone.md) | [Version baseline](docs/tested-versions.txt) |
+| [Validation](docs/validation.md) · [Workstation patterns](docs/workstation-patterns.md) | [Audio](docs/audio-and-spotify.md) · [Phone](docs/phone.md) | [Version baseline](docs/tested-versions.txt) |
 
 <img src="docs/assets/flight-deck.gif" alt="Real Hyprland desktop opening the System and Spotify panels" width="100%">
 
@@ -41,7 +41,7 @@ The main bar carries identity, music, time, sound and controls. The lower bar ca
 
 <table><tr><td><img src="docs/assets/monitor.png" alt="System Monitor"></td><td><img src="docs/assets/usb.png" alt="USB inspector"></td><td><img src="docs/assets/phone.png" alt="Phone bridge"></td></tr><tr><td><b>Monitor</b><br>Threads, memory, processes, disks, network.</td><td><b>USB</b><br>Ports, permissions, processes, history.</td><td><b>Phone</b><br>KDE Connect, Tailscale, Termux, files.</td></tr></table>
 
-*A meter should answer “why?” before it makes a pretty graph.* [Performance notes →](docs/performance.md)
+*A meter should answer “why?” before it makes a pretty graph.* When it doesn't, Monitor's **Capture 15s stall** keeps the evidence. [Performance notes →](docs/performance.md)
 
 ## Panels with purpose
 
@@ -49,7 +49,7 @@ The main bar carries identity, music, time, sound and controls. The lower bar ca
 
 **Music stays local and responsive.** Native transport talks to a patched spotify-player/librespot daemon; catalogue requests take another path. `Ctrl+Space` pauses; `Ctrl+←/→` skips; `Ctrl+↑/↓` adjusts volume. [Audio architecture →](docs/audio-and-spotify.md)
 
-**The lab is one click away.** Docker and Compose, ARM64 containers through QEMU, NVIDIA CDI, serial devices and tmux launches. ARM emulation still runs on the CPU. [Lab manual →](docs/robotics.md)
+**The lab is one click away.** Docker and Compose, ARM64 containers through QEMU, NVIDIA CDI, serial devices and tmux launches. Tasks also records experiments and reopens a project's tmux session. ARM emulation still runs on the CPU. [Lab manual →](docs/robotics.md)
 
 ## Small tricks, large payoff
 

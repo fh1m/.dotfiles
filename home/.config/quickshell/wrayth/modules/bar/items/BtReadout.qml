@@ -25,7 +25,13 @@ Item {
         id:musicRune
         anchors.verticalCenter: parent.verticalCenter
         color:root.audioPlaying?Theme.signal:Theme.dim
-        scale: root.audioPlaying ? 1.08 - .08 * Math.cos(MotionClock.ms * Math.PI * 2 / 840) : 1
+        scale: 1
+        SequentialAnimation on scale {
+            running: root.audioPlaying && musicRune.visible
+            loops: Animation.Infinite
+            NumberAnimation { from: 1; to: 1.16; duration: 420; easing.type: Easing.InOutSine }
+            NumberAnimation { from: 1.16; to: 1; duration: 420; easing.type: Easing.InOutSine }
+        }
     }
 
     // Left-aligned so a short name sits next to the label, but capped at 120px

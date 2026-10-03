@@ -17,8 +17,10 @@ The target is a smooth useful machine, not an empty task manager screenshot. A b
 | Audio visualization | Follows actual active audio; unused processing stops; compact output has a lower frame rate |
 | Wallpapers / theme picker | Expensive picker constructed on demand |
 | Wallpaper startup | A small cached JPEG of each chosen display image loads first; the full-resolution image follows after settings load. The bundled preset never flashes over a custom choice. |
-| Monitor | Fast live sampling while visible; stable delegates and retained graph history |
+| Monitor | Live graph samples while visible; process scans only on Processes, hardware inventory only on detail tabs |
 | Switcher | Captures only while open; selected previews faster; optional preview pause |
+
+On this laptop, a complete 417-process monitor sample took about 125 ms and a hardware-inventory sample about 375 ms. The graph-only path measured about 63–76 ms after separating those jobs. These are local wall-clock samples, not a guarantee under load.
 
 ## Memory: measure the right thing
 
@@ -39,7 +41,7 @@ python3 scripts/doctor.py
 
 Two high-resolution 60 Hz panels plus blur and live content keep the Intel compositor busy. On 2026-09-28, `intel_gpu_top` showed 92–100% Render/3D use during the user's normal Kitty/music desktop: roughly 74–77% Hyprland and 17–20% Kitty in samples. CPU and memory had headroom (about 8 GiB MemAvailable, near-zero memory pressure), and NVIDIA was idle. On an empty main workspace the render engine still used about 52–55%; disabling blur temporarily reduced it to about 40–41%. Blur alone was not the whole cause.
 
-The bar had several independent, perpetual 60 Hz animations: the scrolling ticker, rotating album art, robot badge, sound pulse and Bluetooth pulse. They now use one shared 30 Hz clock. In a later sample of the same Kitty desktop, render use was roughly 46–60%, with Hyprland around 26–42% and Kitty around 16–22%. The workload changed between samples, so these numbers are evidence of a strong improvement, not a fixed percentage saving. Blur stayed enabled at its preferred settings. New render scheduling and eligible direct scanout were retained, but the tested NVIDIA XWayland window did not qualify for scanout.
+The bar once had several independent, perpetual 60 Hz animations. A shared 30 Hz clock was an intermediate improvement; the current shell uses native animations only while each indicator is active, and the ticker no longer renders through two mask textures. An earlier sample of the Kitty desktop showed render use around 46–60%, with Hyprland around 26–42% and Kitty around 16–22%. That workload changed between samples, so these numbers are historical evidence, not a measured saving from the latest change. Blur remains enabled. New render scheduling and eligible direct scanout were retained, but the tested NVIDIA XWayland window did not qualify for scanout.
 
 Popup QML trees are now kept after closing for fast repeat opens. A shorter surface-settle gate starts the reveal sooner, and the clipboard vault no longer reloads an unchanged list on every open. The first cold open of large panels still has a construction cost; the cache removes that cost from repeat use without keeping every panel alive all session.
 
@@ -55,4 +57,4 @@ Input masks pass closing-widget clicks through. Late requests use context guards
 
 Unused reCamera bridge/dashboard units were removed after backups. NoMachine is on demand. Unsupported Dynamic Boost was disabled on this hardware. NVIDIA persistence remained for CUDA readiness with negligible observed CPU use. Network dependencies and essential firmware were not removed just to shorten a boot chart.
 
-There is no perpetual audit timer in this repository. Use short comparable samples, then stop tracing. Debug logs, GPU probes and HCI captures can themselves affect the thing being measured.
+There is no perpetual audit timer in this repository. The Monitor's **Capture 15s stall** action runs `sensei-health` once and saves pressure, RAM, process and service context under `~/.local/state/sensei-health/`. Use short comparable samples, then stop tracing. Debug logs, GPU probes and HCI captures can themselves affect the thing being measured.

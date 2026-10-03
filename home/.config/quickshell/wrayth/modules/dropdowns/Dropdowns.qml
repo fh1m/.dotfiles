@@ -68,11 +68,11 @@ Variants {
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }
         visible: current !== "" && surfaceReady && !ShellState.externalDialogOpen
 
-        implicitWidth: 2 * surfaceInset + (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" ? 1040 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "system" || current === "ident" ? 596 : 380)
+        implicitWidth: Math.min(modelData.width - 2 * edge, 2 * surfaceInset + (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" ? 1040 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "system" || current === "ident" ? 596 : 380))
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.
-        implicitHeight: Math.max(1, Math.round(panelHeight + 2 * surfaceInset))
+        implicitHeight: Math.max(1, Math.min(modelData.height - Appearance.metrics.barHeight - 2 * gap, Math.round(panelHeight + 2 * surfaceInset)))
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "wrayth-popup"
@@ -282,7 +282,9 @@ Variants {
 
             Loader {
                 id: content
-                asynchronous: false
+                // Heavy panels instantiate over multiple event-loop turns so
+                // clicking a readout never blocks the bar's first response.
+                asynchronous: true
 
                 width: parent.width
                 active: popup.current !== ""

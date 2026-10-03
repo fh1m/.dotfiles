@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""Run a robotics experiment with a durable, comparable record."""
+import argparse
+import datetime as dt
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import subprocess
+import sys
+import time
+
+
+def git_value(path, *args):
+    try:
+        p = subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True, timeout=4)
+        return p.stdout.strip() if p.returncode == 0 else ""
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="action", required=True)
+    run = sub.add_parser("run", help="record and run a command")
+    run.add_argument("--project", type=Path, default=Path.cwd())
+    run.add_argument("--name", default="experiment")
+    run.add_argument("--command-line", default="", help="command line split like a terminal, without a shell")
+    run.add_argument("command", nargs=argparse.REMAINDER)
+    open_project = sub.add_parser("open", help="attach to a persistent project tmux session")
+    open_project.add_argument("--project", type=Path, required=True)
+    open_project.add_argument("--name", default="robotics")
+    sub.add_parser("list", help="show recent experiments")
+    args = parser.parse_args()
+    base = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "sensei-lab"
+    base.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if args.action == "list":
+        for item in sorted(base.iterdir(), reverse=True)[:20]:
+            meta = item / "run.json"
+            if meta.exists():
+                d = json.loads(meta.read_text())
+                print(f"{item.name}  {d.get('status', 'running'):>7}  {d['project']}  {' '.join(d['command'])}")
+        return
+    project = args.project.expanduser().resolve()
+    if not project.is_dir():
+        parser.error(f"project directory does not exist: {project}")
+    if args.action == "open":
+        session = re.sub(r"[^a-zA-Z0-9_-]+", "-", args.name).strip("-")[:40] or "robotics"
+        os.execvp("tmux", ["tmux", "new-session", "-A", "-s", session, "-c", str(project)])
+    argv = shlex.split(args.command_line) if args.command_line else (args.command[1:] if args.command[:1] == ["--"] else args.command)
+    if not argv:
+        parser.error("a command is required after --")
+    label = re.sub(r"[^a-zA-Z0-9_-]+", "-", args.name).strip("-")[:40] or "experiment"
+    folder = base / f"{dt.datetime.now().astimezone():%Y%m%d-%H%M%S}-{label}-{os.getpid()}"
+    folder.mkdir(mode=0o700)
+    meta = {
+        "name": args.name, "project": str(project), "command": argv,
+        "git_commit": git_value(project, "rev-parse", "HEAD"),
+        "git_branch": git_value(project, "branch", "--show-current"),
+        "git_dirty": bool(git_value(project, "status", "--porcelain")),
+        "started_at": time.time(), "status": "running", "pid": os.getpid(),
+    }
+    record = folder / "run.json"
+    record.write_text(json.dumps(meta, indent=2) + "\n")
+    print(f"Sensei, experiment {args.name} → {folder}", flush=True)
+    process = None
+    with (folder / "output.log").open("w") as log:
+        try:
+            process = subprocess.Popen(argv, cwd=project, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+            for line in process.stdout:
+                sys.stdout.write(line)
+                log.write(line)
+                log.flush()
+            code = process.wait()
+        except (OSError, KeyboardInterrupt) as error:
+            code = 130 if isinstance(error, KeyboardInterrupt) else 127
+            if process is not None and process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+            print(error, file=log)
+    meta.update(finished_at=time.time(), elapsed_seconds=round(time.time() - meta["started_at"], 2), exit_code=code, status="passed" if code == 0 else "failed")
+    record.write_text(json.dumps(meta, indent=2) + "\n")
+    print(f"\n{meta['status']} · {meta['elapsed_seconds']}s · {folder}", flush=True)
+    raise SystemExit(code)
+
+
+if __name__ == "__main__":
+    main()

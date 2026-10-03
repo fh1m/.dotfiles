@@ -7,7 +7,6 @@ import json
 import os
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import sys
 import time
@@ -54,8 +53,8 @@ def screenshot(args):
             run(['wl-copy', '--type', 'image/png'], stdin=data, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     else:
         command = ['grimblast']
-        if args.mode == 'area' and shutil.which('hyprpicker'):
-            command.append('--freeze')
+        # A frozen compositor frame made area selection look like a desktop
+        # stall, and kept the shell from animating while the picker was open.
         command += ['copysave', args.mode, str(output)]
         logpath = HOME_DIR / ".local/state/wrayth/capture.log"
         logpath.parent.mkdir(parents=True, exist_ok=True)

@@ -1,10 +1,9 @@
 import QtQuick
-import QtQuick.Effects
 import qs.config
 import qs.services
 
-// A seamless horizontal marquee. Two copies of the text chase each other so the
-// loop has no seam, and the alpha is masked at both ends to fade the text out.
+// Two copies make a seamless marquee. Animate a single item transform rather
+// than driving every glyph through a global JavaScript clock and two FBO masks.
 Item {
     id: root
 
@@ -25,14 +24,6 @@ Item {
         anchors.fill: parent
         clip: true
 
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            maskEnabled: true
-            maskSource: mask
-            // Without spread the mask is a hard cutoff rather than a ramp.
-            maskSpreadAtMin: 1
-        }
-
         Item {
             id: strip
 
@@ -42,8 +33,14 @@ Item {
 
             // Scrolls the width of one copy, then loops; the second copy is
             // exactly where the first started, so the seam never shows.
-            property real epoch: MotionClock.ms
-            readonly property real offset: scrollActive ? ((MotionClock.ms - epoch) * root.speed / 1000) % Math.max(1, root.contentWidth + root.loopGap) : 0
+            property real offset: 0
+            NumberAnimation on offset {
+                from: 0
+                to: Math.max(1, root.contentWidth + root.loopGap)
+                duration: Math.max(1000, Math.round(1000 * (root.contentWidth + root.loopGap) / Math.max(1, root.speed)))
+                loops: Animation.Infinite
+                running: root.scrollActive
+            }
 
             Text {
                 id: first
@@ -85,40 +82,4 @@ Item {
     }
 
     readonly property bool scrollActive: root.visible && root.scrollEnabled && root.contentWidth > 0 && (!root.scrollOnlyOverflow || root.contentWidth > root.width)
-    onTextChanged: strip.epoch = MotionClock.ms
-    onScrollEnabledChanged: strip.epoch = MotionClock.ms
-
-    // Drawn at zero opacity rather than visible: false -- an invisible item
-    // never renders into its layer, so it would hand MultiEffect an empty mask.
-    Item {
-        id: mask
-
-        anchors.fill: parent
-        opacity: 0
-        layer.enabled: true
-
-        Rectangle {
-            anchors.fill: parent
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-
-                GradientStop {
-                    position: 0
-                    color: "transparent"
-                }
-                GradientStop {
-                    position: Math.min(0.5, root.fade / Math.max(1, root.width))
-                    color: "white"
-                }
-                GradientStop {
-                    position: Math.max(0.5, 1 - root.fade / Math.max(1, root.width))
-                    color: "white"
-                }
-                GradientStop {
-                    position: 1
-                    color: "transparent"
-                }
-            }
-        }
-    }
 }

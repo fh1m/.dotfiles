@@ -2,6 +2,8 @@
 import os,time,json,re,platform,subprocess
 from pathlib import Path
 now=time.monotonic(); cache=Path(os.environ.get('XDG_RUNTIME_DIR','/tmp'))/'fh1m-monitor.json'
+details=os.environ.get('SENSEI_MONITOR_DETAIL')=='1'
+inventory=os.environ.get('SENSEI_MONITOR_INVENTORY')=='1'
 try: old=json.loads(cache.read_text())
 except Exception: old={}
 dt=max(.1,now-old.get('time',now-2)); tick=os.sysconf('SC_CLK_TCK'); page=os.sysconf('SC_PAGE_SIZE')
@@ -10,9 +12,11 @@ for line in Path('/proc/stat').read_text().splitlines():
     if not line.startswith('cpu'):continue
     fields=line.split();values=list(map(int,fields[1:9]));total=sum(values);idle=values[3]+values[4];key=fields[0];cpus[key]=[total,idle];before=old.get('cpus',{}).get(key,[total,idle]);delta=total-before[0];usage.append(round(max(0,min(100,100*(1-(idle-before[1])/delta))),1) if delta else 0)
 mem={k:int(v.split()[0])*1024 for k,v in [line.split(':',1) for line in Path('/proc/meminfo').read_text().splitlines()]}
-processes=[];pids={}
+processes=[];pids={};processCount=0
 for path in Path('/proc').iterdir():
     if not path.name.isdigit():continue
+    processCount+=1
+    if not details:continue
     try:
         raw=(path/'stat').read_text();name=raw[raw.index('(')+1:raw.rindex(')')];fields=raw[raw.rindex(')')+2:].split();pid=int(path.name);start=int(fields[19]);ticks=int(fields[11])+int(fields[12]);rss=int(fields[21])*page;io={}
         try: io={k:int(v) for k,v in [x.split(':',1) for x in (path/'io').read_text().splitlines()]}
@@ -51,7 +55,7 @@ except Exception:ips=[]
 
 # Expensive inventory is refreshed at most every five seconds, while live rates remain fast.
 extra=old.get('extra',{});extraTime=old.get('extraTime',0)
-if now-extraTime>=5 or not extra:
+if inventory and (now-extraTime>=5 or not extra):
     def read(path,default='—'):
         try:return Path(path).read_text().strip()
         except OSError:return default
@@ -81,4 +85,4 @@ if now-extraTime>=5 or not extra:
     extra['gpuDetails']=staticGpu+'\n\n'+extra['gpuDetails']
     extraTime=now
 state={'time':now,'cpus':cpus,'pids':pids,'nets':nets,'disks':disks,'extra':extra,'extraTime':extraTime};tmp=cache.with_suffix('.tmp');tmp.write_text(json.dumps(state));tmp.chmod(0o600);tmp.replace(cache)
-print(json.dumps({'extra':extra,'cpu':usage[0], 'cores':usage[1:],'memory':{'total':mem['MemTotal'],'used':mem['MemTotal']-mem['MemAvailable'],'available':mem['MemAvailable'],'cache':mem.get('Cached',0)+mem.get('Buffers',0),'swapTotal':mem['SwapTotal'],'swapUsed':mem['SwapTotal']-mem['SwapFree']},'processes':sorted(processes,key=lambda p:p['cpu'],reverse=True),'mounts':mounts,'network':network,'storage':storage,'uptime':float(Path('/proc/uptime').read_text().split()[0]),'load':os.getloadavg(),'kernel':platform.release(),'host':platform.node(),'ips':ips,'sampleTime':time.time()}))
+print(json.dumps({'extra':extra if inventory else {},'cpu':usage[0], 'cores':usage[1:],'memory':{'total':mem['MemTotal'],'used':mem['MemTotal']-mem['MemAvailable'],'available':mem['MemAvailable'],'cache':mem.get('Cached',0)+mem.get('Buffers',0),'swapTotal':mem['SwapTotal'],'swapUsed':mem['SwapTotal']-mem['SwapFree']},'processes':sorted(processes,key=lambda p:p['cpu'],reverse=True),'processCount':processCount,'mounts':mounts,'network':network,'storage':storage,'uptime':float(Path('/proc/uptime').read_text().split()[0]),'load':os.getloadavg(),'kernel':platform.release(),'host':platform.node(),'ips':ips,'sampleTime':time.time()}))

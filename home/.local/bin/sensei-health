@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+"""Capture a short, on-demand desktop stall trace without a resident sampler."""
+import argparse
+import datetime as dt
+import json
+import os
+from pathlib import Path
+import subprocess
+import time
+
+
+def read(path):
+    try:
+        return Path(path).read_text()
+    except OSError:
+        return ""
+
+
+def pressure(kind):
+    result = {}
+    for line in read(f"/proc/pressure/{kind}").splitlines():
+        parts = line.split()
+        if parts:
+            result[parts[0]] = {k: float(v) for k, v in (x.split("=", 1) for x in parts[1:])}
+    return result
+
+
+def snapshot():
+    memory = {}
+    for line in read("/proc/meminfo").splitlines():
+        key, value = line.split(":", 1)
+        if key in ("MemAvailable", "MemTotal", "SwapFree", "SwapTotal"):
+            memory[key] = int(value.split()[0]) * 1024
+    return {
+        "at": time.time(),
+        "pressure": {name: pressure(name) for name in ("cpu", "memory", "io")},
+        "memory": memory,
+        "load": os.getloadavg(),
+    }
+
+
+def command(*args):
+    try:
+        return subprocess.run(args, capture_output=True, text=True, timeout=8).stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return "unavailable"
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--seconds", type=int, default=15)
+    args = parser.parse_args()
+    if not 1 <= args.seconds <= 120:
+        parser.error("duration must be between 1 and 120 seconds")
+    base = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "sensei-health"
+    base.mkdir(parents=True, exist_ok=True, mode=0o700)
+    folder = base / dt.datetime.now().astimezone().strftime("%Y%m%d-%H%M%S")
+    folder.mkdir(mode=0o700)
+    print(f"Sensei, capturing {args.seconds}s of pressure and memory: {folder}", flush=True)
+    samples = []
+    for i in range(args.seconds + 1):
+        samples.append(snapshot())
+        if i < args.seconds:
+            time.sleep(1)
+    extras = {
+        "processes": command("ps", "-eo", "pid,comm,%cpu,rss", "--sort=-%cpu"),
+        "quickshell": command("ps", "-C", "quickshell", "-o", "pid,etime,%cpu,rss,args"),
+        "user_services": command("systemctl", "--user", "--failed", "--no-pager"),
+        "displays": command("hyprctl", "monitors", "-j"),
+    }
+    (folder / "samples.json").write_text(json.dumps(samples, indent=2) + "\n")
+    (folder / "system.json").write_text(json.dumps(extras, indent=2) + "\n")
+    largest = {}
+    for kind in ("cpu", "memory", "io"):
+        for level in ("some", "full"):
+            values = [s["pressure"].get(kind, {}).get(level, {}).get("avg10", 0) for s in samples]
+            largest[f"{kind}.{level}"] = round(max(values), 2)
+    lines = [
+        "# Desktop stall capture",
+        "",
+        f"Samples: {len(samples)} at one-second intervals",
+        f"Peak 10-second pressure: {largest}",
+        f"Available RAM: {samples[-1]['memory'].get('MemAvailable', 0) / 2**30:.1f} GiB",
+        "",
+        "## Highest CPU processes at end",
+        "```",
+        *extras["processes"].splitlines()[:16],
+        "```",
+        "",
+        "Raw samples and service/display details are in this directory.",
+    ]
+    (folder / "report.md").write_text("\n".join(lines) + "\n")
+    print("\n".join(lines), flush=True)
+    print(f"Saved: {folder / 'report.md'}")
+
+
+if __name__ == "__main__":
+    main()

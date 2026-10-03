@@ -40,6 +40,14 @@ Expected result is `aarch64`; inspect registration flags if cross-builds fail. S
 
 ## tmux workflow
 
+Docker lab → Tasks includes an experiment cockpit. Set the project directory in Launch, enter a name and command, then choose **Record run**. It saves the exact command, Git commit/dirty state, duration and combined output under `~/.local/state/sensei-lab/`. **Open project** resumes its named tmux session in that directory. Nothing samples or starts in the background.
+
+```sh
+sensei-lab run --project ~/ROS_workspaces/my_ws --name lidar-baseline -- colcon build
+sensei-lab list
+sensei-lab open --project ~/ROS_workspaces/my_ws --name lidar-baseline
+```
+
 ```sh
 # UI launch form can create this session/window instead.
 tmux new-session -s robotics -n bringup

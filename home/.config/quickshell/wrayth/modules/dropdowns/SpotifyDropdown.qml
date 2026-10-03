@@ -15,7 +15,7 @@ DropdownFrame {
  property string playlistToAdd:""
  property real contentWidth:root.width-28
  Popup {
- id:artViewer;parent:Overlay.overlay;visible:SpotifyDesk.artExpanded;onClosed:SpotifyDesk.artExpanded=false;width:Math.min(700,(parent?.width??root.width)-32);height:Math.min(750,(parent?.height??root.height)-32);x:((parent?.width??root.width)-width)/2;y:((parent?.height??root.height)-height)/2;modal:true;focus:true;padding:16;closePolicy:Popup.CloseOnEscape|Popup.CloseOnPressOutside
+ id:artViewer;parent:Overlay.overlay||root;visible:SpotifyDesk.artExpanded;onClosed:SpotifyDesk.artExpanded=false;width:Math.min(700,root.width-32);height:Math.min(750,root.height-32);x:(root.width-width)/2;y:(root.height-height)/2;modal:true;focus:true;padding:16;closePolicy:Popup.CloseOnEscape|Popup.CloseOnPressOutside
  background:ChamferPanel {fillColor:Theme.widgetGlass;chamfer:Appearance.chamfer.panel;borderColor:Theme.widgetBorder;borderWidth:1;scanlines:false}
  contentItem:Column {spacing:10
  RoundedArtwork {cornerRadius:12;width:artViewer.availableWidth;height:artViewer.availableHeight-65;source:SpotifyDesk.albumArt;sourceSize:Qt.size(1024,1024);fillMode:Image.PreserveAspectFit;asynchronous:true}

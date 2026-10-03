@@ -43,5 +43,5 @@ ChamferPanel {
  Keys.onPressed:event=>{if(!event.isAutoRepeat&&(event.key===Qt.Key_Space||event.key===Qt.Key_Return||event.key===Qt.Key_Enter)){root.keyHeld=true;event.accepted=true;}}
  Keys.onReleased:event=>{if(root.keyHeld&&(event.key===Qt.Key_Space||event.key===Qt.Key_Return||event.key===Qt.Key_Enter)){root.keyHeld=false;root.activated();event.accepted=true;}}
  onActiveFocusChanged:if(!activeFocus)keyHeld=false
- MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:root.enabled?Qt.PointingHandCursor:Qt.ArrowCursor;onPressed:root.forceActiveFocus();onClicked:root.activated()}
+ MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:root.enabled?Qt.PointingHandCursor:Qt.ArrowCursor;onClicked:root.activated()}
 }

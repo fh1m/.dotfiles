@@ -15,10 +15,13 @@ Item {
  PathLine {x:14;y:.5}
  }
  }
- RoundedArtwork {id:art;cornerRadius:15;anchors.left:parent.left;anchors.leftMargin:22;anchors.verticalCenter:parent.verticalCenter;width:30;height:30;opacity:SpotifyDesk.trackLoading?.48:1;rotation:SpotifyDesk.playing&&!SpotifyDesk.trackLoading&&visible?(MotionClock.ms%12000)*.03:0
+ RoundedArtwork {id:art;cornerRadius:15;anchors.left:parent.left;anchors.leftMargin:22;anchors.verticalCenter:parent.verticalCenter;width:30;height:30;opacity:SpotifyDesk.trackLoading?.48:1;rotation:0
+ NumberAnimation on rotation {from:0;to:360;duration:12000;loops:Animation.Infinite;running:SpotifyDesk.playing&&!SpotifyDesk.trackLoading&&art.visible}
  source:SpotifyDesk.albumArt;sourceSize:Qt.size(120,120);fillMode:Image.PreserveAspectCrop;asynchronous:true;visible:status===Image.Ready}
  Text { renderType: Text.QtRendering; renderTypeQuality: 104;anchors.centerIn:art;visible:!art.visible;text:"\uf001";font.family:Appearance.font.icons;font.pixelSize:16;color:Theme.dim}
- Text {renderType:Text.NativeRendering;anchors.centerIn:art;visible:SpotifyDesk.trackLoading;text:"\uf110";font.family:Appearance.font.icons;font.pixelSize:19;color:Theme.spotifyGreen;rotation:(MotionClock.ms%900)*.4}
+ Text {id:loadingGlyph;renderType:Text.NativeRendering;anchors.centerIn:art;visible:SpotifyDesk.trackLoading;text:"\uf110";font.family:Appearance.font.icons;font.pixelSize:19;color:Theme.spotifyGreen;rotation:0
+ NumberAnimation on rotation {from:0;to:360;duration:900;loops:Animation.Infinite;running:loadingGlyph.visible}
+ }
  Ticker {anchors.left:art.right;anchors.leftMargin:12;anchors.right:parent.right;anchors.rightMargin:20;anchors.verticalCenter:parent.verticalCenter;height:24;scrollOnlyOverflow:true;loopGap:28;scrollEnabled:SpotifyDesk.playing&&!SpotifyDesk.trackLoading;text:SpotifyDesk.trackLoading?'LOADING · '+SpotifyDesk.title:SpotifyDesk.title==='Spotify'?'Spotify · Sensei’s soundtrack':SpotifyDesk.title+' - '+SpotifyDesk.artist;foreground:SpotifyDesk.trackLoading?Theme.signal:SpotifyDesk.playing?Theme.spotifyGreen:Theme.dim;pixelSize:13;speed:25;fade:8}
  MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;acceptedButtons:Qt.LeftButton|Qt.RightButton|Qt.MiddleButton;onClicked:e=>{if(e.button===Qt.RightButton||e.button===Qt.MiddleButton)SpotifyDesk.action('toggle');else{ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdown('spotify');}}}
 }
