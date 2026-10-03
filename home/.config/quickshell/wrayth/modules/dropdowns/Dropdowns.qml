@@ -3,6 +3,7 @@ import Quickshell.Io
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
+import qs.components
 import qs.config
 import qs.services
 
@@ -41,7 +42,22 @@ Variants {
         // -- only the visible panel inside it grows and shrinks. Reconfiguring
         // the layer every frame is exactly what made the height animation
         // stutter; see implicitHeight below.
-        readonly property real panelHeight: content.item?.surfaceHeight ?? content.item?.implicitHeight ?? 0
+        // Allocate an approximate surface immediately while a heavy QML view
+        // compiles asynchronously. Before this, Loader.Ready gated the *whole*
+        // popup: measured cold opens took 0.5–1.2 s to show any response.
+        readonly property real loadingHeight: {
+            if (bottomPanel) return 490;
+            switch (current) {
+            case "spotify": return 834;
+            case "docker": return 800;
+            case "calendar": case "weather": return 862;
+            case "system": return 696;
+            case "sound": return 616;
+            case "wifi": return 1008;
+            default: return 520;
+            }
+        }
+        readonly property real panelHeight: content.item?.surfaceHeight ?? content.item?.implicitHeight ?? loadingHeight
 
         // 0 hidden, 1 fully out. This only slides the panel *inside* the
         // surface; the surface's own fade is the compositor's, from the
@@ -112,7 +128,7 @@ Variants {
             target: popup
             property: "reveal"
             to: 1
-            duration: 260
+            duration: 220
             easing.type: Easing.OutCubic
             onFinished: popup.cachedHeight = popup.panelHeight
         }
@@ -123,7 +139,7 @@ Variants {
             onTriggered: {
                 if (popup.current === "" || ShellState.dropdown !== popup.current) return;
                 // Wait for the compositor to acknowledge the newly sized surface.
-                if (!content.item || content.status !== Loader.Ready || popup.panelHeight <= 0) { restart(); return; }
+                if (popup.panelHeight <= 0) { restart(); return; }
                 const h = Math.round(popup.panelHeight);
                 if (h !== popup.measuredHeight) { popup.measuredHeight=h; popup.stableFrames=0; restart(); return; }
                 if (++popup.stableFrames < 2) { restart(); return; }
@@ -280,11 +296,33 @@ Variants {
                 onClicked: ShellState.dropdown = ""
             }
 
+            // The compositor can slide a real, styled surface into view while
+            // the expensive panel tree is still being instantiated. Fade the
+            // content over it when ready, instead of flashing a new surface.
+            ChamferPanel {
+                anchors.fill: parent
+                visible: opacity > 0
+                opacity: content.status === Loader.Ready ? 0 : 1
+                Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                scanlines: false
+                chamfer: Appearance.chamfer.panel
+                fillColor: Theme.widgetGlass
+                borderColor: Theme.widgetBorder
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 9
+                    Text { text: "SENSEI // " + popup.current.toUpperCase(); color: Theme.widgetText; font.family: Appearance.font.data; font.pixelSize: 17; font.bold: true }
+                    Text { text: content.status === Loader.Error ? "Panel failed to load" : "Preparing controls…"; color: Theme.widgetMuted; font.family: Appearance.font.data; font.pixelSize: 12 }
+                }
+            }
+
             Loader {
                 id: content
                 // Heavy panels instantiate over multiple event-loop turns so
                 // clicking a readout never blocks the bar's first response.
                 asynchronous: true
+                opacity: status === Loader.Ready ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
                 width: parent.width
                 active: popup.current !== ""

@@ -53,6 +53,8 @@ bash scripts/build-native.sh
 bash scripts/build-spotify.sh
 ```
 
+If Quickshell starts crashing after a Qt update, rebuild the pinned Noctalia fork against the *installed* Qt. Install `cmake ninja cli11 vulkan-headers qt6-shadertools spirv-tools jemalloc` and the normal Quickshell development dependencies, then run `bash scripts/build-quickshell-local.sh`. The build is limited to two low-priority jobs and installs under `~/.local/opt/sensei-quickshell`; it does not replace the package. `wrayth-shell` selects it only while its Qt version stamp matches. Read [the render investigation](performance.md) before treating every graphical stall as a Quickshell crash.
+
 The C bridge needs a C compiler, json-c, OpenSSL and BlueZ development headers. Both native sources compile on the reference machine. The Bluetooth shared object is **inactive** until you explicitly add its drop-in and headset address.
 
 Spotify is a patched source build, not a binary copied from the original machine. The Rust build uses the retained lockfile, daemon, PulseAudio and media-control features. Two build jobs are the default to limit memory pressure. A fresh release build can take time and disk space; it is not done every login. Read [Spotify setup](audio-and-spotify.md), configure your own Spotify OAuth client ID/redirect and authenticate before enabling its service.

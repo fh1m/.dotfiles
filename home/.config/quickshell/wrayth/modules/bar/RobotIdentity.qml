@@ -13,7 +13,7 @@ SlantBlock {
         x: 8; y: 3; width: 44; height: 38
         scale: 1
         SequentialAnimation on scale {
-            running: SpotifyDesk.playing && robotArt.visible
+            running: ShellState.ambientMotion && SpotifyDesk.playing && robotArt.visible
             loops: Animation.Infinite
             NumberAnimation { from: 1; to: 1.045; duration: 650; easing.type: Easing.InOutSine }
             NumberAnimation { from: 1.045; to: 1; duration: 650; easing.type: Easing.InOutSine }
@@ -50,7 +50,7 @@ SlantBlock {
                     required property int index
                     width: 5; height: 4; color: Theme.ground
                     SequentialAnimation on opacity {
-                        running: (RobotBench.data.gpu.computeCount ?? 0) > 0
+                        running: ShellState.ambientMotion && (RobotBench.data.gpu.computeCount ?? 0) > 0
                         loops: Animation.Infinite
                         NumberAnimation { to: 0.9; duration: 1100 + index * 150 }
                         NumberAnimation { to: 0.3; duration: 1100 + index * 150 }

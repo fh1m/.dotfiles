@@ -27,7 +27,7 @@ Item {
         color:root.audioPlaying?Theme.signal:Theme.dim
         scale: 1
         SequentialAnimation on scale {
-            running: root.audioPlaying && musicRune.visible
+            running: ShellState.ambientMotion && root.audioPlaying && musicRune.visible
             loops: Animation.Infinite
             NumberAnimation { from: 1; to: 1.16; duration: 420; easing.type: Easing.InOutSine }
             NumberAnimation { from: 1.16; to: 1; duration: 420; easing.type: Easing.InOutSine }

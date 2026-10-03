@@ -16,7 +16,7 @@ Item {
  }
  }
  RoundedArtwork {id:art;cornerRadius:15;anchors.left:parent.left;anchors.leftMargin:22;anchors.verticalCenter:parent.verticalCenter;width:30;height:30;opacity:SpotifyDesk.trackLoading?.48:1;rotation:0
- NumberAnimation on rotation {from:0;to:360;duration:12000;loops:Animation.Infinite;running:SpotifyDesk.playing&&!SpotifyDesk.trackLoading&&art.visible}
+ NumberAnimation on rotation {from:0;to:360;duration:12000;loops:Animation.Infinite;running:ShellState.ambientMotion&&SpotifyDesk.playing&&!SpotifyDesk.trackLoading&&art.visible}
  source:SpotifyDesk.albumArt;sourceSize:Qt.size(120,120);fillMode:Image.PreserveAspectCrop;asynchronous:true;visible:status===Image.Ready}
  Text { renderType: Text.QtRendering; renderTypeQuality: 104;anchors.centerIn:art;visible:!art.visible;text:"\uf001";font.family:Appearance.font.icons;font.pixelSize:16;color:Theme.dim}
  Text {id:loadingGlyph;renderType:Text.NativeRendering;anchors.centerIn:art;visible:SpotifyDesk.trackLoading;text:"\uf110";font.family:Appearance.font.icons;font.pixelSize:19;color:Theme.spotifyGreen;rotation:0

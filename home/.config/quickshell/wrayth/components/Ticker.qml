@@ -39,13 +39,13 @@ Item {
                 to: Math.max(1, root.contentWidth + root.loopGap)
                 duration: Math.max(1000, Math.round(1000 * (root.contentWidth + root.loopGap) / Math.max(1, root.speed)))
                 loops: Animation.Infinite
-                running: root.scrollActive
+                running: root.scrollActive && ShellState.ambientMotion
             }
 
             Text {
                 id: first
 
-                x: root.scrollOnlyOverflow && root.contentWidth <= root.width ? (root.width-root.contentWidth)/2 : -strip.offset
+                x: root.scrollOnlyOverflow && root.contentWidth <= root.width ? (root.width-root.contentWidth)/2 : -(ShellState.ambientMotion ? strip.offset : 0)
                 color: root.foreground
                 text: root.text
                 font.family: Appearance.font.data

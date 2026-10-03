@@ -25,6 +25,19 @@ set -u
 
 read -r -a QS_ARGS <<< "${WRAYTH_QS_ARGS:--c wrayth}"
 
+# A private rebuild tracks Qt's private ABI without replacing the distro
+# package. Never launch it after a Qt version change; the fallback remains the
+# packaged binary until the local build is refreshed.
+qs_bin="${WRAYTH_QS_BIN:-qs}"
+local_qs="${HOME}/.local/opt/sensei-quickshell/bin/qs"
+qt_stamp="${HOME}/.local/opt/sensei-quickshell/qt-version"
+if [ -z "${WRAYTH_QS_BIN:-}" ] && [ -x "$local_qs" ] && [ -r "$qt_stamp" ]; then
+    current_qt="$(/usr/lib/qt6/bin/qtpaths --query QT_VERSION 2>/dev/null || true)"
+    if [ -n "$current_qt" ] && [ "$(cat "$qt_stamp")" = "$current_qt" ]; then
+        qs_bin="$local_qs"
+    fi
+fi
+
 runtime="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 tag="$(printf '%s' "${QS_ARGS[*]}" | cksum | cut -d' ' -f1)"
 
@@ -39,14 +52,14 @@ locked() {
 # A live instance answers IPC; -n below makes a duplicate exit at once, and
 # this tells that apart from a death.
 alive() {
-    qs "${QS_ARGS[@]}" ipc show > /dev/null 2>&1
+    "$qs_bin" "${QS_ARGS[@]}" ipc show > /dev/null 2>&1
 }
 
 starts=()
 logdir="${XDG_STATE_HOME:-$HOME/.local/state}/wrayth"
 mkdir -p "$logdir"
 while :; do
-    WRAYTH_SUPERVISED=1 QS_NO_RELOAD_POPUP=1 qs "${QS_ARGS[@]}" -n >> "$logdir/shell.log" 2>&1 9>&-
+    WRAYTH_SUPERVISED=1 QS_NO_RELOAD_POPUP=1 "$qs_bin" "${QS_ARGS[@]}" -n >> "$logdir/shell.log" 2>&1 9>&-
     rc=$?
 
     if ! locked && [ "$rc" -eq 0 ]; then
@@ -65,6 +78,11 @@ while :; do
     done
     starts=("${kept[@]}" "$now")
     if [ "${#starts[@]}" -gt 5 ]; then
+        if [ "$qs_bin" = "$local_qs" ]; then
+            printf 'Local Quickshell failed repeatedly; falling back to packaged qs.\n' >> "$logdir/shell.log"
+            qs_bin=qs
+            starts=()
+        fi
         sleep 5
     else
         sleep 0.2

@@ -80,6 +80,10 @@ Singleton {
     // True while the pointer is anywhere over the bar. The dropdown's focus grab
     // waits on this; see the comment there.
     property bool barHovered: false
+    // A moving bar surface can force both Intel-driven screens to composite at
+    // full rate. Keep readings live, but spend animation frames only while the
+    // bar or an overlay is being used. Music playback itself is unaffected.
+    readonly property bool ambientMotion: barHovered || dropdown !== "" || deckVisible || pickerOpen || launcherOpen || powerOpen
 
     // **Where each bar readout is, published by the readouts themselves.**
     // `dropdown open <name>` used to hang every panel at a fixed x in the

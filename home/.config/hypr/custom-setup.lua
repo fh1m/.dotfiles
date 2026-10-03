@@ -177,9 +177,12 @@ hl.bind("SUPER + SHIFT + Tab", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher c
 hl.bind("ALT + grave", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle same 1"))
 hl.bind("ALT + SHIFT + grave", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle same -1"))
 
--- Frost only the terminal's transparent pixels; keep its text fully opaque.
-hl.window_rule({ name = "sensei-kitty-frost", match = { class = "^kitty$" }, no_blur = false })
-hl.layer_rule({ name = "sensei-bar-frost", match = { namespace = "^wrayth-bar$" }, blur = true, ignore_alpha = 0.15 })
+-- These two constantly changing surfaces exhausted the Intel UHD 630 render
+-- engine at idle (96–99%). Excluding them from compositor blur leaves roughly
+-- 35% GPU headroom while popup/switcher blur remains enabled. The bar and
+-- terminal retain their tinted translucent fills; see docs/performance.md.
+hl.window_rule({ name = "sensei-kitty-render-headroom", match = { class = "^kitty$" }, no_blur = true })
+hl.layer_rule({ name = "sensei-bar-render-headroom", match = { namespace = "^wrayth-bar$" }, blur = false })
 -- Native image/calendar choosers stay above ordinary apps.
 hl.window_rule({ name = "sensei-native-chooser", match = { class = "^(zenity|org\\.gnome\\.Zenity)$" }, float = true, center = true })
 -- Smooth geometry transitions; whole-application opacity fades are disabled.
