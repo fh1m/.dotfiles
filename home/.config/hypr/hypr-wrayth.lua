@@ -32,14 +32,10 @@ hl.layer_rule({
     animation = "fade",
 })
 
--- Blur behind the translucent surfaces, confined to the shape actually drawn.
--- `ignore_alpha` leaves anything below the threshold unfrosted, so chamfered
--- corners, margins and the deck's terminal gap do not come out as hard-edged
--- frosted rectangles.
+-- The daily-driver profile keeps these surfaces opaque and unblurred.
 hl.layer_rule({
     match        = { namespace = "wrayth-(bar|deck|deckbg|popup|overlay|notifications)" },
-    blur         = true,
-    ignore_alpha = 0.15,
+    blur         = false,
 })
 
 -- The wallpaper layer is opaque and must not fade on a profile change (the
@@ -121,20 +117,15 @@ hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 4, bezier = "w
 hl.config({
     decoration = {
         dim_special    = 0.38,
-        -- The frosting every translucent panel was designed against: size 8,
-        -- two passes (Hyprland's default is one, which reads as smeared rather
-        -- than frosted behind the panels' fine type).
         blur           = {
-            enabled        = true,
-            special        = true,
-            size           = 8,
-            passes         = 2,
-            ignore_opacity = true,
+            enabled        = false,
+            special        = false,
         },
         rounding       = 34,
         rounding_power = 1,
         -- A soft black shadow casts depth without tinting any profile.
         shadow = {
+            enabled = false,
             color = "rgba(0000004D)",
             range = 15,
         },

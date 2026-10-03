@@ -47,22 +47,22 @@ Singleton {
     readonly property color ground: palette.ground
     readonly property color deep: palette.deep
     readonly property color panelHex: palette.panelHex
-    readonly property color panel: palette.panel
-    readonly property color panel2: palette.panel2
-    readonly property color barBg: palette.barBg
+    readonly property color panel: Qt.rgba(palette.panel.r, palette.panel.g, palette.panel.b, 1)
+    readonly property color panel2: Qt.rgba(palette.panel2.r, palette.panel2.g, palette.panel2.b, 1)
+    readonly property color barBg: Qt.rgba(palette.barBg.r, palette.barBg.g, palette.barBg.b, 1)
 
     // Structure
     readonly property color hair: "#606060"
     readonly property color frame: "#080a0e"
-    // OLED glass widget palette: main wallpaper coral softened for readable UI.
+    // Opaque OLED widget palette: no live background sampling or alpha blend.
     readonly property color widgetAccent: "#ff718a"
     readonly property color widgetText: "#f5ecef"
     readonly property color widgetMuted: "#b3a4aa"
     readonly property color widgetFaint: "#897b81"
     readonly property color widgetBorder: alpha(widgetText, .17)
-    readonly property color widgetGlass: alpha("#000000", .44)
-    readonly property color widgetSurface: alpha("#000000", .16)
-    readonly property color widgetRaised: alpha("#000000", .29)
+    readonly property color widgetGlass: "#05070a"
+    readonly property color widgetSurface: "#10141b"
+    readonly property color widgetRaised: "#18202b"
     readonly property color uiSurface: "#10151d"
     readonly property color uiRaised: "#18202b"
     readonly property color uiBorder: "#343d49"

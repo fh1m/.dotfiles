@@ -23,7 +23,7 @@ Variants {
         property bool inhibitReady: false
         Timer { interval: 1000; running: true; onTriggered: bar.inhibitReady = true }
         IdleInhibitor { window: bar; enabled: Idle.hold && bar.inhibitReady }
-        Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.barBg, 0.92); border.width:1; border.color:"#181a1e" }
+        Rectangle { anchors.fill: parent; color: Theme.barBg; border.width:1; border.color:"#181a1e" }
         MouseArea {
             anchors.fill: parent
             property int stamp: 0

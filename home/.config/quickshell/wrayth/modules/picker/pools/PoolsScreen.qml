@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Effects
 import qs.components
 import qs.config
 import qs.services
@@ -814,10 +813,7 @@ Item {
         height: 60
         z: 10
 
-        // **The lift is scale and shadow together.** Either on its own reads
-        // as a rendering change; the pair reads as the tile coming off the
-        // surface. The tilt leans into the direction of travel and is shaped
-        // so it is zero at both ends of the arc.
+        // Lift by scale and tilt without an offscreen shadow blur pass.
         transform: [
             Rotation {
                 origin.x: ghost.width / 2
@@ -831,14 +827,6 @@ Item {
                 yScale: 1 + 0.05 * root.dragLift
             }
         ]
-
-        layer.enabled: root.dragLift > 0
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowBlur: 1.0
-            shadowVerticalOffset: 10 * root.dragLift
-            shadowOpacity: 0.65 * root.dragLift
-        }
 
         // The ghost is in hand or it is not; it fades rather than blinking on
         // and off under the pointer. It does not rise -- it is following the

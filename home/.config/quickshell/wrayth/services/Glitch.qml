@@ -200,6 +200,11 @@ Singleton {
     property real dueAt: 0
 
     function schedule_(): void {
+        if (!root.enabled) {
+            schedule.stop();
+            root.dueAt = 0;
+            return;
+        }
         root.dueAt = Date.now() + root.roll();
         schedule.interval = Math.max(16, root.dueAt - Date.now());
         schedule.restart();
@@ -209,6 +214,10 @@ Singleton {
     // schedule made that return early like any other wake, which took away the
     // one thing a test session had for driving the idle path.
     function tick(force: bool): void {
+        if (!root.enabled && !force) {
+            schedule.stop();
+            return;
+        }
         const now = Date.now();
         const remaining = root.dueAt - now;
         if (!force && remaining > 20) {

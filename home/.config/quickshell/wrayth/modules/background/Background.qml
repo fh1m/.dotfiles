@@ -32,9 +32,7 @@ Variants {
             imageFillMode: Wallpapers.displayMode(modelData.name)
             anchors.fill: parent
 
-            // Crisp on an empty workspace, the lockscreen's treatment once
-            // something is open. Wallpaper animates both over 250 ms.
-            blurRadius: 0
+            // Crisp wallpaper with a mild static dim behind workspaces.
             dim: 0.2
         }
 

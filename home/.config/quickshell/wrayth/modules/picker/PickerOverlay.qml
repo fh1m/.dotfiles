@@ -274,7 +274,6 @@ Variants {
             // it does not move, which is what the switch promises.
             Wallpaper {
                 anchors.fill: parent
-                blurRadius: 16
                 dim: 0.62
             }
 

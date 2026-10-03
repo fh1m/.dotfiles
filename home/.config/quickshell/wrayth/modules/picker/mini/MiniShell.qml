@@ -42,7 +42,6 @@ Item {
     Wallpaper {
         anchors.fill: parent
         source: root.image
-        blurRadius: 4
         dim: 0.4
     }
 

@@ -27,11 +27,11 @@ The desktop then had to acquire the habits of its owner: named workspaces, manua
 | Music always available | Native background client, event-driven transport, bounded cache | Catalogue loading should not block a pause click |
 | A personal operator identity | Sensei greetings and useful badge interactions | Personality stays in the interface, not in random notifications |
 | A coherent shape language | Chamfered panels, fields and buttons | Corners echo the window styling |
-| OLED/glass preference | Black translucent widgets, warm text and coral accents from the wallpaper | Glass can be visible without sacrificing labels |
+| OLED/performance preference | Opaque black widgets, warm text and coral accents from the wallpaper | Detailed controls stay readable without constant blur passes |
 
 ## The palette evolved
 
-Early versions used red/blue more broadly and inherited text treatments from the source shell. Bangla accents were tried, then replaced with Russian labels at the owner’s request. Cyan was removed in favour of blue tones. Later, widgets became OLED black glass with quieter, wallpaper-derived foreground accents. Bars and widget surfaces remain distinct: red/blue carries identity and navigation; glass lets the wallpaper participate beneath detailed controls.
+Early versions used red/blue more broadly and inherited text treatments from the source shell. Bangla accents were tried, then replaced with Russian labels at the owner’s request. Cyan was removed in favour of blue tones. Later, widgets became OLED black with quieter, wallpaper-derived foreground accents. Bars and widget surfaces remain distinct: red/blue carries identity and navigation; opaque dark panels keep detailed controls legible while the two displays work hard.
 
 Rounded button shapes and an extra dark backing rectangle made cut-corner panels look inconsistent. The back layer was removed. UI controls use readable labels, restrained hover feedback, explicit selected states and sensible padding. Rotary controls and thin rails make adjustments easier to distinguish from tabs and actions.
 

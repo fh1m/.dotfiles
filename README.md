@@ -65,7 +65,7 @@ The main bar carries identity, music, time, sound and controls. The lower bar ca
 
 The launcher keeps native app icons. Search finds open windows **and** installed apps. The clipboard remembers text, screenshots and copied file paths locally, with image previews; its contents never enter this repo.
 
-## Under the glass
+## Under the shell
 
 - **One animation owner per surface.** Widgets enter in QML; Hyprland does not animate them again.
 - **Two GPU paths, deliberate jobs.** Intel composes the dual displays and decodes supported video; NVIDIA renders selected apps and trains models.

@@ -21,7 +21,7 @@ Variants {
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "wrayth-bar"
         anchors { bottom: true; left: true; right: true }
-        Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.barBg, 0.92); border.width:1; border.color:"#181a1e" }
+        Rectangle { anchors.fill: parent; color: Theme.barBg; border.width:1; border.color:"#181a1e" }
         Row {
             id: meters
             anchors.left: parent.left

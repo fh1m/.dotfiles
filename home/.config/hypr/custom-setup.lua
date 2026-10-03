@@ -29,10 +29,10 @@ for id, name in ipairs(workspace_names) do
     hl.workspace_rule({ workspace = tostring(id), default_name = name, persistent = true, monitor = id == 6 and "DP-2" or "eDP-1" })
 end
 
--- Keep Wrayth's animations and blur, with Hyprland's blur optimizations.
+-- Keep the motion, but do not spend Intel render time on blur or shadows.
 hl.config({
     animations = { enabled = true },
-    decoration = { blur = { new_optimizations = true, xray = true, enabled = true, size = 10, passes = 3 }, shadow = { range = 10 } }, general = { border_size = 2 }, input = { touchpad = { natural_scroll = true }, follow_mouse = 0 },
+    decoration = { blur = { enabled = false }, shadow = { enabled = false } }, general = { border_size = 2 }, input = { touchpad = { natural_scroll = true }, follow_mouse = 0 },
 })
 
 hl.bind(mod .. " + SHIFT + up", hl.dsp.window.move({ monitor = "eDP-1" }))
@@ -177,10 +177,7 @@ hl.bind("SUPER + SHIFT + Tab", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher c
 hl.bind("ALT + grave", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle same 1"))
 hl.bind("ALT + SHIFT + grave", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle same -1"))
 
--- These two constantly changing surfaces exhausted the Intel UHD 630 render
--- engine at idle (96–99%). Excluding them from compositor blur leaves roughly
--- 35% GPU headroom while popup/switcher blur remains enabled. The bar and
--- terminal retain their tinted translucent fills; see docs/performance.md.
+-- Keep the former hot surfaces explicit even if another theme enables blur.
 hl.window_rule({ name = "sensei-kitty-render-headroom", match = { class = "^kitty$" }, no_blur = true })
 hl.layer_rule({ name = "sensei-bar-render-headroom", match = { namespace = "^wrayth-bar$" }, blur = false })
 -- Native image/calendar choosers stay above ordinary apps.
@@ -198,7 +195,7 @@ for _, leaf in ipairs({"workspaces", "workspacesIn", "workspacesOut"}) do
     hl.animation({ leaf = leaf, enabled = true, speed = 3.4, bezier = "senseiGlide", style = "slide" })
 end
 hl.layer_rule({ name = "sensei-popup-single-motion", match = { namespace = "^wrayth-popup$" }, no_anim = true })
-hl.layer_rule({ name = "sensei-navigation-stable", match = { namespace = "^sensei-navigation$" }, blur = true, ignore_alpha = 0.25, no_anim = true })
+hl.layer_rule({ name = "sensei-navigation-stable", match = { namespace = "^sensei-navigation$" }, blur = false, no_anim = true })
 
 -- Keep application opacity steady when focus changes during workspace motion.
 hl.animation({ leaf = "fadeSwitch", enabled = false, speed = 1, bezier = "senseiGlide" })
@@ -223,8 +220,8 @@ for _, spec in ipairs({{"LEFT", "previous"}, {"RIGHT", "next"}, {"UP", "volume-u
     hl.bind("CTRL + " .. spec[1], hl.dsp.exec_cmd("qs -c wrayth ipc call spotify action " .. spec[2]))
 end
 
--- Popup content owns its motion; blur follows even low-alpha opening frames.
-hl.layer_rule({ name = "sensei-popup-soft-reveal", match = { namespace = "^wrayth-popup$" }, blur = true, ignore_alpha = 0.01, no_anim = true })
+-- Popup content owns its motion; keep its compositor surface free of blur.
+hl.layer_rule({ name = "sensei-popup-soft-reveal", match = { namespace = "^wrayth-popup$" }, blur = false, no_anim = true })
 
 -- Give the Intel display renderer better scheduling; allow scanout where eligible.
 hl.config({ render = { new_render_scheduling = true, direct_scanout = 2 } })

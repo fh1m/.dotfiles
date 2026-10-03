@@ -1,10 +1,9 @@
 import QtQuick
-import QtQuick.Effects
 import qs.config
 import qs.services
 
-// The wallpaper, crossfading whenever it changes. Used crisp on the desktop
-// background and blurred/dimmed behind the deck, lock and overlays.
+// The wallpaper, crossfading whenever it changes. Backdrops are dimmed rather
+// than blurred so no offscreen image effect runs on either high-resolution panel.
 //
 // **The default source is the one the shell is showing**, not the profile's
 // file: which wallpaper that is -- the profile's own, one of its pool, or a
@@ -17,23 +16,13 @@ Item {
     property url source: Wallpapers.displayed
     property int imageFillMode: Image.PreserveAspectCrop
 
-    // 0 = crisp. The spec's blurred backdrops ask for about 16.
-    property real blurRadius: 0
     // 0 = full brightness, 0.58 gives the spec's "about 42% brightness".
     property real dim: 0
 
     // The pool's own fade, so a slow shuffle drifts rather than cuts.
     property int fadeDuration: Wallpapers.fadeDuration
 
-    // Blur and dim are animated so the desktop can settle between crisp and
-    // quiet as windows come and go.
-    Behavior on blurRadius {
-        NumberAnimation {
-            duration: Appearance.duration.panel
-            easing.type: Easing.OutCubic
-        }
-    }
-
+    // Dim changes still settle smoothly without an offscreen blur pass.
     Behavior on dim {
         NumberAnimation {
             duration: Appearance.duration.panel
@@ -70,13 +59,6 @@ Item {
         id: layers
 
         anchors.fill: parent
-        layer.enabled: root.blurRadius > 0
-        layer.effect: MultiEffect {
-            blurEnabled: true
-            blur: Math.min(1, root.blurRadius / 64)
-            blurMax: 64
-            autoPaddingEnabled: false
-        }
 
         Image {
             anchors.fill: parent

@@ -161,7 +161,8 @@ Singleton {
     // OFF, RARE, NORMAL or CUSTOM. The first three are presets that fill the
     // fields below; CUSTOM is what the row says once the numbers are the
     // user's own.
-    property string glitch: "NORMAL"
+    // Optional flourish; no periodic glitch work in the daily-driver profile.
+    property string glitch: "OFF"
 
     readonly property var glitchModes: ["OFF", "RARE", "NORMAL", "CUSTOM"]
 

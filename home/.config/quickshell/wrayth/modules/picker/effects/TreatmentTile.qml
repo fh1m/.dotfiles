@@ -98,7 +98,6 @@ Item {
 
             Wallpaper {
                 anchors.fill: parent
-                blurRadius: 4
                 dim: 0.4
             }
 

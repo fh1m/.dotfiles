@@ -46,7 +46,6 @@ Variants {
 
             Wallpaper {
                 anchors.fill: parent
-                blurRadius: 16
                 dim: 0.58
             }
 
