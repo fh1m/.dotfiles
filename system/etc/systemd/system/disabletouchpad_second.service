@@ -1,0 +1,17 @@
+[Unit]
+Description=Disable unused ZenBook ScreenPad touchscreen at the I2C controller
+After=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Unbinding only hid-multitouch removed input events but left the controller
+# delivering hundreds of unused interrupts per second. The ScreenPad display
+# and its brightness driver are separate from this touch/stylus controller.
+ExecStart=/bin/sh -c 'for n in $(seq 1 50); do if [ -L /sys/bus/i2c/drivers/i2c_hid_acpi/i2c-ELAN9009:00 ]; then printf %%s i2c-ELAN9009:00 > /sys/bus/i2c/drivers/i2c_hid_acpi/unbind; exit 0; fi; sleep 0.1; done; exit 1'
+ExecStop=/bin/sh -c 'if [ ! -L /sys/bus/i2c/drivers/i2c_hid_acpi/i2c-ELAN9009:00 ] && [ -e /sys/bus/i2c/devices/i2c-ELAN9009:00 ]; then printf %%s i2c-ELAN9009:00 > /sys/bus/i2c/drivers/i2c_hid_acpi/bind; fi'
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

@@ -49,6 +49,18 @@ for line in Path('/proc/diskstats').read_text().splitlines():
     if not re.fullmatch(r'nvme\d+n\d+|sd[a-z]+|mmcblk\d+',name):continue
     counters=[int(v[5])*512,int(v[9])*512,int(v[12])];disks[name]=counters;prev=old.get('disks',{}).get(name,counters)
     storage.append({'name':name,'read':max(0,(counters[0]-prev[0])/dt),'write':max(0,(counters[1]-prev[1])/dt),'busy':min(100,max(0,(counters[2]-prev[2])/dt/10))})
+def io_full(path):
+    try:
+        return int(next(line for line in Path(path).read_text().splitlines()
+                        if line.startswith('full ')).rsplit('total=',1)[1])
+    except (OSError,ValueError,IndexError,StopIteration):
+        return None
+psi={'global':io_full('/proc/pressure/io'),
+     'user':io_full(f'/sys/fs/cgroup/user.slice/user-{os.getuid()}.slice/io.pressure')}
+old_psi=old.get('psi',{})
+io_pressure={key:round(max(0,min(100,(value-old_psi[key])/1e6/dt*100)),2)
+             if value is not None and old_psi.get(key) is not None else 0
+             for key,value in psi.items()}
 try:
     addresses=json.loads(subprocess.run(['ip','-j','address'],capture_output=True,text=True,timeout=2).stdout);ips=[a['local'] for interface in addresses for a in interface.get('addr_info',[]) if a['family']=='inet' and a.get('scope')=='global']
 except Exception:ips=[]
@@ -72,7 +84,7 @@ if inventory and (now-extraTime>=5 or not extra):
         for sensor in h.glob('temp*_input'):
             try:sensors.append({'name':name+' / '+read(sensor.with_name(sensor.name.replace('_input','_label')),sensor.stem),'value':int(read(sensor))/1000})
             except ValueError:pass
-    extra={'os':read('/etc/os-release'),'cpuInfo':read('/proc/cpuinfo').split('processor\t: 1')[0], 'batteries':batteries,'sensors':sensors,'usb':command(['lsusb']),'pci':'\n'.join(d.name+' · vendor '+read(d/'vendor')+' · device '+read(d/'device')+' · class '+read(d/'class')+' · driver '+(d/'driver').resolve().name for d in Path('/sys/bus/pci/devices').glob('*')), 'routes':command(['ip','route']), 'addresses':command(['ip','-br','address']), 'dns':read('/etc/resolv.conf'), 'connections':command(['ss','-tunap']), 'audio':command(['wpctl','status','-n']), 'profile':command(['@HOME@/.local/bin/sensei-power','name']), 'displays':command(['hyprctl','monitors','-j']), 'services':command(['systemctl','--user','--failed','--no-pager']), 'gpuDetails':'Dedicated GPU asleep — telemetry intentionally avoids waking it.'}
+    extra={'os':read('/etc/os-release'),'cpuInfo':read('/proc/cpuinfo').split('processor\t: 1')[0], 'batteries':batteries,'sensors':sensors,'usb':command(['lsusb']),'pci':'\n'.join(d.name+' · vendor '+read(d/'vendor')+' · device '+read(d/'device')+' · class '+read(d/'class')+' · driver '+(d/'driver').resolve().name for d in Path('/sys/bus/pci/devices').glob('*')), 'routes':command(['ip','route']), 'addresses':command(['ip','-br','address']), 'dns':read('/etc/resolv.conf'), 'connections':command(['ss','-tunap']), 'audio':command(['wpctl','status','-n']), 'profile':command(['/home/fh1m/.local/bin/sensei-power','name']), 'displays':command(['hyprctl','monitors','-j']), 'services':command(['systemctl','--user','--failed','--no-pager']), 'gpuDetails':'Dedicated GPU asleep — telemetry intentionally avoids waking it.'}
     nvidia=[d for d in Path('/sys/bus/pci/devices').glob('*') if read(d/'vendor')=='0x10de' and read(d/'class').startswith('0x03')]
     if nvidia and read(nvidia[0]/'power/runtime_status')=='active':
         fields='name,driver_version,pstate,temperature.gpu,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,clocks.current.graphics,clocks.current.memory,clocks.current.sm,pcie.link.gen.current,pcie.link.width.current'
@@ -84,5 +96,5 @@ if inventory and (now-extraTime>=5 or not extra):
         staticGpu+='\nPCI address: '+d.name+'\nVendor / device: '+read(d/'vendor')+' / '+read(d/'device')+'\nRuntime power: '+read(d/'power/runtime_status')+'\nPower policy: '+read(d/'power/control')
     extra['gpuDetails']=staticGpu+'\n\n'+extra['gpuDetails']
     extraTime=now
-state={'time':now,'cpus':cpus,'pids':pids,'nets':nets,'disks':disks,'extra':extra,'extraTime':extraTime};tmp=cache.with_suffix('.tmp');tmp.write_text(json.dumps(state));tmp.chmod(0o600);tmp.replace(cache)
-print(json.dumps({'extra':extra if inventory else {},'cpu':usage[0], 'cores':usage[1:],'memory':{'total':mem['MemTotal'],'used':mem['MemTotal']-mem['MemAvailable'],'available':mem['MemAvailable'],'cache':mem.get('Cached',0)+mem.get('Buffers',0),'swapTotal':mem['SwapTotal'],'swapUsed':mem['SwapTotal']-mem['SwapFree']},'processes':sorted(processes,key=lambda p:p['cpu'],reverse=True),'processCount':processCount,'mounts':mounts,'network':network,'storage':storage,'uptime':float(Path('/proc/uptime').read_text().split()[0]),'load':os.getloadavg(),'kernel':platform.release(),'host':platform.node(),'ips':ips,'sampleTime':time.time()}))
+state={'time':now,'cpus':cpus,'pids':pids,'nets':nets,'disks':disks,'psi':psi,'extra':extra,'extraTime':extraTime};tmp=cache.with_suffix('.tmp');tmp.write_text(json.dumps(state));tmp.chmod(0o600);tmp.replace(cache)
+print(json.dumps({'extra':extra if inventory else {},'cpu':usage[0], 'cores':usage[1:],'memory':{'total':mem['MemTotal'],'used':mem['MemTotal']-mem['MemAvailable'],'available':mem['MemAvailable'],'cache':mem.get('Cached',0)+mem.get('Buffers',0),'swapTotal':mem['SwapTotal'],'swapUsed':mem['SwapTotal']-mem['SwapFree']},'processes':sorted(processes,key=lambda p:p['cpu'],reverse=True),'processCount':processCount,'mounts':mounts,'network':network,'storage':storage,'ioPressure':io_pressure,'uptime':float(Path('/proc/uptime').read_text().split()[0]),'load':os.getloadavg(),'kernel':platform.release(),'host':platform.node(),'ips':ips,'sampleTime':time.time()}))

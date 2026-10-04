@@ -78,7 +78,7 @@ DropdownFrame {
  Repeater {model:root.gpu.processes??[];NrLabel { font.capitalization: Font.MixedCase; tracked: false;required property var modelData;text:(modelData.pid??"")+"   "+(modelData.name??"process")+"   "+(modelData.type??"")+"   "+(modelData.memoryMiB??modelData.usedMemoryMiB??"—")+" MiB";pixelSize:13}}
  Text { text:root.d.extra?.gpuDetails??"Loading hardware telemetry…";width:parent.width;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetText;wrapMode:Text.Wrap}
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Intel drives both displays. Desktop rendering activity: "+(RobotBench.data.intelUsage??"—")+"%\nThis Intel counter covers Hyprland, not every Intel GPU process.";pixelSize:12;color:Theme.widgetMuted}
- Row {spacing:8;ControlTile {label:"NVIDIA terminal";glyph:"\uf120";onActivated:Quickshell.execDetached(["/home/fh1m/.local/bin/sim-console"])}ControlTile {label:"nvtop";onActivated:Quickshell.execDetached(["sensei-terminal","nvtop"])}ControlTile {label:"Robotics controls";onActivated:{ShellState.systemPage=2;ShellState.dropdown="system";}}}
+ Row {spacing:8;ControlTile {label:"NVIDIA terminal";glyph:"\uf120";onActivated:Quickshell.execDetached(["/home/fh1m/.local/bin/sim-console"])}ControlTile {label:"nvtop";onActivated:Quickshell.execDetached(["/home/fh1m/.local/bin/sensei-terminal","nvtop"])}ControlTile {label:"Robotics controls";onActivated:{ShellState.systemPage=2;ShellState.dropdown="system";}}}
  }ScrollBar.vertical:DeskScrollBar {}}
  Flickable {id:sectionEnter4Container;anchors.fill:parent;visible:root.page===3; clip:true;contentHeight:storageContent.height;Column {id:storageContent;width:parent.width;spacing:10
  Repeater {model:root.d.mounts;Rectangle {required property var modelData;width:storageContent.width;height:76;color:Theme.alpha(Theme.widgetSurface,.6);border.color:Theme.widgetBorder
@@ -87,6 +87,11 @@ DropdownFrame {
  Rectangle {x:12;y:57;width:parent.width-24;height:5;color:Theme.widgetBorder;Rectangle {width:parent.width*modelData.percent/100;height:parent.height;color:modelData.percent>90?Theme.widgetAccent:Theme.widgetAccent}}
  }}
  Repeater {model:root.d.storage;NrLabel { font.capitalization: Font.MixedCase; tracked: false;required property var modelData;text:modelData.name+"    read "+root.size(modelData.read)+"/s    write "+root.size(modelData.write)+"/s    busy "+modelData.busy.toFixed(1)+"%";pixelSize:13}}
+ Row {spacing:24
+ NrLabel {font.capitalization:Font.MixedCase;tracked:false;text:"Global I/O wait  "+Number(root.d.ioPressure?.global??0).toFixed(1)+"%";pixelSize:12;color:Theme.widgetMuted}
+ NrLabel {font.capitalization:Font.MixedCase;tracked:false;text:"Your apps blocked  "+Number(root.d.ioPressure?.user??0).toFixed(1)+"%";pixelSize:12;color:(root.d.ioPressure?.user??0)>3?Theme.widgetAccent:Theme.widgetText}
+ }
+ NrLabel {font.capitalization:Font.MixedCase;tracked:false;width:parent.width;wrapMode:Text.WordWrap;text:"Global wait can include Intel display-flip synchronization. Compare it with app pressure and the disk busy rate before treating it as storage contention.";pixelSize:11;color:Theme.widgetMuted}
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Process disk counters need permission. Network traffic is shown per interface;\nper-process network attribution requires additional tracing.";pixelSize:11;color:Theme.widgetMuted}
  }ScrollBar.vertical:DeskScrollBar {}}
 
@@ -104,7 +109,7 @@ DropdownFrame {
  }
 
  }
- Row {spacing:8;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:Demo.active ? ("Private host / addresses hidden · "+root.d.kernel) : (root.processCommand || (root.d.host+" · "+root.d.kernel+" · "+root.d.ips.join(" / ")));width:660;elide:Text.ElideRight;pixelSize:10;color:Theme.widgetMuted}ControlTile {implicitWidth:190;implicitHeight:25;label:"Capture 15s stall";onActivated:Quickshell.execDetached(["sensei-terminal","--hold","--title","Sensei · stall capture","-e","/home/fh1m/.local/bin/sensei-health"])}ControlTile {implicitWidth:150;implicitHeight:25;label:"Open btop";onActivated:Quickshell.execDetached(["sensei-terminal","btop"])}}
+ Row {spacing:8;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:Demo.active ? ("Private host / addresses hidden · "+root.d.kernel) : (root.processCommand || (root.d.host+" · "+root.d.kernel+" · "+root.d.ips.join(" / ")));width:660;elide:Text.ElideRight;pixelSize:10;color:Theme.widgetMuted}ControlTile {implicitWidth:190;implicitHeight:25;label:"Capture 15s stall";onActivated:Quickshell.execDetached(["/home/fh1m/.local/bin/sensei-terminal","--hold","--title","Sensei · stall capture","-e","/home/fh1m/.local/bin/sensei-health"])}ControlTile {implicitWidth:150;implicitHeight:25;label:"Open btop";onActivated:Quickshell.execDetached(["/home/fh1m/.local/bin/sensei-terminal","btop"])}}
  }
  property string processCommand:""
 }

@@ -16,9 +16,9 @@ def read(path):
         return ""
 
 
-def pressure(kind):
+def pressure(kind, path=None):
     result = {}
-    for line in read(f"/proc/pressure/{kind}").splitlines():
+    for line in read(path or f"/proc/pressure/{kind}").splitlines():
         parts = line.split()
         if parts:
             result[parts[0]] = {k: float(v) for k, v in (x.split("=", 1) for x in parts[1:])}
@@ -60,6 +60,7 @@ def snapshot():
     return {
         "at": time.time(),
         "pressure": {name: pressure(name) for name in ("cpu", "memory", "io")},
+        "user_io_pressure": pressure("io", f"/sys/fs/cgroup/user.slice/user-{os.getuid()}.slice/io.pressure"),
         "memory": memory,
         "disks": disk_counters(),
         "blocked_tasks": blocked_tasks(),
@@ -103,11 +104,13 @@ def main():
         for level in ("some", "full"):
             values = [s["pressure"].get(kind, {}).get(level, {}).get("avg10", 0) for s in samples]
             largest[f"{kind}.{level}"] = round(max(values), 2)
+    largest["user.io.full"] = round(max(s["user_io_pressure"].get("full", {}).get("avg10", 0) for s in samples), 2)
     lines = [
         "# Desktop stall capture",
         "",
         f"Samples: {len(samples)} at one-second intervals",
         f"Peak 10-second pressure: {largest}",
+        "User I/O pressure is measured separately; global PSI can include kernel display-flip workers.",
         f"Available RAM: {samples[-1]['memory'].get('MemAvailable', 0) / 2**30:.1f} GiB",
         "",
         "## Storage versus display waits",
