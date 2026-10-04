@@ -141,7 +141,7 @@ Singleton {
             // shell's own terminal.
             if (chosen.entry.runInTerminal)
                 Quickshell.execDetached({
-                    command: ["kitty", "-e"].concat(Array.from(chosen.entry.command)),
+                    command: ["sensei-terminal", "-e"].concat(Array.from(chosen.entry.command)),
                     workingDirectory: chosen.entry.workingDirectory || Quickshell.env("HOME")
                 });
             else

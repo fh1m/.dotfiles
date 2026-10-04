@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=Sensei Terminal
+GenericName=Terminal Emulator
+Comment=Alacritty with a persistent tmux workspace
+TryExec=/home/fh1m/.local/bin/sensei-terminal
+Exec=/home/fh1m/.local/bin/sensei-terminal
+Icon=Alacritty
+Categories=System;TerminalEmulator;
+StartupNotify=true
+StartupWMClass=Alacritty
+X-TerminalArgExec=--
+X-TerminalArgTitle=--title
+X-TerminalArgAppId=--class
+X-TerminalArgDir=--working-directory
+X-TerminalArgHold=--hold

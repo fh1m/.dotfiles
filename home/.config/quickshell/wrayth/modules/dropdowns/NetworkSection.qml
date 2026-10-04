@@ -8,7 +8,7 @@ import qs.utils
 Column {
  id:root;width:parent.width;spacing:10
  readonly property int page:DesktopExtras.networkPage
- function action(name,value=''){Quickshell.execDetached(['kitty','--title','Sensei · Network','@HOME@/.local/bin/sensei-network-action',name,value]);}
+ function action(name,value=''){Quickshell.execDetached(['sensei-terminal','--title','Sensei · Network','/home/fh1m/.local/bin/sensei-network-action',name,value]);}
  Component.onCompleted:DesktopExtras.loadNetwork()
  Row {spacing:7
   ControlTile {implicitWidth:170;label:'Wi-Fi';navigation:true;selected:DesktopExtras.networkPage===0;onActivated:DesktopExtras.networkPage=0}

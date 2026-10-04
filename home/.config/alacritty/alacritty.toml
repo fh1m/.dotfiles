@@ -1,0 +1,167 @@
+# Sensei · fast daily terminal. Kitty remains available for the Wrayth deck.
+# Match the live Kitty palette, ZedMono metrics and opaque compositor profile.
+[general]
+live_config_reload = true
+
+[env]
+TERM = "alacritty"
+
+[window]
+decorations = "None"
+opacity = 1.0
+padding = { x = 12, y = 8 }
+dynamic_padding = false
+resize_increments = true
+title = "Sensei · Terminal"
+dynamic_title = true
+
+[scrolling]
+history = 10000
+multiplier = 3
+
+[font]
+normal = { family = "ZedMono Nerd Font Mono", style = "Regular" }
+bold = { family = "ZedMono Nerd Font Mono", style = "Bold" }
+italic = { family = "ZedMono Nerd Font Mono", style = "Italic" }
+bold_italic = { family = "ZedMono Nerd Font Mono", style = "Bold Italic" }
+size = 11.5
+offset = { x = 2, y = 4 }
+glyph_offset = { x = 0, y = 0 }
+builtin_box_drawing = true
+
+[colors.primary]
+background = "#000000"
+foreground = "#8bb9f6"
+dim_foreground = "#6d87ac"
+
+[colors.cursor]
+text = "#000000"
+cursor = "#ffffff"
+
+[colors.selection]
+text = "#000000"
+background = "#D8054A"
+
+[colors.normal]
+black = "#0f0f0f"
+red = "#ff1767"
+green = "#0090ff"
+yellow = "#f7ed30"
+blue = "#D8054A"
+magenta = "#6c43a5"
+cyan = "#D8054A"
+white = "#ffffff"
+
+[colors.bright]
+black = "#002766"
+red = "#ff1767"
+green = "#abe05a"
+yellow = "#ffda00"
+blue = "#D8054A"
+magenta = "#ff1767"
+cyan = "#D8054A"
+white = "#ffffff"
+
+[cursor]
+style = { shape = "Underline", blinking = "Never" }
+unfocused_hollow = true
+
+[selection]
+save_to_clipboard = true
+
+[terminal]
+osc52 = "CopyPaste"
+
+[mouse]
+hide_when_typing = false
+
+[[keyboard.bindings]]
+key = "V"
+mods = "Alt"
+action = "Paste"
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Control|Shift"
+chars = "\u0060c"
+
+[[keyboard.bindings]]
+key = "N"
+mods = "Control|Shift"
+action = "CreateNewWindow"
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Super"
+chars = "\u0060c"
+
+[[keyboard.bindings]]
+key = "ArrowUp"
+mods = "Control|Shift"
+chars = "\u0060["
+
+[[keyboard.bindings]]
+key = "ArrowDown"
+mods = "Control|Shift"
+action = "ScrollLineDown"
+
+[[keyboard.bindings]]
+key = "H"
+mods = "Control|Shift"
+action = "SearchBackward"
+
+[[keyboard.bindings]]
+key = "/"
+mods = "Control|Shift"
+action = "SearchForward"
+
+[[keyboard.bindings]]
+key = "F5"
+mods = "Super"
+action = "None"
+
+[[keyboard.bindings]]
+key = "Y"
+mods = "Super"
+command = { program = "alacritty", args = ["--title", "Sensei · btop", "-e", "btop"] }
+
+[[keyboard.bindings]]
+key = "N"
+mods = "Control"
+command = { program = "alacritty", args = ["--title", "Sensei · nvtop", "-e", "nvtop"] }
+
+# Kitty-style tab and layout keys routed into the persistent tmux session.
+[[keyboard.bindings]]
+key = "'"
+mods = "Super"
+chars = "\u0060c"
+
+[[keyboard.bindings]]
+key = "["
+mods = "Super"
+chars = "\u0060p"
+
+[[keyboard.bindings]]
+key = "]"
+mods = "Super"
+chars = "\u0060n"
+
+[[keyboard.bindings]]
+key = "L"
+mods = "Control|Shift"
+chars = "\u0060 "
+
+[[keyboard.bindings]]
+key = "M"
+mods = "Control|Shift"
+chars = "\u0060z"
+
+[[keyboard.bindings]]
+key = "E"
+mods = "Control|Shift"
+chars = "\u0060w"
+
+[[keyboard.bindings]]
+key = "Escape"
+mods = "Control|Shift"
+chars = "\u0060:"

@@ -3,7 +3,7 @@
 import json, shutil, subprocess
 from pathlib import Path
 
-commands = ['qs', 'hyprctl', 'kitty', 'wl-copy', 'grim', 'slurp', 'wf-recorder',
+commands = ['qs', 'hyprctl', 'kitty', 'alacritty', 'chafa', 'wl-copy', 'grim', 'slurp', 'wf-recorder',
             'wpctl', 'pactl', 'playerctl', 'bluetoothctl', 'nmcli', 'docker',
             'tmux', 'kdeconnect-cli', 'tailscale', 'syncthing', 'sshfs', 'rsync']
 result = {'commands': {c: bool(shutil.which(c)) for c in commands}}

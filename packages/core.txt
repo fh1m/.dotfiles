@@ -2,6 +2,8 @@
 hyprland
 quickshell
 kitty
+alacritty
+chafa
 tmux
 networkmanager
 pipewire

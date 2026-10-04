@@ -1,0 +1,8 @@
+#!/usr/bin/python3
+"""Open a CUDA workbench on workspace 4, offloading the terminal when available."""
+import os
+import subprocess
+
+subprocess.run(['hyprctl', 'dispatch', 'hl.dsp.focus({workspace="4"})'], check=True)
+os.execvp('sensei-gpu-run', ['sensei-gpu-run', 'nvidia', 'sensei-terminal',
+                            '--class', 'robot-sim', '--title', 'SIM-CUDA', 'zsh'])

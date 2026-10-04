@@ -25,6 +25,8 @@
 
 **ASUS ZenBook Pro Duo UX581GV.** The big panel is the canvas; the ScreenPad is the instrument cluster. Intel drives both internal displays. The RTX 2060 handles selected graphics and CUDA work. [The actual wiring and GPU limits →](docs/gpu-and-chrome.md)
 
+**Daily terminal:** Alacritty + persistent tmux. Same ZedMono palette; less Intel render load in a matched local test. Kitty stays for the remote-controlled deck. [Terminal controls and tradeoffs →](docs/terminal.md)
+
 ## A little controlled chaos
 
 ![Three floating Kitty windows with ROS code, a CUDA Compose recipe and system facts](docs/assets/floating-workstation.png)

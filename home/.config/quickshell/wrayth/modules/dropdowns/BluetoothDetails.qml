@@ -63,10 +63,10 @@ Column {
    Column {width:parent.width;spacing:8;visible:root.page===3
     Row {width:parent.width;spacing:6
      ControlTile {width:(parent.width-6)/2;label:'Audio mixer';glyph:'\uf1de';onActivated:BluetoothDesk.tool(['pavucontrol'])}
-     ControlTile {width:(parent.width-6)/2;label:'Controller status';glyph:'\uf120';onActivated:BluetoothDesk.tool(['kitty','--title','Bluetooth diagnostics','sh','-c','bluetoothctl show; printf "\\nPress Enter to close"; read line'])}
+     ControlTile {width:(parent.width-6)/2;label:'Controller status';glyph:'\uf120';onActivated:BluetoothDesk.tool(['sensei-terminal','--title','Bluetooth diagnostics','sh','-c','bluetoothctl show; printf "\\nPress Enter to close"; read line'])}
     }
     Row {width:parent.width;spacing:6
-     ControlTile {width:(parent.width-6)/2;label:'Audio health';glyph:'\uf201';onActivated:BluetoothDesk.tool(['kitty','--title','Bluetooth audio health','pw-top'])}
+     ControlTile {width:(parent.width-6)/2;label:'Audio health';glyph:'\uf201';onActivated:BluetoothDesk.tool(['sensei-terminal','--title','Bluetooth audio health','pw-top'])}
      ControlTile {width:(parent.width-6)/2;label:'Refresh details';glyph:'\uf021';onActivated:BluetoothDesk.refresh()}
     }
     Text {width:parent.width;wrapMode:Text.WordWrap;text:'Sensei, use 5 GHz Wi-Fi for music. Your headset has a dedicated transport buffer; other devices keep their defaults. Disconnect pauses music intentionally. Pair, connect and forget controls remain in each device row.';font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetMuted;lineHeight:1.4}

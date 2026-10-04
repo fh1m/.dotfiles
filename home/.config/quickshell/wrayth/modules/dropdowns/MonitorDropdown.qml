@@ -78,7 +78,7 @@ DropdownFrame {
  Repeater {model:root.gpu.processes??[];NrLabel { font.capitalization: Font.MixedCase; tracked: false;required property var modelData;text:(modelData.pid??"")+"   "+(modelData.name??"process")+"   "+(modelData.type??"")+"   "+(modelData.memoryMiB??modelData.usedMemoryMiB??"—")+" MiB";pixelSize:13}}
  Text { text:root.d.extra?.gpuDetails??"Loading hardware telemetry…";width:parent.width;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetText;wrapMode:Text.Wrap}
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Intel drives both displays. Desktop rendering activity: "+(RobotBench.data.intelUsage??"—")+"%\nThis Intel counter covers Hyprland, not every Intel GPU process.";pixelSize:12;color:Theme.widgetMuted}
- Row {spacing:8;ControlTile {label:"NVIDIA terminal";glyph:"\uf120";onActivated:Quickshell.execDetached(["/home/fh1m/.local/bin/sim-console"])}ControlTile {label:"nvtop";onActivated:Quickshell.execDetached(["kitty","nvtop"])}ControlTile {label:"Robotics controls";onActivated:{ShellState.systemPage=2;ShellState.dropdown="system";}}}
+ Row {spacing:8;ControlTile {label:"NVIDIA terminal";glyph:"\uf120";onActivated:Quickshell.execDetached(["/home/fh1m/.local/bin/sim-console"])}ControlTile {label:"nvtop";onActivated:Quickshell.execDetached(["sensei-terminal","nvtop"])}ControlTile {label:"Robotics controls";onActivated:{ShellState.systemPage=2;ShellState.dropdown="system";}}}
  }ScrollBar.vertical:DeskScrollBar {}}
  Flickable {id:sectionEnter4Container;anchors.fill:parent;visible:root.page===3; clip:true;contentHeight:storageContent.height;Column {id:storageContent;width:parent.width;spacing:10
  Repeater {model:root.d.mounts;Rectangle {required property var modelData;width:storageContent.width;height:76;color:Theme.alpha(Theme.widgetSurface,.6);border.color:Theme.widgetBorder
@@ -104,7 +104,7 @@ DropdownFrame {
  }
 
  }
- Row {spacing:8;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:Demo.active ? ("Private host / addresses hidden · "+root.d.kernel) : (root.processCommand || (root.d.host+" · "+root.d.kernel+" · "+root.d.ips.join(" / ")));width:660;elide:Text.ElideRight;pixelSize:10;color:Theme.widgetMuted}ControlTile {implicitWidth:190;implicitHeight:25;label:"Capture 15s stall";onActivated:Quickshell.execDetached(["kitty","--hold","--title","Sensei · stall capture","-e","/home/fh1m/.local/bin/sensei-health"])}ControlTile {implicitWidth:150;implicitHeight:25;label:"Open btop";onActivated:Quickshell.execDetached(["kitty","btop"])}}
+ Row {spacing:8;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:Demo.active ? ("Private host / addresses hidden · "+root.d.kernel) : (root.processCommand || (root.d.host+" · "+root.d.kernel+" · "+root.d.ips.join(" / ")));width:660;elide:Text.ElideRight;pixelSize:10;color:Theme.widgetMuted}ControlTile {implicitWidth:190;implicitHeight:25;label:"Capture 15s stall";onActivated:Quickshell.execDetached(["sensei-terminal","--hold","--title","Sensei · stall capture","-e","/home/fh1m/.local/bin/sensei-health"])}ControlTile {implicitWidth:150;implicitHeight:25;label:"Open btop";onActivated:Quickshell.execDetached(["sensei-terminal","btop"])}}
  }
  property string processCommand:""
 }

@@ -34,7 +34,7 @@ hl.monitor({
 -- ===========================================================================
 -- Programs
 -- ===========================================================================
-local terminal = "kitty"
+local terminal = "sensei-terminal"
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
@@ -43,6 +43,11 @@ hl.env("HYPRCURSOR_SIZE", "24")
 -- Look and layout
 -- ===========================================================================
 hl.config({
+    xwayland = {
+        -- Render NVIDIA Chrome at native pixels on the 2x internal panels.
+        -- Its own --force-device-scale-factor=2 restores the original UI size.
+        force_zero_scaling = true,
+    },
     general = {
         gaps_in     = 5,
         gaps_out    = 12,
@@ -167,5 +172,5 @@ hl.window_rule({
 -- ===========================================================================
 -- wrayth -- last, so its keys and rules apply over everything above
 -- ===========================================================================
-dofile("@HOME@/.config/hypr/hypr-wrayth.lua")
-dofile("@HOME@/.config/hypr/custom-setup.lua")
+dofile("/home/fh1m/.config/hypr/hypr-wrayth.lua")
+dofile("/home/fh1m/.config/hypr/custom-setup.lua")

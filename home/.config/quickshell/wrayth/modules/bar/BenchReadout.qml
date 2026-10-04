@@ -39,6 +39,6 @@ Row {
     }
     HoverHandler { cursorShape: Qt.PointingHandCursor }
     TapHandler {
-        onTapped: Hyprland.dispatch('hl.dsp.exec_cmd("kitty --title Robot-Bench @HOME@/.local/bin/robot-bench-data --watch")')
+        onTapped: Hyprland.dispatch('hl.dsp.exec_cmd("sensei-terminal --title Robot-Bench /home/fh1m/.local/bin/robot-bench-data --watch")')
     }
 }

@@ -58,7 +58,7 @@ Singleton {
  function move(t,id){pinned=true;Hyprland.dispatch('hl.dsp.window.move({window="address:'+addressFor(t)+'",workspace="'+id+'",follow=false})');Qt.callLater(()=>Hyprland.refreshToplevels());}
  function floatWindow(t){pinned=true;Hyprland.dispatch('hl.dsp.window.float({action="toggle",window="address:'+addressFor(t)+'"})');}
  function launch(e){pendingSelection={kind:'app',entry:e};opened=false;}
- function executeApp(e){Launcher.record(e.id);Deck.leave();if(e.runInTerminal)Quickshell.execDetached({command:["kitty","-e"].concat(Array.from(e.command)),workingDirectory:e.workingDirectory||Quickshell.env('HOME')});else e.execute();}
+ function executeApp(e){Launcher.record(e.id);Deck.leave();if(e.runInTerminal)Quickshell.execDetached({command:["sensei-terminal","-e"].concat(Array.from(e.command)),workingDirectory:e.workingDirectory||Quickshell.env('HOME')});else e.execute();}
  function syncFocus(){let t=root.all.find(w=>w.lastIpcObject?.focusHistoryID===0);if(!t)return;const address=t.address;if(!address||address===root.lastFocusAddress)return;root.lastFocusAddress=address;mru=[address].concat(mru.filter(a=>a!==address)).slice(0,100);focusTitle=t.title||t.wayland?.appId||"Window";focusWorkspace=t.workspace?.id??1;focusScreen=t.monitor?.name??"eDP-1";focusStamp++;}
  Connections {target:Hyprland;function onActiveToplevelChanged(){root.syncFocus();}function onRawEvent(event){if(['openwindow','closewindow','movewindow','workspace','focusedmon'].includes(event.name))Hyprland.refreshToplevels();}}
  Connections {target:ActiveWindow;function onIpcChanged(){root.syncFocus();}}

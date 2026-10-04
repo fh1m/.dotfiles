@@ -244,13 +244,13 @@ def action(a,id='',args=None):
     if a=='ssh-install-key':
         c=config()
         if not SSH_KEY.exists() or not c['host'] or not c['user']:raise ValueError('Create the Phone key and save the SSH target first.')
-        subprocess.Popen(['kitty','--title','Phone SSH key setup','ssh-copy-id','-i',str(SSH_KEY)+'.pub','-p',str(c['port']),c['user']+'@'+c['host']],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        subprocess.Popen(['sensei-terminal','--title','Phone SSH key setup','ssh-copy-id','-i',str(SSH_KEY)+'.pub','-p',str(c['port']),c['user']+'@'+c['host']],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         return {'ok':True,'output':'Key setup opened. Verify the host fingerprint and enter the Termux password there. Only the public key is copied.'}
     if a in ('ssh-trust','ssh-run'):
         c=config()
         if not c['host'] or not c['user']:raise ValueError('Save a Termux SSH target first.')
         target=c['user']+'@'+c['host'];base=['ssh','-p',str(c['port']),'-o','ConnectTimeout=8']+(['-i',str(SSH_KEY)] if SSH_KEY.exists() else [])
-        if a=='ssh-trust':subprocess.Popen(['kitty','--title','Phone SSH',*base,target],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);return {'ok':True,'output':'SSH shell opened. Verify the host fingerprint and authenticate there.'}
+        if a=='ssh-trust':subprocess.Popen(['sensei-terminal','--title','Phone SSH',*base,target],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);return {'ok':True,'output':'SSH shell opened. Verify the host fingerprint and authenticate there.'}
         return run([*base,'-o','BatchMode=yes','-o','StrictHostKeyChecking=yes',target,args[0]],timeout=15)
     if a=='mirror':
         serial=args[0] if args else ''

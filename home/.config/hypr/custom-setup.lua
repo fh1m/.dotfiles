@@ -3,7 +3,7 @@
 -- volume, and brightness shortcuts.
 
 local mod = "SUPER"
-local terminal = "kitty"
+local terminal = "sensei-terminal"
 
 -- Preserve the original monitor arrangement and session environment.
 hl.monitor({
@@ -43,11 +43,12 @@ hl.env("XCURSOR_SIZE", "24")
 hl.env("QT_CURSOR_SIZE", "24")
 hl.env("MOZ_DISABLE_RDD_SANDBOX", "1")
 hl.env("MOZ_ENABLE_WAYLAND", "1")
+hl.env("TERMINAL", "sensei-terminal")
 hl.env("QT_QPA_PLATFORM", "wayland")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
 
 hl.bind(mod .. " + RETURN", hl.dsp.exec_cmd(terminal))
-hl.bind("ALT + RETURN", hl.dsp.exec_cmd("kitty"))
+hl.bind("ALT + RETURN", hl.dsp.exec_cmd("sensei-terminal"))
 hl.bind("ALT + W", hl.dsp.exec_cmd("google-chrome-stable"))
 hl.bind("ALT + F", hl.dsp.exec_cmd("nautilus"))
 hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs -c wrayth ipc call picker toggle"))
@@ -178,7 +179,7 @@ hl.bind("ALT + grave", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle sam
 hl.bind("ALT + SHIFT + grave", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle same -1"))
 
 -- Keep the former hot surfaces explicit even if another theme enables blur.
-hl.window_rule({ name = "sensei-kitty-render-headroom", match = { class = "^kitty$" }, no_blur = true })
+hl.window_rule({ name = "sensei-terminal-render-headroom", match = { class = "^(kitty|Alacritty)$" }, no_blur = true })
 hl.layer_rule({ name = "sensei-bar-render-headroom", match = { namespace = "^wrayth-bar$" }, blur = false })
 -- Native image/calendar choosers stay above ordinary apps.
 hl.window_rule({ name = "sensei-native-chooser", match = { class = "^(zenity|org\\.gnome\\.Zenity)$" }, float = true, center = true })

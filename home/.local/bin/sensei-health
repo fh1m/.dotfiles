@@ -25,6 +25,32 @@ def pressure(kind):
     return result
 
 
+def disk_counters():
+    """NVMe bytes and busy time; PSI alone cannot identify storage waits."""
+    result = {}
+    for disk in Path('/sys/block').glob('nvme*n*'):
+        try:
+            fields = [int(x) for x in (disk / 'stat').read_text().split()]
+            result[disk.name] = {
+                'read_bytes': fields[2] * 512,
+                'write_bytes': fields[6] * 512,
+                'busy_ms': fields[9],
+            }
+        except (OSError, ValueError, IndexError):
+            pass
+    return result
+
+
+def blocked_tasks():
+    try:
+        output = subprocess.run(['ps', '-eo', 'pid=,stat=,wchan:32=,comm='],
+                                capture_output=True, text=True, timeout=2).stdout
+        return [line.strip() for line in output.splitlines()
+                if len(line.split()) >= 2 and line.split()[1].startswith('D')][:20]
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+
+
 def snapshot():
     memory = {}
     for line in read("/proc/meminfo").splitlines():
@@ -35,6 +61,8 @@ def snapshot():
         "at": time.time(),
         "pressure": {name: pressure(name) for name in ("cpu", "memory", "io")},
         "memory": memory,
+        "disks": disk_counters(),
+        "blocked_tasks": blocked_tasks(),
         "load": os.getloadavg(),
     }
 
@@ -81,6 +109,16 @@ def main():
         f"Samples: {len(samples)} at one-second intervals",
         f"Peak 10-second pressure: {largest}",
         f"Available RAM: {samples[-1]['memory'].get('MemAvailable', 0) / 2**30:.1f} GiB",
+        "",
+        "## Storage versus display waits",
+        "",
+        *[f"{name}: read {(last['read_bytes'] - first['read_bytes']) / 2**20:.1f} MiB, "
+          f"wrote {(last['write_bytes'] - first['write_bytes']) / 2**20:.1f} MiB, "
+          f"busy {(last['busy_ms'] - first['busy_ms']) / max(args.seconds * 1000, 1):.1%}"
+          for name, last in samples[-1]['disks'].items()
+          if (first := samples[0]['disks'].get(name))],
+        "Blocked tasks (D state, final sample):",
+        *[f"- {task}" for task in samples[-1]['blocked_tasks']],
         "",
         "## Highest CPU processes at end",
         "```",

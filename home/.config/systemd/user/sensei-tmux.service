@@ -1,0 +1,10 @@
+[Unit]
+Description=Prepare persistent Sensei tmux session
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=%h/.local/bin/sensei-tmux --prepare
+
+[Install]
+WantedBy=default.target

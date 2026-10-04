@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""Open an independent tmux client, with windows retained in the Sensei session."""
+import fcntl
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+BASE = 'Sensei'
+RUNTIME = Path(os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}'))
+
+def tmux(*args, capture=False):
+    return subprocess.run(['tmux', *args], check=True, text=True,
+                          stdout=subprocess.PIPE if capture else subprocess.DEVNULL,
+                          stderr=subprocess.PIPE if capture else subprocess.DEVNULL)
+
+def main():
+    if len(sys.argv) > 1 and sys.argv[1] == '--prepare':
+        try:
+            tmux('has-session', '-t', f'={BASE}')
+        except subprocess.CalledProcessError:
+            tmux('new-session', '-d', '-s', BASE, '-n', 'ready')
+        return
+    if os.environ.get('TMUX'):
+        raise SystemExit('Already inside tmux; use the tmux prefix (`) to open windows or sessions.')
+    RUNTIME.mkdir(parents=True, exist_ok=True)
+    with (RUNTIME / 'sensei-tmux-launch.lock').open('a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            tmux('has-session', '-t', f'={BASE}')
+        except subprocess.CalledProcessError:
+            tmux('new-session', '-d', '-s', BASE, '-n', 'ready')
+        sessions = [line.split('\t', 1) for line in
+                    tmux('list-sessions', '-F', '#{session_name}\t#{session_attached}',
+                         capture=True).stdout.splitlines()]
+        active_view = any((name.startswith('Desk-') or name == BASE) and attached != '0'
+                          for name, attached in sessions)
+        if active_view:
+            window = tmux('new-window', '-d', '-t', BASE, '-c', os.getcwd(),
+                          '-P', '-F', '#{window_id}', capture=True).stdout.strip()
+        else:
+            # Reopen the last detached work instead of growing empty shells.
+            window = tmux('display-message', '-p', '-t', BASE, '#{window_id}',
+                          capture=True).stdout.strip()
+        existing = [name for name, _ in sessions]
+        slot = next(i for i in range(1, 1000) if f'Desk-{i}' not in existing)
+        client = f'Desk-{slot}'
+        tmux('new-session', '-d', '-t', BASE, '-s', client)
+        tmux('select-window', '-t', f'{client}:{window}')
+        tmux('set-hook', '-t', client, 'client-attached', f'set-option -t {client} destroy-unattached on')
+    os.execvp('tmux', ['tmux', 'attach-session', '-t', client])
+
+if __name__ == '__main__':
+    try:
+        main()
+    except subprocess.CalledProcessError as error:
+        raise SystemExit(f'tmux setup failed: {error.stderr or error}')

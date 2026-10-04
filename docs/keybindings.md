@@ -4,6 +4,8 @@
 
 Use **Super+F2** for the local shortcut reference. The effective Lua configuration is the source of truth if a binding changes.
 
+The terminal's internal tab, pane, copy and session shortcuts are in [Terminal →](terminal.md).
+
 | Key | Action |
 |---|---|
 | Tap Super | Native-icon application launcher on the focused display |

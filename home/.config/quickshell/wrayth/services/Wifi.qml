@@ -247,7 +247,7 @@ Singleton {
     // installed, otherwise `nmtui-edit` in a terminal -- this machine has
     // nmtui and not the editor, and neither is worth making a dependency.
     function openSettings(ssid: string): void {
-        Deck.launch(["sh", "-c", `command -v nm-connection-editor >/dev/null && exec nm-connection-editor || exec kitty --class wr-net-settings nmtui-edit '${ssid.replace(/'/g, "'\\''")}'`]);
+        Deck.launch(["sh", "-c", `command -v nm-connection-editor >/dev/null && exec nm-connection-editor || exec sensei-terminal --class wr-net-settings nmtui-edit '${ssid.replace(/'/g, "'\\''")}'`]);
     }
 
     // Join a network that does not broadcast its name. Runs through the same
