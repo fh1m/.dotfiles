@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+"""Pick an existing robotics project and open it in a persistent tmux window."""
+import os
+import subprocess
+from pathlib import Path
+
+home = Path.home()
+roots = [home / 'Projects', home / 'Work/Projects', home / 'Ros_workspaces']
+paths = set()
+for root in roots:
+    if not root.is_dir():
+        continue
+    for base, dirs, files in os.walk(root):
+        current = Path(base)
+        depth = len(current.relative_to(root).parts)
+        dirs[:] = [name for name in dirs if not name.startswith('.') and name not in
+                   {'node_modules', 'build', 'install', 'log', '.venv', 'venv', '__pycache__'}]
+        if depth >= 3:
+            dirs[:] = []
+        if depth > 0 and (depth == 1 or any(name in files for name in
+                {'.git', 'package.xml', 'pyproject.toml', 'Cargo.toml', 'CMakeLists.txt'})):
+            paths.add(str(current))
+
+if not paths:
+    raise SystemExit('No project directories found')
+choice = subprocess.run(
+    ['fzf', '--reverse', '--border=none', '--prompt=BAY / project > ',
+     '--header=Enter opens a persistent tmux window · Esc cancels'],
+    input='\n'.join(sorted(paths)) + '\n', text=True, capture_output=True,
+    check=False,
+).stdout.strip()
+if choice:
+    path = Path(choice)
+    if path.is_dir() and any(path == root or root in path.parents for root in roots):
+        subprocess.run(['tmux', 'new-window', '-c', str(path), '-n', path.name[:24]], check=True)

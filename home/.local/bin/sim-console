@@ -4,5 +4,5 @@ import os
 import subprocess
 
 subprocess.run(['hyprctl', 'dispatch', 'hl.dsp.focus({workspace="4"})'], check=True)
-os.execvp('sensei-gpu-run', ['sensei-gpu-run', 'nvidia', 'sensei-terminal',
+os.execv('/home/fh1m/.local/bin/sensei-gpu-run', ['/home/fh1m/.local/bin/sensei-gpu-run', 'nvidia', '/home/fh1m/.local/bin/sensei-terminal',
                             '--class', 'robot-sim', '--title', 'SIM-CUDA', 'zsh'])

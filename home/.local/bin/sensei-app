@@ -3,7 +3,7 @@
 import fcntl,json,os,subprocess,sys,time
 from pathlib import Path
 APPS={
- 'terminal':(['alacritty'],['sensei-terminal'],['sensei-terminal']),
+ 'terminal':(['alacritty'],[str(Path.home()/'.local/bin/sensei-terminal')],[str(Path.home()/'.local/bin/sensei-terminal')]),
  'web':(['google-chrome','google-chrome-stable','chromium'],['google-chrome-stable'],['google-chrome-stable','--new-window']),
  'files':(['org.gnome.nautilus','nautilus'],['nautilus'],['nautilus','--new-window']),
  'calculator':(['org.gnome.calculator','gnome-calculator'],['gnome-calculator'],['gnome-calculator'])}
@@ -17,12 +17,16 @@ def main():
   clients=json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True))
   windows=[c for c in clients if c.get('class','').lower() in aliases or c.get('initialClass','').lower() in aliases]
   windows.sort(key=lambda c:c.get('focusHistoryID',999))
-  if windows and mode=='focus-or-launch':
+  active=json.loads(subprocess.check_output(['hyprctl','activewindow','-j'],text=True))
+  # Repeating the terminal shortcut inside the already-focused terminal
+  # should create another workbench; focusing that same window looks broken.
+  repeat_terminal=(app=='terminal' and any(c.get('address')==active.get('address') for c in windows))
+  if windows and mode=='focus-or-launch' and not repeat_terminal:
    address=windows[0]['address'];result={'action':'focus','app':app,'address':address,'workspace':windows[0]['workspace']['id']}
    if not dry:subprocess.run(['hyprctl','dispatch','hl.dsp.focus({window="address:'+address+'"})'],check=True,stdout=subprocess.DEVNULL)
   else:
    stamp=runtime/f'sensei-app-{app}.pending'
-   if mode=='focus-or-launch' and stamp.exists() and time.time()-stamp.stat().st_mtime<5:
+   if mode=='focus-or-launch' and not repeat_terminal and stamp.exists() and time.time()-stamp.stat().st_mtime<5:
     result={'action':'pending','app':app}
    else:
     command=new if mode=='new-window' else normal

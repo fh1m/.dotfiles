@@ -3,7 +3,7 @@
 -- volume, and brightness shortcuts.
 
 local mod = "SUPER"
-local terminal = "sensei-terminal"
+local terminal = "/home/fh1m/.local/bin/sensei-terminal"
 
 -- Preserve the original monitor arrangement and session environment.
 hl.monitor({
@@ -43,12 +43,13 @@ hl.env("XCURSOR_SIZE", "24")
 hl.env("QT_CURSOR_SIZE", "24")
 hl.env("MOZ_DISABLE_RDD_SANDBOX", "1")
 hl.env("MOZ_ENABLE_WAYLAND", "1")
-hl.env("TERMINAL", "sensei-terminal")
+hl.env("TERMINAL", "/home/fh1m/.local/bin/sensei-terminal")
+hl.env("PATH", os.getenv("HOME") .. "/.local/bin:" .. (os.getenv("PATH") or "/usr/local/bin:/usr/bin"))
 hl.env("QT_QPA_PLATFORM", "wayland")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
 
 hl.bind(mod .. " + RETURN", hl.dsp.exec_cmd(terminal))
-hl.bind("ALT + RETURN", hl.dsp.exec_cmd("sensei-terminal"))
+hl.bind("ALT + RETURN", hl.dsp.exec_cmd("/home/fh1m/.local/bin/sensei-terminal"))
 hl.bind("ALT + W", hl.dsp.exec_cmd("google-chrome-stable"))
 hl.bind("ALT + F", hl.dsp.exec_cmd("nautilus"))
 hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs -c wrayth ipc call picker toggle"))
@@ -116,7 +117,10 @@ hl.bind("ALT + Print", hl.dsp.exec_cmd(capture .. "screenshot active"))
 hl.bind("CTRL + Print", hl.dsp.exec_cmd(capture .. "screenshot screen"))
 hl.bind("SUPER + Print", hl.dsp.exec_cmd(capture .. "record output"))
 hl.bind("SUPER + SHIFT + Print", hl.dsp.exec_cmd(capture .. "record area"))
-hl.bind("SUPER + F2", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/desktop-shortcuts"))
+hl.bind("SUPER + F2", hl.dsp.exec_cmd("qs -c wrayth ipc call shortcuts toggle"))
+-- US keyboard: Shift+/ prints ?, so this is Ctrl+Shift+?.
+hl.unbind("CTRL + SHIFT + slash")
+hl.bind("CTRL + SHIFT + slash", hl.dsp.exec_cmd("qs -c wrayth ipc call shortcuts toggle"))
 
 -- Six regular workspaces; remove the copied extra numeric shortcuts.
 for _, key in ipairs({ "7", "8", "9", "0" }) do

@@ -71,7 +71,7 @@ def tmux_launch(command,session,window):
  if not re.fullmatch(r'[A-Za-z0-9_-]{1,48}',session):raise ValueError('Use a simple tmux session name.')
  if session not in sessions():run(['tmux','new-session','-d','-s',session,'-n',window,shlex.join(command)])
  else:run(['tmux','new-window','-t',session,'-n',window,shlex.join(command)])
- subprocess.Popen(['sensei-terminal','--title','Robotics · '+session,'-e','tmux','attach-session','-t',session],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+ subprocess.Popen([str(Path.home()/'.local/bin/sensei-terminal'),'--title','Robotics · '+session,'-e','tmux','attach-session','-t',session],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  return {'ok':True,'output':'Opened '+window+' in tmux session '+session+'.'}
 def action(name,a):
  if name in ['start','stop','restart','pause','unpause','kill','remove']:

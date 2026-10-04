@@ -13,9 +13,9 @@ DropdownFrame {
  ControlTile {label:"System Monitor";glyph:"\uf080";onActivated:ShellState.dropdown="monitor"}
  ControlTile {label:"Clipboard Vault";glyph:"\uf0ea";onActivated:ShellState.dropdown="clipboard"}
  ControlTile {label:"Robotics controls";glyph:"\uf085";onActivated:{ShellState.systemPage=2;ShellState.dropdown="system"}}
- ControlTile {label:"NVIDIA terminal";glyph:"\uf120";onActivated:Quickshell.execDetached(["@HOME@/.local/bin/sim-console"])}
- ControlTile {label:"Project files";glyph:"\uf07c";onActivated:Quickshell.execDetached(["xdg-open","@HOME@"])}
- ControlTile {label:"Keyboard shortcuts";glyph:"\uf11c";onActivated:Quickshell.execDetached(["@HOME@/.local/bin/desktop-shortcuts"])}
+ ControlTile {label:"NVIDIA terminal";glyph:"\uf120";onActivated:Quickshell.execDetached(["/home/fh1m/.local/bin/sim-console"])}
+ ControlTile {label:"Project files";glyph:"\uf07c";onActivated:Quickshell.execDetached(["xdg-open","/home/fh1m"])}
+ ControlTile {label:"Keyboard shortcuts";glyph:"\uf11c";onActivated:ShellState.openExclusive("shortcuts")}
  }
  ControlTile {label:"Display wallpapers";glyph:"\uf03e";onActivated:ShellState.openExclusive("picker")}
  NrLabel {text:"LOCAL WORKSTATION // commands are copied, never executed by clipboard";pixelSize:10;color:Theme.widgetMuted}

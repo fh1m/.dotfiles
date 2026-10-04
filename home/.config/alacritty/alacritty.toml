@@ -25,7 +25,7 @@ bold = { family = "ZedMono Nerd Font Mono", style = "Bold" }
 italic = { family = "ZedMono Nerd Font Mono", style = "Italic" }
 bold_italic = { family = "ZedMono Nerd Font Mono", style = "Bold Italic" }
 size = 11.5
-offset = { x = 2, y = 4 }
+offset = { x = 4, y = 6 }
 glyph_offset = { x = 0, y = 0 }
 builtin_box_drawing = true
 
@@ -88,12 +88,7 @@ chars = "\u0060c"
 [[keyboard.bindings]]
 key = "N"
 mods = "Control|Shift"
-action = "CreateNewWindow"
-
-[[keyboard.bindings]]
-key = "Return"
-mods = "Super"
-chars = "\u0060c"
+command = { program = "/home/fh1m/.local/bin/sensei-terminal" }
 
 [[keyboard.bindings]]
 key = "ArrowUp"
@@ -122,13 +117,13 @@ action = "None"
 
 [[keyboard.bindings]]
 key = "Y"
-mods = "Super"
-command = { program = "alacritty", args = ["--title", "Sensei · btop", "-e", "btop"] }
+mods = "Control|Shift"
+command = { program = "/home/fh1m/.local/bin/sensei-terminal", args = ["--title", "Sensei · btop", "-e", "btop"] }
 
 [[keyboard.bindings]]
-key = "N"
-mods = "Control"
-command = { program = "alacritty", args = ["--title", "Sensei · nvtop", "-e", "nvtop"] }
+key = "G"
+mods = "Control|Shift"
+command = { program = "/home/fh1m/.local/bin/sensei-terminal", args = ["--title", "Sensei · nvtop", "-e", "nvtop"] }
 
 # Kitty-style tab and layout keys routed into the persistent tmux session.
 [[keyboard.bindings]]

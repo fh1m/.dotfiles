@@ -1,10 +1,12 @@
 [Unit]
-Description=Prepare persistent Sensei tmux session
+Description=Persistent Sensei tmux server
 
 [Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=%h/.local/bin/sensei-tmux --prepare
+Type=simple
+ExecStart=/usr/bin/tmux -D
+ExecStartPost=%h/.local/bin/sensei-tmux --prepare
+Restart=always
+RestartSec=2
 
 [Install]
 WantedBy=default.target

@@ -2,7 +2,7 @@
 
 [← Workstation](../README.md)
 
-Use **Super+F2** for the local shortcut reference. The effective Lua configuration is the source of truth if a binding changes.
+Use **Ctrl+Shift+?** or **Super+F2** for the searchable Quickshell shortcut guide. Type an action, key, or category; fuzzy matches appear immediately. Arrow keys choose a row, Enter copies its shortcut, Esc closes it. The effective Lua configuration is the source of truth if a binding changes.
 
 The terminal's internal tab, pane, copy and session shortcuts are in [Terminal →](terminal.md).
 

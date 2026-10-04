@@ -11,6 +11,14 @@ Scope {
     id: root
 
     IpcHandler {
+        target: "shortcuts"
+        function toggle(): void { ShellState.openExclusive(ShellState.shortcutsOpen ? "" : "shortcuts"); }
+        function open(): void { ShellState.openExclusive("shortcuts"); }
+        function close(): void { ShellState.shortcutsOpen = false; }
+        function state(): string { return JSON.stringify({open: ShellState.shortcutsOpen}); }
+    }
+
+    IpcHandler {
         target: "weather"
         function open():void { ShellState.dropdownAnchorX=(ShellState.barScreens[0]?.width??1920)/2;ShellState.dropdown="weather"; }
         function page(index:int):void {ShellState.dropdownAnchorX=ShellState.anchorFor("weather");WeatherDesk.page=Math.max(0,Math.min(3,index));ShellState.dropdown="weather";}

@@ -15,6 +15,7 @@ import qs.modules.popups
 import qs.modules.session
 import qs.modules.status
 import qs.modules.navigation
+import "modules/shortcuts" as ShortcutUi
 import qs.services
 
 ShellRoot {
@@ -43,6 +44,7 @@ ShellRoot {
     FontCheck {}
     ScreenCheck {}
     NavigationOverlay {}
+    ShortcutUi.ShortcutsOverlay {}
     // Native window border indicates focus without a flashing overlay.
     Ipc {}
 }

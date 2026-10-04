@@ -7,8 +7,8 @@
 | Same feel | Implementation |
 |---|---|
 | ZedMono Nerd Font Mono, 11.5 pt; black/red/blue palette | `~/.config/alacritty/alacritty.toml` |
-| Independent terminal tabs and panes | tmux windows/panes; `Desk-N` clients share the persistent `Sensei` window set |
-| Closing a terminal preserves work | Boot-started user `sensei-tmux.service`; detached window remains in `Sensei` |
+| Independent terminal tabs and panes | tmux windows/panes; `BAY-NN` clients share the persistent `Sensei` window set |
+| Closing a terminal preserves work | systemd supervises the tmux server; detached windows remain in `Sensei` |
 | Fast image preview | `chafa image.png`; character-cell image, less fidelity than Kitty graphics |
 | URL detection / navigation | Alacritty URL hints (`Ctrl+Shift+O`), Vi mode (`Ctrl+Shift+Space`) |
 | Clipboard | Alacritty OSC 52 + tmux `set-clipboard external` + tmux-yank / `wl-copy` |
@@ -21,7 +21,7 @@ Graphics forks exist: [ayosec/alacritty](https://github.com/ayosec/alacritty) ad
 
 | Key | Action |
 |---|---|
-| `Super+Return`, `Alt+Return`, `Super+Q` | Focus existing Alacritty, or launch one |
+| `Super+Return`, `Alt+Return`, `Super+Q` | Focus existing Alacritty, or launch one; Super+Return while it is focused opens another BAY |
 | `Super+Shift+Return` | Force a new Alacritty window |
 | `Super+'`, `Ctrl+Shift+Return` | New tmux window (Kitty-style tab) |
 | `Super+[ / ]` | Previous / next tmux window |
@@ -32,14 +32,16 @@ Graphics forks exist: [ayosec/alacritty](https://github.com/ayosec/alacritty) ad
 | `Ctrl+Shift+Up` | tmux copy mode; scroll history even in a TUI |
 | `` ` + | `` / `` ` + - `` | Horizontal / vertical split |
 | `` ` + s `` | Session picker |
+| `` ` + g `` | Fuzzy project picker; open a new tmux window in the chosen project |
+| `` ` + S `` | Synchronize typing across panes in the current window; status shows SYNC |
 | `` ` + Ctrl+s `` / `` ` + Ctrl+r `` | Save / restore layouts with tmux-resurrect |
 | `` ` + r `` | Reload tmux configuration |
 
 The tmux prefix is the backtick (`` ` ``). The six retained plugins each have one job: TPM loads them; copycat searches; yank copies; tmux-fzf picks windows/sessions; resurrect saves layouts; Mighty Scroll handles the mouse wheel. The overlapping mouse and session plugins were removed from the active configuration, but their installed files were left alone. The mouse wheel uses tmux history in Codex/Claude; `Ctrl+Shift+Up` is the predictable fallback. Scrollback is 50,000 lines. `TERM=alacritty` outside, `TERM=tmux-256color` inside, with RGB and OSC 52 advertised. [tmux clipboard guide](https://github.com/tmux/tmux/wiki/Clipboard) · [Mighty Scroll behavior](https://github.com/noscript/tmux-mighty-scroll).
 
-The base session starts at login and uses around 1 MiB before any terminal is opened. Each daily window gets its own `Desk-N` view so switching windows in one terminal does not move another. On close, that view disappears; the window and its processes remain in `Sensei`. Use `` ` + s `` to revisit them. A reboot cannot keep live processes; resurrect saves layouts and supported commands on demand.
+The base session starts at login. The user service runs tmux in the foreground with restart supervision, so a successful one-shot startup cannot hide a vanished server. Each daily window gets its own `BAY-NN` view so switching windows in one terminal does not move another. On close, that view disappears; the window and its processes remain in `Sensei`. Use `` ` + s `` to revisit them. A reboot cannot keep live processes; resurrect saves layouts and supported commands on demand.
 
-The statusline is one continuous dark rail: an operator block, linked desk, active window in muted red, quiet inactive windows and current path. It uses ZedMono Nerd Font Mono's regular/bold faces with Alacritty's native box drawing. The active window has a side marker; no underline or pointy Powerline separators. A screenshot crop of the real terminal verified its glyphs and spacing on the 2× panel.
+The statusline is one continuous dark rail: an operator block, linked BAY, active window in muted red, quiet inactive windows, a thin neutral separator, and the current path. Prefix, copy, zoom, and synchronized panes appear only when active. It uses ZedMono Nerd Font Mono's regular/bold faces with Alacritty's native box drawing; no underline or pointy Powerline separators.
 
 Task windows opened by widgets use Alacritty **without attaching to the daily tmux session**, so a package or Bluetooth command cannot take over your workbench. `sim-console` explicitly offloads its terminal to NVIDIA when training mode is off; the ordinary terminal stays on Intel. A scratch Alacritty run reported RTX 2060 OpenGL 3.3 successfully. The `.desktop` entry and `xdg-terminals.list` select the same launcher.
 

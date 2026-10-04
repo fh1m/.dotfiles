@@ -44,6 +44,7 @@ Singleton {
     property bool launcherOpen: false
     property bool powerOpen: false
     property bool pickerOpen: false
+    property bool shortcutsOpen: false
     // Which of the picker's three screens is up: "grid", "editor" or "pools".
     // It lives here rather than on the overlay so the IPC can drive it -- the
     // two inner screens are reached by clicking, and nothing in a test session
@@ -83,7 +84,7 @@ Singleton {
     // A moving bar surface can force both Intel-driven screens to composite at
     // full rate. Keep readings live, but spend animation frames only while the
     // bar or an overlay is being used. Music playback itself is unaffected.
-    readonly property bool ambientMotion: barHovered || dropdown !== "" || deckVisible || pickerOpen || launcherOpen || powerOpen
+    readonly property bool ambientMotion: barHovered || dropdown !== "" || deckVisible || pickerOpen || launcherOpen || powerOpen || shortcutsOpen
 
     // **Where each bar readout is, published by the readouts themselves.**
     // `dropdown open <name>` used to hang every panel at a fixed x in the
@@ -126,6 +127,7 @@ Singleton {
         launcherOpen = which === "launcher";
         powerOpen = which === "power";
         pickerOpen = which === "picker";
+        shortcutsOpen = which === "shortcuts";
         Daemons.libraryOpen = which === "daemons";
         // A dropdown is not an overlay, but it is a surface holding a focus
         // grab, and two things on screen asking for the keyboard is the bug

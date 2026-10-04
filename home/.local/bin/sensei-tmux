@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 BASE = 'Sensei'
+VIEW_PREFIX = 'BAY-'
 RUNTIME = Path(os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}'))
 
 def tmux(*args, capture=False):
@@ -33,7 +34,7 @@ def main():
         sessions = [line.split('\t', 1) for line in
                     tmux('list-sessions', '-F', '#{session_name}\t#{session_attached}',
                          capture=True).stdout.splitlines()]
-        active_view = any((name.startswith('Desk-') or name == BASE) and attached != '0'
+        active_view = any((name.startswith(VIEW_PREFIX) or name.startswith('Desk-') or name == BASE) and attached != '0'
                           for name, attached in sessions)
         if active_view:
             window = tmux('new-window', '-d', '-t', BASE, '-c', os.getcwd(),
@@ -43,8 +44,8 @@ def main():
             window = tmux('display-message', '-p', '-t', BASE, '#{window_id}',
                           capture=True).stdout.strip()
         existing = [name for name, _ in sessions]
-        slot = next(i for i in range(1, 1000) if f'Desk-{i}' not in existing)
-        client = f'Desk-{slot}'
+        slot = next(i for i in range(1, 1000) if f'{VIEW_PREFIX}{i:02d}' not in existing)
+        client = f'{VIEW_PREFIX}{slot:02d}'
         tmux('new-session', '-d', '-t', BASE, '-s', client)
         tmux('select-window', '-t', f'{client}:{window}')
         tmux('set-hook', '-t', client, 'client-attached', f'set-option -t {client} destroy-unattached on')

@@ -7,9 +7,11 @@ args = sys.argv[1:]
 out = []
 value_options = {'--title', '-T', '--class', '--working-directory', '--directory', '--config-file', '--option', '-o'}
 i = 0
+explicit_command = False
 while i < len(args):
     arg = args[i]
     if arg in ('-e', '--command'):
+        explicit_command = True
         out.extend(['-e', *args[i + 1:]])
         break
     if arg in value_options:
@@ -27,10 +29,13 @@ while i < len(args):
         i += 1
         continue
     out.extend(['-e', *args[i:]])
+    explicit_command = True
     break
-else:
-    # The final default is selected here, so app launchers and shortcuts agree.
-    if not args:
-        out.extend(['--title', 'Sensei · Terminal', '-e', '/home/fh1m/.local/bin/sensei-tmux'])
+# Option-only launches still join the persistent workbench. Explicit task
+# commands stay independent so a package action cannot replace daily work.
+if not explicit_command:
+    if not any(arg in ('--title', '-T') for arg in args):
+        out.extend(['--title', 'Sensei · Terminal'])
+    out.extend(['-e', '/home/fh1m/.local/bin/sensei-tmux'])
 
 os.execvp('alacritty', ['alacritty', *out])
