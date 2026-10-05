@@ -59,8 +59,8 @@ hl.config({
 -- Native Hyprland tabs: drag a window onto a group, or use the keys below.
 -- Group titles and the two-pixel active marker provide a visible focus cue.
 hl.bind("SUPER + ALT + G", hl.dsp.group.toggle())
-hl.bind("SUPER + ALT + H", hl.dsp.window.move({ into_or_create_group = "l" }))
-hl.bind("SUPER + ALT + L", hl.dsp.window.move({ into_or_create_group = "r" }))
+hl.bind("SUPER + ALT + H", hl.dsp.window.move({ into_group = "l" }))
+hl.bind("SUPER + ALT + L", hl.dsp.window.move({ into_group = "r" }))
 hl.bind("SUPER + ALT + J", hl.dsp.group.next())
 hl.bind("SUPER + ALT + K", hl.dsp.group.prev())
 hl.bind("SUPER + ALT + U", hl.dsp.window.move({ out_of_group = true }))
