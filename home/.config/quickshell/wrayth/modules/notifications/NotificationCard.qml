@@ -51,8 +51,8 @@ ChamferPanel {
     signal dismissed
 
     chamfer: Appearance.chamfer.panel
-    fillColor: Theme.panel2
-    borderColor: critical ? Theme.accent : Theme.hair
+    fillColor: Theme.widgetGlass
+    borderColor: critical ? Theme.widgetAccent : Theme.widgetBorder
 
     implicitHeight: strip.height + body.implicitHeight + padding + 2
 
@@ -70,7 +70,7 @@ ChamferPanel {
 
             width: tabLabel.implicitWidth + 26
             height: parent.height
-            fillColor: root.tone
+            fillColor: Theme.widgetSurface
 
             NrLabel {
                 id: tabLabel
@@ -78,7 +78,7 @@ ChamferPanel {
                 anchors.left: parent.left
                 anchors.leftMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.ground
+                color: root.tone
                 text: root.tabText
             }
         }
@@ -104,7 +104,11 @@ ChamferPanel {
             anchors.rightMargin: 8
             anchors.verticalCenter: parent.verticalCenter
             elide: Text.ElideRight
-            text: `FROM${Appearance.separator}${root.notification?.appName || "UNKNOWN"}`
+            text: root.notification?.appName || "Application"
+            font.family: Appearance.font.ui
+            font.capitalization: Font.MixedCase
+            tracked: false
+            pixelSize: 11
         }
 
         Text {
@@ -154,8 +158,8 @@ ChamferPanel {
             textFormat: Text.PlainText
             color: Theme.bright
             elide: Text.ElideRight
-            font.family: Appearance.font.data
-            font.pixelSize: 16
+            font.family: Appearance.font.ui
+            font.pixelSize: 15
             font.weight: Appearance.font.weightSemi
         }
 
@@ -165,8 +169,8 @@ ChamferPanel {
 
             text: Notifications.safeBody(root.notification?.body)
             color: Theme.text
-            font.family: Appearance.font.data
-            font.pixelSize: 15
+            font.family: Appearance.font.ui
+            font.pixelSize: 14
             wrapMode: Text.Wrap
             maximumLineCount: 6
             elide: Text.ElideRight
