@@ -4,6 +4,24 @@
 
 These are real screenshots of fh1m’s desktop. A temporary privacy mode suppresses personal notifications and private window previews. The code window opens [Mongla’s public optical-flow calibration](https://github.com/fh1m/mongla_ws/blob/main/tools/flow_derot_calibrate.py); the other shows this repo’s CUDA Compose recipe. Neither screenshot claims a vehicle or container was running. The system numbers are live samples.
 
+## Watch the workbench work
+
+![Main display: System and Spotify over real working windows](assets/flight-deck.gif)
+
+[Main display MP4](assets/flight-deck.mp4) · [Full-size floating workstation](assets/floating-workstation.png)
+
+![Robotics panel: launching environments, tmux, ARM/GPU and tasks](assets/robotics-lab.gif)
+
+[Robotics MP4](assets/robotics-lab.mp4) · [Lab guide](robotics.md)
+
+![Alacritty and tmux with public Mongla code, GPU metrics and container inventory](assets/tmux-field-lab.gif)
+
+[Tmux MP4](assets/tmux-field-lab.mp4) · [Full-size still](assets/tmux-field-lab.png) · [Terminal guide](terminal.md)
+
+![ScreenPad switching from Monitor to USB inspection](assets/screenpad-tools.gif)
+
+[ScreenPad MP4](assets/screenpad-tools.mp4)
+
 | Surface | Purpose |
 |---|---|
 | Empty main + ScreenPad | The actual stacked UX581GV desktop before showcase windows open |
@@ -70,4 +88,4 @@ The [switcher implementation](../home/.config/quickshell/wrayth/modules/navigati
 
 ## Re-capture on your machine
 
-`scripts/capture-gallery.py` uses the live shell, grim and bat. It opens two temporary Kitty code windows, uses workspaces 4/5, captures eDP-1/DP-2, then closes only its own windows and restores the original focus. Adapt output/workspace names for another layout. It does not delete browser or phone data. Watch its cleanup if interrupted; demo mode also has a watchdog. Review every image before publishing because newly added widgets may need their own privacy treatment.
+`scripts/capture-gallery.py` takes the stills. `scripts/capture-showcase.py` records the main/ScreenPad tours. `scripts/capture-workflows.py` records the robotics/tmux tours on an empty workspace with a separate tmux socket. All use the live desktop, restore focus and close only their showcase windows. Review every frame before publishing; new widgets may need additional privacy treatment.
