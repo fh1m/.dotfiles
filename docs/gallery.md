@@ -2,7 +2,7 @@
 
 [← Workstation](../README.md)
 
-These are real screenshots of fh1m’s desktop. A temporary privacy mode suppresses personal notifications and private window previews. The terminals show repository-owned ROS code and a Compose recipe, not the development conversation. Metrics are not fabricated. The source files are examples, not a claim that a robot was attached and executing them during capture.
+These are real screenshots of fh1m’s desktop. A temporary privacy mode suppresses personal notifications and private window previews. The code window opens [Mongla’s public optical-flow calibration](https://github.com/fh1m/mongla_ws/blob/main/tools/flow_derot_calibrate.py); the other shows this repo’s CUDA Compose recipe. Neither screenshot claims a vehicle or container was running. The system numbers are live samples.
 
 | Surface | Purpose |
 |---|---|
@@ -19,8 +19,13 @@ These are real screenshots of fh1m’s desktop. A temporary privacy mode suppres
 | USB | Current device inventory and diagnostic entry |
 | Weather | Forecast view |
 | Launcher | Native icons and search |
+| Operator | Live CPU, available RAM, CUDA work and lab shortcuts |
+| Native tabs | Alacritty and Obsidian with a cut-corner, inset title strip |
+| XKCD | Right-click intermission, with keyboard and swipe navigation |
 
 ## Main / ScreenPad
+
+*Big canvas above; tiled instrument field below. The repeat is deliberate.*
 
 ![Empty main](assets/desktop-empty-main.png)
 ![Empty ScreenPad](assets/desktop-empty-screenpad.png)
@@ -30,6 +35,7 @@ These are real screenshots of fh1m’s desktop. A temporary privacy mode suppres
 
 ## System and observability
 
+![Operator deck](assets/operator.png)
 ![System](assets/system.png)
 ![Monitor](assets/monitor.png)
 ![USB](assets/usb.png)
@@ -47,8 +53,19 @@ These are real screenshots of fh1m’s desktop. A temporary privacy mode suppres
 
 ## Robotics and navigation
 
+*The code is a held-out calibration fit from the public AUV stack; the terminal is set smaller so you can read more than twelve lines at once.*
+
+![Mongla optical-flow fit in the terminal](assets/mongla-code.png)
+
 ![Docker](assets/docker.png)
 ![Launcher](assets/launcher.png)
+![Native Alacritty and Obsidian tabs](assets/signal-ledger/tabs-v2.webp)
+
+## Intermission
+
+*An engineer may press Right Click to consult a stick figure. This one is [XKCD #3306](https://xkcd.com/3306/) by Randall Munroe ([CC BY-NC 2.5](https://xkcd.com/license.html)).*
+
+![XKCD in the shell](assets/comic.png)
 The [switcher implementation](../home/.config/quickshell/wrayth/modules/navigation/NavigationOverlay.qml) combines app/window cards with a six-space drag overview. On the reference hybrid-GPU session, `grim` stalled while the live toplevel previews were active, so these two surfaces are deliberately absent from the gallery. They remain available with Alt+Tab and Super+A in the actual session.
 
 ## Re-capture on your machine

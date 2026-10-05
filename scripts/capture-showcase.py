@@ -5,10 +5,16 @@ import signal
 import subprocess
 import time
 from pathlib import Path
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs/assets'
 OUT.mkdir(exist_ok=True)
+QS = Path.home() / '.local/opt/sensei-quickshell/bin/qs'
+QS = str(QS if QS.exists() else 'qs')
+PUBLIC_ROS = Path.home() / 'tmp/mongla_ws/tools/flow_derot_calibrate.py'
+ROS_SOURCE = PUBLIC_ROS if PUBLIC_ROS.exists() else ROOT / 'examples/robotics-bringup.py'
+ROS_RANGE = ['--line-range=84:113'] if ROS_SOURCE == PUBLIC_ROS else []
 
 
 def run(*argv, timeout=15):
@@ -16,7 +22,7 @@ def run(*argv, timeout=15):
 
 
 def ipc(*args):
-    return run('qs', '-c', 'wrayth', 'ipc', 'call', *args)
+    return run(QS, '-c', 'wrayth', 'ipc', 'call', *args)
 
 
 def dispatch(body):
@@ -43,7 +49,7 @@ def window_for(cls):
 
 
 def terminal(cls, title, args, x, y, width, height):
-    subprocess.Popen(['kitty', '--class', cls, '--title', title, '--hold', *args],
+    subprocess.Popen(['kitty', '-o', 'font_size=10.4', '--class', cls, '--title', title, '--hold', *args],
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     c = window_for(cls)
     target = 'address:' + c['address']
@@ -95,9 +101,9 @@ try:
     dispatch('hl.dsp.focus({workspace="4"})')
     recording = recorder('flight-deck', 'eDP-1')
     time.sleep(.7)
-    terminal('sensei-showcase-ros', 'ROS 2 // heartbeat',
+    terminal('sensei-showcase-ros', 'Mongla // held-out flow fit',
              ['bat', '--paging=never', '--style=numbers,header', '--color=always',
-              str(ROOT / 'examples/robotics-bringup.py')], 66, 142, 792, 744)
+              *ROS_RANGE, str(ROS_SOURCE)], 66, 142, 940, 860)
     terminal('sensei-showcase-compose', 'ARM + CUDA // compose',
              ['bat', '--paging=never', '--style=numbers,header', '--color=always',
               str(ROOT / 'examples/compose.robotics.yaml')], 1160, 142, 680, 480)
@@ -106,6 +112,7 @@ try:
               'OS:Kernel:WM:Terminal:CPU:GPU:Memory:Uptime:Battery'], 1135, 654, 700, 320)
     time.sleep(.9)
     capture('floating-workstation')
+    Image.open(OUT / 'floating-workstation.png').crop((66, 140, 1008, 1013)).save(OUT / 'mongla-code.png')
     ipc('dropdown', 'open', 'system')
     time.sleep(1.1)
     capture('floating-system')

@@ -3,6 +3,7 @@ import Quickshell.Bluetooth
 import qs.components
 import qs.config
 import qs.services
+import qs.modules.bar
 
 Item {
     id: root
@@ -13,40 +14,38 @@ Item {
     readonly property var connectedDevices:(Bluetooth.devices?.values??[]).filter(d=>d.connected)
     readonly property bool audioPlaying:Cava.live&&Audio.audible&&/^bluez_output\./.test(Audio.sink?.name||'')
 
-    implicitWidth: condensed ? 48 : 116
+    implicitWidth: condensed ? 44 : 116
     implicitHeight: 34
     Behavior on implicitWidth { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
     BarSurface { anchors.fill: parent; grouped:true; selected: ShellState.dropdown === "bluetooth"; hovered: btHover.hovered; pressed: btTap.pressed }
     Row {
         id: readout
         anchors.left: parent.left
-        anchors.leftMargin: 8
+        anchors.leftMargin: 10
         anchors.verticalCenter: parent.verticalCenter
         spacing: 7
 
     // The rune stands in for the word `BT`, so it keeps that word's grey in
     // every state. The device name beside it is what carries the reading.
-    BluetoothGlyph {
-        id:musicRune
-        anchors.verticalCenter: parent.verticalCenter
-        color:root.audioPlaying?Theme.signalRed:root.connectedDevices.length?Theme.semanticCyan:Theme.dim
-        scale: 1
-        SequentialAnimation on scale {
-            running: ShellState.ambientMotion && root.audioPlaying && musicRune.visible
-            loops: Animation.Infinite
-            NumberAnimation { from: 1; to: 1.16; duration: 420; easing.type: Easing.InOutSine }
-            NumberAnimation { from: 1.16; to: 1; duration: 420; easing.type: Easing.InOutSine }
+    Item {
+        width: 24; height: 24
+        y: (readout.height - height) / 2
+        InstrumentIcon {
+            id:musicRune
+            anchors.centerIn: parent
+            kind: "bluetooth"
+            ink:root.audioPlaying?Theme.signalRed:root.connectedDevices.length?Theme.signalRed:Theme.alpha(Theme.signalRed,.55)
+            SequentialAnimation on scale {
+                running: ShellState.ambientMotion && root.audioPlaying && musicRune.visible
+                loops: Animation.Infinite
+                NumberAnimation { from: 1; to: 1.12; duration: 420; easing.type: Easing.InOutSine }
+                NumberAnimation { from: 1.12; to: 1; duration: 420; easing.type: Easing.InOutSine }
+            }
         }
     }
-    Rectangle {
-        anchors.bottom: parent.bottom; anchors.horizontalCenter: parent.horizontalCenter
-        width: root.condensed && root.connectedDevices.length ? 17 : 0; height: 2
-        color: Theme.semanticCyan
-    }
-
     // Left-aligned so a short name sits next to the label, but capped at 120px
     // so a long one truncates instead of pushing the ticker around.
-    Column { visible: !root.condensed; anchors.verticalCenter: parent.verticalCenter; spacing: -1
+    Column { visible: !root.condensed; y: (readout.height - height) / 2; spacing: -1
         Text {text:"Bluetooth";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
         Text {text:!root.adapter||!root.adapter.enabled?"Off":root.connectedDevices.length?`${root.connectedDevices.length} linked`:"Ready";font.family:Appearance.font.barUi;font.pixelSize:10;color:root.connectedDevices.length?Theme.widgetAccent:Theme.dim}
     }

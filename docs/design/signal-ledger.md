@@ -47,7 +47,7 @@ The token source is `home/.config/quickshell/wrayth/config/Theme.qml` and the sh
 
 ## Prototype critique
 
-The initial captured media page was too much like a generic card dashboard. Tabs were changed to a continuous rail, translucent card fills became opaque, and scanlines were removed from shared surfaces. The first ScreenPad capture repeated its wallpaper because it was in tile mode; crop mode gives the lower display one stable backdrop. The command result list retains generous horizontal blank space because name and category are separated for fast scanning; it is data space rather than a decorative card.
+The initial captured media page was too much like a generic card dashboard. Tabs were changed to a continuous rail, translucent card fills became opaque, and scanlines were removed from shared surfaces. The ScreenPad now deliberately tiles its own wallpaper; the repeated image reads as a separate instrument field below the main display. The command result list retains generous horizontal blank space because name and category are separated for fast scanning; it is data space rather than a decorative card.
 
 The included images are UI-only crops; they omit terminal contents and private windows.
 
@@ -61,4 +61,4 @@ Three approaches were compared against the same real controls:
 | Command spine | One system mark plus urgent alerts | One searchable control drawer | Calmest bar, but adds a click for common audio and display changes |
 | Distributed dials | Small audio/display meters beside the clock | Dedicated detail panels | Readings are always visible, but the clock loses its quiet center |
 
-The current prototype uses the first direction. Its arrows reveal information, not new duplicate controls. Cyan means a connected external device; amber is the screen brightness meter; signal pink marks active audio, unread alerts, and selected work.
+The current prototype uses the first direction. Its arrows reveal information, not new duplicate controls. Signal pink marks connected controls, active audio, unread alerts, and selected work; amber is reserved for caution.

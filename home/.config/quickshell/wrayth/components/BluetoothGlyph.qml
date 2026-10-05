@@ -24,8 +24,8 @@ Item {
     property color color: Theme.dim
 
     // The layout slot is unchanged, so nothing on the bar moves.
-    implicitWidth: 24
-    implicitHeight: 25
+    implicitWidth: 20
+    implicitHeight: 22
 
     Glyph {
         anchors.centerIn: parent
@@ -33,6 +33,6 @@ Item {
         text: String.fromCodePoint(0xF00AF)
         color: root.color
         family: Appearance.font.icons
-        pixelSize: 25
+        pixelSize: 20
     }
 }

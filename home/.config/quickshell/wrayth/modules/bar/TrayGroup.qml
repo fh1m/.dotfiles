@@ -9,7 +9,7 @@ BarSurface {
  visible:items.length>0
  implicitWidth:visible?trayRow.implicitWidth+12:0
  implicitHeight:34
- grouped:false
+ grouped:true
  Row {id:trayRow;anchors.centerIn:parent;spacing:7
   Repeater {model:root.items
    Item {id:trayIcon;required property var modelData;width:18;height:18
