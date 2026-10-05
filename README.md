@@ -56,7 +56,7 @@ The main bar carries identity, music, time, sound, notifications and controls. T
 
 ## Panels with purpose
 
-<table><tr><td width="48%"><img src="docs/assets/operator.png" alt="Operator deck with live CPU, available RAM, CUDA jobs and uptime"></td><td><b>FIELD / R-01.</b><br>The tag says “no magic” until CUDA gets busy. Middle click opens a field report: CPU, available RAM, CUDA jobs, uptime and lab tools. Left click visits <a href="https://github.com/fh1m">fh1m on GitHub</a>; right click finds XKCD.</td></tr></table>
+<table><tr><td width="48%"><img src="docs/assets/operator.png" alt="Operator deck with live CPU, available RAM, CUDA jobs and uptime"></td><td><b>FIELD / R-01.</b><br>“No magic, just code” becomes a live CUDA job count when the RTX works. Middle click opens a field report: CPU, available RAM, CUDA jobs, uptime and lab tools. Left click visits <a href="https://github.com/fh1m">fh1m on GitHub</a>; right click finds XKCD.</td></tr></table>
 
 <details><summary>Right click for a small research break</summary><p><img src="docs/assets/comic.png" alt="XKCD comic in the shell’s intermission panel" width="740"><br><sub><a href="https://xkcd.com/3306/">XKCD #3306</a> by Randall Munroe, CC BY-NC 2.5. A lab without an intermission is just a long incident report.</sub></p></details>
 

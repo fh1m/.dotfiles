@@ -86,7 +86,7 @@ For NVIDIA containers, install/configure the NVIDIA runtime and regenerate CDI. 
 
 ## 7. Restore preferences, not credentials from Git
 
-Choose wallpapers through the picker and set each display independently. The original wallpapers are linked in `THIRD_PARTY.md`; Git stores the generated Wrayth wallpapers and your configuration, not unlicensed copies of the original art. New installation defaults to the generated Circuit wallpaper.
+Choose wallpapers through the picker and set each display independently. On the UX581GV, choose **Tile** for DP-2 to reproduce the ScreenPad gallery composition; use any image you own or have permission to display. The original wallpapers are linked in `THIRD_PARTY.md`; Git stores the generated Wrayth wallpapers and your configuration, not unlicensed copies of the original art. New installation defaults to the generated Circuit wallpaper.
 
 Re-pair Bluetooth devices. Sign into Spotify. Join Tailscale on both devices, pair KDE Connect and install Termux on the phone. Configure Syncthing devices and folders anew. Do not copy someone else’s host keys, pairing certificates, token files or device IDs from a public repository.
 
