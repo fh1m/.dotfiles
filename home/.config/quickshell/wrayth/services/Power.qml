@@ -6,9 +6,8 @@ import Quickshell.Io
 import Quickshell.Services.UPower
 import qs.services
 
-// Battery state from UPower, power profiles from power-profiles-daemon.
-// Quickshell exposes PowerProfiles.profile read-only, so setting one goes
-// through powerprofilesctl; the D-Bus property then updates on its own.
+// Battery state from UPower; power policy through sensei-power/system76-power.
+// The CPU profile never implies a full-speed PWM fan override.
 Singleton {
     id: root
 
@@ -73,7 +72,9 @@ Singleton {
 
     Process {id:setProc;onExited:{if(root.queuedProfile){let next=root.queuedProfile;root.queuedProfile="";root.setProfile(next);}}command:["/home/fh1m/.local/bin/sensei-power","get"];stdout:StdioCollector{onStreamFinished:{try{let d=JSON.parse(text);if(d.error)root.error=d.error;else{root.profileName=d.name;root.error="";}}catch(e){root.error=String(e);}}}}
     FileView {path:"/home/fh1m/.config/hypr/power-state.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{let d=JSON.parse(text());root.profileName=d.name;}catch(e){}}}
-    onOnBatteryChanged:if(!RobotBench.data.trainingMode)root.setProfile(onBattery?"balanced":"performance")
+    onOnBatteryChanged:if(!RobotBench.data.trainingMode)root.setProfile("balanced")
     Timer {interval:60000;repeat:true;running:ShellState.dropdown==="system";onTriggered:if(!setProc.running){setProc.command=["/home/fh1m/.local/bin/sensei-power","get"];setProc.running=true;}}
-    Component.onCompleted:root.setProfile(onBattery?"balanced":"performance")
+    // Read the existing profile at startup. Reloading the shell must not
+    // silently promote AC to Performance or cancel a deliberate user choice.
+    Component.onCompleted: { setProc.command=["/home/fh1m/.local/bin/sensei-power","get"];setProc.running=true; }
 }

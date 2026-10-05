@@ -40,11 +40,11 @@ Variants {
 
         onShownChanged: if (shown) input.forceActiveFocus()
 
-        // The spec's 45% dim. The blur behind it is Hyprland's.
+        // A bounded modal scrim, with no sampled blur or live backdrop shader.
         Rectangle {
             anchors.fill: parent
             color: "black"
-            opacity: 0.45
+            opacity: 0.58
         }
 
         // Anywhere outside the panel closes.
@@ -62,8 +62,9 @@ Variants {
             width: 680
             height: header.height + search.height + list.height + footer.height + 2
 
-            chamfer: Appearance.chamfer.panel
-            fillColor: Theme.panel2
+            chamfer: Theme.radiusPanel
+            fillColor: Theme.ink
+            borderColor: Theme.rule
 
             // Swallows clicks so they do not reach the dismiss layer behind.
             MouseArea {
@@ -79,26 +80,17 @@ Variants {
                 anchors.right: parent.right
                 height: 52
 
-                GlitchFx {
-                    group: "overlay"
+                Text {
                     id: title
-
                     anchors.left: parent.left
-                    anchors.leftMargin: 16
+                    anchors.leftMargin: 18
                     anchors.verticalCenter: parent.verticalCenter
-                    fills: true
-                    textual: true
-                    width: execTitle.implicitWidth
-                    height: execTitle.implicitHeight
-                    scrambleItems: [execTitle]
-
-                    GlitchText {
-                        id: execTitle
-
-                        anchors.fill: parent
-                        text: "EXEC"
-                        pixelSize: 20
-                    }
+                    text: "01  /  COMMAND"
+                    color: Theme.paper
+                    font.family: Appearance.font.heading
+                    font.pixelSize: 17
+                    font.weight: Font.DemiBold
+                    renderType: Text.NativeRendering
                 }
 
                 Text {
@@ -106,8 +98,8 @@ Variants {
                     anchors.leftMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
 
-                    text: "ПУСК"
-                    color: Theme.signal
+                    text: "LAUNCH · SWITCH · FIND"
+                    color: Theme.paperMuted
                     font.family: Appearance.font.accent
                     font.letterSpacing: 0
                     font.pixelSize: Appearance.size.katakana
@@ -119,7 +111,7 @@ Variants {
                     anchors.right: parent.right
                     anchors.rightMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
-                    text: `${Launcher.count} MATCHES`
+                    text: `${Launcher.count} matches`
                 }
             }
 

@@ -8,7 +8,7 @@ TERM = "alacritty"
 
 [window]
 decorations = "None"
-opacity = 0.90
+opacity = 1.0
 padding = { x = 20, y = 12 }
 dynamic_padding = true
 resize_increments = true
@@ -20,19 +20,19 @@ history = 10000
 multiplier = 3
 
 [font]
-normal = { family = "JetBrainsMono Nerd Font Mono", style = "Regular" }
-bold = { family = "JetBrainsMono Nerd Font Mono", style = "Bold" }
-italic = { family = "JetBrainsMono Nerd Font Mono", style = "Italic" }
-bold_italic = { family = "JetBrainsMono Nerd Font Mono", style = "Bold Italic" }
-size = 10.5
-offset = { x = 1, y = 4 }
-glyph_offset = { x = 2, y = 2 }
+normal = { family = "Iosevka Nerd Font Mono", style = "Regular" }
+bold = { family = "Iosevka Nerd Font Mono", style = "Bold" }
+italic = { family = "Iosevka Nerd Font Mono", style = "Italic" }
+bold_italic = { family = "Iosevka Nerd Font Mono", style = "Bold Italic" }
+size = 11.8
+offset = { x = 3, y = 4 }
+glyph_offset = { x = 0, y = 0 }
 builtin_box_drawing = true
 
 [colors.primary]
-background = "#000000"
-foreground = "#edf3fb"
-dim_foreground = "#a9b5c5"
+background = "#090807"
+foreground = "#e8e2da"
+dim_foreground = "#a9a29a"
 
 [colors.cursor]
 text = "#000000"
@@ -40,16 +40,16 @@ cursor = "#ffffff"
 
 [colors.selection]
 text = "#000000"
-background = "#ff4297"
+background = "#f23d70"
 
 [colors.normal]
 black = "#0f0f0f"
-red = "#ff647f"
+red = "#f23d70"
 green = "#0090ff"
 yellow = "#f7ed30"
-blue = "#ff4297"
-magenta = "#df106d"
-cyan = "#c7cbd3"
+blue = "#f23d70"
+magenta = "#f23d70"
+cyan = "#76bcc0"
 white = "#ffffff"
 
 [colors.bright]

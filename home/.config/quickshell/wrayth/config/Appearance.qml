@@ -56,7 +56,8 @@ Singleton {
         readonly property string ui: "JetBrainsMono Nerd Font Propo"
         // ZedMono: labels, readouts and body text.
         readonly property string barUi: "JetBrainsMono Nerd Font Propo"
-        readonly property string data: "JetBrainsMono Nerd Font Mono"
+        readonly property string data: "Iosevka Nerd Font Mono"
+        readonly property string telemetry: "Iosevka Nerd Font Mono"
         // Russian accent labels use the same personal font.
         readonly property string accent: "JetBrainsMono Nerd Font Propo"
         // Icons that are somebody else's standard rather than ours -- the
@@ -181,9 +182,9 @@ Singleton {
     // a `panel` fade with an 8 px rise, leaving is quicker, because a thing on
     // its way out has nothing left to say.
     readonly property QtObject duration: QtObject {
-        readonly property int state: 120
-        readonly property int move: 160
-        readonly property int panel: 190
+        readonly property int state: 100
+        readonly property int move: 180
+        readonly property int panel: 210
         readonly property int wallpaper: 800
 
         readonly property int enter: 250

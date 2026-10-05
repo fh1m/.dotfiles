@@ -124,20 +124,18 @@ Item {
         anchors.fill: parent
         scanlines: false
 
-        chamfer: 6
+        chamfer: 0
         chamferTopLeft: 0
-        chamferTopRight: 6
+        chamferTopRight: 0
         chamferBottomRight: 0
-        chamferBottomLeft: Math.max(6, root.cutBottomLeft)
+        chamferBottomLeft: 0
 
         fillColor: {
             if (!root.usable)
-                return "transparent";
-            if (root.failed)
-                return Theme.alpha(Theme.accent, 0.12);
-            if (root.accented)
-                return Theme.alpha(Theme.accent, 0.12);
-            return hover.hovered ? Theme.alpha(Theme.hair, 0.35) : "transparent";
+                return Theme.ink;
+            if (root.failed || root.accented)
+                return Theme.surfaceTwo;
+            return hover.hovered ? Theme.surfaceOne : Theme.ink;
         }
         // The press flash brightens the border with it, which is what makes a
         // click on a transparent button read as a press at all.
@@ -148,7 +146,7 @@ Item {
                 return Theme.accent;
             if (root.working)
                 return Theme.alpha(Theme.accent, 0.6);
-            return root.accented ? Theme.accent : Theme.hair;
+            return root.accented ? Theme.accent : Theme.rule;
         }
 
         Behavior on fillColor {

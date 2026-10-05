@@ -44,7 +44,7 @@ ChamferPanel {
     readonly property color applyBorder: complete ? Theme.widgetAccent : Theme.alpha(Theme.widgetBorder, 0.55)
     readonly property color applyFill: complete ? Theme.alpha(Theme.widgetAccent, 0.12) : "transparent"
 
-    chamfer: Appearance.chamfer.panel
+    chamfer: Theme.radiusPanel
     fillColor: Theme.widgetGlass
 
     implicitHeight: body.y + body.implicitHeight + padding

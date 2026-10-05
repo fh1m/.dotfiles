@@ -16,15 +16,9 @@ ChamferPanel {
     readonly property bool critical: level === "CRITICAL"
     readonly property bool low: level === "LOW"
 
-    readonly property color tone: {
-        if (critical)
-            return Theme.accent;
-        if (low)
-            return Theme.mute;
-        return Theme.signal;
-    }
+    readonly property color tone: low ? Theme.paperMuted : Theme.signalRed
 
-    readonly property string tabText: critical ? "ALERT" : (low ? "LOG" : "INCOMING")
+    readonly property string tabText: critical ? "ACTION REQUIRED" : (low ? "QUIET" : "NOTICE")
     readonly property string katakana: critical ? "ТРЕВОГА" : (low ? "ЖУРНАЛ" : "СВЯЗЬ")
 
     // Critical never times out; everything else gets the spec's six seconds.
@@ -50,9 +44,9 @@ ChamferPanel {
     HoverHandler { id: cardHover }
     signal dismissed
 
-    chamfer: Appearance.chamfer.panel
-    fillColor: Theme.widgetGlass
-    borderColor: critical ? Theme.widgetAccent : Theme.widgetBorder
+    chamfer: Theme.radiusPanel
+    fillColor: Theme.ink
+    borderColor: critical ? Theme.signalRed : Theme.rule
 
     implicitHeight: strip.height + body.implicitHeight + padding + 2
 
@@ -70,7 +64,7 @@ ChamferPanel {
 
             width: tabLabel.implicitWidth + 26
             height: parent.height
-            fillColor: Theme.widgetSurface
+            fillColor: Theme.surfaceOne
 
             NrLabel {
                 id: tabLabel
@@ -100,7 +94,7 @@ ChamferPanel {
 
             anchors.left: appImage.right
             anchors.leftMargin: 8
-            anchors.right: kana.left
+            anchors.right: age.left
             anchors.rightMargin: 8
             anchors.verticalCenter: parent.verticalCenter
             elide: Text.ElideRight
@@ -113,6 +107,7 @@ ChamferPanel {
 
         Text {
             id: kana
+            visible: false
 
             anchors.right: age.left
             anchors.rightMargin: 8

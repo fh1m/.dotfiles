@@ -21,9 +21,10 @@ Variants {
         Component.onCompleted: ShellState.barWindow = bar
         HoverHandler { onHoveredChanged: ShellState.barHovered = hovered }
         property bool inhibitReady: false
+        property bool readoutsOpen: false
         Timer { interval: 1000; running: true; onTriggered: bar.inhibitReady = true }
         IdleInhibitor { window: bar; enabled: Idle.hold && bar.inhibitReady }
-        Rectangle { anchors.fill: parent; color: Theme.barBg; border.width:1; border.color:"#181a1e" }
+        Rectangle { anchors.fill: parent; color: Theme.barBg }
         MouseArea {
             anchors.fill: parent
             property int stamp: 0
@@ -43,7 +44,7 @@ Variants {
         }
         SpotifyButton {
             anchors.left: identity.right
-            anchors.leftMargin: -14
+            anchors.leftMargin: 13
             height: bar.height
             width: Math.min(implicitWidth,clock.x-identity.width-24)
             anchors.verticalCenter: parent.verticalCenter
@@ -53,17 +54,15 @@ Variants {
             anchors.right: parent.right
             anchors.rightMargin: 12
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 6
-            
-            BtReadout { anchors.verticalCenter: parent.verticalCenter }
-            DisplayBadge { output: "main"; anchors.verticalCenter: parent.verticalCenter }
-            SoundButton { anchors.verticalCenter: parent.verticalCenter }
-            NotificationsButton { anchors.verticalCenter: parent.verticalCenter }
-            SystemButton { anchors.verticalCenter: parent.verticalCenter }
+            spacing: 3
+            RailFold { expanded: bar.readoutsOpen; onToggled: bar.readoutsOpen = !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
+            BtReadout { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
+            DisplayBadge { output: "main"; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
+            SoundButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
+            NotificationsButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
+            SystemButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
         }
-        Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: "#181a1e" }
-        Rectangle { anchors.left: parent.left; anchors.bottom: parent.bottom; width: identity.width; height: 2; color: Theme.accent }
+        Rectangle { x: 51; anchors.bottom: parent.bottom; width: 38; height: 2; color: Theme.signalRed }
 
-        Scanlines { surface: "panel" }
     }
 }

@@ -10,7 +10,7 @@
 
 | Start here | Make it yours | Keep it running |
 |:---:|:---:|:---:|
-| [Install](docs/installation.md) · [Gallery](docs/gallery.md) · [Keys](docs/keybindings.md) | [Design system](docs/design-system.md) · [GPU + Chrome](docs/gpu-and-chrome.md) · [Robotics](docs/robotics.md) | [Hardware](docs/hardware-and-boot.md) · [Performance](docs/performance.md) · [Recovery](docs/operations.md) |
+| [Install](docs/installation.md) · [Gallery](docs/gallery.md) · [Keys](docs/keybindings.md) | [Signal Ledger](docs/design/signal-ledger.md) · [GPU + Chrome](docs/gpu-and-chrome.md) · [Robotics](docs/robotics.md) | [Hardware](docs/hardware-and-boot.md) · [Performance](docs/performance.md) · [Recovery](docs/operations.md) |
 | [Validation](docs/validation.md) · [Workstation patterns](docs/workstation-patterns.md) | [Audio](docs/audio-and-spotify.md) · [Phone](docs/phone.md) | [Version baseline](docs/tested-versions.txt) |
 
 <img src="docs/assets/flight-deck.gif" alt="Real Hyprland desktop opening the System and Spotify panels" width="100%">
@@ -25,7 +25,7 @@
 
 **ASUS ZenBook Pro Duo UX581GV.** The big panel is the canvas; the ScreenPad is the instrument cluster. Intel drives both internal displays. The RTX 2060 handles selected graphics and CUDA work. [The actual wiring and GPU limits →](docs/gpu-and-chrome.md)
 
-**Daily terminal:** Alacritty + persistent tmux. JetBrains Mono typography; less Intel render load in a matched local test. Kitty stays for the remote-controlled deck. [Terminal controls and tradeoffs →](docs/terminal.md)
+**Daily terminal:** Alacritty + persistent tmux, with Iosevka for the working text. Kitty stays for the remote-controlled deck. [Terminal controls and tradeoffs →](docs/terminal.md)
 
 ## A little controlled chaos
 
@@ -37,8 +37,8 @@
 
 The main bar carries identity, music, time, sound, notifications and controls. The lower bar carries **Terminal · Web · Code · Sim · Work · Misc**, clipboard, diagnostics, phone, GPU and USB. [See every panel →](docs/gallery.md)
 
-![Main display controls](docs/assets/bar-main-rehaul.png)
-![ScreenPad controls](docs/assets/bar-screenpad-rehaul.png)
+![Folded main-display instrument rail](docs/assets/signal-ledger/main-rail.webp)
+![Folded ScreenPad instrument rail](docs/assets/signal-ledger/screenpad-rail.webp)
 
 ## The second screen has a job
 

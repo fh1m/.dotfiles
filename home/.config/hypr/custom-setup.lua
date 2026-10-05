@@ -38,23 +38,34 @@ hl.config({
         drag_into_group = 1,
         merge_groups_on_drag = true,
         merge_groups_on_groupbar = true,
+        col = { border_active = "rgba(f23d70ff)", border_inactive = "rgba(39342fff)", border_locked_active = "rgba(f23d70ff)", border_locked_inactive = "rgba(39342fff)" },
         groupbar = {
             enabled = true,
             blur = false,
-            gradients = false,
+            gradients = true,
             font_family = "JetBrainsMono Nerd Font Propo",
-            font_size = 11,
-            font_weight_active = 600,
-            font_weight_inactive = 400,
-            height = 23,
-            indicator_height = 2,
-            text_padding = 9,
-            text_color = "rgba(eeeeeeff)",
-            text_color_inactive = "rgba(999999ff)",
-            col = { active = "rgba(111114ff)", inactive = "rgba(08080aff)", locked_active = "rgba(191219ff)", locked_inactive = "rgba(08080aff)" },
+            font_size = 12,
+            font_weight_active = 700,
+            font_weight_inactive = 600,
+            height = 30,
+            indicator_height = 0,
+            indicator_gap = 0,
+            rounding = 13,
+            rounding_power = 1.0,
+            round_only_edges = true,
+            gradient_rounding = 13,
+            gradient_rounding_power = 1.0,
+            gradient_round_only_edges = true,
+            text_padding = 18,
+            text_color = "rgba(e8e2daff)",
+            text_color_inactive = "rgba(77716aff)",
+            col = { active = "rgba(090807ff)", inactive = "rgba(090807ff)", locked_active = "rgba(090807ff)", locked_inactive = "rgba(090807ff)" },
         },
     },
 })
+
+-- These group border keys need their full dotted names in Hyprland's Lua API.
+hl.config({ ["group.col.border_active"] = "rgba(f23d70ff)", ["group.col.border_inactive"] = "rgba(39342fff)", ["group.col.border_locked_active"] = "rgba(f23d70ff)", ["group.col.border_locked_inactive"] = "rgba(39342fff)" })
 
 -- Native Hyprland tabs: drag a window onto a group, or use the keys below.
 -- Group titles and the two-pixel active marker provide a visible focus cue.

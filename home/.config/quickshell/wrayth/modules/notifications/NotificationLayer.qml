@@ -85,7 +85,7 @@ Variants {
             // degrees whatever their length, so an equal cut on a corner inset
             // by the border width is parallel to the window's and sits just
             // inside it, with an even gap the whole way along.
-            chamferTopRight: Appearance.chamfer.panel
+            chamferTopRight: Theme.radiusPanel
 
             opacity: card.reveal
             // Slides in from the right with a brief shear, settling as it lands.

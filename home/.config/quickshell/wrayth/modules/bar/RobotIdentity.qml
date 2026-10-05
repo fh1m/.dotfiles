@@ -1,64 +1,52 @@
 import QtQuick
-import QtQuick.Controls
-import qs.components
 import qs.config
 import qs.services
 
-SlantBlock {
+Item {
     id: root
-    fillColor: Theme.blend(Theme.barBg, Theme.widgetRaised, .32)
-    implicitWidth: 270
+    implicitWidth: 158
     implicitHeight: Appearance.metrics.barHeight
+
+    // Small, functional station mark: identity remains visible beside media.
     Canvas {
-        id: robotArt
-        x: 8; y: 3; width: 44; height: 38
-        scale: 1
-        SequentialAnimation on scale {
-            running: ShellState.ambientMotion && SpotifyDesk.playing && robotArt.visible
-            loops: Animation.Infinite
-            NumberAnimation { from: 1; to: 1.045; duration: 650; easing.type: Easing.InOutSine }
-            NumberAnimation { from: 1.045; to: 1; duration: 650; easing.type: Easing.InOutSine }
-        }
-        property color ink: Theme.widgetAccent
+        id: mark
+        x: 13; anchors.verticalCenter: parent.verticalCenter
+        width: 30; height: 30
+        property color ink: Theme.signalRed
         onInkChanged: requestPaint()
         onPaint: {
-            const c = getContext("2d"); c.reset(); c.strokeStyle=ink; c.fillStyle=ink; c.lineWidth=1;
-            c.beginPath(); c.moveTo(9,3); c.lineTo(34,3); c.lineTo(41,10); c.lineTo(41,29); c.lineTo(34,36); c.lineTo(9,36); c.lineTo(2,29); c.lineTo(2,10); c.closePath(); c.stroke();
-            c.strokeRect(10,12,23,17); c.fillRect(14,17,5,4); c.fillRect(24,17,5,4);
-            c.beginPath(); c.moveTo(17,25); c.lineTo(26,25); c.moveTo(21.5,12); c.lineTo(21.5,7); c.stroke(); c.fillRect(20,5,3,3);
-            c.beginPath(); c.moveTo(10,18); c.lineTo(5,18); c.lineTo(5,25); c.moveTo(33,18); c.lineTo(38,18); c.lineTo(38,25); c.moveTo(17,29); c.lineTo(17,33); c.moveTo(27,29); c.lineTo(27,33); c.stroke();
-            c.fillRect(4,9,2,2); c.fillRect(37,9,2,2); c.fillRect(4,28,2,2); c.fillRect(37,28,2,2);
+            const c = getContext("2d"); c.reset();
+            c.strokeStyle = ink; c.fillStyle = ink; c.lineWidth = 1.5;
+            c.strokeRect(4, 6, 22, 19);
+            c.beginPath(); c.moveTo(15, 2); c.lineTo(15, 6); c.moveTo(3, 13); c.lineTo(0, 13); c.moveTo(27, 13); c.lineTo(30, 13); c.stroke();
+            c.fillRect(8, 12, 4, 3); c.fillRect(18, 12, 4, 3);
+            c.beginPath(); c.moveTo(11, 20); c.lineTo(19, 20); c.stroke();
+        }
+        SequentialAnimation on opacity {
+            running: ShellState.ambientMotion && SpotifyDesk.playing
+            loops: Animation.Infinite
+            NumberAnimation { from: 1; to: .7; duration: 900; easing.type: Easing.InOutSine }
+            NumberAnimation { from: .7; to: 1; duration: 900; easing.type: Easing.InOutSine }
         }
     }
     Column {
-        x: 61; anchors.verticalCenter: parent.verticalCenter; spacing: 2
-        Row {
-            spacing: 9
-            Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: "fh1m"; font.family: Appearance.font.data; font.pixelSize: 15; font.weight: 700; font.letterSpacing: 1; color: Theme.widgetAccent }
-            Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: "// R-01"; font.family: Appearance.font.data; font.pixelSize: 11; color: Theme.widgetMuted; anchors.verticalCenter: parent.verticalCenter }
+        x: 51; anchors.verticalCenter: parent.verticalCenter; spacing: 1
+        Text {
+            text: "fh1m"; font.family: Appearance.font.display; font.pixelSize: 16
+            font.weight: Font.Bold; color: Theme.signalRed
         }
-        Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: "ROBOTICS // " + (RobotBench.data.boardCount ?? 0) + " USB"; font.family: Appearance.font.data; font.pixelSize: 10; font.letterSpacing: 0.5; color: Theme.widgetAccent }
-    }
-    Rectangle { x: 194; y: 9; width: 1; height: 26; color: Theme.alpha(Theme.widgetAccent, 0.4) }
-    Column {
-        x: 204; anchors.verticalCenter: parent.verticalCenter; spacing: 4
-        Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: (RobotBench.data.gpu.computeCount ?? 0) > 0 ? "CUDA" : "DECK"; font.family: Appearance.font.data; font.pixelSize: 10; font.weight: 600; color: Theme.widgetAccent }
-        Row {
-            spacing: 3
-            Repeater {
-                model: 4
-                Rectangle {
-                    required property int index
-                    width: 5; height: 4; color: Theme.widgetAccent
-                    SequentialAnimation on opacity {
-                        running: ShellState.ambientMotion && (RobotBench.data.gpu.computeCount ?? 0) > 0
-                        loops: Animation.Infinite
-                        NumberAnimation { to: 0.9; duration: 1100 + index * 150 }
-                        NumberAnimation { to: 0.3; duration: 1100 + index * 150 }
-                    }
-                }
-            }
+        Text {
+            text: "R-01  ·  " + (RobotBench.data.boardCount ?? 0) + " USB"
+            font.family: Appearance.font.telemetry; font.pixelSize: 10
+            color: Theme.paperMuted
         }
     }
-    MouseArea { id: operatorPointer; hoverEnabled: true; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: event => { const panel=event.button===Qt.RightButton?"comic":"ident"; ShellState.publishAnchor(panel,12); ShellState.toggleDropdown(panel); } }
+    MouseArea {
+        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: event => {
+            const panel = event.button === Qt.RightButton ? "comic" : "ident";
+            ShellState.publishAnchor(panel, 12); ShellState.toggleDropdown(panel);
+        }
+    }
 }

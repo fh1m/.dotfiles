@@ -4,8 +4,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 
-// What the bar's workspace indicator shows. The indicator is always exactly
-// five slots wide, so this decides which five: the page of numbered workspaces
+// What the ScreenPad's workspace indicator shows. It tracks the main display,
+// so focusing a ScreenPad app or the bottom bar cannot change its selection.
+// The indicator is always exactly six slots wide: the numbered workspaces
 // holding the active one, or -- while any special workspace is visible -- the
 // special workspaces themselves.
 //
@@ -28,9 +29,10 @@ Singleton {
         favorites: "FAVS"
     })
 
-    property var monitorIpc: Hyprland.focusedMonitor?.lastIpcObject ?? null
+    readonly property var mainMonitor: Hyprland.monitors.values.find(m => m.name === "eDP-1") ?? null
+    readonly property var monitorIpc: mainMonitor?.lastIpcObject ?? null
 
-    readonly property int activeId: Hyprland.focusedWorkspace?.id ?? 1
+    readonly property int activeId: monitorIpc?.activeWorkspace?.id ?? mainMonitor?.activeWorkspace?.id ?? 1
 
     // "special:deck" while one is up, "" otherwise.
     readonly property string activeSpecial: monitorIpc?.specialWorkspace?.name ?? ""
@@ -123,7 +125,8 @@ Singleton {
     readonly property int litPip: special ? numberedPips : Math.max(0, usedPages.indexOf(currentPage))
 
     // Which slot the bar's accent line runs to, or -1 when none is lit.
-    readonly property int activeIndex: slots.findIndex(slot => slot.active)
+    readonly property int activeIndex: special ? slots.findIndex(slot => slot.active)
+                                                : activeId >= 1 && activeId <= perPage ? activeId - 1 : -1
 
     function activate(slot: var): void {
         if (slot.empty)

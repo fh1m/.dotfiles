@@ -19,9 +19,9 @@ ChamferPanel {
     readonly property real padding: 14
 
     implicitWidth: 380
-    chamfer: Appearance.chamfer.panel
+    chamfer: Theme.radiusPanel
     fillColor: Theme.widgetGlass
-    borderColor: Theme.widgetBorder
+    borderColor: Theme.rule
     scanlines: false
 
     Item {
@@ -32,8 +32,8 @@ ChamferPanel {
         anchors.right: parent.right
         anchors.margins: root.padding
         height: root.greeting === "" ? 38 : 50
-        ChamferPanel {anchors.fill:parent;chamfer:5;scanlines:false;fillColor:Theme.widgetSurface;borderColor:"transparent";borderWidth:0}
-        Rectangle {anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.topMargin:-8;height:1;color:Theme.alpha(root.headerAccent,.28)}
+        ChamferPanel {anchors.fill:parent;chamfer:Theme.radiusSmall;scanlines:false;fillColor:Theme.surfaceOne;borderColor:Theme.rule;borderWidth:1}
+        Rectangle {anchors.left:parent.left;anchors.top:parent.top;anchors.topMargin:-8;width:30;height:2;color:root.headerAccent}
 
         Row {
             anchors.left: parent.left
@@ -42,8 +42,8 @@ ChamferPanel {
             anchors.topMargin: 4
             spacing: 8
 
-            ChamferPanel {visible:root.hasTitleGlyph;chamfer:4;scanlines:false;width:27;height:27;fillColor:Theme.blend(Theme.widgetSurface,root.headerAccent,.14);borderColor:"transparent";borderWidth:0
-                Text {anchors.centerIn:parent;text:root.hasTitleGlyph?root.title.charAt(0):"";font.family:Appearance.font.icons;font.pixelSize:15;color:root.headerAccent}
+            ChamferPanel {visible:root.hasTitleGlyph;chamfer:Theme.radiusSmall;scanlines:false;width:27;height:27;fillColor:Theme.ink;borderColor:Theme.rule;borderWidth:1
+                Text {anchors.centerIn:parent;text:root.hasTitleGlyph?root.title.charAt(0):"";font.family:Appearance.font.icons;font.pixelSize:18;color:root.headerAccent}
             }
 
             NrLabel {

@@ -5,14 +5,17 @@ import qs.services
 
 BarSurface {
     id: root
-    implicitWidth: 106; implicitHeight: 34
-    grouped: false
+    property bool condensed: false
+    clip: true
+    implicitWidth: condensed ? 48 : 106; implicitHeight: 34
+    grouped: condensed
+    Behavior on implicitWidth { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
     selected: ShellState.dropdown === "system"
     hovered: pointer.containsMouse
     pressed: pointer.pressed
-    Row {anchors.centerIn:parent;spacing:7
-        Text {anchors.verticalCenter:parent.verticalCenter;text:"\uf1de";font.family:Appearance.font.icons;font.pixelSize:17;color:ShellState.dropdown==="system"?Theme.widgetAccent:Theme.dim}
-        Column {anchors.verticalCenter:parent.verticalCenter;spacing:-1
+    Row {anchors.left:parent.left;anchors.leftMargin:8;anchors.verticalCenter:parent.verticalCenter;spacing:7
+        Text {anchors.verticalCenter:parent.verticalCenter;text:"\uf1de";font.family:Appearance.font.icons;font.pixelSize:24;color:ShellState.dropdown==="system"?Theme.signalRed:Theme.paper}
+        Column {visible:!root.condensed;anchors.verticalCenter:parent.verticalCenter;spacing:-1
             Text {text:"System";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
             Text {text:"Controls";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.widgetMuted}
         }

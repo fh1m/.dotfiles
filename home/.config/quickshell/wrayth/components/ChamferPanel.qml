@@ -10,7 +10,7 @@ import qs.config
 Item {
     id: root
 
-    property real chamfer: Appearance.chamfer.panel
+    property real chamfer: Theme.radiusPanel
     // The four corners, each in px. The default pair carries `chamfer`; set any
     // of them to 0 for a square corner.
     property real chamferTopLeft: 0
@@ -40,7 +40,7 @@ Item {
     // Set `scanlines: false` on a panel whose subtree draws its own -- the
     // EFFECTS page's preview tiles, which each show a treatment that is not
     // the one the shell is wearing.
-    property bool scanlines: true
+    property bool scanlines: false
 
     readonly property bool isChamferPanel: true
 

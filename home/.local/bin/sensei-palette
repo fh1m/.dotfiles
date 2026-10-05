@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Extract a restrained OLED desktop palette from the main wallpaper once per change."""
+"""Publish Signal Ledger's stable colors for the shell and terminal tools."""
 
 import json
-import colorsys
 import os
 from pathlib import Path
 import re
@@ -43,35 +42,20 @@ def main():
         image = Path(sys.argv[1] if len(sys.argv) > 1 else config["displays"]["eDP-1"]["file"]).expanduser()
         if not image.is_file():
             raise ValueError(f"main wallpaper unavailable: {image}")
-        fingerprint = [str(image), image.stat().st_mtime_ns, image.stat().st_size, 7]
+        fingerprint = [str(image), image.stat().st_mtime_ns, image.stat().st_size, 8]
         cached = json.loads(out.read_text()) if out.exists() else {}
         if cached.get("fingerprint") == fingerprint:
             palette = cached
         else:
-            result = subprocess.run(
-                ["matugen", "image", str(image), "--type", "scheme-vibrant",
-                 "--prefer", "saturation", "--dry-run", "--json", "hex"],
-                check=True, capture_output=True, text=True, timeout=25)
-            colors = json.loads(result.stdout)["colors"]
-            def tone(key):
-                return colors[key]["default"]["color"]
-            # Keep Matugen's source hue as a small accent. The wallpaper's hot
-            # magenta must not turn every foreground and selected row pastel.
-            src = tone("source_color").lstrip("#")
-            red, green, blue = (int(src[n:n + 2], 16) / 255 for n in (0, 2, 4))
-            hue, _, _ = colorsys.rgb_to_hsv(red, green, blue)
-            def companion(offset, saturation, value):
-                rgb = colorsys.hsv_to_rgb((hue + offset) % 1, saturation, value)
-                return "#" + "".join(f"{round(c * 255):02x}" for c in rgb)
             palette = {
                 "wallpaper": str(image), "fingerprint": fingerprint,
-                "ground": "#000000", "surface": "#111114",
-                "raised": "#1c1c21", "primary": companion(0, .74, 1),
-                "vibrant": "#" + src,
-                "secondary": "#c7cbd3",
-                "tertiary": "#7e8b9d",
-                "text": "#edf3fb", "muted": "#a9b5c5",
-                "outline": "#424957", "error": "#ff647f",
+                "ground": "#090807", "surface": "#141210",
+                "raised": "#1e1b18", "primary": "#f23d70",
+                "vibrant": "#f23d70",
+                "secondary": "#76bcc0",
+                "tertiary": "#d6a65e",
+                "text": "#e8e2da", "muted": "#a9a29a",
+                "outline": "#39342f", "error": "#f23d70",
             }
         write_if_changed(out, json.dumps(palette, indent=2) + "\n")
 
@@ -79,7 +63,7 @@ def main():
         if terminal.exists():
             content = terminal.read_text()
             content = replace_section(content, "colors.primary", {
-                "background": "#000000", "foreground": palette["text"],
+                "background": palette["ground"], "foreground": palette["text"],
                 "dim_foreground": palette["muted"]})
             content = replace_section(content, "colors.selection", {
                 "background": palette["primary"]})
@@ -161,11 +145,11 @@ def main():
                 ("YELLOW", "tertiary"), ("RED", "error"),
                 ("CYAN", "secondary"), ("MAGENTA", "vibrant"),
                 ("WHITE", "text"))) + ('\nRESET="%f"\n'
-                f'BADGE="%K{{{palette["primary"]}}}%F{{#000000}}"\n'
+                f'BADGE="%K{{{palette["primary"]}}}%F{{{palette["ground"]}}}"\n'
                 'BADGE_END="%k%f"\n')
         write_if_changed(prompt, prompt_text)
         fzf = home / ".config/fzf/sensei-colors"
-        fzf_colors = '--color=bg:#000000,bg+:' + palette['raised'] + \
+        fzf_colors = '--color=bg:' + palette['ground'] + ',bg+:' + palette['raised'] + \
             ',fg:' + palette['text'] + ',fg+:' + palette['text'] + \
             ',hl:' + palette['primary'] + ',hl+:' + palette['tertiary'] + \
             ',info:' + palette['muted'] + ',prompt:' + palette['primary'] + \

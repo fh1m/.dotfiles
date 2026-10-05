@@ -6,17 +6,22 @@ import qs.services
 
 Item {
     id: root
+    property bool condensed: false
+    clip: true
 
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property var connectedDevices:(Bluetooth.devices?.values??[]).filter(d=>d.connected)
     readonly property bool audioPlaying:Cava.live&&Audio.audible&&/^bluez_output\./.test(Audio.sink?.name||'')
 
-    implicitWidth: 116
+    implicitWidth: condensed ? 48 : 116
     implicitHeight: 34
-    BarSurface { anchors.fill: parent; grouped:false; selected: ShellState.dropdown === "bluetooth"; hovered: btHover.hovered; pressed: btTap.pressed }
+    Behavior on implicitWidth { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
+    BarSurface { anchors.fill: parent; grouped:true; selected: ShellState.dropdown === "bluetooth"; hovered: btHover.hovered; pressed: btTap.pressed }
     Row {
         id: readout
-        anchors.centerIn: parent
+        anchors.left: parent.left
+        anchors.leftMargin: 8
+        anchors.verticalCenter: parent.verticalCenter
         spacing: 7
 
     // The rune stands in for the word `BT`, so it keeps that word's grey in
@@ -24,8 +29,8 @@ Item {
     BluetoothGlyph {
         id:musicRune
         anchors.verticalCenter: parent.verticalCenter
-        color:root.audioPlaying?Theme.signal:Theme.dim
-        scale: 1.15
+        color:root.audioPlaying?Theme.signalRed:root.connectedDevices.length?Theme.semanticCyan:Theme.dim
+        scale: 1
         SequentialAnimation on scale {
             running: ShellState.ambientMotion && root.audioPlaying && musicRune.visible
             loops: Animation.Infinite
@@ -33,10 +38,15 @@ Item {
             NumberAnimation { from: 1.16; to: 1; duration: 420; easing.type: Easing.InOutSine }
         }
     }
+    Rectangle {
+        anchors.bottom: parent.bottom; anchors.horizontalCenter: parent.horizontalCenter
+        width: root.condensed && root.connectedDevices.length ? 17 : 0; height: 2
+        color: Theme.semanticCyan
+    }
 
     // Left-aligned so a short name sits next to the label, but capped at 120px
     // so a long one truncates instead of pushing the ticker around.
-    Column { anchors.verticalCenter: parent.verticalCenter; spacing: -1
+    Column { visible: !root.condensed; anchors.verticalCenter: parent.verticalCenter; spacing: -1
         Text {text:"Bluetooth";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
         Text {text:!root.adapter||!root.adapter.enabled?"Off":root.connectedDevices.length?`${root.connectedDevices.length} linked`:"Ready";font.family:Appearance.font.barUi;font.pixelSize:10;color:root.connectedDevices.length?Theme.widgetAccent:Theme.dim}
     }

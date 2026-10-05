@@ -7,7 +7,7 @@ import qs.services
 import qs.components
 DropdownFrame {
  headerAccent:Theme.widgetAccent
- id:root;title:"\uf1bc Spotify studio";katakana:"МУЗЫКА";implicitWidth:1080;fillColor:Theme.widgetGlass
+ id:root;title:"\uf1bc Music / Spotify";katakana:"AUDIO PATH";implicitWidth:1080;fillColor:Theme.ink
  IpcHandler {target:"spotifyview";function state():string{return JSON.stringify({count:musicList.count,visible:musicList.visible,query:SpotifyDesk.query,contextId:SpotifyDesk.contextItem.id||"",loading:SpotifyDesk.loading,error:SpotifyDesk.error});}function filter(text:string):void{SpotifyDesk.query=text;}}
  property int page:SpotifyDesk.page
  readonly property real position:SpotifyDesk.positionMs
@@ -16,22 +16,27 @@ DropdownFrame {
  property real contentWidth:root.width-28
  Popup {
  id:artViewer;parent:Overlay.overlay||root;visible:SpotifyDesk.artExpanded;onClosed:SpotifyDesk.artExpanded=false;width:Math.min(700,root.width-32);height:Math.min(750,root.height-32);x:(root.width-width)/2;y:(root.height-height)/2;modal:true;focus:true;padding:16;closePolicy:Popup.CloseOnEscape|Popup.CloseOnPressOutside
- background:ChamferPanel {fillColor:Theme.widgetGlass;chamfer:Appearance.chamfer.panel;borderColor:Theme.widgetBorder;borderWidth:1;scanlines:false}
+ background:ChamferPanel {fillColor:Theme.ink;chamfer:Theme.radiusPanel;borderColor:Theme.rule;borderWidth:1;scanlines:false}
  contentItem:Column {spacing:10
  RoundedArtwork {cornerRadius:12;width:artViewer.availableWidth;height:artViewer.availableHeight-65;source:SpotifyDesk.albumArt;sourceSize:Qt.size(1024,1024);fillMode:Image.PreserveAspectFit;asynchronous:true}
  Row {width:parent.width;Text {width:parent.width-100;text:SpotifyDesk.title+' - '+SpotifyDesk.artist;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetText}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:96;implicitHeight:30;label:'Close';onActivated:artViewer.close()}}
  }
  }
  Column {width:parent.width;spacing:12
- Row {spacing:7;Repeater {model:['Now playing','Queue','Playlists','Library','Search','Devices','Account'];ControlTile {accentColor:Theme.widgetAccent;required property string modelData;required property int index;implicitWidth:Math.floor((root.width-28-42)/7);implicitHeight:32;label:modelData;selected:SpotifyDesk.page===index;onActivated:SpotifyDesk.page=index}}}
+ Row {spacing:0;Repeater {model:['Now playing','Queue','Playlists','Library','Search','Devices','Account'];Item {required property string modelData;required property int index;width:Math.floor((root.width-28)/7);height:34
+ Rectangle {anchors.fill:parent;color:SpotifyDesk.page===index?Theme.surfaceTwo:Theme.ink;opacity:pointer.containsMouse||SpotifyDesk.page===index?1:.85}
+ Text {anchors.centerIn:parent;text:modelData;font.family:Appearance.font.ui;font.pixelSize:11;font.weight:SpotifyDesk.page===index?Font.DemiBold:Font.Normal;color:SpotifyDesk.page===index?Theme.paper:Theme.paperMuted}
+ Rectangle {anchors.bottom:parent.bottom;anchors.horizontalCenter:parent.horizontalCenter;width:SpotifyDesk.page===index?parent.width-20:0;height:2;color:Theme.signalRed;Behavior on width {NumberAnimation {duration:Theme.motionTravel;easing.type:Easing.OutCubic}}}
+ MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:SpotifyDesk.page=index}
+ }}}
  Row {width:parent.width;spacing:16
- ChamferPanel {id:playerPane;width:342;height:Math.max(670,playerContents.implicitHeight+28);fillColor:Theme.alpha(Theme.widgetSurface,.85);borderColor:Theme.widgetBorder;chamfer:6;scanlines:false
+ ChamferPanel {id:playerPane;width:342;height:Math.max(670,playerContents.implicitHeight+28);fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {id:playerContents;anchors.fill:parent;anchors.margins:14;spacing:12
- ChamferPanel {width:312;height:312;fillColor:Theme.widgetSurface;borderColor:Theme.widgetBorder;chamfer:6;scanlines:false
+ ChamferPanel {width:312;height:312;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  RoundedArtwork {cornerRadius:10;anchors.fill:parent;anchors.margins:1;source:SpotifyDesk.albumArt;sourceSize:Qt.size(640,640);fillMode:Image.PreserveAspectCrop;asynchronous:true}
  MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:SpotifyDesk.artExpanded=true}
  Text {anchors.centerIn:parent;visible:SpotifyDesk.albumArt==='';text:'\uf1bc';font.family:Appearance.font.icons;font.pixelSize:88;color:Theme.widgetMuted}
- Rectangle {anchors.bottom:parent.bottom;anchors.right:parent.right;anchors.margins:7;width:24;height:24;radius:12;color:Theme.widgetSurface;Text {anchors.centerIn:parent;text:'\uf1bc';font.family:Appearance.font.icons;font.pixelSize:17;color:SpotifyDesk.playing?Theme.widgetAccent:Theme.widgetMuted}}
+ Rectangle {anchors.bottom:parent.bottom;anchors.right:parent.right;anchors.margins:7;width:24;height:24;radius:Theme.radiusSmall;color:Theme.surfaceOne;Text {anchors.centerIn:parent;text:'\uf1bc';font.family:Appearance.font.icons;font.pixelSize:17;color:SpotifyDesk.playing?Theme.signalRed:Theme.widgetMuted}}
  }
  Text {width:312;text:SpotifyDesk.title;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:17;font.weight:600;color:Theme.widgetText}
  Text {width:312;text:SpotifyDesk.artist;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted}
@@ -54,7 +59,7 @@ DropdownFrame {
  ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf025';label:'Liked songs';onActivated:SpotifyDesk.action('liked-play')}
  ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf15c';label:'Lyrics';selected:SpotifyDesk.lyricsOpen;onActivated:SpotifyDesk.lyricsOpen=!SpotifyDesk.lyricsOpen}
  }
- ChamferPanel {visible:root.page===0;width:parent.width;height:68;fillColor:Theme.alpha(Theme.widgetSurface,.6);borderColor:Theme.widgetBorder;chamfer:6;scanlines:false
+ ChamferPanel {visible:root.page===0;width:parent.width;height:68;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {anchors.fill:parent;anchors.margins:10;spacing:7;Text {width:parent.width;text:(SpotifyDesk.skipPending?'Switching track…':SpotifyDesk.playing?'Playing':'Paused')+' · '+(SpotifyDesk.playback.device||'Sensei · ZenBook Duo')+' · Premium streaming';font.family:Appearance.font.ui;font.pixelSize:12;color:SpotifyDesk.playing?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}Text {width:parent.width;text:'Ctrl + Space  play / pause     •     right-click music badge to toggle';font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted;elide:Text.ElideRight}}
  }
  Row {visible:root.page===3;spacing:6;Repeater {model:[{key:'liked',label:'Liked'},{key:'albums',label:'Albums'},{key:'artists',label:'Artists'},{key:'recent',label:'Recent'},{key:'top',label:'Top tracks'}];ControlTile {accentColor:Theme.widgetAccent;required property var modelData;implicitWidth:(parent.parent.width-24)/5;implicitHeight:30;label:modelData.label;selected:SpotifyDesk.libraryKind===modelData.key;onActivated:SpotifyDesk.libraryKind=modelData.key}}}
@@ -78,20 +83,20 @@ DropdownFrame {
  ControlTile {id:loadMore;visible:root.page>=2&&root.page<=3&&SpotifyDesk.nextPage!=='';accentColor:Theme.widgetAccent;implicitWidth:parent.width;implicitHeight:32;label:'Load more · '+SpotifyDesk.visibleRows.length+' of '+SpotifyDesk.totalRows+' songs / collections';enabled:!SpotifyDesk.loading;onActivated:SpotifyDesk.more()}
  LyricsFollower {id:lyricsPanel;visible:root.page===0&&SpotifyDesk.lyricsOpen;width:parent.width;height:Math.max(220,playerPane.height-y)}
  ListView {id:deviceList;visible:root.page===5;width:parent.width;height:playerPane.height-deviceList.y;model:SpotifyDesk.devices;spacing:8;clip:true;ScrollBar.vertical:DeskScrollBar {}
- delegate:ChamferPanel {required property var modelData;width:deviceList.width;height:76;fillColor:Theme.alpha(Theme.widgetSurface,.6);borderColor:(SpotifyDesk.playback.selectedDeviceId?SpotifyDesk.playback.selectedDeviceId===modelData.id:modelData.is_active)?Theme.widgetAccent:Theme.widgetBorder;chamfer:6;scanlines:false
+ delegate:ChamferPanel {required property var modelData;width:deviceList.width;height:76;fillColor:Theme.surfaceOne;borderColor:(SpotifyDesk.playback.selectedDeviceId?SpotifyDesk.playback.selectedDeviceId===modelData.id:modelData.is_active)?Theme.signalRed:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {x:12;y:12;width:parent.width-200;spacing:7;Text {width:parent.width;text:modelData.name||'Spotify device';font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.widgetText;elide:Text.ElideRight}Text {text:(modelData.is_active?'Active · ':'')+(modelData.type||'device')+' · volume '+(modelData.volume_percent??0)+'%';font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}}
  ControlTile {accentColor:Theme.widgetAccent;anchors.right:parent.right;anchors.rightMargin:12;anchors.verticalCenter:parent.verticalCenter;implicitWidth:156;implicitHeight:32;label:SpotifyDesk.playback.selectedDeviceId===modelData.id?(modelData.is_active?'Selected · active':'Selected · waiting'):modelData.is_active?'Active elsewhere':'Listen here';selected:SpotifyDesk.playback.selectedDeviceId?SpotifyDesk.playback.selectedDeviceId===modelData.id:modelData.is_active;enabled:!!modelData.id;onActivated:SpotifyDesk.action('connect',[modelData.id])}
  }
  }
  Column {visible:root.page===6;width:parent.width;spacing:14
- ChamferPanel {width:parent.width;height:176;fillColor:Theme.alpha(Theme.widgetSurface,.7);borderColor:Theme.widgetBorder;chamfer:6;scanlines:false
+ ChamferPanel {width:parent.width;height:176;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {anchors.fill:parent;anchors.margins:18;spacing:13
  Text {text:'Sensei, your music lives here.';font.family:Appearance.font.ui;font.pixelSize:18;color:Theme.widgetText}
  Text {width:parent.width;text:'Player  spotify-player '+SpotifyDesk.account.version+'\nService  '+SpotifyDesk.account.service+'\nConnect name  Sensei · ZenBook Duo\nLogin  '+(SpotifyDesk.account.cachedLogin?'Saved on this laptop':'Sign in once in your browser');font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted;lineHeight:1.45}
  }
  }
  Row {spacing:10;ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Sign in / reconnect';glyph:'\uf1bc';onActivated:SpotifyDesk.login()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Restart music service';glyph:'\uf021';onActivated:SpotifyDesk.restart()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Open Spotify web';glyph:'\uf08e';onActivated:Quickshell.execDetached(['xdg-open','https://open.spotify.com/'])}}
- ChamferPanel {width:parent.width;height:250;fillColor:Theme.alpha(Theme.widgetSurface,.7);borderColor:Theme.widgetBorder;chamfer:6;scanlines:false
+ ChamferPanel {width:parent.width;height:250;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {anchors.fill:parent;anchors.margins:18;spacing:14
  Text {width:parent.width;text:'Ready in the background';font.family:Appearance.font.ui;font.pixelSize:16;color:Theme.widgetText}
  Text {width:parent.width;text:'The player starts with your desktop and stays paused until you choose music. No browser or terminal stays open for playback.\n\nAlbum art is cached; playlists and library refresh on demand. Playback status arrives through desktop media signals. Queue refreshes only while this widget is open and music is playing.\n\nSpotify Premium is required. Account access and available catalogue features depend on Spotify. Offline downloads are not supported by this client.';wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted;lineHeight:1.3}
