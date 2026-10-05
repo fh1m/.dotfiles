@@ -44,6 +44,7 @@ ShellRoot {
     FontCheck {}
     ScreenCheck {}
     NavigationOverlay {}
+    GroupMarker {}
     ShortcutUi.ShortcutsOverlay {}
     // Native window border indicates focus without a flashing overlay.
     Ipc {}

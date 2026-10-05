@@ -6,7 +6,7 @@ import qs.services
 // Five slots, never more, never fewer, never a different width. What is in them
 // is `Spaces`' business: the page of numbered workspaces holding the active one,
 // or the special workspaces while one of those is up.
-Row {
+Item {
     id: root
 
     // The bar draws the line under these, so it needs their pitch and which one
@@ -15,7 +15,34 @@ Row {
     readonly property int itemSpacing: 7
     readonly property int activeIndex: Spaces.activeIndex
 
-    spacing: itemSpacing
+    implicitWidth: slots.implicitWidth + 6
+    implicitHeight: Appearance.metrics.workspaceHeight + 6
+
+    Rectangle {
+        anchors.fill: parent
+        color: Theme.surfaceOne
+        radius: Theme.radiusSmall
+        border.width: 1
+        border.color: Theme.rule
+    }
+    Rectangle {
+        id: carriage
+        visible: root.activeIndex >= 0
+        x: 3 + root.activeIndex * (root.itemWidth + root.itemSpacing)
+        y: 3
+        width: root.itemWidth
+        height: Appearance.metrics.workspaceHeight
+        color: Theme.surfaceTwo
+        radius: Theme.radiusSmall
+        border.width: 1
+        border.color: Theme.rule
+        Behavior on x { SmoothedAnimation { velocity: 900; maximumEasingTime: 140 } }
+    }
+    Row {
+    id: slots
+    x: 3
+    anchors.verticalCenter: parent.verticalCenter
+    spacing: root.itemSpacing
 
     Repeater {
         model: Spaces.slots
@@ -34,16 +61,12 @@ Row {
             HoverHandler { id: workspaceHover }
 
             Rectangle {
-                anchors.fill: parent
-                radius: 2; border.width: button.occupied || button.active ? 1 : 0; border.color: "#26282d"
-                color: button.active ? Theme.alpha(Theme.accent, 0.15) : "transparent"
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Appearance.duration.state
-                        easing.type: Easing.OutCubic
-                    }
-                }
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: button.active ? 24 : button.occupied ? 10 : 0
+                height: button.active ? 2 : 1
+                color: button.active ? Theme.signalRed : Theme.paperMuted
+                Behavior on width { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
             }
 
             // **`NrLabel`, so the number is centred on its ink.** It was a
@@ -61,7 +84,7 @@ Row {
                     text: button.modelData.glyph ?? ""
                     font.family: "ZedMono Nerd Font"
                     font.pixelSize: 14
-                    color: button.active ? Theme.accent : button.occupied ? Theme.accent : Theme.mute
+                    color: button.active ? Theme.signalRed : button.occupied ? Theme.paper : Theme.mute
                     renderType: Text.NativeRendering
                 }
                 NrLabel {
@@ -69,7 +92,7 @@ Row {
                     centred: true
                     text: button.modelData.label
                     font.capitalization: Font.MixedCase
-                    color: button.active ? Theme.accent : button.occupied ? Theme.accent : Theme.mute
+                    color: button.active ? Theme.paper : button.occupied ? Theme.paper : Theme.mute
                     pixelSize: 11
                     font.family: Appearance.font.barUi
                     tracked: false
@@ -92,5 +115,6 @@ Row {
                 onClicked: Spaces.activate(button.modelData)
             }
         }
+    }
     }
 }

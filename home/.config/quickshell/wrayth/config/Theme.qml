@@ -53,47 +53,67 @@ Singleton {
     readonly property string description: Profiles.descriptions[profile] ?? ""
     readonly property url wallpaper: Paths.url(Paths.wallpaperFor(profile))
 
-    // --- Tokens -------------------------------------------------------------
+    // Signal Ledger / foundation. These are independent of wallpaper sampling:
+    // signal means identity and active work, amber means caution, cyan means a
+    // connected external path. A wallpaper change may alter imagery, not UI
+    // semantics. Components below use these tokens, including legacy aliases.
+    readonly property color ink: "#090807"
+    readonly property color paper: "#e8e2da"
+    readonly property color paperMuted: "#a9a29a"
+    readonly property color signalRed: "#f23d70"
+    readonly property color semanticCyan: "#76bcc0"
+    readonly property color semanticAmber: "#d6a65e"
+    readonly property color surfaceOne: "#141210"
+    readonly property color surfaceTwo: "#1e1b18"
+    readonly property color rule: "#39342f"
+    readonly property color inactiveTab: "#b9b3aa"
+    readonly property int radiusSmall: 2
+    readonly property int radiusPanel: 5
+    readonly property int strokeHair: 1
+    readonly property int motionAck: 100
+    readonly property int motionTravel: 180
+    readonly property int motionReveal: 210
+    // --- Compatibility tokens ----------------------------------------------
     // Backgrounds
-    readonly property color ground: "#000000"
-    readonly property color deep: "#000000"
+    readonly property color ground: ink
+    readonly property color deep: ink
     readonly property color panelHex: palette.panelHex
-    readonly property color panel: "#000000"
-    readonly property color panel2: "#000000"
-    readonly property color barBg: "#000000"
+    readonly property color panel: ink
+    readonly property color panel2: ink
+    readonly property color barBg: ink
 
     // Structure
-    readonly property color hair: adaptive.outline ?? "#424957"
-    readonly property color frame: "#11151c"
+    readonly property color hair: rule
+    readonly property color frame: surfaceOne
     // Opaque OLED widget palette: no live background sampling or alpha blend.
-    readonly property color widgetAccent: adaptive.primary ?? "#ff428e"
-    readonly property color widgetText: adaptive.text ?? "#edf3fb"
-    readonly property color widgetMuted: adaptive.muted ?? "#a9b5c5"
-    readonly property color widgetFaint: "#647081"
+    readonly property color widgetAccent: signalRed
+    readonly property color widgetText: paper
+    readonly property color widgetMuted: paperMuted
+    readonly property color widgetFaint: "#726d66"
     readonly property color widgetBorder: alpha(widgetText, .17)
-    readonly property color widgetGlass: "#000000"
-    readonly property color widgetSurface: adaptive.surface ?? "#111114"
-    readonly property color widgetRaised: adaptive.raised ?? "#1c1c21"
+    readonly property color widgetGlass: ink
+    readonly property color widgetSurface: surfaceOne
+    readonly property color widgetRaised: surfaceTwo
     readonly property color uiSurface: widgetSurface
     readonly property color uiRaised: widgetRaised
     readonly property color uiBorder: alpha(widgetText, .20)
-    readonly property color uiSuccess: "#76bd93"
-    readonly property color uiWarning: "#e6b66a"
-    readonly property color spotifyGreen: "#1DB954"
-    readonly property color track: palette.track
-    readonly property color cell: palette.cell
+    readonly property color uiSuccess: semanticCyan
+    readonly property color uiWarning: semanticAmber
+    readonly property color spotifyGreen: signalRed
+    readonly property color track: surfaceOne
+    readonly property color cell: surfaceTwo
 
     // Type
     readonly property color text: widgetText
-    readonly property color bright: "#ffffff"
+    readonly property color bright: paper
     readonly property color dim: widgetMuted
     readonly property color mute: widgetFaint
 
     // Meaning
-    readonly property color signal: adaptive.secondary ?? "#c7cbd3"
-    readonly property color focusBlue: adaptive.tertiary ?? "#7e8b9d"
-    readonly property color accent: adaptive.vibrant ?? "#df106d"
-    readonly property color alert: adaptive.error ?? "#ff647f"
+    readonly property color signal: semanticCyan
+    readonly property color focusBlue: semanticCyan
+    readonly property color accent: signalRed
+    readonly property color alert: signalRed
 
     // --- Helpers ------------------------------------------------------------
     // Token at partial alpha, e.g. accent@15% row tints.

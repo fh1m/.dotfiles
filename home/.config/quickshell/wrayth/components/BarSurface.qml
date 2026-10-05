@@ -1,24 +1,33 @@
 import QtQuick
 import qs.config
 
-// One filled control surface for both bars. Colour changes are cheap; the
-// geometry remains fixed so interaction never reconfigures a layer surface.
-ChamferPanel {
+// One continuous instrument rail: temporary local elevation on hover, a
+// fine separator for grouping, and a short signal rule for an open panel.
+Rectangle {
     id: root
     property bool hovered: false
     property bool selected: false
     property bool pressed: false
     property bool grouped: false
-    chamfer: grouped ? 2 : 4
-    scanlines: false
-    fillColor: pressed ? Theme.widgetRaised
-                       : hovered ? Theme.blend(Theme.barBg, Theme.widgetRaised, .80)
-                       : Theme.blend(Theme.barBg, Theme.widgetRaised, .32)
-    borderColor: grouped ? "transparent" : selected ? Theme.alpha(Theme.widgetAccent, .52)
-                          : hovered ? Theme.alpha(Theme.widgetAccent, .25) : Theme.alpha(Theme.widgetText, .10)
-    borderWidth: grouped ? 0 : 1
-    scale: pressed ? .975 : 1
-    Behavior on fillColor { ColorAnimation { duration: root.pressed ? 60 : 130 } }
-    Behavior on borderColor { ColorAnimation { duration: 130 } }
-    Behavior on scale { NumberAnimation { duration: root.pressed ? 60 : 150; easing.type: Easing.OutCubic } }
+    radius: 0
+    color: pressed ? Theme.surfaceTwo : hovered || selected ? Theme.surfaceOne : Theme.ink
+    border.width: 0
+    Rectangle {
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        width: 1; height: root.height - 16
+        visible: !root.grouped
+        color: Theme.rule
+    }
+    Rectangle {
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: root.selected ? 24 : 0
+        height: 2
+        color: Theme.signalRed
+        Behavior on width { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
+    }
+    scale: pressed ? .985 : 1
+    Behavior on color { ColorAnimation { duration: Theme.motionAck } }
+    Behavior on scale { NumberAnimation { duration: Theme.motionAck; easing.type: Easing.OutCubic } }
 }

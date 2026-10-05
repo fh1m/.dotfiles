@@ -22,14 +22,14 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: root.selected ? Theme.alpha(Theme.accent, 0.12) : "transparent"
+        color: root.selected ? Theme.surfaceTwo : "transparent"
     }
 
     Rectangle {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        width: 2
+        width: 3
         color: Theme.accent
         visible: root.selected
     }
@@ -55,7 +55,7 @@ Item {
 
         chamfer: 5
         // Filled accent when selected, so the letters read as cut out of it.
-        fillColor: Theme.cell
+        fillColor: Theme.surfaceOne
         borderColor: root.selected ? Theme.accent : Theme.hair
 
         Image {
@@ -77,7 +77,7 @@ Item {
             anchors.centerIn: parent
 
             text: root.result.name.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase()
-            color: root.selected ? Theme.ground : Theme.dim
+            color: root.selected ? Theme.paper : Theme.dim
             font.family: Appearance.font.data
             font.pixelSize: 10
             font.weight: Appearance.font.weightBold

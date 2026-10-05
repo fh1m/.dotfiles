@@ -16,7 +16,9 @@ try:
   call('system76-power','profile',native)
   for p,v in levels.items():
    if int((p/'brightness').read_text())!=v:call('brightnessctl','-d',p.name,'set',str(v))
-  call('sudo','-n','/usr/local/libexec/fh1m-zenbook-fan','boost' if name=='performance' else 'auto')
+  # CPU policy and fan policy are separate. Full-speed PWM is a manual,
+  # short-lived override; Performance must leave firmware fan control intact.
+  call('sudo','-n','/usr/local/libexec/fh1m-zenbook-fan','auto')
   d=publish(current())
  else:d=publish(current())
  print(d['name'] if action=='name' else json.dumps(d))

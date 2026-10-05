@@ -306,7 +306,7 @@ Variants {
                 opacity: content.status === Loader.Ready ? 0 : 1
                 Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
                 scanlines: false
-                chamfer: Appearance.chamfer.panel
+                chamfer: Theme.radiusPanel
                 fillColor: Theme.widgetGlass
                 borderColor: Theme.widgetBorder
                 Column {
