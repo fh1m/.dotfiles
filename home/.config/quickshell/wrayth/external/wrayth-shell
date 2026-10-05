@@ -23,6 +23,10 @@
 
 set -u
 
+# Display-manager sessions have a minimal PATH. Widget actions and launchers
+# must resolve the same user tools that an interactive shell can see.
+export PATH="$HOME/.local/bin:$PATH"
+
 read -r -a QS_ARGS <<< "${WRAYTH_QS_ARGS:--c wrayth}"
 
 # A private rebuild tracks Qt's private ABI without replacing the distro

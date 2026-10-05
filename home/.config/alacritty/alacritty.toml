@@ -8,9 +8,9 @@ TERM = "alacritty"
 
 [window]
 decorations = "None"
-opacity = 1.0
-padding = { x = 12, y = 8 }
-dynamic_padding = false
+opacity = 0.90
+padding = { x = 20, y = 12 }
+dynamic_padding = true
 resize_increments = true
 title = "Sensei · Terminal"
 dynamic_title = true
@@ -20,19 +20,19 @@ history = 10000
 multiplier = 3
 
 [font]
-normal = { family = "ZedMono Nerd Font Mono", style = "Regular" }
-bold = { family = "ZedMono Nerd Font Mono", style = "Bold" }
-italic = { family = "ZedMono Nerd Font Mono", style = "Italic" }
-bold_italic = { family = "ZedMono Nerd Font Mono", style = "Bold Italic" }
-size = 11.5
-offset = { x = 4, y = 6 }
-glyph_offset = { x = 0, y = 0 }
+normal = { family = "JetBrainsMono Nerd Font Mono", style = "Regular" }
+bold = { family = "JetBrainsMono Nerd Font Mono", style = "Bold" }
+italic = { family = "JetBrainsMono Nerd Font Mono", style = "Italic" }
+bold_italic = { family = "JetBrainsMono Nerd Font Mono", style = "Bold Italic" }
+size = 10.5
+offset = { x = 1, y = 4 }
+glyph_offset = { x = 2, y = 2 }
 builtin_box_drawing = true
 
 [colors.primary]
 background = "#000000"
-foreground = "#8bb9f6"
-dim_foreground = "#6d87ac"
+foreground = "#edf3fb"
+dim_foreground = "#a9b5c5"
 
 [colors.cursor]
 text = "#000000"
@@ -40,16 +40,16 @@ cursor = "#ffffff"
 
 [colors.selection]
 text = "#000000"
-background = "#D8054A"
+background = "#ff4297"
 
 [colors.normal]
 black = "#0f0f0f"
-red = "#ff1767"
+red = "#ff647f"
 green = "#0090ff"
 yellow = "#f7ed30"
-blue = "#D8054A"
-magenta = "#6c43a5"
-cyan = "#D8054A"
+blue = "#ff4297"
+magenta = "#df106d"
+cyan = "#c7cbd3"
 white = "#ffffff"
 
 [colors.bright]

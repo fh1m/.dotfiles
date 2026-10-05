@@ -27,6 +27,11 @@ The terminal's internal tab, pane, copy and session shortcuts are in [Terminal â
 | Super+mouse drag / right-drag | Move / resize window |
 | Super+Shift+Up/Down | Move to main / ScreenPad monitor |
 | Super+W | Theme / wallpaper picker |
+| Super+Alt+G | Toggle native tab group for the focused window |
+| Super+Alt+H/L | Move focused window into or create a group left/right |
+| Super+Alt+J/K | Next/previous tab in the group |
+| Super+Alt+U | Remove focused window from its group |
+| Drag onto group title | Add another window to that tab group |
 | Super+Shift+V | Persistent clipboard |
 | Super+Shift+M | System Monitor |
 | Super+E | Wrayth deck |

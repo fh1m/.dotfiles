@@ -27,11 +27,11 @@ Variants {
             anchors.left: parent.left
             anchors.leftMargin: 16
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 7
+            spacing: 6
             TrayGroup { anchors.verticalCenter: parent.verticalCenter }
             ArchiveButton { anchors.verticalCenter: parent.verticalCenter }
-            ArchiveButton { target: "clipboard"; label: "CLIPBOARD"; glyph: "\uf0ea"; anchors.verticalCenter: parent.verticalCenter }
-            ArchiveButton { target: "phone"; label: PhoneBridge.ready ? "Phone · online" : "Phone"; glyph: "\uf10b"; anchors.verticalCenter: parent.verticalCenter }
+            ArchiveButton { target: "clipboard"; label: "Clipboard"; detail:"History"; glyph: "\uf0ea"; anchors.verticalCenter: parent.verticalCenter }
+            ArchiveButton { target: "phone"; label: "Phone"; detail:PhoneBridge.phoneNearby?"Nearby":PhoneBridge.ready?"Online":"Offline"; glyph: "\uf10b"; anchors.verticalCenter: parent.verticalCenter }
         }
         Row {
             id: navigation
@@ -41,7 +41,8 @@ Variants {
             Workspaces { id: workspaces; anchors.verticalCenter: parent.verticalCenter }
         }
         Row {
-            spacing: 12
+            id:machineControls
+            spacing: 6
             UsbBadge { anchors.verticalCenter: parent.verticalCenter }
             SimLaunchpad { anchors.verticalCenter: parent.verticalCenter }
             DisplayBadge { output: "screenpad"; anchors.verticalCenter: parent.verticalCenter }

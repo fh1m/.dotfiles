@@ -8,8 +8,10 @@ ChamferPanel {
     id: root
 
     property string title: ""
+    readonly property bool hasTitleGlyph: title.length > 0 && title.charCodeAt(0) >= 0xe000 && title.charCodeAt(0) <= 0xf8ff
+    readonly property string titleText: hasTitleGlyph ? title.slice(1).trim() : title
     property string katakana: ""
-    property string greeting: "Sensei, your workstation is ready."
+    property string greeting: ""
     property color headerAccent: Theme.widgetAccent
     default property alias body: content.data
     property alias headerRight: right.data
@@ -29,36 +31,48 @@ ChamferPanel {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: root.padding
-        height: 44
+        height: root.greeting === "" ? 38 : 50
+        ChamferPanel {anchors.fill:parent;chamfer:5;scanlines:false;fillColor:Theme.widgetSurface;borderColor:"transparent";borderWidth:0}
         Rectangle {anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.topMargin:-8;height:1;color:Theme.alpha(root.headerAccent,.28)}
 
         Row {
             anchors.left: parent.left
+            anchors.leftMargin: 8
             anchors.top: parent.top
-            anchors.topMargin: 1
+            anchors.topMargin: 4
             spacing: 8
+
+            ChamferPanel {visible:root.hasTitleGlyph;chamfer:4;scanlines:false;width:27;height:27;fillColor:Theme.blend(Theme.widgetSurface,root.headerAccent,.14);borderColor:"transparent";borderWidth:0
+                Text {anchors.centerIn:parent;text:root.hasTitleGlyph?root.title.charAt(0):"";font.family:Appearance.font.icons;font.pixelSize:15;color:root.headerAccent}
+            }
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                pixelSize: Math.max(13, Appearance.size.label)
-                font.weight: Font.Bold
+                pixelSize: 15
+                font.family: Appearance.font.heading
+                font.capitalization: Font.MixedCase
+                font.letterSpacing: 0
+                font.weight: Font.DemiBold
                 color: Theme.widgetText
-                text: root.title
+                text: root.titleText
             }
 
+        }
+
             Text {
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: right.width + 12
+                y: 8
                 text: root.katakana
-                color: root.headerAccent
+                color: Theme.widgetMuted
                 font.family: Appearance.font.accent
                 font.letterSpacing: 0
-                font.pixelSize: Appearance.size.katakana
+                font.pixelSize: 10
                 font.weight: Appearance.font.weightMedium
                 renderType: Text.NativeRendering
             }
-        }
 
-        Text { x: 0; y: 29; text: root.greeting; color: Theme.widgetMuted; font.family: Appearance.font.data; font.pixelSize: 11; renderType: Text.QtRendering }
+        Text { x: 8; y: 31; visible: root.greeting !== ""; text: root.greeting; color: Theme.widgetMuted; font.family: Appearance.font.ui; font.pixelSize: 12; renderType: Text.QtRendering }
 
         Item {
             id: right

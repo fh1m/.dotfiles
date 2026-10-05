@@ -34,7 +34,7 @@ hl.monitor({
 -- ===========================================================================
 -- Programs
 -- ===========================================================================
-local terminal = "sensei-terminal"
+local terminal = "/home/fh1m/.local/bin/sensei-terminal"
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")

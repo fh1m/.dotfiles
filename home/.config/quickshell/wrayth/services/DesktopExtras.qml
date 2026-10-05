@@ -16,7 +16,7 @@ Singleton {
  function loadComic(number='latest'){if(comicProcess.running)return;comicError='';comicProcess.command=['/home/fh1m/.local/bin/sensei-desktop-data','comic',String(number)];comicProcess.running=true;}
  function loadPackages(check=false){if(packageProcess.running)return;packagesError='';packageProcess.command=['/home/fh1m/.local/bin/sensei-desktop-data','packages',check?'check':'cached'];packageProcess.running=true;}
  function loadNetwork(){if(!networkProcess.running)networkProcess.running=true;}
- function packageAction(action,name=''){Quickshell.execDetached(['sensei-terminal','--title','Sensei · Packages','/home/fh1m/.local/bin/sensei-package-action',action,name]);}
+ function packageAction(action,name=''){Quickshell.execDetached(['/home/fh1m/.local/bin/sensei-terminal','--title','Sensei · Packages','/home/fh1m/.local/bin/sensei-package-action',action,name]);}
  Process {id:comicProcess;stdout:StdioCollector {onStreamFinished:{try{const data=JSON.parse(text);if(data.error)root.comicError=data.error;else root.comic=data;}catch(e){root.comicError=String(e);}}}}
  Process {id:packageProcess;stdout:StdioCollector {onStreamFinished:{try{const data=JSON.parse(text);if(data.error)root.packagesError=data.error;else {root.packages=data;root.packagesError=data.error||'';}}catch(e){root.packagesError=String(e);}}}}
  Process {id:networkProcess;command:['/home/fh1m/.local/bin/sensei-desktop-data','network'];stdout:StdioCollector {onStreamFinished:{try{root.network=JSON.parse(text);}catch(e){root.network={error:String(e)};}}}}

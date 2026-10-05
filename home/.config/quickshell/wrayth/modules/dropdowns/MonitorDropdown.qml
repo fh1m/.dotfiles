@@ -6,7 +6,7 @@ import qs.config
 import qs.services
 DropdownFrame {
  id:root
- title:"\uf080 SYSTEM MONITOR";katakana:"ТЕЛЕМЕТРИЯ"
+ title:"\uf080 System monitor";katakana:"ТЕЛЕМЕТРИЯ"
  implicitWidth:1040
  property int page:ShellState.monitorPage
  property string sort:"cpu"
@@ -32,18 +32,18 @@ DropdownFrame {
  Row {spacing:12
  Repeater {model:3
 
- ChamferPanel {required property int index;readonly property var modelData: index===0?{name:"CPU",value:root.d.cpu.toFixed(1)+" %",history:LiveMonitor.cpuHistory,ink:Theme.widgetAccent}:index===1?{name:"RAM",value:root.size(root.d.memory.used)+" / "+root.size(root.d.memory.total),history:LiveMonitor.ramHistory,ink:Theme.widgetText}:{name:"Nvidia RTX 2060",value:root.gpu.state==="sleep"?"0% · sleeping":(root.gpu.usage??"—")+" %",history:LiveMonitor.gpuHistory,ink:Theme.widgetAccent};width:(overview.width-24)/3;height:124;fillColor:Theme.alpha(Theme.widgetSurface,.6);borderColor:Theme.widgetBorder;chamfer:6;scanlines:false
- NrLabel { font.capitalization: Font.MixedCase; tracked: false;x:12;y:10;text:modelData.name;pixelSize:12;color:Theme.widgetMuted}
+ ChamferPanel {required property int index;readonly property var modelData: index===0?{name:"CPU",value:root.d.cpu.toFixed(1)+" %",history:LiveMonitor.cpuHistory,ink:Theme.widgetAccent}:index===1?{name:"RAM",value:root.size(root.d.memory.used)+" / "+root.size(root.d.memory.total),history:LiveMonitor.ramHistory,ink:Theme.widgetText}:{name:"Nvidia RTX 2060",value:root.gpu.state==="sleep"?"0% · sleeping":(root.gpu.usage??"—")+" %",history:LiveMonitor.gpuHistory,ink:Theme.widgetAccent};width:(overview.width-24)/3;height:124;fillColor:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.08);chamfer:8;scanlines:false
+ NrLabel { font.capitalization: Font.MixedCase; tracked: false;font.family:Appearance.font.heading;x:12;y:10;text:modelData.name;pixelSize:14;color:Theme.widgetMuted}
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;x:12;y:31;text:modelData.value;pixelSize:15;color:modelData.ink}
  MonitorGraph {x:12;y:60;width:parent.width-24;height:52;values:modelData.history;ink:modelData.ink}
  }}
  }
  Row {spacing:12
- Rectangle {width:(overview.width-12)/2;height:94;color:Theme.alpha(Theme.widgetSurface,.6);border.color:Theme.widgetBorder
- Column {x:12;y:10;spacing:7;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Memory breakdown";color:Theme.widgetAccent;pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Available "+root.size(root.d.memory.available)+"   Cache "+root.size(root.d.memory.cache);pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Swap "+root.size(root.d.memory.swapUsed)+" / "+root.size(root.d.memory.swapTotal);pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Cache is reclaimable; used = total − available";pixelSize:10;color:Theme.widgetMuted}}
+ ChamferPanel {width:(overview.width-12)/2;height:94;fillColor:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.08);chamfer:8;scanlines:false
+ Column {x:12;y:10;spacing:7;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Memory breakdown";color:Theme.widgetText;font.family:Appearance.font.heading;pixelSize:14}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Available "+root.size(root.d.memory.available)+"   Cache "+root.size(root.d.memory.cache);pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Swap "+root.size(root.d.memory.swapUsed)+" / "+root.size(root.d.memory.swapTotal);pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Cache is reclaimable; used = total − available";pixelSize:10;color:Theme.widgetMuted}}
  }
- Rectangle {width:(overview.width-12)/2;height:94;color:Theme.alpha(Theme.widgetSurface,.6);border.color:Theme.widgetBorder
- Column {x:12;y:10;spacing:7;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Thermals / session";color:Theme.widgetAccent;pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"CPU "+(RobotBench.data.cpuTemperature??"—")+" °C   Load "+root.d.load.map(v=>v.toFixed(2)).join(" / ");pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Uptime "+Math.floor(root.d.uptime/3600)+"h "+Math.floor(root.d.uptime/60%60)+"m   "+(root.d.processCount??root.d.processes.length)+" processes";pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:Machine.cpuModel+" · "+root.d.cores.length+" threads";pixelSize:10;color:Theme.widgetMuted}}
+ ChamferPanel {width:(overview.width-12)/2;height:94;fillColor:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.08);chamfer:8;scanlines:false
+ Column {x:12;y:10;spacing:7;NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Thermals / session";color:Theme.widgetText;font.family:Appearance.font.heading;pixelSize:14}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"CPU "+(RobotBench.data.cpuTemperature??"—")+" °C   Load "+root.d.load.map(v=>v.toFixed(2)).join(" / ");pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Uptime "+Math.floor(root.d.uptime/3600)+"h "+Math.floor(root.d.uptime/60%60)+"m   "+(root.d.processCount??root.d.processes.length)+" processes";pixelSize:12}NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:Machine.cpuModel+" · "+root.d.cores.length+" threads";pixelSize:10;color:Theme.widgetMuted}}
  }
  }
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"CPU threads · each core 0–100%";pixelSize:11;color:Theme.widgetMuted}

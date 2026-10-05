@@ -6,7 +6,7 @@ Hyprland blur changed from size 6 / passes 2 to size 8 / passes 2, with existing
 
 Hyprland --verify-config passed; runtime configerrors empty. Calendar, sound and system panels opened successfully. Screenshots inspected on both monitors: 60 Hz main, 60.017 Hz ScreenPad. Short before/after compositor CPU samples both 2.5% of one core. Nvidia runtime status remained suspended. These checks do not constitute an exhaustive frame-time benchmark or guarantee zero dropped frames under every workload.
 
-Backup: @HOME@/.local/state/hyprland-repair-20260926/smooth-render-055954
+Backup: /home/fh1m/.local/state/hyprland-repair-20260926/smooth-render-055954
 
 Already-open GTK applications may require restarting to pick up fontconfig changes. Quickshell restarted successfully to refresh its font and reload caches.
 

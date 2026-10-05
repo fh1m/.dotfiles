@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+"""Extract a restrained OLED desktop palette from the main wallpaper once per change."""
+
+import json
+import colorsys
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+
+home = Path.home()
+state = home / ".config/wrayth"
+wallpapers = state / "wallpapers.json"
+out = state / "wallpaper-palette.json"
+
+
+def write_if_changed(path, value):
+    if path.exists() and path.read_text() == value:
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as tmp:
+        tmp.write(value)
+        name = tmp.name
+    os.replace(name, path)
+    return True
+
+
+def replace_section(text, section, changes):
+    match = re.search(r"(?ms)^\[" + re.escape(section) + r"\]\n(.*?)(?=^\[|\Z)", text)
+    if not match:
+        return text
+    body = match.group(1)
+    for key, value in changes.items():
+        body = re.sub(r"(?m)^" + re.escape(key) + r"\s*=\s*\"[^\"]*\"", f'{key} = "{value}"', body)
+    return text[:match.start(1)] + body + text[match.end(1):]
+
+
+def main():
+    try:
+        config = json.loads(wallpapers.read_text())
+        image = Path(sys.argv[1] if len(sys.argv) > 1 else config["displays"]["eDP-1"]["file"]).expanduser()
+        if not image.is_file():
+            raise ValueError(f"main wallpaper unavailable: {image}")
+        fingerprint = [str(image), image.stat().st_mtime_ns, image.stat().st_size, 7]
+        cached = json.loads(out.read_text()) if out.exists() else {}
+        if cached.get("fingerprint") == fingerprint:
+            palette = cached
+        else:
+            result = subprocess.run(
+                ["matugen", "image", str(image), "--type", "scheme-vibrant",
+                 "--prefer", "saturation", "--dry-run", "--json", "hex"],
+                check=True, capture_output=True, text=True, timeout=25)
+            colors = json.loads(result.stdout)["colors"]
+            def tone(key):
+                return colors[key]["default"]["color"]
+            # Keep Matugen's source hue as a small accent. The wallpaper's hot
+            # magenta must not turn every foreground and selected row pastel.
+            src = tone("source_color").lstrip("#")
+            red, green, blue = (int(src[n:n + 2], 16) / 255 for n in (0, 2, 4))
+            hue, _, _ = colorsys.rgb_to_hsv(red, green, blue)
+            def companion(offset, saturation, value):
+                rgb = colorsys.hsv_to_rgb((hue + offset) % 1, saturation, value)
+                return "#" + "".join(f"{round(c * 255):02x}" for c in rgb)
+            palette = {
+                "wallpaper": str(image), "fingerprint": fingerprint,
+                "ground": "#000000", "surface": "#111114",
+                "raised": "#1c1c21", "primary": companion(0, .74, 1),
+                "vibrant": "#" + src,
+                "secondary": "#c7cbd3",
+                "tertiary": "#7e8b9d",
+                "text": "#edf3fb", "muted": "#a9b5c5",
+                "outline": "#424957", "error": "#ff647f",
+            }
+        write_if_changed(out, json.dumps(palette, indent=2) + "\n")
+
+        terminal = home / ".config/alacritty/alacritty.toml"
+        if terminal.exists():
+            content = terminal.read_text()
+            content = replace_section(content, "colors.primary", {
+                "background": "#000000", "foreground": palette["text"],
+                "dim_foreground": palette["muted"]})
+            content = replace_section(content, "colors.selection", {
+                "background": palette["primary"]})
+            content = replace_section(content, "colors.normal", {
+                "red": palette["error"], "blue": palette["primary"],
+                "magenta": palette["vibrant"], "cyan": palette["secondary"]})
+            write_if_changed(terminal, content)
+
+        for gtk in ("gtk-3.0", "gtk-4.0"):
+            settings = home / ".config" / gtk / "settings.ini"
+            if settings.exists():
+                write_if_changed(settings, re.sub(r'(?m)^gtk-font-name=.*$',
+                                                  'gtk-font-name=JetBrainsMono Nerd Font Propo 11', settings.read_text()))
+            css = home / ".config" / gtk / "colors.css"
+            if not css.exists():
+                continue
+            content = css.read_text()
+            for name, value in {
+                "window_bg_color": "#000000", "view_bg_color": "#000000",
+                "headerbar_bg_color": "#000000", "popover_bg_color": "#000000",
+                "card_bg_color": palette["surface"],
+                "window_fg_color": palette["text"],
+                "accent_bg_color": palette["primary"],
+                "accent_color": palette["primary"],
+                "accent_fg_color": "#000000",
+            }.items():
+                content = re.sub(r"(?m)^(@define-color " + name + r" )#[0-9a-fA-F]{6};",
+                                 lambda m: m.group(1) + value + ";", content)
+            write_if_changed(css, content)
+        for qt in ("qt5ct", "qt6ct"):
+            scheme = home / ".config" / qt / "colors/matugen.conf"
+            if scheme.exists():
+                active = [palette['text'], palette['surface'], palette['raised'], palette['raised'],
+                          palette['surface'], palette['outline'], palette['text'], '#ffffff',
+                          palette['text'], '#000000', '#000000', '#000000',
+                          palette['primary'], '#000000', palette['primary'], palette['primary'],
+                          palette['surface'], '#000000', palette['surface'], palette['text'], palette['muted']]
+                disabled = active.copy()
+                for index in (0, 6, 8, 19, 20):
+                    disabled[index] = palette['muted']
+                content = '[ColorScheme]\n' + ''.join(
+                    name + '=' + ', '.join(disabled if name == 'disabled_colors' else active) + '\n'
+                    for name in ('active_colors', 'disabled_colors', 'inactive_colors'))
+                write_if_changed(scheme, content)
+            config = home / '.config' / qt / (qt + '.conf')
+            if config.exists():
+                content = re.sub(r'(?m)^(general|fixed)="[^,]+,',
+                                 lambda m: m.group(1) + '="' + ('JetBrainsMono Nerd Font Propo' if m.group(1) == 'general' else 'JetBrainsMono Nerd Font Mono') + ',',
+                                 config.read_text())
+                write_if_changed(config, content)
+        kitty = home / '.config/kitty/wrayth-colors.conf'
+        if kitty.exists():
+            content = kitty.read_text()
+            keys = {'background':'#000000','foreground':palette['text'],
+                    'cursor':palette['text'],'cursor_text_color':'#000000',
+                    'selection_background':palette['primary'], 'selection_foreground':'#000000',
+                    'color0':'#000000','color8':palette['muted'],
+                    'color1':palette['error'],'color9':palette['error'],
+                    'color2':palette['secondary'],'color10':palette['secondary'],
+                    'color3':palette['tertiary'],'color11':palette['tertiary'],
+                    'color4':palette['primary'],'color12':palette['primary'],
+                    'color5':palette['vibrant'],'color13':palette['vibrant'],
+                    'color6':palette['secondary'],'color14':palette['secondary'],
+                    'color7':palette['text'],'color15':'#ffffff',
+                    'active_tab_background':palette['primary'],'active_tab_foreground':'#000000',
+                    'inactive_tab_background':'#000000','inactive_tab_foreground':palette['muted'],
+                    'tab_bar_background':'#000000','inactive_border_color':palette['outline']}
+            for key, value in keys.items():
+                content = re.sub(r'(?m)^' + re.escape(key) + r'\s+#[0-9a-fA-F]{6}\s*$',
+                                 key + ' ' + value, content)
+            if write_if_changed(kitty, content):
+                subprocess.run(['pkill','-USR1','-x','kitty'],capture_output=True)
+        # Shells and tmux read these tiny generated files; wallpaper changes
+        # never rerun a heavy prompt command or refresh the entire terminal.
+        prompt = home / ".config/zsh/sensei-palette.zsh"
+        prompt_text = "# Generated by sensei-palette\n" + "\n".join(
+            f'{name}="%F{{{palette[key]}}}"' for name, key in (
+                ("BLUE", "primary"), ("GREEN", "secondary"),
+                ("YELLOW", "tertiary"), ("RED", "error"),
+                ("CYAN", "secondary"), ("MAGENTA", "vibrant"),
+                ("WHITE", "text"))) + ('\nRESET="%f"\n'
+                f'BADGE="%K{{{palette["primary"]}}}%F{{#000000}}"\n'
+                'BADGE_END="%k%f"\n')
+        write_if_changed(prompt, prompt_text)
+        fzf = home / ".config/fzf/sensei-colors"
+        fzf_colors = '--color=bg:#000000,bg+:' + palette['raised'] + \
+            ',fg:' + palette['text'] + ',fg+:' + palette['text'] + \
+            ',hl:' + palette['primary'] + ',hl+:' + palette['tertiary'] + \
+            ',info:' + palette['muted'] + ',prompt:' + palette['primary'] + \
+            ',pointer:' + palette['vibrant'] + ',marker:' + palette['secondary'] + \
+            ',spinner:' + palette['primary'] + ',header:' + palette['muted'] + '\n'
+        write_if_changed(fzf, fzf_colors)
+        theme = home / '.config/tmux/sensei-theme.conf'
+        template = home / '.config/tmux/sensei-theme.template.conf'
+        if template.exists():
+            original = template.read_text()
+            replacements = {'@ACCENT@': palette['primary'], '@TEXT@': palette['text'],
+                            '@MUTED@': palette['muted'], '@OUTLINE@': palette['outline']}
+            for old, new in replacements.items():
+                original = re.sub(re.escape(old), new, original, flags=re.I)
+            if write_if_changed(theme, original):
+                subprocess.run(['tmux', 'source-file', str(theme)], capture_output=True)
+        border = palette['primary'].lstrip('#') + 'FF'
+        outline = palette['outline'].lstrip('#') + 'FF'
+        subprocess.run(['hyprctl','--instance','0','eval',
+                        'hl.config({["general.col.active_border"]="rgba(' + border +
+                        ')",["general.col.inactive_border"]="rgba(' + outline + ')"})'],
+                       capture_output=True,timeout=2)
+        print(json.dumps(palette))
+    except (OSError, KeyError, ValueError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
+        print(f"sensei-palette: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -214,7 +214,7 @@ Scope {
         function page(index: string): void { CalendarDesk.page=Math.max(0,Math.min(4,parseInt(index)||0));ShellState.dropdownAnchorX=ShellState.anchorFor("calendar");ShellState.dropdown="calendar"; }
         function state(): string { return JSON.stringify({events:CalendarDesk.events.length,error:CalendarDesk.error,clocks:CalendarDesk.clocks.length}); }
     }
-    readonly property var dropdownNames: ["docker", "spotify", "usb", "phone", "weather", "comic", "ident", "wifi", "bluetooth", "power", "system", "monitor", "clipboard", "displays", "sound", "calendar"]
+    readonly property var dropdownNames: ["docker", "spotify", "usb", "phone", "weather", "comic", "ident", "wifi", "bluetooth", "power", "system", "monitor", "clipboard", "displays", "sound", "calendar", "notifications"]
 
     // Shared by `demo drag` and `demo dragFile`; see the note on them.
     function runDemoDrag(profile: string, file: string): string {

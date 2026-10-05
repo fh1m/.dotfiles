@@ -13,8 +13,8 @@ panel: most of the rules below were learned by getting them wrong first.
   junction. Windows get Hyprland's rounding at `rounding_power = 1`, which
   turns the rounding into a straight 16 px cut to match.
 - **Hairline borders:** a 1 px frame in `hair` around an inner fill.
-- **Opaque panels:** `panel` / `panel2` fills keep the cut-corner shape and
-  readable text without compositor blur or a translucent backing.
+- **Translucent panels:** `panel` / `panel2` fills with Hyprland's blur behind,
+  confined to the drawn shape (`ignore_alpha`), so chamfers stay crisp.
 - **Labels over decoration:** small, uppercase, tracked labels —
   `HOST <name> // UPLINK <ssid>`. The separator is ` // `. Small katakana tags
   sit beside headers in `signal`.
@@ -154,8 +154,9 @@ so the partial cells at each end take the neighbouring cell's colour.
 always-visible bar ticker needs (firewall, packages, vulnerabilities, planner,
 uplink). Nothing polls faster than it changes.
 
-**Opacity.** Keep the large wallpaper, bars and panels opaque in the performance
-profile. Small focus and selection tints may still use alpha within a panel.
+**Blur and opacity.** Never fade a subtree containing a blurred `Wallpaper`
+through a parent's `opacity`: Qt's implicit opacity path composites the blur
+to nothing. Enable `layer.enabled` on the fading parent instead.
 
 ## The lockscreen and its security
 

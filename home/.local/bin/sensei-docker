@@ -81,8 +81,17 @@ def action(name,a):
  if name=='logs':return {'ok':True,'output':run(['docker','logs','--tail','150',identifier(a[0])],5,True)[-24000:]}
  if name=='tmux':
   id=identifier(a[0]);d=json.loads(run(['docker','inspect',id]))[0]
-  if not d['State']['Running']:run(['docker','start',id])
-  return tmux_launch(['docker','exec','-it',id,a[2] if len(a)>2 else '/bin/sh'],a[1] or 'robotics','docker-'+d['Name'].strip('/')[:28])
+  box=d['Name'].strip('/')
+  if d.get('Config',{}).get('Labels',{}).get('manager')=='distrobox':
+   # Distrobox initializes the user's home, environment and shell; docker exec
+   # bypasses that contract and enters as the wrong environment.
+   command=['distrobox','enter','--name',box]
+   label='box-'+box[:28]
+  else:
+   if not d['State']['Running']:run(['docker','start',id])
+   command=['docker','exec','-it',id,a[2] if len(a)>2 else '/bin/sh']
+   label='docker-'+box[:28]
+  return tmux_launch(command,a[1] or 'daily_dev',label)
  if name=='pull':return job(['docker','pull',identifier(a[0])],'Pull '+a[0])
  if name in ['image-remove','volume-remove','network-remove']:
   kind=name.split('-')[0];return job(['docker',kind,'rm',identifier(a[0])],name+' '+a[0][:24])

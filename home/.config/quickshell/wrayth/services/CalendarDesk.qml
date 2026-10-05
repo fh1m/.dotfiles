@@ -11,25 +11,25 @@ Singleton {
  function stopwatchReset(){stopwatchRunning=false;stopwatchAccumulated=0;laps=[];saveStopwatch();}
  function stopwatchLap(){laps=laps.concat([stopwatchElapsed(Date.now())]);saveStopwatch();}
  function saveStopwatch(){stopwatchFile.setText(JSON.stringify({running:stopwatchRunning,started:stopwatchStarted,accumulated:stopwatchAccumulated,laps:laps}));}
- FileView {id:stopwatchFile;path:"@HOME@/.local/share/sensei-calendar/stopwatch.json";printErrors:false;onLoaded:{try{let d=JSON.parse(text());root.stopwatchRunning=!!d.running;root.stopwatchStarted=Number(d.started)||0;root.stopwatchAccumulated=Number(d.accumulated)||0;root.laps=d.laps||[];}catch(e){}}}property string selectedDay:Qt.formatDateTime(new Date(),'yyyy-MM-dd');property string month:Qt.formatDateTime(new Date(),'yyyy-MM-01');property string error:"";property bool importing:false
+ FileView {id:stopwatchFile;path:"/home/fh1m/.local/share/sensei-calendar/stopwatch.json";printErrors:false;onLoaded:{try{let d=JSON.parse(text());root.stopwatchRunning=!!d.running;root.stopwatchStarted=Number(d.started)||0;root.stopwatchAccumulated=Number(d.accumulated)||0;root.laps=d.laps||[];}catch(e){}}}property string selectedDay:Qt.formatDateTime(new Date(),'yyyy-MM-dd');property string month:Qt.formatDateTime(new Date(),'yyyy-MM-01');property string error:"";property bool importing:false
  function refresh(){if(!list.running)list.running=true;}
  function dispatch(command){if(act.running){queue=queue.concat([command]);return;}error="";operation=command[1];act.command=command;act.running=true;}
- function save(value){dispatch(["@HOME@/.local/bin/sensei-calendar","save",JSON.stringify(value)]);}
- function action(name,id){dispatch(["@HOME@/.local/bin/sensei-calendar",name,String(id)]);}
- function taskSave(value){dispatch(["@HOME@/.local/bin/sensei-calendar","task-save",JSON.stringify(value)]);}
- function focusAction(name,values){dispatch(["@HOME@/.local/bin/sensei-calendar","focus",name,JSON.stringify(values||{})]);}
+ function save(value){dispatch(["/home/fh1m/.local/bin/sensei-calendar","save",JSON.stringify(value)]);}
+ function action(name,id){dispatch(["/home/fh1m/.local/bin/sensei-calendar",name,String(id)]);}
+ function taskSave(value){dispatch(["/home/fh1m/.local/bin/sensei-calendar","task-save",JSON.stringify(value)]);}
+ function focusAction(name,values){dispatch(["/home/fh1m/.local/bin/sensei-calendar","focus",name,JSON.stringify(values||{})]);}
  function formatSeconds(value){const s=Math.max(0,Math.ceil(value));return String(Math.floor(s/60)).padStart(2,'0')+":"+String(s%60).padStart(2,'0');}
  function focusRemaining(now){return focusState.running?Math.max(0,focusState.ends-now/1000):focusState.remaining;}
  SystemClock {id:dayClock;precision:root.focusState.running?SystemClock.Seconds:SystemClock.Minutes}
- readonly property string barSummary:{const d=Qt.formatDateTime(dayClock.date,'yyyy-MM-dd');const todo=tasks.filter(t=>!t.archived&&!t.done&&t.date<=d).length;let items=['DHAKA · UTC+06',todo+' tasks'];if(upcoming.length)items.push('Next '+upcoming[0].time+' '+upcoming[0].title);else items.push('Agenda clear');return items.join('  /  ');}
- readonly property string focusReadout:focusState.running?(focusState.phase==='focus'?'FOCUS ':'BREAK ')+formatSeconds(focusRemaining(dayClock.date.getTime())):''
- function timer(seconds,title){dispatch(["@HOME@/.local/bin/sensei-calendar","timer",String(seconds),title]);}
+ readonly property string barSummary:{const d=Qt.formatDateTime(dayClock.date,'yyyy-MM-dd');const todo=tasks.filter(t=>!t.archived&&!t.done&&t.date<=d).length;let items=[];if(todo>0)items.push(todo+(todo===1?' task':' tasks'));if(upcoming.length)items.push('Next '+upcoming[0].time+' '+upcoming[0].title);return items.join('  ·  ');}
+ readonly property string focusReadout:focusState.running&&focusRemaining(dayClock.date.getTime())>0?(focusState.phase==='focus'?'Focus ':'Break ')+formatSeconds(focusRemaining(dayClock.date.getTime())):''
+ function timer(seconds,title){dispatch(["/home/fh1m/.local/bin/sensei-calendar","timer",String(seconds),title]);}
  onMonthChanged:refresh()
- Process {id:list;command:["@HOME@/.local/bin/sensei-calendar","list",root.month];stdout:StdioCollector {onStreamFinished:{try{let d=JSON.parse(text);root.events=d.events;root.clocks=d.clocks;root.tasks=d.tasks||[];root.upcoming=d.upcoming||[];root.focusState=d.focus||root.focusState;}catch(e){}}}}
+ Process {id:list;command:["/home/fh1m/.local/bin/sensei-calendar","list",root.month];stdout:StdioCollector {onStreamFinished:{try{let d=JSON.parse(text);root.events=d.events;root.clocks=d.clocks;root.tasks=d.tasks||[];root.upcoming=d.upcoming||[];root.focusState=d.focus||root.focusState;}catch(e){}}}}
  Process {id:act;stderr:StdioCollector {onStreamFinished:root.error=text.trim()}onExited:(code,status)=>{if(code===0&&(root.operation==="save"||root.operation==="task-save"))root.saved();root.refresh();if(root.queue.length){let next=root.queue[0];root.queue=root.queue.slice(1);Qt.callLater(()=>root.dispatch(next));}}}
  Process {id:ics;property string chosen:"";command:["env","GDK_DEBUG=no-portals","zenity","--file-selection","--title=Sensei, import calendar","--file-filter=Calendar | *.ics"];stdout:StdioCollector {onStreamFinished:ics.chosen=text.trim()}onExited:(code,status)=>{if(code===0&&ics.chosen)root.action("import",ics.chosen);ShellState.externalDialogOpen=false;}}
  function importCalendar(){ShellState.externalDialogOpen=true;ics.chosen="";ics.running=true;}
- FileView {path:"@HOME@/.local/share/sensei-calendar/revision";watchChanges:true;printErrors:false;onFileChanged:{reload();root.refresh();}}
+ FileView {path:"/home/fh1m/.local/share/sensei-calendar/revision";watchChanges:true;printErrors:false;onFileChanged:{reload();root.refresh();}}
  Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==="calendar")root.refresh();}}
  property string today:Qt.formatDateTime(dayClock.date,"yyyy-MM-dd")
  onTodayChanged:refresh()

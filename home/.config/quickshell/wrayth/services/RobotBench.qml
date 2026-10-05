@@ -10,7 +10,7 @@ Singleton {
     function refresh(): void { if (!poll.running) poll.running = true; }
     Process {
         id: poll
-        command: ["env", "SENSEI_MONITOR_OPEN="+(ShellState.dropdown === "monitor" ? "1" : "0"), "@HOME@/.local/bin/robot-bench-data"]
+        command: ["env", "SENSEI_MONITOR_OPEN="+(ShellState.dropdown === "monitor" ? "1" : "0"), "/home/fh1m/.local/bin/robot-bench-data"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try { root.data = JSON.parse(text); } catch (error) {}

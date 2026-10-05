@@ -6,6 +6,7 @@ import qs.services
 
 SlantBlock {
     id: root
+    fillColor: Theme.blend(Theme.barBg, Theme.widgetRaised, .32)
     implicitWidth: 270
     implicitHeight: Appearance.metrics.barHeight
     Canvas {
@@ -18,7 +19,7 @@ SlantBlock {
             NumberAnimation { from: 1; to: 1.045; duration: 650; easing.type: Easing.InOutSine }
             NumberAnimation { from: 1.045; to: 1; duration: 650; easing.type: Easing.InOutSine }
         }
-        property color ink: Theme.ground
+        property color ink: Theme.widgetAccent
         onInkChanged: requestPaint()
         onPaint: {
             const c = getContext("2d"); c.reset(); c.strokeStyle=ink; c.fillStyle=ink; c.lineWidth=1;
@@ -33,22 +34,22 @@ SlantBlock {
         x: 61; anchors.verticalCenter: parent.verticalCenter; spacing: 2
         Row {
             spacing: 9
-            Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: "fh1m"; font.family: Appearance.font.data; font.pixelSize: 15; font.weight: 700; font.letterSpacing: 1; color: Theme.ground }
-            Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: "// R-01"; font.family: Appearance.font.data; font.pixelSize: 11; color: Theme.ground; anchors.verticalCenter: parent.verticalCenter }
+            Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: "fh1m"; font.family: Appearance.font.data; font.pixelSize: 15; font.weight: 700; font.letterSpacing: 1; color: Theme.widgetAccent }
+            Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: "// R-01"; font.family: Appearance.font.data; font.pixelSize: 11; color: Theme.widgetMuted; anchors.verticalCenter: parent.verticalCenter }
         }
-        Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: "ROBOTICS // " + (RobotBench.data.boardCount ?? 0) + " USB"; font.family: Appearance.font.data; font.pixelSize: 10; font.letterSpacing: 0.5; color: Theme.ground }
+        Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: "ROBOTICS // " + (RobotBench.data.boardCount ?? 0) + " USB"; font.family: Appearance.font.data; font.pixelSize: 10; font.letterSpacing: 0.5; color: Theme.widgetAccent }
     }
-    Rectangle { x: 194; y: 9; width: 1; height: 26; color: Theme.alpha(Theme.ground, 0.4) }
+    Rectangle { x: 194; y: 9; width: 1; height: 26; color: Theme.alpha(Theme.widgetAccent, 0.4) }
     Column {
         x: 204; anchors.verticalCenter: parent.verticalCenter; spacing: 4
-        Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: (RobotBench.data.gpu.computeCount ?? 0) > 0 ? "CUDA" : "DECK"; font.family: Appearance.font.data; font.pixelSize: 10; font.weight: 600; color: Theme.ground }
+        Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: (RobotBench.data.gpu.computeCount ?? 0) > 0 ? "CUDA" : "DECK"; font.family: Appearance.font.data; font.pixelSize: 10; font.weight: 600; color: Theme.widgetAccent }
         Row {
             spacing: 3
             Repeater {
                 model: 4
                 Rectangle {
                     required property int index
-                    width: 5; height: 4; color: Theme.ground
+                    width: 5; height: 4; color: Theme.widgetAccent
                     SequentialAnimation on opacity {
                         running: ShellState.ambientMotion && (RobotBench.data.gpu.computeCount ?? 0) > 0
                         loops: Animation.Infinite

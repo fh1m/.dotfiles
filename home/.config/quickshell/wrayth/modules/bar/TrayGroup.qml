@@ -1,14 +1,15 @@
 import QtQuick
 import Quickshell.Services.SystemTray
+import qs.components
 import qs.config
 import qs.services
-Rectangle {
+BarSurface {
  id:root
  readonly property var items:SystemTray.items.values
  visible:items.length>0
  implicitWidth:visible?trayRow.implicitWidth+16:0
- implicitHeight:30
- color:'transparent';radius:2;border.width:1;border.color:Theme.hair
+ implicitHeight:34
+ grouped:false
  Row {id:trayRow;anchors.centerIn:parent;spacing:8
   Repeater {model:root.items
    Item {id:trayIcon;required property var modelData;width:24;height:24

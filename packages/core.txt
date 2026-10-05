@@ -33,6 +33,7 @@ fontconfig
 noto-fonts
 noto-fonts-cjk
 ttf-iosevka-nerd
+ttf-jetbrains-mono-nerd
 ttf-zed-mono-nerd
 cava
 fastfetch

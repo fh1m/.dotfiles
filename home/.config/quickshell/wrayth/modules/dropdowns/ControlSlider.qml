@@ -35,8 +35,8 @@ Item {
   Text {anchors.centerIn:parent;text:root.glyph||'◉';font.family:root.glyph?Appearance.font.icons:Appearance.font.data;font.pixelSize:13;color:knob.pressed||knob.activeFocus?root.accentColor:Theme.widgetMuted}
   Rectangle {anchors.fill:parent;radius:21;color:'transparent';border.color:knob.activeFocus?Theme.alpha(root.accentColor,.6):'transparent'}
  }
- Text {x:54;y:5;width:parent.width-118;elide:Text.ElideRight;text:root.title;font.family:Appearance.font.data;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.widgetText}
- Text {anchors.right:parent.right;y:5;text:Math.round(root.displayed)+'%';font.family:Appearance.font.data;font.pixelSize:13;font.weight:Font.DemiBold;color:root.accentColor}
+ Text {x:54;y:5;width:parent.width-118;elide:Text.ElideRight;text:root.title;font.family:Appearance.font.ui;font.pixelSize:13;font.weight:Font.DemiBold;color:Theme.widgetText}
+ Text {anchors.right:parent.right;y:5;text:Math.round(root.displayed)+'%';font.family:Appearance.font.ui;font.pixelSize:14;font.weight:Font.DemiBold;color:root.accentColor}
  Slider {
   id:trim;x:54;y:25;width:Math.max(30,parent.width-54);height:18
   from:0;to:root.maximum;stepSize:1

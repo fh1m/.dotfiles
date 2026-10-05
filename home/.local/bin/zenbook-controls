@@ -46,8 +46,8 @@ def main():
   result=run('sudo','-n','/usr/local/libexec/fh1m-zenbook-camera',argument if argument in ['on','off'] else 'toggle');notify('Built-in RGB / IR camera',result)
  elif command=='profile':
   if argument not in ['power-saver','balanced','performance']:
-   current=run('@HOME@/.local/bin/sensei-power','name');profiles=['power-saver','balanced','performance'];argument=profiles[(profiles.index(current)+1)%3]
-  run('@HOME@/.local/bin/sensei-power','set',argument);notify('CPU power profile',argument)
+   current=run('/home/fh1m/.local/bin/sensei-power','name');profiles=['power-saver','balanced','performance'];argument=profiles[(profiles.index(current)+1)%3]
+  run('/home/fh1m/.local/bin/sensei-power','set',argument);notify('CPU power profile',argument)
  elif command=='charge':run('asusctl','battery','limit',argument);notify('Charge limit',argument+'%')
  elif command=='screenpad':
   monitor=next(m for m in json.loads(run('hyprctl','monitors','-j')) if m['name']=='DP-2')
@@ -67,25 +67,25 @@ def main():
    previous={'wifi':run('nmcli','radio','wifi')=='enabled','bluetooth':'Powered: yes' in run('bluetoothctl','show')}
    run('nmcli','radio','wifi','off');run('bluetoothctl','power','off');cache.write_text(json.dumps(previous));notify('Airplane mode','On — Wi-Fi and Bluetooth disabled')
  elif command=='training':
-  chrome=json.loads(run('@HOME@/.local/bin/sensei-chrome','status'))
+  chrome=json.loads(run('/home/fh1m/.local/bin/sensei-chrome','status'))
   if argument=='on':
-   if not state.get('training',False):state['trainingBefore']={'profile':run('@HOME@/.local/bin/sensei-power','name'),'hold':run('qs','-c','wrayth','ipc','call','idle','state')=='HOLD','chromeGpu':chrome.get('mode','nvidia')}
-   run('systemctl','--user','stop','wrayth-battery-idle.service');run('@HOME@/.local/bin/sensei-power','set','performance');run('qs','-c','wrayth','ipc','call','idle','hold','on');state['training']=True;save(state)
-   result=json.loads(run('@HOME@/.local/bin/sensei-chrome','mode','intel'))
+   if not state.get('training',False):state['trainingBefore']={'profile':run('/home/fh1m/.local/bin/sensei-power','name'),'hold':run('qs','-c','wrayth','ipc','call','idle','state')=='HOLD','chromeGpu':chrome.get('mode','nvidia')}
+   run('systemctl','--user','stop','wrayth-battery-idle.service');run('/home/fh1m/.local/bin/sensei-power','set','performance');run('qs','-c','wrayth','ipc','call','idle','hold','on');state['training']=True;save(state)
+   result=json.loads(run('/home/fh1m/.local/bin/sensei-chrome','mode','intel'))
    if result.get('error'):raise RuntimeError(result['error'])
    if chrome.get('running') and (chrome.get('actual')!='Intel' or chrome.get('mode')=='nvidia'):
     notify('Sensei, Training mode','Moving Chrome to Intel; saved tabs will reopen.')
-    result=json.loads(run('@HOME@/.local/bin/sensei-chrome','restart',timeout=30))
+    result=json.loads(run('/home/fh1m/.local/bin/sensei-chrome','restart',timeout=30))
     if result.get('error'):raise RuntimeError(result['error'])
   else:
    previous=state.pop('trainingBefore',{'profile':'performance','hold':False,'chromeGpu':'nvidia'})
-   run('@HOME@/.local/bin/sensei-power','set',previous['profile']);run('qs','-c','wrayth','ipc','call','idle','hold','on' if previous['hold'] else 'off');state['training']=False;save(state)
-   choice=previous.get('chromeGpu','nvidia');result=json.loads(run('@HOME@/.local/bin/sensei-chrome','mode',choice))
+   run('/home/fh1m/.local/bin/sensei-power','set',previous['profile']);run('qs','-c','wrayth','ipc','call','idle','hold','on' if previous['hold'] else 'off');state['training']=False;save(state)
+   choice=previous.get('chromeGpu','nvidia');result=json.loads(run('/home/fh1m/.local/bin/sensei-chrome','mode',choice))
    if result.get('error'):raise RuntimeError(result['error'])
    desired='NVIDIA' if choice=='nvidia' else 'Intel'
    if chrome.get('running') and chrome.get('actual')!=desired and (desired=='Intel' or chrome.get('nvidiaAvailable')):
     notify('Sensei, Desktop mode','Restoring Chrome GPU choice; saved tabs will reopen.')
-    result=json.loads(run('@HOME@/.local/bin/sensei-chrome','restart',timeout=30))
+    result=json.loads(run('/home/fh1m/.local/bin/sensei-chrome','restart',timeout=30))
     if result.get('error'):raise RuntimeError(result['error'])
   notify('Sensei, Training mode','Chrome on Intel + Performance + Keep Awake. Other GPU apps may need relaunching.' if state['training'] else 'Previous GPU, power and idle choices restored.')
  elif command=='system':run('qs','-c','wrayth','ipc','call','dropdown','open','system')

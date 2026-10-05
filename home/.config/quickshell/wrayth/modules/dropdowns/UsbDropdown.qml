@@ -7,7 +7,7 @@ import qs.config
 import qs.services
 DropdownFrame {
  id:root
- title:"\uf287 USB LAB";katakana:"ДИАГНОСТИКА"
+ title:"\uf287 USB lab";katakana:"ДИАГНОСТИКА"
  greeting:"Sensei, trace a device from its port to the processes using it."
  implicitWidth:1040
  property string selectedPort:""

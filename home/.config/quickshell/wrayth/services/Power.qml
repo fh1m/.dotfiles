@@ -47,7 +47,7 @@ Singleton {
     property string queuedProfile: ""
     function setProfile(cli: string): void {
         if (setProc.running) {queuedProfile=cli; return;}
-        setProc.command = ["@HOME@/.local/bin/sensei-power", "set", cli];
+        setProc.command = ["/home/fh1m/.local/bin/sensei-power", "set", cli];
         setProc.running = true;
     }
 
@@ -71,9 +71,9 @@ Singleton {
         }
     }
 
-    Process {id:setProc;onExited:{if(root.queuedProfile){let next=root.queuedProfile;root.queuedProfile="";root.setProfile(next);}}command:["@HOME@/.local/bin/sensei-power","get"];stdout:StdioCollector{onStreamFinished:{try{let d=JSON.parse(text);if(d.error)root.error=d.error;else{root.profileName=d.name;root.error="";}}catch(e){root.error=String(e);}}}}
-    FileView {path:"@HOME@/.config/hypr/power-state.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{let d=JSON.parse(text());root.profileName=d.name;}catch(e){}}}
+    Process {id:setProc;onExited:{if(root.queuedProfile){let next=root.queuedProfile;root.queuedProfile="";root.setProfile(next);}}command:["/home/fh1m/.local/bin/sensei-power","get"];stdout:StdioCollector{onStreamFinished:{try{let d=JSON.parse(text);if(d.error)root.error=d.error;else{root.profileName=d.name;root.error="";}}catch(e){root.error=String(e);}}}}
+    FileView {path:"/home/fh1m/.config/hypr/power-state.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{let d=JSON.parse(text());root.profileName=d.name;}catch(e){}}}
     onOnBatteryChanged:if(!RobotBench.data.trainingMode)root.setProfile(onBattery?"balanced":"performance")
-    Timer {interval:60000;repeat:true;running:ShellState.dropdown==="system";onTriggered:if(!setProc.running){setProc.command=["@HOME@/.local/bin/sensei-power","get"];setProc.running=true;}}
+    Timer {interval:60000;repeat:true;running:ShellState.dropdown==="system";onTriggered:if(!setProc.running){setProc.command=["/home/fh1m/.local/bin/sensei-power","get"];setProc.running=true;}}
     Component.onCompleted:root.setProfile(onBattery?"balanced":"performance")
 }

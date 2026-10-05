@@ -14,7 +14,7 @@ Singleton {
  function description(code){if(code===undefined||code===null)return 'Unavailable';if(code===0)return 'Clear sky';if(code<=3)return ['','Mostly clear','Partly cloudy','Overcast'][code];if(code<=48)return 'Fog';if(code<=57)return 'Drizzle';if(code<=67)return 'Rain';if(code<=77)return 'Snow';if(code<=82)return 'Rain showers';if(code<=86)return 'Snow showers';return 'Thunderstorms';}
  function glyph(code){if(code===undefined||code===null)return '\uf0c2';if(code===0)return '\uf185';if(code<=2)return '\uf0c2';if(code<=3)return '\uf0c2';if(code<=48)return '\uf0c2';if(code<=67||code>=80&&code<=82)return '\uf043';if(code<90)return '\uf2dc';return '\uf0e7';}
  function refresh(force=false){run(force?'force':'current',[]);}
- function run(action,args){if(proc.running){pending=[action,args];return;}operation=action;loading=true;error='';proc.command=['@HOME@/.local/bin/sensei-weather',action].concat(args);proc.running=true;}
+ function run(action,args){if(proc.running){pending=[action,args];return;}operation=action;loading=true;error='';proc.command=['/home/fh1m/.local/bin/sensei-weather',action].concat(args);proc.running=true;}
  function chooseCity(value){run('city',[value]);}
  function loadHistory(date){selectedDate=date;run('history',[date]);}
  function dated(day){const d=data.weather?.daily??({});const i=(d.time||[]).indexOf(day);if(i<0)return null;const row={date:day};for(const key of Object.keys(d))if(Array.isArray(d[key]))row[key]=d[key][i];return row;}

@@ -78,7 +78,7 @@ Singleton {
 
         // `exit $rc` so pacman's own result survives the pause that keeps the
         // window up long enough to read what it did.
-        command: ["sensei-terminal", "--class", "wrayth-upgrade", "-e", "bash", "-lc", "sudo pacman -Syu; rc=$?; echo; read -n 1 -s -r -p 'Upgrade finished. Press any key to close.'; exit $rc"]
+        command: ["/home/fh1m/.local/bin/sensei-terminal", "--class", "wrayth-upgrade", "-e", "bash", "-lc", "sudo pacman -Syu; rc=$?; echo; read -n 1 -s -r -p 'Upgrade finished. Press any key to close.'; exit $rc"]
 
         onExited: exitCode => {
             root.upgradeFinished(exitCode === 0);
@@ -100,7 +100,7 @@ Singleton {
         // into the shell string: it comes from arch-audit's output, and a
         // hostile package name in the database must not be able to run as a
         // command. -- takes no more options after it.
-        Deck.launch(["sensei-terminal", "--class", "wrayth-remove", "-e", "bash", "-lc", "sudo pacman -Rns -- \"$1\"; rc=$?; echo; read -n 1 -s -r -p 'Removal finished. Press any key to close.'; exit $rc", "bash", name]);
+        Deck.launch(["/home/fh1m/.local/bin/sensei-terminal", "--class", "wrayth-remove", "-e", "bash", "-lc", "sudo pacman -Rns -- \"$1\"; rc=$?; echo; read -n 1 -s -r -p 'Removal finished. Press any key to close.'; exit $rc", "bash", name]);
     }
 
     function advisoryUrl(name: string): string {

@@ -11,13 +11,13 @@ Item {
     readonly property var connectedDevices:(Bluetooth.devices?.values??[]).filter(d=>d.connected)
     readonly property bool audioPlaying:Cava.live&&Audio.audible&&/^bluez_output\./.test(Audio.sink?.name||'')
 
-    implicitWidth: readout.implicitWidth + 18
-    implicitHeight: 30
-    Rectangle { anchors.fill: parent; radius: 2; color: ShellState.dropdown === "bluetooth" ? Theme.alpha(Theme.signal, 0.10) : "transparent"; border.color: "#26282d"; border.width: 1 }
+    implicitWidth: 116
+    implicitHeight: 34
+    BarSurface { anchors.fill: parent; grouped:false; selected: ShellState.dropdown === "bluetooth"; hovered: btHover.hovered; pressed: btTap.pressed }
     Row {
         id: readout
         anchors.centerIn: parent
-    spacing: 7
+        spacing: 7
 
     // The rune stands in for the word `BT`, so it keeps that word's grey in
     // every state. The device name beside it is what carries the reading.
@@ -25,7 +25,7 @@ Item {
         id:musicRune
         anchors.verticalCenter: parent.verticalCenter
         color:root.audioPlaying?Theme.signal:Theme.dim
-        scale: 1
+        scale: 1.15
         SequentialAnimation on scale {
             running: ShellState.ambientMotion && root.audioPlaying && musicRune.visible
             loops: Animation.Infinite
@@ -36,35 +36,16 @@ Item {
 
     // Left-aligned so a short name sits next to the label, but capped at 120px
     // so a long one truncates instead of pushing the ticker around.
-    Slot {
-        anchors.verticalCenter: parent.verticalCenter
-
-        implicitWidth: Math.min(Appearance.slot.btName, label.implicitWidth)
-        horizontalAlignment: Text.AlignLeft
-
-        text: {
-            if (!root.adapter || !root.adapter.enabled)
-                return "OFF";
-            return root.connectedDevices.length ? `Connected [${root.connectedDevices.length}]` : "Disconnected";
-        }
-        color: root.connectedDevices.length ? Theme.signal : Theme.dim
-
-        // Measures the untruncated name so the slot can shrink below its cap.
-        Text {
-            renderType: Text.NativeRendering
-            id: label
-
-            visible: false
-            text: parent.text
-            font: parent.font
-        }
+    Column { anchors.verticalCenter: parent.verticalCenter; spacing: -1
+        Text {text:"Bluetooth";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
+        Text {text:!root.adapter||!root.adapter.enabled?"Off":root.connectedDevices.length?`${root.connectedDevices.length} linked`:"Ready";font.family:Appearance.font.barUi;font.pixelSize:10;color:root.connectedDevices.length?Theme.widgetAccent:Theme.dim}
     }
 
     }
 
     // Opens the bluetooth dropdown under this readout. TapHandler rather than a
     // MouseArea, so the Row does not try to lay the handler out as a child.
-    HoverHandler {
+    HoverHandler { id: btHover
         cursorShape: Qt.PointingHandCursor
     }
 
@@ -80,7 +61,7 @@ Item {
     onXChanged: root._publish()
     onWidthChanged: root._publish()
     Component.onCompleted: Qt.callLater(root._publish)
-    TapHandler {
+    TapHandler { id: btTap
         onTapped: {
             ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x;
             ShellState.toggleDropdown("bluetooth");

@@ -11,7 +11,7 @@ import subprocess
 import sys
 import time
 
-HOME_DIR = Path('@HOME@')
+HOME_DIR = Path('/home/fh1m')
 RUNTIME = Path(os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}'))
 STATE = RUNTIME / 'desktop-recording.json'
 UNIT = 'desktop-recording.service'
