@@ -3,15 +3,20 @@ import qs.components
 import qs.config
 import qs.services
 
-Rectangle {
+BarSurface {
     id: root
-    implicitWidth: 104; implicitHeight: 28
-    radius: 2
-    color: ShellState.dropdown === "system" || pointer.containsMouse ? Theme.alpha(Theme.signal, 0.15) : "transparent"
-    border.color: "#26282d"
-    border.width: 1
-    Behavior on color { ColorAnimation { duration: 120 } }
-    NrLabel { pixelSize: 12; font.letterSpacing: 0.7; anchors.centerIn: parent; text: "\uf1de SYSTEM"; color: Theme.text }
+    implicitWidth: 106; implicitHeight: 34
+    grouped: false
+    selected: ShellState.dropdown === "system"
+    hovered: pointer.containsMouse
+    pressed: pointer.pressed
+    Row {anchors.centerIn:parent;spacing:7
+        Text {anchors.verticalCenter:parent.verticalCenter;text:"\uf1de";font.family:Appearance.font.icons;font.pixelSize:17;color:ShellState.dropdown==="system"?Theme.widgetAccent:Theme.dim}
+        Column {anchors.verticalCenter:parent.verticalCenter;spacing:-1
+            Text {text:"System";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
+            Text {text:"Controls";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.widgetMuted}
+        }
+    }
     function publish(): void { ShellState.publishAnchor("system", root.mapToItem(null, 0, 0).x); }
     onXChanged: publish()
     Component.onCompleted: Qt.callLater(publish)

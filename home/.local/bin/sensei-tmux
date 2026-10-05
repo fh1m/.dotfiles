@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Open an independent tmux client, with windows retained in the Sensei session."""
+"""Open independent daily_dev clients while retaining their tmux windows."""
 import fcntl
 import os
 import subprocess
 import sys
 from pathlib import Path
 
-BASE = 'Sensei'
-VIEW_PREFIX = 'BAY-'
+BASE = 'daily_dev'
+VIEW_PREFIX = 'daily_dev-'
 RUNTIME = Path(os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}'))
 
 def tmux(*args, capture=False):
@@ -34,7 +34,7 @@ def main():
         sessions = [line.split('\t', 1) for line in
                     tmux('list-sessions', '-F', '#{session_name}\t#{session_attached}',
                          capture=True).stdout.splitlines()]
-        active_view = any((name.startswith(VIEW_PREFIX) or name.startswith('Desk-') or name == BASE) and attached != '0'
+        active_view = any((name.startswith(VIEW_PREFIX) or name == BASE) and attached != '0'
                           for name, attached in sessions)
         if active_view:
             window = tmux('new-window', '-d', '-t', BASE, '-c', os.getcwd(),

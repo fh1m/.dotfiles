@@ -23,6 +23,7 @@ Item {
     property real cutBottomLeft: 0
 
     property string text: ""
+    property string glyph: Appearance.iconFor(text)
     // The verb shown while the action runs. Callers pass it to `begin` too, so
     // the button and any notification it raises agree on what was happening.
     property string verbText: ""
@@ -112,7 +113,7 @@ Item {
     // top of that, so every button grew the moment it was pressed. The
     // Bluetooth row is where it showed -- `UNLINKING` ran straight through its
     // neighbours -- but every action button in the shell did it.
-    implicitWidth: reserve.implicitWidth + root.workReserve + 20
+    implicitWidth: reserve.implicitWidth + root.workReserve + (glyph ? 23 : 0) + 20
     implicitHeight: 24
 
     // The fill and frame, drawn as one chamfered shape so the bottom-left cut
@@ -182,7 +183,16 @@ Item {
         id: content
 
         anchors.centerIn: parent
-        spacing: root.working ? 8 : 0
+        spacing: 6
+
+        Text {
+            visible: root.glyph !== ""
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.glyph
+            font.family: Appearance.font.icons
+            font.pixelSize: 15
+            color: root.usable ? (root.accented ? Theme.widgetAccent : Theme.widgetMuted) : Theme.mute
+        }
 
         NrLabel {
             id: label
@@ -198,7 +208,7 @@ Item {
             // `FAILED // OUT OF RANGE` elided to `FAILED // OU...` with 200 px
             // of empty button beside it. On a button at its own natural width
             // this is the same number it always was.
-            width: Math.max(reserve.implicitWidth + (root.working ? 0 : root.workReserve), root.width - 20 - (root.working ? root.workReserve : 0))
+            width: Math.max(reserve.implicitWidth, root.width - 43 - (root.working ? root.workReserve : 0))
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             centred: true

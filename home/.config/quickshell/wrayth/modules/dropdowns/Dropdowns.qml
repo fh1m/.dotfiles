@@ -53,6 +53,7 @@ Variants {
             case "calendar": case "weather": return 862;
             case "system": return 696;
             case "sound": return 616;
+            case "notifications": return 610;
             case "wifi": return 1008;
             default: return 520;
             }
@@ -84,7 +85,7 @@ Variants {
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }
         visible: current !== "" && surfaceReady && !ShellState.externalDialogOpen
 
-        implicitWidth: Math.min(modelData.width - 2 * edge, 2 * surfaceInset + (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" ? 1040 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "system" || current === "ident" ? 596 : 380))
+        implicitWidth: Math.min(modelData.width - 2 * edge, 2 * surfaceInset + (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" ? 1040 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.
@@ -128,7 +129,7 @@ Variants {
             target: popup
             property: "reveal"
             to: 1
-            duration: 220
+            duration: 155
             easing.type: Easing.OutCubic
             onFinished: popup.cachedHeight = popup.panelHeight
         }
@@ -151,7 +152,7 @@ Variants {
 
         SequentialAnimation {
             id: closeAnim
-            NumberAnimation { target: popup; property: "reveal"; to: 0; duration: 170; easing.type: Easing.InCubic }
+            NumberAnimation { target: popup; property: "reveal"; to: 0; duration: 125; easing.type: Easing.InCubic }
             // Keep the last panel instantiated: rebuilding a large QML tree on
             // every click was costing hundreds of milliseconds.
             ScriptAction { script: popup.surfaceReady=false }
@@ -167,7 +168,7 @@ Variants {
                 target: popup
                 property: "reveal"
                 to: 0
-                duration: 110
+                duration: 85
                 easing.type: Easing.InCubic
             }
             // The surface moves and resizes to the incoming panel here, with
@@ -335,6 +336,7 @@ Variants {
                     case "comic": return comicPanel;
                     case "spotify": return spotifyPanel;
                     case "sound": return soundPanel;
+                    case "notifications": return notificationsPanel;
                     case "weather": return weatherPanel;
                     case "calendar": return calendarPanel;
                     case "displays": return displaysPanel;
@@ -386,6 +388,7 @@ Variants {
             Component { id: comicPanel; ComicDropdown { width: holder.width } }
             Component { id: spotifyPanel; SpotifyDropdown { width: holder.width } }
             Component { id: soundPanel; SoundDropdown { width: holder.width } }
+            Component { id: notificationsPanel; NotificationCenter { width: holder.width } }
             Component { id: weatherPanel; WeatherDropdown { width: holder.width } }
             Component { id: calendarPanel; CalendarDropdown { width: holder.width } }
             Component { id: displaysPanel; DisplayWallpapers { width: holder.width } }

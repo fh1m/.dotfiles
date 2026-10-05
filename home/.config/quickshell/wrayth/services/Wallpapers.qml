@@ -39,7 +39,10 @@ Singleton {
     }
     function displaySource(output: string): url { const path=displays[output]?.file; return path ? Paths.url(path) : displayed; }
     function displayMode(output: string): int { return displays[output]?.mode ?? Image.PreserveAspectCrop; }
-    function setDisplay(output: string, path: string, mode: int): void { const next=Object.assign({},displays); next[output]={file:path,mode:mode};displays=next;syncStartup(output,path);write(); }
+    function updatePalette(): void { Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-palette`,String(displaySource("eDP-1")).replace(/^file:\/\//,"")]); }
+    onLoadedChanged: if (loaded) updatePalette()
+    onDisplayedChanged: if (loaded && !displays["eDP-1"]?.file) updatePalette()
+    function setDisplay(output: string, path: string, mode: int): void { const next=Object.assign({},displays); next[output]={file:path,mode:mode};displays=next;syncStartup(output,path);write();if(output==="eDP-1")Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-palette`,path||String(displayed).replace(/^file:\/\//,"")]); }
 
     // name -> { mode, every, fade, items: [{ file, on, star }] }
     property var pools: ({})

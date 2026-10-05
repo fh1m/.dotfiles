@@ -33,7 +33,37 @@ end
 hl.config({
     animations = { enabled = true },
     decoration = { blur = { enabled = false }, shadow = { enabled = false } }, general = { border_size = 2 }, input = { touchpad = { natural_scroll = true }, follow_mouse = 0 },
+    group = {
+        auto_group = false,
+        drag_into_group = 1,
+        merge_groups_on_drag = true,
+        merge_groups_on_groupbar = true,
+        groupbar = {
+            enabled = true,
+            blur = false,
+            gradients = false,
+            font_family = "JetBrainsMono Nerd Font Propo",
+            font_size = 11,
+            font_weight_active = 600,
+            font_weight_inactive = 400,
+            height = 23,
+            indicator_height = 2,
+            text_padding = 9,
+            text_color = "rgba(eeeeeeff)",
+            text_color_inactive = "rgba(999999ff)",
+            col = { active = "rgba(111114ff)", inactive = "rgba(08080aff)", locked_active = "rgba(191219ff)", locked_inactive = "rgba(08080aff)" },
+        },
+    },
 })
+
+-- Native Hyprland tabs: drag a window onto a group, or use the keys below.
+-- Group titles and the two-pixel active marker provide a visible focus cue.
+hl.bind("SUPER + ALT + G", hl.dsp.group.toggle())
+hl.bind("SUPER + ALT + H", hl.dsp.window.move({ into_or_create_group = "l" }))
+hl.bind("SUPER + ALT + L", hl.dsp.window.move({ into_or_create_group = "r" }))
+hl.bind("SUPER + ALT + J", hl.dsp.group.next())
+hl.bind("SUPER + ALT + K", hl.dsp.group.prev())
+hl.bind("SUPER + ALT + U", hl.dsp.window.move({ out_of_group = true }))
 
 hl.bind(mod .. " + SHIFT + up", hl.dsp.window.move({ monitor = "eDP-1" }))
 hl.bind(mod .. " + SHIFT + down", hl.dsp.window.move({ monitor = "DP-2" }))

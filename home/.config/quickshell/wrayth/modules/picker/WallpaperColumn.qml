@@ -10,7 +10,7 @@ ChamferPanel {
  Row {width:parent.width;spacing:10;NrLabel {text:"Follow theme";font.capitalization:Font.MixedCase;tracked:false;pixelSize:11;anchors.verticalCenter:parent.verticalCenter}ToggleButton {on:Wallpapers.dynamic;onToggled:Wallpapers.setDynamic(!Wallpapers.dynamic)}}
  Repeater {model:[{output:"eDP-1",name:"Main"},{output:"DP-2",name:"ScreenPad"}]
  Rectangle {id:displayRow;required property var modelData;width:parent.width;height:119;color:Theme.alpha(Theme.barBg,.65);border.color:Theme.hair
- Image {x:8;y:9;width:100;height:100;source:Wallpapers.displaySource(displayRow.modelData.output);fillMode:Wallpapers.displayMode(displayRow.modelData.output);asynchronous:true}
+ Image {x:8;y:9;width:100;height:100;source:Wallpapers.displaySource(displayRow.modelData.output);sourceSize:Qt.size(256,256);fillMode:Wallpapers.displayMode(displayRow.modelData.output);asynchronous:true}
  Column {x:119;y:10;width:parent.width-129;spacing:8
  Text {text:displayRow.modelData.name+" · "+displayRow.modelData.output;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.signal}
  Row {spacing:5;ControlTile {implicitWidth:105;implicitHeight:25;label:"Choose image";onActivated:WallpaperChooser.open(displayRow.modelData.output)}ControlTile {implicitWidth:105;implicitHeight:25;label:"Theme image";onActivated:Wallpapers.setDisplay(displayRow.modelData.output,"",Image.PreserveAspectCrop)}}

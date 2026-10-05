@@ -39,33 +39,44 @@ Singleton {
     // measured at 513 TypeErrors in a few seconds, from the picker's
     // miniatures alone.
     readonly property var palette: Profiles.palettes[profile] ?? Profiles.presets.Circuit
+    property var adaptive: ({})
+    FileView {
+        path: Paths.configDir + "/wallpaper-palette.json"
+        watchChanges: true
+        printErrors: false
+        onLoaded: {
+            try { root.adaptive = JSON.parse(text()); }
+            catch (e) { console.warn("wrayth: invalid wallpaper palette", e); }
+        }
+        onFileChanged: reload()
+    }
     readonly property string description: Profiles.descriptions[profile] ?? ""
     readonly property url wallpaper: Paths.url(Paths.wallpaperFor(profile))
 
     // --- Tokens -------------------------------------------------------------
     // Backgrounds
-    readonly property color ground: palette.ground
-    readonly property color deep: palette.deep
+    readonly property color ground: "#000000"
+    readonly property color deep: "#000000"
     readonly property color panelHex: palette.panelHex
-    readonly property color panel: Qt.rgba(palette.panel.r, palette.panel.g, palette.panel.b, 1)
-    readonly property color panel2: Qt.rgba(palette.panel2.r, palette.panel2.g, palette.panel2.b, 1)
-    readonly property color barBg: Qt.rgba(palette.barBg.r, palette.barBg.g, palette.barBg.b, 1)
+    readonly property color panel: "#000000"
+    readonly property color panel2: "#000000"
+    readonly property color barBg: "#000000"
 
     // Structure
-    readonly property color hair: "#606060"
-    readonly property color frame: "#080a0e"
+    readonly property color hair: adaptive.outline ?? "#424957"
+    readonly property color frame: "#11151c"
     // Opaque OLED widget palette: no live background sampling or alpha blend.
-    readonly property color widgetAccent: "#ff718a"
-    readonly property color widgetText: "#f5ecef"
-    readonly property color widgetMuted: "#b3a4aa"
-    readonly property color widgetFaint: "#897b81"
+    readonly property color widgetAccent: adaptive.primary ?? "#ff428e"
+    readonly property color widgetText: adaptive.text ?? "#edf3fb"
+    readonly property color widgetMuted: adaptive.muted ?? "#a9b5c5"
+    readonly property color widgetFaint: "#647081"
     readonly property color widgetBorder: alpha(widgetText, .17)
-    readonly property color widgetGlass: "#05070a"
-    readonly property color widgetSurface: "#10141b"
-    readonly property color widgetRaised: "#18202b"
-    readonly property color uiSurface: "#10151d"
-    readonly property color uiRaised: "#18202b"
-    readonly property color uiBorder: "#343d49"
+    readonly property color widgetGlass: "#000000"
+    readonly property color widgetSurface: adaptive.surface ?? "#111114"
+    readonly property color widgetRaised: adaptive.raised ?? "#1c1c21"
+    readonly property color uiSurface: widgetSurface
+    readonly property color uiRaised: widgetRaised
+    readonly property color uiBorder: alpha(widgetText, .20)
     readonly property color uiSuccess: "#76bd93"
     readonly property color uiWarning: "#e6b66a"
     readonly property color spotifyGreen: "#1DB954"
@@ -73,16 +84,16 @@ Singleton {
     readonly property color cell: palette.cell
 
     // Type
-    readonly property color text: palette.text
-    readonly property color bright: palette.bright
-    readonly property color dim: palette.dim
-    readonly property color mute: palette.mute
+    readonly property color text: widgetText
+    readonly property color bright: "#ffffff"
+    readonly property color dim: widgetMuted
+    readonly property color mute: widgetFaint
 
     // Meaning
-    readonly property color signal: palette.signal
-    readonly property color focusBlue: "#007bff"
-    readonly property color accent: palette.accent
-    readonly property color alert: palette.alert
+    readonly property color signal: adaptive.secondary ?? "#c7cbd3"
+    readonly property color focusBlue: adaptive.tertiary ?? "#7e8b9d"
+    readonly property color accent: adaptive.vibrant ?? "#df106d"
+    readonly property color alert: adaptive.error ?? "#ff647f"
 
     // --- Helpers ------------------------------------------------------------
     // Token at partial alpha, e.g. accent@15% row tints.

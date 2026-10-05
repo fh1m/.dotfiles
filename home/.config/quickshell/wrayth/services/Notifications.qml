@@ -18,6 +18,12 @@ Singleton {
 
     readonly property int maxVisible: 4
     readonly property int gap: 12
+    property var history: []
+    property int unreadCount: 0
+    property bool doNotDisturb: false
+
+    function markRead(): void { unreadCount = 0; }
+    function clearHistory(): void { history = []; unreadCount = 0; }
 
     // Newest first.
     //
@@ -147,6 +153,22 @@ Singleton {
 
         onNotification: notification => {
             notification.tracked = true;
+
+            const entry = {
+                app: String(notification.appName || "Application"),
+                icon: String(notification.appIcon || ""),
+                summary: root.plainSummary(notification.summary || "Notification"),
+                body: root.safeBody(notification.body || ""),
+                time: new Date().toLocaleTimeString(Qt.locale(), "hh:mm AP"),
+                id: notification.id,
+                critical: notification.urgency === NotificationUrgency.Critical
+            };
+            root.history = [entry].concat(root.history.filter(item => item.id !== entry.id)).slice(0, 100);
+            root.unreadCount = Math.min(100, root.unreadCount + 1);
+            if (root.doNotDisturb && !entry.critical) {
+                notification.dismiss();
+                return;
+            }
 
             if (root.expecting) {
                 root.expecting = false;

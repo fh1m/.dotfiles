@@ -9,7 +9,7 @@
 - Spotify queue fetches have their own process so library requests cannot block the queue. Identical queue responses do not reset the list. Old context responses cannot reopen an abandoned collection. Library results are retained separately by kind so delayed albums/liked responses cannot replace the wrong tab.
 - Volume feedback polls cached local state at 300 ms only while an action is pending; no permanent additional timer. Rapid slider changes are coalesced, with optimistic UI retained until confirmed.
 - Ctrl+Left previous song, Ctrl+Right next song, Ctrl+Up +5% Spotify volume, Ctrl+Down −5%; Ctrl+Space remains play/pause. These are global and take precedence over application Ctrl+arrow actions. Loaded bindings have no duplicate tuples.
-- plocate file indexing excludes @HOME@/.cache and @HOME@/.local/share/Trash. These directories occupy approximately 65 GiB and 78 GiB respectively. Nothing was deleted. Existing idle I/O/Nice19 scheduling remains.
+- plocate file indexing excludes /home/fh1m/.cache and /home/fh1m/.local/share/Trash. These directories occupy approximately 65 GiB and 78 GiB respectively. Nothing was deleted. Existing idle I/O/Nice19 scheduling remains.
 
 ## Boot findings
 

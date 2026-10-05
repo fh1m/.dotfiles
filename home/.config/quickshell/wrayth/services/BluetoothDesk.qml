@@ -15,10 +15,10 @@ Singleton {
  function device(address){return (data.devices||[]).find(d=>d.Address===address)||{};}
  function card(address){return (data.cards||[]).find(c=>c.properties?.['api.bluez5.address']===address)||{};}
  function codec(address){return data.codecs?.[address]||{};}
- function action(kind,address,value){if(act.running)return;error='';act.command=['@HOME@/.local/bin/sensei-bluetooth',kind,String(address),String(value)];act.running=true;}
+ function action(kind,address,value){if(act.running)return;error='';act.command=['/home/fh1m/.local/bin/sensei-bluetooth',kind,String(address),String(value)];act.running=true;}
  function tool(command){if(toolProc.running)return;toolProc.command=command;toolProc.running=true;}
  onActiveChanged:{events.running=active;if(active)refresh();}
- Process {id:poll;command:['@HOME@/.local/bin/sensei-bluetooth','snapshot'];stdout:StdioCollector{onStreamFinished:{try{let d=JSON.parse(text);if(d.error)root.error=d.error;else{root.data=d;root.error='';}}catch(e){root.error='Sensei, Bluetooth details could not be read.';}}}}
+ Process {id:poll;command:['/home/fh1m/.local/bin/sensei-bluetooth','snapshot'];stdout:StdioCollector{onStreamFinished:{try{let d=JSON.parse(text);if(d.error)root.error=d.error;else{root.data=d;root.error='';}}catch(e){root.error='Sensei, Bluetooth details could not be read.';}}}}
  Process {id:act;onExited:refreshTimer.restart();stdout:StdioCollector{onStreamFinished:{try{let d=JSON.parse(text);if(d.error)root.error=d.error;}catch(e){}}}}
  Process {id:toolProc}
  Process {id:events;running:root.active;command:['pactl','subscribe'];stdout:SplitParser{onRead:line=>{if(/sink|card|server/.test(line))refreshTimer.restart();}}}

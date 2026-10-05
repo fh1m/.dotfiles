@@ -53,11 +53,12 @@ Variants {
             anchors.right: parent.right
             anchors.rightMargin: 12
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 10
+            spacing: 6
             
             BtReadout { anchors.verticalCenter: parent.verticalCenter }
             DisplayBadge { output: "main"; anchors.verticalCenter: parent.verticalCenter }
             SoundButton { anchors.verticalCenter: parent.verticalCenter }
+            NotificationsButton { anchors.verticalCenter: parent.verticalCenter }
             SystemButton { anchors.verticalCenter: parent.verticalCenter }
         }
         Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: "#181a1e" }

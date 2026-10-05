@@ -35,7 +35,13 @@ def seconds(t):
  return (-1 if m[1] else 1)*sum(int(v or 0)*scale for v,scale in zip(m.groups()[1:],[604800,86400,3600,60,1]))
 def focus_state():
  row=c.execute("select value from settings where key='focus'").fetchone()
- return json.loads(row[0]) if row else {'phase':'focus','running':False,'remaining':1500,'ends':0,'focus':25,'short':5,'long':15,'cycles':4,'completed':0,'task':0,'auto':True,'event':0}
+ f=json.loads(row[0]) if row else {'phase':'focus','running':False,'remaining':1500,'ends':0,'focus':25,'short':5,'long':15,'cycles':4,'completed':0,'task':0,'auto':True,'event':0}
+ # A suspended or powered-off workstation cannot run Pomodoro phases while it
+ # is absent. Recover once instead of displaying an eternal running 00:00.
+ if f.get('running') and f.get('ends',0) < now-60:
+  f['running']=False;f['remaining']=0;f['ends']=0
+  retire_focus(f);store_focus(f)
+ return f
 def store_focus(f):c.execute("insert or replace into settings values('focus',?)",(json.dumps(f),));c.commit()
 def focus_event(f):
  title='Focus session' if f['phase']=='focus' else 'Long break' if f['phase']=='long' else 'Short break'

@@ -10,6 +10,7 @@ Item {
     property string text: ""
     property color foreground:Theme.dim
     property int pixelSize:Appearance.size.ticker
+    property string fontFamily:Appearance.font.data
     property bool scrollOnlyOverflow:false
     property bool scrollEnabled:true
     property real loopGap:0
@@ -48,7 +49,7 @@ Item {
                 x: root.scrollOnlyOverflow && root.contentWidth <= root.width ? (root.width-root.contentWidth)/2 : -(ShellState.ambientMotion ? strip.offset : 0)
                 color: root.foreground
                 text: root.text
-                font.family: Appearance.font.data
+                font.family: root.fontFamily
                 font.pixelSize: root.pixelSize
                 font.letterSpacing: Appearance.size.ticker * Appearance.tickerTracking
                 renderType: Text.QtRendering

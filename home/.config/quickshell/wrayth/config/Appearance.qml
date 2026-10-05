@@ -7,13 +7,58 @@ import Quickshell
 Singleton {
     id: root
 
+    function iconFor(name) {
+  const s=String(name||"").toLowerCase();
+  if(/^(‹|←|previous)/.test(s))return "\uf060";
+  if(/^(›|→|next)/.test(s))return "\uf061";
+  if(/queue|list/.test(s))return "\uf0cb";
+  if(/library|album|artist/.test(s))return "\uf02d";
+  if(/device|peripheral/.test(s))return "\uf2db";
+  if(/account|profile/.test(s))return "\uf007";
+  if(/hourly|clock/.test(s))return "\uf017";
+  if(/history|recent|log/.test(s))return "\uf1da";
+  if(/workspace|session|tab/.test(s))return "\uf009";
+  if(/file|folder|project/.test(s))return "\uf07b";
+  if(/overview|quick|details|info/.test(s))return "\uf05a";
+  if(/wifi|network|hotspot/.test(s))return "\uf1eb";
+  if(/bluetooth/.test(s))return "\uf293";
+  if(/audio|sound|volume|speaker|mute/.test(s))return "\uf028";
+  if(/microphone|mic/.test(s))return "\uf130";
+  if(/screen|display|wallpaper/.test(s))return "\uf108";
+  if(/gpu|nvidia|cuda|graphics/.test(s))return "\uf108";
+  if(/cpu|hardware|performance/.test(s))return "\uf2db";
+  if(/memory|ram|storage|disk/.test(s))return "\uf538";
+  if(/phone|android/.test(s))return "\uf10b";
+  if(/docker|container|image/.test(s))return "\uf308";
+  if(/terminal|ssh|command/.test(s))return "\uf120";
+  if(/package|update|upgrade|install/.test(s))return "\uf0ed";
+  if(/calendar|date|today|schedule|remind/.test(s))return "\uf073";
+  if(/time|timer|stopwatch|focus/.test(s))return "\uf017";
+  if(/play|pause|track|song|playlist|music/.test(s))return "\uf001";
+  if(/search|find/.test(s))return "\uf002";
+  if(/edit|rename/.test(s))return "\uf044";
+  if(/delete|remove|clear|cancel/.test(s))return "\uf1f8";
+  if(/save|copy|clipboard/.test(s))return "\uf0c5";
+  if(/refresh|reload|check/.test(s))return "\uf021";
+  if(/power|shutdown|reboot|suspend/.test(s))return "\uf011";
+  if(/lock|secure/.test(s))return "\uf023";
+  if(/settings|config|control|system/.test(s))return "\uf013";
+  if(/weather|forecast/.test(s))return "\uf0c2";
+  if(/process|monitor|graph|diagnos/.test(s))return "\uf201";
+  if(/open|launch|web/.test(s))return "\uf08e";
+  return "\uf061";
+ }
+
     readonly property QtObject font: QtObject {
         // Personal ZedMono Nerd typography for titles and clock.
-        readonly property string display: "ZedMono Nerd Font"
+        readonly property string display: "JetBrainsMono Nerd Font Mono"
+        readonly property string heading: "JetBrainsMono Nerd Font Propo"
+        readonly property string ui: "JetBrainsMono Nerd Font Propo"
         // ZedMono: labels, readouts and body text.
-        readonly property string data: "ZedMono Nerd Font"
+        readonly property string barUi: "JetBrainsMono Nerd Font Propo"
+        readonly property string data: "JetBrainsMono Nerd Font Mono"
         // Russian accent labels use the same personal font.
-        readonly property string accent: "ZedMono Nerd Font"
+        readonly property string accent: "JetBrainsMono Nerd Font Propo"
         // Icons that are somebody else's standard rather than ours -- the
         // Bluetooth rune, so far. It is the data family's own Nerd Font
         // patch, so an icon from it sits on the same metrics as the labels

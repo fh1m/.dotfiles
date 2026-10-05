@@ -68,8 +68,11 @@ Row {
                     anchors.verticalCenter: parent.verticalCenter
                     centred: true
                     text: button.modelData.label
+                    font.capitalization: Font.MixedCase
                     color: button.active ? Theme.accent : button.occupied ? Theme.accent : Theme.mute
                     pixelSize: 11
+                    font.family: Appearance.font.barUi
+                    tracked: false
                     font.letterSpacing: 0.5; font.features: Appearance.tabularFigures
                 }
             }

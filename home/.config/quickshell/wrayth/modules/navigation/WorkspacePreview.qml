@@ -7,7 +7,7 @@ ChamferPanel {
  Component.onCompleted:WindowDesk.workspaceCards=WindowDesk.workspaceCards.concat([root])
  Component.onDestruction:WindowDesk.workspaceCards=WindowDesk.workspaceCards.filter(c=>c!==root)
  MouseArea {anchors.fill:parent;onClicked:WindowDesk.workspace(root.workspace)}
- Image {anchors.fill:parent;anchors.margins:10;source:Wallpapers.displaySource(root.workspace===6?"DP-2":"eDP-1");fillMode:Image.PreserveAspectCrop;opacity:.35;asynchronous:true}
+ Image {anchors.fill:parent;anchors.margins:10;source:Wallpapers.displaySource(root.workspace===6?"DP-2":"eDP-1");sourceSize:Qt.size(768,432);fillMode:Image.PreserveAspectCrop;opacity:.35;asynchronous:true}
  Text {x:10;y:9;text:Spaces.workspaceNames[root.workspace-1]+" · "+root.windows.length+" windows";font.family:Appearance.font.data;font.pixelSize:13;color:root.selected?Theme.signal:Theme.text}
  Item {id:area;x:8;y:34;width:parent.width-16;height:parent.height-44;clip:true
  Repeater {model:root.windows

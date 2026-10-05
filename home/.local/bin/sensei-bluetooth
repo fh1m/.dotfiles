@@ -32,7 +32,7 @@ def main():
  if command=='profile':
   addr,profile=sys.argv[2:4];d=snapshot();card=next(c for c in d['cards'] if c['properties'].get('api.bluez5.address')==addr)
   if profile not in card['profiles']:raise RuntimeError('This device does not support that profile')
-  player='@HOME@/.local/bin/sensei-spotify-transport';old={}
+  player='/home/fh1m/.local/bin/sensei-spotify-transport';old={}
   try:old=json.loads(run([player,'status']))
   except Exception:pass
   run(['pactl','set-card-profile',card['name'],profile]);time.sleep(.6)

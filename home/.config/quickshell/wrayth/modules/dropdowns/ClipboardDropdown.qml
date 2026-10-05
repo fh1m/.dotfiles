@@ -6,31 +6,31 @@ import qs.config
 import qs.services
 DropdownFrame {
  headerAccent:Theme.widgetAccent
- id:root;title:"\uf0ea CLIPBOARD VAULT";katakana:"АРХИВ";implicitWidth:1040
+ id:root;title:"\uf0ea Clipboard vault";katakana:"АРХИВ";implicitWidth:1040
  property var selected:ClipboardVault.detail
  Column {
  width:parent.width;spacing:8
  Row {spacing:8
- DeskTextField {id:search;width:270;height:32;placeholderText:"Search text, files, snippets…";text:ClipboardVault.query;onTextEdited:ClipboardVault.query=text;color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:12;selectByMouse:true}
+ DeskTextField {id:search;width:270;height:32;placeholderText:"Search text, files, snippets…";text:ClipboardVault.query;onTextEdited:ClipboardVault.query=text;color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:13;selectByMouse:true}
  Repeater {model:[{name:"All",key:"all"},{name:"Text / code",key:"text"},{name:"Images",key:"image"},{name:"Files",key:"files"},{name:"Pinned",key:"pinned"},{name:"Archive",key:"archived"}];ControlTile {required property var modelData;implicitWidth:112;implicitHeight:32;label:modelData.name;navigation:true;selected:ClipboardVault.filter===modelData.key;onActivated:ClipboardVault.filter=modelData.key}}
  }
  Row {
  spacing:12;width:parent.width;height:292
- Rectangle {width:300;height:parent.height;color:Theme.alpha(Theme.widgetSurface,.6);border.color:Theme.widgetBorder
+ ChamferPanel {width:300;height:parent.height;fillColor:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.08);chamfer:8;scanlines:false
  ListView {id:list;anchors.fill:parent;anchors.margins:5;clip:true;spacing:4;model:ClipboardVault.items;ScrollBar.vertical:DeskScrollBar {}
- delegate:Rectangle {required property var modelData;width:list.width-10;height:57;color:ClipboardVault.selected===modelData.id?Theme.alpha(Theme.widgetAccent,.16):pointer.containsMouse?Theme.alpha(Theme.widgetAccent,.07):"transparent";border.color:ClipboardVault.selected===modelData.id?Theme.widgetAccent:Theme.widgetBorder
+ delegate:ChamferPanel {required property var modelData;width:list.width-10;height:57;chamfer:5;scanlines:false;fillColor:ClipboardVault.selected===modelData.id?Theme.blend(Theme.widgetRaised,Theme.widgetAccent,.13):pointer.containsMouse?Theme.widgetRaised:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.07)
  Image {x:6;y:7;width:43;height:43;source:modelData.kind==="image"?"file://"+modelData.path:"";visible:modelData.kind==="image";fillMode:Image.PreserveAspectFit;sourceSize.width:100;asynchronous:true}
  NrLabel {x:15;y:18;visible:modelData.kind!=="image";text:modelData.pinned?"\uf08d":modelData.kind==="files"?"\uf15b":"\uf121";pixelSize:20;color:Theme.widgetAccent}
- NrLabel {x:58;y:8;width:parent.width-65;text:modelData.title;pixelSize:12;elide:Text.ElideRight;maximumLineCount:1}
- NrLabel {x:58;y:31;width:parent.width-65;text:Qt.formatDateTime(new Date(modelData.last*1000),"MMM d · hh:mm AP")+" · ×"+modelData.copies;pixelSize:10;color:Theme.widgetMuted;elide:Text.ElideRight}
+ NrLabel {x:58;y:8;width:parent.width-65;text:modelData.title;pixelSize:13;elide:Text.ElideRight;maximumLineCount:1;tracked:false;font.capitalization:Font.MixedCase;font.family:Appearance.font.ui;color:Theme.widgetText}
+ NrLabel {x:58;y:32;width:parent.width-65;text:Qt.formatDateTime(new Date(modelData.last*1000),"MMM d · hh:mm AP")+" · ×"+modelData.copies;pixelSize:11;color:Theme.widgetMuted;elide:Text.ElideRight;tracked:false;font.capitalization:Font.MixedCase;font.family:Appearance.font.ui}
  MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:ClipboardVault.select(modelData.id);onDoubleClicked:{ClipboardVault.select(modelData.id);ClipboardVault.action("copy");}}
  }
  }
  NrLabel {anchors.centerIn:parent;visible:ClipboardVault.items.length===0;text:"No matching entries";pixelSize:12;color:Theme.widgetMuted}
  }
- Rectangle {width:parent.width-312;height:parent.height;color:Theme.alpha(Theme.widgetSurface,.7);border.color:Theme.widgetBorder
+ ChamferPanel {width:parent.width-312;height:parent.height;fillColor:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.08);chamfer:8;scanlines:false
  Column {anchors.fill:parent;anchors.margins:10;spacing:6
- Row {spacing:8;NrLabel {width:480;text:root.selected.kind==="image"?"IMAGE PREVIEW":root.selected.kind==="files"?"FILES · "+(root.selected.fileCount??0):(root.selected.lexer??"TEXT PREVIEW");pixelSize:12;color:Theme.widgetAccent;elide:Text.ElideRight}NrLabel {text:root.selected.pinned?"\uf08d PINNED":"";pixelSize:11;color:Theme.widgetAccent}}
+ Row {spacing:8;NrLabel {width:480;tracked:false;font.capitalization:Font.MixedCase;font.family:Appearance.font.heading;font.weight:Font.DemiBold;text:root.selected.kind==="image"?"Image preview":root.selected.kind==="files"?"Files · "+(root.selected.fileCount??0):(root.selected.lexer??"Text preview");pixelSize:14;color:Theme.widgetAccent;elide:Text.ElideRight}NrLabel {text:root.selected.pinned?"\uf08d PINNED":"";pixelSize:11;color:Theme.widgetAccent}}
  Flickable {id:preview;width:parent.width;height:222;clip:true;contentWidth:width;contentHeight:root.selected.kind==="files"?Math.max(height,filePreview.implicitHeight):root.selected.kind==="image"?height:code.height;boundsBehavior:Flickable.StopAtBounds;ScrollBar.vertical:DeskScrollBar {}
  Image {id:imagePreview;anchors.fill:parent;visible:root.selected.kind==="image";source:visible&&root.selected.path?"file://"+root.selected.path:"";fillMode:Image.PreserveAspectFit;sourceSize.width:1100;asynchronous:true}
  NrLabel {anchors.centerIn:parent;visible:root.selected.kind==="image"&&imagePreview.status===Image.Error;text:"Preview unavailable · open original";pixelSize:12;color:Theme.widgetMuted}
