@@ -7,7 +7,7 @@ BarSurface {
     id: root
     property bool condensed: false
     clip: true
-    implicitWidth: condensed ? 48 : 115
+    implicitWidth: condensed ? 44 : 115
     implicitHeight: 34
     grouped: condensed
     Behavior on implicitWidth { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
@@ -16,10 +16,10 @@ BarSurface {
     pressed: pointer.pressed
     Row {
         anchors.left: parent.left
-        anchors.leftMargin: 8
+        anchors.leftMargin: 10
         anchors.verticalCenter: parent.verticalCenter
         spacing: 7
-        Text { anchors.verticalCenter: parent.verticalCenter; text: Notifications.unreadCount ? "\uf0f3" : "\uf0a2"; font.family: Appearance.font.icons; font.pixelSize: 24; color: Notifications.unreadCount ? Theme.signalRed : Theme.paperMuted }
+        BarIcon { anchors.verticalCenter: parent.verticalCenter; glyph: Notifications.unreadCount ? "\uf0f3" : "\uf0a2"; inkSize: 19; ink: Notifications.unreadCount ? Theme.signalRed : Theme.paperMuted }
         Column { visible: !root.condensed; anchors.verticalCenter: parent.verticalCenter; spacing: -1
             Text { text: "Alerts"; font.family: Appearance.font.barUi; font.pixelSize: 12; font.weight: Font.DemiBold; color: Theme.text }
             Text { text: Notifications.unreadCount ? Notifications.unreadCount + " new" : "Quiet"; font.family: Appearance.font.barUi; font.pixelSize: 10; color: Theme.widgetMuted }

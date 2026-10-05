@@ -15,65 +15,115 @@ Variants {
         readonly property var monitor: Hyprland.monitors.values.find(m => m.name === modelData.name) ?? null
         readonly property var members: ActiveWindow.ipc?.grouped ?? []
         readonly property int position: Math.max(1, members.indexOf(ActiveWindow.ipc?.address) + 1)
+        readonly property int groupWorkspace: ActiveWindow.ipc?.workspace?.id ?? -1
+        readonly property int shownWorkspace: monitor?.activeWorkspace?.id ?? -2
         screen: modelData
         color: "transparent"
-        visible: ActiveWindow.present && members.length > 1 && WindowDesk.focusScreen === modelData.name && !ShellState.locked
+        visible: ActiveWindow.present && members.length > 1 && groupWorkspace === shownWorkspace && WindowDesk.focusScreen === modelData.name && !ShellState.locked
         implicitWidth: Math.max(1, ActiveWindow.width)
         implicitHeight: 29
         anchors { top: true; left: true }
         margins.left: Math.max(0, ActiveWindow.x - (monitor?.lastIpcObject?.x ?? 0))
-        margins.top: Math.max(0, ActiveWindow.y - (monitor?.lastIpcObject?.y ?? 0) - 39)
+        margins.top: Math.max(0, ActiveWindow.y - (monitor?.lastIpcObject?.y ?? 0) - 30)
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "sensei-tabs"
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         mask: Region {}
+        // Hyprland owns the invisible click/drag targets. This inset surface
+        // gives the tabs the same clipped-corner vocabulary as the windows.
+        Canvas {
+            anchors.fill: parent
+            onWidthChanged: requestPaint()
+            onHeightChanged: requestPaint()
+            onPaint: {
+                const p = getContext("2d")
+                p.reset()
+                const inset = 8, cut = 8, h = height - 1
+                p.fillStyle = Theme.ink
+                p.beginPath()
+                p.moveTo(inset + cut, 0)
+                p.lineTo(width - inset - cut, 0)
+                p.lineTo(width - inset, cut)
+                p.lineTo(width - inset, h - cut)
+                p.lineTo(width - inset - cut, h)
+                p.lineTo(inset + cut, h)
+                p.lineTo(inset, h - cut)
+                p.lineTo(inset, cut)
+                p.closePath()
+                p.fill()
+            }
+        }
         Repeater {
             model: marker.members
             Item {
+                id: tab
                 required property string modelData
                 required property int index
-                readonly property var groupWindow: WindowDesk.all.find(t => WindowDesk.addressFor(t) === modelData) ?? null
-                readonly property string tabTitle: groupWindow?.title ?? groupWindow?.lastIpcObject?.title ?? "Window"
-                TextMetrics {
-                    id: titleWidth
-                    font.family: "JetBrainsMono Nerd Font Propo"
-                    font.pixelSize: 12
-                    font.weight: Font.DemiBold
-                    text: parent.tabTitle
+                readonly property var groupWindow: Hyprland.toplevels.values.find(t => WindowDesk.addressFor(t) === modelData) ?? null
+                readonly property string tabTitle: Demo.active
+                    ? (WindowDesk.desktopEntryFor(groupWindow)?.name ?? groupWindow?.lastIpcObject?.class ?? "Window")
+                    : (groupWindow?.title ?? groupWindow?.lastIpcObject?.title ?? "Window")
+                readonly property real tabWidth: marker.width / Math.max(1, marker.members.length)
+                readonly property bool current: marker.position === index + 1
+                x: index * tabWidth
+                width: Math.max(1, tabWidth)
+                height: marker.height - 2
+                Rectangle {
+                    visible: index > 0
+                    x: 0; y: 5; width: 1; height: 18
+                    color: Theme.rule
                 }
-                x: (index + .5) * marker.width / Math.max(1, marker.members.length) - titleWidth.advanceWidth / 2 - 83
-                y: 7
-                width: 17; height: 17
-                Image {
-                    id: appArt
-                    anchors.fill: parent
-                    source: WindowDesk.iconFor(parent.groupWindow)
-                    sourceSize: Qt.size(32, 32)
-                    fillMode: Image.PreserveAspectFit
-                    asynchronous: true
-                    visible: status === Image.Ready
-                }
-                Text {
+                Row {
+                    id: titleGroup
                     anchors.centerIn: parent
-                    visible: appArt.status !== Image.Ready
-                    text: "·"
-                    color: Theme.paperMuted
-                    font.pixelSize: 15
+                    spacing: 10
+                    Item {
+                        width: 16; height: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        Image {
+                            id: appArt
+                            anchors.fill: parent
+                            source: WindowDesk.iconFor(tab.groupWindow)
+                            sourceSize: Qt.size(32, 32)
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                            visible: status === Image.Ready
+                        }
+                        Text {
+                            anchors.centerIn: parent
+                            visible: appArt.status !== Image.Ready
+                            text: "·"
+                            color: Theme.paperMuted
+                            font.pixelSize: 15
+                        }
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: tab.tabTitle
+                        textFormat: Text.PlainText
+                        width: Math.min(implicitWidth, Math.max(1, tab.tabWidth - 160))
+                        elide: Text.ElideRight
+                        color: tab.current ? Theme.paper : Theme.paperMuted
+                        font.family: "JetBrainsMono Nerd Font Propo"
+                        font.pixelSize: 12
+                        font.weight: tab.current ? Font.Bold : Font.DemiBold
+                        renderType: Text.NativeRendering
+                    }
+                }
+                Rectangle {
+                    visible: tab.current
+                    anchors.bottom: parent.bottom
+                    anchors.horizontalCenter: titleGroup.horizontalCenter
+                    width: Math.min(98, titleGroup.implicitWidth)
+                    height: 2
+                    color: Theme.signalRed
                 }
             }
         }
         Rectangle {
-            x: (marker.position - .5) * marker.width / Math.max(1, marker.members.length) - width / 2
-            anchors.bottom: parent.bottom
-            width: 72
-            height: 2
-            color: Theme.signalRed
-            Behavior on x { SmoothedAnimation { velocity: 1200; maximumEasingTime: 130 } }
-        }
-        Rectangle {
             anchors.right: parent.right
-            anchors.rightMargin: 6
+            anchors.rightMargin: 22
             y: 5
             width: 110
             height: 19

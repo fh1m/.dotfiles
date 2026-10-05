@@ -62,7 +62,5 @@ Variants {
             NotificationsButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             SystemButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
         }
-        Rectangle { x: 51; anchors.bottom: parent.bottom; width: 38; height: 2; color: Theme.signalRed }
-
     }
 }

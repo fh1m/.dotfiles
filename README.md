@@ -29,9 +29,11 @@
 
 ## A little controlled chaos
 
-![Three floating Kitty windows with ROS code, a CUDA Compose recipe and system facts](docs/assets/floating-workstation.png)
+![Three floating Kitty windows with Mongla calibration code, a CUDA Compose recipe and system facts](docs/assets/floating-workstation.png)
 
-*ROS heartbeat. CUDA container. A terminal telling the truth. All three are real Kitty windows.*
+*[Mongla’s held-out optical-flow fit](https://github.com/fh1m/mongla_ws/blob/main/tools/flow_derot_calibrate.py). CUDA recipe. Machine facts. Real code in real Kitty windows.*
+
+<img src="docs/assets/mongla-code.png" alt="Readable close-up of Mongla's k-fold calibration code" width="72%">
 
 <table><tr><td width="50%"><img src="docs/assets/floating-system.png" alt="System controls over floating engineering windows"><br><sub>SYSTEM // controls where the hand expects them</sub></td><td width="50%"><img src="docs/assets/floating-music.png" alt="Spotify studio with artwork over floating engineering windows"><br><sub>SPOTIFY // album art belongs on the desk</sub></td></tr></table>
 
@@ -39,6 +41,10 @@ The main bar carries identity, music, time, sound, notifications and controls. T
 
 ![Folded main-display instrument rail](docs/assets/signal-ledger/main-rail.webp)
 ![Folded ScreenPad instrument rail](docs/assets/signal-ledger/screenpad-rail.webp)
+
+![Native Alacritty and Obsidian tabs, inset inside the cut window border](docs/assets/signal-ledger/tabs-v2.webp)
+
+*Alacritty ⇄ Obsidian. The tab strip stays inside the window silhouette; Hyprland still owns tab dragging and focus.*
 
 ## The second screen has a job
 
@@ -49,6 +55,10 @@ The main bar carries identity, music, time, sound, notifications and controls. T
 *A meter should answer “why?” before it makes a pretty graph.* When it doesn't, Monitor's **Capture 15s stall** keeps the evidence. [Performance notes →](docs/performance.md)
 
 ## Panels with purpose
+
+<table><tr><td width="48%"><img src="docs/assets/operator.png" alt="Operator deck with live CPU, available RAM, CUDA jobs and uptime"></td><td><b>FIELD / R-01.</b><br>The tag says “no magic” until CUDA gets busy. Middle click opens a field report: CPU, available RAM, CUDA jobs, uptime and lab tools. Left click visits <a href="https://github.com/fh1m">fh1m on GitHub</a>; right click finds XKCD.</td></tr></table>
+
+<details><summary>Right click for a small research break</summary><p><img src="docs/assets/comic.png" alt="XKCD comic in the shell’s intermission panel" width="740"><br><sub><a href="https://xkcd.com/3306/">XKCD #3306</a> by Randall Munroe, CC BY-NC 2.5. A lab without an intermission is just a long incident report.</sub></p></details>
 
 <table><tr><td><img src="docs/assets/spotify.png" alt="Spotify studio"><b>Music</b><br>Queue, library, devices, lyrics.</td><td><img src="docs/assets/docker.png" alt="Docker robotics lab"><b>Robotics</b><br>Containers, images, tmux, ARM, CUDA.</td></tr><tr><td><img src="docs/assets/calendar.png" alt="Calendar and time manager"><b>Time</b><br>Calendar, tasks, reminders, Pomodoro.</td><td><img src="docs/assets/sound.png" alt="Sound control"><b>Sound</b><br>Devices, profiles, per-app levels.</td></tr><tr><td><img src="docs/assets/weather.png" alt="Weather forecast"><b>Weather</b><br>Now, next, and what came before.</td><td><img src="docs/assets/system.png" alt="System control"><b>System</b><br>Hardware, network, packages, power.</td></tr></table>
 
@@ -65,13 +75,21 @@ The main bar carries identity, music, time, sound, notifications and controls. T
 | `Alt+grave` | Other windows of this app. |
 | `Super+Alt+G`, then `Super+Alt+H/L` | Group windows into native, titled tabs (create target group first). |
 | App shortcut | Focus its existing window, even across workspaces; add Shift for a new one. |
-| Badge: left / right click | Operator identity / latest XKCD. |
+| Field tag: left / middle / right click | GitHub / operator deck / latest XKCD. |
 | Clock: left / right click | Time manager / weather. |
 | Training mode | Move managed graphics launches to Intel; leave the RTX to CUDA. |
 
 The launcher keeps native app icons. Search finds open windows **and** installed apps. The clipboard remembers text, screenshots and copied file paths locally, with image previews; its contents never enter this repo.
 
 ## Under the shell
+
+| Field measurement | What changed |
+|---|---|
+| **22.6% → 6.6%** Intel render share | Kitty → Alacritty for the same animated terminal test. Kitty remains for the remotely controlled deck. |
+| **286/s → 0/s** unused ScreenPad I²C interrupts | Detached the disabled touch controller; display and 100% brightness stayed working. |
+| **4.35% global / 0.00% user** I/O `full` | Traced the apparent “disk stall” to Intel display fences; the NVMe was only 0.225% busy in that sample. |
+
+These are local workload samples, not universal speedup claims. [Methods and limits →](docs/performance.md)
 
 - **One animation owner per surface.** Widgets enter in QML; Hyprland does not animate them again.
 - **Two GPU paths, deliberate jobs.** Intel composes the dual displays and decodes supported video; NVIDIA renders selected apps and trains models.
