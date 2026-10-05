@@ -63,7 +63,7 @@ The main bar carries identity, music, time, sound, notifications and controls. T
 | `Super+A` | The spatial workspace overview. |
 | `Alt+Tab` / `Super+Tab` | Windows / workspaces, with live previews. |
 | `Alt+grave` | Other windows of this app. |
-| `Super+Alt+G`, then `Super+Alt+H/L` | Group windows into native, titled tabs. |
+| `Super+Alt+G`, then `Super+Alt+H/L` | Group windows into native, titled tabs (create target group first). |
 | App shortcut | Focus its existing window, even across workspaces; add Shift for a new one. |
 | Badge: left / right click | Operator identity / latest XKCD. |
 | Clock: left / right click | Time manager / weather. |
