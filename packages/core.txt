@@ -55,3 +55,6 @@ json-c
 openssl
 libpulse
 dbus
+
+# Learning vault validation (safe YAML, no plugin database)
+python-yaml

@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def render(data, home, hardware):
     try:
-        text = data.decode().replace('@HOME@', str(home))
+        text = data.decode().replace('@HOME@', str(home)).replace('/home/fh1m/', str(home) + '/')
     except UnicodeError:
         return data
     if hardware == 'generic' and text.startswith('-- Personal setup layered'):
@@ -30,6 +30,9 @@ def install(home, apply=False, hardware='generic'):
         relative = source.relative_to(ROOT / 'home')
         dest = home / relative
         data = render(source.read_bytes(), home, hardware)
+        linked_helper = home / '.config/quickshell/wrayth/external' / source.name
+        if relative.parts[:2] == ('.local', 'bin') and dest.is_symlink() and dest.resolve() == linked_helper.resolve() and linked_helper.is_file() and dest.read_bytes() == data:
+            continue
         if dest.is_file() and not dest.is_symlink() and dest.read_bytes() == data:
             continue
         changes.append(str(relative))

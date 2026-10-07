@@ -80,3 +80,8 @@ python3 scripts/doctor.py
 ```
 
 [Read the install guide](docs/installation.md) before applying the UX581GV display preset. Credentials, browser profiles, device pairings, and clipboard history stay out of this repo.
+
+### Oasis — learn anything, build something
+
+Subject vaults, small prerequisite gates, real experiments and reconstructive reviews.
+Obsidian holds the evidence; Neovim stays the workbench. [Learning workflow →](docs/learning-system/README.md)

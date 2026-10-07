@@ -1,0 +1,28 @@
+filters:
+  and:
+    - 'file.ext == "md"'
+    - '!file.inFolder("92 Templates")'
+    - 'type == "source"'
+views:
+  - type: table
+    name: Queue
+    filters:
+      and:
+        - 'status == "inbox" || status == "skimmed" || status == "active"'
+    order:
+      - file.name
+      - note.source_kind
+      - note.status
+      - note.serves
+    limit: 12
+  - type: table
+    name: References
+    filters:
+      and:
+        - 'status == "canonical" || status == "extracted"'
+    order:
+      - file.name
+      - note.source_kind
+      - note.status
+      - note.serves
+    limit: 12

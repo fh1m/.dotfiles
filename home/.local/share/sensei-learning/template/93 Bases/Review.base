@@ -1,0 +1,27 @@
+filters:
+  and:
+    - 'file.ext == "md"'
+    - '!file.inFolder("92 Templates")'
+views:
+  - type: table
+    name: Due
+    filters:
+      and:
+        - '!review.isEmpty() && date(review) <= today()'
+    order:
+      - file.name
+      - note.review
+      - note.confidence
+      - note.domain
+    limit: 12
+  - type: table
+    name: Scheduled
+    filters:
+      and:
+        - '!review.isEmpty()'
+    order:
+      - file.name
+      - note.review
+      - note.confidence
+      - note.domain
+    limit: 12

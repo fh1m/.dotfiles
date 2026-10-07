@@ -1,0 +1,3 @@
+body { --background-primary: #090807; --background-secondary: #141210; --text-normal: #e8e2da; --text-muted: #a9a29a; --interactive-accent: #f23d70; --link-color: #f23d70; --color-accent: #f23d70; }
+.callout[data-callout="failure"], .callout[data-callout="checkpoint"] { --callout-color: 242,61,112; }
+.markdown-rendered h1, .markdown-rendered h2 { letter-spacing: 0; }

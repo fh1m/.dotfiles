@@ -1,0 +1,26 @@
+filters:
+  and:
+    - 'file.ext == "md"'
+    - '!file.inFolder("92 Templates")'
+    - 'type == "project"'
+views:
+  - type: table
+    name: Active
+    filters:
+      and:
+        - 'status != "complete"'
+    order:
+      - file.name
+      - note.status
+      - note.domain
+    limit: 12
+  - type: table
+    name: All builds
+    filters:
+      and:
+        - 'true'
+    order:
+      - file.name
+      - note.status
+      - note.domain
+    limit: 12

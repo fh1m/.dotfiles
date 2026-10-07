@@ -1,0 +1,42 @@
+filters:
+  and:
+    - 'file.ext == "md"'
+    - '!file.inFolder("92 Templates")'
+    - 'type == "prerequisite"'
+views:
+  - type: table
+    name: Active gates
+    filters:
+      and:
+        - 'prerequisite_class == "gate" && status != "passed"'
+    order:
+      - file.name
+      - note.prerequisite_class
+      - note.status
+      - note.confidence
+      - note.serves
+    limit: 12
+  - type: table
+    name: Parallel
+    filters:
+      and:
+        - 'prerequisite_class == "parallel"'
+    order:
+      - file.name
+      - note.prerequisite_class
+      - note.status
+      - note.confidence
+      - note.serves
+    limit: 12
+  - type: table
+    name: Deep descent
+    filters:
+      and:
+        - 'prerequisite_class == "deep-descent"'
+    order:
+      - file.name
+      - note.prerequisite_class
+      - note.status
+      - note.confidence
+      - note.serves
+    limit: 12

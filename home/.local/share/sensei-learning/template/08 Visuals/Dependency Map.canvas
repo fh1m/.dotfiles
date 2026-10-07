@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    {
+      "id": "capability",
+      "type": "file",
+      "file": "00 Home/Current Frontier.md",
+      "x": 0,
+      "y": 0,
+      "width": 430,
+      "height": 380
+    },
+    {
+      "id": "roles",
+      "type": "text",
+      "text": "GATE \u2192 next meaningful build\nPARALLEL \u2192 learn through that build\nDEEP DESCENT \u2192 explore when useful\n\nAdd real prerequisite notes; do not invent a curriculum.",
+      "x": 500,
+      "y": 0,
+      "width": 430,
+      "height": 280
+    }
+  ],
+  "edges": [
+    {
+      "id": "classify",
+      "fromNode": "capability",
+      "fromSide": "right",
+      "toNode": "roles",
+      "toSide": "left",
+      "label": "classify the next dependency"
+    }
+  ]
+}

@@ -1,0 +1,378 @@
+#!/usr/bin/env python3
+"""Local first-principles vault factory and navigation. No daemon or publishing."""
+import argparse
+from datetime import date, datetime
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from urllib.parse import urlencode
+import yaml
+
+HOME = Path.home()
+SOURCE = Path(__file__).resolve()
+TEMPLATE = HOME / '.local/share/sensei-learning/template'
+if not TEMPLATE.exists():
+    candidate = SOURCE.parents[3] / '.local/share/sensei-learning/template'
+    if candidate.exists(): TEMPLATE = candidate
+# Executing directly from the repository uses the same maintained template.
+if not TEMPLATE.exists(): TEMPLATE = SOURCE.parent.parent / 'share/sensei-learning/template'
+CONFIG = HOME / '.config/sensei-learning/config.json'
+DEFAULT_ROOT = HOME / 'Study/Obsidian/Learning'
+VOLATILE = re.compile(r'(^|/)(workspace[^/]*\.json|workspaces\.json|\.cache|cache|plugins|credentials[^/]*|[^/]*token[^/]*\.json)(/|$)|\.(sqlite\w*|db|log)$')
+
+def store(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temp = tempfile.mkstemp(dir=path.parent, prefix='.learning-')
+    try:
+        with os.fdopen(fd, 'w') as f: json.dump(data, f, indent=2); f.write('\n')
+        os.replace(temp, path)
+    finally:
+        if os.path.exists(temp): os.unlink(temp)
+
+def config(): return json.loads(CONFIG.read_text()) if CONFIG.exists() else {}
+
+def vault(selected=None):
+    c = config(); chosen = selected or c.get('active_vault')
+    if not chosen: raise ValueError('No active vault. Run sensei-learn use PATH.')
+    p = Path(chosen).expanduser()
+    if not p.is_dir():
+        registry = HOME / '.config/obsidian/obsidian.json'
+        app = json.loads(registry.read_text()) if registry.exists() else {}
+        matches = [Path(x['path']) for x in app.get('vaults', {}).values() if Path(x['path']).name == chosen]
+        if len(matches) != 1: raise ValueError('Use an unambiguous vault path: ' + chosen)
+        p = matches[0]
+    return p.resolve()
+
+def system(root):
+    manifest = root / '94 Meta/System.json'
+    if manifest.exists(): return json.loads(manifest.read_text())
+    # Existing vaults remain usable without migrating their folders.
+    home = next((p for p in ['Oasis.md','Start here.md','Home.md','Untitled.md'] if (root/p).is_file()), None)
+    if home is None: home = next((str(p.relative_to(root)) for p in root.glob('*.md')), 'Oasis.md')
+    return {'managed':False,'home':home,'frontier':home,'templates':'Templates','daily':'Daily','types':{}}
+
+def inventory():
+    registry=HOME/'.config/obsidian/obsidian.json'
+    app=json.loads(registry.read_text()) if registry.exists() else {}
+    paths={Path(v['path']).resolve() for v in app.get('vaults',{}).values() if Path(v['path']).is_dir()}
+    active=config().get('active_vault','')
+    return [{'name':p.name,'path':str(p),'managed':(p/'94 Meta/System.json').is_file(),'active':str(p)==active}
+            for p in sorted(paths,key=lambda x:x.name.lower())
+            if p!=HOME/'Downloads' and 'Archives' not in p.parts and (p/'.obsidian').is_dir()]
+
+
+def substitute(text, subject='', goal='', title=''):
+    return (text.replace('{{subject_yaml}}', json.dumps(subject, ensure_ascii=False))
+        .replace('{{subject}}', subject).replace('{{goal}}', goal)
+        .replace('{{title}}', title).replace('{{date:YYYY-MM-DD}}', date.today().isoformat()))
+
+def note_text(text):
+    if not text.startswith('---\n'): return {}, text
+    parts = text.split('\n---', 1)
+    if len(parts) != 2: raise ValueError('Unclosed frontmatter')
+    props = yaml.safe_load(parts[0][4:]) or {}
+    if not isinstance(props, dict): raise ValueError('Frontmatter must be a mapping')
+    return props, parts[1]
+
+def resolve(root, target, current=None, files=None):
+    target = target.split('|', 1)[0].split('#', 1)[0].strip()
+    if not target: return None
+    files = files or list(root.rglob('*.md'))
+    if Path(target).is_absolute() or '..' in Path(target).parts: return None
+    for base in [root, current.parent if current else root]:
+        for suffix in ['', '.md']:
+            p = base / (target + suffix)
+            if p.is_file(): return p.resolve()
+    candidates = [p.resolve() for p in files if p.stem == Path(target).stem]
+    return candidates[0] if len(candidates) == 1 else None
+
+def doctor(root, offline=False):
+    errors, warnings = [], []
+    try: meta = system(root)
+    except (OSError, ValueError) as e: return {'ok': False, 'errors': ['Missing/invalid system manifest: ' + str(e)], 'warnings': []}
+    if meta.get('managed') is False: return {'ok':True,'vault':str(root),'errors':[],'warnings':['Existing vault: no Oasis structure imposed. Use init for a structured new subject.']}
+    for folder in meta['directories']:
+        if not (root / folder).is_dir(): errors.append('Missing directory: ' + folder)
+    for key in ['home', 'frontier']:
+        if not (root / meta[key]).is_file(): errors.append('Missing ' + key + ': ' + meta[key])
+    md = [p for p in root.rglob('*.md') if '.git' not in p.parts and '.obsidian' not in p.parts]
+    files = [p for p in root.rglob('*') if p.is_file() and '.git' not in p.parts and '.obsidian' not in p.parts]
+    graph = {}; properties = {}
+    for p in md:
+        rel = str(p.relative_to(root)); template = rel.startswith(meta['templates'] + '/') or rel.startswith('92 Templates/')
+        try: props, body = note_text(p.read_text()); properties[p] = props
+        except (ValueError, yaml.YAMLError) as e: errors.append(rel + ': ' + str(e)); continue
+        if template: continue
+        c = props.get('confidence')
+        if c is not None and (type(c) is not int or not 0 <= c <= 5): errors.append(rel + ': confidence must be integer 0–5')
+        # Exclude code examples from link auditing; they are documentation, not navigation.
+        body = re.sub(r'```.*?```', '', body, flags=re.S)
+        body = re.sub(r'`[^`\n]+`', '', body)
+        for link in re.findall(r'\[\[([^\]]+)\]\]', body):
+            if not resolve(root, link, p, files):
+                message = rel + ': unresolved [[' + link + ']]'
+                critical = rel.startswith('00 Home/') or rel.startswith('02 Courses/')
+                (errors if critical else warnings).append(message)
+        targets = []
+        for key in ['depends_on', 'gates', 'parallel', 'deep_descent']:
+            value = props.get(key, []) or []
+            if not isinstance(value, list): errors.append(rel + ': ' + key + ' must be a link list'); continue
+            for target in value:
+                dep = resolve(root, str(target).strip('[]'), p, md)
+                if not dep: errors.append(rel + ': missing dependency ' + str(target))
+                else: targets.append(dep)
+        graph[p.resolve()] = targets
+    visiting, visited = set(), set()
+    def visit(p):
+        if p in visiting: errors.append('Prerequisite cycle at ' + str(p.relative_to(root))); return
+        if p in visited: return
+        visiting.add(p)
+        for dep in graph.get(p, []): visit(dep)
+        visiting.remove(p); visited.add(p)
+    for p in graph: visit(p)
+    for critical in [Path(meta['home']).stem, Path(meta['frontier']).stem]:
+        matches = [p for p in md if p.stem == critical and not str(p.relative_to(root)).startswith(meta['templates'] + '/')]
+        if len(matches) > 1: errors.append('Ambiguous critical filename: ' + critical)
+    for p in files:
+        if p.suffix == '.base':
+            try:
+                base = yaml.safe_load(p.read_text())
+                if not isinstance(base, dict) or not base.get('views'): errors.append(str(p.relative_to(root)) + ': missing views')
+            except yaml.YAMLError as e: errors.append(str(p.relative_to(root)) + ': ' + str(e))
+        if p.suffix == '.canvas':
+            try:
+                canvas = json.loads(p.read_text()); nodes = {n['id'] for n in canvas['nodes']}
+                for n in canvas['nodes']:
+                    if n.get('type') == 'file' and not (root / n['file']).is_file(): errors.append('Canvas missing file: ' + n['file'])
+                for e in canvas.get('edges', []):
+                    if e['fromNode'] not in nodes or e['toNode'] not in nodes: errors.append('Canvas edge has missing node')
+            except (ValueError, KeyError) as e: errors.append(str(p.relative_to(root)) + ': ' + str(e))
+    for name in ['templates.json', 'daily-notes.json']:
+        try:
+            settings = json.loads((root / '.obsidian' / name).read_text())
+            folder = root / settings['folder']
+            if not folder.is_dir(): errors.append(name + ': configured folder missing')
+            if name == 'templates.json' and not list(folder.glob('*.md')): errors.append('Template directory empty')
+            if settings.get('template') and not resolve(root, settings['template'], files=md): errors.append('Daily template missing')
+        except (ValueError, KeyError, OSError) as e: errors.append(name + ': ' + str(e))
+    if (root / '.git').exists():
+        r = subprocess.run(['git', '-C', str(root), 'ls-files', '-z'], capture_output=True, text=True, check=True)
+        errors += ['Tracked volatile state: ' + p for p in r.stdout.split('\0') if p and VOLATILE.search(p)]
+        r = subprocess.run(['git', '-C', str(root), 'status', '--porcelain'], capture_output=True, text=True, check=True)
+        if r.stdout: warnings.append('Git has uncommitted work (preserved, not an error).')
+    tools = {name: shutil.which(name) is not None for name in ['obsidian', 'git', 'python3', 'fzf']}
+    if not offline and not tools['obsidian']: errors.append('Obsidian is not installed')
+    return {'ok': not errors, 'vault': str(root), 'notes': len(md), 'errors': sorted(set(errors)), 'warnings': sorted(set(warnings)), 'tools': tools}
+
+def register(root):
+    path = HOME / '.config/obsidian/obsidian.json'
+    app = json.loads(path.read_text()) if path.exists() else {}
+    if any(Path(v['path']).resolve() == root for v in app.get('vaults', {}).values()): return
+    # Register through the running app so its cached registry cannot undo us.
+    # This inspected Electron bridge is also used by Obsidian's vault chooser.
+    if shutil.which('obsidian'):
+        code = 'window.electron.ipcRenderer.sendSync("vault-open",' + json.dumps(str(root)) + ',false)'
+        result = subprocess.run(['obsidian','eval','code='+code],capture_output=True,text=True,timeout=20)
+        if result.returncode == 0 and result.stdout.strip() in ['=> true','true']:
+            return
+        # An installed/running app must not have its registry rewritten underneath it.
+        running = subprocess.run(['pgrep','-f','[e]lectron.*obsidian|[e]lectron.*app.asar'],capture_output=True)
+        if running.returncode == 0:
+            raise ValueError('Vault created safely, but app registration failed. Open this folder in Obsidian: '+str(root))
+    import hashlib
+    app.setdefault('vaults', {})[hashlib.sha256(str(root).encode()).hexdigest()[:16]] = {'path': str(root), 'ts': int(datetime.now().timestamp()*1000), 'open': False}
+    if path.exists():
+        backup = HOME / '.local/state/sensei-learning/backups' / ('registry-' + datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
+        backup.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(path, backup); backup.chmod(0o600)
+    store(path, app)
+
+def initialize(args):
+    title = args.subject.strip()
+    if not title or title in ['.', '..'] or '/' in title or '\\' in title or any(ord(c) < 32 for c in title): raise ValueError('Use a subject title, not a path.')
+    root = Path(args.dest).expanduser().absolute() if args.dest else Path(config().get('vault_root', DEFAULT_ROOT)) / title
+    if root.exists() or root.is_symlink(): raise ValueError('Destination already exists; nothing overwritten: ' + str(root))
+    if not TEMPLATE.is_dir(): raise ValueError('Template not installed: ' + str(TEMPLATE))
+    if args.dry_run: print(json.dumps({'destination': str(root), 'subject': title, 'git': not args.no_git, 'template': str(TEMPLATE)}, indent=2)); return
+    root.parent.mkdir(parents=True, exist_ok=True)
+    stage = Path(tempfile.mkdtemp(prefix='.learning-new-', dir=root.parent))
+    try:
+        shutil.copytree(TEMPLATE, stage, dirs_exist_ok=True)
+        meta = system(stage)
+        for f in meta['directories']: (stage / f).mkdir(parents=True, exist_ok=True)
+        for p in stage.rglob('*'):
+            if p.is_file() and p.suffix in ['.md', '.canvas', '.base', '.json', '.css']:
+                text = p.read_text().replace('{{subject_yaml}}', json.dumps(title, ensure_ascii=False)).replace('{{subject}}', title).replace('{{goal}}', args.goal or 'Choose one meaningful capability to build and demonstrate.')
+                p.write_text(text)
+        result = doctor(stage, offline=True)
+        if not result['ok']: raise ValueError('Template validation failed: ' + json.dumps(result['errors']))
+        if not args.no_git:
+            subprocess.run(['git', 'init', '-q', '-b', 'main', str(stage)], check=True)
+        os.rename(stage, root)
+    finally:
+        if stage.exists(): shutil.rmtree(stage)
+    register(root.resolve()); c = config(); c['active_vault'] = str(root.resolve()); store(CONFIG, c)
+    print(root)
+
+def adopt(root):
+    if (root/'94 Meta/System.json').exists(): raise ValueError('Already structured; nothing overwritten')
+    backup=HOME/'.local/state/sensei-learning/backups'/('adopt-'+datetime.now().strftime('%Y%m%d-%H%M%S-%f'))/root.name
+    backup.parent.mkdir(parents=True,exist_ok=True);backup.parent.chmod(0o700)
+    shutil.copytree(root,backup)
+    meta=system(TEMPLATE)
+    for directory in meta['directories']:(root/directory).mkdir(parents=True,exist_ok=True)
+    for source in TEMPLATE.rglob('*'):
+        if not source.is_file():continue
+        rel=source.relative_to(TEMPLATE);dest=root/rel
+        if dest.exists():continue
+        dest.parent.mkdir(parents=True,exist_ok=True)
+        text=source.read_text().replace('{{subject_yaml}}',json.dumps(root.name)).replace('{{subject}}',root.name).replace('{{goal}}','Choose the capability you want to demonstrate; existing notes stay where they are.')
+        dest.write_text(text)
+    # Preserve existing Templates and Daily Notes preferences; add the new prompt
+    # templates to their configured folder instead of changing it underneath users.
+    settings=json.loads((root/'.obsidian/templates.json').read_text());folder=settings.get('folder','92 Templates')
+    if folder!='92 Templates':
+        (root/folder).mkdir(parents=True,exist_ok=True)
+        for source in (TEMPLATE/'92 Templates').glob('*.md'):
+            target=root/folder/source.name
+            if not target.exists():shutil.copy2(source,target)
+        meta['templates']=folder
+    for base in (root/'93 Bases').glob('*.base'):
+        text=base.read_text()
+        if folder!='92 Templates': text=text.replace('!file.inFolder("92 Templates")','!file.inFolder("92 Templates") && !file.inFolder('+json.dumps(folder)+')')
+        base.write_text(text)
+    (root/'94 Meta/System.json').write_text(json.dumps(meta,indent=2)+'\n')
+    # Existing leading Markdown rules can look like malformed YAML. Never alter
+    # user prose automatically; doctor exposes that problem for repair.
+    print(json.dumps({'vault':str(root),'backup':str(backup),'preserved_existing_files':True}))
+
+def cli(root, command, *args):
+    # Exact path verification prevents operating in another vault with the same name.
+    registry = HOME / '.config/obsidian/obsidian.json'
+    entries = json.loads(registry.read_text()).get('vaults', {}) if registry.exists() else {}
+    identities = [key for key,value in entries.items() if Path(value['path']).resolve() == root.resolve()]
+    selector = identities[0] if len(identities) == 1 else root.name
+    # A newly opened vault may not have its CLI listener ready yet. Retry only
+    # the read-only identity handshake; never replay a mutating command.
+    for attempt in range(8):
+        check = subprocess.run(['obsidian', 'vault=' + selector, 'vault', 'info=path'], capture_output=True, text=True, timeout=20)
+        output = check.stdout.strip()
+        if output or check.returncode: break
+        if attempt < 7: time.sleep(0.2)
+    if check.returncode or not output or 'not enabled' in output or 'Error' in output:
+        raise ValueError('Obsidian CLI unavailable: ' + output + check.stderr.strip())
+    if Path(output).resolve() != root.resolve(): raise ValueError('CLI selected a different vault; use a unique vault name.')
+    result = subprocess.run(['obsidian', 'vault=' + selector, command, *args], capture_output=True, text=True, timeout=20)
+    if result.returncode or result.stdout.startswith('Error:') or result.stderr.strip():
+        raise ValueError(result.stdout.strip() or result.stderr.strip() or 'Obsidian command failed')
+    return result.stdout.strip()
+
+def navigate(root, relative):
+    if not (root / relative).is_file(): raise ValueError('Note missing: ' + str(relative))
+    print(cli(root, 'open', 'path=' + str(relative))); return 0
+
+def snapshot(root):
+    # Obsidian's in-memory index supplies state: no recursive shell polling.
+    code = """(async()=>{
+      const meta=METADATA;
+      const frontier=app.vault.getAbstractFileByPath(meta.frontier);
+      const content=frontier?await app.vault.cachedRead(frontier):'';
+      const files=app.vault.getMarkdownFiles().filter(f=>!f.path.startsWith(meta.templates+'/')&&!f.path.startsWith('92 Templates/'));
+      const props=f=>app.metadataCache.getFileCache(f)?.frontmatter||{};
+      const notes=files.map(f=>({path:f.path,name:f.basename,...props(f)}));
+      const due=notes.filter(n=>n.review&&String(n.review).slice(0,10)<=new Date().toLocaleDateString('en-CA'));
+      const fp=frontier?props(frontier):{};
+      return JSON.stringify({vault:app.vault.getName(),path:app.vault.adapter.getBasePath(),frontier:content,
+        question:fp.question||'',next_experiment:fp.next_experiment||'',active_project:fp.active_project||'',
+        gates:notes.filter(n=>n.type==='prerequisite'&&n.prerequisite_class==='gate'&&n.status!=='passed'),
+        reviews:due,questions:notes.filter(n=>n.type==='question'&&n.status!=='resolved'),
+        projects:notes.filter(n=>n.type==='project'&&n.status!=='complete'),
+        labs:notes.filter(n=>['lab','ml-experiment','robotics-experiment','code-investigation','paper-reconstruction'].includes(n.type)&&['planned','active','working','seed'].includes(n.status)),
+        sources:notes.filter(n=>n.type==='source'&&['inbox','skimmed','active'].includes(n.status))});
+    })()"""
+    code=code.replace('METADATA',json.dumps(system(root)))
+    value = cli(root, 'eval', 'code=' + code)
+    if value.startswith('=> '): value = value[3:]
+    if value.startswith('"'): value = json.loads(value)
+    result=json.loads(value);result['vaults']=inventory();return result
+
+def new_note(root, kind, title):
+    meta = system(root); folder = meta['types'][kind]
+    if not title.strip() or any(c in title for c in ['/', '\\', '\n', '\r']) or title in ['.', '..']: raise ValueError('Use a note title, not a path')
+    choices = []
+    for p in (root / meta['templates']).glob('*.md'):
+        props, _ = note_text(p.read_text())
+        if props.get('type') == kind: choices.append(p)
+    if len(choices) != 1: raise ValueError('Need exactly one template for type: ' + kind)
+    target = root / folder / (title + '.md'); target.parent.mkdir(parents=True, exist_ok=True)
+    text = substitute(choices[0].read_text(), title=title)
+    with target.open('x') as f: f.write(text)
+    return target
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
+    p = commands.add_parser('init'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt']:
+        p = commands.add_parser(cmd); p.add_argument('--vault')
+        if cmd == 'doctor': p.add_argument('--offline', action='store_true')
+        if cmd == 'use': p.add_argument('path')
+        if cmd == 'capture': p.add_argument('text', nargs='?'); p.add_argument('--agent', action='store_true')
+        if cmd == 'new': p.add_argument('kind'); p.add_argument('title'); p.add_argument('--open', action='store_true')
+        if cmd == 'search': p.add_argument('query', nargs='?', default='')
+        if cmd == 'cli': p.add_argument('obsidian_command'); p.add_argument('options', nargs=argparse.REMAINDER)
+    args = parser.parse_args()
+    try:
+        if args.command == 'init': initialize(args); return 0
+        if args.command == 'use':
+            root = vault(args.path); system(root); c = config(); c['active_vault'] = str(root); store(CONFIG,c); print(root); return 0
+        if args.command == 'vaults': print(json.dumps(inventory(),ensure_ascii=False)); return 0
+        root = vault(args.vault); meta = system(root)
+        if args.command == 'backup': return subprocess.run([str(HOME/'.local/bin/sensei-learning-backup'),'--vault',str(root)]).returncode
+        if args.command == 'adopt': adopt(root); return 0
+        if args.command == 'status': print(json.dumps(snapshot(root), ensure_ascii=False)); return 0
+        if args.command == 'cli': print(cli(root,args.obsidian_command,*args.options)); return 0
+        if args.command == 'due': print(cli(root,'base:query','path=93 Bases/Review.base','view=Due','format=md')); return 0
+        if args.command == 'gates': print(cli(root,'base:query','path=93 Bases/Prerequisites.base','view=Active gates','format=md')); return 0
+        if args.command == 'tasks': print(cli(root,'tasks','todo','verbose')); return 0
+        if args.command == 'doctor':
+            result = doctor(root, args.offline)
+            if not args.offline:
+                try: result['native_cli_path'] = cli(root,'vault','info=path')
+                except ValueError as error: result['errors'].append(str(error)); result['ok']=False
+            print(json.dumps(result, indent=2)); return 0 if result['ok'] else 1
+        if args.command in ['open','frontier']: return navigate(root, meta['home' if args.command == 'open' else 'frontier'])
+        if args.command == 'today':
+            path = root / meta['daily'] / (date.today().isoformat()+'.md')
+            print(cli(root,'daily')); return 0
+        if args.command == 'capture':
+            text = args.text if args.text is not None else sys.stdin.read()
+            if not text.strip(): raise ValueError('Capture text is empty')
+            folder = root / ('90 Inbox/Agent Drops' if args.agent else '90 Inbox'); folder.mkdir(parents=True,exist_ok=True)
+            p = folder / (datetime.now().strftime('%Y%m%d-%H%M%S-%f') + '.md')
+            content = '---\ntype: capture\nstatus: inbox\ncreated: '+date.today().isoformat()+'\n---\n\n'+text+'\n'
+            code = '(async()=>{const file=await app.vault.create('+json.dumps(str(p.relative_to(root)))+','+json.dumps(content)+');return file.path})()'
+            print(cli(root,'eval','code='+code))
+            print(p); return 0
+        if args.command == 'new':
+            kind = args.kind; title = args.title
+            if kind not in meta['types']: raise ValueError('Unknown note type')
+            if any(c in title for c in ['/', '\\', '\n', '\r']) or title in ['', '.', '..']: raise ValueError('Use a note title, not a path')
+            path = root / meta['types'][kind] / (title + '.md')
+            if path.exists(): raise ValueError('Note exists; not overwritten')
+            choices = [p for p in (root/meta['templates']).glob('*.md') if note_text(p.read_text())[0].get('type') == kind]
+            if len(choices)!=1: raise ValueError('Need exactly one template for type: '+kind)
+            print(cli(root,'create','path='+str(path.relative_to(root)), 'template='+choices[0].stem))
+            print(path)
+            return navigate(root,path.relative_to(root)) if args.open else 0
+        if args.command == 'search':
+            notes = sorted(str(p.relative_to(root)) for p in root.rglob('*.md') if '.git' not in p.parts and '.obsidian' not in p.parts)
+            r = subprocess.run(['fzf','--query',args.query,'--prompt','Learn › '], input='\n'.join(notes),text=True,stdout=subprocess.PIPE)
+            return navigate(root,r.stdout.strip()) if r.returncode == 0 else 0
+    except (ValueError,OSError,KeyError,yaml.YAMLError,subprocess.CalledProcessError,subprocess.TimeoutExpired) as e:
+        print('sensei-learn: '+str(e),file=sys.stderr);return 1
+if __name__ == '__main__': sys.exit(main())

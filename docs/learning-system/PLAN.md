@@ -8,8 +8,8 @@ remain untouched. This isolated feature worktree starts at d0b3a9b.
 
 Canonical seed: `~/Downloads/how sand becomes magic`; it has a local Git history,
 learner-written answers and the open Obsidian registration. The extracted ZIP
-copy is older. Bases, Canvas, daily notes and templates are configured. CLI probe
-reports **not enabled**; URI navigation is the supported fallback. Existing four
+copy is older. Bases, Canvas, daily notes and templates are configured. CLI initially disabled; user enabled it. Native CLI now verified at 1.13.7.
+All navigation and note operations use native CLI with vault-path checks. Existing four
 community plugins are retained, no new plugins planned. Python YAML is installed.
 
 ## Architecture / decisions
@@ -17,7 +17,8 @@ Keep the numbered seed ontology and learner prose. Extend with Projects, Real
 World, Future Branches and Meta. A subject-independent maintained template is
 installed through the existing `home/` deployment. `sensei-learn` is a small Python
 CLI; local state is outside dotfiles. Core Bases query Markdown, no separate DB,
-daemon, automatic mastery, generated encyclopedia or Quickshell dashboard.
+polling daemon, automatic mastery or generated encyclopedia. Oasis is a compact
+subject selector and on-demand frontier panel, not a second note database.
 Gate/parallel/deep-descent are dependency roles, not three giant curricula.
 New vaults are private local Git; never configure a remote automatically.
 
@@ -31,12 +32,12 @@ existing vault Git dirt. Full original backup supports rollback.
 
 ## Milestones / done when
 - [x] M1 discovery: canonical copy, CLI, deployment, original changes and backup identified.
-- [ ] M2 factory: generic subject, doctor, dry-run/refusal/idempotency tests pass.
-- [ ] M3 CS: preserve learner answers; clear next build, classified prerequisites,
+- [x] M2 factory: generic subject, doctor, dry-run/refusal/idempotency tests pass.
+- [x] M3 CS: preserve learner answers; clear next build, classified prerequisites,
   linked project/real-world/branch, critical navigation repaired and doctor passes.
-- [ ] M4 integration: launcher, Neovim actions, Alt+Shift window arrows and editor
+- [x] M4 integration: launcher, Neovim actions, Alt+Shift window arrows and editor
   transparency deployed; input and live app checks pass.
-- [ ] M5 handoff: concise docs, isolated commits, exact staged secret/state review,
+- [x] M5 handoff: concise docs, isolated commits, exact staged secret/state review,
   feature branch pushed without unrelated changes or private subject notes.
 
 ## Intended changes
@@ -53,3 +54,38 @@ volatile state), installer test/idempotency in temporary HOME, actual Obsidian
 URI open and Bases inspection, Neovim action load, isolated tmux modified-key
 transmission. No invented experiments, grades, percentages or measured results.
 Update this ledger as milestones pass; report remaining limits honestly.
+
+## Steering incorporated
+Learning center named **Oasis**. Research 11 sources/people; native bar/dropdown,
+Neovim actions and keyboard workflows; no polling daemon. Existing software,
+robotics and ML work receives experiment scaffolds, not celebrity impersonation.
+
+## Executed refinement
+CS relocated with compatibility link; starter folder/ZIP archived. Workbench and
+Noesis backed up and additively adopted; their original folders and notes remain.
+Subjects is the widget's default view; CS has no privileged role. Native CLI
+registration uses the inspected vault-chooser bridge, avoiding cached-registry
+races. ID plus path verification resolves duplicate archive names safely.
+Obsidian reading font 17px; live zoom 115% verified. No new community plugins.
+Daily private snapshot timer enabled; checksum restore verified in a disposable
+destination. Backup snapshots exclude runtime/plugin/Git state; off-device backup
+requires an explicit second trusted device.
+
+## Validation observed
+Ten factory tests pass; temporary native-CLI vault created, templates expanded,
+Bases returned new experiment rows, and registry/folder test state removed.
+Native metadata cache reported no broken Home links. Three real vaults pass
+structural doctor. Neovim Oasis command/mappings load; tmux uses M-S arrows;
+Hyprland configerrors empty. Live ScreenPad composition inspected via screenshot.
+Installer tests exposed two pre-existing portability/idempotency bugs: hard-coded
+home paths and relinked helper reporting. Both repaired; temporary-HOME repeat
+install now passes without changes. No whole-home reinstall was performed.
+
+## Handoff state
+Task-only implementation committed on the feature branch; private CS structural
+upgrade committed locally as 30b88a2, with earlier learner/config/Canvas edits left
+uncommitted. Installed community-plugin files remain on disk but are no longer
+tracked. Local snapshot restore, exclusion/refusal checks, ten factory/adoption
+tests and rendered installer/systemd checks pass. Public branch contains reusable
+code, defaults, research and a Subjects-only screenshot; no subject notes, app
+registry, session state or credentials. Push verification recorded at handoff.
