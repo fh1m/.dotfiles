@@ -110,7 +110,7 @@ try:
     stop(rec)
     rec = None
     ipc('dropdown', 'close')
-    gif('robotics-lab', '2200:1700:0:100')
+    gif('robotics-lab', '3000:1900:0:70')
 
     # An isolated socket keeps the user's actual daily_dev tmux sessions intact.
     tmux('-f', str(Path.home() / '.tmux.conf'), 'new-session', '-d',

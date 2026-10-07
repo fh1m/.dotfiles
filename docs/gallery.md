@@ -8,6 +8,10 @@ These are real screenshots of fh1m’s desktop. A temporary privacy mode suppres
 
 [Full-quality paired tour](assets/duo-hero.mp4) · [Reduced-motion still](assets/duo-hero.png). The two screen tours were recorded separately and edited into one spatial view.
 
+![Robotics work on the main display paired with Monitor and USB inspection on the ScreenPad](assets/duo-lab.gif)
+
+[Lab pair MP4](assets/duo-lab.mp4) · [Reduced-motion still](assets/duo-lab.png). Both panels are real recordings, paired for the gallery.
+
 ## Watch the workbench work
 
 ![Main display: System and Spotify over real working windows](assets/flight-deck.gif)
@@ -92,4 +96,4 @@ The [switcher implementation](../home/.config/quickshell/wrayth/modules/navigati
 
 ## Re-capture on your machine
 
-`scripts/capture-gallery.py` takes the stills. `scripts/capture-showcase.py` records the main/ScreenPad tours; `scripts/build-duo-hero.sh` edits those into the paired-screen hero. `scripts/capture-workflows.py` records the robotics/tmux tours on an empty workspace with a separate tmux socket. Capture scripts use the live desktop, restore focus and close only their showcase windows. Review every frame before publishing; new widgets may need additional privacy treatment.
+`scripts/capture-gallery.py` takes the stills. `scripts/capture-showcase.py` records the main/ScreenPad tours; `scripts/capture-workflows.py` records the robotics/tmux tours. `scripts/build-duo-hero.sh` pairs them into the two-screen scenes. Capture scripts use the live desktop, restore focus and close only their showcase windows. Review frames before publishing; new widgets may need additional privacy treatment.

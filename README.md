@@ -1,11 +1,14 @@
 <div align="center">
 
+<sub>FH1M / FIELD R-01</sub>
+
+<h1>Sensei Robotics Workstation</h1>
+
+<p>Two screens. Two GPUs. One opinionated workbench.</p>
+
 <picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/duo-hero.png"><img src="docs/assets/duo-hero.gif" alt="Sensei Robotics Workstation: the main display above the ScreenPad, both showing real desktop activity" width="100%"></picture>
 
 <sub>THE MAIN CANVAS ↑ &nbsp;·&nbsp; THE SCREENPAD ↓ &nbsp;·&nbsp; <a href="docs/assets/duo-hero.mp4">WATCH THE MP4</a></sub>
-
-<strong>fh1m / Sensei Robotics Workstation</strong><br>
-Two screens. Two GPUs. One opinionated workbench.
 
 [![Hyprland](https://img.shields.io/badge/Hyprland-0.56%2B-f23d70?style=flat-square)](docs/installation.md) [![Quickshell](https://img.shields.io/badge/Quickshell-0.3-f23d70?style=flat-square)](home/.config/quickshell/wrayth) [![Displays](https://img.shields.io/badge/displays-2-17131a?style=flat-square)](docs/hardware-and-boot.md) [![RTX](https://img.shields.io/badge/RTX-2060-f23d70?style=flat-square)](docs/gpu-and-chrome.md) [![Lab](https://img.shields.io/badge/lab-ARM_%2B_CUDA-17131a?style=flat-square)](docs/robotics.md) [![License](https://img.shields.io/badge/license-GPL--3.0-f23d70?style=flat-square)](LICENSE)
 
@@ -15,9 +18,9 @@ Two screens. Two GPUs. One opinionated workbench.
 
 ## Two displays, one desk
 
-Main canvas above; instrument deck below. The loop pairs recordings from the two real panels. [Empty main](docs/assets/desktop-empty-main.png) · [Tiled ScreenPad](docs/assets/desktop-empty-screenpad.png) · [Full gallery](docs/gallery.md)
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/duo-lab.png"><img src="docs/assets/duo-lab.gif" alt="Robotics lab on the main display while Monitor and USB tools move across the ScreenPad" width="100%"></picture></p>
 
-*The ScreenPad earns its pixels. The RTX earns its watts.* [Hardware map](docs/hardware-and-boot.md) · [GPU paths](docs/gpu-and-chrome.md)
+<sub>MAIN // ARM + CUDA LAB &nbsp;↓&nbsp; SCREENPAD // MONITOR + USB · [MP4](docs/assets/duo-lab.mp4) · [Empty main](docs/assets/desktop-empty-main.png) · [Tiled ScreenPad](docs/assets/desktop-empty-screenpad.png)</sub>
 
 ## Code in the foreground, lab one click away
 
@@ -27,19 +30,13 @@ Main canvas above; instrument deck below. The loop pairs recordings from the two
 
 ![The robotics panel moving through Launch, tmux, ARM/GPU and Tasks](docs/assets/robotics-lab.gif)
 
-<sub>Docker · Compose · serial devices · NVIDIA CDI · ARM through QEMU · tmux · experiment tasks. [MP4](docs/assets/robotics-lab.mp4) · [Lab guide](docs/robotics.md)</sub>
+<sub>Docker / ARM / CUDA / tmux · [MP4](docs/assets/robotics-lab.mp4) · [Lab guide](docs/robotics.md)</sub>
 
 ## The terminal remembers
 
 ![A real Alacritty and isolated tmux lab session switching between calibration and GPU/container facts](docs/assets/tmux-field-lab.gif)
 
 <sub>Alacritty + Iosevka + persistent tmux. Sessions survive the window; the status line tells you where you landed. [Full-size still](docs/assets/tmux-field-lab.png) · [MP4](docs/assets/tmux-field-lab.mp4) · [Terminal guide](docs/terminal.md)</sub>
-
-## The lower deck is working
-
-![ScreenPad moving from the system monitor to the USB inspector](docs/assets/screenpad-tools.gif)
-
-<sub>Monitor catches a 15-second stall trace; USB shows ports, permissions and processes. [MP4](docs/assets/screenpad-tools.mp4) · [All panels](docs/gallery.md)</sub>
 
 ## Small windows, useful jobs
 
