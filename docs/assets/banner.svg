@@ -1,9 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420">
-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#000"/><stop offset="1" stop-color="#180709"/></linearGradient><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ef777b" stroke-opacity=".065"/></pattern></defs>
-<rect width="1600" height="420" fill="url(#g)"/><rect width="1600" height="420" fill="url(#grid)"/>
-<path d="M38 68L68 38H1532L1562 68V352L1532 382H68L38 352Z" fill="none" stroke="#ef777b" stroke-opacity=".4"/>
-<path d="M72 95H276L296 115V307L276 327H72Z" fill="#ff3b45"/>
-<g stroke="#070708" stroke-width="8" fill="none"><path d="M119 161L137 143H230L248 161V248L230 266H137L119 248Z"/><path d="M184 121V143M167 121H201M102 181H119M248 181H264M143 227H224"/><rect x="147" y="171" width="19" height="20"/><rect x="202" y="171" width="19" height="20"/></g>
-<g font-family="monospace"><text x="342" y="144" fill="#ef777b" font-size="18" letter-spacing="6">FH1M // ARCH WORKSTATION</text><text x="337" y="225" fill="#f4eeee" font-size="58" font-weight="bold">Sensei Robotics</text><text x="342" y="271" fill="#bca8ad" font-size="19">Code. Simulate. Train. Build. Listen.</text><text x="342" y="316" fill="#7d929e" font-size="14">HYPRLAND + QUICKSHELL / OLED GLASS / INTEL + NVIDIA / TWO DISPLAYS</text><text x="1280" y="92" fill="#004eff" font-size="16">UX581GV</text><text x="1280" y="116" fill="#bca8ad" font-size="12">FIELD NOTES + DOTFILES</text></g>
-<path d="M342 344H1272" stroke="#ef777b" stroke-opacity=".4"/><path d="M1300 270H1446V312H1404V354H1335V312H1300Z" fill="none" stroke="#004eff" stroke-width="3"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420" role="img" aria-label="fh1m Sensei Robotics Workstation, a two-display instrument desk">
+  <rect width="1600" height="420" fill="#090807"/>
+  <path d="M0 0H1600V7H0Z" fill="#f23d70"/>
+  <path d="M44 38H250M44 38V102M1350 382H1556M1556 318V382" fill="none" stroke="#f23d70" stroke-width="2"/>
+  <g font-family="Iosevka, 'DejaVu Sans Mono', monospace">
+    <text x="45" y="84" fill="#f23d70" font-size="19" font-weight="bold" letter-spacing="3">FIELD / R-01</text>
+    <text x="45" y="141" fill="#e8e2da" font-size="30" font-weight="bold" letter-spacing="3">fh1m</text>
+    <text x="45" y="224" fill="#e8e2da" font-size="59" font-weight="bold" letter-spacing="1">SENSEI</text>
+    <text x="45" y="276" fill="#f23d70" font-size="31" letter-spacing="3">ROBOTICS WORKSTATION</text>
+    <text x="45" y="347" fill="#a99d97" font-size="18">CODE / SIMULATE / TRAIN / BUILD / LISTEN</text>
+    <text x="933" y="356" fill="#a99d97" font-size="16" letter-spacing="2">UX581GV  ·  2 DISPLAYS  ·  INTEL + RTX</text>
+  </g>
+  <path d="M883 64L900 47H1506L1523 64V256L1506 273H900L883 256Z" fill="#150c0f" stroke="#67505a" stroke-width="2"/>
+  <path d="M896 62H1510V79H896Z" fill="#050505"/>
+  <path d="M907 70H1079" fill="none" stroke="#f23d70" stroke-width="4"/>
+  <path d="M896 83H1510V247H896Z" fill="#68072e"/>
+  <path d="M896 220L1018 180L1100 194L1194 150L1280 187L1372 132L1510 181V247H896Z" fill="#170d13"/>
+  <path d="M895 247H1510" stroke="#f23d70" stroke-width="2"/>
+  <path d="M938 289L950 277H1468L1480 289V327L1468 339H950L938 327Z" fill="#151013" stroke="#67505a" stroke-width="2"/>
+  <path d="M951 318H1467" stroke="#f23d70" stroke-width="3"/>
+  <path d="M973 300H1050M1082 300H1173M1205 300H1264M1296 300H1398" stroke="#d8bac3" stroke-width="5" stroke-linecap="square"/>
+  <path d="M1056 285V329M1179 285V329M1270 285V329" stroke="#3f3034" stroke-width="1"/>
 </svg>
