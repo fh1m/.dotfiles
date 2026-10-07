@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Oasis
+Comment=Build, understand, reconstruct — your current learning frontier
+Exec=@HOME@/.local/bin/oasis open
+Icon=obsidian
+Terminal=false
+Categories=Education;Development;
+Keywords=learning;notes;frontier;Obsidian;

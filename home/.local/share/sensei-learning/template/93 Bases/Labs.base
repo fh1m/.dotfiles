@@ -1,0 +1,28 @@
+filters:
+  and:
+    - 'file.ext == "md"'
+    - '!file.inFolder("92 Templates")'
+    - '["lab", "ml-experiment", "robotics-experiment", "code-investigation", "paper-reconstruction"].contains(type)'
+views:
+  - type: table
+    name: Active
+    filters:
+      and:
+        - 'status != "complete"'
+    order:
+      - file.name
+      - note.status
+      - note.domain
+      - note.created
+    limit: 12
+  - type: table
+    name: All experiments
+    filters:
+      and:
+        - 'true'
+    order:
+      - file.name
+      - note.status
+      - note.domain
+      - note.created
+    limit: 12

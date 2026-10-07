@@ -1,0 +1,16 @@
+filters:
+  and:
+    - 'file.ext == "md"'
+    - '!file.inFolder("92 Templates")'
+    - 'type == "branch"'
+views:
+  - type: table
+    name: Parked curiosity
+    filters:
+      and:
+        - 'status == "parked"'
+    order:
+      - file.name
+      - note.status
+      - note.domain
+    limit: 12

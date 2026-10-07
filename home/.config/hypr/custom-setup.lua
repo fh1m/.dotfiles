@@ -273,3 +273,6 @@ hl.layer_rule({ name = "sensei-popup-soft-reveal", match = { namespace = "^wrayt
 
 -- Give the Intel display renderer better scheduling; allow scanout where eligible.
 hl.config({ render = { new_render_scheduling = true, direct_scanout = 2 } })
+
+-- Native learning frontier (installed with the reusable Oasis system).
+dofile(os.getenv("HOME") .. "/.config/hypr/oasis.lua")

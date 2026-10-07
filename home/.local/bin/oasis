@@ -1,0 +1,4 @@
+#!/bin/sh
+# Oasis is the same local-first factory and Obsidian CLI bridge.
+if [ "$#" -eq 0 ]; then set -- open; fi
+exec "@HOME@/.local/bin/sensei-learn" "$@"

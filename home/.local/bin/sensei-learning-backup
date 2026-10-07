@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""Private incremental-in-time snapshots; never publish or overwrite a vault."""
+import argparse, hashlib, json, os, tarfile, tempfile
+from datetime import datetime
+from pathlib import Path
+HOME=Path.home()
+STATE=HOME/'.local/state/sensei-learning/snapshots'
+EXCLUDE={'.git','plugins','themes','.cache','cache','node_modules','build','__pycache__'}
+def eligible(p,root):
+ parts=p.relative_to(root).parts
+ return not any(x in EXCLUDE for x in parts) and not p.is_symlink() and not p.name.startswith(('workspace','.env')) and p.suffix not in {'.log','.db','.sqlite','.sqlite3'}
+def backup(root):
+ root=root.resolve()
+ if not (root/'94 Meta/System.json').is_file():raise ValueError('Not an Oasis vault')
+ key=hashlib.sha256(str(root).encode()).hexdigest()[:12];dest=STATE/key;dest.mkdir(parents=True,exist_ok=True);STATE.chmod(0o700);dest.chmod(0o700)
+ files=sorted(p for p in root.rglob('*') if p.is_file() and eligible(p,root))
+ hashes={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+ digest=hashlib.sha256(json.dumps(hashes,sort_keys=True).encode()).hexdigest()
+ old=dest/'latest.json'
+ if old.exists() and json.loads(old.read_text()).get('digest')==digest:
+  print('Unchanged: '+str(root));return
+ stamp=datetime.now().strftime('%Y%m%d-%H%M%S-%f');name=stamp+'.tar.gz';fd,tmp=tempfile.mkstemp(dir=dest);os.close(fd)
+ try:
+  with tarfile.open(tmp,'w:gz') as tar:
+   for p in files:tar.add(p,arcname=str(p.relative_to(root)),recursive=False)
+  os.chmod(tmp,0o600);os.replace(tmp,dest/name)
+ finally:
+  if os.path.exists(tmp):os.unlink(tmp)
+ record={'vault':str(root),'archive':name,'digest':digest,'files':hashes,'archive_sha256':hashlib.sha256((dest/name).read_bytes()).hexdigest()}
+ (dest/(stamp+'.json')).write_text(json.dumps(record,indent=2)+'\n');old.write_text(json.dumps(record,indent=2)+'\n')
+ # Keep seven newest snapshots plus one per week from the four preceding weeks.
+ snapshots=sorted(dest.glob('*.tar.gz'),reverse=True);keep=set(snapshots[:7]);weeks=set()
+ for p in snapshots[7:]:
+  week=datetime.strptime(p.name[:8],'%Y%m%d').strftime('%G-%V')
+  if week not in weeks and len(weeks)<4:keep.add(p);weeks.add(week)
+ for p in snapshots:
+  if p not in keep:p.unlink();p.with_name(p.name[:-7]+'.json').unlink(missing_ok=True)
+ print(dest/name)
+def restore(archive,destination):
+ if destination.exists() or destination.is_symlink():raise ValueError('Restore destination exists; refusing overwrite')
+ metadata=json.loads(archive.with_name(archive.name[:-7]+'.json').read_text())
+ if hashlib.sha256(archive.read_bytes()).hexdigest()!=metadata['archive_sha256']:raise ValueError('Archive checksum mismatch')
+ destination.parent.mkdir(parents=True,exist_ok=True)
+ with tempfile.TemporaryDirectory(dir=destination.parent) as temporary:
+  stage=Path(temporary)/'vault';stage.mkdir()
+  with tarfile.open(archive) as tar:
+   for m in tar.getmembers():
+    if not m.isfile() or Path(m.name).is_absolute() or '..' in Path(m.name).parts:raise ValueError('Unsafe archive entry')
+    p=stage/m.name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(tar.extractfile(m).read())
+  for name,digest in metadata['files'].items():
+   if hashlib.sha256((stage/name).read_bytes()).hexdigest()!=digest:raise ValueError('Restored file checksum mismatch')
+  system=json.loads((stage/'94 Meta/System.json').read_text())
+  for folder in system['directories']:(stage/folder).mkdir(parents=True,exist_ok=True)
+  stage.rename(destination)
+ print(destination)
+def main():
+ os.umask(0o077);p=argparse.ArgumentParser(description=__doc__);p.add_argument('--vault');p.add_argument('--all',action='store_true');p.add_argument('--restore',type=Path);p.add_argument('--dest',type=Path);a=p.parse_args()
+ try:
+  if a.restore:
+   if not a.dest:raise ValueError('Restore needs --dest pointing to a new directory')
+   restore(a.restore,a.dest);return
+  c=json.loads((HOME/'.config/sensei-learning/config.json').read_text())
+  roots=[Path(a.vault or c['active_vault'])]
+  if a.all:
+   registry=json.loads((HOME/'.config/obsidian/obsidian.json').read_text())
+   roots+= [Path(v['path']) for v in registry.get('vaults',{}).values() if (Path(v['path'])/'94 Meta/System.json').is_file()]
+  for root in sorted(set(r.resolve() for r in roots)):backup(root)
+ except (ValueError,OSError,KeyError,tarfile.TarError) as e:p.exit(1,str(e)+'\n')
+if __name__=='__main__':main()
