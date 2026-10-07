@@ -4,6 +4,10 @@
 
 These are real screenshots of fh1m’s desktop. A temporary privacy mode suppresses personal notifications and private window previews. The code window opens [Mongla’s public optical-flow calibration](https://github.com/fh1m/mongla_ws/blob/main/tools/flow_derot_calibrate.py); the other shows this repo’s CUDA Compose recipe. Neither screenshot claims a vehicle or container was running. The system numbers are live samples.
 
+![Main display above ScreenPad, animated as one two-screen desk](assets/duo-hero.gif)
+
+[Full-quality paired tour](assets/duo-hero.mp4) · [Reduced-motion still](assets/duo-hero.png). The two screen tours were recorded separately and edited into one spatial view.
+
 ## Watch the workbench work
 
 ![Main display: System and Spotify over real working windows](assets/flight-deck.gif)
@@ -88,4 +92,4 @@ The [switcher implementation](../home/.config/quickshell/wrayth/modules/navigati
 
 ## Re-capture on your machine
 
-`scripts/capture-gallery.py` takes the stills. `scripts/capture-showcase.py` records the main/ScreenPad tours. `scripts/capture-workflows.py` records the robotics/tmux tours on an empty workspace with a separate tmux socket. All use the live desktop, restore focus and close only their showcase windows. Review every frame before publishing; new widgets may need additional privacy treatment.
+`scripts/capture-gallery.py` takes the stills. `scripts/capture-showcase.py` records the main/ScreenPad tours; `scripts/build-duo-hero.sh` edits those into the paired-screen hero. `scripts/capture-workflows.py` records the robotics/tmux tours on an empty workspace with a separate tmux socket. Capture scripts use the live desktop, restore focus and close only their showcase windows. Review every frame before publishing; new widgets may need additional privacy treatment.
