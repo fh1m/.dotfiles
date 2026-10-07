@@ -1,22 +1,21 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg" alt="fh1m // Sensei Robotics Workstation" width="100%">
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/duo-hero.png"><img src="docs/assets/duo-hero.gif" alt="Sensei Robotics Workstation: the main display above the ScreenPad, both showing real desktop activity" width="100%"></picture>
 
-**Two screens. Two GPUs. One opinionated workbench.**
+<sub>THE MAIN CANVAS ↑ &nbsp;·&nbsp; THE SCREENPAD ↓ &nbsp;·&nbsp; <a href="docs/assets/duo-hero.mp4">WATCH THE MP4</a></sub>
+
+<strong>fh1m / Sensei Robotics Workstation</strong><br>
+Two screens. Two GPUs. One opinionated workbench.
 
 [![Hyprland](https://img.shields.io/badge/Hyprland-0.56%2B-f23d70?style=flat-square)](docs/installation.md) [![Quickshell](https://img.shields.io/badge/Quickshell-0.3-f23d70?style=flat-square)](home/.config/quickshell/wrayth) [![Displays](https://img.shields.io/badge/displays-2-17131a?style=flat-square)](docs/hardware-and-boot.md) [![RTX](https://img.shields.io/badge/RTX-2060-f23d70?style=flat-square)](docs/gpu-and-chrome.md) [![Lab](https://img.shields.io/badge/lab-ARM_%2B_CUDA-17131a?style=flat-square)](docs/robotics.md) [![License](https://img.shields.io/badge/license-GPL--3.0-f23d70?style=flat-square)](LICENSE)
 
 [Install](docs/installation.md) · [Gallery](docs/gallery.md) · [Keybinds](docs/keybindings.md) · [Robotics lab](docs/robotics.md) · [Performance](docs/performance.md) · [Recovery](docs/operations.md)
 
-<img src="docs/assets/flight-deck.gif" alt="The real dual-GPU workstation opening its System and Music panels" width="100%">
-
-<sub>Real desktop. Real windows. Real controls. [Watch in MP4](docs/assets/flight-deck.mp4).</sub>
-
 </div>
 
 ## Two displays, one desk
 
-<p align="center"><img src="docs/assets/desktop-empty-main.png" alt="The empty 4K main display and its top instrument rail" width="100%"><br><sub>MAIN DISPLAY // CODE, BROWSER, SIMULATION</sub><br><img src="docs/assets/desktop-empty-screenpad.png" alt="Tiled ScreenPad wallpaper and its bottom instrument rail" width="100%"><br><sub>SCREENPAD // WORKSPACES, DIAGNOSTICS, PHONE, USB</sub></p>
+Main canvas above; instrument deck below. The loop pairs recordings from the two real panels. [Empty main](docs/assets/desktop-empty-main.png) · [Tiled ScreenPad](docs/assets/desktop-empty-screenpad.png) · [Full gallery](docs/gallery.md)
 
 *The ScreenPad earns its pixels. The RTX earns its watts.* [Hardware map](docs/hardware-and-boot.md) · [GPU paths](docs/gpu-and-chrome.md)
 
