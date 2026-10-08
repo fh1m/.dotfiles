@@ -1,0 +1,23 @@
+filters:
+  and:
+    - 'file.ext == "md"'
+    - '!file.inFolder("92 Templates") && !file.inFolder("Templates")'
+views:
+  - type: table
+    name: All notes
+    order: [file.name, note.type, note.domain, note.status, note.tags, file.mtime]
+    sort:
+      - property: file.mtime
+        direction: DESC
+  - type: table
+    name: Connections to explore
+    filters:
+      and:
+        - 'file.links.isEmpty()'
+    order: [file.name, note.type, file.mtime]
+  - type: table
+    name: Recall bearing
+    filters:
+      and:
+        - '!review.isEmpty()'
+    order: [file.name, note.review, note.confidence]

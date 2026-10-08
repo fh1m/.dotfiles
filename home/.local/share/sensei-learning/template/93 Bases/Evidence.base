@@ -1,0 +1,34 @@
+filters:
+  and:
+  - file.ext == "md"
+  - '!file.inFolder("92 Templates") && !file.inFolder("Templates")'
+views:
+- type: table
+  name: Experiments
+  filters:
+    and:
+    - type == "lab" || type == "ml-experiment" || type == "robotics-experiment" ||
+      type == "paper-reconstruction"
+  order:
+  - file.name
+  - status
+  - updated
+- type: table
+  name: Builds
+  filters:
+    and:
+    - type == "project"
+  order:
+  - file.name
+  - status
+  - capability
+- type: table
+  name: Gold
+  filters:
+    and:
+    - type == "snippet"
+  order:
+  - file.name
+  - source
+  - locator
+  - serves

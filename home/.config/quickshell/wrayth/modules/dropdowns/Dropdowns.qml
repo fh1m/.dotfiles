@@ -333,7 +333,7 @@ Variants {
                     case "docker": return dockerPanel;
                     case "usb": return usbPanel;
                     case "phone": return phonePanel;
-                    case "oasis": return oasisPanel;
+                    case "oasis": return null;
                     case "comic": return comicPanel;
                     case "spotify": return spotifyPanel;
                     case "sound": return soundPanel;

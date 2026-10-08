@@ -1,135 +1,161 @@
-# Oasis
+# Noesis
 
-**Choose a capability. Predict. Build. Measure. Correct. Reconstruct.**
+**Study → attempt → understand → build → revisit.** A connected learning workspace, not another pile of tabs.
 
-![Oasis subjects — one learning system, independent vaults](assets/oasis-subjects.png)
-
-Oasis is a subject-independent learning workflow backed by ordinary Markdown and
-Obsidian's native CLI. CS is one vault; robotics, mathematics, biology or your
-next obsession are equally valid. There is no vault-count limit.
+![Noesis on the main display](assets/noesis-workspace.png)
 
 ## Start
 
 ```sh
-oasis init "Control Theory" --goal "Build and test a stabilizing controller"
-oasis vaults
-oasis use "$HOME/Study/Obsidian/Engineering/Workbench"
-oasis frontier
-oasis new concept "Feedback"
-oasis new robotics-experiment "Timestamp and frame sanity"
-oasis new paper-reconstruction "Reconstruct the estimator"
-oasis today
-oasis capture "My prediction failed; check the timebase"
-oasis due
-oasis doctor
-oasis backup
+noesis                         # persistent main-display window
+noesis init "Control Theory"   # private local vault; refuses existing paths
+noesis doctor                  # files, links, settings and real Obsidian CLI
+noesis use /path/to/vault       # unlimited independent vaults
+noesis today                   # native daily note
 ```
 
-`init --dry-run` previews; `--dest PATH` chooses a location; `--no-git` skips
-local Git initialization. Existing destinations are refused. Nothing is published.
-`oasis adopt --vault PATH` backs up and adds structure to an existing vault without
-overwriting its files. Existing template-folder settings stay in place.
+Default home: `~/Study/Obsidian/Knowledge`. Existing Workbench, Noesis robotics and
+How Sand Becomes Magic vaults remain independent. The CS vault still lives at
+`~/Study/Obsidian/Learning/how sand becomes magic`; its old Downloads path is a
+compatibility symlink. Workbench is an engineering studio, not a course catalogue.
 
-## Where things belong
+**Super+Ctrl+O** raises Noesis. The lower-bar Noesis entry does the same. Changing
+focus does not close it. Drag the header, resize using the existing Hyprland
+window controls, or use its minimize/expand/close buttons. Geometry is local state.
 
-| Area | Job |
+Neovim: `<leader>ow` opens the window; `oo` home, `of` frontier, `od` today,
+`oc` capture with code/commit context, `os` search, `ob` backup. Visual `<leader>og`
+captures selected code with provenance. Coding stays in your current environment;
+these actions do not enter or replace a container.
+
+## Flexible by construction
+
+New vaults use `Notes`, `Inbox`, `Daily`, `Maps`, `Templates`, `Views`, `System`
+and `Attachments`. Those are convenient storage defaults. Write elsewhere with
+`noesis new note "An idea" --folder "Any structure"`, or move notes in Obsidian.
+Obsidian updates internal links; stable record IDs survive renaming and moving.
+No metadata is required for an ordinary free note.
+
+| Work | Record |
 |---|---|
-| Home / Frontier | Capability, current question, gate and next experiment |
-| Foundations / Courses | Operational prerequisites and paths |
-| Labs / Concepts | Evidence and durable explanatory models |
-| Questions / Errors | Open gaps and preserved failed predictions |
-| Sources / Visuals | Resources with a purpose; dependency Canvas |
-| Reviews | Reconstruct, derive, trace or transfer without looking |
-| Projects / Real World | Runnable capability tests and deployed reality |
-| Future Branches | Valuable curiosity that does not block today's build |
-| Inbox / Daily | Raw material and working observations |
-| Templates / Bases / Meta | Reusable prompts, useful views, protocol |
+| Read a paper, book, article, docs or lecture | Resource, source locator, reading goal and resume position |
+| Follow a course | Materials and assignments; consumption and capability tracked separately |
+| Solve a hard problem | Independent attempts, hints, blockers, explanation and later retry |
+| Implement a model | Build, code/environment, tests and measurable evidence |
+| Test hardware or simulation | Prediction, apparatus, units/frames/time, controls, raw results and uncertainty |
+| Learn a mechanism | Concept, derivation, trace, counterexample and reconstruction |
+| Keep a useful fragment | Snippet with source, assumptions and where verified |
+| Correct a model | Error/misconception with its original reasoning preserved |
+| Remember what matters | Reconstruction evidence and a learner-chosen revisit |
 
-**Gate:** the minimum understanding needed for the next meaningful build.
-**Parallel:** learn it alongside the build that makes it concrete.
-**Deep descent:** explore the layer below when it helps; it is not prerequisite debt.
-Dependency roles belong to a path/build; a skill can have a different role elsewhere.
+Prerequisites are **gate**, **parallel** or **deep descent**. Ordinary connections
+may cycle; prerequisites must not become an endless queue before an interesting build.
+Confidence is self-reported 0–5, supported by evidence. A reading count is never a
+mastery score. Future branches park curiosity without inflating the current gate.
 
-Confidence: 0 seen · 1 recognize · 2 repeat · 3 familiar problem · 4 derive/predict
-· 5 build/debug/transfer. Record actual evidence. Agents do not award mastery.
+## Papers and documents
 
-## A small daily loop
-
-Open Frontier. Set its visible `question`, `next_experiment` and `active_project`
-properties; these are also the panel readouts. State a prediction. Repair one small gate or run one test. Keep the
-raw observation and failed model. Extract a concept only when useful. Reconstruct
-one due item. Update the next experiment. Stop collecting pages as a proxy for skill.
-
-Sources record **why useful**, the question/build served and what was verified.
-Experiments separate proposed setup, observations and interpretation. Reviews
-rebuild a mechanism, derivation, state trace or diagram; not merely rereading.
-ML, robotics, software and paper-reconstruction templates give domain-specific
-checks without inventing outcomes. Agent instructions live in every vault's
-`AGENTS.md`; unprocessed agent text belongs in Inbox/Agent Drops.
-
-## Daily-driver integration
-
-- Lower-bar **Oasis**: Subjects first; choose any vault or create a new subject.
-  Frontier, review, experiment and source views read the active vault's real state.
-  No background polling loop or separate database.
-- Launcher: **Oasis**. `Super+Ctrl+O`: active Frontier.
-- Neovim `<Space>oo` home, `of` frontier, `od` daily, `oc` capture with code context,
-  `os` knowledge search, `ob` snapshot. `:Oasis frontier` also works.
-- Existing Neovim knowledge/project tools and vaults remain available independently.
-- tmux `Alt+Shift+Left/Right` changes windows; ordinary Shift arrows reach agents.
-  History is 200,000 lines. This cannot manufacture past text an application never
-  emitted into terminal history.
-
-The bridge resolves vault IDs and verifies their exact paths; duplicate vault names
-cannot silently send an action to the wrong archive. Native CLI handles creation,
-search, daily notes, tasks, properties, Bases and navigation. `oasis cli help` exposes
-all installed commands. Capture uses the CLI's eval plus Obsidian's vault API to
-preserve literal code escapes. New-vault registration uses the app's inspected
-vault-chooser IPC through CLI eval; that one internal bridge may need adjustment
-if Obsidian changes it. It refuses unsafe registry rewriting while the app runs.
-
-## Backup / portability
-
-A low-priority persistent user timer snapshots registered structured vaults daily.
-Local snapshots live in `~/.local/state/sensei-learning/snapshots` with private
-permissions, checksums, seven recent snapshots plus four weekly representatives.
-Unchanged content is skipped. Plugins, workspace state, caches and `.git` are
-excluded from daily archives. Your existing Git history remains in each real vault;
-the initial migration backup includes the original history and installed plugins.
+Zotero owns references and original annotations. Sioyek is the focused PDF reader.
+Obsidian owns your explanations, linked concepts, attempts and experiment records.
 
 ```sh
-systemctl --user status sensei-learning-backup.timer
-sensei-learning-backup --all
-sensei-learning-backup --restore /path/to/snapshot.tar.gz --dest /new/restore/path
+noesis resource "A paper" --kind paper --url https://example.org/paper \
+  --file /path/to/paper.pdf --why "What this helps me do"
+noesis read-resource "Notes/A paper.md"
+noesis progress "Notes/A paper.md" --position "Section 3, equation 8" --state active
+noesis attempt "Notes/A problem.md" --result blocked \
+  --evidence "I cannot justify the invariant" --hint none
+noesis review "Notes/A concept.md" --confidence 3 --days 7 \
+  --evidence "Solved a familiar instance; transfer still failed"
 ```
 
-Restore verifies checksums and refuses an existing destination. These are **local
-backups**: protect against editing mistakes, not laptop/disk loss. Syncthing is
-already available; configure an explicit trusted second device for off-device
-copies. Never automatically publish private notes. Use normal Git for intentional
-subject milestones; generated vaults have no remote and no automatic commits.
+Zotero: save references with its browser connector or Add by Identifier; export
+references as **CSL JSON**. Create a note from PDF annotations and export that note
+as **Markdown**, retaining its exported image files beside it.
 
-Reusable template/scripts/UI/defaults belong in dotfiles; subject notes stay in
-vaults; app registry/session state stays local. Installer `scripts/install.py`
-renders the existing `home/` tree. The full installer was tested only in temporary
-HOME; live deployment used targeted task files to preserve unrelated changes.
+```sh
+noesis import-csl /path/references.json --dry-run
+noesis import-csl /path/references.json
+noesis import-notes /path/export.md --resource "Notes/A paper.md"
+```
 
-To update: edit the maintained template, run `tests/test_learning.py` and
-`scripts/test-install.py`, then deploy the changed reusable files. Existing vault
-notes are not bulk overwritten by a template update. To undo: disable the timer,
-remove Oasis launcher/helper/UI hooks, remove the Neovim additive plugin, and use
-the private pre-change backup if restoring original settings. Vault content remains.
+Imports deduplicate identifiers and find renamed notes. Annotation imports own only
+`Attachments/Imports/<record-id>/annotations.md`; a single embed is appended to
+your note through the native CLI. Re-imports preserve your synthesis and keep previous generated excerpts.
+Use the Import section and native file picker for the same operations.
 
-## Troubleshooting
+Zotero annotations live in its database. **Export a PDF with embedded annotations**
+when you want them visible in Sioyek; the two annotation stores do not magically
+synchronize. Sioyek: `:` command search, `t` contents, `/` search, `F9` fit width,
+`Alt+Left/Right` navigation history, bookmarks/highlights/portals via command menu.
+The selected stable release uses bundled Qt 5/XWayland; Zotero and Obsidian use
+native Wayland. Global Ctrl+arrow media shortcuts remain intact.
 
-`oasis doctor --vault PATH` checks structure, YAML, critical links, dependency cycles,
-Canvas references, Bases YAML, configured paths, tracked volatile state and actual
-native CLI identity. Intentional unresolved concept links are warnings; broken Home
-navigation is an error. `--offline` skips the running-app check.
+The official readers are pinned user-local releases, with inspected checksums:
 
-Enable Obsidian Settings → General → Advanced → Command line interface. Existing
-vaults can be opened independently; use `oasis use PATH` to select. If an app upgrade
-breaks registration, the newly generated notes remain safe; open that folder via
-Obsidian's vault chooser. Do not hand-edit the registry under a running application.
+```sh
+python scripts/setup-learning-readers.py          # show plan
+python scripts/setup-learning-readers.py --apply  # idempotent install
+```
 
-[Research and adaptations](research.md) · [Execution ledger](PLAN.md)
+No OS-wide upgrade is performed. Zotero 10.0.6 and Sioyek 2.0.0 were installed this
+way because the machine's stale CachyOS Zotero package URL returned 404.
+The archived Obsidian Zotero Integration plugin is not a required dependency.
+Browser connector/Web Clipper installation is a browser action, not silently enabled.
+
+## Use Obsidian fully
+
+Core **Properties + Bases** expose actual work. Canvas arranges models, Markdown
+notes and evidence spatially; backlinks/local graph expose relationships.
+LaTeX, Mermaid, PDF/image/audio/video embeds, bookmarks and daily notes stay native.
+The installed Excalidraw plugin can be reused for freehand drawing; the factory
+requires no community plugin. Open `System/Obsidian Field Guide.md` in a new vault.
+
+Agents should teach and challenge your model, not ghostwrite an encyclopedia.
+Their automatically discovered `AGENTS.md` asks for predictions, concrete traces,
+assumptions, counterexamples and real experiments. AI drafts go to Inbox; they do
+not become learner evidence merely by being generated.
+
+## Backup and recovery
+
+A private daily systemd timer snapshots managed vaults. `noesis backup` takes an
+immediate vault snapshot; `sensei-learning-backup --all` also backs up reader data.
+Archives/checksum manifests live under `~/.local/state/sensei-learning/snapshots`.
+
+```sh
+sensei-learning-backup --restore /path/to/snapshot.tar.gz --dest /NEW/vault/path
+```
+
+Restore checks checksums and refuses an existing destination. Plugin binaries,
+workspace/session files, caches, credentials and large generated runs are excluded.
+Vault Git history is preserved in the original migration backup, not each note snapshot.
+Reader snapshots use SQLite's backup API and integrity checks. If Zotero holds an
+exclusive lock, its last internal `.bak` is used and timestamped explicitly; close
+Zotero and rerun for a fresh database snapshot. Its full-text cache is rebuildable
+and omitted. Reader restore is documented in each manifest: close the app, verify
+hashes, restore into a **new** data directory. Never sync a live Zotero database
+with Syncthing. Local snapshots do not protect against losing the disk; an off-device
+trusted destination remains optional and unconfigured.
+
+## Implementation and undo
+
+Dotfiles manage the factory, helpers, QML, reader defaults, launcher and additive
+Neovim/Hyprland integration through the existing rendered `home/` installer.
+Private subject material is not published. Update the maintained factory for new
+vaults; upgrades to existing vaults are additive, with backups and no prose replacement.
+
+Noesis reuses Obsidian's live metadata index. A Linux filesystem watcher runs only
+while its window is open; refreshes are debounced, previews fetched on demand and
+lists virtualized. No browser frontend, permanent indexing daemon or idle scanning.
+
+To undo: restore the task's deployment backup; remove the Noesis window invocation
+from `shell.qml` and its bar action/Hyprland binding; disable
+`sensei-learning-backup.timer` if desired. Keep your vaults. Reader wrappers and
+versioned directories can be removed independently; they are not your library data.
+
+Troubleshooting: `noesis doctor`, enable Obsidian's native CLI, select an exact vault
+path, then retry. Imports need a real CSL JSON array/Markdown export. Reader actions
+need `source` or `local_file`. Busy actions expose cancellation without erasing inputs;
+a cancelled multi-step action may have completed a write—refresh before retrying.
+
+[Research and tradeoffs](research.md) · [Implementation ledger](PLAN.md)

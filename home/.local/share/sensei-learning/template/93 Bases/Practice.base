@@ -1,0 +1,25 @@
+filters:
+  and:
+  - file.ext == "md"
+  - '!file.inFolder("92 Templates") && !file.inFolder("Templates")'
+views:
+- type: table
+  name: Problems
+  filters:
+    and:
+    - type == "problem"
+  order:
+  - file.name
+  - status
+  - difficulty
+  - review
+  - concepts
+- type: table
+  name: Retry due
+  filters:
+    and:
+    - type == "problem" && !review.isEmpty() && review <= today()
+  order:
+  - file.name
+  - review
+  - status

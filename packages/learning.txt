@@ -1,0 +1,10 @@
+# Host requirements; currently present on fh1m's machine.
+obsidian
+python
+python-yaml
+git
+fzf
+pandoc
+yt-dlp
+# Official pinned Zotero/Sioyek readers: scripts/setup-learning-readers.py --apply
+# Repositories may alternatively provide zotero / sioyek; choose one provider.

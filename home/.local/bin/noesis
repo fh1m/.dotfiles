@@ -1,0 +1,4 @@
+#!/bin/sh
+# Noesis: same durable learning bridge; oasis remains a compatibility alias.
+if [ "$#" -eq 0 ]; then set -- window; fi
+exec "@HOME@/.local/bin/sensei-learn" "$@"

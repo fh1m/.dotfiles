@@ -19,3 +19,15 @@ Thumbs.db
 build/
 target/
 node_modules/
+
+System/Imports/
+94 Meta/Imports/
+Attachments/Imports/
+assets/Imports/
+Runs/
+Datasets/
+*.mp4
+*.mkv
+*.webm
+*.bag
+*.mcap

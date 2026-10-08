@@ -1,0 +1,4 @@
+#!/bin/sh
+# Official user-local install; native Wayland uses the monitor's scale.
+export MOZ_ENABLE_WAYLAND=1
+exec "@HOME@/.local/opt/zotero-10.0.6/zotero" "$@"

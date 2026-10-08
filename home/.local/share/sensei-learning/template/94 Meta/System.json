@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "template_version": 1,
+  "template_version": 2,
   "directories": [
     "00 Home",
     "01 Foundations",
@@ -45,6 +45,13 @@
     "ml-experiment": "03 Labs",
     "robotics-experiment": "03 Labs",
     "code-investigation": "03 Labs",
-    "paper-reconstruction": "03 Labs"
+    "paper-reconstruction": "03 Labs",
+    "note": "90 Inbox",
+    "map": "08 Visuals",
+    "paper": "07 Sources",
+    "course": "02 Courses",
+    "problem": "03 Labs",
+    "resource": "07 Sources",
+    "snippet": "04 Concepts"
   }
 }

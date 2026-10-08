@@ -1,5 +1,5 @@
 [Unit]
-Description=Private Oasis learning-vault snapshot
+Description=Private Noesis vault and research-reader snapshots
 [Service]
 Type=oneshot
 ExecStart=@HOME@/.local/bin/sensei-learning-backup --all

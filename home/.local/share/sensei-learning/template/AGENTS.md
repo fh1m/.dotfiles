@@ -26,3 +26,6 @@ Preserve learner-written models, predictions, answers and failed experiments.
 Before agent-generated code: establish behavior, invariant, interface, constraints
 and test oracle. Afterwards help the learner trace, perturb, test and replace one
 piece. Understanding is demonstrated by the learner, not the agent's prose.
+
+## Study is not mastery
+Never mark a resource understood because it was read. Preserve source provenance and separate imported excerpts from learner synthesis. Do not overwrite old attempts or failed predictions. Use a small reconstruct/derive/solve/implement/measure task before confidence changes; only the learner reports the result. Permit arbitrary folders and free notes. Paper reproduction must name environment, data split, baseline, metric and uncertainties. Course completion and capability evidence are separate.

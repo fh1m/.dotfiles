@@ -21,3 +21,8 @@ domain: {{subject_yaml}}
 
 Progress means **derive · predict · solve · build · measure · debug · explain · transfer**.
 A blank queue is honest. A polished page is not evidence.
+
+[[93 Bases/Library.base|Browse by meaning, status, topic and links]]
+
+## Study, attempt, verify
+[[93 Bases/Study.base|Papers · courses · resources]] · [[93 Bases/Practice.base|Problems and retries]] · [[93 Bases/Evidence.base|Experiments · builds · snippets]]

@@ -15,6 +15,7 @@ import qs.modules.popups
 import qs.modules.session
 import qs.modules.status
 import qs.modules.navigation
+import "modules/learning" as LearningUi
 import "modules/shortcuts" as ShortcutUi
 import qs.services
 
@@ -25,6 +26,7 @@ ShellRoot {
     BottomBar {}
     BarEdges {}
     Dropdowns {}
+    LearningUi.NoesisWindow {}
     DeckOverlay {}
     NotificationLayer {}
     OsdLayer {}

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Zotero
+Comment=Noesis research reader
+Exec=@HOME@/.local/bin/zotero %u
+Icon=@HOME@/.local/opt/zotero-10.0.6/icons/icon128.png
+Terminal=false
+Categories=Education;Science;
+MimeType=x-scheme-handler/zotero;
