@@ -207,7 +207,8 @@ Item {
       NoesisButton {text:Oasis.quiet?"Show":"Quiet";onClicked:{Oasis.quiet=!Oasis.quiet;Oasis.savePreferences();root.load(false);}}
       NoesisButton {text:"All paths";visible:Oasis.pathScope!=="";onClicked:{Oasis.setPathScope("");root.load(false);}}
      }
-     ColumnLayout {visible:root.section==="Today"&&!root.query&&!root.loading&&!root.selected.id&&!Oasis.error;Layout.fillWidth:true;spacing:NoesisStyle.lg
+     ScrollView {id:todayScroll;visible:root.section==="Today"&&!root.query&&!root.loading&&!root.selected.id&&!Oasis.error;Layout.fillWidth:true;Layout.fillHeight:true;clip:true
+     ColumnLayout {width:todayScroll.availableWidth;spacing:NoesisStyle.lg
       Text {visible:!root.home.continue;text:root.home.empty_reason==="no-records"?"Begin with something worth understanding":"Your notes are here. Choose a thread to continue.";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.title;wrapMode:Text.Wrap;Layout.fillWidth:true;Layout.topMargin:NoesisStyle.xl}
       Text {visible:!root.home.continue;text:"This vault has no recorded active work. Saved notes are preserved; they do not imply learning progress.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;Layout.maximumWidth:680;Layout.fillWidth:true}
       Text {visible:(root.home.paths||[]).length>0;text:"Learning paths and courses";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
@@ -226,8 +227,9 @@ Item {
        NoesisButton {text:"Browse this vault";onClicked:root.section="Library"}
       }
      }
+     }
      Text {visible:root.loading;text:"Loading your workspace…";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
-     ListView {id:list;Layout.fillWidth:true;Layout.fillHeight:true;clip:true;model:root.rows;keyNavigationEnabled:true;reuseItems:true;spacing:NoesisStyle.xs
+     ListView {id:list;visible:root.section!=="Today"||!!root.query||!!root.selected.id||root.rows.length>0;Layout.fillWidth:true;Layout.fillHeight:true;clip:true;model:root.rows;keyNavigationEnabled:true;reuseItems:true;spacing:NoesisStyle.xs
       Keys.onReturnPressed:if(currentIndex>=0)root.select(root.rows[currentIndex])
       delegate:NoesisRow {required property var modelData;required property int index;width:list.width;title:modelData.title||modelData.path;subtitle:modelData.reason||((modelData.source_kind||modelData.type||"")+(modelData.status?" · "+modelData.status:""));highlighted:root.selected.id===modelData.id;onClicked:{list.currentIndex=index;root.select(modelData);}}
       ScrollBar.vertical:ScrollBar {}
