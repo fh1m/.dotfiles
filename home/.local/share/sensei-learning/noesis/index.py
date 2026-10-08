@@ -140,7 +140,7 @@ class Index:
     def generation(self):
         return self.db.execute('SELECT generation FROM meta').fetchone()[0]
 
-    def query(self, query='', kind=None, cursor=0, limit=50):
+    def query(self, query='', kind=None, cursor=0, limit=50, resource_kinds=None):
         if not isinstance(query, str):raise ValueError('Search query must be text')
         query = query.strip()
         limit = min(50, max(1, int(limit)))
@@ -158,15 +158,20 @@ class Index:
             kinds = kind if isinstance(kind, list) else [kind]
             where.append('kind IN (' + ','.join('?' for _ in kinds) + ')')
             args.extend(kinds)
-        sql = 'SELECT records.path,records.id,kind,title,states.status FROM records LEFT JOIN states ON states.id=records.id'
+        if resource_kinds is not None:
+            if not isinstance(resource_kinds,list) or any(not isinstance(value,str) for value in resource_kinds):raise ValueError('Resource kinds must be a list of source kinds')
+            where.append("(kind!='resource' OR json_extract(records.props,'$.source_kind') IN ("+','.join('?' for _ in resource_kinds)+'))')
+            args.extend(resource_kinds)
+        sql = "SELECT records.path,records.id,kind,title,states.status,json_extract(records.props,'$.source_kind') FROM records LEFT JOIN states ON states.id=records.id"
         if where:
             sql += ' WHERE ' + ' AND '.join(where)
         rows = list(self.db.execute(sql + ' ORDER BY path LIMIT ? OFFSET ?', args + [limit + 1, cursor]))
         results, size = [], 0
         for row in rows[:limit]:
-            item = dict(zip(('path', 'id', 'type', 'title', 'status'), row))
+            item = dict(zip(('path', 'id', 'type', 'title', 'status', 'source_kind'), row))
             item['title'] = item['title'][:256]
             item['type'] = item['type'][:80]
+            item['source_kind']=item['source_kind'][:80] if isinstance(item['source_kind'],str) else None
             item_size = len(json.dumps(item).encode())
             if results and size + item_size > 60 * 1024:break
             results.append(item)

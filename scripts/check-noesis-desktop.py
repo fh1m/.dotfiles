@@ -39,7 +39,9 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
    clients=json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True));client=next(c for c in clients if c['pid']==process.pid and c['title'].startswith('Noesis'))
    subprocess.run(['hyprctl','dispatch','hl.dsp.focus({window='+json.dumps('address:'+client['address'])+'})'],capture_output=True)
    time.sleep(.3)
+   keyboard_events=[]
    def shortcut(keys,key):
+    keyboard_events.append((keys,key))
     result=subprocess.run(['hyprctl','dispatch','hl.dsp.send_shortcut({mods='+json.dumps(keys.replace(' ',' + '))+',key='+json.dumps(key)+',window='+json.dumps('address:'+client['address'])+'})'],text=True,capture_output=True);assert result.returncode==0,result.stderr;time.sleep(.3)
    def state():
     result=subprocess.run([binary,'-p',str(config),'ipc','call','noesis-window','state'],env=env,text=True,capture_output=True,timeout=5);return json.loads(result.stdout)
@@ -115,6 +117,43 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
    props,_=parse(records[0].read_text());receipt=cli('operation-status',props['operation_id'])
    assert receipt['status']=='committed' and len(receipt['records'])==1
    print('Native problem dialog saved one record with a committed receipt')
+   # A complete connected-record route through native dialogs and contextual actions.
+   typing_events=[0]
+   journey_start=len(keyboard_events)
+   def type_text(value):
+    typing_events[0]+=len(value)
+    for letter in value:
+     if letter=='_':shortcut('SHIFT','minus')
+     else:shortcut('',{' ':'space','/':'slash','-':'minus','.':'period'}.get(letter,letter))
+   implementation=home/'implementation';implementation.mkdir()
+   def git(*args):subprocess.run(['git','-C',str(implementation),*args],capture_output=True,check=True)
+   git('init','-q');git('config','user.name','Synthetic learner');git('config','user.email','synthetic@example.invalid')
+   (implementation/'model.py').write_text('prediction = 0\n');git('add','model.py');git('commit','-qm','Synthetic baseline')
+   shortcut('CTRL','3');shortcut('CTRL','n');type_text('synthetic paper');shortcut('CTRL','Return');time.sleep(.5)
+   paper_file=next((vault/'Records/resource').glob('synthetic paper*'));paper,_=parse(paper_file.read_text())
+   shortcut('CTRL','period');shortcut('','Return');type_text('synthetic question');shortcut('','Tab');type_text('why');shortcut('CTRL','Return');time.sleep(.5)
+   question_file=next((vault/'Records/question').glob('synthetic question*'));question,_=parse(question_file.read_text())
+   assert question['parent_ref']['record_id']==paper['id']
+   shortcut('ALT','Left');time.sleep(.5);assert state()['selected']==str(paper_file.relative_to(vault))
+   shortcut('CTRL','period');shortcut('','Down');shortcut('','Return');type_text('synthetic implementation');shortcut('','Tab');type_text(str(implementation));shortcut('CTRL','Return');time.sleep(.5)
+   project_file=next((vault/'Records/project').glob('synthetic implementation*'));project,_=parse(project_file.read_text())
+   assert project['parent_ref']['record_id']==paper['id'] and project['code_snapshot']['commit']
+   shortcut('CTRL','period');shortcut('','Down');shortcut('','Return');type_text('synthetic run');shortcut('','Tab');type_text('prediction zero');shortcut('CTRL','Return');time.sleep(.5)
+   run_file=next((vault/'Records/experiment').glob('synthetic run*'));run,_=parse(run_file.read_text())
+   assert run['parent_ref']['record_id']==project['id'] and run['code_snapshot']['commit']==project['code_snapshot']['commit']
+   shortcut('CTRL','period')
+   for _ in range(3):shortcut('','Down')
+   shortcut('','Return');type_text('measured one');shortcut('','Tab');shortcut('','Tab');type_text('prediction contradicted');shortcut('CTRL','Return');time.sleep(.6)
+   comparisons=[event for event in cli('timeline',run['id'])['activities'] if event['event']=='comparison']
+   assert len(comparisons)==1 and comparisons[0]['code_snapshot']['commit']==run['code_snapshot']['commit']
+   shortcut('ALT','Left');shortcut('ALT','Left');time.sleep(.5)
+   assert state()['selected']==str(paper_file.relative_to(vault))
+   print('Native paper → question → implementation → run → comparison → paper passed; all targets remain connected')
+   print('Connected route:',len(keyboard_events)-journey_start-typing_events[0],'keyboard actions plus',typing_events[0],'typed characters; no file hunting or metadata copying')
+   client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==process.pid and c['title'].startswith('Noesis'))
+   x,y=client['at'];w,h=client['size'];subprocess.run(['grim','-g',f'{x},{y} {w}x{h}','/tmp/noesis-research-context.png'],check=True)
+
+
 
 
   finally:process.terminate();process.wait(timeout=5);print(log.read_text()[-5000:])

@@ -27,7 +27,7 @@ def serve(resolve):
                 if action == 'reconcile':
                     result = index.reconcile(request.get('paths'))
                 elif action == 'query':
-                    result = index.query(request.get('query', ''), request.get('kind'), request.get('cursor') or 0)
+                    result = index.query(request.get('query', ''), request.get('kind'), request.get('cursor') or 0,resource_kinds=request.get('resource_kinds'))
                 elif action == 'record':
                     result = index.record(request['record_id'])
                     result['overview'] = overview(index, request['record_id'])

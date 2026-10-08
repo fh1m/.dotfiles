@@ -44,19 +44,40 @@ def create(root, kind, title, body='', fields=None, parent_id=None, relation='co
         from .scopes import assert_unique
         assert_unique(root)
         fields=dict(fields or {})
+        if operation_id:
+            receipt=contained(root,'.Noesis/Operations/'+operation_id+'.json')
+            if receipt.exists():
+                journal=json.loads(read_content(receipt))
+                index=Index(root)
+                try:
+                    index.reconcile()
+                    exists=index.db.execute("SELECT 1 FROM records WHERE json_extract(props,'$.operation_id')=? LIMIT 1",(operation_id,)).fetchone()
+                finally:index.close()
+                # An acknowledged creation is independent of current tool/storage availability.
+                if exists or journal.get('status')=='committed':
+                    return _create(root,kind,title,body,fields,operation_id,request_hash)
         if parent_id:
             if relation not in ('contains','assigns','references','investigates'):raise ValueError('Unsupported parent relationship')
             index=Index(root)
             try:
                 health=index.reconcile()
                 if health['errors']:raise ValueError(str(health['errors']))
-                index.record(parent_id)
+                parent=index.record(parent_id,include_body=False,include_attempt=False)['props']
+                repository=parent.get('repository') or (parent.get('code_snapshot') or {}).get('repository')
+                if kind=='experiment' and repository:
+                    from .development import snapshot
+                    try:fields['code_snapshot']=snapshot(repository)
+                    except (ValueError,OSError):fields['code_snapshot']={'repository':repository,'availability':'unavailable'}
                 meta=json.loads(manifest_path(root).read_text())
                 if kind=='unit' and order is None:
                     existing=[json.loads(raw).get('order') for raw, in index.db.execute('SELECT props FROM relationships WHERE source=?',(parent_id,))]
                     order=max([n for n in existing if type(n) is int],default=-1)+1
                 fields['parent_ref']={'vault_id':meta['vault_id'],'record_id':parent_id,'relation':relation,'order':order}
             finally:index.close()
+        if kind=='project' and fields.get('repository'):
+            from .development import snapshot
+            fields['code_snapshot']=snapshot(fields['repository'])
+            fields['repository']=fields['code_snapshot']['repository']
         return _create(root,kind,title,body,fields,operation_id,request_hash)
 
 

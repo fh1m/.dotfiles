@@ -8,17 +8,27 @@ from .persistence import lock,manifest_path,publish,render,contained,checksum
 from .index import Index
 
 
-def capture(root,text,kind='capture',agent=False,operation_id=None):
+def capture(root,text,kind='capture',agent=False,operation_id=None,context_id=None):
     if not isinstance(text,str) or not text.strip():raise ValueError('Capture text is empty')
     if kind not in ('capture','snippet','question'):raise ValueError('Unsupported capture kind')
     operation_id=operation_id or str(uuid.uuid4());uuid.UUID(operation_id)
-    request_hash=checksum(json.dumps({'text':text,'kind':kind,'agent':agent},sort_keys=True))
+    request={'text':text,'kind':kind,'agent':agent}
+    if context_id:request['context_id']=context_id
+    request_hash=checksum(json.dumps(request,sort_keys=True))
     with lock(root):
         from .scopes import assert_unique
         assert_unique(root)
         meta=json.loads(manifest_path(root).read_text())
         if meta.get('noesis_schema')!=2:raise ValueError('Review and apply migration before capturing in this vault')
         uuid.UUID(str(meta.get('vault_id')))
+        if context_id:
+            uuid.UUID(context_id)
+            index=Index(root)
+            try:
+                health=index.reconcile()
+                if health['errors']:raise ValueError(str(health['errors']))
+                index.record(context_id,include_body=False,include_attempt=False)
+            finally:index.close()
         journal_path=contained(root,'.Noesis/Operations/'+operation_id+'.json')
         original=read_content(journal_path) if journal_path.exists() else None
         if original:
@@ -46,6 +56,7 @@ def capture(root,text,kind='capture',agent=False,operation_id=None):
         record={'id':journal['record_id'],'noesis_schema':2,'type':kind,'title':title,'status':'inbox',
                 'created':journal['timestamp'],'operation_id':operation_id,'request_hash':request_hash,
                 'provenance':'agent-output-unverified' if agent else 'learner-capture'}
+        if context_id:record['parent_ref']={'vault_id':meta['vault_id'],'record_id':context_id,'relation':'references','order':None}
         path=contained(root,journal['path']);publish(path,render(record,'\n'+text+'\n'))
         journal['status']='committed';publish(journal_path,json.dumps(journal,indent=2),checksum(original))
         return path
