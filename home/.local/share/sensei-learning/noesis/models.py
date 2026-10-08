@@ -35,9 +35,11 @@ def promote(root, relative, kind, expected_id=None):
         return dict(props, path=str(path.relative_to(root)))
 
 
-def create(root, kind, title, body='', fields=None, parent_id=None, relation='contains', order=None):
+def create(root, kind, title, body='', fields=None, parent_id=None, relation='contains', order=None, operation_id=None):
     if kind not in KINDS:raise ValueError('Unsupported creation kind')
     if not title.strip() or any(c in title for c in '/\\\n\r\0'):raise ValueError('Use a title, not a path')
+    if operation_id:uuid.UUID(operation_id)
+    request_hash=checksum(json.dumps(dict(kind=kind,title=title,body=body,fields=fields or {},parent_id=parent_id,relation=relation,order=order),sort_keys=True))
     with lock(root):
         from .scopes import assert_unique
         assert_unique(root)
@@ -55,17 +57,43 @@ def create(root, kind, title, body='', fields=None, parent_id=None, relation='co
                     order=max([n for n in existing if type(n) is int],default=-1)+1
                 fields['parent_ref']={'vault_id':meta['vault_id'],'record_id':parent_id,'relation':relation,'order':order}
             finally:index.close()
-        return _create(root,kind,title,body,fields)
+        return _create(root,kind,title,body,fields,operation_id,request_hash)
 
 
-def _create(root, kind, title, body='', fields=None):
+def _create(root, kind, title, body='', fields=None, operation_id=None, request_hash=None):
     meta = json.loads(manifest_path(root).read_text())
     if meta.get('noesis_schema') != 2:raise ValueError('Migrate the vault first')
     uuid.UUID(str(meta.get('vault_id')))
+    journal_path=contained(root,'.Noesis/Operations/'+operation_id+'.json') if operation_id else None
+    original=read_content(journal_path) if journal_path and journal_path.exists() else None
+    journal=json.loads(original) if original else None
+    if journal:
+        if journal.get('request_hash')!=request_hash or journal.get('vault_id')!=meta['vault_id']:
+            raise ValueError('Operation ID reused with changed record content or vault identity')
+        index=Index(root)
+        try:
+            health=index.reconcile()
+            if health['errors']:raise ValueError('Could not verify previous creation: '+str(health['errors']))
+            rows=list(index.db.execute("SELECT path,props FROM records WHERE json_extract(props,'$.operation_id')=?",(operation_id,)))
+            if len(rows)==1:
+                if journal.get('status')!='committed':
+                    journal['status']='committed';publish(journal_path,json.dumps(journal,indent=2),checksum(original))
+                return dict(json.loads(rows[0][1]),path=rows[0][0])
+            if rows or journal.get('status')=='committed':
+                raise ValueError('Previous creation committed but is missing or duplicated; inspect recovery before retrying')
+        finally:index.close()
     props = dict(fields or {})
     props.update(id=str(uuid.uuid4()), noesis_schema=2, type=kind, title=title, created=datetime.now(timezone.utc).isoformat())
     path = contained(root, 'Records/' + kind + '/' + title[:100] + ' [' + props['id'][:8] + '].md')
+    if journal:
+        props=journal['props'];path=contained(root,journal['path'])
+    elif journal_path:
+        props.update(operation_id=operation_id,request_hash=request_hash)
+        journal=dict(status='preparing',vault_id=meta['vault_id'],operation_id=operation_id,request_hash=request_hash,props=props,path=str(path.relative_to(root)))
+        original=json.dumps(journal,indent=2);publish(journal_path,original)
     publish(path, render(props, '\n# ' + title + '\n\n' + body + '\n'))
+    if journal_path:
+        journal['status']='committed';publish(journal_path,json.dumps(journal,indent=2),checksum(original))
     return dict(props, path=str(path.relative_to(root)))
 
 def relationship(root, source, target, relation, role=None, reason='', exit_task=None, context=None, order=None):

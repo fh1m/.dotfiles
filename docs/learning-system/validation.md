@@ -6,8 +6,8 @@ work; the presence of a module does not complete its milestone.
 
 ## Observed verification, 2026-10-09
 
-- Sixteen existing factory/import tests and forty-five new core/workflow/recovery/
-  watcher/Zotero/capture/reader/scope tests pass: 61 total. Fixtures are synthetic and disposable.
+- Sixteen existing factory/import tests and forty-seven new core/workflow/recovery/
+  watcher/Zotero/capture/reader/scope tests pass: 63 total. Fixtures are synthetic and disposable.
 - Capture, paged query, progress and attempt CLI operations pass with PATH containing
   no Obsidian executable. Native note opening remains a separate application action.
 - Merged progress rejects current-only overflow, lowered totals, negative counts,
@@ -108,7 +108,7 @@ sufficient native acceptance evidence.
   so it cannot establish a populated native annotation recovery journey.
 - P1: restored-vault fork/registration conflict workflow, complete cross-vault
   resolution and broader property/concurrency/fault-injection coverage. Activities
-  and captures now provide cancellation commit receipts. Operations lacking a
+  captures and record creation now provide cancellation commit receipts. Operations lacking a
   receipt still report uncertainty. Capture drafts are private machine state.
 - P2: populated native Zotero lifecycle and exhaustive multi-file recovery. An
   isolated installed Zotero 10.0.6 profile passed the supported local API probe;
@@ -210,4 +210,13 @@ acceptance. The course fixture uses CLI setup; it does not prove UI course creat
 Schema checks refuse future-version downgrades while keeping their records readable.
 Migration preserves original CRLF body bytes and backup bytes. A 10,000-event
 causal history reduces without recursive traversal or quadratic dependency setup.
-The full automated suite passes 61 tests (45 connected-core and 16 compatibility).
+The full automated suite passes 63 tests (47 connected-core and 16 compatibility).
+
+Record-creation fault checks interrupt before and after atomic publication, retry
+after a move, retain the reserved identity/parent order, refuse changed payloads,
+and refuse recreation of an unavailable committed record. Ctrl+N and Ctrl+Enter
+provide a discoverable creation action in each workspace, including Practice.
+
+The native check creates a problem through Ctrl+4 → Ctrl+N → title → Ctrl+Enter
+and verifies one saved record with its committed receipt. QML logs contain no
+errors or warnings for the tested main/compact/companion lifecycle.

@@ -561,7 +561,7 @@ def main():
         if cmd == 'promote':p.add_argument('path');p.add_argument('kind',choices=KINDS);p.add_argument('--target-id')
         if cmd == 'backup':p.add_argument('--restic',action='store_true')
         if cmd == 'recover':p.add_argument('snapshot');p.add_argument('--dest',type=Path,required=True)
-        if cmd == 'record':p.add_argument('kind',choices=KINDS);p.add_argument('title');p.add_argument('--body',default='');p.add_argument('--data',default='{}');p.add_argument('--parent-id');p.add_argument('--relation',default='contains');p.add_argument('--order',type=int)
+        if cmd == 'record':p.add_argument('--operation-id');p.add_argument('kind',choices=KINDS);p.add_argument('title');p.add_argument('--body',default='');p.add_argument('--data',default='{}');p.add_argument('--parent-id');p.add_argument('--relation',default='contains');p.add_argument('--order',type=int)
         if cmd == 'link':
             p.add_argument('source');p.add_argument('target');p.add_argument('relation');p.add_argument('--role');p.add_argument('--reason',default='');p.add_argument('--exit-task');p.add_argument('--context');p.add_argument('--order',type=int)
         if cmd == 'event':
@@ -638,7 +638,7 @@ def main():
         if args.command=='record':
             fields=json.loads(args.data)
             if not isinstance(fields,dict):raise ValueError('Record data must be an object')
-            print(json.dumps(create_record(root,args.kind,args.title,args.body,fields,args.parent_id,args.relation,args.order),default=str));return 0
+            print(json.dumps(create_record(root,args.kind,args.title,args.body,fields,args.parent_id,args.relation,args.order,args.operation_id),default=str));return 0
         if args.command=='link':print(json.dumps(relationship(root,args.source,args.target,args.relation,args.role,args.reason,args.exit_task,args.context,args.order),default=str));return 0
         if args.command=='event':
             fields=json.loads(args.data)
