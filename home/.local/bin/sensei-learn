@@ -18,12 +18,15 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'share/sensei-learning'))
 from noesis.persistence import parse as parse_markdown, publish, migration, lock as vault_lock
-from noesis.activities import record_activity, validate_progress
+from noesis.activities import record_activity, validate_progress, operation_status
 from noesis.index import Index
 from noesis.worker import serve
 from noesis.imports import import_csl as core_import_csl
 from noesis.models import create as create_record, relationship, promote, KINDS
 from noesis.policies import next_actions, agent_context
+from noesis.zotero import LocalAPI, import_item
+from noesis.artifacts import inspect as inspect_artifact
+from noesis.captures import capture as capture_text
 from noesis import recovery
 
 HOME = Path.home()
@@ -527,19 +530,15 @@ def library_action(root,args):
     if not path.is_file() or path.suffix!='.md':raise ValueError('Choose a Markdown learning record')
     relative=str(path.relative_to(root))
     if args.command=='read-resource':
-        props,_=note_text(path.read_text());local=props.get('local_file','');url=props.get('source','');zotero=props.get('zotero_uri','')
-        if args.reader=='zotero':
-            if zotero:return subprocess.run(['xdg-open',str(zotero)]).returncode
-            subprocess.Popen([str(HOME/'.local/bin/zotero') if (HOME/'.local/bin/zotero').exists() else 'zotero'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True);return 0
-        if local:
-            file=Path(str(local)).expanduser()
-            if not file.is_absolute():file=checked_path(root,str(local))
-            if not file.is_file():raise ValueError('Linked local file missing')
-            command=[str(HOME/'.local/bin/sioyek') if (HOME/'.local/bin/sioyek').exists() else 'sioyek',str(file)] if args.reader=='sioyek' and file.suffix.lower()=='.pdf' else ['xdg-open',str(file)]
-        elif url:
-            if not str(url).startswith(('https://','http://','zotero://')):raise ValueError('Resource URL scheme not supported')
-            command=['xdg-open',str(url)]
-        else:raise ValueError('Set source or local_file in this resource; no document linked yet')
+        from noesis.readers import command as reader_command, resource_props
+        from noesis.index import Index
+        props,_=note_text(path.read_text())
+        index=Index(root)
+        try:
+            index.reconcile()
+            record=index.record(props['id'],include_body=False,include_attempt=False)
+            command=reader_command(root,resource_props(index,props['id']),record.get('state',{}),args.reader)
+        finally:index.close()
         subprocess.Popen(command,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True);return 0
     if args.command=='progress':
         state={'position':args.position}
@@ -558,17 +557,21 @@ def library_action(root,args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote']:
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check']:
         p = commands.add_parser(cmd); p.add_argument('--vault')
+        if cmd == 'artifact-check':p.add_argument('record_id');p.add_argument('--operation-id')
+        if cmd == 'zotero-import':p.add_argument('key');p.add_argument('--server-id')
+        if cmd == 'zotero-search':p.add_argument('query',nargs='?',default='');p.add_argument('--cursor',type=int,default=0)
+        if cmd == 'operation-status':p.add_argument('operation_id')
         if cmd == 'promote':p.add_argument('path');p.add_argument('kind',choices=KINDS);p.add_argument('--target-id')
         if cmd == 'backup':p.add_argument('--restic',action='store_true')
         if cmd == 'recover':p.add_argument('snapshot');p.add_argument('--dest',type=Path,required=True)
-        if cmd == 'record':p.add_argument('kind',choices=KINDS);p.add_argument('title');p.add_argument('--body',default='');p.add_argument('--data',default='{}')
+        if cmd == 'record':p.add_argument('kind',choices=KINDS);p.add_argument('title');p.add_argument('--body',default='');p.add_argument('--data',default='{}');p.add_argument('--parent-id');p.add_argument('--relation',default='contains');p.add_argument('--order',type=int)
         if cmd == 'link':
             p.add_argument('source');p.add_argument('target');p.add_argument('relation');p.add_argument('--role');p.add_argument('--reason',default='');p.add_argument('--exit-task');p.add_argument('--context');p.add_argument('--order',type=int)
         if cmd == 'event':
-            p.add_argument('path');p.add_argument('event',choices=['study','resolution','attempt-start','attempt','review','assistance','comparison','correction','capability-decision','session-state','disposition']);p.add_argument('--evidence',default='');p.add_argument('--data',default='{}')
-        if cmd == 'next':p.add_argument('--quiet',action='store_true')
+            p.add_argument('path');p.add_argument('event',choices=['study','resolution','attempt-start','attempt','review','review-plan','assistance','comparison','correction','capability-decision','session-state','disposition']);p.add_argument('--evidence',default='');p.add_argument('--data',default='{}')
+        if cmd == 'next':p.add_argument('--quiet',action='store_true');p.add_argument('--path-id')
         if cmd == 'context':p.add_argument('record_id');p.add_argument('--role',default='tutor')
         if cmd == 'migrate':p.add_argument('--apply',action='store_true')
         if cmd == 'query':p.add_argument('query',nargs='?',default='');p.add_argument('--kind');p.add_argument('--cursor',type=int,default=0)
@@ -577,7 +580,7 @@ def main():
         if cmd == 'status':p.add_argument('--legacy',action='store_true')
         if cmd == 'doctor': p.add_argument('--offline', action='store_true')
         if cmd == 'use': p.add_argument('path')
-        if cmd == 'capture': p.add_argument('text', nargs='?'); p.add_argument('--agent', action='store_true');p.add_argument('--kind',choices=['capture','snippet','question'],default='capture')
+        if cmd == 'capture':p.add_argument('--operation-id');p.add_argument('text', nargs='?');p.add_argument('--stdin-line',action='store_true'); p.add_argument('--agent', action='store_true');p.add_argument('--kind',choices=['capture','snippet','question'],default='capture')
         if cmd == 'new': p.add_argument('--folder'); p.add_argument('kind'); p.add_argument('title'); p.add_argument('--open', action='store_true')
         if cmd == 'search': p.add_argument('query', nargs='?', default='')
         if cmd == 'practice': p.add_argument('path');p.add_argument('--mode',choices=list(PRACTICE_MODES),required=True);p.add_argument('--goal',required=True);p.add_argument('--open',action='store_true')
@@ -593,7 +596,7 @@ def main():
         if cmd == 'import-csl':p.add_argument('source');p.add_argument('--dry-run',action='store_true')
         if cmd == 'import-notes':p.add_argument('source');p.add_argument('--resource',required=True)
         if cmd == 'read-resource':p.add_argument('path');p.add_argument('--reader',choices=['sioyek','zotero','default'],default='sioyek')
-        if cmd == 'window-state':p.add_argument('--width',type=int);p.add_argument('--height',type=int);p.add_argument('--workspace',choices=['Today','Learn','Research','Practice','Lab','Library']);p.add_argument('--list-ratio',type=float);p.add_argument('--context-json');p.add_argument('--monitor');p.add_argument('--quiet',choices=['on','off'])
+        if cmd == 'window-state':p.add_argument('--drafts-json');p.add_argument('--drafts-stdin',action='store_true');p.add_argument('--path-scope');p.add_argument('--path-scope-vault');p.add_argument('--width',type=int);p.add_argument('--height',type=int);p.add_argument('--workspace',choices=['Today','Learn','Research','Practice','Lab','Library']);p.add_argument('--list-ratio',type=float);p.add_argument('--context-json');p.add_argument('--monitor');p.add_argument('--quiet',choices=['on','off'])
         if cmd == 'cli': p.add_argument('obsidian_command'); p.add_argument('options', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     try:
@@ -606,6 +609,11 @@ def main():
             with vault_lock(file.parent):
                 state=json.loads(file.read_text()) if file.exists() else {}
                 if args.width is not None and args.height is not None:state.update(width=min(1800,max(360,args.width)),height=min(1000,max(300,args.height)))
+                if args.drafts_json is not None or args.drafts_stdin:
+                    drafts=json.loads(sys.stdin.readline() if args.drafts_stdin else args.drafts_json)
+                    if not isinstance(drafts,dict) or any(not isinstance(v,str) for v in drafts.values()):raise ValueError('Drafts must map targets to text')
+                    state['drafts']=drafts
+                if args.path_scope is not None:state['path_scope']=args.path_scope;state['path_scope_vault']=args.path_scope_vault or ''
                 if args.workspace:state['workspace']=args.workspace
                 if args.monitor:state['monitor']=args.monitor
                 if args.quiet:state['quiet']=args.quiet=='on'
@@ -614,29 +622,34 @@ def main():
                     context=json.loads(args.context_json)
                     if not isinstance(context,dict):raise ValueError('Context must be an object')
                     state['context']={k:context.get(k) for k in ['id','path','title','type','vault','session_state']}
-                if any(value is not None for value in [args.width,args.height,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet]):store(file,state)
+                if any(value is not None for value in [args.width,args.height,args.drafts_json,True if args.drafts_stdin else None,args.path_scope,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet]):store(file,state)
             print(file.read_text() if file.exists() else '{"width":1440,"height":880}');return 0
         if args.command == 'use':
             root = vault(args.path); system(root); c = config(); c['active_vault'] = str(root); store(CONFIG,c); print(root); return 0
         if args.command == 'vaults': print(json.dumps(inventory(),ensure_ascii=False)); return 0
         if args.command=='serve':serve(vault);return 0
+        if args.command=='zotero-search':print(json.dumps(LocalAPI().search(args.query,args.cursor)));return 0
+        if args.command=='zotero-probe':print(json.dumps(LocalAPI().probe()));return 0
         if args.command=='recover':print(json.dumps(recovery.restore(args.snapshot,args.dest)));return 0
         root = vault(args.vault); meta = system(root)
+        if args.command=='artifact-check':print(json.dumps(inspect_artifact(root,args.record_id,args.operation_id),default=str));return 0
+        if args.command=='zotero-import':print(json.dumps(import_item(root,args.key,LocalAPI(server_id=args.server_id)),default=str));return 0
+        if args.command=='operation-status':print(json.dumps(operation_status(root,args.operation_id),default=str));return 0
         if args.command=='promote':print(json.dumps(promote(root,args.path,args.kind,args.target_id),default=str));return 0
         if args.command=='record':
             fields=json.loads(args.data)
             if not isinstance(fields,dict):raise ValueError('Record data must be an object')
-            print(json.dumps(create_record(root,args.kind,args.title,args.body,fields),default=str));return 0
+            print(json.dumps(create_record(root,args.kind,args.title,args.body,fields,args.parent_id,args.relation,args.order),default=str));return 0
         if args.command=='link':print(json.dumps(relationship(root,args.source,args.target,args.relation,args.role,args.reason,args.exit_task,args.context,args.order),default=str));return 0
         if args.command=='event':
             fields=json.loads(args.data)
             if not isinstance(fields,dict):raise ValueError('Event data must be an object')
             print(json.dumps(record_activity(root,args.path,args.event,args.evidence,args.operation_id,expected_id=args.target_id,**fields),default=str));return 0
-        if args.command in ['next','context','recover','promote']:
+        if args.command in ['next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check']:
             index=Index(root)
             try:
                 index.reconcile()
-                result=next_actions(index,args.quiet) if args.command=='next' else agent_context(index,args.record_id,args.role)
+                result=next_actions(index,args.quiet,args.path_id) if args.command=='next' else agent_context(index,args.record_id,args.role)
                 print(json.dumps(result,default=str))
             finally:index.close()
             return 0
@@ -731,15 +744,9 @@ def main():
             path = root / meta['daily'] / (date.today().isoformat()+'.md')
             print(cli(root,'daily')); return 0
         if args.command == 'capture':
-            text = args.text if args.text is not None else sys.stdin.read()
-            if not text.strip(): raise ValueError('Capture text is empty')
-            inbox='Inbox' if meta.get('layout')=='network' else '90 Inbox'
-            folder = root / (inbox+'/Agent Drops' if args.agent else inbox); folder.mkdir(parents=True,exist_ok=True)
-            p = folder / (datetime.now().strftime('%Y%m%d-%H%M%S-%f') + '.md')
-            content = '---\nid: '+str(uuid.uuid4())+'\ntype: '+args.kind+'\nstatus: inbox\ncreated: '+date.today().isoformat()+'\n---\n\n'+text+'\n'
-            code = '(async()=>{const file=await app.vault.create('+json.dumps(str(p.relative_to(root)))+','+json.dumps(content)+');return file.path})()'
-            write_new(p,content.replace('type: '+args.kind,'noesis_schema: 2\ntype: '+args.kind))
-            print(p); return 0
+            text = json.loads(sys.stdin.readline()) if args.stdin_line else args.text if args.text is not None else sys.stdin.read()
+            if not isinstance(text,str):raise ValueError("Capture input must be text")
+            print(capture_text(root,text,args.kind,args.agent,args.operation_id));return 0
         if args.command == 'new':
             kind = args.kind; title = args.title
             if kind not in meta['types']: raise ValueError('Unknown note type')

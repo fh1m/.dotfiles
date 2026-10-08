@@ -1,6 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import json
 import uuid
+from .locators import normalize as normalize_locator
 from .index import Index
 from .persistence import checksum, contained, lock, manifest_path, parse, publish, render
 
@@ -14,12 +15,61 @@ def validate_progress(current=None, total=None):
         raise ValueError('Progress exceeds total')
 
 
+def operation_status(root, operation_id):
+    """Wait for writers, then report durable publication rather than process exit."""
+    uuid.UUID(operation_id)
+    with lock(root):
+        index = Index(root)
+        try:
+            health = index.reconcile()
+            rows = [dict(json.loads(raw), path=path) for path, raw in index.db.execute(
+                "SELECT path,props FROM records WHERE json_extract(props,'$.operation_id')=?",
+                (operation_id,))]
+            if health['errors'] or len(rows) > 1:
+                return {'operation_id': operation_id, 'status': 'uncertain', 'errors': health['errors'], 'records': rows}
+            witness=contained(root,'.Noesis/Operations/'+operation_id+'.json')
+            witness_state=json.loads(witness.read_text()).get('status') if witness.exists() else None
+            committed=witness_state=='committed'
+            return {'operation_id': operation_id, 'status': 'committed' if rows or committed else 'uncertain' if witness_state=='preparing' else 'not-committed', 'records': rows, 'record_unavailable':bool(committed and not rows)}
+        finally:index.close()
+
+
+def unfinished_attempts(timeline):
+    finalized = {event.get('attempt_id') for event in timeline if event.get('event') == 'attempt'}
+    return [event for event in timeline if event.get('event') == 'attempt-start' and event['id'] not in finalized]
+
+
+def causal_order(events, predecessor, resolutions):
+    pending={event['id']:event for event in events}
+    if len(pending)!=len(events):raise ValueError('Duplicate activity identity')
+    emitted=set();ordered=[]
+    while pending:
+        ready=[]
+        for identity,event in pending.items():
+            dependencies=set(event.get(resolutions,[]) or [])
+            if event.get(predecessor):dependencies.add(event[predecessor])
+            if dependencies-set(pending)-emitted:raise ValueError('Missing activity predecessor')
+            if dependencies<=emitted:ready.append(event)
+        if not ready:raise ValueError('Cyclic activity history')
+        event=min(ready,key=lambda event:(str(event.get('timestamp','')),event['id']))
+        ordered.append(event);emitted.add(event['id']);del pending[event['id']]
+    return ordered
+
+
+def review_heads(timeline):
+    plans=causal_order([event for event in timeline if event.get('event')=='review-plan'],'previous_plan','resolves_plans')
+    referenced=set()
+    for plan in plans:
+        referenced.update(plan.get('resolves_plans',[]))
+        if plan.get('previous_plan'):referenced.add(plan['previous_plan'])
+    return [plan for plan in plans if plan['id'] not in referenced]
+
+
 def progress_state(props, timeline):
     baseline = {k: props.get(k) for k in ('progress_current', 'progress_total', 'position', 'status')}
     states, heads = {}, set()
-    for event in timeline:
-        if event.get('event') not in ('study', 'session-state', 'disposition', 'resolution'):
-            continue
+    events=[event for event in timeline if event.get('event') in ('study', 'session-state', 'disposition', 'resolution')]
+    for event in causal_order(events,'previous','resolves'):
         previous = event.get('previous')
         if previous is not None and previous not in states:
             raise ValueError('Missing study predecessor')
@@ -44,7 +94,7 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
     request_hash = checksum(json.dumps({'target': expected_id or relative, 'event': event, 'evidence': evidence, 'fields': fields}, sort_keys=True, default=str))
     if any(key in fields for key in ('id', 'type', 'noesis_schema', 'target', 'timestamp', 'provenance', 'path')):
         raise ValueError('Reserved activity metadata cannot be supplied')
-    if event not in ('study', 'resolution', 'attempt-start', 'attempt', 'review', 'assistance', 'comparison', 'correction', 'capability-decision', 'session-state', 'disposition'):
+    if event not in ('study', 'resolution', 'attempt-start', 'attempt', 'review', 'review-plan', 'assistance', 'comparison', 'correction', 'capability-decision', 'session-state', 'disposition', 'artifact-check'):
         raise ValueError('Unknown activity event')
     with lock(root):
         meta = json.loads(manifest_path(root).read_text())
@@ -75,6 +125,22 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                         if old.get('request_hash') != request_hash:
                             raise ValueError('Operation ID reused with changed content')
                         return old
+            if event == 'attempt-start' and unfinished_attempts(index.timeline(identity)):
+                raise ValueError('Resume or finalize the durable unfinished attempt before starting another')
+            if event=='review-plan':
+                if not evidence.strip():raise ValueError('Check planning needs a purpose or learner decision')
+                if fields.get('action') not in ('schedule','snooze','retire'):raise ValueError('Choose schedule, snooze or retire')
+                stage=fields.get('stage','retry')
+                if stage not in ('retry','later','maintenance'):raise ValueError('Choose retry, later or maintenance')
+                days=fields.get('days',meta.get('review_intervals',{}).get(stage,{'retry':1,'later':7,'maintenance':30}[stage]))
+                if type(days) is not int or not 1<=days<=3650:raise ValueError('Check interval must be 1–3650 days')
+                heads=review_heads(index.timeline(identity))
+                if len(heads)>1:
+                    if set(fields.get('resolves_plans',[]))!={head['id'] for head in heads}:raise ValueError('Divergent check plans need an explicit resolution naming all heads')
+                elif fields.get('resolves_plans'):raise ValueError('Only conflicting check plans can be resolved')
+                fields['previous_plan']=heads[0]['id'] if len(heads)==1 else None
+                fields['interval_days']=days
+                fields['due']=(datetime.now(timezone.utc)+timedelta(days=days)).isoformat() if fields['action']!='retire' else None
             if fields.get('attempt_id'):
                 started = index.record(fields['attempt_id'])['props']
                 if started.get('event') != 'attempt-start' or started.get('target', {}).get('record_id') != identity:
@@ -107,7 +173,14 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                 if event in ('session-state', 'disposition') and isinstance(update, str):update = {'status': update}
                 if not isinstance(update, dict) or set(update) - {'progress_current', 'progress_total', 'position', 'status', 'reading_pass', 'locator'}:
                     raise ValueError('Invalid study state fields')
+                if update.get('locator') is not None:
+                    update['locator'],update['position']=normalize_locator(update['locator'])
+                if update.get('reading_pass') is not None and update['reading_pass'] not in ('survey','detail','reconstruct','verify'):
+                    raise ValueError('Unsupported reading pass')
+                if 'position' in update and 'locator' not in update:update['locator']=None
                 state.update(update)
+                source={key:props[key] for key in ('bibliography_projection','zotero_projection','zotero_version','local_file') if props.get(key)}
+                if source:fields['source_snapshot']=source
                 validate_progress(state.get('progress_current'), state.get('progress_total'))
                 fields.update(state=state, previous=previous)
             elif event in ('attempt', 'review'):
@@ -118,7 +191,7 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
             now = datetime.now(timezone.utc)
             record = dict(fields, id=str(uuid.uuid4()), noesis_schema=2, type='activity', event=event,
                 target={'vault_id': meta['vault_id'], 'record_id': identity}, timestamp=now.isoformat(),
-                operation_id=operation_id or str(uuid.uuid4()), provenance='learner-reported', request_hash=request_hash)
+                operation_id=operation_id or str(uuid.uuid4()), provenance='noesis-file-inspection' if event=='artifact-check' else 'learner-reported', request_hash=request_hash)
             if event == 'resolution':
                 if not evidence.strip():raise ValueError('Resolution needs a learner explanation')
                 state, _ = progress_state(props, index.timeline(identity) + [record])

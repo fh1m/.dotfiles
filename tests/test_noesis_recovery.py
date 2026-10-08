@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 import shutil
 import sys
+import sqlite3
+from contextlib import closing
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -59,6 +61,31 @@ class Recovery(unittest.TestCase):
         self.assertIn('sensor.mcap', report['external'])
         self.assertFalse(backup['off_device'])
         with self.assertRaises(ValueError):recovery.restore(backup['snapshot_id'], restored, state)
+
+    def test_reader_restore_preserves_bookmarks_positions_annotations(self):
+        snapshot=self.home/'reader-snapshot';snapshot.mkdir()
+        database=snapshot/'shared.db'
+        with closing(sqlite3.connect(database)) as db, db:
+            db.execute('CREATE TABLE bookmarks(document TEXT,page INTEGER,description TEXT)')
+            db.execute('INSERT INTO bookmarks VALUES(?,?,?)',('synthetic-paper',7,'Reconstruct this derivation'))
+            db.execute('CREATE TABLE positions(document TEXT,page INTEGER,offset REAL)')
+            db.execute('INSERT INTO positions VALUES(?,?,?)',('synthetic-paper',9,.3))
+            db.execute('CREATE TABLE annotations(id TEXT,page INTEGER,text TEXT)')
+            db.execute('INSERT INTO annotations VALUES(?,?,?)',('native-annotation',8,'Check the hidden assumption'))
+        metadata={'files':{'shared.db':legacy.sha(database)},'database_sources':{'shared.db':{'mode':'sqlite-online-backup'}}}
+        (snapshot/'manifest.json').write_text(json.dumps(metadata))
+        destination=self.home/'new-profile'
+        result=legacy.restore_reader(snapshot,destination)
+        self.assertEqual(result['databases']['shared.db']['tables']['annotations'],1)
+        with closing(sqlite3.connect(destination/'shared.db')) as db:
+            self.assertEqual(db.execute('SELECT * FROM bookmarks').fetchone(),('synthetic-paper',7,'Reconstruct this derivation'))
+            self.assertEqual(db.execute('SELECT * FROM positions').fetchone(),('synthetic-paper',9,.3))
+            self.assertEqual(db.execute('SELECT id FROM annotations').fetchone()[0],'native-annotation')
+        with self.assertRaises(ValueError):legacy.restore_reader(snapshot,destination)
+        metadata['files']['../escaped.db']=legacy.sha(database)
+        (snapshot/'manifest.json').write_text(json.dumps(metadata))
+        with self.assertRaisesRegex(ValueError,'Unsafe'):legacy.restore_reader(snapshot,self.home/'malicious')
+        self.assertFalse((self.home/'malicious').exists())
 
 
 if __name__ == '__main__':unittest.main()

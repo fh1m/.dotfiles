@@ -3,17 +3,67 @@ from datetime import datetime, timezone
 import json
 
 
-def next_actions(index, quiet=False):
+def path_scope(index, path_id):
+    """Follow explicit educational containment, never arbitrary concept associations."""
+    root = index.record(path_id)
+    if root['props'].get('type') != 'path':raise ValueError('Recommendation scope must name a path')
+    return {row[0] for row in index.db.execute("""WITH RECURSIVE scope(id) AS (
+        SELECT ? UNION SELECT target FROM relationships WHERE context=?
+        UNION SELECT edges.target FROM relationships edges JOIN scope ON edges.source=scope.id
+        WHERE edges.relation IN ('contains','orders','assigns','pursues','investigates')) SELECT id FROM scope""",(path_id,path_id))}
+
+
+
+def next_actions(index, quiet=False, path_id=None):
     if quiet:return []
+    scope = path_scope(index, path_id) if path_id else None
+    inactive=('parked','abandoned','retired','skipped','passed','complete')
+    if path_id and index.record(path_id)['state'].get('status') in inactive:return []
+    cache={}
+    def record(identity):
+        if identity not in cache:cache[identity]=index.record(identity,include_body=False,include_attempt=False)
+        return cache[identity]
+    grouped={}
+    ordered=set()
+    for source,target,raw,status,parent_status in index.db.execute("""SELECT r.source,r.target,r.props,s.status,parent_state.status
+        FROM relationships r JOIN records child ON child.id=r.target AND child.kind='unit'
+        JOIN records parent ON parent.id=r.source LEFT JOIN states s ON s.id=r.target
+        LEFT JOIN states parent_state ON parent_state.id=r.source WHERE r.relation IN ('orders','contains')"""):
+        edge=json.loads(raw)
+        if type(edge.get('order')) is not int:continue
+        ordered.add(target)
+        if parent_status in inactive:continue
+        grouped.setdefault(source,[]).append((edge['order'],target,status))
+    next_units=set()
+    for steps in grouped.values():
+        for _,target,status in sorted(steps):
+            if status not in inactive+('read','extracted','succeeded'):
+                next_units.add(target);break
+    from .activities import review_heads
+    plans={}
+    for target, in index.db.execute("SELECT DISTINCT target FROM activities WHERE json_extract(props,'$.event')='review-plan'"):
+        try:plans[target]=review_heads(index.timeline(target))
+        except ValueError:plans[target]=[]
+    plan_ids={head[0]['id'] for head in plans.values() if len(head)==1}
     candidates = []
     now = datetime.now(timezone.utc).isoformat()
-    for path, identity, kind, raw in index.db.execute('''SELECT path,id,kind,props FROM records
-        WHERE kind IN ('session','practice-session','relationship','unit','experiment')
-        OR (kind='activity' AND (json_extract(props,'$.retry_requested')=1 OR json_extract(props,'$.due') IS NOT NULL))
-        OR json_extract(props,'$.pin')=1 ORDER BY path'''):
+    for path, identity, kind, raw, derived_raw, pinned in index.db.execute("""SELECT r.path,r.id,r.kind,r.props,s.state,json_extract(r.props,'$.pin') FROM records r
+        LEFT JOIN states s ON s.id=r.id WHERE (r.kind IN ('session','practice-session','relationship','unit','experiment')
+        AND COALESCE(s.status,'active') NOT IN ('parked','abandoned','retired','skipped','passed','complete','read','extracted','succeeded'))
+        OR (r.kind='activity' AND (json_extract(r.props,'$.retry_requested')=1 OR json_extract(r.props,'$.due')<=? OR json_extract(r.props,'$.event')='review-plan'))
+        OR json_extract(r.props,'$.pin')=1
+        ORDER BY CASE WHEN json_extract(r.props,'$.pin')=1 THEN 1 WHEN r.kind IN ('session','practice-session') THEN 2
+        WHEN r.kind='relationship' THEN 3 WHEN json_extract(r.props,'$.retry_requested')=1 THEN 4 WHEN r.kind='activity' THEN 5 ELSE 6 END,r.path""",(now,)):
+        if kind=='unit' and identity in ordered and identity not in next_units and not pinned:continue
         props = json.loads(raw)
+        target_id = props.get('target', {}).get('record_id') if kind == 'activity' else None
+        if kind == 'relationship':target_id = props.get('exit_task') or props.get('target')
+        if kind=='activity' and props.get('event')=='review-plan' and (identity not in plan_ids or props.get('action')=='retire'):continue
+        if kind=='activity' and props.get('event')!='review-plan' and target_id in plans:continue
+        if scope is not None and identity not in scope and target_id not in scope and props.get('context') != path_id:
+            continue
         if identity:
-            derived = index.record(identity)['state']
+            derived = json.loads(derived_raw) if derived_raw else record(identity)['state']
             if derived.get('conflict'):continue
             if derived.get('status') is not None:props['status'] = derived['status']
         if props.get('status') in ('parked', 'abandoned', 'retired', 'skipped', 'passed', 'complete'):continue
@@ -28,7 +78,8 @@ def next_actions(index, quiet=False):
             priority, reason = 4, 'Independent retry explicitly requested'
         elif kind == 'activity' and props.get('due') and props['due'] <= now:
             priority, reason = 5, 'Learner-selected check is due; age is not a competence estimate'
-        elif kind in ('unit', 'experiment') and props.get('status', 'active') not in ('complete', 'succeeded'):
+        elif kind in ('unit', 'experiment') and props.get('status', 'active') not in ('complete', 'succeeded', 'read', 'extracted'):
+            if kind=='unit' and identity in ordered and identity not in next_units:continue
             priority, reason = 6, 'Incomplete unit or explicit experiment'
         if reason:
             evidence = identity
@@ -37,13 +88,17 @@ def next_actions(index, quiet=False):
             title = props.get('title')
             if target:
                 try:
-                    record = index.record(target)
+                    target_record = record(target)
                 except ValueError:continue
-                if record['state'].get('status') in ('parked', 'abandoned', 'retired', 'skipped', 'passed', 'complete'):continue
-                identity, path, kind = target, record['path'], record['props'].get('type', 'note')
-                title = record['props'].get('title') or path
+                if target_record['state'].get('status') in inactive:continue
+                identity, path, kind = target, target_record['path'], target_record['props'].get('type', 'note')
+                title = target_record['props'].get('title') or path
             candidates.append({'id': identity, 'path': path, 'title': title, 'type': kind, 'reason': reason, 'priority': priority, 'evidence_id': evidence})
-    return sorted(candidates, key=lambda row: (row['priority'], row['path']))[:50]
+            if len({row['id'] for row in candidates})>=50:break
+    unique = {}
+    for row in sorted(candidates, key=lambda row: (row['priority'], row['path'])):
+        unique.setdefault(row['id'], row)
+    return list(unique.values())[:50]
 
 
 def agent_context(index, identity, role='tutor'):

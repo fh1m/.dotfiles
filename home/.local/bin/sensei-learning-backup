@@ -131,9 +131,37 @@ def backup_readers():
   except Exception:
    shutil.rmtree(dest);raise
 
+def restore_reader(snapshot,destination):
+ """Verify a reader snapshot in isolation; never write a live reader profile."""
+ import sqlite3
+ from contextlib import closing
+ if destination.exists() or destination.is_symlink():raise ValueError('Reader restore destination exists; refusing overwrite')
+ metadata=json.loads((snapshot/'manifest.json').read_text())
+ destination.parent.mkdir(parents=True,exist_ok=True)
+ databases={}
+ with tempfile.TemporaryDirectory(dir=destination.parent) as temporary:
+  stage=Path(temporary)/'profile';stage.mkdir()
+  for name,digest in metadata['files'].items():
+   source=safe(snapshot,name)
+   if source.is_symlink() or not source.is_file():raise ValueError('Reader file missing or unsafe')
+   target=safe(stage,name);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
+   if sha(target)!=digest:raise ValueError('Reader checksum mismatch: '+name)
+   if target.suffix in {'.db','.sqlite'}:
+    with closing(sqlite3.connect(target.as_uri()+'?mode=ro',uri=True)) as db:
+     if db.execute('PRAGMA integrity_check').fetchone()[0]!='ok':raise ValueError('Reader database integrity failed')
+     tables=[row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+     counts={table:db.execute('SELECT COUNT(*) FROM "'+table.replace('"','""')+'"').fetchone()[0] for table in tables}
+     databases[name]={'tables':counts,'source':metadata.get('database_sources',{}).get(name,{})}
+  atomic_json(stage/'noesis-reader-recovery.json',{'databases':databases,'source':metadata.get('source'),'database_sources':metadata.get('database_sources',{})})
+  stage.rename(destination)
+ return {'destination':str(destination),'verified_files':len(metadata['files']),'databases':databases,'live_profile_modified':False}
+
 def main():
- os.umask(0o077);p=argparse.ArgumentParser(description=__doc__);p.add_argument('--vault');p.add_argument('--all',action='store_true');p.add_argument('--restore',type=Path);p.add_argument('--dest',type=Path);a=p.parse_args()
+ os.umask(0o077);p=argparse.ArgumentParser(description=__doc__);p.add_argument('--vault');p.add_argument('--all',action='store_true');p.add_argument('--restore',type=Path);p.add_argument('--restore-reader',type=Path);p.add_argument('--dest',type=Path);a=p.parse_args()
  try:
+  if a.restore_reader:
+   if not a.dest:raise ValueError('Reader restore needs --dest pointing to a new directory')
+   print(json.dumps(restore_reader(a.restore_reader,a.dest)));return
   if a.restore:
    if not a.dest:raise ValueError('Restore needs --dest pointing to a new directory')
    restore(a.restore,a.dest);return

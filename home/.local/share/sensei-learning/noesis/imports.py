@@ -4,7 +4,7 @@ import hashlib
 import json
 import re
 import uuid
-from .persistence import checksum, contained, lock, notes, parse, publish, render
+from .persistence import checksum, contained, lock, notes, parse, publish, render, manifest_path
 
 
 def aliases(item):
@@ -25,13 +25,23 @@ def import_csl(root, source, meta, resource_key, dry=False):
         for path in notes(root):
             text = path.read_text()
             props, body = parse(text)
-            if not props.get('source_id'):continue
-            key = props['source_id']
+            if not props.get('source_id') and not (props.get('type') in ('paper','resource') and props.get('external_aliases')):continue
+            key = props.get('source_id') or 'noesis:'+props['id']
             if key in records:raise ValueError('Duplicate imported source identity')
             records[key] = (path, props, body, text)
             for alias in props.get('external_aliases', []):
                 if alias in by_alias and by_alias[alias] != key:raise ValueError('Conflicting external alias')
                 by_alias[alias] = key
+        # A retried interrupted import must recover the same resource identity,
+        # including a projection published before its resource pointer.
+        namespace = uuid.UUID(json.loads(manifest_path(root).read_text())['vault_id'])
+        transaction = contained(root, 'Imports/Transactions/' + checksum(source.read_text()) + '.json')
+        journal = {'source_sha256': checksum(source.read_text()), 'status': 'preparing', 'resources': []}
+        journal_text = transaction.read_text() if transaction.exists() else None
+        if not dry:
+            replacement = json.dumps(journal, indent=2)
+            publish(transaction, replacement, checksum(journal_text) if journal_text is not None else None)
+            journal_text = replacement
         for item in items:
             key = resource_key(item)
             candidates = {by_alias[a] for a in aliases(item) if a in by_alias}
@@ -44,7 +54,7 @@ def import_csl(root, source, meta, resource_key, dry=False):
             else:
                 title = re.sub(r'[\\/\n\r\x00-\x1f]', ' ', str(item['title'])).strip()[:130] or 'Paper'
                 path = contained(root, meta['types'].get('paper', 'Notes') + '/' + title + ' [' + key[:8] + '].md')
-                props = {'id': str(uuid.uuid4()), 'source_id': key, 'type': 'paper', 'status': 'queued', 'created': date.today().isoformat()}
+                props = {'id': str(uuid.uuid5(namespace, 'bibliography:' + str(key))), 'source_id': key, 'type': 'paper', 'status': 'queued', 'created': date.today().isoformat()}
                 body = '\n# ' + str(item['title']) + '\n\n## Why this paper?\n\n## Claims / model / assumptions\n\n## My reconstruction\n\n## Implementation and evidence\n\n## Questions / limitations / connections\n'
                 text = None
                 created.append(str(path.relative_to(root)))
@@ -63,6 +73,13 @@ def import_csl(root, source, meta, resource_key, dry=False):
                     publish(projection, render({'id': str(uuid.uuid4()), 'noesis_schema': 2, 'type': 'imported-bibliography', 'resource_id': props['id'], 'source_sha256': digest}, '\n```json\n' + raw + '\n```\n'))
                 if updated != props or text is None:
                     publish(path, render(updated, body), checksum(text) if text is not None else None)
+                journal['resources'].append({'resource_id': props['id'], 'path': str(path.relative_to(root)), 'projection': str(projection.relative_to(root))})
+                replacement = json.dumps(journal, indent=2)
+                publish(transaction, replacement, checksum(journal_text))
+                journal_text = replacement
             records[key] = (path, updated, body, render(updated, body))
             for alias in updated['external_aliases']:by_alias[alias] = key
+        if not dry:
+            journal['status'] = 'committed'
+            publish(transaction, json.dumps(journal, indent=2), checksum(journal_text))
     return {'created': created, 'existing': existing, 'dry_run': dry}

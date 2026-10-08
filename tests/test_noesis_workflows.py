@@ -6,14 +6,18 @@ import unittest
 from unittest.mock import patch
 import uuid
 import math
+import hashlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'home/.local/share/sensei-learning'))
 from noesis.persistence import migration, parse, publish, render
 from noesis.models import create, relationship
-from noesis.activities import record_activity, progress_state
+from noesis.activities import record_activity, progress_state, operation_status
 from noesis.index import Index
 from noesis.imports import import_csl
 from noesis.policies import next_actions, agent_context
+from noesis.views import overview
+from noesis.artifacts import inspect as inspect_artifact
+import noesis.imports as import_module
 
 
 class Workflows(unittest.TestCase):
@@ -46,6 +50,10 @@ class Workflows(unittest.TestCase):
         self.assertEqual(index.record(units[-1]['id'])['state']['position'], 'timestamp 12:30')
         self.assertEqual([index.timeline(task['id']) for task in tasks], [[], []])
         self.assertEqual(index.timeline(project['id']), [])
+        counts=overview(index,course['id'])['counts']
+        self.assertEqual((counts['lectures']['consumed'],counts['lectures']['total']),(6,6))
+        self.assertEqual((counts['assignments']['reported_success'],counts['assignments']['total']),(0,2))
+        self.assertEqual((counts['projects']['reported_success'],counts['projects']['total']),(0,1))
         relationship(self.root, course['id'], units[-1]['id'], 'orders', order=0)
         self.assertEqual(len(index.timeline(units[-1]['id'])), 1)
 
@@ -98,6 +106,18 @@ class Workflows(unittest.TestCase):
         self.assertIn('noise falls', index.record(experiment['id'])['body'])
         self.assertEqual(index.timeline(experiment['id'])[0]['hypothesis'], 'contradicted')
 
+    def test_explicit_artifact_checks_preserve_prediction_and_reference(self):
+        file=self.home/'sensor.dat';file.write_bytes(b'synthetic measurement')
+        artifact=create(self.root,'artifact','Sensor data',fields={'location':str(file),'sha256':hashlib.sha256(file.read_bytes()).hexdigest()})
+        original=(self.root/artifact['path']).read_text()
+        first=inspect_artifact(self.root,artifact['id'])
+        self.assertEqual(first['integrity'],'matches expected checksum')
+        file.write_bytes(b'changed measurement')
+        self.assertEqual(inspect_artifact(self.root,artifact['id'])['integrity'],'checksum mismatch')
+        file.unlink()
+        self.assertEqual(inspect_artifact(self.root,artifact['id'])['availability'],'artifact unavailable')
+        self.assertEqual((self.root/artifact['path']).read_text(),original)
+
     def test_gate_cycles_context_and_manual_parking(self):
         a, b = create(self.root, 'concept', 'A'), create(self.root, 'concept', 'B')
         relationship(self.root, a['id'], b['id'], 'prerequisite', role='parallel')
@@ -125,9 +145,96 @@ class Workflows(unittest.TestCase):
         self.assertEqual(index.record(task['id'])['state']['position'], 'page 3')
         self.assertEqual(index.record(task['id'])['activity_head'], resolved['id'])
 
+    def test_commit_receipts_and_scoped_recommendations(self):
+        path = create(self.root, 'path', 'Selected path')
+        other = create(self.root, 'path', 'Other path')
+        unit = create(self.root, 'unit', 'Selected lecture')
+        unrelated = create(self.root, 'unit', 'Unrelated lecture')
+        task = create(self.root, 'task', 'Assignment')
+        relationship(self.root, path['id'], unit['id'], 'orders', order=0)
+        relationship(self.root, other['id'], unrelated['id'], 'orders', order=0)
+        relationship(self.root, unit['id'], task['id'], 'assigns')
+        operation = str(uuid.uuid4())
+        self.assertEqual(operation_status(self.root, operation)['status'], 'not-committed')
+        recorded = record_activity(self.root, unit['path'], 'study', operation_id=operation,
+                                   state={'status': 'read', 'position': 'timestamp 12:30'})
+        self.assertEqual(operation_status(self.root, operation)['records'][0]['id'], recorded['id'])
+        retry = record_activity(self.root, task['path'], 'attempt', 'Needs an independent retry.',
+                                assistance=['reference'], outcome='succeeded', retry_requested=True)
+        index = self.index()
+        scoped = next_actions(index, path_id=path['id'])
+        self.assertEqual([row['id'] for row in scoped], [task['id']])
+        self.assertEqual(scoped[0]['evidence_id'], retry['id'])
+        self.assertIn(unrelated['id'], [row['id'] for row in next_actions(index)])
+        self.assertEqual(next_actions(index, quiet=True, path_id=path['id']), [])
+        with self.assertRaisesRegex(ValueError, 'path'):next_actions(index, path_id=unit['id'])
+
+    def test_interrupted_bibliography_pointer_reuses_projected_identity(self):
+        source=self.home/'export.json';source.write_text(json.dumps([{'id':'synthetic-source','title':'Paper'}]))
+        actual=import_module.publish
+        def interrupt(path,*args,**kwargs):
+            if path.parent.name=='Resources':raise OSError('Injected interruption before resource pointer')
+            return actual(path,*args,**kwargs)
+        with patch.object(import_module,'publish',side_effect=interrupt):
+            with self.assertRaises(OSError):import_csl(self.root,source,{'types':{'paper':'Resources'}},lambda item:item['id'])
+        projection=next((self.root/'Imports').rglob('*.md'))
+        expected=parse(projection.read_text())[0]['resource_id']
+        meta=json.loads((self.root/'System/System.json').read_text())
+        result=import_csl(self.root,source,dict(meta,types={'paper':'Resources'}),lambda item:item['id'])
+        self.assertEqual(parse((self.root/result['created'][0]).read_text())[0]['id'],expected)
+        self.assertEqual(len(list((self.root/'Imports').rglob('*.md'))),1)
+        self.assertEqual(json.loads(next((self.root/'Imports/Transactions').glob('*.json')).read_text())['status'],'committed')
+
+    def test_connected_units_and_specific_resume_locations_rebuild(self):
+        course=create(self.root,'resource','Linear algebra',fields={'source_kind':'course'})
+        unit=create(self.root,'unit','Lecture 1',fields={'unit_kind':'lecture'},parent_id=course['id'],order=0)
+        task=create(self.root,'task','Problem set 1',parent_id=unit['id'],relation='assigns')
+        record_activity(self.root,unit['path'],'study',state={'locator':{'kind':'timestamp','value':'1:12:30'}})
+        index=self.index()
+        self.assertEqual(index.record(unit['id'])['state']['locator']['seconds'],4350)
+        self.assertEqual(index.relations(course['id'])[0]['other_id'],unit['id'])
+        self.assertEqual(overview(index,course['id'])['counts']['assignments']['total'],1)
+        self.assertEqual(index.timeline(task['id']),[])
+        with self.assertRaises(ValueError):record_activity(self.root,unit['path'],'study',state={'locator':{'kind':'timestamp','value':'12:99'}})
+        with self.assertRaises(ValueError):record_activity(self.root,unit['path'],'study',state={'locator':{'kind':'page','value':0}})
+        with self.assertRaises(ValueError):create(self.root,'unit','Invalid child',parent_id=str(uuid.uuid4()))
+        self.assertFalse(list((self.root/'Records/unit').glob('Invalid*')))
+        moved=self.root/'Moved lecture.md';(self.root/unit['path']).rename(moved)
+        with index.db:
+            for table in ('records','relationships','activities','search'):index.db.execute('DELETE FROM '+table)
+        index.reconcile()
+        self.assertEqual(index.relations(course['id'])[0]['other_path'],'Moved lecture.md')
+
+    def test_review_planning_snooze_retirement_and_ordered_next_unit(self):
+        course=create(self.root,'resource','Course')
+        first=create(self.root,'unit','First unit',parent_id=course['id'])
+        second=create(self.root,'unit','Second unit',parent_id=course['id'])
+        task=create(self.root,'task','Retry this task')
+        record_activity(self.root,task['path'],'attempt','Assisted result needs a retry.',outcome='succeeded',assistance=['reference'],retry_requested=True)
+        index=self.index()
+        self.assertEqual([r['id'] for r in next_actions(index) if r['type']=='unit'],[first['id']])
+        operation=str(uuid.uuid4())
+        planned=record_activity(self.root,task['path'],'review-plan','Reconstruct before opening the editorial.',operation,action='schedule',stage='retry')
+        self.assertEqual(planned['interval_days'],1)
+        self.assertEqual(record_activity(self.root,task['path'],'review-plan','Reconstruct before opening the editorial.',operation,action='schedule',stage='retry')['id'],planned['id'])
+        later=record_activity(self.root,task['path'],'review-plan','Choose a quieter day.',action='snooze',stage='later')
+        self.assertEqual(later['interval_days'],7)
+        self.assertEqual(later['previous_plan'],planned['id'])
+        retired=record_activity(self.root,task['path'],'review-plan','Intentionally retire this check.',action='retire',stage='maintenance')
+        self.assertIsNone(retired['due'])
+        with self.assertRaises(ValueError):record_activity(self.root,task['path'],'review-plan','Invalid interval',action='schedule',days=0)
+        record_activity(self.root,first['path'],'study',state={'status':'read'})
+        index.reconcile()
+        self.assertEqual([r['id'] for r in next_actions(index) if r['type']=='unit'],[second['id']])
+        self.assertNotIn(task['id'],[r['id'] for r in next_actions(index)])
+        self.assertEqual(index.timeline(task['id'])[0]['assistance'],['reference'])
+
     def test_reveal_is_retained_and_independent_retry_gets_new_identity(self):
         task = create(self.root, 'task', 'Protected problem')
         started = record_activity(self.root, task['path'], 'attempt-start', mode='derive')
+        restarted=self.index()
+        self.assertEqual(restarted.record(task['id'])['attempt']['id'],started['id'])
+        with self.assertRaisesRegex(ValueError,'unfinished'):record_activity(self.root,task['path'],'attempt-start',mode='derive')
         record_activity(self.root, task['path'], 'assistance', attempt_id=started['id'], assistance=['reference'])
         operation = str(uuid.uuid4())
         result = record_activity(self.root, task['path'], 'attempt', 'Corrected reasoning', operation_id=operation,
