@@ -6,7 +6,7 @@ Focuses only the fixture window for injected input; stops its own processes.
 Screenshots contain synthetic records and are supplementary visual evidence.
 """
 from pathlib import Path
-import importlib.util,tempfile,subprocess,os,json,time
+import importlib.util,tempfile,subprocess,os,json,time,shutil
 repo=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('installer',repo/'scripts/install.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
@@ -152,6 +152,57 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
    print('Connected route:',len(keyboard_events)-journey_start-typing_events[0],'keyboard actions plus',typing_events[0],'typed characters; no file hunting or metadata copying')
    client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==process.pid and c['title'].startswith('Noesis'))
    x,y=client['at'];w,h=client['size'];subprocess.run(['grim','-g',f'{x},{y} {w}x{h}','/tmp/noesis-research-context.png'],check=True)
+   # Define a capability through the path UI, then preserve three different attempts.
+   path=cli('record','path','synthetic demonstration path')
+   shortcut('CTRL','2');shortcut('CTRL','k');type_text('demonstration');shortcut('','Down');shortcut('','Return');time.sleep(.5)
+   shortcut('CTRL','period')
+   for _ in range(3):shortcut('','Down')
+   shortcut('','Return');type_text('scoped capability');shortcut('','Tab');type_text('explain failed assumption');shortcut('CTRL','Return');time.sleep(.5)
+   capability_file=next((vault/'Records/capability').glob('scoped capability*'));capability,_=parse(capability_file.read_text())
+   assert capability['parent_ref']['relation']=='pursues' and capability['criteria']==['explain failed assumption']
+   shortcut('CTRL','4');shortcut('CTRL','k');type_text('synthetic problem');shortcut('','Down');shortcut('','Return');time.sleep(.5)
+   problem,_=parse(records[0].read_text())
+   def action(index):
+    shortcut('CTRL','period')
+    for _ in range(index):shortcut('','Down')
+    shortcut('','Return');time.sleep(.5)
+   def reported(outcome_steps):
+    shortcut('CTRL','Tab');shortcut('','Tab');shortcut('','Home')
+    for _ in range(outcome_steps):shortcut('','Down')
+    shortcut('','Tab');shortcut('','Home');shortcut('','Down') # explicitly declare no outside assistance
+    current=state();assert current['reported_outcome']==('failed' if outcome_steps==2 else 'succeeded') and current['declared_assistance']=='none',current
+   action(0);type_text('failed prediction');reported(2);action(0)
+   attempts=[event for event in cli('timeline',problem['id'])['activities'] if event['event']=='attempt']
+   assert len(attempts)==1 and attempts[0]['outcome']=='failed' and attempts[0]['assistance']==['none']
+   action(0);type_text('scoped');shortcut('','Down');shortcut('','Return');time.sleep(.5)
+   type_text('failure explains the assumption')
+   client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==process.pid and c['title'].startswith('Noesis'))
+   x,y=client['at'];w,h=client['size'];subprocess.run(['grim','-g',f'{x},{y} {w}x{h}','/tmp/noesis-evidence-dialog.png'],check=True)
+   shortcut('CTRL','Return');time.sleep(.6)
+   decisions=[event for event in cli('timeline',capability['id'])['activities'] if event['event']=='capability-decision']
+   assert len(decisions)==1 and decisions[0]['evidence_id']==attempts[0]['id'] and decisions[0]['actor']=='learner'
+   action(2);type_text('corrected model');action(1);assert not state()['reference_hidden']
+   reported(4);action(1)
+   action(2);type_text('independent reasoning');reported(4);action(0)
+   attempts=[event for event in cli('timeline',problem['id'])['activities'] if event['event']=='attempt']
+   assert [(event['outcome'],event['assistance']) for event in attempts]==[('failed',['none']),('succeeded',['reference']),('succeeded',['none'])]
+   assert len({event['attempt_id'] for event in attempts})==3
+   print('Native practice: independent failure → reference-assisted success → independent retry; explicit scoped learner decision preserved')
+   shortcut('CTRL','2');shortcut('CTRL','k');type_text('scoped');shortcut('','Down');shortcut('','Return');time.sleep(.5)
+   assert state()['selected']==str(capability_file.relative_to(vault))
+   client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==process.pid and c['title'].startswith('Noesis'))
+   x,y=client['at'];w,h=client['size'];subprocess.run(['grim','-g',f'{x},{y} {w}x{h}','/tmp/noesis-capability-context.png'],check=True)
+   subprocess.run([binary,'-p',str(config),'ipc','call','noesis','close'],env=env,capture_output=True,timeout=5);time.sleep(.5)
+   assert not state()['worker'] and not state()['watch']
+   process.terminate();process.wait(timeout=5);shutil.rmtree(home/'.cache/noesis')
+   process=subprocess.Popen([binary,'-p',str(config),'--no-color'],env=env,stdout=stream,stderr=subprocess.STDOUT);time.sleep(4)
+   assert state()['selected']==str(capability_file.relative_to(vault))
+   recovered=[event for event in cli('timeline',problem['id'])['activities'] if event['event']=='attempt']
+   assert [(event['outcome'],event['assistance']) for event in recovered]==[('failed',['none']),('succeeded',['reference']),('succeeded',['none'])]
+   assert len([event for event in cli('timeline',capability['id'])['activities'] if event['event']=='capability-decision'])==1
+   print('Three attempts and scoped evidence decision recovered after cache deletion and application restart')
+
+
 
 
 

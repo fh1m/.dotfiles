@@ -256,3 +256,14 @@ After the source-kind query changes, current concept benchmarks are: 100 records
 responses remain below 7,809 bytes. These replace the earlier table for this slice;
 Qt frame timing, populated native readers and complete lifecycle memory measurements
 remain unfinished. Synthetic before/after research captures are in visual-language.md.
+
+
+### Real Today correction — 2026-10-09
+
+Read-only inspection of the four managed local vaults found no index errors. The selected robotics vault named Noesis contains notes but zero activity records and zero next actions. Knowledge has four activities and a resumable context; CS has a path and a next action; Workbench has a project but no activities. Counts describe inventory, not learning. No private note was changed to populate Today.
+
+A real running-window capture was inspected locally (`/tmp/noesis-real-today-before.png`); it is not a synthetic fixture or proof of workflow completion. Private screenshots remain outside public Git. The empty suggestion heading and duplicate Today capture controls were removed. Today now explains local scope, offers other managed vaults, exposes existing path/course outlines, and provides direct start actions. Prose uses installed Adwaita Sans; technical metadata retains its existing monospace font.
+
+Practice native acceptance passed: failed independent, assisted successful, and later independent successful attempts retain distinct IDs. Explicit learner criterion decisions preserve failed evidence honestly. Restart after deleting the disposable cache recovered history and decisions. This is synthetic native interaction evidence, not a real learner observation.
+
+Remaining Today gate: opt-in, bounded unified Continue/Search across authorized vaults with each result carrying vault identity; cross-vault selection must preserve scoped drafts and mutations. This intermediate release still queries the selected vault and labels that limit. A–F product acceptance is not yet complete.

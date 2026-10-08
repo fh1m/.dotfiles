@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 import qs.config
 Singleton {
- readonly property string uiFont:Appearance.font.ui
+ readonly property string uiFont:"Adwaita Sans"
  readonly property string codeFont:Appearance.font.data
  readonly property int caption:12
  readonly property int label:13

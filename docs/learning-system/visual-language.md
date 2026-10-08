@@ -99,3 +99,6 @@ the source; creation and administrative actions move into a keyboard action list
 Source opening and exact reading position remain immediately available. Resource
 labels reflect the medium, and courses belong in Learn rather than Research.
 The native connected-record route is verified separately in validation.md.
+
+
+Interface prose now uses the installed Adwaita Sans, with the existing data font reserved for technical metadata. Today must explain its selected-vault scope and distinguish existing notes from recorded active work. No empty suggestion section or duplicate capture invitation should displace onboarding.

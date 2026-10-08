@@ -46,4 +46,11 @@ class Scopes(unittest.TestCase):
   result=subprocess.run([sys.executable,str(ROOT/'home/.local/bin/sensei-learn'),'capture','A prediction'],env=env,capture_output=True,text=True)
   self.assertEqual(result.returncode,0,result.stderr);self.assertTrue(Path(result.stdout.strip()).is_file())
   self.assertFalse((self.home/'.config/obsidian/obsidian.json').exists())
+ def test_registered_noesis_only_scope_is_selectable_without_obsidian_folder(self):
+  register(self.root)
+  result=subprocess.run([sys.executable,str(ROOT/'home/.local/bin/sensei-learn'),'vaults'],env=dict(os.environ,HOME=str(self.home)),capture_output=True,text=True)
+  self.assertEqual(result.returncode,0,result.stderr)
+  self.assertEqual([row['path'] for row in json.loads(result.stdout)],[str(self.root)])
+  self.assertTrue(json.loads(result.stdout)[0]['managed'])
+  self.assertFalse((self.root/'.obsidian').exists())
 if __name__=='__main__':unittest.main()

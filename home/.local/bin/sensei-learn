@@ -81,7 +81,7 @@ def inventory():
     active=config().get('active_vault','')
     return [{'name':p.name,'path':str(p),'managed':((p/'94 Meta/System.json').is_file() or (p/'System/System.json').is_file()),'active':str(p)==active}
             for p in sorted(paths,key=lambda x:x.name.lower())
-            if p!=HOME/'Downloads' and 'Archives' not in p.parts and (p/'.obsidian').is_dir()]
+            if p!=HOME/'Downloads' and 'Archives' not in p.parts and ((p/'.obsidian').is_dir() or (p/'System/System.json').is_file() or (p/'94 Meta/System.json').is_file())]
 
 
 def substitute(text, subject='', goal='', title=''):
