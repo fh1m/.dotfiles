@@ -24,3 +24,6 @@ Why does it work? Invariants, complexity, boundary cases and counterexample.
 
 ## Independent retry
 Reconstruct without the editorial. Link the missing concept if blocked.
+
+## Pattern and transfer
+Which cue suggested the method? Why does it fit? Try a nearby wrong method and a changed constraint. Record pattern exposure separately from independent solving.

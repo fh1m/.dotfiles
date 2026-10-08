@@ -26,3 +26,6 @@ Symbols/units/assumptions; or representation/state transition.
 ## Below / above / real world
 
 ## Reconstruct without the source
+
+## Usable interface and reconstruction
+What can I do with this before descending further? Inputs/outputs, assumptions and failure boundaries. Close the source and reconstruct one load-bearing step, then change one condition.

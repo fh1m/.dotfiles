@@ -23,3 +23,15 @@ views:
   - file.name
   - review
   - status
+
+- type: table
+  name: Sessions
+  filters:
+    and:
+    - type == "practice-session"
+  order:
+  - file.name
+  - mode
+  - goal
+  - status
+  - source_note

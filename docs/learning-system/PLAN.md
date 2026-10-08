@@ -141,3 +141,14 @@ samples were 82–146 ms; a quiet 3-second shell sample used ~1% of one CPU core
 These are spot checks, not a promise of universal frame-time performance.
 Installer repeatability and diff/secret review pass. Public code contains no private
 vault content or transient Obsidian state. Subject notes remain local/private.
+
+## Practice synthesis — 2026-10-08
+Implement the research as behavior: five practice modes and independent Markdown
+sessions; hide/reveal references; Recall defaults hidden; scrolling tools preserve
+preview space. Additive Playbook/session Base/protocol in real vaults; improved
+factory templates. No new dependencies, fake mastery, celebrity routine claims or
+background polling. Done when native session opening, actual Bases rows, source
+preservation, sixteen unit checks, live QML composition and backup pass.
+Research provenance and exact design changes: practice-design.md.
+
+Acceptance passed: native session creation/opening and actual Sessions Base row; Recall hides reference; sixteen tests; live composition inspected; obsolete test vault removed. A startup command-registration race was fixed by retrying only the read-only identity handshake.

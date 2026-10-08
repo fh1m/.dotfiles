@@ -33,3 +33,6 @@ What would falsify the claim? What prerequisites block the next useful attempt?
 
 ## Connections
 Concepts, related papers, real implementations and future branches.
+
+## Reproduction contract
+Baseline, reference output/oracle, data split, preprocessing, seed, environment and code commit. Change one thing per comparison; preserve discrepancies rather than explaining them away.

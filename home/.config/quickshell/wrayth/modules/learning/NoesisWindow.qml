@@ -39,5 +39,5 @@ FloatingWindow {
   }
   Content.OasisDropdown {id:content;Layout.fillWidth:true;Layout.fillHeight:true;chamfer:0}
  }
- IpcHandler {target:"noesis-window";function state():string{return JSON.stringify({visible:win.visible,width:win.width,height:win.height,screen:win.screen?.name,section:content.section,selected:content.selected.path||"",rows:content.rows.length});}function section(name:string):void{content.section=name;}function select(path:string):void{let n=(Oasis.state.notes||[]).find(x=>x.path===path);if(n){content.selected=n;Oasis.preview(path);}}}
+ IpcHandler {target:"noesis-window";function state():string{return JSON.stringify({visible:win.visible,width:win.width,height:win.height,screen:win.screen?.name,section:content.section,selected:content.selected.path||"",rows:content.rows.length,reference_hidden:content.referenceHidden});}function section(name:string):void{content.section=name;}function select(path:string):void{let n=(Oasis.state.notes||[]).find(x=>x.path===path);if(n){content.selected=n;Oasis.preview(path);}}}
 }

@@ -21,6 +21,22 @@ class Learning(unittest.TestCase):
  def create(self,title='Classical Mechanics',dry=False):
   a=argparse.Namespace(subject=title,dest=str(self.h/'vault'),goal='Predict a pendulum period and measure disagreement',dry_run=dry,no_git=True)
   m.initialize(a);return self.h/'vault'
+ def test_practice_modes_preserve_source_and_do_not_award_mastery(self):
+  r=self.create();source=m.new_note(r,'concept','Useful mechanism');original=source.read_text()
+  sessions=[]
+  for mode in m.PRACTICE_MODES:
+   p=m.practice_session(r,str(source.relative_to(r)),mode,'Test a changed input');props,body=m.note_text(p.read_text())
+   self.assertEqual(props['mode'],mode);self.assertNotIn('confidence',props);self.assertIn('Before feedback',body);sessions.append(p)
+  self.assertEqual(source.read_text(),original);self.assertEqual(len(set(sessions)),5)
+  with self.assertRaises(ValueError):m.practice_session(r,'../outside.md','derive','Goal')
+  with self.assertRaises(ValueError):m.practice_session(r,str(source.relative_to(r)),'derive',' ')
+  self.assertTrue(m.doctor(r,True)['ok'])
+ def test_cli_retries_only_readonly_startup_handshake(self):
+  from types import SimpleNamespace
+  r=self.create();responses=[SimpleNamespace(stdout='Error: Command "vault" not found.',stderr='',returncode=1),SimpleNamespace(stdout=str(r),stderr='',returncode=0),SimpleNamespace(stdout='mutation completed',stderr='',returncode=0)]
+  with patch.object(m,'ensure_app'),patch.object(m.time,'sleep'),patch.object(m.subprocess,'run',side_effect=responses) as run:
+   self.assertEqual(m.cli(r,'append','path=example.md','content=test'),'mutation completed')
+   self.assertEqual(sum(call.args[0][2]=='append' for call in run.call_args_list),1)
  def test_subject_vault_and_refusal(self):
   r=self.create();self.assertTrue(m.doctor(r,True)['ok'])
   self.assertEqual(m.system(r)['template_version'],2)
