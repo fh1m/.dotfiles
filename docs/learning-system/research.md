@@ -95,3 +95,5 @@ A browser learning app, mandatory flashcards, imported-annotation-as-understandi
 celebrity imitation, a graph advertised as a brain replica, duplicate PDF annotation
 authorities, archived-plugin dependence, automatic cloud signup and always-running
 index polling. Existing specialized tools beat rebuilding their editors.
+
+[Complete four-video synthesis and limits](colin-galen.md).
