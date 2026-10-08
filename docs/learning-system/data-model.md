@@ -21,3 +21,16 @@ Ownership: learner prose remains Markdown; Zotero exports become recoverable
 versioned projections; code stays in repositories; large artifacts stay in external
 storage; layout preferences are machine-local. There is no synchronization of a
 live Zotero database and no automatic capability award.
+
+
+Child publication may own a parent_ref containing vault_id, record_id, relation
+and optional order. The index projects this into the same relationship queries;
+it is rebuildable, not a second source of truth. Parent and child titles/paths
+may change without changing the edge. New linked units publish in one atomic
+Markdown file rather than requiring a partially committed pair of files.
+
+Cached derived states support bounded queries. Immutable study, attempt, exposure,
+review-plan and comparison records remain authoritative. Causal predecessors
+control reduction, not wall-clock ordering. Local operation receipts witness
+capture publication; retries preserve record identity after moves. A missing
+committed record is a recovery condition, not permission to recreate it.

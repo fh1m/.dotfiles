@@ -81,3 +81,19 @@ repeatability. Inspect public staged files for private notes/state/credentials.
 See validation.md for measured results and remaining release gates. A phase is not
 complete merely because its source files exist. Full release requires all P0-P8
 behavioral/native/recovery/performance gates. Optional integrations are separate.
+
+
+## Product coherence continuation — 2026-10-09
+
+The additional product directive is part of P2–P8, not a replacement roadmap.
+Visual consistency is built alongside the workflows: shared Wrayth tokens,
+quiet navigation, contextual Read/Work/History/Connections, optional details,
+auto-preserved drafts, precise resource resume and a small intentional Today.
+See visual-language.md for inspected product patterns and implementation rules.
+
+Completed implementation slices include durable unfinished-attempt recovery,
+append pagination, concept inclusion, path-scoped next actions, ordered-unit
+frontiers, explicit review plans, local Zotero read/import projections, native
+reader locators, child-owned parent references and capture commit receipts.
+Native acceptance and remaining journey gaps stay in validation.md. Research,
+course and Lab are not declared complete because their primitives exist.

@@ -4,10 +4,10 @@ The connected foundation is implemented and deployed. Full P0–P8 release
 acceptance remains open. This ledger distinguishes tested behavior from remaining
 work; the presence of a module does not complete its milestone.
 
-## Observed verification, 2026-10-08
+## Observed verification, 2026-10-09
 
-- Sixteen existing factory/import tests and twenty-one new core/workflow/recovery/
-  watcher tests pass: 37 total. Fixtures are synthetic and disposable.
+- Sixteen existing factory/import tests and thirty-three new core/workflow/recovery/
+  watcher/Zotero/capture/reader tests pass: 49 total. Fixtures are synthetic and disposable.
 - Capture, paged query, progress and attempt CLI operations pass with PATH containing
   no Obsidian executable. Native note opening remains a separate application action.
 - Merged progress rejects current-only overflow, lowered totals, negative counts,
@@ -71,9 +71,9 @@ Each warm-query sample set has 50 requests; capture has ten CLI samples.
 
 | Records | Cold rebuild | Warm worker p95 | Largest summary response | Capture CLI p95 |
 |---:|---:|---:|---:|---:|
-| 100 | 0.034 s | 0.586 ms | 5,772 bytes | 88.336 ms |
-| 1,000 | 0.333 s | 1.331 ms | 5,866 bytes | 90.460 ms |
-| 10,000 | 3.394 s | 8.653 ms | 5,958 bytes | 92.915 ms |
+| 100 | 0.036 s | 0.846 ms | 5,772 bytes | 140.491 ms |
+| 1,000 | 0.346 s | 1.803 ms | 5,866 bytes | 105.162 ms |
+| 10,000 | 3.784 s | 8.979 ms | 5,958 bytes | 104.010 ms |
 
 An initial 10,000-record run took 9.991 seconds. Repeated FTS path scans were
 replaced with row-ID deletion; the table above records the corrected result.
@@ -100,30 +100,82 @@ sufficient native acceptance evidence.
 
 ## Remaining release gates and limitations
 
-- P0: meaningful reader-state restore into separate profiles; complete consistent
-  reader backup validation; supported registration/version probes and exhaustive
-  interruption/concurrent publication cases.
-- P1: explicit restored-vault fork/registration conflict workflow, complete cross-
-  vault resolution, cancellation commit-status reporting and broader property/
-  concurrency/fault-injection coverage. Current cancellation reports uncertainty
-  and asks for inspection; it does not instruct blind repetition.
-- P2: native Zotero local-API capability/instance/permission experiment, reliable
-  reader locator handoff, annotation-ID lifecycle and exhaustive multi-file import
-  interruption/recovery. CSL/Markdown export fallback is the implemented adapter.
-- P3–P5: richer course/context/evidence presentation, complete reorder/replacement
-  history, all realistic reading/assignment/project fixtures, environment/repository
-  launching and explicit external-artifact integrity checks. Current records and
-  relationships provide the foundation; these integrations are not all complete.
-- P6: exhaustive focused keyboard/tab/resize acceptance, changed/disconnected output
-  tests, repeated Qt lifecycle/memory measurements and complete specialized study
-  layouts. Main-display placement was observed; fallback behavior is implemented
-  but its full hardware matrix has not been exercised.
-- P7: path/context-specific recommendation scope, configurable 1/7/30-day suggestion
-  policy, fuller agent-context exports and complete manual override journeys.
-- P8: Qt input/frame timing, actual warm workspace p95, recommendation scale,
-  host/container acceptance, no-growth lifecycle measurements and full release
-  privacy/recovery/performance matrix. Optional P9 tools remain uninstalled.
+- P0: fresh consistent reader backup publication, supported Obsidian registration
+  probes and exhaustive interruption/concurrent publication cases. Reader restore
+  now verifies SQLite integrity and row content on synthetic populated databases.
+  Actual Sioyek/Zotero snapshots restored to new private directories with matching
+  rows; the actual Zotero snapshot contains no bibliography or annotation items,
+  so it cannot establish a populated native annotation recovery journey.
+- P1: restored-vault fork/registration conflict workflow, complete cross-vault
+  resolution and broader property/concurrency/fault-injection coverage. Activities
+  and captures now provide cancellation commit receipts. Operations lacking a
+  receipt still report uncertainty. Capture drafts are private machine state.
+- P2: populated native Zotero lifecycle and exhaustive multi-file recovery. An
+  isolated installed Zotero 10.0.6 profile passed the supported local API probe;
+  its root returns plain text, handled without assuming JSON. Instance/permission
+  checks and native annotation revision/deletion are tested through synthetic API
+  responses. Sioyek one-based pages, Zotero PDF page URIs and YouTube timestamps
+  have tested command construction; populated native reader-resume acceptance
+  remains open. Multiple Zotero PDF attachments require selection in Zotero.
+- P3–P5: all representative end-to-end course, paper, derivation and experiment
+  desktop journeys; reorder/replacement history, repository/environment launches
+  and criterion-level capability presentation. Child units, questions, tasks, runs
+  and artifact references now publish with durable parent links in one file.
+  Artifact checks stream and distinguish unavailable, unverified, match/mismatch.
+  Lab comparison controls are implemented; their complete native journey remains
+  an acceptance gate. These additions do not complete the milestones by themselves.
+- P6: exhaustive tab-order/resize/fallback-output matrix, repeated Qt memory
+  measurements, complete specialized study layouts and long-absence journeys.
+  Main placement, keyboard capture/search/workspace changes and append pagination
+  have native checks. The companion uses the same visual tokens without another
+  query worker. Machine preferences and unfinished attempts survive independently.
+- P7: fuller role-specific agent exports, ancestor parking/manual overrides and
+  repeated prerequisite bottleneck views. Path scoping, ordered-unit frontiers and
+  explicit schedule/snooze/retire plans are implemented and tested. Configurable
+  1/7/30-day defaults are convenience policy, never competence estimates.
+- P8: Qt input/frame timing, actual warm workspace p95, host/container acceptance,
+  no-growth lifecycle measurements and full release privacy/recovery matrix.
+  Optional P9 tools remain uninstalled; off-device protection remains deferred.
 
 No milestone is marked fully accepted on the strength of source files alone.
 The deployment is a working connected baseline, with the above release gates
 still requiring implementation or verification.
+
+
+## Product coherence continuation
+
+The shared visual language uses existing Wrayth fonts/surfaces and a single pink
+accent. Read/Work/History/Connections reveal controls according to current work;
+Details is optional. Native Markdown preview is selectable; equations, diagrams,
+editing, PDF annotation and code remain specialist handoffs. Learn includes concept
+and legacy stage records. Today separates Continue from at most five suggestions.
+
+The 10,000 ordered-unit fixture rebuilt in 5.986 seconds, queried at p95 8.975 ms,
+returned at most 5,808 bytes, suggested Today at p95 115.477 ms and captured at
+p95 111.573 ms. This exercises relationships as well as flat concept records.
+These remain backend measurements, not Qt input/frame measurements.
+
+Native interaction checks caught and repaired a nonfunctional Ctrl+Enter capture
+shortcut and stale selected-context state after filesystem changes. Reference
+reveal waits for a successful exposure record instead of showing material before
+its provenance commits. Clock-skewed activity predecessors reduce causally;
+missing/cyclic predecessors fail visibly rather than silently changing state.
+
+
+The native disposable 123-record window appended 50 → 100 → 123. Actual Hyprland
+key delivery verified Ctrl+K, Ctrl+Shift+N, typing, Ctrl+Enter, Escape and Ctrl+2/6.
+Capture took three explicit keyboard steps (open, text, save) with no classification.
+An externally finalized attempt-start updated the selected context through inotify.
+A full process restart recovered its exact unfinished attempt and protected reference.
+The window was resized by the compositor from 1440×880 to 1000×650 Qt units;
+the optional inspector collapsed. The companion was observed on DP-2 at 480×112
+Qt units. Closing stopped the worker and watch. These dimensions are Qt units,
+not a new measurement of the compositor's monitor scale. The main monitor remains
+1920×1080 logical; screenshots and IPC assertions cover different evidence.
+
+scripts/check-noesis-desktop.py reproduces these checks in a disposable HOME.
+The before/after images show a synthetic selected task, not private content.
+Before, permanent capture/progress/attempt controls competed with reading. After,
+Work gives reasoning room, History and Connections are separate, and Details can
+collapse. The screenshots demonstrate hierarchy; the keyboard/history checks
+establish behavior. Full paper/course/Lab journey metrics remain release gates.
