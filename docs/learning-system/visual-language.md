@@ -102,3 +102,26 @@ The native connected-record route is verified separately in validation.md.
 
 
 Interface prose now uses the installed Adwaita Sans, with the existing data font reserved for technical metadata. Today must explain its selected-vault scope and distinguish existing notes from recorded active work. No empty suggestion section or duplicate capture invitation should displace onboarding.
+
+## Actual screenshot corrections in this continuation
+
+Learner-facing titles use display projections, keeping full file paths in Details.
+Learn's Paths & courses, Concepts and Sources avoid equating entire courses with
+individual lectures. A reviewed outline opens a course and its units; modules can
+contain their own readings/assignments. Creation lives under **+ New**, keeping the
+header legible at compact widths. Ordinary operation feedback is prose, never a
+JSON response. The development UI switch is hidden by default.
+
+Reading blocks have bounded widths and a restrained 22/18/16 px heading hierarchy,
+15 px prose and 13 px code. Duplicate title H1 is omitted in the preview; source
+prose stays intact. Wiki-link labels are readable, embeds are explained, and
+full-fidelity documents open in their owning application. Plain text is deliberate:
+no document HTML execution, remote image loading or false equation rendering.
+
+New native course and cross-vault captures are synthetic fixtures, inspected for
+composition. They are not the user's private screenshots or human usability
+results. The supplied real screenshots remain the motivating visual evidence.
+The course screenshot exposed a clipped header and raw JSON footer during testing;
+both were corrected and the same fixture recaptured before deployment.
+
+[Native course outline fixture](assets/course-outline-native.png) · [Native cross-vault fixture](assets/cross-vault-native.png). Both are disposable application captures, not private vault or desktop images.

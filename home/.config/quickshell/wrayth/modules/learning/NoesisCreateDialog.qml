@@ -19,7 +19,7 @@ NoesisDialog {
  background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;border.width:1;border.color:NoesisStyle.rule}
  contentItem:ColumnLayout {spacing:NoesisStyle.lg
   NoesisField {id:name;placeholderText:root.kind==="unit"?"Lesson or chapter title":"Title";Layout.fillWidth:true}
-  NoesisSelect {id:medium;visible:root.kind==="resource"||root.kind==="unit";Layout.fillWidth:true;model:root.kind==="unit"?["lecture","reading","chapter","section","video","assignment"]:["paper","book","course","video","playlist","article","docs","dataset","other"]}
+  NoesisSelect {id:medium;visible:root.kind==="resource"||root.kind==="unit";Layout.fillWidth:true;model:root.kind==="unit"?["lecture","reading","chapter","section","video","assignment","module"]:["paper","book","course","video","playlist","article","docs","dataset","other"]}
   NoesisField {id:source;visible:["resource","unit","artifact","task"].includes(root.kind);placeholderText:root.kind==="artifact"?"Existing file path or source URL":"Source URL or local PDF path · optional";Layout.fillWidth:true}
   NoesisField {id:repository;visible:root.kind==="project";Layout.fillWidth:true;placeholderText:"Existing Git repository path · optional";Accessible.name:"Implementation repository"}
   NoesisField {id:revision;visible:root.kind==="artifact";Layout.fillWidth:true;placeholderText:"Code commit, dataset version or configuration · optional"}

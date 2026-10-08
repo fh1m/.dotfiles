@@ -1,6 +1,7 @@
 """Transparent recommendations; no inferred competence or forgetting."""
 from datetime import datetime, timezone
 import json
+from .presentation import display_title
 
 
 def path_scope(index, path_id):
@@ -112,8 +113,8 @@ def next_actions(index, quiet=False, path_id=None):
                 except ValueError:continue
                 if target_record['state'].get('status') in inactive:continue
                 identity, path, kind = target, target_record['path'], target_record['props'].get('type', 'note')
-                title = target_record['props'].get('title') or path
-            candidates.append({'id': identity, 'path': path, 'title': title, 'type': kind, 'reason': reason, 'priority': priority, 'evidence_id': evidence})
+                title = display_title(target_record['props'],path)
+            candidates.append({'id': identity, 'path': path, 'title': display_title({'title':title,'type':kind},path), 'type': kind, 'reason': reason, 'priority': priority, 'evidence_id': evidence})
             if len({row['id'] for row in candidates})>=50:break
     unique = {}
     for row in sorted(candidates, key=lambda row: (row['priority'], row['path'])):

@@ -143,3 +143,40 @@ Compare prediction and observation starts with the run's original hypothesis.
 Ctrl+Enter saves the comparison and its code snapshot. Questions, implementations,
 runs and artifacts remain separate notes with durable relationships. Alt+Left and
 Alt+Right return through working contexts without searching for filenames.
+
+## Continue across learning vaults
+
+On Today or Library, select **All learning vaults** (`Ctrl+Shift+K`). This is a
+read scope across registered managed vaults, not a merged vault. Search results
+and Continue show their origin. Opening a result selects its owning vault before
+any work can be saved. Drafts stay keyed by vault and record. Select **This vault**
+to return to a local view. Downloads and unmanaged directories are excluded.
+Unavailable storage is reported; available registered vaults remain searchable.
+
+Learn separates **Paths & courses**, **Concepts** and **Sources**. A course opens
+its outline; a module opens its children. Individual lectures do not display empty
+course statistics. The Library remains the flat universal search view.
+
+## Import a course outline
+
+In Learn choose **Import outline** (`Ctrl+Shift+O`). Enter the JSON file path,
+review the expanded outline, then create it. Start from
+[the example](examples/course-outline.json), replacing its titles and optional
+source URLs. This example is an organizational scaffold, not an imported MIT
+syllabus. Entries reference earlier parents by key. Up to 300 entries are supported.
+Repeated imports of the same outline resume an interrupted publication without
+creating another course. A changed file requires another review. No lecture
+completion or independent success is manufactured during import.
+
+## Window and document modes
+
+The title-bar presentation selector offers **Workspace** (recommended maximized
+study), **Tiled**, and **Window**. `Ctrl+Alt+M` cycles them. Normal geometry is
+remembered separately. The ScreenPad companion remains a small context surface.
+The legacy interface is available only with `NOESIS_DEVELOPMENT=1`.
+
+Native previews provide bounded readable orientation, code and heading blocks.
+They do not execute HTML or load remote images. Full equations, tables, images,
+Canvas and diagrams open through **Open note** in Obsidian; source PDFs open in
+Zotero/Sioyek through their supported handoffs. Source prose is never rewritten
+for presentation. File paths remain available in Details.

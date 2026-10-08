@@ -16,7 +16,7 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
   (vault/f'concept-{number:03}.md').write_text(f'---\nid: 33333333-3333-4333-8333-{number:012}\nnoesis_schema: 2\ntype: concept\ntitle: Connected concept {number:03}\n---\nA synthetic technical explanation.')
  (home/'.config/sensei-learning').mkdir(exist_ok=True);(home/'.config/sensei-learning/config.json').write_text(json.dumps({'active_vault':str(vault)}))
  config=home/'.config/quickshell/wrayth';(config/'shell.qml').write_text('import QtQuick\nimport Quickshell\nimport "modules/learning" as LearningUi\nimport qs.services\nShellRoot { LearningUi.NoesisWindow {} LearningUi.NoesisCompanion {} Component.onCompleted:Oasis.open() }\n')
- env=dict(os.environ,HOME=str(home),XDG_CONFIG_HOME=str(home/'.config'),XDG_CACHE_HOME=str(home/'.cache'),XDG_STATE_HOME=str(home/'.local/state'))
+ env=dict(os.environ,NOESIS_WINDOW_MODE="normal",HOME=str(home),XDG_CONFIG_HOME=str(home/'.config'),XDG_CACHE_HOME=str(home/'.cache'),XDG_STATE_HOME=str(home/'.local/state'))
  binary=os.environ.get('NOESIS_QS',str(Path.home()/'.local/opt/sensei-quickshell/bin/qs'))
  log=home/'qml.log'
  with log.open('w') as stream:
@@ -209,3 +209,4 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
 
   finally:process.terminate();process.wait(timeout=5);print(log.read_text()[-5000:])
  print(log.read_text()[-5000:])
+ assert 'WARN' not in log.read_text() and 'ERROR' not in log.read_text(), 'Native QML emitted warnings or errors'

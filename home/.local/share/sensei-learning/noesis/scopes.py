@@ -11,7 +11,7 @@ from .persistence import checksum,manifest_path,publish
 def registry_path():return Path.home()/'.local/state/noesis/vaults.json'
 
 
-def locations():
+def locations(include_missing=False):
     result=set()
     native=Path.home()/'.config/obsidian/obsidian.json'
     if native.exists():
@@ -27,13 +27,19 @@ def locations():
         values=data.get('locations',[]) if isinstance(data,dict) else None
         if not isinstance(values,list) or any(not isinstance(value,str) or not Path(value).is_absolute() for value in values):raise ValueError('Malformed Noesis location registry; preserve it and recover the registered paths')
         result.update(Path(value).resolve() for value in values)
+        replacements=data.get('replacements',{})
+        if not isinstance(replacements,dict):raise ValueError('Malformed replacement registry')
+        result.difference_update(Path(value).resolve() for value in replacements)
     configuration=Path.home()/'.config/sensei-learning/config.json'
     if configuration.exists():
         try:
             active=json.loads(configuration.read_text()).get('active_vault')
             if active:result.add(Path(active).expanduser().resolve())
         except (ValueError,TypeError):pass
-    return {path for path in result if path.is_dir()}
+    if path.exists():
+        data=json.loads(path.read_text())
+        result.difference_update(Path(value).resolve() for value in data.get('replacements',{}))
+    return result if include_missing else {path for path in result if path.is_dir()}
 
 
 def identity(root):

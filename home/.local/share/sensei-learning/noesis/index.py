@@ -4,6 +4,7 @@ from pathlib import Path
 import sqlite3
 import uuid
 from .persistence import notes, parse, contained, manifest_path
+from .presentation import display_title
 
 
 class Index:
@@ -37,11 +38,11 @@ class Index:
             CREATE TABLE IF NOT EXISTS states(id TEXT PRIMARY KEY,status TEXT,state TEXT);
             CREATE INDEX IF NOT EXISTS state_status ON states(status);
         ''')
-        if self.db.execute('PRAGMA user_version').fetchone()[0] != 4:
+        if self.db.execute('PRAGMA user_version').fetchone()[0] != 5:
             with self.db:
                 for table in ('records', 'search', 'activities', 'relationships', 'aliases', 'states'):
                     self.db.execute('DELETE FROM ' + table)
-                self.db.execute('PRAGMA user_version=4')
+                self.db.execute('PRAGMA user_version=5')
 
     def close(self):
         self.db.close()
@@ -85,7 +86,7 @@ class Index:
                         parent=props['parent_ref']
                         if not isinstance(parent,dict) or parent.get('vault_id')!=self.manifest.get('vault_id') or not parent.get('record_id'):
                             raise ValueError('Parent reference must identify a record in this vault')
-                    title = props.get('title') or props.get('imported_title') or path.stem
+                    title = display_title(props, relative)
                     self.db.execute('DELETE FROM search WHERE rowid IN (SELECT rowid FROM records WHERE path=?)', (relative,))
                     row = self.db.execute('INSERT OR REPLACE INTO records VALUES(?,?,?,?,?,?,?)',
                         (relative, stamp, str(props.get('id', '')), str(props.get('type', 'note')), str(title), json.dumps(props, default=str), body))
@@ -199,7 +200,7 @@ class Index:
             file = Path(location).expanduser() if location else None
             artifact = {'location': location, 'availability': 'available' if file and file.exists() else 'artifact unavailable', 'expected_checksum': metadata.get('sha256')}
         unfinished = unfinished_attempts(self.timeline(identity)) if include_attempt else []
-        return {'path': path, 'props': metadata, 'body': body, 'state': state, 'activity_head': head, 'artifact': artifact,
+        return {'path': path, 'display_title':display_title(metadata,path), 'props': metadata, 'body': body, 'state': state, 'activity_head': head, 'artifact': artifact,
                 'attempt': unfinished[0] if len(unfinished) == 1 else None, 'attempt_conflict': len(unfinished) > 1}
 
     def timeline(self, identity):
@@ -210,8 +211,16 @@ class Index:
         for path, raw in self.db.execute('SELECT path,props FROM relationships WHERE source=? OR target=? ORDER BY path LIMIT 50', (identity, identity)):
             props = json.loads(raw)
             other = props['target'] if props['source'] == identity else props['source']
-            locations = list(self.db.execute('SELECT r.path,r.title,r.kind,s.status FROM records r LEFT JOIN states s ON s.id=r.id WHERE r.id=?', (other,)))
+            reference=props.get('target_ref' if props['source']==identity else 'source_ref') or {}
             row = dict(props, path=path, other_id=other)
+            if reference.get('vault_id') and reference['vault_id']!=self.manifest.get('vault_id'):
+                try:
+                    from .references import resolve
+                    resolved=resolve(reference)
+                    row.update(other_path=resolved['path'],other_title=resolved['title'],other_type=resolved['type'],other_status=resolved['status'],other_vault=resolved['vault'],other_vault_id=resolved['vault_id'])
+                except (ValueError,OSError,KeyError) as error:row['availability']=str(error)
+                result.append(row);continue
+            locations = list(self.db.execute('SELECT r.path,r.title,r.kind,s.status FROM records r LEFT JOIN states s ON s.id=r.id WHERE r.id=?', (other,)))
             if len(locations) == 1:
                 row.update(zip(('other_path', 'other_title', 'other_type','other_status'), locations[0]))
             else:row['availability'] = 'Missing or duplicate related identity'

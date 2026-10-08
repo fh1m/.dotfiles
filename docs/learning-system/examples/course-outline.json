@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "title": "Linear Algebra — example outline",
+  "entries": [
+    {"key":"foundations","kind":"unit","title":"Foundations","fields":{"unit_kind":"module"}},
+    {"key":"lecture1","parent":"foundations","kind":"unit","title":"Vectors and systems","fields":{"unit_kind":"lecture"}},
+    {"key":"lecture2","parent":"foundations","kind":"unit","title":"Elimination","fields":{"unit_kind":"lecture"}},
+    {"key":"lecture3","parent":"foundations","kind":"unit","title":"Matrix operations","fields":{"unit_kind":"lecture"}},
+    {"key":"lecture4","kind":"unit","title":"Vector spaces","fields":{"unit_kind":"lecture"}},
+    {"key":"lecture5","kind":"unit","title":"Orthogonality","fields":{"unit_kind":"lecture"}},
+    {"key":"lecture6","kind":"unit","title":"Eigenvalues","fields":{"unit_kind":"lecture"}},
+    {"key":"reading1","parent":"foundations","kind":"unit","title":"Systems reading","fields":{"unit_kind":"reading"}},
+    {"key":"reading2","kind":"unit","title":"Projection reading","fields":{"unit_kind":"reading"}},
+    {"key":"assignment1","parent":"foundations","kind":"task","title":"Solve and explain an elimination problem"},
+    {"key":"assignment2","kind":"task","title":"Derive a projection"},
+    {"key":"project","kind":"project","title":"Implement a least-squares estimator"},
+    {"key":"concept","kind":"concept","title":"Matrix multiplication"}
+  ]
+}

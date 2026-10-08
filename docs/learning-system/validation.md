@@ -269,3 +269,85 @@ Practice native acceptance passed: failed independent, assisted successful, and 
 Remaining Today gate: opt-in, bounded unified Continue/Search across authorized vaults with each result carrying vault identity; cross-vault selection must preserve scoped drafts and mutations. This intermediate release still queries the selected vault and labels that limit. A–F product acceptance is not yet complete.
 
 Real deployed Today was inspected in both the selected robotics vault and Knowledge. Knowledge displayed its real Continue context and two course outlines; the original robotics selection was restored. These were local visual inspections, not click-through resume proof. Today onboarding scrolls rather than clipping at compact sizes. Current automated total: 75 tests (59 core and 16 compatibility); the added Today state test passed separately.
+
+## Release continuation evidence — 2026-10-09
+
+The worktree was clean at `4813ad0` at re-entry; there was no newer uncommitted
+local implementation. The original dotfiles checkout was not edited. The user's
+real screenshots were inspected locally; private vaults were not modified to
+populate Today. Earlier vault-inventory counts are time-specific observations,
+not current claims of learner progress.
+
+New acceptance commands:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_noesis*.py'
+python3 -m unittest discover -s tests -p 'test_learning.py'
+python3 scripts/check-noesis-desktop.py
+python3 scripts/check-noesis-collection-desktop.py
+python3 scripts/check-noesis-experiment.py
+python3 scripts/check-noesis-zotero.py
+python3 scripts/benchmark-noesis.py
+```
+
+Automated: 75 core and 16 compatibility tests passed. Added coverage includes
+registered cross-vault scope and duplicate identity refusal, pagination/cursor
+ownership, unavailable registered storage and malformed active-scope isolation, concurrent attempt-start refusal, research source filters, completed-material continuation,
+course-resource distinction, explicit restore replacement/fork and interrupted
+publication, safe bounded previews, interrupted outline retry, foreign concept
+resolution after moves, and Zotero item/library-version distinction and omitted
+attachment annotations. No real vault migration was used for acceptance.
+
+The broad native disposable run passed 50 → 100 → 123 append pagination,
+keyboard search/capture/Escape, 1000×650 resize, inspector, protected durable
+attempt restart, DP-2 480×112 companion, stopped worker/watch, six-lecture course
+with assessments untouched, creation receipts, connected paper → question →
+implementation → run → comparison → paper, and failed/assisted/independent
+attempts plus a learner criterion decision recovered after cache deletion.
+The connected-record route still uses 28 keyboard actions plus 161 typed characters.
+It does not establish actual paper reproduction or human resumption speed.
+
+The separate cross-vault native run passed explicit collection search, opening a
+CS task while Robotics was selected, and capture in CS only. Native outline
+review/create yielded six lectures, two readings, two assignments and a project,
+with no reported successes. Workspace was 1916×1032, Tiled 939×1008, and Window
+1440×880 Qt units; compositor floating/fullscreen state was checked. No QML
+warnings/errors occurred. A startup race exposed by the broad run was repaired
+with bounded compositor-state verification rather than assuming dispatcher exit
+established geometry. Native acceptance is run serially to avoid competing fixture
+applications stealing focus; one earlier overlapping run is not accepted evidence.
+
+Measured isolated launch: 536.13 ms; conservative warm-open p95: 119.91 ms;
+instrumented animation-frame p95: 16.945 ms / 1,188 samples. Twelve-cycle RSS
+ranged from 191,584 to 192,256 KiB, ending at 191,640 KiB. This small
+measurement does not prove absence of long-term growth or input latency.
+
+Current concept benchmark: 100 / 1,000 / 10,000 records rebuilt in
+0.037 / 0.368 / 3.654 seconds; warm worker-query p95
+0.864 / 3.026 / 29.873 ms; capture p95
+109.293 / 108.028 / 106.743 ms. Largest summary was 7,808 bytes.
+
+The executed trusted software calibration used 1,000 generated measurements
+(rad/s), a committed estimator, CSV and plot references, an original contradicted
+zero-bias prediction, and a second held-out check. Mean was 0.1200065 rad/s;
+held-out residual mean was 0.000005331 rad/s after bias estimation. Missing artifact
+storage remained explicit; Restic restored both comparisons and the code revision.
+This is generated-data software evidence, not hardware measurement or Transformer
+paper reproduction.
+
+A populated isolated Zotero 10.0.6 profile imported the genuine
+[Attention Is All You Need paper](https://arxiv.org/abs/1706.03762), its accessible
+PDF and native annotation. Metadata/annotation edits and deletion produced three
+retained projections with the resource UUID and learner analysis unchanged.
+Its real API exposed two defects: item version is not library version, and local
+attachment `/children` omits annotations. Collection-version checkpoints and a
+bounded annotation reconciliation now handle those cases. If the bounded library
+projection exceeds 1,000 annotations, import refuses and requests a scoped export;
+it does not silently pretend annotations were deleted. Production imports remain
+GET-only. Test authorization applies only to a disposable profile.
+
+The authoritative remaining P0–P8 gates are in PLAN.md. Native PDF page/annotation
+navigation, transfer/review, outline reorder/replacement, reader-state restoration,
+Distrobox, disconnected ScreenPad and complete long-term/input/idle acceptance
+remain open. Off-device protection is not configured; the encrypted strategy is
+in migration-recovery.md. This evidence is not a complete-release claim.

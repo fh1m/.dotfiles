@@ -25,6 +25,8 @@ class Opener:
         if self.error:raise HTTPError(request.full_url,self.error,'refused',{},None)
         endpoint=request.full_url.split('/api/')[1]
         if endpoint=='':data={'version':3}
+        elif endpoint=='users/0/items?limit=1':data=[]
+        elif endpoint.startswith('users/0/items?itemType=annotation'):data=[dict(x,data=dict(x['data'],parentItem='ATTACH01')) for x in self.annotations]
         elif endpoint=='users/0/items/PAPER001':data={'key':'PAPER001','version':7,'data':{'title':self.title,'itemType':'journalArticle','DOI':'10.synthetic/paper'}}
         elif endpoint.startswith('users/0/items/top?'):data=[{'key':f'ITEM{i:04}','version':7,'data':{'title':f'Paper {i}','itemType':'journalArticle'}} for i in range(50)]
         elif endpoint.startswith('users/0/items/PAPER001/children'):data=[{'key':'ATTACH01','version':2,'data':{'itemType':'attachment','contentType':'application/pdf'}}]
@@ -54,6 +56,26 @@ class Zotero(unittest.TestCase):
         self.assertEqual(parse(path.read_text())[0]['imported_title'],'Corrected metadata')
         self.assertTrue(all(r.get_method()=='GET' for r in opener.requests))
         self.assertTrue(all(r.full_url.startswith('http://127.0.0.1:23119/api/') for r in opener.requests))
+    def test_item_and_library_versions_are_distinct(self):
+        opener=Opener();original=opener.open
+        def open_response(request,timeout):
+            response=original(request,timeout)
+            if request.full_url.endswith('/items/PAPER001'):response.headers['Last-Modified-Version']='1'
+            return response
+        opener.open=open_response
+        self.assertEqual(LocalAPI(opener=opener).item('PAPER001')[0]['key'],'PAPER001')
+        checkpoints=[r for r in opener.requests if r.full_url.endswith('/items?limit=1')]
+        self.assertEqual(len(checkpoints),2)
+
+    def test_local_attachment_children_omission_does_not_lose_annotations(self):
+        opener=Opener();original=opener.open
+        def open_response(request,timeout):
+            if '/items/ATTACH01/children?' in request.full_url:return Response([],opener.server)
+            return original(request,timeout)
+        opener.open=open_response
+        children=LocalAPI(opener=opener).item('PAPER001')[1]
+        self.assertIn('ANNOT001',[child['key'] for child in children])
+
     def test_search_pages_are_bounded_encoded_and_instance_bound(self):
         opener=Opener();result=LocalAPI(opener=opener).search('matrix & calculus',50)
         self.assertEqual(len(result['records']),50);self.assertEqual(result['cursor'],100)
