@@ -25,7 +25,7 @@ def install(home, apply=False, hardware='generic'):
     backup = home / '.local/state/dotfiles-backups' / stamp
     changes = []
     for source in sorted((ROOT / 'home').rglob('*')):
-        if not source.is_file() or source.name.endswith('.example'):
+        if not source.is_file() or source.name.endswith(('.example', '.pyc')) or '__pycache__' in source.parts:
             continue
         relative = source.relative_to(ROOT / 'home')
         dest = home / relative
