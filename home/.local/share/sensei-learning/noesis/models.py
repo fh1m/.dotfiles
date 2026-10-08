@@ -57,7 +57,7 @@ def create(root, kind, title, body='', fields=None, parent_id=None, relation='co
                 if exists or journal.get('status')=='committed':
                     return _create(root,kind,title,body,fields,operation_id,request_hash)
         if parent_id:
-            if relation not in ('contains','assigns','references','investigates'):raise ValueError('Unsupported parent relationship')
+            if relation not in ('contains','assigns','references','investigates','pursues'):raise ValueError('Unsupported parent relationship')
             index=Index(root)
             try:
                 health=index.reconcile()

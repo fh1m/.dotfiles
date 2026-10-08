@@ -15,7 +15,7 @@ from noesis.activities import record_activity, progress_state, operation_status
 from noesis.index import Index
 from noesis.imports import import_csl
 from noesis.policies import next_actions, agent_context
-from noesis.views import overview
+from noesis.views import overview, today
 from noesis.artifacts import inspect as inspect_artifact
 import noesis.imports as import_module
 
@@ -29,6 +29,20 @@ class Workflows(unittest.TestCase):
         (self.root / 'System').mkdir(parents=True)
         (self.root / 'System/System.json').write_text(json.dumps({'directories': [], 'types': {'paper': 'Resources'}}))
         migration(self.root, True)
+
+    def test_today_distinguishes_notes_from_recorded_work(self):
+        self.assertEqual(today(self.index())['empty_reason'],'no-records')
+        path=create(self.root,'path','Existing learning path')
+        view=today(self.index())
+        self.assertEqual(view['empty_reason'],'no-active-work')
+        self.assertIsNone(view['continue'])
+        self.assertEqual(view['paths'][0]['id'],path['id'])
+        resource=create(self.root,'resource','A paper',fields={'source_kind':'paper'})
+        record_activity(self.root,resource['path'],'study',state={'position':'page 4'})
+        view=today(self.index())
+        self.assertEqual(view['continue']['id'],resource['id'])
+        self.assertEqual(view['continue']['position'],'page 4')
+        self.assertEqual(view['availability'],'ready')
 
     def test_parking_context_suppresses_descendants_but_preserves_shared_work(self):
         first=create(self.root,'resource','First course',fields={'source_kind':'course'})
@@ -90,6 +104,20 @@ class Workflows(unittest.TestCase):
         self.assertEqual(view['statement'],'Derive the expression independently.')
         legacy=create(self.root,'task','Legacy problem','A prior explanation without an explicit statement section.')
         self.assertIsNone(overview(self.index(),legacy['id'])['statement'])
+
+    def test_path_capability_and_scoped_evidence_survive_reconstruction(self):
+        path=create(self.root,'path','Estimator foundations')
+        capability=create(self.root,'capability','Explain estimator assumptions',fields={'criteria':['Identify an invalid independence assumption']},parent_id=path['id'],relation='pursues')
+        task=create(self.root,'task','Inspect a failed model',parent_id=path['id'],relation='assigns')
+        attempt=record_activity(self.root,task['path'],'attempt','A contradictory observation falsified my assumption.',outcome='failed',assistance=['none'],scope='Independence assumption',assessment='learner-reported')
+        record_activity(self.root,capability['path'],'capability-decision','The failed prediction exposes a specific unsupported independence assumption.',actor='learner',criterion='Identify an invalid independence assumption',evidence_id=attempt['id'],decision='accept')
+        (self.root/capability['path']).rename(self.root/'Renamed capability.md')
+        index=self.index();view=overview(index,capability['id'])
+        self.assertEqual(view['criteria'],['Identify an invalid independence assumption'])
+        self.assertEqual(view['evidence'][0]['outcome'],'failed')
+        self.assertEqual(view['evidence'][0]['assistance'],['none'])
+        self.assertEqual(index.relations(path['id'])[0]['relation'],'pursues')
+        self.assertNotIn('mastery',view)
 
     def test_search_resolves_external_identity_without_serializing_metadata(self):
         resource=create(self.root,'resource','Readable research title',fields={'source_kind':'paper','source':'https://doi.org/10.1234/example','external_aliases':['doi:10.1234/example']})
