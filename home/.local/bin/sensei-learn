@@ -74,9 +74,10 @@ def system(root):
     return {'managed':False,'home':home,'frontier':home,'templates':'Templates','daily':'Daily','types':{}}
 
 def inventory():
-    registry=HOME/'.config/obsidian/obsidian.json'
-    app=json.loads(registry.read_text()) if registry.exists() else {}
-    paths={Path(v['path']).resolve() for v in app.get('vaults',{}).values() if Path(v['path']).is_dir()}
+    from noesis.scopes import locations
+    paths=locations()
+    active_path=config().get('active_vault')
+    if active_path and Path(active_path).is_dir():paths.add(Path(active_path).resolve())
     active=config().get('active_vault','')
     return [{'name':p.name,'path':str(p),'managed':((p/'94 Meta/System.json').is_file() or (p/'System/System.json').is_file()),'active':str(p)==active}
             for p in sorted(paths,key=lambda x:x.name.lower())
@@ -177,6 +178,9 @@ def doctor(root, offline=False):
         errors += ['Tracked volatile state: ' + p for p in r.stdout.split('\0') if p and VOLATILE.search(p)]
         r = subprocess.run(['git', '-C', str(root), 'status', '--porcelain'], capture_output=True, text=True, check=True)
         if r.stdout: warnings.append('Git has uncommitted work (preserved, not an error).')
+    from noesis.scopes import conflicts
+    duplicates=conflicts(root)
+    if duplicates:errors.append('Duplicate vault identity: '+', '.join(duplicates))
     tools = {name: shutil.which(name) is not None for name in ['obsidian', 'git', 'python3', 'fzf']}
     if not offline and not tools['obsidian']: errors.append('Obsidian is not installed')
     return {'ok': not errors, 'vault': str(root), 'notes': len(md), 'errors': sorted(set(errors)), 'warnings': sorted(set(warnings)), 'tools': tools}
@@ -184,36 +188,17 @@ def doctor(root, offline=False):
 def ensure_app(selector=None):
     # CLI requests started against a closed Electron app can become the primary
     # process and be killed by a command timeout. Start the real GUI separately.
-    running=subprocess.run(['pgrep','-f',r'^/usr/lib/electron[0-9]+/electron /usr/lib/obsidian/app.asar'],capture_output=True)
-    if running.returncode:
+    from noesis.obsidian import app_running
+    if not app_running():
         args=['obsidian']
         if selector:args.append('obsidian://open?'+urlencode({'vault':selector}))
         subprocess.Popen(args,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
         time.sleep(1)
 
 def register(root):
-    path = HOME / '.config/obsidian/obsidian.json'
-    app = json.loads(path.read_text()) if path.exists() else {}
-    if any(Path(v['path']).resolve() == root for v in app.get('vaults', {}).values()): return
-    # Register through the running app so its cached registry cannot undo us.
-    # This inspected Electron bridge is also used by Obsidian's vault chooser.
-    if shutil.which('obsidian'):
-        ensure_app()
-        code = 'window.electron.ipcRenderer.sendSync("vault-open",' + json.dumps(str(root)) + ',false)'
-        result = subprocess.run(['obsidian','eval','code='+code],capture_output=True,text=True,timeout=20)
-        current=json.loads(path.read_text()) if path.exists() else {}
-        if any(Path(v['path']).resolve()==root for v in current.get('vaults',{}).values()):
-            return
-        # An installed/running app must not have its registry rewritten underneath it.
-        running = subprocess.run(['pgrep','-f','[e]lectron.*obsidian|[e]lectron.*app.asar'],capture_output=True)
-        if running.returncode == 0:
-            raise ValueError('Vault created safely, but app registration failed. Open this folder in Obsidian: '+str(root))
-    import hashlib
-    app.setdefault('vaults', {})[hashlib.sha256(str(root).encode()).hexdigest()[:16]] = {'path': str(root), 'ts': int(datetime.now().timestamp()*1000), 'open': False}
-    if path.exists():
-        backup = HOME / '.local/state/sensei-learning/backups' / ('registry-' + datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
-        backup.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(path, backup); backup.chmod(0o600)
-    store(path, app)
+    from noesis.scopes import register as register_scope
+    return register_scope(root)
+
 
 def network_layout(root):
     """Change a new staging vault only; never move an existing user's notes."""
@@ -317,14 +302,24 @@ def cli(root, command, *args):
     ensure_app(selector)
     # A newly opened vault may not have its CLI listener ready yet. Retry only
     # the read-only identity handshake; never replay a mutating command.
+    check=None;output=''
+    deadline=time.monotonic()+8
     for attempt in range(12):
-        check = subprocess.run(['obsidian', 'vault=' + selector, 'vault', 'info=path'], capture_output=True, text=True, timeout=20)
+        remaining=deadline-time.monotonic()
+        if remaining<=0:raise ValueError('Obsidian CLI startup timed out; the vault and learner content are unchanged')
+        try:
+            check = subprocess.run(['obsidian', 'vault=' + selector, 'vault', 'info=path'], capture_output=True, text=True, timeout=min(2,remaining))
+        except subprocess.TimeoutExpired:
+            if time.monotonic()>=deadline:raise ValueError('Obsidian CLI startup timed out; open Obsidian and retry the handoff')
+            continue
         output = check.stdout.strip()
         initializing = not output or 'Command "vault" not found' in output
         if not initializing: break
         if attempt < 11: time.sleep(0.2)
+    if check is None:raise ValueError('Obsidian CLI did not respond; open Obsidian and retry the handoff')
     if check.returncode or not output or 'not enabled' in output or 'Error' in output:
-        raise ValueError('Obsidian CLI unavailable: ' + output + check.stderr.strip())
+        guidance=' Open this folder as a vault in Obsidian: '+str(root) if not identities else ' Enable its supported CLI and retry the handoff.'
+        raise ValueError('Obsidian CLI unavailable: ' + output + check.stderr.strip()+guidance)
     if Path(output).resolve() != root.resolve(): raise ValueError('CLI selected a different vault; use a unique vault name.')
     result = subprocess.run(['obsidian', 'vault=' + selector, command, *args], capture_output=True, text=True, timeout=20)
     if result.returncode or result.stdout.startswith('Error:') or result.stderr.strip():
@@ -557,11 +552,11 @@ def library_action(root,args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check']:
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register']:
         p = commands.add_parser(cmd); p.add_argument('--vault')
         if cmd == 'artifact-check':p.add_argument('record_id');p.add_argument('--operation-id')
         if cmd == 'zotero-import':p.add_argument('key');p.add_argument('--server-id')
-        if cmd == 'zotero-search':p.add_argument('query',nargs='?',default='');p.add_argument('--cursor',type=int,default=0)
+        if cmd == 'zotero-search':p.add_argument('query',nargs='?',default='');p.add_argument('--cursor',type=int,default=0);p.add_argument('--server-id')
         if cmd == 'operation-status':p.add_argument('operation_id')
         if cmd == 'promote':p.add_argument('path');p.add_argument('kind',choices=KINDS);p.add_argument('--target-id')
         if cmd == 'backup':p.add_argument('--restic',action='store_true')
@@ -579,7 +574,7 @@ def main():
         if cmd == 'serve':p.add_argument('--stdio',action='store_true',required=True)
         if cmd == 'status':p.add_argument('--legacy',action='store_true')
         if cmd == 'doctor': p.add_argument('--offline', action='store_true')
-        if cmd == 'use': p.add_argument('path')
+        if cmd in ('use','vault-register'): p.add_argument('path')
         if cmd == 'capture':p.add_argument('--operation-id');p.add_argument('text', nargs='?');p.add_argument('--stdin-line',action='store_true'); p.add_argument('--agent', action='store_true');p.add_argument('--kind',choices=['capture','snippet','question'],default='capture')
         if cmd == 'new': p.add_argument('--folder'); p.add_argument('kind'); p.add_argument('title'); p.add_argument('--open', action='store_true')
         if cmd == 'search': p.add_argument('query', nargs='?', default='')
@@ -624,14 +619,18 @@ def main():
                     state['context']={k:context.get(k) for k in ['id','path','title','type','vault','session_state']}
                 if any(value is not None for value in [args.width,args.height,args.drafts_json,True if args.drafts_stdin else None,args.path_scope,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet]):store(file,state)
             print(file.read_text() if file.exists() else '{"width":1440,"height":880}');return 0
+        if args.command=='vault-register':print(json.dumps(register(Path(args.path).expanduser().resolve())));return 0
         if args.command == 'use':
             root = vault(args.path); system(root); c = config(); c['active_vault'] = str(root); store(CONFIG,c); print(root); return 0
         if args.command == 'vaults': print(json.dumps(inventory(),ensure_ascii=False)); return 0
         if args.command=='serve':serve(vault);return 0
-        if args.command=='zotero-search':print(json.dumps(LocalAPI().search(args.query,args.cursor)));return 0
+        if args.command=='zotero-search':print(json.dumps(LocalAPI(server_id=args.server_id).search(args.query,args.cursor)));return 0
         if args.command=='zotero-probe':print(json.dumps(LocalAPI().probe()));return 0
         if args.command=='recover':print(json.dumps(recovery.restore(args.snapshot,args.dest)));return 0
         root = vault(args.vault); meta = system(root)
+        if args.command in ('resource','progress','attempt','import-csl','import-notes','record','link','event','capture','new','update','review','canvas','attach','practice','adopt','enable-drawing','promote'):
+            from noesis.scopes import assert_unique
+            assert_unique(root)
         if args.command=='artifact-check':print(json.dumps(inspect_artifact(root,args.record_id,args.operation_id),default=str));return 0
         if args.command=='zotero-import':print(json.dumps(import_item(root,args.key,LocalAPI(server_id=args.server_id)),default=str));return 0
         if args.command=='operation-status':print(json.dumps(operation_status(root,args.operation_id),default=str));return 0
@@ -645,7 +644,7 @@ def main():
             fields=json.loads(args.data)
             if not isinstance(fields,dict):raise ValueError('Event data must be an object')
             print(json.dumps(record_activity(root,args.path,args.event,args.evidence,args.operation_id,expected_id=args.target_id,**fields),default=str));return 0
-        if args.command in ['next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check']:
+        if args.command in ['next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register']:
             index=Index(root)
             try:
                 index.reconcile()

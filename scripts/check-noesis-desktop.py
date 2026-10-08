@@ -80,5 +80,30 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
    process.terminate();process.wait(timeout=5)
    process=subprocess.Popen([binary,'-p',str(config),'--no-color'],env=env,stdout=stream,stderr=subprocess.STDOUT);time.sleep(4)
    restarted=state();print('Restarted context:',restarted['selected'],restarted['attempt']);assert restarted['selected']=='test.md' and restarted['attempt']==attempt and restarted['reference_hidden']
+   def cli(*args):
+    result=subprocess.run([str(home/'.local/bin/noesis'),*args,'--vault',str(vault)],env=env,text=True,capture_output=True,check=True);return json.loads(result.stdout)
+   course=cli('record','resource','Synthetic linear algebra','--data',json.dumps({'source_kind':'course'}),'--body','Six lectures, two independent problem sets and a project.')
+   units=[]
+   for number in range(6):
+    units.append(cli('record','unit',f'Lecture {number+1}','--parent-id',course['id'],'--data',json.dumps({'unit_kind':'lecture'})))
+   for number in (0,3):cli('record','task',f'Problem set {number+1}','--parent-id',units[number]['id'],'--relation','assigns')
+   cli('record','project','Estimator implementation','--parent-id',course['id'])
+   for unit in units[:2]:cli('event',unit['path'],'study','--data',json.dumps({'state':{'status':'read'}}))
+   subprocess.run([binary,'-p',str(config),'ipc','call','noesis-window','section','Learn'],env=env,capture_output=True,timeout=5);time.sleep(.5)
+   # Select the course using actual search → Down → Enter key delivery.
+   clients=json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True));client=next(c for c in clients if c['pid']==process.pid and c['title'].startswith('Noesis'))
+   subprocess.run(['hyprctl','dispatch','hl.dsp.focus({window='+json.dumps('address:'+client['address'])+'})'],capture_output=True)
+   shortcut('CTRL','k')
+   for letter in 'linear':shortcut('',letter)
+   time.sleep(.4);shortcut('','Down');shortcut('','Return');time.sleep(.5)
+   current=state();counts=current['overview_counts'];assert current['selected']==course['path'] and current['context_tab']=='Read'
+   assert counts['lectures']['total']==6 and counts['lectures']['consumed']==2 and counts['assignments']['reported_success']==0 and counts['projects']['reported_success']==0
+   scale=client['size'][0]/current['width'];resize(1000,650)
+   current=state();assert current['read_viewport_height']>100 and current['read_content_height']>current['read_viewport_height']
+   print('Course: 2/6 consumed; assignments/projects untouched; compact context scrolls:',current['read_viewport_height'],current['read_content_height'])
+   client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==process.pid and c['title'].startswith('Noesis'))
+   x,y=client['at'];w,h=client['size'];subprocess.run(['grim','-g',f'{x},{y} {w}x{h}','/tmp/noesis-course-compact.png'],check=True)
+
+
   finally:process.terminate();process.wait(timeout=5);print(log.read_text()[-5000:])
  print(log.read_text()[-5000:])

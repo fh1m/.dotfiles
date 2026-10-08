@@ -36,6 +36,27 @@ class Core(unittest.TestCase):
         migration(self.root, True)
         return parse(self.note.read_text())[0]['id']
 
+    def test_migration_preserves_authored_line_endings_and_original_backup_bytes(self):
+        before=b'---\r\ntype: task\r\n---\r\n\r\nPrediction and derivation.\r\nA preserved mistaken step.\r\n'
+        self.note.write_bytes(before)
+        original_body=parse(before.decode())[1]
+        result=migration(self.root,True)
+        self.assertEqual(parse(self.note.read_bytes().decode())[1],original_body)
+        self.assertEqual((Path(result['backup'])/'target.md').read_bytes(),before)
+
+    def test_future_schema_is_readable_without_silent_downgrade(self):
+        import uuid
+        identity=str(uuid.uuid4())
+        self.note.write_text(render({'id':identity,'noesis_schema':99,'type':'future-kind'},'A future record remains mine.'))
+        original=self.note.read_text()
+        for apply in (False,True):
+            with self.assertRaisesRegex(ValueError,'Unsupported Noesis schema'):migration(self.root,apply)
+            self.assertEqual(self.note.read_text(),original)
+        index=Index(self.root)
+        try:
+            index.reconcile();self.assertEqual(index.record(identity)['body'],'A future record remains mine.')
+        finally:index.close()
+
     def test_malformed_frontmatter_is_never_rewritten(self):
         for text in ('---\na: 1\n---oops\nbody', '---\na: 1\na: 2\n---\nbody', '---\n[bad\n---\nbody'):
             self.note.write_text(text)

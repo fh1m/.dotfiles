@@ -57,6 +57,10 @@ class CaptureReaders(unittest.TestCase):
   try:
    index.reconcile();state=index.record(chapter['id'])['state'];self.assertIsNone(state.get('locator'));self.assertEqual(state['position'],'Appendix, theorem 2')
   finally:index.close()
+ def test_long_clock_skewed_history_reduces_without_recursive_or_quadratic_walk(self):
+  events=[{'id':str(number),'event':'study','previous':str(number-1) if number else None,'timestamp':str(10000-number),'state':{'position':str(number)}} for number in range(10000)]
+  state,head=progress_state({},list(reversed(events)))
+  self.assertEqual(head,'9999');self.assertEqual(state['position'],'9999')
  def test_causal_history_survives_clock_skew_and_rejects_cycles(self):
   events=[{'id':'second','event':'study','previous':'first','timestamp':'2020','state':{'position':'page 8'}},{'id':'first','event':'study','timestamp':'2030','state':{'position':'page 2'}}]
   self.assertEqual(progress_state({},events)[0]['position'],'page 8')
