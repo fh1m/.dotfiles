@@ -30,10 +30,25 @@ def promote(root, relative, kind, expected_id=None):
         return dict(props, path=str(path.relative_to(root)))
 
 
-def create(root, kind, title, body='', fields=None):
+def create(root, kind, title, body='', fields=None, parent_id=None, relation='contains', order=None):
     if kind not in KINDS:raise ValueError('Unsupported creation kind')
     if not title.strip() or any(c in title for c in '/\\\n\r\0'):raise ValueError('Use a title, not a path')
-    with lock(root):return _create(root,kind,title,body,fields)
+    with lock(root):
+        fields=dict(fields or {})
+        if parent_id:
+            if relation not in ('contains','assigns','references','investigates'):raise ValueError('Unsupported parent relationship')
+            index=Index(root)
+            try:
+                health=index.reconcile()
+                if health['errors']:raise ValueError(str(health['errors']))
+                index.record(parent_id)
+                meta=json.loads(manifest_path(root).read_text())
+                if kind=='unit' and order is None:
+                    existing=[json.loads(raw).get('order') for raw, in index.db.execute('SELECT props FROM relationships WHERE source=?',(parent_id,))]
+                    order=max([n for n in existing if type(n) is int],default=-1)+1
+                fields['parent_ref']={'vault_id':meta['vault_id'],'record_id':parent_id,'relation':relation,'order':order}
+            finally:index.close()
+        return _create(root,kind,title,body,fields)
 
 
 def _create(root, kind, title, body='', fields=None):

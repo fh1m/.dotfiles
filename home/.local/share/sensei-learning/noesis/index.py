@@ -34,12 +34,14 @@ class Index:
             CREATE TABLE IF NOT EXISTS aliases(path TEXT,alias TEXT);
             CREATE INDEX IF NOT EXISTS external_alias ON aliases(alias);
             CREATE INDEX IF NOT EXISTS alias_path ON aliases(path);
+            CREATE TABLE IF NOT EXISTS states(id TEXT PRIMARY KEY,status TEXT,state TEXT);
+            CREATE INDEX IF NOT EXISTS state_status ON states(status);
         ''')
-        if self.db.execute('PRAGMA user_version').fetchone()[0] != 3:
+        if self.db.execute('PRAGMA user_version').fetchone()[0] != 4:
             with self.db:
-                for table in ('records', 'search', 'activities', 'relationships', 'aliases'):
+                for table in ('records', 'search', 'activities', 'relationships', 'aliases', 'states'):
                     self.db.execute('DELETE FROM ' + table)
-                self.db.execute('PRAGMA user_version=3')
+                self.db.execute('PRAGMA user_version=4')
 
     def close(self):
         self.db.close()
@@ -57,7 +59,10 @@ class Index:
                 row = self.db.execute('SELECT path,stamp FROM records WHERE path=?', (str(path.relative_to(self.root)),)).fetchone()
                 if row:previous[row[0]] = row[1]
             candidates = [p for p in targets if p.is_file() and not p.is_symlink()]
-        seen, errors, changed = set(), [], False
+        seen, errors, changed, affected = set(), [], False, set()
+        def invalidate(relative):
+            affected.update(row[0] for row in self.db.execute('SELECT id FROM records WHERE path=?',(relative,)) if row[0])
+            affected.update(row[0] for row in self.db.execute('SELECT target FROM activities WHERE path=?',(relative,)) if row[0])
         with self.db:
             for path in candidates:
                 relative = str(path.relative_to(self.root))
@@ -67,6 +72,7 @@ class Index:
                 stamp = str((stat.st_mtime_ns, stat.st_size, stat.st_ino))
                 if previous.get(relative) == stamp:
                     continue
+                invalidate(relative)
                 try:
                     props, body = parse(path.read_text())
                     if props.get('noesis_schema') == 2:
@@ -75,6 +81,10 @@ class Index:
                         raise ValueError('Activity needs a structured durable target')
                     if props.get('external_aliases') is not None and not isinstance(props['external_aliases'], list):
                         raise ValueError('External aliases must be a list')
+                    if props.get('parent_ref'):
+                        parent=props['parent_ref']
+                        if not isinstance(parent,dict) or parent.get('vault_id')!=self.manifest.get('vault_id') or not parent.get('record_id'):
+                            raise ValueError('Parent reference must identify a record in this vault')
                     title = props.get('title') or props.get('imported_title') or path.stem
                     self.db.execute('DELETE FROM search WHERE rowid IN (SELECT rowid FROM records WHERE path=?)', (relative,))
                     row = self.db.execute('INSERT OR REPLACE INTO records VALUES(?,?,?,?,?,?,?)',
@@ -83,10 +93,18 @@ class Index:
                     for table in ('activities', 'relationships', 'aliases'):
                         self.db.execute('DELETE FROM ' + table + ' WHERE path=?', (relative,))
                     raw = json.dumps(props, default=str)
+                    if props.get('id'):affected.add(str(props['id']))
                     if props.get('type') == 'activity':
+                        if props.get('target',{}).get('record_id'):affected.add(props['target']['record_id'])
                         self.db.execute('INSERT INTO activities VALUES(?,?,?,?)', (relative, props.get('target', {}).get('record_id'), props.get('timestamp'), raw))
                     if props.get('type') == 'relationship':
                         self.db.execute('INSERT INTO relationships VALUES(?,?,?,?,?,?,?)', (relative, props.get('source'), props.get('target'), props.get('relation'), props.get('role'), props.get('context'), raw))
+                    elif props.get('parent_ref'):
+                        parent=props['parent_ref']
+                        edge={'source':parent['record_id'],'target':props['id'],'source_ref':parent,
+                              'target_ref':{'vault_id':self.manifest['vault_id'],'record_id':props['id']},
+                              'relation':parent.get('relation','contains'),'order':parent.get('order'),'ownership':'child metadata'}
+                        self.db.execute('INSERT INTO relationships VALUES(?,?,?,?,?,?,?)',(relative,edge['source'],edge['target'],edge['relation'],None,None,json.dumps(edge)))
                     for alias in props.get('external_aliases', []):
                         self.db.execute('INSERT INTO aliases VALUES(?,?)', (relative, str(alias)))
                     changed = True
@@ -98,11 +116,20 @@ class Index:
                         self.db.execute('DELETE FROM ' + table + ' WHERE path=?', (relative,))
                     changed = True
             for relative in previous.keys() - seen:
+                invalidate(relative)
                 self.db.execute('DELETE FROM search WHERE rowid IN (SELECT rowid FROM records WHERE path=?)', (relative,))
                 self.db.execute('DELETE FROM records WHERE path=?', (relative,))
                 for table in ('activities', 'relationships', 'aliases'):
                     self.db.execute('DELETE FROM ' + table + ' WHERE path=?', (relative,))
                 changed = True
+            from .activities import progress_state
+            for identity in affected:
+                rows=list(self.db.execute("SELECT props FROM records WHERE id=? AND kind!='activity' AND kind NOT LIKE 'imported-%'",(identity,)))
+                if len(rows)!=1:
+                    self.db.execute('DELETE FROM states WHERE id=?',(identity,));continue
+                try:state,_=progress_state(json.loads(rows[0][0]),self.timeline(identity))
+                except ValueError as error:state={'conflict':str(error)}
+                self.db.execute('INSERT OR REPLACE INTO states VALUES(?,?,?)',(identity,state.get('status'),json.dumps(state,default=str)))
             if changed:
                 self.db.execute('UPDATE meta SET generation=generation+1')
         duplicates = list(self.db.execute("SELECT lower(id) FROM records WHERE id!='' GROUP BY lower(id) HAVING COUNT(*)>1"))
@@ -142,15 +169,19 @@ class Index:
             size += item_size
         return {'generation': self.generation, 'records': results, 'cursor': cursor + len(results) if len(rows) > len(results) else None}
 
-    def record(self, identity):
-        rows = list(self.db.execute('SELECT path,props,body FROM records WHERE id=?', (identity,)))
+    def record(self, identity, include_body=True, include_attempt=True):
+        rows = list(self.db.execute('SELECT path,props,'+('body' if include_body else "''")+' FROM records WHERE id=?', (identity,)))
         if len(rows) != 1:
             raise ValueError('Target ID missing or duplicated: ' + identity)
         path, props, body = rows[0]
         metadata = json.loads(props)
-        from .activities import progress_state
+        from .activities import progress_state, unfinished_attempts
         try:
-            state, head = progress_state(metadata, self.timeline(identity))
+            cached=self.db.execute('SELECT state FROM states WHERE id=?',(identity,)).fetchone()
+            if cached:state,head=json.loads(cached[0]),None
+            else:state, head = progress_state(metadata, self.timeline(identity))
+            if include_attempt:
+                _,head=progress_state(metadata,self.timeline(identity))
         except ValueError as error:
             state, head = {'conflict': str(error)}, None
         artifact = None
@@ -158,7 +189,9 @@ class Index:
             location = metadata.get('location', metadata.get('local_file', ''))
             file = Path(location).expanduser() if location else None
             artifact = {'location': location, 'availability': 'available' if file and file.exists() else 'artifact unavailable', 'expected_checksum': metadata.get('sha256')}
-        return {'path': path, 'props': metadata, 'body': body, 'state': state, 'activity_head': head, 'artifact': artifact}
+        unfinished = unfinished_attempts(self.timeline(identity)) if include_attempt else []
+        return {'path': path, 'props': metadata, 'body': body, 'state': state, 'activity_head': head, 'artifact': artifact,
+                'attempt': unfinished[0] if len(unfinished) == 1 else None, 'attempt_conflict': len(unfinished) > 1}
 
     def timeline(self, identity):
         return [dict(json.loads(raw), path=path) for path, raw in self.db.execute('SELECT path,props FROM activities WHERE target=? ORDER BY timestamp,path', (identity,))]
@@ -168,10 +201,10 @@ class Index:
         for path, raw in self.db.execute('SELECT path,props FROM relationships WHERE source=? OR target=? ORDER BY path LIMIT 50', (identity, identity)):
             props = json.loads(raw)
             other = props['target'] if props['source'] == identity else props['source']
-            locations = list(self.db.execute('SELECT path,title,kind FROM records WHERE id=?', (other,)))
+            locations = list(self.db.execute('SELECT r.path,r.title,r.kind,s.status FROM records r LEFT JOIN states s ON s.id=r.id WHERE r.id=?', (other,)))
             row = dict(props, path=path, other_id=other)
             if len(locations) == 1:
-                row.update(zip(('other_path', 'other_title', 'other_type'), locations[0]))
+                row.update(zip(('other_path', 'other_title', 'other_type','other_status'), locations[0]))
             else:row['availability'] = 'Missing or duplicate related identity'
             result.append(row)
         return sorted(result, key=lambda row: (row['order'] if type(row.get('order')) is int else float('inf'), row.get('other_title', ''), row['path']))
