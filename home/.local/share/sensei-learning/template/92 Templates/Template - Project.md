@@ -26,3 +26,6 @@ What will I build/run/measure/break/repair/explain?
 ## Real-world analogue
 
 ## Exit demonstration / next branches
+
+## Smallest vertical slice
+Which end-to-end behavior can run first? Name the oracle and useful delivered capability. Separate computation from side effects; record the input → state → output trace and one measured bottleneck.

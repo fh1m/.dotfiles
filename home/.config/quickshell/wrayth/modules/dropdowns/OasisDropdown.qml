@@ -13,6 +13,8 @@ ChamferPanel {
  function pick(field){filePicker.destination=field;filePicker.open();}
  property string section:"Today"
  property var selected:({})
+ property bool referenceHidden:false
+ readonly property var practiceModes:["pattern","interface","derive","build","transfer"]
  property string folder:""
  property string captureSubmission:""
  property string roleFilter:"All"
@@ -25,7 +27,7 @@ ChamferPanel {
   if(section==="Resources")rows=s.sources||[];
   else if(section==="Papers")rows=(s.notes||[]).filter(n=>n.type==="paper");
   else if(section==="Courses")rows=(s.notes||[]).filter(n=>n.type==="course");
-  else if(section==="Practice")rows=(s.notes||[]).filter(n=>n.type==="problem");
+  else if(section==="Practice")rows=(s.notes||[]).filter(n=>["problem","practice-session"].includes(n.type));
   else if(section==="Snippets")rows=(s.notes||[]).filter(n=>n.type==="snippet");
   else if(section==="Vaults")rows=s.vaults||[];
   else if(section==="Builds")rows=s.projects||[];
@@ -45,7 +47,7 @@ ChamferPanel {
   return rows;
  }
  Connections {target:Oasis;function onActiveVaultChanged(){panel.selected=({});panel.folder="";}function onFinished(ok){if(ok&&capture.text===panel.captureSubmission)capture.text="";panel.captureSubmission="";}}
- onSectionChanged:{search.text="";roleFilter="All";role.currentIndex=0;if(section!=="Connections"&&section!=="Import")selected=({});}
+ onSectionChanged:{referenceHidden=section==="Recall";search.text="";roleFilter="All";role.currentIndex=0;if(section!=="Connections"&&section!=="Import")selected=({});}
  ColumnLayout {
   anchors.fill:parent;anchors.margins:16;spacing:10
   RowLayout {Layout.fillWidth:true;spacing:12
@@ -120,7 +122,7 @@ ChamferPanel {
        Text {width:parent.width;text:(modelData.isFolder?"▸ ":"")+modelData.name;color:panel.selected.path===modelData.path?Theme.widgetAccent:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:14;elide:Text.ElideRight}
        Text {width:parent.width;text:panel.section==="Vaults"?(modelData.active?"Selected · ":"")+"Independent vault":(modelData.type||modelData.ext||"")+" · "+(modelData.status||modelData.folder||modelData.path);color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:12;elide:Text.ElideRight}
       }
-      MouseArea {id:hover;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{if(panel.section==="Vaults"){Oasis.choose(modelData.path);}else if(modelData.isFolder){panel.folder=modelData.path;}else{panel.selected=modelData;if(modelData.path.endsWith(".md"))Oasis.preview(modelData.path);}}onDoubleClicked:if(panel.section!=="Vaults"&&!modelData.isFolder)Oasis.note(modelData.path)}
+      MouseArea {id:hover;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{if(panel.section==="Vaults"){Oasis.choose(modelData.path);}else if(modelData.isFolder){panel.folder=modelData.path;}else{panel.selected=modelData;panel.referenceHidden=panel.section==="Recall";if(modelData.path.endsWith(".md"))Oasis.preview(modelData.path);}}onDoubleClicked:if(panel.section!=="Vaults"&&!modelData.isFolder)Oasis.note(modelData.path)}
      }
      Text {visible:!panel.rows.length;anchors.centerIn:parent;text:panel.section==="Connections"?"Select a note, then explore its links.":"No matching entries. Keep only useful state.";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:11}
     }
@@ -130,10 +132,15 @@ ChamferPanel {
    ColumnLayout {Layout.preferredWidth:Math.min(460,panel.width*.36);Layout.fillHeight:true;spacing:8
     Text {text:panel.selected.name||"Tools for understanding";color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:14;font.bold:true;Layout.fillWidth:true;elide:Text.ElideRight}
     RowLayout {ActionButton {text:"Open";usable:!!panel.selected.path&&panel.section!=="Vaults"&&!Oasis.working;onClicked:Oasis.note(panel.selected.path)}ActionButton {text:"Links";glyph:"\uf0e8";usable:!!panel.selected.path&&panel.section!=="Vaults";onClicked:panel.section="Connections"}}
+    ActionButton {visible:!!panel.selected.path;text:panel.referenceHidden?"Reveal reference":"Hide reference";glyph:"\uf06e";onClicked:panel.referenceHidden=!panel.referenceHidden}
     ScrollView {Layout.fillWidth:true;Layout.fillHeight:true;clip:true
-     TextArea {readOnly:true;selectByMouse:true;wrapMode:TextEdit.Wrap;textFormat:TextEdit.PlainText;background:null;color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:14;text:panel.selected.path===Oasis.previewPath?Oasis.previewText:"Capture freely. Connect related ideas.\n\nUse links and maps to explain relationships, not just collect nodes.\n\nReconstruct from memory; preserve evidence and failed predictions.\n\nOpen Graph / Canvas / notes in Obsidian. LaTeX and drawings use its full renderer."}
+     TextArea {readOnly:true;selectByMouse:true;wrapMode:TextEdit.Wrap;textFormat:TextEdit.PlainText;background:null;color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:14;text:panel.referenceHidden?"Reference hidden. Reconstruct the mechanism, solve a small case, or draw the causal chain before revealing it.":panel.selected.path===Oasis.previewPath?Oasis.previewText.replace(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/, ""):"Capture freely. Connect related ideas.\n\nUse links and maps to explain relationships, not just collect nodes.\n\nReconstruct from memory; preserve evidence and failed predictions.\n\nOpen Graph / Canvas / notes in Obsidian. LaTeX and drawings use its full renderer."}
     }
-    ColumnLayout {visible:!!panel.selected.path;Layout.fillWidth:true;spacing:8
+    ScrollView {id:practiceTools;visible:!!panel.selected.path;Layout.fillWidth:true;Layout.preferredHeight:Math.min(420,panel.height*.48);clip:true
+    ColumnLayout {width:practiceTools.availableWidth;spacing:8
+    DeskComboBox {id:practiceMode;Layout.fillWidth:true;model:["Pattern study","Interface exploration","Independent reconstruction","Build / reproduce","Transfer test"];onActivated:panel.referenceHidden=["derive","transfer"].includes(panel.practiceModes[currentIndex])}
+    DeskTextField {id:practiceGoal;Layout.fillWidth:true;placeholderText:"What will you solve, explain, build or test?"}
+    ActionButton {text:"Begin practice";glyph:"\uf040";usable:!!panel.selected.path&&panel.selected.path.endsWith(".md")&&practiceGoal.text.trim()!==""&&!Oasis.working;onClicked:Oasis.run(["practice",panel.selected.path,"--mode",panel.practiceModes[practiceMode.currentIndex],"--goal",practiceGoal.text,"--open"])}
     RowLayout {spacing:5
      ActionButton {text:"Local graph";glyph:"\uf0e8";usable:!!panel.selected.path&&panel.selected.path.endsWith(".md")&&!Oasis.working;onClicked:Oasis.run(["cli","eval","code=(async()=>{const f=app.vault.getAbstractFileByPath("+JSON.stringify(panel.selected.path)+");await app.workspace.getLeaf(false).openFile(f);app.commands.executeCommandById('graph:open-local');return 'Local graph opened'})()"])}
      ActionButton {text:"Draw";glyph:"\uf040";usable:!Oasis.working;onClicked:{if((Oasis.state.commands||[]).includes("obsidian-excalidraw-plugin:excalidraw-autocreate"))Oasis.run(["cli","command","id=obsidian-excalidraw-plugin:excalidraw-autocreate"]);else Oasis.run(["enable-drawing"]);}}
@@ -151,6 +158,7 @@ ChamferPanel {
     ActionButton {text:"Update status";usable:!!panel.selected.path&&panel.selected.path.endsWith(".md")&&status.text.trim()!==""&&!Oasis.working;onClicked:Oasis.run(["update",panel.selected.path,"status",status.text])}
     RowLayout {DeskTextField {id:confidence;Layout.preferredWidth:70;placeholderText:"0–5";validator:IntValidator {bottom:0;top:5}}DeskTextField {id:days;Layout.preferredWidth:70;text:"7";placeholderText:"Days";validator:IntValidator {bottom:1;top:3650}}DeskTextField {id:evidence;Layout.fillWidth:true;placeholderText:"Recall evidence"}}
     ActionButton {text:"Record recall";glyph:"\uf1da";usable:!!panel.selected.path&&panel.selected.path.endsWith(".md")&&confidence.acceptableInput&&confidence.text!==""&&days.acceptableInput&&evidence.text.trim()!==""&&!Oasis.working;onClicked:Oasis.run(["review",panel.selected.path,"--confidence",confidence.text,"--days",days.text,"--evidence",evidence.text])}
+    }
     }
    }
   }

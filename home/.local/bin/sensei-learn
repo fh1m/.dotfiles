@@ -308,11 +308,12 @@ def cli(root, command, *args):
     ensure_app(selector)
     # A newly opened vault may not have its CLI listener ready yet. Retry only
     # the read-only identity handshake; never replay a mutating command.
-    for attempt in range(8):
+    for attempt in range(12):
         check = subprocess.run(['obsidian', 'vault=' + selector, 'vault', 'info=path'], capture_output=True, text=True, timeout=20)
         output = check.stdout.strip()
-        if output or check.returncode: break
-        if attempt < 7: time.sleep(0.2)
+        initializing = not output or 'Command "vault" not found' in output
+        if not initializing: break
+        if attempt < 11: time.sleep(0.2)
     if check.returncode or not output or 'not enabled' in output or 'Error' in output:
         raise ValueError('Obsidian CLI unavailable: ' + output + check.stderr.strip())
     if Path(output).resolve() != root.resolve(): raise ValueError('CLI selected a different vault; use a unique vault name.')
@@ -371,6 +372,38 @@ def new_note(root, kind, title):
     target = root / folder / (title + '.md'); target.parent.mkdir(parents=True, exist_ok=True)
     text = substitute(choices[0].read_text(), title=title)
     with target.open('x') as f: f.write(text)
+    return target
+
+PRACTICE_MODES = {
+ 'pattern': ('Pattern study', 'Predict an approach from the problem cues, then inspect a solution. Extract why the cue fits, a nearby counterexample and the discovery question. This is exposure, not an independent solve.'),
+ 'interface': ('Interface exploration', 'State inputs, outputs, operations, assumptions and costs. Run a tiny working case and a failure case. Which internals can wait, and which failure knowledge is a gate?'),
+ 'derive': ('Independent reconstruction', 'Close the source. Try to derive, explain, sketch or solve the load-bearing step. Preserve the first model and dead ends; seek a small hint only when further effort stops being productive.'),
+ 'build': ('Build / reproduce', 'Start with the smallest baseline. Name data or apparatus, versions, code commit, units or shapes, test oracle and metric. Predict one change, compare results, preserve discrepancies and inspect silent failures.'),
+ 'transfer': ('Transfer test', 'Close the original solution. Change one constraint, assumption, representation or setting. Predict what still works, implement or solve the changed case, and justify the boundary.')
+}
+
+def practice_session(root, relative, mode, goal):
+    if mode not in PRACTICE_MODES: raise ValueError('Unknown practice mode')
+    if not goal.strip(): raise ValueError('State a concrete practice goal')
+    source = checked_path(root, relative)
+    if not source.is_file() or source.suffix != '.md': raise ValueError('Select an existing Markdown note')
+    props, _ = note_text(source.read_text())
+    identity = str(uuid.uuid4()); label, guidance = PRACTICE_MODES[mode]
+    folder = system(root)['types'].get('practice-session', system(root)['types'].get('review', 'Notes'))
+    title = label + ' - ' + source.stem[:70] + ' - ' + datetime.now().strftime('%Y%m%d-%H%M%S')
+    target = checked_path(root, folder + '/' + title + ' [' + identity[:8] + '].md')
+    metadata = {'id':identity, 'type':'practice-session', 'status':'active', 'mode':mode,
+                'created':date.today().isoformat(), 'source_note':relative, 'goal':goal.strip()}
+    if props.get('id'): metadata['source_note_id'] = props['id']
+    body = '# ' + label + '\n\n' + guidance + '\n\n'
+    body += '## Goal and starting model\n' + goal.strip() + '\n\n'
+    body += '## Before feedback\nMy prediction, proposed approach or smallest test; alternatives and why I chose one.\n\n'
+    body += '## Attempt trail\nPreserve actual work, rejected ideas and the evidence that rejected them.\n\n'
+    body += '## Feedback and assistance\nWhat did I reveal? Which hint, reference, agent or person helped?\n\n'
+    body += '## Reusable insight and boundary\nProblem cue → useful idea → reason → where it fails.\n\n'
+    body += '## Evidence and next independent test\nCommands, code, measurements or explanation; one changed case to try later. No automatic confidence update.\n\n'
+    body += '## Original material — reveal after attempting when appropriate\n[[' + relative + ']]\n'
+    write_new(target, '---\n' + yaml.safe_dump(metadata, sort_keys=False, allow_unicode=True) + '---\n\n' + body)
     return target
 
 def identify(root,relative):
@@ -517,13 +550,14 @@ def library_action(root,args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window']:
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice']:
         p = commands.add_parser(cmd); p.add_argument('--vault')
         if cmd == 'doctor': p.add_argument('--offline', action='store_true')
         if cmd == 'use': p.add_argument('path')
         if cmd == 'capture': p.add_argument('text', nargs='?'); p.add_argument('--agent', action='store_true');p.add_argument('--kind',choices=['capture','snippet','question'],default='capture')
         if cmd == 'new': p.add_argument('--folder'); p.add_argument('kind'); p.add_argument('title'); p.add_argument('--open', action='store_true')
         if cmd == 'search': p.add_argument('query', nargs='?', default='')
+        if cmd == 'practice': p.add_argument('path');p.add_argument('--mode',choices=list(PRACTICE_MODES),required=True);p.add_argument('--goal',required=True);p.add_argument('--open',action='store_true')
         if cmd == 'preview': p.add_argument('path')
         if cmd == 'update': p.add_argument('path'); p.add_argument('field',choices=['status','question','next_experiment','active_project']); p.add_argument('value')
         if cmd == 'review': p.add_argument('path'); p.add_argument('--confidence',type=int,required=True); p.add_argument('--days',type=int,default=7); p.add_argument('--evidence',required=True)
@@ -553,6 +587,10 @@ def main():
         root = vault(args.vault); meta = system(root)
         if args.command in ['resource','progress','attempt','import-csl','import-notes','read-resource']:
             return library_action(root,args)
+        if args.command == 'practice':
+            target=practice_session(root,args.path,args.mode,args.goal)
+            if args.open: cli(root,'open','path='+str(target.relative_to(root)))
+            print(target);return 0
         if args.command == 'backup': return subprocess.run([str(HOME/'.local/bin/sensei-learning-backup'),'--vault',str(root)]).returncode
         if args.command == 'adopt': adopt(root); return 0
         if args.command=='enable-drawing':

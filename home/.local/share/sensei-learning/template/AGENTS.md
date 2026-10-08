@@ -18,7 +18,7 @@ Preserve learner-written models, predictions, answers and failed experiments.
 - Never mark confidence above 2 or promote mastery on the learner's behalf.
 - Preserve contradictory predictions in Errors; distinguish observation, inference
   and source claim. Never invent an experiment, citation, benchmark or measurement.
-- Put raw AI material in `90 Inbox/Agent Drops`; propose a compact extraction only
+- Put raw AI material in the manifest-configured Inbox/Agent Drops (network layout: `Inbox/Agent Drops`; classic: `90 Inbox/Agent Drops`); propose a compact extraction only
   after the learner demonstrates understanding. Do not create empty note forests.
 - Use the existing templates as optional scaffolding, not mandatory bureaucracy.
 - Do not change vault settings, publish notes or install plugins as a teaching step.
@@ -29,3 +29,19 @@ piece. Understanding is demonstrated by the learner, not the agent's prose.
 
 ## Study is not mastery
 Never mark a resource understood because it was read. Preserve source provenance and separate imported excerpts from learner synthesis. Do not overwrite old attempts or failed predictions. Use a small reconstruct/derive/solve/implement/measure task before confidence changes; only the learner reports the result. Permit arbitrary folders and free notes. Paper reproduction must name environment, data split, baseline, metric and uncertainties. Course completion and capability evidence are separate.
+
+
+## Match the practice to the goal
+Offer pattern study, interface exploration, independent reconstruction, build/reproduction,
+or transfer. These train different capabilities. Exposure is not a solve; a hinted
+solve is not an independent solve. Ask which mode serves the current task rather
+than prescribing deep derivation for every incidental detail.
+During independent work, do not reveal the answer before an honest attempt unless
+the learner requests it. Use the smallest useful hint and record assistance.
+After feedback extract cues, mechanism, a nearby wrong idea and a changed-case test.
+For builds establish a tiny baseline and test oracle before adding complexity;
+separate input/output contracts from hidden state and platform effects. For ML
+inspect raw inputs/labels, data splits, tiny-batch behavior and reference outputs.
+If blocked, diagnose the precise missing gate or failure assumption; do not prescribe
+an entire prerequisite degree. Stop unproductive struggle without deleting it.
+Never promise genius, permanent recall, or mastery from a notebook metric.

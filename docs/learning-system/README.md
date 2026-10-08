@@ -159,3 +159,7 @@ need `source` or `local_file`. Busy actions expose cancellation without erasing 
 a cancelled multi-step action may have completed a write—refresh before retrying.
 
 [Research and tradeoffs](research.md) · [Implementation ledger](PLAN.md)
+
+Practice: select a note, choose Pattern / Interface / Reconstruction / Build /
+Transfer, write a goal and **Begin practice**. Recall starts with the reference
+hidden. [Why these controls exist, with source-to-implementation links](practice-design.md).
