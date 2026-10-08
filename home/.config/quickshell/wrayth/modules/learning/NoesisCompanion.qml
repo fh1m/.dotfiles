@@ -1,10 +1,13 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import qs.components
 import qs.config
 import qs.services
 PanelWindow {
+ id:companion
+ IpcHandler {target:"noesis-companion";function state():string{return JSON.stringify({visible:companion.visible,screen:companion.screen?.name,width:companion.width,height:companion.height,context:Oasis.currentContext.id||""});}}
  readonly property var companionScreen:Quickshell.screens.find(s=>s.name==="DP-2")||null
  screen:companionScreen
  visible:companionScreen!==null&&!!Oasis.currentContext.id&&Oasis.currentContext.vault===Oasis.activeVault
@@ -13,9 +16,9 @@ PanelWindow {
  implicitWidth:Math.min(480,(companionScreen?.width||480)-32)
  implicitHeight:112
  exclusiveZone:0
- color:Theme.widgetSurface
- ColumnLayout {anchors.fill:parent;anchors.margins:12;spacing:8
-  Text {text:Oasis.currentContext.title||Oasis.currentContext.path||"Current context";color:Theme.widgetAccent;font.family:Appearance.font.data;font.pixelSize:13;Layout.fillWidth:true;elide:Text.ElideRight}
+ color:NoesisStyle.surface
+ ColumnLayout {anchors.fill:parent;anchors.margins:NoesisStyle.md;spacing:NoesisStyle.sm
+  Text {text:Oasis.currentContext.title||Oasis.currentContext.path||"Current context";color:NoesisStyle.accent;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;Layout.fillWidth:true;elide:Text.ElideRight}
   RowLayout {
    NoesisButton {text:"Resume";onClicked:Oasis.open()}
    NoesisButton {text:"Capture";onClicked:{Oasis.open();Oasis.captureRequested();}}

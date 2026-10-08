@@ -54,9 +54,46 @@ refuses a stale path that now belongs to another record.
 `noesis next --vault PATH` explains suggestions. A disposition with state parked,
 abandoned, retired, skipped, passed or complete suppresses applicable suggestions;
 `next --quiet` disables them. `context RECORD_UUID --role tutor` (or examiner, researcher, reviewer, archivist) exports an explicit unverified agent context. Neither operation
-awards capability. Review dates are learner-selected policy conveniences. The planned configurable
-1/7/30-day suggestion policy is not enabled yet.
+awards capability. Review dates are learner-selected policy conveniences. The explicit Plan a check action uses configurable retry/later/maintenance defaults
+of 1/7/30 days. Schedule, snooze and retirement create new records; they preserve
+earlier attempts and plans. Multiple conflicting plans require explicit resolution.
 
 CS, engineering, robotics and shared Knowledge remain separate. Never put private
 vault content, app registration, reader databases or credentials in public dotfiles.
 Local recovery is documented separately; off-device protection remains unfinished.
+
+
+## Connected resource work
+
+Today offers one Continue context and at most five explained suggestions. Select a
+path and choose Use path for Today to scope suggestions. Quiet hides suggestions
+without changing history. Read, Work, History and Connections separate the current
+material from reasoning and its durable record. Details is optional (Ctrl+I).
+
+Add a resource, then Add lesson / chapter or Add problem in its context. Child
+records own their stable parent reference, so publication is one atomic Markdown
+file. Ordered lessons are independent from assignment and project outcomes.
+Lessons can have their own video URL; chapters can reuse their containing book's
+PDF. Save place distinguishes page, section, exercise and timestamp. Paper reading
+passes remain separate from reconstruction and reproduction.
+
+From Zotero searches the supported local read API. Imports retain server identity,
+native annotation IDs and source revisions; learner analysis is never replaced.
+If the local API is unavailable, import-csl/import-notes remain supported. Noesis
+does not write to the Zotero database. A single PDF attachment supports a Zotero
+page handoff; multiple attachments require selection in Zotero. Sioyek pages and
+YouTube timestamp links resume the explicitly saved location. Equations, diagrams,
+editing and reader annotation use the specialist applications via Open note/source.
+
+Quick capture accepts text immediately. Ctrl+Shift+N opens it; Ctrl+Enter saves.
+Drafts remain machine-local, private and target-scoped; they are not finalized
+learning history. Capture and activity operation receipts distinguish committed,
+not committed and uncertain interruption outcomes. An unavailable committed record
+requires inspection instead of blind recreation. Unfinished attempts recover their
+identity after reopening, moves and cache rebuilds.
+
+`artifact-check ARTIFACT_UUID` streams a checksum and records match, mismatch,
+unverified or unavailable separately from the original prediction. Large data stays
+external. `sensei-learning-backup --restore-reader SNAPSHOT --dest NEW_DIRECTORY`
+verifies and restores saved reader databases into a new location; it never replaces
+an active reader profile.

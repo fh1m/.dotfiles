@@ -3,9 +3,17 @@ import QtQuick.Controls
 import qs.config
 Button {
  id:root
+ property bool primary:false
+ property string hint:""
+ property int textAlignment:Text.AlignHCenter
  Accessible.name:text
- font.family:Appearance.font.data;font.pixelSize:13
- padding:10
- contentItem:Text {text:root.text;color:root.enabled?(root.highlighted?Theme.widgetAccent:Theme.widgetText):Theme.widgetMuted;font:root.font;horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter;elide:Text.ElideRight}
- background:Rectangle {color:root.down||root.hovered||root.highlighted?Theme.widgetRaised:Theme.widgetSurface;radius:3;border.width:1;border.color:root.activeFocus?Theme.widgetAccent:Theme.widgetBorder}
+ hoverEnabled:true
+ font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label
+ implicitHeight:NoesisStyle.control
+ leftPadding:NoesisStyle.md;rightPadding:NoesisStyle.md;topPadding:NoesisStyle.sm;bottomPadding:NoesisStyle.sm
+ contentItem:Text {text:root.text;color:!root.enabled?NoesisStyle.quiet:root.primary||root.highlighted?NoesisStyle.accent:NoesisStyle.ink;font:root.font;horizontalAlignment:root.textAlignment;verticalAlignment:Text.AlignVCenter;elide:Text.ElideRight}
+ background:Rectangle {color:root.down||root.hovered||root.highlighted||root.primary?NoesisStyle.hover:"transparent";radius:NoesisStyle.radius;border.width:root.activeFocus||root.primary?1:0;border.color:root.activeFocus?NoesisStyle.accent:NoesisStyle.rule;Behavior on color {ColorAnimation {duration:NoesisStyle.transition}}}
+ ToolTip.visible:hint!==""&&hovered
+ ToolTip.text:hint
+ ToolTip.delay:600
 }
