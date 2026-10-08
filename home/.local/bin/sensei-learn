@@ -585,7 +585,7 @@ def main():
         if cmd == 'update': p.add_argument('path'); p.add_argument('field',choices=['status','question','next_experiment','active_project']); p.add_argument('value')
         if cmd == 'review': p.add_argument('path'); p.add_argument('--confidence',type=int,required=True); p.add_argument('--days',type=int,default=7); p.add_argument('--evidence',required=True)
         if cmd == 'canvas': p.add_argument('title')
-        if cmd == 'attach': p.add_argument('source'); p.add_argument('--note')
+        if cmd == 'attach': p.add_argument('source'); p.add_argument('--note');p.add_argument('--copy',action='store_true')
         if cmd == 'resource': p.add_argument('title');p.add_argument('--kind',choices=['paper','book','article','docs','lecture','playlist','course','dataset','other'],default='paper');p.add_argument('--url',default='');p.add_argument('--file');p.add_argument('--why',default='')
         if cmd in ['progress','attempt','event']:p.add_argument('--target-id');p.add_argument('--operation-id')
         if cmd == 'progress': p.add_argument('path');p.add_argument('--position',required=True);p.add_argument('--current',type=int);p.add_argument('--total',type=int);p.add_argument('--state',choices=['queued','active','read','extracted','parked','rejected']);p.add_argument('--evidence',default='')
@@ -690,9 +690,21 @@ def main():
             source=Path(args.source).expanduser().resolve()
             if not source.is_file():raise ValueError('Choose a local file')
             if args.note and not checked_path(root,args.note).is_file():raise ValueError('Note missing; attachment not copied')
+            if (source.stat().st_size>25*1024*1024 or source.suffix.lower() in {'.mcap','.bag','.mp4','.mkv'}) and not args.copy:
+                artifact=create_record(root,'artifact',source.stem,'External artifact. The original file stays at its source location.',{'location':str(source),'size':source.stat().st_size,'ownership':'external','storage_class':'large-artifact','backup_policy':'not included in routine text backups'})
+                if args.note:
+                    identity=note_text(checked_path(root,args.note).read_text())[0].get('id')
+                    if identity:relationship(root,identity,artifact['id'],'references')
+                print(json.dumps(dict(artifact,referenced=True,explicit_copy_available=True)));return 0
             folder='Attachments' if meta.get('layout')=='network' else 'assets';dest=checked_path(root,folder+'/'+source.name)
             dest.parent.mkdir(parents=True,exist_ok=True)
-            with source.open('rb') as src,dest.open('xb') as target:shutil.copyfileobj(src,target)
+            fd,temporary=tempfile.mkstemp(dir=dest.parent,prefix='.noesis-attachment-')
+            try:
+                with source.open('rb') as src,os.fdopen(fd,'wb') as target:
+                    shutil.copyfileobj(src,target);target.flush();os.fsync(target.fileno())
+                os.link(temporary,dest)
+            finally:
+                if os.path.exists(temporary):os.unlink(temporary)
             if args.note:
                 note=checked_path(root,args.note)
                 if not note.is_file():raise ValueError('Note missing; attachment copied safely but not linked')

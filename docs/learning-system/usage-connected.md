@@ -34,7 +34,8 @@ in the body, and record a comparison naming code/configuration, units and discre
 Missing storage is reported as artifact unavailable; it does not delete knowledge.
 
 In Practice, start an attempt, reconstruct, record any reveal, then finalize with
-outcome and evidence. Use a new attempt for an independent retry. Correlated hints,+references and agent help remain attached to that attempt even when the selected
+outcome and evidence. Use a new attempt for an independent retry. Correlated hints,
+references and agent help remain attached to that attempt even when the selected
 assistance label says none. Outside assistance must be declared; otherwise it is
 unknown. Success remains a reported assessment, not automatically verified ability.
 
@@ -52,10 +53,9 @@ refuses a stale path that now belongs to another record.
 
 `noesis next --vault PATH` explains suggestions. A disposition with state parked,
 abandoned, retired, skipped, passed or complete suppresses applicable suggestions;
-`next --quiet` disables them. `context RECORD_UUID --role tutor|examiner|researcher|
-reviewer|archivist` exports an explicit unverified agent context. Neither operation
-awards capability. Suggested review intervals are policy conveniences, not a
-validated competence scheduler.
+`next --quiet` disables them. `context RECORD_UUID --role tutor` (or examiner, researcher, reviewer, archivist) exports an explicit unverified agent context. Neither operation
+awards capability. Review dates are learner-selected policy conveniences. The planned configurable
+1/7/30-day suggestion policy is not enabled yet.
 
 CS, engineering, robotics and shared Knowledge remain separate. Never put private
 vault content, app registration, reader databases or credentials in public dotfiles.

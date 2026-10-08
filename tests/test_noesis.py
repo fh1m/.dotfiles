@@ -152,7 +152,17 @@ class Core(unittest.TestCase):
         run('progress', 'target.md', '--position', 'page 9', '--current', '9')
         run('attempt', 'target.md', '--result', 'failed', '--evidence', 'Counterexample', '--assistance', 'none')
         self.assertEqual(len(json.loads(run('query', 'observation'))['records']), 1)
+        self.assertEqual(len(json.loads(run('query', 'observ'))['records']), 1)
         self.assertIn('page 9', run('timeline', parse(self.note.read_text())[0]['id']))
+        recording = self.home / 'measurements.mcap'
+        with recording.open('wb') as handle:
+            handle.truncate(26 * 1024 * 1024)
+        original = self.note.read_text()
+        attachment = json.loads(run('attach', str(recording), '--note', 'target.md'))
+        self.assertTrue(attachment['referenced'])
+        self.assertEqual(self.note.read_text(), original)
+        self.assertFalse((self.root / 'Attachments' / recording.name).exists())
+        self.assertTrue(recording.is_file())
 
 
 if __name__ == '__main__':unittest.main()
