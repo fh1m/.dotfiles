@@ -7,7 +7,10 @@ def next_actions(index, quiet=False):
     if quiet:return []
     candidates = []
     now = datetime.now(timezone.utc).isoformat()
-    for path, identity, kind, raw in index.db.execute('SELECT path,id,kind,props FROM records ORDER BY path'):
+    for path, identity, kind, raw in index.db.execute('''SELECT path,id,kind,props FROM records
+        WHERE kind IN ('session','practice-session','relationship','unit','experiment')
+        OR (kind='activity' AND (json_extract(props,'$.retry_requested')=1 OR json_extract(props,'$.due') IS NOT NULL))
+        OR json_extract(props,'$.pin')=1 ORDER BY path'''):
         props = json.loads(raw)
         if identity:
             derived = index.record(identity)['state']

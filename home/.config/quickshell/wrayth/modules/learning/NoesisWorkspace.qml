@@ -58,7 +58,7 @@ Item {
     let result=response.result;
     if(result.errors){if(result.errors.length)Oasis.error=JSON.stringify(result.errors);root.load(false);return;}
     if(response.request_id===root.latest){root.rows=result.records||[];root.cursor=result.cursor===null||result.cursor===undefined?"":String(result.cursor);}
-    if(response.request_id===root.detailSerial){root.body=result.body||"";root.selected=Object.assign({},root.selected,result.props||{});Oasis.currentContext=Object.assign({},root.selected,{vault:Oasis.activeVault,session_state:result.state?.status||""});Oasis.savePreferences();position.text=result.state?.position||"";if(result.state?.conflict)Oasis.error=result.state.conflict;}
+    if(response.request_id===root.detailSerial){root.body=result.body||"";root.selected=Object.assign({},root.selected,result.props||{},{path:result.path});Oasis.currentContext=Object.assign({},root.selected,{vault:Oasis.activeVault,session_state:result.state?.status||""});Oasis.savePreferences();position.text=result.state?.position||"";if(result.state?.conflict)Oasis.error=result.state.conflict;}
     if(response.request_id===root.historySerial)root.history=result.activities||[];
     if(response.request_id===root.relationSerial)root.relations=result.relationships||[];
    }catch(error){Oasis.error="Query response failed: "+String(error);}
