@@ -1,4 +1,11 @@
 #!/bin/sh
 # Noesis: same durable learning bridge; oasis remains a compatibility alias.
 if [ "$#" -eq 0 ]; then set -- window; fi
+if [ -f /run/.containerenv ]; then
+    if command -v distrobox-host-exec >/dev/null 2>&1; then
+        exec distrobox-host-exec "@HOME@/.local/bin/sensei-learn" "$@"
+    fi
+    echo "Noesis needs the Distrobox host bridge in this container." >&2
+    exit 1
+fi
 exec "@HOME@/.local/bin/sensei-learn" "$@"

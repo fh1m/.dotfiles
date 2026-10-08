@@ -3,6 +3,7 @@ obsidian
 python
 python-yaml
 git
+restic
 fzf
 pandoc
 yt-dlp

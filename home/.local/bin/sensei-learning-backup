@@ -1,21 +1,49 @@
 #!/usr/bin/env python3
 """Private incremental-in-time snapshots; never publish or overwrite a vault."""
-import argparse, hashlib, json, os, tarfile, tempfile
+import argparse, hashlib, json, os, tarfile, tempfile, shutil, fcntl
 from datetime import datetime
 from pathlib import Path
 HOME=Path.home()
 STATE=HOME/'.local/state/sensei-learning/snapshots'
 EXCLUDE={'.git','plugins','themes','.cache','cache','node_modules','build','__pycache__'}
+def sha(path):
+ with path.open('rb') as stream:return hashlib.file_digest(stream,'sha256').hexdigest()
+def safe(root,name):
+ p=Path(name)
+ if p.is_absolute() or '..' in p.parts or not (root/p).resolve().is_relative_to(root.resolve()):raise ValueError('Unsafe manifest path')
+ return root/p
+def atomic_json(path,record):
+ fd,tmp=tempfile.mkstemp(dir=path.parent)
+ try:
+  with os.fdopen(fd,'w') as stream:json.dump(record,stream,indent=2);stream.flush();os.fsync(stream.fileno())
+  os.replace(tmp,path)
+ finally:
+  if os.path.exists(tmp):os.unlink(tmp)
 def eligible(p,root):
  parts=p.relative_to(root).parts
  return not any(x in EXCLUDE for x in parts) and not p.is_symlink() and not p.name.startswith(('workspace','.env')) and p.suffix not in {'.log','.db','.sqlite','.sqlite3'}
 def backup(root):
+ STATE.mkdir(parents=True,exist_ok=True)
+ with (STATE/'.lock').open('a') as stream:
+  fcntl.flock(stream,fcntl.LOCK_EX)
+  with tempfile.TemporaryDirectory(dir=STATE) as temporary:
+   original=root.resolve();stage=Path(temporary)/'vault';stage.mkdir()
+   references={}
+   for p in sorted(original.rglob('*')):
+    if not p.is_file() or not eligible(p,original):continue
+    if p.stat().st_size>25*1024*1024 or p.suffix.lower() in {'.mcap','.bag','.mp4','.mkv'}:
+     references[str(p.relative_to(original))]={'location':str(p),'size':p.stat().st_size,'protection':'external; not included in text snapshot'};continue
+    before=p.stat();target=stage/p.relative_to(original);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,target)
+    after=p.stat()
+    if (before.st_mtime_ns,before.st_size,before.st_ino)!=(after.st_mtime_ns,after.st_size,after.st_ino):raise ValueError('File changed during backup; retry: '+str(p))
+   snapshot(stage,original,references)
+def snapshot(root,original,references):
  root=root.resolve()
  if not ((root/'94 Meta/System.json').is_file() or (root/'System/System.json').is_file()):raise ValueError('Not a Noesis vault')
- key=hashlib.sha256(str(root).encode()).hexdigest()[:12];dest=STATE/key;dest.mkdir(parents=True,exist_ok=True);STATE.chmod(0o700);dest.chmod(0o700)
+ key=hashlib.sha256(str(original).encode()).hexdigest()[:12];dest=STATE/key;dest.mkdir(parents=True,exist_ok=True);STATE.chmod(0o700);dest.chmod(0o700)
  files=sorted(p for p in root.rglob('*') if p.is_file() and eligible(p,root))
- hashes={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
- digest=hashlib.sha256(json.dumps(hashes,sort_keys=True).encode()).hexdigest()
+ hashes={str(p.relative_to(root)):sha(p) for p in files}
+ digest=hashlib.sha256(json.dumps([hashes,references],sort_keys=True).encode()).hexdigest()
  old=dest/'latest.json'
  if old.exists() and json.loads(old.read_text()).get('digest')==digest:
   print('Unchanged: '+str(root));return
@@ -26,8 +54,8 @@ def backup(root):
   os.chmod(tmp,0o600);os.replace(tmp,dest/name)
  finally:
   if os.path.exists(tmp):os.unlink(tmp)
- record={'vault':str(root),'archive':name,'digest':digest,'files':hashes,'archive_sha256':hashlib.sha256((dest/name).read_bytes()).hexdigest()}
- (dest/(stamp+'.json')).write_text(json.dumps(record,indent=2)+'\n');old.write_text(json.dumps(record,indent=2)+'\n')
+ record={'vault':str(original),'archive':name,'digest':digest,'files':hashes,'external_artifacts':references,'archive_sha256':sha(dest/name)}
+ atomic_json(dest/(stamp+'.json'),record);atomic_json(old,record)
  # Keep seven newest snapshots plus one per week from the four preceding weeks.
  snapshots=sorted(dest.glob('*.tar.gz'),reverse=True);keep=set(snapshots[:7]);weeks=set()
  for p in snapshots[7:]:
@@ -39,20 +67,21 @@ def backup(root):
 def restore(archive,destination):
  if destination.exists() or destination.is_symlink():raise ValueError('Restore destination exists; refusing overwrite')
  metadata=json.loads(archive.with_name(archive.name[:-7]+'.json').read_text())
- if hashlib.sha256(archive.read_bytes()).hexdigest()!=metadata['archive_sha256']:raise ValueError('Archive checksum mismatch')
+ if sha(archive)!=metadata['archive_sha256']:raise ValueError('Archive checksum mismatch')
  destination.parent.mkdir(parents=True,exist_ok=True)
  with tempfile.TemporaryDirectory(dir=destination.parent) as temporary:
   stage=Path(temporary)/'vault';stage.mkdir()
   with tarfile.open(archive) as tar:
    for m in tar.getmembers():
     if not m.isfile() or Path(m.name).is_absolute() or '..' in Path(m.name).parts:raise ValueError('Unsafe archive entry')
-    p=stage/m.name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(tar.extractfile(m).read())
+    p=safe(stage,m.name);p.parent.mkdir(parents=True,exist_ok=True)
+    with tar.extractfile(m) as source,p.open('xb') as target:shutil.copyfileobj(source,target)
   for name,digest in metadata['files'].items():
-   if hashlib.sha256((stage/name).read_bytes()).hexdigest()!=digest:raise ValueError('Restored file checksum mismatch')
+   if sha(safe(stage,name))!=digest:raise ValueError('Restored file checksum mismatch')
   manifest=stage/'System/System.json'
   if not manifest.is_file():manifest=stage/'94 Meta/System.json'
   system=json.loads(manifest.read_text())
-  for folder in system['directories']:(stage/folder).mkdir(parents=True,exist_ok=True)
+  for folder in system['directories']:safe(stage,folder).mkdir(parents=True,exist_ok=True)
   stage.rename(destination)
  print(destination)
 def backup_readers():
@@ -90,7 +119,7 @@ def backup_readers():
       target.unlink(missing_ok=True)
      if error:raise ValueError(str(error)+': close '+root.name+' and retry backup')
     else:shutil.copy2(p,target)
-    records[str(relative)]=hashlib.sha256(target.read_bytes()).hexdigest()
+    records[str(relative)]=sha(target)
    manifest={'source':str(root),'files':records,'database_sources':database_sources,'restore':'Close the reader, verify checksums, restore into a NEW data directory; never overwrite a live database.'}
    latest=dest.parent/'latest.json'
    if latest.exists() and json.loads(latest.read_text()).get('files')==records:

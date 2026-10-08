@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Linux filesystem push notifications, only while the Noesis window is open."""
-import ctypes,os,select,struct,sys
+import ctypes,os,select,struct,sys,json
 from pathlib import Path
 root=Path(sys.argv[1]).resolve()
 if not root.is_dir():raise SystemExit('Vault missing')
@@ -16,23 +16,27 @@ def add_tree(path):
   dirs[:]=[d for d in dirs if not d.startswith('.') and d not in excluded and not (Path(folder)/d).is_symlink()]
   p=Path(folder);wd=lib.inotify_add_watch(fd,os.fsencode(p),mask)
   if wd>=0:watched[wd]=p
+  else:print("degraded:watch-failed:"+str(p),flush=True)
 try:
  add_tree(root)
  while True:
   select.select([fd],[],[])
   try:data=os.read(fd,65536)
   except BlockingIOError:continue
-  changed=False;offset=0
+  changed=False;offset=0;paths=set();reconcile=False
   while offset<len(data):
    wd,event,cookie,length=struct.unpack_from('iIII',data,offset);offset+=16
    name=os.fsdecode(data[offset:offset+length].split(b'\0',1)[0]);offset+=length
+   if event&0x4000:
+    print(json.dumps({'reconcile':True,'reason':'overflow'}),flush=True);add_tree(root);continue
+   if event&(0x400|0x800):print("degraded:root-moved-or-deleted",flush=True)
    if event&0x8000:watched.pop(wd,None);continue
    base=watched.get(wd)
    if base is None:continue
    target=base/name
    if event&0x40000000:
     if event&(0x100|0x80) and name not in excluded and not name.startswith('.') and not target.is_symlink():add_tree(target)
-    changed=True
-   elif target.suffix in ['.md','.base','.canvas'] or target.name=='System.json':changed=True
-  if changed:print('changed',flush=True)
+    changed=True;reconcile=True
+   elif target.suffix in ['.md','.base','.canvas'] or target.name=='System.json':changed=True;paths.add(str(target.relative_to(root)))
+  if changed:print(json.dumps({'reconcile':reconcile,'paths':sorted(paths)}),flush=True)
 finally:os.close(fd)

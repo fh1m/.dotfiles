@@ -13,7 +13,7 @@ spec=importlib.util.spec_from_loader(loader.name,loader);m=importlib.util.module
 class Learning(unittest.TestCase):
  def setUp(self):
   self.temp=tempfile.TemporaryDirectory();self.h=Path(self.temp.name)
-  self.patches=[patch.object(m,'register',lambda root: None),patch.object(m,'HOME',self.h),patch.object(m,'CONFIG',self.h/'config.json'),patch.object(m,'TEMPLATE',ROOT/'home/.local/share/sensei-learning/template')]
+  self.patches=[patch('pathlib.Path.home',return_value=self.h),patch.object(m,'register',lambda root: None),patch.object(m,'HOME',self.h),patch.object(m,'CONFIG',self.h/'config.json'),patch.object(m,'TEMPLATE',ROOT/'home/.local/share/sensei-learning/template')]
   for p in self.patches:p.start()
  def tearDown(self):
   for p in self.patches:p.stop()
