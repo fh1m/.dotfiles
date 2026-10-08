@@ -73,7 +73,7 @@ class Index:
                         raise ValueError('Activity needs a structured durable target')
                     if props.get('external_aliases') is not None and not isinstance(props['external_aliases'], list):
                         raise ValueError('External aliases must be a list')
-                    title = props.get('title') or path.stem
+                    title = props.get('title') or props.get('imported_title') or path.stem
                     self.db.execute('DELETE FROM search WHERE rowid IN (SELECT rowid FROM records WHERE path=?)', (relative,))
                     row = self.db.execute('INSERT OR REPLACE INTO records VALUES(?,?,?,?,?,?,?)',
                         (relative, stamp, str(props.get('id', '')), str(props.get('type', 'note')), str(title), json.dumps(props, default=str), body))

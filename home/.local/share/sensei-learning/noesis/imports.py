@@ -52,6 +52,7 @@ def import_csl(root, source, meta, resource_key, dry=False):
             digest = hashlib.sha256(raw.encode()).hexdigest()
             projection = contained(root, 'Imports/' + props['id'] + '/bibliography/' + digest + '.md')
             updated = dict(props, noesis_schema=2, source_kind='paper', source=item.get('URL', ''), doi=item.get('DOI', ''),
+                imported_title=item['title'], imported_authors=item.get('author', []), imported_date=item.get('issued'),
                 external_aliases=sorted(set(props.get('external_aliases', []) + aliases(item))), bibliography_projection=str(projection.relative_to(root)))
             match = re.search(r'/items/([A-Z0-9]{8})$', str(item.get('id', '')))
             if match:updated['zotero_uri'] = 'zotero://select/library/items/' + match[1]
