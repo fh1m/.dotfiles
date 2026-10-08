@@ -65,6 +65,7 @@ class Workflows(unittest.TestCase):
         self.assertEqual(updated['id'], identity)
         self.assertEqual(updated_body, body)
         self.assertEqual(updated['doi'], '10.example/new')
+        self.assertEqual(updated['imported_title'], 'Corrected bibliography')
         self.assertEqual(len(list((self.root / 'Imports' / identity / 'bibliography').glob('*.md'))), 2)
 
     def test_derive_build_transfer_and_capability_are_explicit(self):

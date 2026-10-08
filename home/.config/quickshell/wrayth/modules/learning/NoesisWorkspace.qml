@@ -111,6 +111,7 @@ Item {
    Flow {Layout.fillWidth:true;spacing:6
     NoesisButton {text:"Open note";enabled:!!root.selected.path&&!root.referenceHidden;onClicked:Oasis.note(root.selected.path)}
     NoesisButton {text:"Reader";enabled:!root.referenceHidden;visible:["paper","resource","course"].includes(root.selected.type);onClicked:Oasis.run(["read-resource",root.selected.path,"--reader",root.selected.zotero_uri?"zotero":"sioyek"])}
+    NoesisButton {text:"Bibliography";enabled:!root.referenceHidden;visible:!!root.selected.bibliography_projection;onClicked:Oasis.note(root.selected.bibliography_projection)}
     NoesisButton {text:root.referenceHidden?"Reveal reference":"Hide reference";enabled:!!root.selected.path;onClicked:{if(root.referenceHidden)root.saveEvent("assistance",{assistance:["reference"],scope:"Noesis preview"});root.referenceHidden=!root.referenceHidden;}}
    }
    ScrollView {Layout.fillWidth:true;Layout.fillHeight:true;clip:true
