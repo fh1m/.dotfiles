@@ -10,8 +10,9 @@ def next_actions(index, quiet=False):
     for path, identity, kind, raw in index.db.execute('SELECT path,id,kind,props FROM records ORDER BY path'):
         props = json.loads(raw)
         if identity:
-            for event in index.timeline(identity):
-                if event.get('event') in ('disposition','session-state'):props['status'] = event.get('state', props.get('status'))
+            derived = index.record(identity)['state']
+            if derived.get('conflict'):continue
+            if derived.get('status') is not None:props['status'] = derived['status']
         if props.get('status') in ('parked', 'abandoned', 'retired', 'skipped', 'passed', 'complete'):continue
         reason, priority = None, 99
         if props.get('pin'):
@@ -26,7 +27,19 @@ def next_actions(index, quiet=False):
             priority, reason = 5, 'Learner-selected check is due; age is not a competence estimate'
         elif kind in ('unit', 'experiment') and props.get('status', 'active') not in ('complete', 'succeeded'):
             priority, reason = 6, 'Incomplete unit or explicit experiment'
-        if reason:candidates.append({'id': identity, 'path': path, 'type': kind, 'reason': reason, 'priority': priority})
+        if reason:
+            evidence = identity
+            target = props.get('target', {}).get('record_id') if kind == 'activity' else None
+            if kind == 'relationship':target = props.get('exit_task') or props.get('target')
+            title = props.get('title')
+            if target:
+                try:
+                    record = index.record(target)
+                except ValueError:continue
+                if record['state'].get('status') in ('parked', 'abandoned', 'retired', 'skipped', 'passed', 'complete'):continue
+                identity, path, kind = target, record['path'], record['props'].get('type', 'note')
+                title = record['props'].get('title') or path
+            candidates.append({'id': identity, 'path': path, 'title': title, 'type': kind, 'reason': reason, 'priority': priority, 'evidence_id': evidence})
     return sorted(candidates, key=lambda row: (row['priority'], row['path']))[:50]
 
 

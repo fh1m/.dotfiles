@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import uuid
+import math
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'home/.local/share/sensei-learning'))
 from noesis.persistence import migration, parse, publish, render
@@ -139,6 +140,34 @@ class Workflows(unittest.TestCase):
                                       attempt_id=retry['id'], outcome='succeeded', assistance=['none'])
         self.assertEqual(independent['assistance'], ['none'])
         self.assertNotEqual(independent['attempt_id'], result['attempt_id'])
+
+    def test_neural_network_gradient_bug_checks_survive_restart_and_move(self):
+        x, weight, bias, target = 2.0, .3, -.1, .5
+        def loss(w):return (math.tanh(w*x+bias)-target)**2
+        epsilon = 1e-6
+        numeric = (loss(weight+epsilon)-loss(weight-epsilon))/(2*epsilon)
+        output = math.tanh(weight*x+bias)
+        mistaken = 2*(output-target)*(1-output**2)
+        corrected = mistaken*x
+        self.assertGreater(abs(mistaken-numeric), 1e-3)
+        self.assertAlmostEqual(corrected, numeric, places=7)
+        project = create(self.root, 'project', 'Tiny network from scratch', 'Prediction: the implemented gradient matches finite differences.',
+                         {'environment': 'synthetic Python fixture', 'data': {'x': x, 'target': target}, 'configuration': {'weight': weight, 'bias': bias}})
+        task = create(self.root, 'task', 'Derive and implement weight gradient', 'Assumption: smooth tanh and squared error.')
+        relationship(self.root, project['id'], task['id'], 'references')
+        failed = record_activity(self.root, task['path'], 'attempt', f'Missing x factor: implemented {mistaken}, numerical {numeric}.',
+                                 outcome='failed', assistance=['none'], mode='build', assessment='synthetic numerical check')
+        record_activity(self.root, task['path'], 'correction', 'Chain rule contributes the input multiplier.', supersedes=failed['id'], assistance=['reference'])
+        record_activity(self.root, task['path'], 'attempt', f'Corrected {corrected} matches {numeric} within 1e-7.',
+                        outcome='succeeded', assistance=['reference'], mode='build', assessment='synthetic numerical check')
+        before = self.index().relations(project['id'])
+        moved = self.root / 'moved-task.md';(self.root / task['path']).rename(moved)
+        for file in (self.home / '.cache/noesis').glob('*.sqlite'):file.unlink()
+        rebuilt = self.index()
+        self.assertEqual(rebuilt.record(task['id'])['path'], 'moved-task.md')
+        self.assertEqual(rebuilt.relations(project['id'])[0]['other_path'], 'moved-task.md')
+        self.assertEqual(len(rebuilt.timeline(task['id'])), 3)
+        self.assertIn('Prediction:', rebuilt.record(project['id'])['body'])
 
 
 if __name__ == '__main__':unittest.main()

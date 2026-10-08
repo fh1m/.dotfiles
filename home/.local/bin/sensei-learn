@@ -613,7 +613,7 @@ def main():
                 if args.context_json is not None:
                     context=json.loads(args.context_json)
                     if not isinstance(context,dict):raise ValueError('Context must be an object')
-                    state['context']={k:context.get(k) for k in ['id','path','title','type','vault']}
+                    state['context']={k:context.get(k) for k in ['id','path','title','type','vault','session_state']}
                 if any(value is not None for value in [args.width,args.height,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet]):store(file,state)
             print(file.read_text() if file.exists() else '{"width":1440,"height":880}');return 0
         if args.command == 'use':

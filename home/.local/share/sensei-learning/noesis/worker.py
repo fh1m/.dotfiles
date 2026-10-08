@@ -29,8 +29,10 @@ def serve(resolve):
                     result = index.query(request.get('query', ''), request.get('kind'), request.get('cursor') or 0)
                 elif action == 'record':
                     result = index.record(request['record_id'])
+                    result['body_truncated'] = len(result['body']) > 32000
+                    result['body'] = result['body'][:32000]
                 elif action == 'timeline':
-                    result = {'activities': index.timeline(request['record_id'])}
+                    result = {'activities': index.timeline(request['record_id'])[-50:]}
                 elif action == 'relations':
                     result = {'relationships': index.relations(request['record_id'])}
                 elif action == 'next':

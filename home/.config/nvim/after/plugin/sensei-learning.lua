@@ -2,6 +2,14 @@
 local executable = vim.fn.expand('~/.local/bin/noesis')
 local function run(args)
   if vim.fn.executable(executable) ~= 1 then vim.notify('Noesis is not installed', vim.log.levels.ERROR); return end
+  if args[1] ~= 'window' and args[1] ~= 'use' then
+    local ok, config = pcall(function()
+      return vim.json.decode(table.concat(vim.fn.readfile(vim.fn.expand('~/.config/sensei-learning/config.json')), '\n'))
+    end)
+    if ok and config.active_vault then
+      table.insert(args, 2, '--vault'); table.insert(args, 3, config.active_vault)
+    end
+  end
   vim.system(vim.list_extend({executable}, args), {text=true}, function(result)
     if result.code ~= 0 then vim.schedule(function() vim.notify(result.stderr or 'Noesis action failed', vim.log.levels.ERROR) end) end
   end)

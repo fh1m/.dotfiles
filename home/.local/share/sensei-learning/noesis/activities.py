@@ -18,7 +18,7 @@ def progress_state(props, timeline):
     baseline = {k: props.get(k) for k in ('progress_current', 'progress_total', 'position', 'status')}
     states, heads = {}, set()
     for event in timeline:
-        if event.get('event') not in ('study', 'resolution'):
+        if event.get('event') not in ('study', 'session-state', 'disposition', 'resolution'):
             continue
         previous = event.get('previous')
         if previous is not None and previous not in states:
@@ -28,7 +28,8 @@ def progress_state(props, timeline):
             if set(event.get('resolves', [])) != heads or previous not in heads:
                 raise ValueError('Resolution must name all conflicting heads and selected predecessor')
             heads.clear()
-        state.update(event['state'])
+        update = event['state'] if isinstance(event['state'], dict) else {'status': event['state']}
+        state.update(update)
         states[event['id']] = state
         heads.discard(previous)
         heads.add(event['id'])
@@ -100,9 +101,10 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                 session = index.record(fields['session'])
                 if session['props'].get('type') not in ('session', 'practice-session'):
                     raise ValueError('Session reference must target a session')
-            if event == 'study':
+            if event in ('study', 'session-state', 'disposition'):
                 state, previous = progress_state(props, index.timeline(identity))
                 update = fields.pop('state')
+                if event in ('session-state', 'disposition') and isinstance(update, str):update = {'status': update}
                 if not isinstance(update, dict) or set(update) - {'progress_current', 'progress_total', 'position', 'status', 'reading_pass', 'locator'}:
                     raise ValueError('Invalid study state fields')
                 state.update(update)
