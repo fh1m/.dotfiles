@@ -16,6 +16,7 @@ Item {
  property string activeAttempt:""
  property string captureSubmission:""
  property var relations:[]
+ property var artifactInfo:({})
  property string body:""
  property string query:""
  property string cursor:""
@@ -26,6 +27,7 @@ Item {
  property int relationSerial:0
  property var changedPaths:[]
  property bool reconcileAll:false
+ property bool watchTransition:true
  property bool referenceHidden:false
  readonly property bool coreRunning:worker.running
  readonly property bool watchRunning:watch.running
@@ -38,14 +40,14 @@ Item {
   worker.write(JSON.stringify(request)+"\n");return request.request_id;
  }
  function load(append){latest=send(section==="Today"&&!query?"next":"query",{kind:kinds[section]||null,query:query,quiet:Oasis.quiet,cursor:append?Number(cursor):0});}
- function select(row){let changed=row.id!==selected.id;if(changed)activeAttempt="";selected=row;Oasis.currentContext=Object.assign({},row,{vault:Oasis.activeVault});Oasis.savePreferences();body="";history=[];relations=[];if(changed)referenceHidden=section==="Practice";if(row.id){detailSerial=send("record",{record_id:row.id});historySerial=send("timeline",{record_id:row.id});relationSerial=send("relations",{record_id:row.id});}else Oasis.preview(row.path);}
+ function select(row){let changed=row.id!==selected.id;if(changed)activeAttempt="";selected=row;Oasis.currentContext=Object.assign({},row,{vault:Oasis.activeVault});Oasis.savePreferences();body="";artifactInfo=({});history=[];relations=[];if(changed)referenceHidden=section==="Practice";if(row.id){detailSerial=send("record",{record_id:row.id});historySerial=send("timeline",{record_id:row.id});relationSerial=send("relations",{record_id:row.id});}else Oasis.preview(row.path);}
  function saveEvent(event,data){if(activeAttempt&&event!=="attempt-start")data.attempt_id=activeAttempt;Oasis.run(["event",selected.path,event,"--target-id",selected.id,"--evidence",evidence.text,"--data",JSON.stringify(data)]);}
  onSectionChanged:{Oasis.workspace=section;Oasis.savePreferences();selected=({});history=[];relations=[];detailSerial=0;historySerial=0;relationSerial=0;body="";query="";search.text="";load(false);}
  Component.onCompleted:watch.running=Oasis.windowOpen&&Oasis.activeVault!==""
  Connections {target:Oasis;
-  function onWindowOpenChanged(){watch.running=Oasis.windowOpen&&Oasis.activeVault!=="";}
+  function onWindowOpenChanged(){root.watchTransition=true;watch.running=Oasis.windowOpen&&Oasis.activeVault!=="";}
   function onCaptureRequested(){capture.forceActiveFocus();}
-  function onActiveVaultChanged(){watch.running=false;refresh.stop();root.changedPaths=[];root.reconcileAll=false;Qt.callLater(()=>watch.running=Oasis.windowOpen&&Oasis.activeVault!=="");root.rows=[];root.selected=({});root.body="";root.history=[];root.detailSerial=0;root.historySerial=0;root.relationSerial=0;if(worker.running)root.send("reconcile");}
+  function onActiveVaultChanged(){root.watchTransition=true;watch.running=false;refresh.stop();root.changedPaths=[];root.reconcileAll=false;Qt.callLater(()=>watch.running=Oasis.windowOpen&&Oasis.activeVault!=="");root.rows=[];root.selected=({});root.body="";root.history=[];root.detailSerial=0;root.historySerial=0;root.relationSerial=0;if(worker.running)root.send("reconcile");}
   function onFinished(ok){if(ok){if(Oasis.operationResult.event==="attempt-start"){root.activeAttempt=Oasis.operationResult.id;root.referenceHidden=true;}else if(Oasis.operationResult.event==="attempt")root.activeAttempt="";root.send("reconcile");if(root.selected.id)root.select(root.selected);}}
  }
  Process {
@@ -58,7 +60,7 @@ Item {
     let result=response.result;
     if(result.errors){if(result.errors.length)Oasis.error=JSON.stringify(result.errors);root.load(false);return;}
     if(response.request_id===root.latest){root.rows=result.records||[];root.cursor=result.cursor===null||result.cursor===undefined?"":String(result.cursor);}
-    if(response.request_id===root.detailSerial){root.body=result.body||"";root.selected=Object.assign({},root.selected,result.props||{},{path:result.path});Oasis.currentContext=Object.assign({},root.selected,{vault:Oasis.activeVault,session_state:result.state?.status||""});Oasis.savePreferences();position.text=result.state?.position||"";if(result.state?.conflict)Oasis.error=result.state.conflict;}
+    if(response.request_id===root.detailSerial){root.body=result.body||"";root.artifactInfo=result.artifact||({});root.selected=Object.assign({},root.selected,result.props||{},{path:result.path});Oasis.currentContext=Object.assign({},root.selected,{vault:Oasis.activeVault,session_state:result.state?.status||""});Oasis.savePreferences();position.text=result.state?.position||"";if(result.state?.conflict)Oasis.error=result.state.conflict;}
     if(response.request_id===root.historySerial)root.history=result.activities||[];
     if(response.request_id===root.relationSerial)root.relations=result.relationships||[];
    }catch(error){Oasis.error="Query response failed: "+String(error);}
@@ -69,7 +71,10 @@ Item {
   try{let event=JSON.parse(line);root.reconcileAll=root.reconcileAll||event.reconcile;root.changedPaths=Array.from(new Set(root.changedPaths.concat(event.paths||[])));}
   catch(error){Oasis.error=line;root.reconcileAll=true;}
   refresh.restart();
- }}}
+ }}
+  onStarted:root.watchTransition=false
+  stderr:StdioCollector {onStreamFinished:if(text.trim())Oasis.error="Filesystem watch failed; refresh to reconcile."}
+  onExited:code=>{if(code!==0&&Oasis.windowOpen&&!root.watchTransition)Oasis.error="Filesystem watch stopped; refresh to reconcile."}}
  Timer {id:refresh;interval:250;onTriggered:{root.send("reconcile",{paths:root.reconcileAll||root.changedPaths.length>1000?null:root.changedPaths});root.changedPaths=[];root.reconcileAll=false;}}
  Timer {id:searchDelay;interval:150;onTriggered:root.load(false)}
  Shortcut {sequence:"Ctrl+K";onActivated:search.forceActiveFocus()}
@@ -98,6 +103,7 @@ Item {
     }
    }
    NoesisButton {visible:root.section==="Today";text:Oasis.quiet?"Show suggestions":"Quiet suggestions";onClicked:{Oasis.quiet=!Oasis.quiet;Oasis.savePreferences();root.load(false);}}
+   NoesisButton {text:"Refresh";onClicked:root.send("reconcile")}
    NoesisButton {visible:root.cursor!=="";text:"Next 50";onClicked:root.load(true)}
    DeskTextArea {id:capture;Layout.fillWidth:true;Layout.preferredHeight:90;placeholderText:"Capture a thought…";Accessible.name:"Quick capture"}
    NoesisButton {text:"Capture";enabled:capture.text.trim()!==""&&!Oasis.working;onClicked:{root.captureSubmission=capture.text;Oasis.run(["capture",capture.text]);}}
@@ -108,6 +114,8 @@ Item {
   }
   ColumnLayout {Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumWidth:0;visible:root.width>=720
    Label {text:root.selected.title||root.selected.path||"Select a working context";color:Theme.widgetAccent;wrapMode:Text.Wrap;Layout.fillWidth:true}
+   Label {visible:root.selected.type==="artifact";text:(root.artifactInfo.availability||"Artifact reference")+" · "+(root.artifactInfo.location||"");color:Theme.widgetMuted;wrapMode:Text.Wrap;Layout.fillWidth:true}
+   Label {visible:root.selected.confidence!==undefined;text:"Legacy confidence: "+root.selected.confidence+" / 5 · self-report";color:Theme.widgetMuted}
    Flow {Layout.fillWidth:true;spacing:6
     NoesisButton {text:"Open note";enabled:!!root.selected.path&&!root.referenceHidden;onClicked:Oasis.note(root.selected.path)}
     NoesisButton {text:"Reader";enabled:!root.referenceHidden;visible:["paper","resource","course"].includes(root.selected.type);onClicked:Oasis.run(["read-resource",root.selected.path,"--reader",root.selected.zotero_uri?"zotero":"sioyek"])}

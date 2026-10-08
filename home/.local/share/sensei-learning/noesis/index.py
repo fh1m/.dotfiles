@@ -14,9 +14,11 @@ class Index:
         except (ValueError, OSError):
             self.manifest = {}
         folder = Path(cache) if cache else Path.home() / '.cache/noesis'
-        folder.mkdir(parents=True, exist_ok=True)
+        folder.mkdir(parents=True, exist_ok=True, mode=0o700)
+        folder.chmod(0o700)
         key = hashlib.sha256(str(self.root).encode()).hexdigest()
         self.db = sqlite3.connect(folder / (key + '.sqlite'))
+        (folder / (key + '.sqlite')).chmod(0o600)
         self.db.executescript('''
             CREATE TABLE IF NOT EXISTS records(path TEXT PRIMARY KEY, stamp TEXT,
               id TEXT, kind TEXT, title TEXT, props TEXT, body TEXT);
@@ -112,13 +114,15 @@ class Index:
         return self.db.execute('SELECT generation FROM meta').fetchone()[0]
 
     def query(self, query='', kind=None, cursor=0, limit=50):
+        if not isinstance(query, str):raise ValueError('Search query must be text')
+        query = query.strip()
         limit = min(50, max(1, int(limit)))
         cursor = max(0, int(cursor))
         where, args = ([] if kind else ["kind NOT IN ('activity','relationship') AND kind NOT LIKE 'imported-%'"]), []
         if query:
             # Quoted tokens avoid exposing FTS operators as a command language.
             where.append('path IN (SELECT path FROM search WHERE search MATCH ?)')
-            args.append(' AND '.join('"' + s.replace('"', '""') + '"' for s in query.split()))
+            args.append(' AND '.join('"' + s.replace('"', '""') + '"*' for s in query.split()))
         if kind:
             kinds = kind if isinstance(kind, list) else [kind]
             where.append('kind IN (' + ','.join('?' for _ in kinds) + ')')
@@ -170,4 +174,4 @@ class Index:
                 row.update(zip(('other_path', 'other_title', 'other_type'), locations[0]))
             else:row['availability'] = 'Missing or duplicate related identity'
             result.append(row)
-        return result
+        return sorted(result, key=lambda row: (row['order'] if type(row.get('order')) is int else float('inf'), row.get('other_title', ''), row['path']))
