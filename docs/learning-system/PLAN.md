@@ -103,3 +103,6 @@ The next research/development slice adds contextual action navigation, visible
 questions/implementations, an existing-repository Neovim handoff, code snapshots
 for experiment runs, and initiating-scope Neovim captures. Native connected-record
 acceptance passes; full reader/annotation/execution journeys remain in the ledger.
+
+
+2026-10-09 product correction: real selected robotics Noesis vault has notes but no activity; Knowledge and CS contain resumable or path contexts. Verified all four indexes without errors, preserved private content. Scoped Today onboarding and proportional prose typography deployed; real empty and Knowledge Today inspected. Unified authorized-vault Continue/Search and A–F native product gates remain open. Practice criterion decisions now passed native restart and cache-loss recovery.
