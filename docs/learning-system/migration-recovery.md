@@ -25,3 +25,36 @@ remains deferred. External artifact manifests are references, not copies. Reader
 database snapshot freshness must be inspected; restoring Markdown does not prove
 that reader annotations and positions work. Keep legacy recovery copies until that
 acceptance is demonstrated. Never overwrite a live reader database.
+
+## Explicit restored ownership or independent fork
+
+A restored copy keeps its identity. To make it the registered replacement:
+
+```sh
+noesis vault-register /path/to/restored --replace-location /path/to/original
+```
+
+Matching vault identities and a unique original registration are required. The
+machine registry is backed up; original contents and Obsidian's registry are not
+rewritten. An independently registered copy instead needs new identities:
+
+```sh
+noesis vault-fork /path/to/source --dest /path/to/new-fork
+noesis vault-register /path/to/new-fork
+```
+
+Fork publication is staged, refuses duplicate record IDs and symlinks, remaps
+local record references, retains explicit provenance and leaves the source
+unchanged. Editor runtime, Git internals, cache and old operation receipts are
+excluded. External artifact references still need their original storage.
+Close editors before forking; Noesis locking cannot lock another editor's drafts.
+
+## Off-device protection remains unconfigured
+
+The viable strategy is a second encrypted Restic repository on an independently
+reachable disk or authenticated remote storage. Keep the password outside the
+vault and obtain its own recovery copy. Copy verified local snapshots using
+Restic's supported repository-copy workflow; run repository checks and restore a
+snapshot to a new location before enabling retention. Never prune the only
+verified copy. No remote destination or credentials have been invented or
+configured by this implementation. Local recovery does not protect laptop loss.

@@ -8,6 +8,8 @@ Singleton {
  readonly property int caption:12
  readonly property int label:13
  readonly property int body:15
+ readonly property int subheading:16
+ readonly property int sectionHeading:18
  readonly property int heading:22
  readonly property int title:30
  readonly property int xs:4

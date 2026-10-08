@@ -555,7 +555,7 @@ def library_action(root,args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','open-project']:
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','open-project']:
         p = commands.add_parser(cmd); p.add_argument('--vault')
         if cmd == 'open-project':p.add_argument('record_id')
         if cmd == 'artifact-check':p.add_argument('record_id');p.add_argument('--operation-id')
@@ -567,7 +567,7 @@ def main():
         if cmd == 'recover':p.add_argument('snapshot');p.add_argument('--dest',type=Path,required=True)
         if cmd == 'record':p.add_argument('--operation-id');p.add_argument('kind',choices=KINDS);p.add_argument('title');p.add_argument('--body',default='');p.add_argument('--data',default='{}');p.add_argument('--parent-id');p.add_argument('--relation',default='contains');p.add_argument('--order',type=int)
         if cmd == 'link':
-            p.add_argument('source');p.add_argument('target');p.add_argument('relation');p.add_argument('--role');p.add_argument('--reason',default='');p.add_argument('--exit-task');p.add_argument('--context');p.add_argument('--order',type=int)
+            p.add_argument('source');p.add_argument('target');p.add_argument('relation');p.add_argument('--target-vault');p.add_argument('--role');p.add_argument('--reason',default='');p.add_argument('--exit-task');p.add_argument('--context');p.add_argument('--order',type=int)
         if cmd == 'event':
             p.add_argument('path');p.add_argument('event',choices=['study','resolution','attempt-start','attempt','review','review-plan','assistance','comparison','correction','capability-decision','session-state','disposition']);p.add_argument('--evidence',default='');p.add_argument('--data',default='{}')
         if cmd == 'next':p.add_argument('--quiet',action='store_true');p.add_argument('--path-id')
@@ -579,6 +579,9 @@ def main():
         if cmd == 'status':p.add_argument('--legacy',action='store_true')
         if cmd == 'doctor': p.add_argument('--offline', action='store_true')
         if cmd in ('use','vault-register'): p.add_argument('path')
+        if cmd=='vault-register':p.add_argument('--replace-location')
+        if cmd=='vault-fork':p.add_argument('source');p.add_argument('--dest',required=True)
+        if cmd=='course-import':p.add_argument('source');p.add_argument('--apply',action='store_true');p.add_argument('--operation-id');p.add_argument('--expected-digest')
         if cmd == 'capture':p.add_argument('--context-id');p.add_argument('--operation-id');p.add_argument('text', nargs='?');p.add_argument('--stdin-line',action='store_true'); p.add_argument('--agent', action='store_true');p.add_argument('--kind',choices=['capture','snippet','question'],default='capture')
         if cmd == 'new': p.add_argument('--folder'); p.add_argument('kind'); p.add_argument('title'); p.add_argument('--open', action='store_true')
         if cmd == 'search': p.add_argument('query', nargs='?', default='')
@@ -595,7 +598,7 @@ def main():
         if cmd == 'import-csl':p.add_argument('source');p.add_argument('--dry-run',action='store_true')
         if cmd == 'import-notes':p.add_argument('source');p.add_argument('--resource',required=True)
         if cmd == 'read-resource':p.add_argument('--target-id');p.add_argument('path');p.add_argument('--reader',choices=['sioyek','zotero','default'],default='sioyek')
-        if cmd == 'window-state':p.add_argument('--drafts-json');p.add_argument('--drafts-stdin',action='store_true');p.add_argument('--path-scope');p.add_argument('--path-scope-vault');p.add_argument('--width',type=int);p.add_argument('--height',type=int);p.add_argument('--workspace',choices=['Today','Learn','Research','Practice','Lab','Library']);p.add_argument('--list-ratio',type=float);p.add_argument('--context-json');p.add_argument('--monitor');p.add_argument('--quiet',choices=['on','off'])
+        if cmd == 'window-state':p.add_argument('--presentation',choices=['workspace','tiled','normal']);p.add_argument('--collection',choices=['on','off']);p.add_argument('--drafts-json');p.add_argument('--drafts-stdin',action='store_true');p.add_argument('--path-scope');p.add_argument('--path-scope-vault');p.add_argument('--width',type=int);p.add_argument('--height',type=int);p.add_argument('--workspace',choices=['Today','Learn','Research','Practice','Lab','Library']);p.add_argument('--list-ratio',type=float);p.add_argument('--context-json');p.add_argument('--monitor');p.add_argument('--quiet',choices=['on','off'])
         if cmd == 'cli': p.add_argument('obsidian_command'); p.add_argument('options', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     try:
@@ -614,6 +617,8 @@ def main():
                     state['drafts']=drafts
                 if args.path_scope is not None:state['path_scope']=args.path_scope;state['path_scope_vault']=args.path_scope_vault or ''
                 if args.workspace:state['workspace']=args.workspace
+                if args.presentation:state['presentation']=args.presentation
+                if args.collection:state['collection']=args.collection=='on'
                 if args.monitor:state['monitor']=args.monitor
                 if args.quiet:state['quiet']=args.quiet=='on'
                 if args.list_ratio is not None:state['list_ratio']=min(.6,max(.2,args.list_ratio))
@@ -621,9 +626,24 @@ def main():
                     context=json.loads(args.context_json)
                     if not isinstance(context,dict):raise ValueError('Context must be an object')
                     state['context']={k:context.get(k) for k in ['id','path','title','type','vault','session_state']}
-                if any(value is not None for value in [args.width,args.height,args.drafts_json,True if args.drafts_stdin else None,args.path_scope,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet]):store(file,state)
+                if any(value is not None for value in [args.width,args.height,args.drafts_json,True if args.drafts_stdin else None,args.path_scope,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet,args.presentation,args.collection]):store(file,state)
             print(file.read_text() if file.exists() else '{"width":1440,"height":880}');return 0
-        if args.command=='vault-register':print(json.dumps(register(Path(args.path).expanduser().resolve())));return 0
+        if args.command=='course-import':
+            from noesis.outlines import plan,apply as apply_outline
+            if args.apply:
+                if not args.operation_id:raise ValueError('An explicit operation ID is required for retryable outline import')
+                print(json.dumps(apply_outline(vault(args.vault),args.source,args.operation_id,args.expected_digest)))
+            else:print(json.dumps(plan(args.source)))
+            return 0
+        if args.command=='vault-fork':
+            from noesis.identity_recovery import fork
+            print(json.dumps(fork(args.source,args.dest)));return 0
+        if args.command=='vault-register':
+            if args.replace_location:
+                from noesis.identity_recovery import replace_location
+                print(json.dumps(replace_location(args.path,args.replace_location)))
+            else:print(json.dumps(register(Path(args.path).expanduser().resolve())))
+            return 0
         if args.command == 'use':
             root = vault(args.path); system(root); c = config(); c['active_vault'] = str(root); store(CONFIG,c); print(root); return 0
         if args.command == 'vaults': print(json.dumps(inventory(),ensure_ascii=False)); return 0
@@ -654,12 +674,18 @@ def main():
             fields=json.loads(args.data)
             if not isinstance(fields,dict):raise ValueError('Record data must be an object')
             print(json.dumps(create_record(root,args.kind,args.title,args.body,fields,args.parent_id,args.relation,args.order,args.operation_id),default=str));return 0
-        if args.command=='link':print(json.dumps(relationship(root,args.source,args.target,args.relation,args.role,args.reason,args.exit_task,args.context,args.order),default=str));return 0
+        if args.command=='link':
+            if args.target_vault:
+                if any(value is not None for value in (args.role,args.exit_task,args.context,args.order)):raise ValueError('Cross-vault educational gate/order contexts require a global policy; use a nonblocking connection')
+                from noesis.references import link as cross_link
+                result=cross_link(root,args.source,args.target,args.relation,args.target_vault,args.reason)
+            else:result=relationship(root,args.source,args.target,args.relation,args.role,args.reason,args.exit_task,args.context,args.order)
+            print(json.dumps(result,default=str));return 0
         if args.command=='event':
             fields=json.loads(args.data)
             if not isinstance(fields,dict):raise ValueError('Event data must be an object')
             print(json.dumps(record_activity(root,args.path,args.event,args.evidence,args.operation_id,expected_id=args.target_id,**fields),default=str));return 0
-        if args.command in ['next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','open-project']:
+        if args.command in ['next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','open-project']:
             index=Index(root)
             try:
                 index.reconcile()

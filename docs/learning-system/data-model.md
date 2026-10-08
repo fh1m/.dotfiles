@@ -34,3 +34,39 @@ review-plan and comparison records remain authoritative. Causal predecessors
 control reduction, not wall-clock ordering. Local operation receipts witness
 capture publication; retries preserve record identity after moves. A missing
 committed record is a recovery condition, not permission to recreate it.
+
+## Native host decision — measured continuation
+
+Retain Quickshell's ordinary `FloatingWindow` for the first release. The name of
+this Qt type does not require compositor floating rules: the application now
+selects maximized Workspace, tiled or normal presentation through supported
+Hyprland 0.56.2 dispatcher expressions, addressed to its own PID/title-discovered
+window. Mode completion is verified against compositor state and retried within a
+bounded startup window. Debug/legacy switching is development-only.
+
+An isolated native fixture measured approximately 536 ms launch-to-visible
+worker/watch, a conservative 12-open p95 of 120 ms, and 17.0 ms instrumented Qt
+animation-frame p95. RSS remained around 187 MiB across twelve cycles. This is the
+isolated fixture shell, not a per-Noesis measurement inside the live Wrayth shell.
+Worker and watches stop when the workspace closes. Frame instrumentation runs
+only in the acceptance fixture, not the application.
+
+These results do not measure physical input-to-pixel latency, sustained five-minute
+idle CPU or long-term shell stability. A standalone PySide6 host could isolate the
+workspace but currently adds another lifecycle/deployment boundary without a
+measured requirement. Reconsider after demonstrated shell interference or a rich
+content requirement that specialist handoff cannot meet. No WebEngine is added.
+
+Display titles and bounded plain-text preview blocks are derived presentation;
+source paths/prose stay authoritative and unchanged. Cache version 5 rebuilds the
+new titles. The collection worker reads at most sixteen explicitly selected,
+registered managed vaults, emits owner references and bounded pages, and surfaces
+partial unavailable storage rather than manufacturing empty progress.
+
+Nonblocking cross-vault `references`, `supports`, `exercises` and `pursues` links
+resolve explicit vault/record IDs after moves. Blocking contextual gates remain
+rejected until their global deadlock semantics are accepted.
+
+Primary references: [Quickshell FloatingWindow](https://quickshell.org/docs/v0.3.0/types/Quickshell/FloatingWindow/),
+[Hyprland dispatcher implementation for 0.56.2](https://github.com/hyprwm/Hyprland/blob/v0.56.2/src/config/lua/bindings/LuaBindingsDispatchers.cpp),
+[Qt FrameAnimation](https://doc.qt.io/qt-6/qml-qtquick-frameanimation.html).

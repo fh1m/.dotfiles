@@ -9,6 +9,15 @@ from .views import overview, today
 
 def serve(resolve):
     indexes = {}
+    def get_index(root,reconcile=False):
+        key=str(root)
+        if key not in indexes:
+            indexes[key]=Index(root)
+            reconcile=True
+        if reconcile:
+            health=indexes[key].reconcile()
+            if health.get('errors'):raise ValueError('Vault index has invalid records; inspect Doctor')
+        return indexes[key]
     try:
         for line in sys.stdin:
             request = {}
@@ -19,18 +28,20 @@ def serve(resolve):
                     raise ValueError('Expected protocol version 1')
                 root = resolve(request['vault'])
                 key = str(root)
-                if key not in indexes:
-                    indexes[key] = Index(root)
-                    indexes[key].reconcile()
-                index = indexes[key]
                 action = request.get('action', 'query')
-                if action == 'reconcile':
+                index = None if action in ('collection-today','collection-query') else get_index(root)
+                if action in ('collection-today','collection-query'):
+                    from .collection import project
+                    result=project(request,get_index)
+                elif action == 'reconcile':
                     result = index.reconcile(request.get('paths'))
                 elif action == 'query':
                     result = index.query(request.get('query', ''), request.get('kind'), request.get('cursor') or 0,resource_kinds=request.get('resource_kinds'))
                 elif action == 'record':
                     result = index.record(request['record_id'])
                     result['overview'] = overview(index, request['record_id'])
+                    from .presentation import preview
+                    result['preview']=preview(result['body'],result['display_title'])
                     result['body_truncated'] = len(result['body']) > 32000
                     result['body'] = result['body'][:32000]
                 elif action == 'timeline':

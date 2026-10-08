@@ -11,5 +11,5 @@ hl.window_rule({
 hl.window_rule({
  name = "noesis-learning-window",
  match = { title = "^Noesis — Learning workspace$" },
- float = true, center = true, no_blur = true,
+ tile = true, no_blur = true,
 })

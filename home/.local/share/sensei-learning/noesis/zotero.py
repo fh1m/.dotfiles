@@ -66,12 +66,28 @@ class LocalAPI:
     def item(self, key):
         if not re.fullmatch(r'[A-Z0-9]{8}', key):raise ValueError('Expected Zotero item key')
         self.probe()
-        item = self.get('users/0/items/' + key)
+        self.get('users/0/items?limit=1')
         library_version = self.library_version
+        item = self.get('users/0/items/' + key)
         children = self.children(key)
         for child in list(children):
             if child.get('data',{}).get('itemType') == 'attachment':children.extend(self.children(child['key']))
+        # Zotero 10.0.6 local /children omits attachment annotations although
+        # direct annotation reads work. Reconcile a bounded annotation projection;
+        # never interpret an omitted child list as authoritative deletion.
+        attachments={child['key'] for child in children if child.get('data',{}).get('itemType')=='attachment'}
+        known={child['key'] for child in children}
+        if attachments:
+            for start in range(0,1000,50):
+                page=self.get('users/0/items?'+urlencode({'itemType':'annotation','limit':50,'start':start}))
+                if not isinstance(page,list):raise ValueError('Invalid Zotero annotation response')
+                for child in page:
+                    if child.get('data',{}).get('parentItem') in attachments and child.get('key') not in known:
+                        children.append(child);known.add(child['key'])
+                if len(page)<50:break
+            else:raise ValueError('Annotation reconciliation exceeds 1,000 items; use a scoped export')
         if len(children)>1000:raise ValueError('Too many child records; use export')
+        self.get('users/0/items?limit=1')
         if library_version and self.library_version != library_version:raise ValueError('Zotero library changed during read; retry import')
         return item, children
 
