@@ -6,8 +6,8 @@ work; the presence of a module does not complete its milestone.
 
 ## Observed verification, 2026-10-09
 
-- Sixteen existing factory/import tests and thirty-three new core/workflow/recovery/
-  watcher/Zotero/capture/reader tests pass: 49 total. Fixtures are synthetic and disposable.
+- Sixteen existing factory/import tests and forty-five new core/workflow/recovery/
+  watcher/Zotero/capture/reader/scope tests pass: 61 total. Fixtures are synthetic and disposable.
 - Capture, paged query, progress and attempt CLI operations pass with PATH containing
   no Obsidian executable. Native note opening remains a separate application action.
 - Merged progress rejects current-only overflow, lowered totals, negative counts,
@@ -71,9 +71,9 @@ Each warm-query sample set has 50 requests; capture has ten CLI samples.
 
 | Records | Cold rebuild | Warm worker p95 | Largest summary response | Capture CLI p95 |
 |---:|---:|---:|---:|---:|
-| 100 | 0.036 s | 0.846 ms | 5,772 bytes | 140.491 ms |
-| 1,000 | 0.346 s | 1.803 ms | 5,866 bytes | 105.162 ms |
-| 10,000 | 3.784 s | 8.979 ms | 5,958 bytes | 104.010 ms |
+| 100 | 0.034 s | 0.754 ms | 6,572 bytes | 109.515 ms |
+| 1,000 | 0.339 s | 1.261 ms | 6,666 bytes | 103.238 ms |
+| 10,000 | 3.476 s | 9.006 ms | 6,758 bytes | 101.804 ms |
 
 An initial 10,000-record run took 9.991 seconds. Repeated FTS path scans were
 replaced with row-ID deletion; the table above records the corrected result.
@@ -100,8 +100,8 @@ sufficient native acceptance evidence.
 
 ## Remaining release gates and limitations
 
-- P0: fresh consistent reader backup publication, supported Obsidian registration
-  probes and exhaustive interruption/concurrent publication cases. Reader restore
+- P0: fresh consistent reader backup publication, supported native registration handoff acceptance
+  and exhaustive interruption/concurrent publication cases. Reader restore
   now verifies SQLite integrity and row content on synthetic populated databases.
   Actual Sioyek/Zotero snapshots restored to new private directories with matching
   rows; the actual Zotero snapshot contains no bibliography or annotation items,
@@ -179,3 +179,35 @@ Before, permanent capture/progress/attempt controls competed with reading. After
 Work gives reasoning room, History and Connections are separate, and Details can
 collapse. The screenshots demonstrate hierarchy; the keyboard/history checks
 establish behavior. Full paper/course/Lab journey metrics remain release gates.
+
+
+Noesis registration now owns only its private machine-local location registry.
+Synthetic checks preserve the native registry byte-for-byte, register/capture with
+Obsidian absent, retain unknown registry fields, reject restored duplicate UUIDs
+without changing either copy, and permit independent capture when the native
+registry is malformed. Native process detection covers Electron, standalone and
+AppImage shapes. The read-only CLI startup handshake has an eight-second deadline;
+mutating native commands are never retried. Existing native registrations remain
+usable; new ones use the supported manual Open folder as vault fallback.
+Replacement/fork and full cross-vault reference resolution remain unfinished.
+
+
+The native fixture now opens a six-lecture course with two problem sets and one
+project using actual Ctrl+K → text → Down → Enter. Its two consumed lectures leave
+assignment/project outcomes untouched. At 1000×650 Qt units, the context has a
+340-unit scroll viewport for 590 units of content instead of overflowing fixed
+panels. Lecture/read completion and pause/resume are explicit actions; paused
+ownership suppresses pending work, while a shared unit with an active parent stays
+available. New problems have a separate declared statement section; protected
+preview does not expose following reference sections or infer a legacy statement.
+
+Exact DOI/UUID search resolves resource identity without returning whole metadata.
+Study activities preserve source URL/edition/revision and owned projection pointers.
+Zotero search pagination appends and binds subsequent pages to the same server
+instance. These are reliable workflow increments, not complete native paper/Lab
+acceptance. The course fixture uses CLI setup; it does not prove UI course creation.
+
+Schema checks refuse future-version downgrades while keeping their records readable.
+Migration preserves original CRLF body bytes and backup bytes. A 10,000-event
+causal history reduces without recursive traversal or quadratic dependency setup.
+The full automated suite passes 61 tests (45 connected-core and 16 compatibility).

@@ -26,6 +26,7 @@ class Opener:
         endpoint=request.full_url.split('/api/')[1]
         if endpoint=='':data={'version':3}
         elif endpoint=='users/0/items/PAPER001':data={'key':'PAPER001','version':7,'data':{'title':self.title,'itemType':'journalArticle','DOI':'10.synthetic/paper'}}
+        elif endpoint.startswith('users/0/items/top?'):data=[{'key':f'ITEM{i:04}','version':7,'data':{'title':f'Paper {i}','itemType':'journalArticle'}} for i in range(50)]
         elif endpoint.startswith('users/0/items/PAPER001/children'):data=[{'key':'ATTACH01','version':2,'data':{'itemType':'attachment','contentType':'application/pdf'}}]
         elif endpoint.startswith('users/0/items/ATTACH01/children'):data=self.annotations
         else:raise AssertionError(endpoint)
@@ -53,6 +54,13 @@ class Zotero(unittest.TestCase):
         self.assertEqual(parse(path.read_text())[0]['imported_title'],'Corrected metadata')
         self.assertTrue(all(r.get_method()=='GET' for r in opener.requests))
         self.assertTrue(all(r.full_url.startswith('http://127.0.0.1:23119/api/') for r in opener.requests))
+    def test_search_pages_are_bounded_encoded_and_instance_bound(self):
+        opener=Opener();result=LocalAPI(opener=opener).search('matrix & calculus',50)
+        self.assertEqual(len(result['records']),50);self.assertEqual(result['cursor'],100)
+        self.assertIn('q=matrix+%26+calculus',opener.requests[-1].full_url)
+        self.assertIn('start=50',opener.requests[-1].full_url)
+        with self.assertRaisesRegex(ValueError,'instance changed'):LocalAPI(server_id='previous-instance',opener=opener).search()
+        with self.assertRaises(ValueError):LocalAPI(opener=opener).search(start=-1)
     def test_permissions_and_instance_preconditions_fail_before_import(self):
         opener=Opener();opener.error=403
         with self.assertRaisesRegex(ValueError,'settings'):LocalAPI(opener=opener).probe()

@@ -97,3 +97,28 @@ unverified or unavailable separately from the original prediction. Large data st
 external. `sensei-learning-backup --restore-reader SNAPSHOT --dest NEW_DIRECTORY`
 verifies and restores saved reader databases into a new location; it never replaces
 an active reader profile.
+
+
+New vaults register their location with Noesis locally. `noesis vault-register PATH`
+adds an existing location without changing Obsidian's registry. For a new folder,
+use Obsidian's Open folder as vault when rich editing is needed. Capture, query and
+history work beforehand. Existing native registrations continue to work.
+
+Registered copies sharing a vault UUID block affected mutations and appear in
+Doctor. Noesis never silently assigns a new identity. Explicit replacement/fork
+support remains a release gate; an unregistered restore stays available for
+read-only validation. Noesis no longer invokes a private Electron registration
+bridge or edits Obsidian's registry as fallback.
+
+
+Lecture viewed / Finished reading record consumption only. Pause reading parks
+that context; Resume reading restores it. Library rows expose the derived state.
+Pending work under parked owners is quiet, while shared work under an active owner
+remains available. Counts describe the recorded outline, not an inferred complete
+university syllabus or evidence of competence. Course context scrolls at compact
+sizes instead of clipping its controls.
+
+New problems keep an explicit Problem statement section separate from reference
+solutions. Protected preview shows only that declared section; legacy explanations
+stay hidden until a recorded reveal. Declared problem URLs open their source.
+Search accepts exact DOI forms and stable record UUIDs as well as ordinary words.

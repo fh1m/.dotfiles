@@ -14,11 +14,29 @@ def path_scope(index, path_id):
 
 
 
+def parked_contexts(index):
+    """Suppress owned descendants; reusable records with an active parent remain available."""
+    blocked={row[0] for row in index.db.execute("SELECT id FROM states WHERE status IN ('parked','abandoned','retired','skipped')")}
+    if not blocked:return blocked
+    parents={};children={}
+    for source,target in index.db.execute("SELECT source,target FROM relationships WHERE relation IN ('contains','orders','assigns','investigates')"):
+        parents.setdefault(target,set()).add(source);children.setdefault(source,set()).add(target)
+    remaining={target:len(values) for target,values in parents.items()}
+    queue=list(blocked)
+    for source in queue:
+        for target in children.get(source,()):
+            if target in blocked:continue
+            remaining[target]-=1
+            if remaining[target]==0:blocked.add(target);queue.append(target)
+    return blocked
+
+
 def next_actions(index, quiet=False, path_id=None):
     if quiet:return []
     scope = path_scope(index, path_id) if path_id else None
     inactive=('parked','abandoned','retired','skipped','passed','complete')
     if path_id and index.record(path_id)['state'].get('status') in inactive:return []
+    blocked=parked_contexts(index)
     cache={}
     def record(identity):
         if identity not in cache:cache[identity]=index.record(identity,include_body=False,include_attempt=False)
@@ -55,9 +73,11 @@ def next_actions(index, quiet=False, path_id=None):
         ORDER BY CASE WHEN json_extract(r.props,'$.pin')=1 THEN 1 WHEN r.kind IN ('session','practice-session') THEN 2
         WHEN r.kind='relationship' THEN 3 WHEN json_extract(r.props,'$.retry_requested')=1 THEN 4 WHEN r.kind='activity' THEN 5 ELSE 6 END,r.path""",(now,)):
         if kind=='unit' and identity in ordered and identity not in next_units and not pinned:continue
+        if identity in blocked and not pinned:continue
         props = json.loads(raw)
         target_id = props.get('target', {}).get('record_id') if kind == 'activity' else None
         if kind == 'relationship':target_id = props.get('exit_task') or props.get('target')
+        if target_id in blocked and not pinned:continue
         if kind=='activity' and props.get('event')=='review-plan' and (identity not in plan_ids or props.get('action')=='retire'):continue
         if kind=='activity' and props.get('event')!='review-plan' and target_id in plans:continue
         if scope is not None and identity not in scope and target_id not in scope and props.get('context') != path_id:

@@ -40,19 +40,25 @@ def unfinished_attempts(timeline):
 
 
 def causal_order(events, predecessor, resolutions):
-    pending={event['id']:event for event in events}
-    if len(pending)!=len(events):raise ValueError('Duplicate activity identity')
-    emitted=set();ordered=[]
-    while pending:
-        ready=[]
-        for identity,event in pending.items():
-            dependencies=set(event.get(resolutions,[]) or [])
-            if event.get(predecessor):dependencies.add(event[predecessor])
-            if dependencies-set(pending)-emitted:raise ValueError('Missing activity predecessor')
-            if dependencies<=emitted:ready.append(event)
-        if not ready:raise ValueError('Cyclic activity history')
-        event=min(ready,key=lambda event:(str(event.get('timestamp','')),event['id']))
-        ordered.append(event);emitted.add(event['id']);del pending[event['id']]
+    import heapq
+    nodes={event['id']:event for event in events}
+    if len(nodes)!=len(events):raise ValueError('Duplicate activity identity')
+    node_ids=set(nodes)
+    incoming={};children={};ready=[]
+    for identity,event in nodes.items():
+        dependencies=set(event.get(resolutions,[]) or [])
+        if event.get(predecessor):dependencies.add(event[predecessor])
+        if dependencies-node_ids:raise ValueError('Missing activity predecessor')
+        incoming[identity]=len(dependencies)
+        for previous in dependencies:children.setdefault(previous,[]).append(identity)
+        if not dependencies:heapq.heappush(ready,(str(event.get('timestamp','')),identity))
+    ordered=[]
+    while ready:
+        _,identity=heapq.heappop(ready);ordered.append(nodes[identity])
+        for following in children.get(identity,()):
+            incoming[following]-=1
+            if incoming[following]==0:heapq.heappush(ready,(str(nodes[following].get('timestamp','')),following))
+    if len(ordered)!=len(nodes):raise ValueError('Cyclic activity history')
     return ordered
 
 
@@ -97,6 +103,8 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
     if event not in ('study', 'resolution', 'attempt-start', 'attempt', 'review', 'review-plan', 'assistance', 'comparison', 'correction', 'capability-decision', 'session-state', 'disposition', 'artifact-check'):
         raise ValueError('Unknown activity event')
     with lock(root):
+        from .scopes import assert_unique
+        assert_unique(root)
         meta = json.loads(manifest_path(root).read_text())
         if meta.get('noesis_schema') != 2 or not meta.get('vault_id'):
             raise ValueError('Run migrate --apply after reviewing its dry-run')
@@ -114,6 +122,8 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
             status = index.reconcile()
             if status['errors']:
                 raise ValueError('Index validation errors: ' + str(status['errors']))
+            from .persistence import supported_schema
+            supported_schema(props,legacy=True)
             index.record(identity)
             if operation_id:
                 uuid.UUID(operation_id)
@@ -179,7 +189,7 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                     raise ValueError('Unsupported reading pass')
                 if 'position' in update and 'locator' not in update:update['locator']=None
                 state.update(update)
-                source={key:props[key] for key in ('bibliography_projection','zotero_projection','zotero_version','local_file') if props.get(key)}
+                source={key:props[key] for key in ('bibliography_projection','zotero_projection','zotero_version','zotero_attachment_key','local_file','source','source_kind','doi','arxiv','revision','edition') if props.get(key)}
                 if source:fields['source_snapshot']=source
                 validate_progress(state.get('progress_current'), state.get('progress_total'))
                 fields.update(state=state, previous=previous)

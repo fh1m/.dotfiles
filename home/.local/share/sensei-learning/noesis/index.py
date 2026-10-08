@@ -148,19 +148,23 @@ class Index:
         where, args = ([] if kind else ["kind NOT IN ('activity','relationship') AND kind NOT LIKE 'imported-%'"]), []
         if query:
             # Quoted tokens avoid exposing FTS operators as a command language.
-            where.append('path IN (SELECT path FROM search WHERE search MATCH ?)')
-            args.append(' AND '.join('"' + s.replace('"', '""') + '"*' for s in query.split()))
+            import re
+            alias=query.strip().lower()
+            if re.match(r'^(https?://(dx\.)?doi\.org/|doi:)',alias):alias='doi:'+re.sub(r'^(https?://(dx\.)?doi\.org/|doi:)','',alias)
+            elif re.match(r'^10\.\d{4,9}/',alias):alias='doi:'+alias
+            where.append('(path IN (SELECT path FROM search WHERE search MATCH ?) OR path IN (SELECT path FROM aliases WHERE alias=?) OR records.id=?)')
+            args.extend([' AND '.join('"' + s.replace('"', '""') + '"*' for s in query.split()),alias,query])
         if kind:
             kinds = kind if isinstance(kind, list) else [kind]
             where.append('kind IN (' + ','.join('?' for _ in kinds) + ')')
             args.extend(kinds)
-        sql = 'SELECT path,id,kind,title FROM records'
+        sql = 'SELECT records.path,records.id,kind,title,states.status FROM records LEFT JOIN states ON states.id=records.id'
         if where:
             sql += ' WHERE ' + ' AND '.join(where)
         rows = list(self.db.execute(sql + ' ORDER BY path LIMIT ? OFFSET ?', args + [limit + 1, cursor]))
         results, size = [], 0
         for row in rows[:limit]:
-            item = dict(zip(('path', 'id', 'type', 'title'), row))
+            item = dict(zip(('path', 'id', 'type', 'title', 'status'), row))
             item['title'] = item['title'][:256]
             item['type'] = item['type'][:80]
             item_size = len(json.dumps(item).encode())

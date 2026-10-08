@@ -30,6 +30,37 @@ class Workflows(unittest.TestCase):
         (self.root / 'System/System.json').write_text(json.dumps({'directories': [], 'types': {'paper': 'Resources'}}))
         migration(self.root, True)
 
+    def test_parking_context_suppresses_descendants_but_preserves_shared_work(self):
+        first=create(self.root,'resource','First course',fields={'source_kind':'course'})
+        second=create(self.root,'resource','Second course',fields={'source_kind':'course'})
+        unit=create(self.root,'unit','Shared lecture',parent_id=first['id'])
+        relationship(self.root,second['id'],unit['id'],'contains')
+        task=create(self.root,'task','Outstanding problem',parent_id=unit['id'],relation='assigns')
+        record_activity(self.root,task['path'],'attempt','Failed independently',outcome='failed',assistance=['none'],retry_requested=True)
+        record_activity(self.root,first['path'],'disposition',state='parked')
+        index=self.index();self.assertIn(task['id'],{row['id'] for row in next_actions(index)})
+        record_activity(self.root,second['path'],'disposition',state='parked')
+        index=self.index();self.assertNotIn(task['id'],{row['id'] for row in next_actions(index)})
+        self.assertEqual(index.query('Outstanding')['records'][0]['status'],None)
+        self.assertEqual(len(index.timeline(task['id'])),1)
+        record_activity(self.root,first['path'],'disposition',state='active')
+        index=self.index();self.assertIn(task['id'],{row['id'] for row in next_actions(index)})
+
+    def test_problem_statement_projection_does_not_expose_reference(self):
+        task=create(self.root,'task','Reconstruct equation','## Problem statement\n\nDerive the expression independently.\n\n## Reference\n\nThe saved solution.')
+        view=overview(self.index(),task['id'])
+        self.assertEqual(view['statement'],'Derive the expression independently.')
+        legacy=create(self.root,'task','Legacy problem','A prior explanation without an explicit statement section.')
+        self.assertIsNone(overview(self.index(),legacy['id'])['statement'])
+
+    def test_search_resolves_external_identity_without_serializing_metadata(self):
+        resource=create(self.root,'resource','Readable research title',fields={'source_kind':'paper','source':'https://doi.org/10.1234/example','external_aliases':['doi:10.1234/example']})
+        study=record_activity(self.root,resource['path'],'study',state={'locator':{'kind':'page','value':2}})
+        self.assertEqual(study['source_snapshot']['source'],'https://doi.org/10.1234/example')
+        index=self.index()
+        for query in ('10.1234/example','https://doi.org/10.1234/example','doi:10.1234/example',resource['id']):
+            rows=index.query(query)['records'];self.assertEqual([row['id'] for row in rows],[resource['id']]);self.assertNotIn('props',rows[0])
+
     def tearDown(self):
         self.patch.stop();self.temp.cleanup()
 

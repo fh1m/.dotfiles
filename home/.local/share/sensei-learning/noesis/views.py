@@ -25,6 +25,10 @@ def overview(index, identity):
         return {'kind':'paper','annotations':annotations[:50],'annotations_truncated':len(annotations)>50,
                 'projection':projection,'bibliography':root['props'].get('bibliography_projection'),
                 'summary':'Source annotations and learner analysis remain separate'}
+    if kind in ('task','problem'):
+        import re
+        statement=re.search(r'(?ms)^## Problem statement\r?\n(.*?)(?=^## |\Z)',root.get('body',''))
+        return {'kind':'practice','statement':statement.group(1).strip() if statement else None,'source_role':'learner-declared problem statement; reference and history remain separate'}
     if kind in ('experiment','project','lab'):
         comparisons=[event for event in index.timeline(identity) if event.get('event')=='comparison']
         return {'kind':'project' if kind=='project' else 'experiment','hypothesis':root['props'].get('hypothesis'),'latest_comparison':comparisons[-1] if comparisons else None,'summary':'Prediction, reported observation and conclusion remain separate'}
@@ -54,7 +58,7 @@ def overview(index, identity):
     counts={bucket:{'total':0,'consumed':0,'reported_success':0,'independent_reported_success':0} for bucket in ('lectures','readings','assignments','projects','other_units')}
     for record_id,record_kind,raw in rows[:1000]:
         props=json.loads(raw)
-        bucket='assignments' if record_kind in ('task','problem') else 'projects' if record_kind=='project' else {'lecture':'lectures','reading':'readings','assignment':'assignments'}.get(props.get('unit_kind'),'other_units')
+        bucket='assignments' if record_kind in ('task','problem') else 'projects' if record_kind=='project' else {'lecture':'lectures','video':'lectures','reading':'readings','assignment':'assignments'}.get(props.get('unit_kind'),'other_units')
         counts[bucket]['total']+=1
         record=index.record(record_id)
         if record['state'].get('status') in ('read','extracted','complete'):counts[bucket]['consumed']+=1
@@ -74,7 +78,7 @@ def today(index, context_id=None, path_id=None, quiet=False):
         try:
             record=index.record(identity)
         except (ValueError,TypeError):continue
-        if record['props'].get('type') in ('activity','relationship') or record['state'].get('status') in ('retired','abandoned'):continue
+        if record['props'].get('type') in ('activity','relationship') or record['state'].get('status') in ('retired','abandoned','parked'):continue
         events=index.timeline(identity)
         resume={'id':identity,'path':record['path'],'title':record['props'].get('title') or record['props'].get('imported_title') or Path(record['path']).stem,
                 'type':record['props'].get('type','note'),'position':record['state'].get('position') or '',

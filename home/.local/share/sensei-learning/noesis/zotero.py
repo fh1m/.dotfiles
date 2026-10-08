@@ -7,6 +7,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler
 from urllib.parse import urlencode
 from .imports import import_csl
+from .persistence import read_content
 from .persistence import contained, lock, manifest_path, parse, publish, render, checksum
 import uuid
 
@@ -99,7 +100,7 @@ def import_item(root, key, api=None):
         result = import_csl(root,source,meta,lambda entry: checksum(entry['id'])[:16])
     relative = (result['created'] + result['existing'])[0]
     with lock(root):
-        path = contained(root,relative);text=path.read_text();props,body=parse(text)
+        path = contained(root,relative);text=read_content(path);props,body=parse(text)
         raw = json.dumps({'item':item,'children':children,'server_id':api.server_id},sort_keys=True)
         digest=checksum(raw)
         projection=contained(root,'Imports/'+props['id']+'/zotero/'+digest+'.md')

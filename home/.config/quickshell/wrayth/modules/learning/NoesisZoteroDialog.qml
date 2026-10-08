@@ -9,6 +9,8 @@ NoesisDialog {
  id:root
  property var records:[]
  property string serverId:""
+ property int cursor:-1
+ property bool appending:false
  property string error:""
  property string querySent:""
  property string vaultScope:""
@@ -16,8 +18,8 @@ NoesisDialog {
  signal imported(var record)
  modal:true;width:620;height:480
  title:"From Zotero"
- onOpened:{vaultScope=Oasis.activeVault;records=[];error="";search.text="";refresh();search.forceActiveFocus();}
- function refresh(){if(reader.running)return;querySent=search.text;reader.command=["@HOME@/.local/bin/noesis","zotero-search",querySent];reader.running=true;}
+ onOpened:{vaultScope=Oasis.activeVault;records=[];serverId="";cursor=-1;error="";search.text="";refresh();search.forceActiveFocus();}
+ function refresh(append){if(reader.running)return;appending=!!append;querySent=search.text;reader.command=["@HOME@/.local/bin/noesis","zotero-search",querySent,"--cursor",String(append?cursor:0)];if(append&&serverId)reader.command=reader.command.concat(["--server-id",serverId]);reader.running=true;}
  background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;border.width:1;border.color:NoesisStyle.rule}
  contentItem:ColumnLayout {spacing:NoesisStyle.md
   Text {text:"Bibliography and original annotations remain in Zotero.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;Layout.fillWidth:true;wrapMode:Text.Wrap}
@@ -27,6 +29,7 @@ NoesisDialog {
    delegate:NoesisRow {required property var modelData;width:ListView.view.width;title:modelData.title;subtitle:modelData.type;enabled:!Oasis.working;onClicked:{root.importing=true;Oasis.run(["zotero-import",modelData.key,"--server-id",root.serverId]);}}
    ScrollBar.vertical:ScrollBar {}
   }
+  NoesisButton {text:"Load 50 more";visible:root.cursor>=0;enabled:!reader.running;onClicked:root.refresh(true)}
   RowLayout {Layout.fillWidth:true
    NoesisButton {text:"Open Zotero";onClicked:Quickshell.execDetached(["@HOME@/.local/bin/zotero"])}
    NoesisButton {text:"Refresh";onClicked:root.refresh()}
@@ -35,6 +38,6 @@ NoesisDialog {
   }
  }
  Timer {id:debounce;interval:200;onTriggered:if(root.opened)root.refresh()}
- Process {id:reader;stdout:StdioCollector {onStreamFinished:{if(root.vaultScope!==Oasis.activeVault||root.querySent!==search.text)return;try{let result=JSON.parse(text);root.records=result.records;root.serverId=result.server_id;root.error="";}catch(e){root.error="Could not read Zotero results.";}}}stderr:StdioCollector {onStreamFinished:if(text.trim())root.error=text.trim()}onExited:if(root.opened&&root.querySent!==search.text)Qt.callLater(root.refresh)}
+ Process {id:reader;stdout:StdioCollector {onStreamFinished:{if(root.vaultScope!==Oasis.activeVault||root.querySent!==search.text)return;try{let result=JSON.parse(text);root.records=root.appending?Array.from(new Map(root.records.concat(result.records).map(record=>[record.key,record])).values()):result.records;root.cursor=result.cursor??-1;root.serverId=result.server_id;root.error="";}catch(e){root.error="Could not read Zotero results.";}}}stderr:StdioCollector {onStreamFinished:if(text.trim())root.error=text.trim()}onExited:if(root.opened&&root.querySent!==search.text)Qt.callLater(root.refresh)}
  Connections {target:Oasis;function onActiveVaultChanged(){root.close();}function onFinished(ok){if(root.importing){root.importing=false;if(ok){root.imported(Oasis.operationResult);root.close();}else root.error=Oasis.error;}}}
 }

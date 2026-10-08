@@ -57,6 +57,12 @@ def contained(root, relative):
     return target
 
 
+def read_content(path):
+    # Universal-newline decoding would change learner prose and invalidate byte
+    # provenance. UTF-8 Markdown/JSON content retains its authored line endings.
+    return Path(path).read_bytes().decode('utf-8')
+
+
 def checksum(text):
     return hashlib.sha256(text.encode()).hexdigest()
 
@@ -83,7 +89,7 @@ def publish(path, text, expected=None):
         if expected is None:
             os.link(temp, path)  # exclusive atomic publication; never overwrite
         else:
-            if checksum(path.read_text()) != expected:
+            if checksum(read_content(path)) != expected:
                 raise ValueError('Content changed; refusing conflicting update')
             os.replace(temp, path)
         directory = os.open(path.parent, os.O_DIRECTORY)
@@ -113,18 +119,27 @@ def manifest_path(root):
     raise ValueError('No Noesis manifest; adopt this vault explicitly first')
 
 
+def supported_schema(props, legacy=False):
+    value=props.get('noesis_schema')
+    if value is None and legacy:return
+    if type(value) is not int or value not in ((0,1,2) if legacy else (2,)):
+        raise ValueError('Unsupported Noesis schema; record remains readable, but no downgrade or mutation is allowed')
+
+
 def migration(root, apply=False):
     with lock(root):
         manifest = manifest_path(root)
-        original = manifest.read_text()
+        original = read_content(manifest)
         meta = json.loads(original)
+        supported_schema(meta,legacy=True)
         changes, seen = [], {}
         for path in sorted(notes(root)):
             relative = str(path.relative_to(root))
             if relative.startswith((meta.get('templates', 'Templates') + '/', '92 Templates/')):
                 continue
-            text = path.read_text()
+            text = read_content(path)
             props, body = parse(text)
+            supported_schema(props,legacy=True)
             identity = props.get('id')
             if identity:
                 canonical = str(uuid.UUID(str(identity)))

@@ -3,6 +3,7 @@ from datetime import datetime,timezone
 import json
 import re
 import uuid
+from .persistence import read_content
 from .persistence import lock,manifest_path,publish,render,contained,checksum
 from .index import Index
 
@@ -13,9 +14,13 @@ def capture(root,text,kind='capture',agent=False,operation_id=None):
     operation_id=operation_id or str(uuid.uuid4());uuid.UUID(operation_id)
     request_hash=checksum(json.dumps({'text':text,'kind':kind,'agent':agent},sort_keys=True))
     with lock(root):
+        from .scopes import assert_unique
+        assert_unique(root)
         meta=json.loads(manifest_path(root).read_text())
+        if meta.get('noesis_schema')!=2:raise ValueError('Review and apply migration before capturing in this vault')
+        uuid.UUID(str(meta.get('vault_id')))
         journal_path=contained(root,'.Noesis/Operations/'+operation_id+'.json')
-        original=journal_path.read_text() if journal_path.exists() else None
+        original=read_content(journal_path) if journal_path.exists() else None
         if original:
             journal=json.loads(original)
             if journal.get('request_hash')!=request_hash:raise ValueError('Operation ID reused with changed capture content')

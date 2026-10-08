@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import uuid
+from .persistence import read_content
 from .persistence import checksum, contained, lock, notes, parse, publish, render, manifest_path
 
 
@@ -16,14 +17,19 @@ def aliases(item):
 
 
 def import_csl(root, source, meta, resource_key, dry=False):
-    items = json.loads(source.read_text())
+    source_text=read_content(source)
+    items = json.loads(source_text)
     if not isinstance(items, list) or any(not isinstance(i, dict) or not i.get('title') for i in items):
         raise ValueError('Expected a CSL JSON array with titled items')
     created, existing = [], []
     with lock(root):
+        from .scopes import assert_unique
+        assert_unique(root)
+        from .persistence import supported_schema
+        supported_schema(json.loads(manifest_path(root).read_text()))
         records, by_alias = {}, {}
         for path in notes(root):
-            text = path.read_text()
+            text = read_content(path)
             props, body = parse(text)
             if not props.get('source_id') and not (props.get('type') in ('paper','resource') and props.get('external_aliases')):continue
             key = props.get('source_id') or 'noesis:'+props['id']
@@ -32,12 +38,17 @@ def import_csl(root, source, meta, resource_key, dry=False):
             for alias in props.get('external_aliases', []):
                 if alias in by_alias and by_alias[alias] != key:raise ValueError('Conflicting external alias')
                 by_alias[alias] = key
+        for item in items:
+            key=resource_key(item);candidates={by_alias[alias] for alias in aliases(item) if alias in by_alias}
+            if key in records:candidates.add(key)
+            if len(candidates)>1:raise ValueError('Ambiguous resource aliases; review duplicates')
+            if candidates:supported_schema(records[next(iter(candidates))][1],legacy=True)
         # A retried interrupted import must recover the same resource identity,
         # including a projection published before its resource pointer.
         namespace = uuid.UUID(json.loads(manifest_path(root).read_text())['vault_id'])
-        transaction = contained(root, 'Imports/Transactions/' + checksum(source.read_text()) + '.json')
-        journal = {'source_sha256': checksum(source.read_text()), 'status': 'preparing', 'resources': []}
-        journal_text = transaction.read_text() if transaction.exists() else None
+        transaction = contained(root, 'Imports/Transactions/' + checksum(source_text) + '.json')
+        journal = {'source_sha256': checksum(source_text), 'status': 'preparing', 'resources': []}
+        journal_text = read_content(transaction) if transaction.exists() else None
         if not dry:
             replacement = json.dumps(journal, indent=2)
             publish(transaction, replacement, checksum(journal_text) if journal_text is not None else None)
