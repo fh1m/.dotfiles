@@ -27,6 +27,7 @@ ShellRoot {
     BarEdges {}
     Dropdowns {}
     LearningUi.NoesisWindow {}
+    LearningUi.NoesisCompanion {}
     DeckOverlay {}
     NotificationLayer {}
     OsdLayer {}
