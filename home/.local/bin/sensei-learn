@@ -2,6 +2,8 @@
 """Local first-principles vault factory and navigation. No daemon or publishing."""
 import argparse
 from datetime import date, datetime
+import hashlib
+import uuid
 import json
 import os
 from pathlib import Path
@@ -39,7 +41,7 @@ def config(): return json.loads(CONFIG.read_text()) if CONFIG.exists() else {}
 
 def vault(selected=None):
     c = config(); chosen = selected or c.get('active_vault')
-    if not chosen: raise ValueError('No active vault. Run sensei-learn use PATH.')
+    if not chosen: raise ValueError('No active vault. Run noesis use PATH.')
     p = Path(chosen).expanduser()
     if not p.is_dir():
         registry = HOME / '.config/obsidian/obsidian.json'
@@ -50,7 +52,8 @@ def vault(selected=None):
     return p.resolve()
 
 def system(root):
-    manifest = root / '94 Meta/System.json'
+    manifest = root / 'System/System.json'
+    if not manifest.exists():manifest = root / '94 Meta/System.json'
     if manifest.exists(): return json.loads(manifest.read_text())
     # Existing vaults remain usable without migrating their folders.
     home = next((p for p in ['Oasis.md','Start here.md','Home.md','Untitled.md'] if (root/p).is_file()), None)
@@ -62,7 +65,7 @@ def inventory():
     app=json.loads(registry.read_text()) if registry.exists() else {}
     paths={Path(v['path']).resolve() for v in app.get('vaults',{}).values() if Path(v['path']).is_dir()}
     active=config().get('active_vault','')
-    return [{'name':p.name,'path':str(p),'managed':(p/'94 Meta/System.json').is_file(),'active':str(p)==active}
+    return [{'name':p.name,'path':str(p),'managed':((p/'94 Meta/System.json').is_file() or (p/'System/System.json').is_file()),'active':str(p)==active}
             for p in sorted(paths,key=lambda x:x.name.lower())
             if p!=HOME/'Downloads' and 'Archives' not in p.parts and (p/'.obsidian').is_dir()]
 
@@ -117,7 +120,7 @@ def doctor(root, offline=False):
         for link in re.findall(r'\[\[([^\]]+)\]\]', body):
             if not resolve(root, link, p, files):
                 message = rel + ': unresolved [[' + link + ']]'
-                critical = rel.startswith('00 Home/') or rel.startswith('02 Courses/')
+                critical = rel in [meta['home'],meta['frontier']] or rel.startswith('00 Home/') or rel.startswith('02 Courses/')
                 (errors if critical else warnings).append(message)
         targets = []
         for key in ['depends_on', 'gates', 'parallel', 'deep_descent']:
@@ -170,6 +173,16 @@ def doctor(root, offline=False):
     if not offline and not tools['obsidian']: errors.append('Obsidian is not installed')
     return {'ok': not errors, 'vault': str(root), 'notes': len(md), 'errors': sorted(set(errors)), 'warnings': sorted(set(warnings)), 'tools': tools}
 
+def ensure_app(selector=None):
+    # CLI requests started against a closed Electron app can become the primary
+    # process and be killed by a command timeout. Start the real GUI separately.
+    running=subprocess.run(['pgrep','-f',r'^/usr/lib/electron[0-9]+/electron /usr/lib/obsidian/app.asar'],capture_output=True)
+    if running.returncode:
+        args=['obsidian']
+        if selector:args.append('obsidian://open?'+urlencode({'vault':selector}))
+        subprocess.Popen(args,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+        time.sleep(1)
+
 def register(root):
     path = HOME / '.config/obsidian/obsidian.json'
     app = json.loads(path.read_text()) if path.exists() else {}
@@ -177,9 +190,11 @@ def register(root):
     # Register through the running app so its cached registry cannot undo us.
     # This inspected Electron bridge is also used by Obsidian's vault chooser.
     if shutil.which('obsidian'):
+        ensure_app()
         code = 'window.electron.ipcRenderer.sendSync("vault-open",' + json.dumps(str(root)) + ',false)'
         result = subprocess.run(['obsidian','eval','code='+code],capture_output=True,text=True,timeout=20)
-        if result.returncode == 0 and result.stdout.strip() in ['=> true','true']:
+        current=json.loads(path.read_text()) if path.exists() else {}
+        if any(Path(v['path']).resolve()==root for v in current.get('vaults',{}).values()):
             return
         # An installed/running app must not have its registry rewritten underneath it.
         running = subprocess.run(['pgrep','-f','[e]lectron.*obsidian|[e]lectron.*app.asar'],capture_output=True)
@@ -191,6 +206,38 @@ def register(root):
         backup = HOME / '.local/state/sensei-learning/backups' / ('registry-' + datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
         backup.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(path, backup); backup.chmod(0o600)
     store(path, app)
+
+def network_layout(root):
+    """Change a new staging vault only; never move an existing user's notes."""
+    mapping={'00 Home':'','01 Foundations':'Notes','02 Courses':'Notes','03 Labs':'Notes','04 Concepts':'Notes',
+      '05 Questions':'Notes','06 Errors and Bugs':'Notes','07 Sources':'Notes','08 Visuals':'Maps',
+      '09 Reviews':'Notes','10 Projects':'Notes','11 Real World':'Notes','12 Future Branches':'Notes',
+      '90 Inbox':'Inbox','91 Daily':'Daily','92 Templates':'Templates','93 Bases':'Views','94 Meta':'System','assets':'Attachments'}
+    replacements={key+'/':(value+'/' if value else '') for key,value in mapping.items()}
+    files=[p for p in root.rglob('*') if p.is_file()]
+    for path in files:
+        rel=path.relative_to(root);parts=rel.parts
+        dest=root/Path(mapping.get(parts[0],parts[0]),*parts[1:])
+        text=path.read_text()
+        for old,new in replacements.items():text=text.replace(old,new)
+        if path.suffix=='.base':
+            for old,new in mapping.items():text=text.replace(json.dumps(old),json.dumps(new))
+        if path.suffix=='.json' and parts[0]=='.obsidian':
+            obj=json.loads(text)
+            if isinstance(obj,dict):
+                for key in ['folder','attachmentFolderPath']:
+                    if obj.get(key) in mapping:obj[key]=mapping[obj[key]]
+            text=json.dumps(obj,indent=2)+'\n'
+        if dest!=path:path.unlink()
+        dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(text)
+    meta=json.loads((root/'System/System.json').read_text())
+    meta['layout']='network';meta['directories']=['Notes','Inbox/Agent Drops','Daily','Maps','Templates','Views','System','Attachments']
+    meta['home']='Home.md';meta['frontier']='Current Frontier.md';meta['templates']='Templates';meta['daily']='Daily'
+    meta['types']={key:'Notes' for key in meta['types']};meta['types']['daily']='Daily'
+    (root/'System/System.json').write_text(json.dumps(meta,indent=2)+'\n')
+    for folder in sorted(root.rglob('*'),key=lambda p:len(p.parts),reverse=True):
+        if folder.is_dir() and not any(folder.iterdir()) :folder.rmdir()
+    for folder in meta['directories']:(root/folder).mkdir(parents=True,exist_ok=True)
 
 def initialize(args):
     title = args.subject.strip()
@@ -209,6 +256,7 @@ def initialize(args):
             if p.is_file() and p.suffix in ['.md', '.canvas', '.base', '.json', '.css']:
                 text = p.read_text().replace('{{subject_yaml}}', json.dumps(title, ensure_ascii=False)).replace('{{subject}}', title).replace('{{goal}}', args.goal or 'Choose one meaningful capability to build and demonstrate.')
                 p.write_text(text)
+        if getattr(args,'layout','classic') == 'network': network_layout(stage)
         result = doctor(stage, offline=True)
         if not result['ok']: raise ValueError('Template validation failed: ' + json.dumps(result['errors']))
         if not args.no_git:
@@ -220,7 +268,7 @@ def initialize(args):
     print(root)
 
 def adopt(root):
-    if (root/'94 Meta/System.json').exists(): raise ValueError('Already structured; nothing overwritten')
+    if (root/'94 Meta/System.json').exists() or (root/'System/System.json').exists(): raise ValueError('Already structured; nothing overwritten')
     backup=HOME/'.local/state/sensei-learning/backups'/('adopt-'+datetime.now().strftime('%Y%m%d-%H%M%S-%f'))/root.name
     backup.parent.mkdir(parents=True,exist_ok=True);backup.parent.chmod(0o700)
     shutil.copytree(root,backup)
@@ -257,6 +305,7 @@ def cli(root, command, *args):
     entries = json.loads(registry.read_text()).get('vaults', {}) if registry.exists() else {}
     identities = [key for key,value in entries.items() if Path(value['path']).resolve() == root.resolve()]
     selector = identities[0] if len(identities) == 1 else root.name
+    ensure_app(selector)
     # A newly opened vault may not have its CLI listener ready yet. Retry only
     # the read-only identity handshake; never replay a mutating command.
     for attempt in range(8):
@@ -276,24 +325,34 @@ def navigate(root, relative):
     if not (root / relative).is_file(): raise ValueError('Note missing: ' + str(relative))
     print(cli(root, 'open', 'path=' + str(relative))); return 0
 
+def checked_path(root,relative):
+    part=Path(relative)
+    if part.is_absolute() or '..' in part.parts or any(p.startswith('.') for p in part.parts):raise ValueError('Use a visible vault-relative path')
+    target=(root/part).resolve()
+    if not target.is_relative_to(root.resolve()):raise ValueError('Path escapes vault')
+    return target
+
 def snapshot(root):
     # Obsidian's in-memory index supplies state: no recursive shell polling.
     code = """(async()=>{
       const meta=METADATA;
       const frontier=app.vault.getAbstractFileByPath(meta.frontier);
       const content=frontier?await app.vault.cachedRead(frontier):'';
-      const files=app.vault.getMarkdownFiles().filter(f=>!f.path.startsWith(meta.templates+'/')&&!f.path.startsWith('92 Templates/'));
+      const files=app.vault.getMarkdownFiles().filter(f=>!f.path.startsWith(meta.templates+'/')&&!f.path.startsWith('92 Templates/')&&!f.path.includes('/Imports/'));
       const props=f=>app.metadataCache.getFileCache(f)?.frontmatter||{};
-      const notes=files.map(f=>({path:f.path,name:f.basename,...props(f)}));
+      const notes=files.map(f=>({...props(f),path:f.path,name:f.basename,folder:f.parent?.path||'',modified:f.stat.mtime,
+       links:([...(app.metadataCache.getFileCache(f)?.links||[]),...(app.metadataCache.getFileCache(f)?.frontmatterLinks||[])]).map(l=>({label:l.displayText||l.link,path:app.metadataCache.getFirstLinkpathDest(l.link,f.path)?.path||'',target:l.link}))}));
+      const allfiles=app.vault.getFiles().filter(f=>!f.path.startsWith('.obsidian/')).map(f=>({path:f.path,name:f.name,folder:f.parent?.path||'',ext:f.extension,size:f.stat.size,modified:f.stat.mtime}));
       const due=notes.filter(n=>n.review&&String(n.review).slice(0,10)<=new Date().toLocaleDateString('en-CA'));
       const fp=frontier?props(frontier):{};
       return JSON.stringify({vault:app.vault.getName(),path:app.vault.adapter.getBasePath(),frontier:content,
+        commands:Object.keys(app.commands.commands).filter(x=>/^(graph:|canvas:|bookmarks:|daily-notes|outline|properties|obsidian-excalidraw-plugin:)/.test(x)),notes:notes,files:allfiles,types:meta.types||{},home:meta.home,frontier_path:meta.frontier,templates:meta.templates,
         question:fp.question||'',next_experiment:fp.next_experiment||'',active_project:fp.active_project||'',
         gates:notes.filter(n=>n.type==='prerequisite'&&n.prerequisite_class==='gate'&&n.status!=='passed'),
         reviews:due,questions:notes.filter(n=>n.type==='question'&&n.status!=='resolved'),
         projects:notes.filter(n=>n.type==='project'&&n.status!=='complete'),
         labs:notes.filter(n=>['lab','ml-experiment','robotics-experiment','code-investigation','paper-reconstruction'].includes(n.type)&&['planned','active','working','seed'].includes(n.status)),
-        sources:notes.filter(n=>n.type==='source'&&['inbox','skimmed','active'].includes(n.status))});
+        sources:notes.filter(n=>['source','resource','paper','course'].includes(n.type)&&!['archived','rejected'].includes(n.status))});
     })()"""
     code=code.replace('METADATA',json.dumps(system(root)))
     value = cli(root, 'eval', 'code=' + code)
@@ -314,30 +373,235 @@ def new_note(root, kind, title):
     with target.open('x') as f: f.write(text)
     return target
 
+def identify(root,relative):
+    """Only assign identity once; path and title are free to change."""
+    code='(async()=>{const f=app.vault.getAbstractFileByPath('+json.dumps(relative)+');await app.fileManager.processFrontMatter(f,p=>{if(!p.id)p.id='+json.dumps(str(uuid.uuid4()))+'});return f.path})()'
+    return cli(root,'eval','code='+code)
+
+def parse_eval(value):
+    if value.startswith('=> '):value=value[3:]
+    return json.loads(value)
+
+def resource_key(item):
+    doi=str(item.get('DOI','')).strip().lower().removeprefix('https://doi.org/')
+    identity='doi:'+doi if doi else 'id:'+str(item.get('id') or item.get('URL') or item.get('title','')).strip()
+    if identity=='id:':raise ValueError('Resource needs an identifier or title')
+    return hashlib.sha256(identity.encode()).hexdigest()[:24]
+
+def write_new(path,content):
+    path.parent.mkdir(parents=True,exist_ok=True)
+    with path.open('x') as f:f.write(content)
+
+def import_csl(root,source,dry=False):
+    """Read Zotero's supported CSL JSON export; never access its live database."""
+    items=json.loads(source.read_text())
+    if not isinstance(items,list) or any(not isinstance(i,dict) or not i.get('title') for i in items):raise ValueError('Expected a CSL JSON array with titled items')
+    keys=[resource_key(i) for i in items]
+    if len(set(keys))!=len(keys):
+        # Export can contain duplicate references: canonical identifier wins.
+        items=list({resource_key(i):i for i in items}.values())
+    meta=system(root);folder=meta['types'].get('paper','Notes');created=[];existing=[]
+    # Stable ids make an import robust to renamed or moved notes.
+    identities={}
+    for p in root.rglob('*.md'):
+        if any(x in p.parts for x in ['.obsidian','.git']):continue
+        try:props,_=note_text(p.read_text())
+        except (ValueError,yaml.YAMLError):continue
+        if props.get('source_id'):identities[props['source_id']]=p
+    for item in items:
+        key=resource_key(item)
+        if key in identities:existing.append(str(identities[key].relative_to(root)));continue
+        title=re.sub(r'[\\/\n\r\x00-\x1f]',' ',str(item['title'])).strip()[:130] or 'Paper'
+        path=checked_path(root,folder+'/'+title+' ['+key[:8]+'].md')
+        props={'id':str(uuid.uuid4()),'source_id':key,'type':'paper','status':'queued','source_kind':'paper','source':item.get('URL',''),'doi':item.get('DOI',''),'created':date.today().isoformat(),'reading_pass':0,'position':''}
+        item_uri=re.search(r'/items/([A-Z0-9]{8})$',str(item.get('id','')))
+        if item_uri:props['zotero_uri']='zotero://select/library/items/'+item_uri[1]
+        authors='; '.join(' '.join(str(a.get(k,'')) for k in ['given','family']).strip() or a.get('literal','') for a in item.get('author',[]) if isinstance(a,dict))
+        content='---\n'+yaml.safe_dump(props,sort_keys=False,allow_unicode=True)+'---\n\n# '+str(item['title'])+'\n\n'+authors+'\n\n## Why this paper?\n\n## Claims / model / assumptions\n\n## My reconstruction\n\n## Implementation and evidence\n\n## Questions / limitations / connections\n'
+        if not dry:write_new(path,content)
+        created.append(str(path.relative_to(root)))
+    return {'created':created,'existing':existing,'dry_run':dry}
+
+def import_notes(root,source,relative):
+    if source.suffix.lower()!='.md':raise ValueError('Use Zotero Markdown note export, not its database')
+    source=source.resolve();note=checked_path(root,relative)
+    if not note.is_file() or note.suffix!='.md':raise ValueError('Select a resource Markdown note')
+    props,_=note_text(note.read_text());identity=props.get('id')
+    if not isinstance(identity,str) or not re.fullmatch(r'[a-zA-Z0-9-]{1,80}',identity):raise ValueError('Resource needs a stable id; create it with noesis resource or import-csl')
+    meta=system(root);folder='Attachments' if meta.get('layout')=='network' else 'assets'
+    target=checked_path(root,folder+'/Imports/'+identity+'/annotations.md')
+    source_text=source.read_text()
+    # Copy exported image sidecars and rewrite only relative Markdown image links.
+    def image(match):
+        locator=match.group(2)
+        if '://' in locator or locator.startswith('data:'):return match.group(0)
+        candidate=(source.parent/locator).resolve()
+        if not candidate.is_relative_to(source.parent.resolve()) or not candidate.is_file():raise ValueError('Export image missing or outside export folder: '+locator)
+        dest=target.parent/'images'/candidate.name;dest.parent.mkdir(parents=True,exist_ok=True)
+        if dest.exists() and dest.read_bytes()!=candidate.read_bytes():
+            dest=dest.with_name(dest.stem+'-'+hashlib.sha256(candidate.read_bytes()).hexdigest()[:8]+dest.suffix)
+        if not dest.exists():shutil.copy2(candidate,dest)
+        return '!['+match.group(1)+'](images/'+dest.name+')'
+    source_text=re.sub(r'!\[([^\]]*)\]\(([^)]+)\)',image,source_text)
+    target.parent.mkdir(parents=True,exist_ok=True)
+    digest=hashlib.sha256(source_text.encode()).hexdigest()
+    content='---\ntype: imported-excerpt\nsource_id: '+identity+'\nexport_sha256: '+digest+'\n---\n\n> Imported source material; not evidence of understanding.\n\n'+source_text
+    if target.exists():
+        old,_=note_text(target.read_text())
+        if old.get('source_id')!=identity or old.get('type')!='imported-excerpt':raise ValueError('Refusing to replace an unowned excerpt')
+        if old.get('export_sha256')==digest:return {'excerpt':str(target.relative_to(root)),'unchanged':True}
+        history=target.parent/'history';history.mkdir(exist_ok=True)
+        shutil.copy2(target,history/(datetime.now().strftime('%Y%m%d-%H%M%S-%f')+'.md'))
+    # Atomic replace the generated file only; the learner note is untouched.
+    fd,tmp=tempfile.mkstemp(dir=target.parent)
+    try:
+        with os.fdopen(fd,'w') as f:f.write(content)
+        os.replace(tmp,target)
+    finally:
+        if os.path.exists(tmp):os.unlink(tmp)
+    return {'excerpt':str(target.relative_to(root)),'embed':'![['+str(target.relative_to(root))+']]','learner_note_unchanged':True}
+
+def library_action(root,args):
+    meta=system(root)
+    if args.command=='import-csl':print(json.dumps(import_csl(root,Path(args.source).expanduser(),args.dry_run),ensure_ascii=False));return 0
+    if args.command=='import-notes':
+        result=import_notes(root,Path(args.source).expanduser(),args.resource)
+        relative=str(checked_path(root,args.resource).relative_to(root));embed='![['+result['excerpt']+']]'
+        code='(async()=>{const f=app.vault.getAbstractFileByPath('+json.dumps(relative)+');const text=await app.vault.read(f);if(!text.includes('+json.dumps(embed)+'))await app.vault.append(f,'+json.dumps('\n\n## Imported annotations\n'+embed+'\n')+');return f.path})()'
+        cli(root,'eval','code='+code);print(json.dumps(result,ensure_ascii=False));return 0
+    if args.command=='resource':
+        if not args.title.strip() or any(c in args.title for c in ['/','\\','\n','\r']):raise ValueError('Use a resource title, not a path')
+        kind='course' if args.kind=='course' else 'paper' if args.kind=='paper' else 'resource'
+        path=checked_path(root,meta['types'].get(kind,'Notes')+'/'+args.title+'.md')
+        file=Path(args.file).expanduser().resolve() if args.file else None
+        if file and not file.is_file():raise ValueError('Resource file missing')
+        props={'id':str(uuid.uuid4()),'type':kind,'status':'queued','source_kind':args.kind,'source':args.url,'created':date.today().isoformat(),'position':''}
+        if file:props['local_file']=str(file)
+        write_new(path,'---\n'+yaml.safe_dump(props,sort_keys=False,allow_unicode=True)+'---\n\n# '+args.title+'\n\n## Why this resource?\n'+args.why+'\n\n## My model / notes\n\n## Attempts / evidence\n\n## Connections / next action\n')
+        print(path);return 0
+    path=checked_path(root,args.path)
+    if not path.is_file() or path.suffix!='.md':raise ValueError('Choose a Markdown learning record')
+    relative=str(path.relative_to(root))
+    if args.command=='read-resource':
+        props,_=note_text(path.read_text());local=props.get('local_file','');url=props.get('source','');zotero=props.get('zotero_uri','')
+        if args.reader=='zotero':
+            if zotero:return subprocess.run(['xdg-open',str(zotero)]).returncode
+            subprocess.Popen([str(HOME/'.local/bin/zotero') if (HOME/'.local/bin/zotero').exists() else 'zotero'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True);return 0
+        if local:
+            file=Path(str(local)).expanduser()
+            if not file.is_absolute():file=checked_path(root,str(local))
+            if not file.is_file():raise ValueError('Linked local file missing')
+            command=[str(HOME/'.local/bin/sioyek') if (HOME/'.local/bin/sioyek').exists() else 'sioyek',str(file)] if args.reader=='sioyek' and file.suffix.lower()=='.pdf' else ['xdg-open',str(file)]
+        elif url:
+            if not str(url).startswith(('https://','http://','zotero://')):raise ValueError('Resource URL scheme not supported')
+            command=['xdg-open',str(url)]
+        else:raise ValueError('Set source or local_file in this resource; no document linked yet')
+        subprocess.Popen(command,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True);return 0
+    if args.command=='progress':
+        if args.current is not None and args.current<0 or args.total is not None and args.total<=0:raise ValueError('Progress counts must be nonnegative with a positive total')
+        if args.current is not None and args.total is not None and args.current>args.total:raise ValueError('Progress exceeds total')
+        updates={'position':args.position,'updated':date.today().isoformat()}
+        if args.current is not None:updates['progress_current']=args.current
+        if args.total is not None:updates['progress_total']=args.total
+        if args.state:updates['status']=args.state
+        entry='\n\n## Study '+datetime.now().isoformat(timespec='seconds')+'\nResume: '+args.position+'\n'+args.evidence+'\n'
+    else:
+        if not args.evidence.strip():raise ValueError('An attempt needs actual evidence')
+        updates={'updated':date.today().isoformat(),'last_result':args.result}
+        # A solved attempt is evidence, not automatic concept mastery.
+        entry='\n\n## Attempt '+datetime.now().isoformat(timespec='seconds')+'\nResult: '+args.result+'\nHints: '+args.hint+'\n\n'+args.evidence+'\n'
+    code='(async()=>{const f=app.vault.getAbstractFileByPath('+json.dumps(relative)+');await app.fileManager.processFrontMatter(f,p=>{Object.assign(p,'+json.dumps(updates)+');if(!p.id)p.id='+json.dumps(str(uuid.uuid4()))+'});await app.vault.append(f,'+json.dumps(entry)+');return f.path})()'
+    print(cli(root,'eval','code='+code));return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
-    p = commands.add_parser('init'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt']:
+    p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window']:
         p = commands.add_parser(cmd); p.add_argument('--vault')
         if cmd == 'doctor': p.add_argument('--offline', action='store_true')
         if cmd == 'use': p.add_argument('path')
-        if cmd == 'capture': p.add_argument('text', nargs='?'); p.add_argument('--agent', action='store_true')
-        if cmd == 'new': p.add_argument('kind'); p.add_argument('title'); p.add_argument('--open', action='store_true')
+        if cmd == 'capture': p.add_argument('text', nargs='?'); p.add_argument('--agent', action='store_true');p.add_argument('--kind',choices=['capture','snippet','question'],default='capture')
+        if cmd == 'new': p.add_argument('--folder'); p.add_argument('kind'); p.add_argument('title'); p.add_argument('--open', action='store_true')
         if cmd == 'search': p.add_argument('query', nargs='?', default='')
+        if cmd == 'preview': p.add_argument('path')
+        if cmd == 'update': p.add_argument('path'); p.add_argument('field',choices=['status','question','next_experiment','active_project']); p.add_argument('value')
+        if cmd == 'review': p.add_argument('path'); p.add_argument('--confidence',type=int,required=True); p.add_argument('--days',type=int,default=7); p.add_argument('--evidence',required=True)
+        if cmd == 'canvas': p.add_argument('title')
+        if cmd == 'attach': p.add_argument('source'); p.add_argument('--note')
+        if cmd == 'resource': p.add_argument('title');p.add_argument('--kind',choices=['paper','book','article','docs','lecture','playlist','course','dataset','other'],default='paper');p.add_argument('--url',default='');p.add_argument('--file');p.add_argument('--why',default='')
+        if cmd == 'progress': p.add_argument('path');p.add_argument('--position',required=True);p.add_argument('--current',type=int);p.add_argument('--total',type=int);p.add_argument('--state',choices=['queued','active','read','extracted','parked','rejected']);p.add_argument('--evidence',default='')
+        if cmd == 'attempt': p.add_argument('path');p.add_argument('--result',choices=['blocked','hinted','solved','reproduced','failed','transferred'],required=True);p.add_argument('--evidence',required=True);p.add_argument('--hint',default='none')
+        if cmd == 'import-csl':p.add_argument('source');p.add_argument('--dry-run',action='store_true')
+        if cmd == 'import-notes':p.add_argument('source');p.add_argument('--resource',required=True)
+        if cmd == 'read-resource':p.add_argument('path');p.add_argument('--reader',choices=['sioyek','zotero','default'],default='sioyek')
+        if cmd == 'window-state':p.add_argument('--width',type=int);p.add_argument('--height',type=int)
         if cmd == 'cli': p.add_argument('obsidian_command'); p.add_argument('options', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     try:
         if args.command == 'init': initialize(args); return 0
+        if args.command=='window':
+            executable=HOME/'.local/opt/sensei-quickshell/bin/qs'
+            return subprocess.run([str(executable) if executable.exists() else 'qs','-c','wrayth','ipc','call','noesis','open']).returncode
+        if args.command=='window-state':
+            file=HOME/'.local/state/sensei-learning/window.json'
+            if args.width is not None and args.height is not None:store(file,{'width':min(1800,max(900,args.width)),'height':min(1000,max(560,args.height))})
+            print(file.read_text() if file.exists() else '{"width":1440,"height":880}');return 0
         if args.command == 'use':
             root = vault(args.path); system(root); c = config(); c['active_vault'] = str(root); store(CONFIG,c); print(root); return 0
         if args.command == 'vaults': print(json.dumps(inventory(),ensure_ascii=False)); return 0
         root = vault(args.vault); meta = system(root)
+        if args.command in ['resource','progress','attempt','import-csl','import-notes','read-resource']:
+            return library_action(root,args)
         if args.command == 'backup': return subprocess.run([str(HOME/'.local/bin/sensei-learning-backup'),'--vault',str(root)]).returncode
         if args.command == 'adopt': adopt(root); return 0
+        if args.command=='enable-drawing':
+            plugin='obsidian-excalidraw-plugin'
+            choices=[Path(v['path'])/'.obsidian/plugins'/plugin for v in inventory() if (Path(v['path'])/'.obsidian/plugins'/plugin/'manifest.json').is_file()]
+            if not choices:raise ValueError('Install Excalidraw from Obsidian community plugins once, then reuse it here.')
+            source=choices[0];manifest=json.loads((source/'manifest.json').read_text())
+            if manifest.get('id')!=plugin:raise ValueError('Plugin identity mismatch')
+            destination=root/'.obsidian/plugins'/plugin;destination.mkdir(parents=True,exist_ok=True)
+            for name in ['main.js','manifest.json','styles.css']:
+                if (source/name).is_file() and not (destination/name).exists():shutil.copy2(source/name,destination/name)
+            cli(root,'plugins:restrict','off')
+            print(cli(root,'eval','code=(async()=>{await app.plugins.loadManifests();if(!app.plugins.plugins["'+plugin+'"])await app.plugins.enablePluginAndSave("'+plugin+'");return app.plugins.plugins["'+plugin+'"]?"Freehand drawing enabled":"Plugin enabled; let startup finish, then press Draw"})()'));return 0
+        if args.command == 'files': print(json.dumps(snapshot(root)['files'],ensure_ascii=False));return 0
+        if args.command in ['preview','update','review']:
+            path=checked_path(root,args.path)
+            if not path.is_file():raise ValueError('File does not exist')
+            relative=str(path.relative_to(root))
+            if args.command=='preview': print(cli(root,'read','path='+relative));return 0
+            if args.command=='update': print(cli(root,'property:set','path='+relative,'name='+args.field,'value='+args.value,'type=text'));return 0
+            if not 0<=args.confidence<=5 or not 1<=args.days<=3650 or not args.evidence.strip():raise ValueError('Review needs confidence 0–5, days 1–3650 and actual evidence')
+            from datetime import timedelta
+            review=(date.today()+timedelta(days=args.days)).isoformat()
+            entry='\n\n## Recall '+date.today().isoformat()+'\nConfidence: '+str(args.confidence)+' / 5 · next recall: '+review+'\n\n'+args.evidence+'\n'
+            code='(async()=>{const f=app.vault.getAbstractFileByPath('+json.dumps(relative)+');await app.fileManager.processFrontMatter(f,p=>{p.confidence='+str(args.confidence)+';p.review='+json.dumps(review)+'});await app.vault.append(f,'+json.dumps(entry)+');return f.path})()'
+            print(cli(root,'eval','code='+code));return 0
+        if args.command=='canvas':
+            if any(c in args.title for c in ['/', '\\','\n']) or not args.title.strip():raise ValueError('Use a canvas title')
+            folder='Maps' if meta.get('layout')=='network' else '08 Visuals'
+            path=folder+'/'+args.title+'.canvas';checked_path(root,path)
+            print(cli(root,'eval','code=(async()=>{await app.vault.create('+json.dumps(path)+','+json.dumps('{"nodes":[],"edges":[]}')+');return "Created"})()'))
+            return navigate(root,path)
+        if args.command=='attach':
+            source=Path(args.source).expanduser().resolve()
+            if not source.is_file():raise ValueError('Choose a local file')
+            if args.note and not checked_path(root,args.note).is_file():raise ValueError('Note missing; attachment not copied')
+            folder='Attachments' if meta.get('layout')=='network' else 'assets';dest=checked_path(root,folder+'/'+source.name)
+            dest.parent.mkdir(parents=True,exist_ok=True)
+            with source.open('rb') as src,dest.open('xb') as target:shutil.copyfileobj(src,target)
+            if args.note:
+                note=checked_path(root,args.note)
+                if not note.is_file():raise ValueError('Note missing; attachment copied safely but not linked')
+                code='(async()=>{const f=app.vault.getAbstractFileByPath('+json.dumps(str(note.relative_to(root)))+');await app.vault.append(f,'+json.dumps('\n[['+str(dest.relative_to(root))+']]\n')+');return f.path})()'
+                print(cli(root,'eval','code='+code))
+            print(dest);return 0
         if args.command == 'status': print(json.dumps(snapshot(root), ensure_ascii=False)); return 0
         if args.command == 'cli': print(cli(root,args.obsidian_command,*args.options)); return 0
-        if args.command == 'due': print(cli(root,'base:query','path=93 Bases/Review.base','view=Due','format=md')); return 0
-        if args.command == 'gates': print(cli(root,'base:query','path=93 Bases/Prerequisites.base','view=Active gates','format=md')); return 0
+        if args.command == 'due': print(cli(root,'base:query','path='+('Views/Review.base' if meta.get('layout')=='network' else '93 Bases/Review.base'),'view=Due','format=md')); return 0
+        if args.command == 'gates': print(cli(root,'base:query','path='+('Views/Prerequisites.base' if meta.get('layout')=='network' else '93 Bases/Prerequisites.base'),'view=Active gates','format=md')); return 0
         if args.command == 'tasks': print(cli(root,'tasks','todo','verbose')); return 0
         if args.command == 'doctor':
             result = doctor(root, args.offline)
@@ -352,9 +616,10 @@ def main():
         if args.command == 'capture':
             text = args.text if args.text is not None else sys.stdin.read()
             if not text.strip(): raise ValueError('Capture text is empty')
-            folder = root / ('90 Inbox/Agent Drops' if args.agent else '90 Inbox'); folder.mkdir(parents=True,exist_ok=True)
+            inbox='Inbox' if meta.get('layout')=='network' else '90 Inbox'
+            folder = root / (inbox+'/Agent Drops' if args.agent else inbox); folder.mkdir(parents=True,exist_ok=True)
             p = folder / (datetime.now().strftime('%Y%m%d-%H%M%S-%f') + '.md')
-            content = '---\ntype: capture\nstatus: inbox\ncreated: '+date.today().isoformat()+'\n---\n\n'+text+'\n'
+            content = '---\nid: '+str(uuid.uuid4())+'\ntype: '+args.kind+'\nstatus: inbox\ncreated: '+date.today().isoformat()+'\n---\n\n'+text+'\n'
             code = '(async()=>{const file=await app.vault.create('+json.dumps(str(p.relative_to(root)))+','+json.dumps(content)+');return file.path})()'
             print(cli(root,'eval','code='+code))
             print(p); return 0
@@ -362,11 +627,13 @@ def main():
             kind = args.kind; title = args.title
             if kind not in meta['types']: raise ValueError('Unknown note type')
             if any(c in title for c in ['/', '\\', '\n', '\r']) or title in ['', '.', '..']: raise ValueError('Use a note title, not a path')
-            path = root / meta['types'][kind] / (title + '.md')
+            path = checked_path(root,(args.folder or meta['types'][kind])+'/'+title+'.md')
+            path.parent.mkdir(parents=True,exist_ok=True)
             if path.exists(): raise ValueError('Note exists; not overwritten')
             choices = [p for p in (root/meta['templates']).glob('*.md') if note_text(p.read_text())[0].get('type') == kind]
             if len(choices)!=1: raise ValueError('Need exactly one template for type: '+kind)
             print(cli(root,'create','path='+str(path.relative_to(root)), 'template='+choices[0].stem))
+            identify(root,str(path.relative_to(root)))
             print(path)
             return navigate(root,path.relative_to(root)) if args.open else 0
         if args.command == 'search':

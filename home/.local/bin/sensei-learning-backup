@@ -11,7 +11,7 @@ def eligible(p,root):
  return not any(x in EXCLUDE for x in parts) and not p.is_symlink() and not p.name.startswith(('workspace','.env')) and p.suffix not in {'.log','.db','.sqlite','.sqlite3'}
 def backup(root):
  root=root.resolve()
- if not (root/'94 Meta/System.json').is_file():raise ValueError('Not an Oasis vault')
+ if not ((root/'94 Meta/System.json').is_file() or (root/'System/System.json').is_file()):raise ValueError('Not a Noesis vault')
  key=hashlib.sha256(str(root).encode()).hexdigest()[:12];dest=STATE/key;dest.mkdir(parents=True,exist_ok=True);STATE.chmod(0o700);dest.chmod(0o700)
  files=sorted(p for p in root.rglob('*') if p.is_file() and eligible(p,root))
  hashes={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
@@ -49,10 +49,59 @@ def restore(archive,destination):
     p=stage/m.name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(tar.extractfile(m).read())
   for name,digest in metadata['files'].items():
    if hashlib.sha256((stage/name).read_bytes()).hexdigest()!=digest:raise ValueError('Restored file checksum mismatch')
-  system=json.loads((stage/'94 Meta/System.json').read_text())
+  manifest=stage/'System/System.json'
+  if not manifest.is_file():manifest=stage/'94 Meta/System.json'
+  system=json.loads(manifest.read_text())
   for folder in system['directories']:(stage/folder).mkdir(parents=True,exist_ok=True)
   stage.rename(destination)
  print(destination)
+def backup_readers():
+ import sqlite3,shutil,time
+ for root in [HOME/'Zotero',HOME/'.local/share/Sioyek']:
+  if not root.is_dir():continue
+  dest=STATE/'readers'/root.name/datetime.now().strftime('%Y%m%d-%H%M%S-%f')
+  dest.mkdir(parents=True,exist_ok=True);dest.chmod(0o700)
+  records={};database_sources={}
+  try:
+   for p in root.rglob('*'):
+    if not p.is_file() or p.is_symlink() or p.name.startswith('fulltext') or p.name.endswith(('-wal','-shm','-journal','.bak')):continue
+    relative=p.relative_to(root);target=dest/relative;target.parent.mkdir(parents=True,exist_ok=True)
+    if p.suffix in ['.sqlite','.db']:
+     candidates=[p]
+     # Zotero may hold an exclusive runtime lock; its own last-consistent backup
+     # is a safe fallback, explicitly labelled with its actual timestamp.
+     if (p.with_name(p.name+'.bak')).is_file():candidates.append(p.with_name(p.name+'.bak'))
+     error=None
+     for candidate in candidates:
+      source=out=None
+      try:
+       source=sqlite3.connect(candidate.as_uri()+'?mode=ro',uri=True,timeout=2);out=sqlite3.connect(target)
+       deadline=time.monotonic()+3
+       def progress(status,remaining,total):
+        if time.monotonic()>deadline:raise ValueError('Reader database busy')
+       source.backup(out,pages=128,progress=progress,sleep=.1)
+       if out.execute('PRAGMA quick_check').fetchone()[0]!='ok':raise ValueError('Reader database integrity check failed')
+       database_sources[str(relative)]={'source':str(candidate),'source_modified':datetime.fromtimestamp(candidate.stat().st_mtime).isoformat(),'mode':'native-last-consistent-backup' if candidate!=p else 'sqlite-online-backup'}
+       error=None;break
+      except (ValueError,sqlite3.Error) as e:error=e
+      finally:
+       if out:out.close()
+       if source:source.close()
+      target.unlink(missing_ok=True)
+     if error:raise ValueError(str(error)+': close '+root.name+' and retry backup')
+    else:shutil.copy2(p,target)
+    records[str(relative)]=hashlib.sha256(target.read_bytes()).hexdigest()
+   manifest={'source':str(root),'files':records,'database_sources':database_sources,'restore':'Close the reader, verify checksums, restore into a NEW data directory; never overwrite a live database.'}
+   latest=dest.parent/'latest.json'
+   if latest.exists() and json.loads(latest.read_text()).get('files')==records:
+    shutil.rmtree(dest);print('Reader unchanged: '+str(root));continue
+   (dest/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n');store_latest={'snapshot':str(dest),**manifest};latest.write_text(json.dumps(store_latest,indent=2)+'\n')
+   print('Reader snapshot: '+str(dest))
+   if any(v['mode']=='native-last-consistent-backup' for v in database_sources.values()):print('Zotero was open: snapshot uses its timestamped last internal backup, not a claim of live freshness.')
+   for old in sorted((p for p in dest.parent.iterdir() if p.is_dir()),reverse=True)[7:]:shutil.rmtree(old)
+  except Exception:
+   shutil.rmtree(dest);raise
+
 def main():
  os.umask(0o077);p=argparse.ArgumentParser(description=__doc__);p.add_argument('--vault');p.add_argument('--all',action='store_true');p.add_argument('--restore',type=Path);p.add_argument('--dest',type=Path);a=p.parse_args()
  try:
@@ -63,7 +112,8 @@ def main():
   roots=[Path(a.vault or c['active_vault'])]
   if a.all:
    registry=json.loads((HOME/'.config/obsidian/obsidian.json').read_text())
-   roots+= [Path(v['path']) for v in registry.get('vaults',{}).values() if (Path(v['path'])/'94 Meta/System.json').is_file()]
+   roots+= [Path(v['path']) for v in registry.get('vaults',{}).values() if ((Path(v['path'])/'94 Meta/System.json').is_file() or (Path(v['path'])/'System/System.json').is_file())]
   for root in sorted(set(r.resolve() for r in roots)):backup(root)
+  if a.all:backup_readers()
  except (ValueError,OSError,KeyError,tarfile.TarError) as e:p.exit(1,str(e)+'\n')
 if __name__=='__main__':main()

@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=Oasis
+Name=Noesis
 Comment=Build, understand, reconstruct — your current learning frontier
-Exec=@HOME@/.local/bin/oasis open
+Exec=@HOME@/.local/bin/noesis window
 Icon=obsidian
 Terminal=false
 Categories=Education;Development;

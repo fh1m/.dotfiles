@@ -89,3 +89,55 @@ tracked. Local snapshot restore, exclusion/refusal checks, ten factory/adoption
 tests and rendered installer/systemd checks pass. Public branch contains reusable
 code, defaults, research and a Subjects-only screenshot; no subject notes, app
 registry, session state or credentials. Push verification recorded at handoff.
+
+
+## Noesis lifelong-learning expansion — 2026-10-08
+Approved: connected Knowledge vault plus independent vaults; persistent native
+main-display window; Zotero + Sioyek. Preserve pre-existing work and subject notes.
+Main monitor eDP-1 is 1920×1080 logical; ScreenPad is 1920×550. Obsidian 1.14.4
+currently runs native Wayland; verify readability without unnecessary restart.
+
+Milestones (done when):
+- [x] N1: fix CLI identity/races, network factory and native acceptance checks.
+- [x] N2: optional paper/course/problem/resource/snippet records, append-only
+  attempts and progress; repeatable imports preserve learner notes; tests pass.
+- [x] N3: Zotero and inspected Sioyek installed, readers launch, settings backed
+  up; annotated-PDF boundaries and exports documented and checked.
+- [x] N4: shared Knowledge vault, flexible templates/Bases/Canvas and Obsidian
+  handbooks work; Workbench remains an engineering studio.
+- [x] N5: Noesis is a resizable, persistent 1440×880 main-display window; bar
+  raises it; no click-away dismissal; data/preview actions responsive and bounded.
+- [x] N6: native end-to-end disposable learning workflow, backup/restore,
+  installer repeatability and private-state review pass; task-only branch pushed.
+
+Use Markdown as learning authority, Zotero for citations/annotations, Sioyek for
+focused reading, Neovim/Distrobox for implementation. No custom rich editor,
+mastery inferred from reading time, idle polling, private notes in public Git,
+cloud accounts, or archived-plugin dependency. Stable IDs survive path changes.
+Source imports own their generated excerpt files, never learner-written bodies.
+Research search inventory: 58 targeted queries; source provenance recorded in
+research.md. The four requested Colin Galen captions were inspected; paraphrases and source links are in research.md.
+
+
+### Expansion acceptance evidence
+Fourteen factory/import tests pass, including identity after rename, flexible
+paths, repeat imports and traversal refusal. Native Obsidian acceptance created
+notes, Canvas, evidence, study positions and recall; Study/Practice/Evidence Bases
+returned actual rows. Annotation re-import preserves learner prose and embeds once.
+The disposable vaults and their native registrations were removed afterward.
+All four real vaults pass structural checks. Knowledge is the default, with real
+queued sources, not invented mastery. Existing CS and engineering notes remain.
+
+Readers: official Zotero 10.0.6 and Sioyek 2.0.0 installed under ~/.local/opt with
+checksummed, repeatable setup. Zotero is native Wayland; Sioyek stable uses XWayland.
+Excalidraw was reused from the existing installation and its live load verified.
+Snapshot restore and overwrite refusal pass. Reader SQLite snapshots pass integrity
+checks; open Zotero uses its timestamped internal backup rather than claiming live
+freshness. Local snapshots are not off-device disaster protection.
+
+Main-display persistent window, focus-away survival, watcher shutdown on close,
+empty Hyprland configerrors and additive Neovim mappings verified. Warm opening
+samples were 82–146 ms; a quiet 3-second shell sample used ~1% of one CPU core.
+These are spot checks, not a promise of universal frame-time performance.
+Installer repeatability and diff/secret review pass. Public code contains no private
+vault content or transient Obsidian state. Subject notes remain local/private.

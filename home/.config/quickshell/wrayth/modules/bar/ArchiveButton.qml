@@ -14,7 +14,7 @@ BarSurface {
  implicitWidth:condensed?44:target==="monitor"?112:124;implicitHeight:34
  Behavior on implicitWidth { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
  grouped:condensed
- selected:ShellState.dropdown===target;hovered:pointer.containsMouse;pressed:pointer.pressed
+ selected:target==="oasis"?Oasis.windowOpen:ShellState.dropdown===target;hovered:pointer.containsMouse;pressed:pointer.pressed
  Row {anchors.left:parent.left;anchors.leftMargin:10;anchors.verticalCenter:parent.verticalCenter;spacing:8
      BarIcon {glyph:root.glyph;anchors.verticalCenter:parent.verticalCenter;inkSize:18;ink:root.target==="phone"&&!PhoneBridge.ready?Theme.alpha(Theme.signalRed,.55):Theme.signalRed}
      Column {visible:!root.condensed;anchors.verticalCenter:parent.verticalCenter;spacing:-1
@@ -22,5 +22,5 @@ BarSurface {
          Text {text:root.detail;visible:root.detail!=="";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.widgetMuted}
      }
  }
- MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{if(root.page>=0)ShellState.monitorPage=root.page;ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdown(root.target);}}
+ MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{if(root.target==="oasis"){Oasis.open();return;}if(root.page>=0)ShellState.monitorPage=root.page;ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdown(root.target);}}
 }

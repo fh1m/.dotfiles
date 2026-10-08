@@ -35,7 +35,7 @@ Variants {
             ArchiveButton { condensed: !bar.archiveOpen; anchors.verticalCenter: parent.verticalCenter }
             ArchiveButton { condensed: !bar.archiveOpen; target: "clipboard"; label: "Clipboard"; detail:"History"; glyph: "\uf0ea"; anchors.verticalCenter: parent.verticalCenter }
             ArchiveButton { condensed: !bar.archiveOpen; target: "phone"; label: "Phone"; detail:PhoneBridge.phoneNearby?"Nearby":PhoneBridge.ready?"Online":"Offline"; glyph: "\uf10b"; anchors.verticalCenter: parent.verticalCenter }
-            ArchiveButton { condensed: !bar.archiveOpen; target: "oasis"; label: "Oasis"; detail:Oasis.activeVault?"Build · understand":"Choose a vault"; glyph: "\uf02d"; anchors.verticalCenter: parent.verticalCenter }
+            ArchiveButton { condensed: !bar.archiveOpen; target: "oasis"; label: "Noesis"; detail:Oasis.activeVault?"Build · understand":"Choose a vault"; glyph: "\uf02d"; anchors.verticalCenter: parent.verticalCenter }
         }
         Row {
             id: navigation

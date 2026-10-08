@@ -1,38 +1,32 @@
-# Small schema, useful links
+# Connections before containers
 
-Numbered folders retain the seed vault's roles: Home, Foundations, Courses,
-Labs, Concepts, Questions, Errors and Bugs, Sources, Visuals, Reviews, Projects,
-Real World, Future Branches, Inbox, Daily, Templates, Bases and Meta.
+Folders store files; they do not define the limits of a subject. New Noesis vaults
+use a shallow storage layout. Existing paths stay valid. A note can belong to
+several topics through tags, properties, maps and explicit links.
 
-Common properties: `type`, `status`, `domain`, `created`. Use `confidence` (0–5)
-and `review` (YYYY-MM-DD) for recall-bearing notes. Do not fill optional fields
-until they help a real view or decision. Keep learning `layer`, `course`, `stage`
-and `source` where they already have meaning.
+Capture in any form: prose, scratch work, equations, code, tables, a Canvas or a
+pen drawing. Templates are optional prompts, not required forms. Free notes need
+no mastery score. Use a role (`type`) only when it makes a view useful.
 
-Concept states: seed → working → solid → revisit. Questions: open → resolved.
-Labs/projects: planned → active → complete (or failed). Prerequisites: active →
-passed, with demonstrated exit-test evidence. Sources: inbox → skimmed → active →
-extracted; canonical is a trusted reference, rejected/archived is retained provenance.
-Branches: parked → selected; a branch never silently becomes an active gate.
+Explain links: supports, contradicts, causes, constrains, implements, approximates,
+or is an example of. Compare similar ideas in different domains. Link an episode
+or experiment to the model it changed; preserve the mistaken prediction.
 
-## Dependencies are roles at an interface
-Path/project/frontier notes use `gates`, `parallel`, `deep_descent`: lists of
-quoted wikilinks. Operational prerequisite notes use `depends_on` for their
-smaller prerequisites, plus `prerequisite_class` and `serves` to show the specific
-build they support. A prerequisite's class is contextual; split role notes if
-it is a gate for one build and an optional descent for another.
+Maps answer questions. Reconstruct a map without looking; a pretty connected
+graph does not prove understanding. Bases give overlapping views rather than a
+single filing hierarchy. Use backlinks and the local graph to find context.
 
-Edges point **from the thing being learned to its prerequisite**. This direction
-must remain acyclic. General conceptual links and future branches are not edges
-in the prerequisite DAG. Keep the minimum understanding and exit test in prose.
+Important recall-bearing notes use confidence 0–5 and a review date. Confidence
+is your judgment supported by a derivation, prediction, build, trace or transfer
+test. The agent never awards mastery. Note count and graph size are not progress.
 
-Equations: symbols, units, assumptions, sanity check and boundary case. Software:
-representation, state transition, invariant, concrete trace and failure condition.
+Prerequisite links (`gates`, `parallel`, `deep_descent`, `depends_on`) are directed
+and acyclic. General knowledge links may loop freely. A gate is the smallest
+skill needed for the next meaningful build; it is not years of prerequisite debt.
 
-Sources need a reason and a served question/build. Errors preserve original
-belief, contradiction, corrected model and earlier-detection heuristic. Raw agent
-output belongs in `90 Inbox/Agent Drops`, not a mastered Concept.
+For equations: symbols, units, assumptions, boundary case and sanity check. For
+software: representation, state transitions, invariant and a concrete trace.
+For experiments: predicted result, actual evidence, uncertainty and model update.
 
-Git stores Markdown and durable defaults. Never track workspace/session files,
-plugin mutable state, credentials, caches, build output or giant raw recordings.
-Store large experimental evidence separately and link to its path + checksum.
+Git stores durable notes/defaults. Workspace state, plugin auth, caches and giant
+recordings stay out. External evidence can be linked by path and checksum.
