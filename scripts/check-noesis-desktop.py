@@ -103,6 +103,18 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
    print('Course: 2/6 consumed; assignments/projects untouched; compact context scrolls:',current['read_viewport_height'],current['read_content_height'])
    client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==process.pid and c['title'].startswith('Noesis'))
    x,y=client['at'];w,h=client['size'];subprocess.run(['grim','-g',f'{x},{y} {w}x{h}','/tmp/noesis-course-compact.png'],check=True)
+   # Create through the actual dialog keyboard action, then verify its durable receipt.
+   shortcut('CTRL','4');shortcut('CTRL','n')
+   for letter in 'synthetic problem':shortcut('','space' if letter==' ' else letter)
+   shortcut('CTRL','Return');time.sleep(.7)
+   records=list((vault/'Records/task').glob('synthetic problem*'))
+   assert len(records)==1
+   import sys
+   sys.path.insert(0,str(repo/'home/.local/share/sensei-learning'))
+   from noesis.persistence import parse
+   props,_=parse(records[0].read_text());receipt=cli('operation-status',props['operation_id'])
+   assert receipt['status']=='committed' and len(receipt['records'])==1
+   print('Native problem dialog saved one record with a committed receipt')
 
 
   finally:process.terminate();process.wait(timeout=5);print(log.read_text()[-5000:])

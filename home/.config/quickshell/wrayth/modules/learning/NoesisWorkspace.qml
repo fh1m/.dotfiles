@@ -109,6 +109,7 @@ Item {
   onExited:code=>{if(code!==0&&Oasis.windowOpen&&!root.watchTransition)Oasis.error="Filesystem watch stopped; refresh to reconcile."}}
  Timer {id:refresh;interval:250;onTriggered:{root.send("reconcile",{paths:root.reconcileAll||root.changedPaths.length>1000?null:root.changedPaths});root.changedPaths=[];root.reconcileAll=false;}}
  Timer {id:searchDelay;interval:150;onTriggered:root.load(false)}
+ Shortcut {sequence:"Ctrl+N";onActivated:root.section==="Today"?root.quickCapture():createDialog.begin(root.section==="Lab"?"experiment":root.section==="Practice"?"task":"resource","")}
  Shortcut {sequence:"Ctrl+K";onActivated:search.forceActiveFocus()}
  Shortcut {sequence:"Ctrl+Shift+N";onActivated:root.quickCapture()}
  Shortcut {sequence:"Ctrl+1";onActivated:root.section="Today"}
@@ -141,7 +142,7 @@ Item {
     NoesisButton {text:"→";enabled:root.navigationIndex+1<root.navigation.length;onClicked:root.forward();Accessible.name:"Forward";hint:"Alt+Right"}
     Text {text:root.section;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.heading;Layout.fillWidth:true}
     NoesisField {id:search;Keys.onDownPressed:{list.forceActiveFocus();list.currentIndex=0;}Layout.preferredWidth:Math.min(280,root.width*.22);placeholderText:"Search · Ctrl+K";onTextChanged:{root.query=text;searchDelay.restart();}Accessible.name:"Search learning records"}
-    NoesisButton {text:root.section==="Lab"?"+ Experiment":"+ Resource";visible:["Learn","Research","Lab","Library"].includes(root.section);onClicked:createDialog.begin(root.section==="Lab"?"experiment":"resource","")}
+    NoesisButton {text:root.section==="Lab"?"+ Experiment":root.section==="Practice"?"+ Problem":"+ Resource";hint:"Ctrl+N";visible:root.section!=="Today";onClicked:createDialog.begin(root.section==="Lab"?"experiment":root.section==="Practice"?"task":"resource","")}
     NoesisButton {text:"+ Path";visible:root.section==="Learn";onClicked:createDialog.begin("path","")}
     NoesisButton {text:"From Zotero";visible:root.section==="Research";onClicked:zoteroDialog.open()}
     NoesisButton {text:"+ Capture";primary:true;onClicked:root.quickCapture()}

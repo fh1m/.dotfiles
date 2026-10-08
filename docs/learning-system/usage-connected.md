@@ -1,7 +1,8 @@
 # Connected Noesis usage
 
 Open with Super+Ctrl+O or `noesis window`. Ctrl+1–6 selects Today, Learn,
-Research, Practice, Lab and Library. Ctrl+K searches; Ctrl+Shift+N focuses capture.
+Research, Practice, Lab and Library. Ctrl+K searches; Ctrl+Shift+N focuses capture. Ctrl+N creates the current
+workspace’s resource, problem or experiment; Ctrl+Enter saves its dialog.
 Drag the pane divider to adjust the list/context ratio. The previous UI remains
 available from the window header. The ScreenPad companion appears for a selected
 context; closing the main window stops its worker and filesystem watch.
@@ -87,7 +88,7 @@ editing and reader annotation use the specialist applications via Open note/sour
 
 Quick capture accepts text immediately. Ctrl+Shift+N opens it; Ctrl+Enter saves.
 Drafts remain machine-local, private and target-scoped; they are not finalized
-learning history. Capture and activity operation receipts distinguish committed,
+learning history. Capture, record creation and activity operation receipts distinguish committed,
 not committed and uncertain interruption outcomes. An unavailable committed record
 requires inspection instead of blind recreation. Unfinished attempts recover their
 identity after reopening, moves and cache rebuilds.

@@ -46,6 +46,44 @@ class Workflows(unittest.TestCase):
         record_activity(self.root,first['path'],'disposition',state='active')
         index=self.index();self.assertIn(task['id'],{row['id'] for row in next_actions(index)})
 
+    def test_record_receipt_recovers_publication_before_acknowledgement_and_move(self):
+        import noesis.models as model_module
+        operation=str(uuid.uuid4())
+        real_publish=model_module.publish
+        def interrupted(path,text,expected=None):
+            if path.suffix=='.json' and json.loads(text).get('status')=='committed':
+                raise OSError('Interrupted after record publication')
+            return real_publish(path,text,expected)
+        with patch.object(model_module,'publish',side_effect=interrupted):
+            with self.assertRaises(OSError):create(self.root,'question','A durable question','Why?',operation_id=operation)
+        receipt=operation_status(self.root,operation)
+        self.assertEqual(receipt['status'],'committed');self.assertEqual(len(receipt['records']),1)
+        record=receipt['records'][0];moved=self.root/'Moved question.md'
+        (self.root/record['path']).rename(moved)
+        retry=create(self.root,'question','A durable question','Why?',operation_id=operation)
+        self.assertEqual(retry['id'],record['id']);self.assertEqual(retry['path'],'Moved question.md')
+        with self.assertRaisesRegex(ValueError,'changed record content'):
+            create(self.root,'question','A durable question','Changed explanation',operation_id=operation)
+        moved.unlink()
+        self.assertTrue(operation_status(self.root,operation)['record_unavailable'])
+        with self.assertRaisesRegex(ValueError,'inspect recovery'):
+            create(self.root,'question','A durable question','Why?',operation_id=operation)
+
+    def test_record_receipt_recovers_before_publication_without_changing_parent_order(self):
+        import noesis.models as model_module
+        parent=create(self.root,'resource','Ordered course',fields={'source_kind':'course'})
+        operation=str(uuid.uuid4());real_publish=model_module.publish
+        def interrupted(path,text,expected=None):
+            if path.suffix=='.md':raise OSError('Interrupted before record publication')
+            return real_publish(path,text,expected)
+        with patch.object(model_module,'publish',side_effect=interrupted):
+            with self.assertRaises(OSError):create(self.root,'unit','First lesson',parent_id=parent['id'],operation_id=operation)
+        self.assertEqual(operation_status(self.root,operation)['status'],'uncertain')
+        create(self.root,'unit','Another lesson',parent_id=parent['id'],order=10)
+        retry=create(self.root,'unit','First lesson',parent_id=parent['id'],operation_id=operation)
+        self.assertEqual(retry['parent_ref']['order'],0)
+        self.assertEqual(operation_status(self.root,operation)['status'],'committed')
+
     def test_problem_statement_projection_does_not_expose_reference(self):
         task=create(self.root,'task','Reconstruct equation','## Problem statement\n\nDerive the expression independently.\n\n## Reference\n\nThe saved solution.')
         view=overview(self.index(),task['id'])
