@@ -6,8 +6,8 @@ work; the presence of a module does not complete its milestone.
 
 ## Observed verification, 2026-10-09
 
-- Sixteen existing factory/import tests and forty-seven new core/workflow/recovery/
-  watcher/Zotero/capture/reader/scope tests pass: 63 total. Fixtures are synthetic and disposable.
+- Sixteen existing factory/import tests and fifty-six new core/workflow/recovery/
+  watcher/Zotero/capture/reader/scope tests pass: 72 total. Fixtures are synthetic and disposable.
 - Capture, paged query, progress and attempt CLI operations pass with PATH containing
   no Obsidian executable. Native note opening remains a separate application action.
 - Merged progress rejects current-only overflow, lowered totals, negative counts,
@@ -195,7 +195,7 @@ Replacement/fork and full cross-vault reference resolution remain unfinished.
 The native fixture now opens a six-lecture course with two problem sets and one
 project using actual Ctrl+K → text → Down → Enter. Its two consumed lectures leave
 assignment/project outcomes untouched. At 1000×650 Qt units, the context has a
-340-unit scroll viewport for 590 units of content instead of overflowing fixed
+340-unit scroll viewport for 548 units of content instead of overflowing fixed
 panels. Lecture/read completion and pause/resume are explicit actions; paused
 ownership suppresses pending work, while a shared unit with an active parent stays
 available. New problems have a separate declared statement section; protected
@@ -210,7 +210,7 @@ acceptance. The course fixture uses CLI setup; it does not prove UI course creat
 Schema checks refuse future-version downgrades while keeping their records readable.
 Migration preserves original CRLF body bytes and backup bytes. A 10,000-event
 causal history reduces without recursive traversal or quadratic dependency setup.
-The full automated suite passes 63 tests (47 connected-core and 16 compatibility).
+The full automated suite passes 72 tests (56 connected-core and 16 compatibility).
 
 Record-creation fault checks interrupt before and after atomic publication, retry
 after a move, retain the reserved identity/parent order, refuse changed payloads,
@@ -220,3 +220,39 @@ provide a discoverable creation action in each workspace, including Practice.
 The native check creates a problem through Ctrl+4 → Ctrl+N → title → Ctrl+Enter
 and verifies one saved record with its committed receipt. QML logs contain no
 errors or warnings for the tested main/compact/companion lifecycle.
+
+
+## Connected research/development slice — 2026-10-09
+
+Nine additional checks cover observed Git revisions, dirty and uncommitted trees,
+missing storage, atomic project creation failure, receipts after disconnection,
+stable capture links after moves, native Neovim vault binding, and stale reader
+identity refusal. Neovim's actual headless runtime executes the bridge test; the
+external launch command itself is tested as an argument vector, not as proof of a
+complete native editing session.
+
+The disposable native desktop completes paper → question → implementation → run
+→ comparison → paper using actual keyboard delivery, dialogs and history. It checks
+all parent identities and the comparison's retained Git snapshot. Setup creates
+only a synthetic local repository; no CLI repairs are used for the connected route.
+The route does not yet prove paper PDF annotation, populated Zotero lifecycle,
+execution/reproduction, or a container handoff. Those remain release gates.
+
+Context Actions replaces permanently visible administrative buttons. Related
+questions and implementations are visible beside the source context. Comparison
+and review dialogs capture initiating vault/target IDs; reader opening refuses a
+stale target and reports a native handoff rather than raw JSON. Git inspection uses
+bounded read commands with optional locks disabled; no code is automatically run.
+
+The measured connected-record route uses 28 keyboard actions plus 161 typed
+characters (including the repository path), with no filename hunting or metadata
+copying. Artificial key-delivery delays are not a human resumption-time metric.
+Research excludes course/book resources; Learn retains their units and concepts;
+Library remains universal. This classification has explicit query tests.
+
+After the source-kind query changes, current concept benchmarks are: 100 records,
+0.039 s cold / 1.122 ms warm query p95 / 117.509 ms capture; 1,000 records, 0.347 s /
+3.299 ms / 148.592 ms; 10,000 records, 3.784 s / 30.010 ms / 132.470 ms. Summary
+responses remain below 7,809 bytes. These replace the earlier table for this slice;
+Qt frame timing, populated native readers and complete lifecycle memory measurements
+remain unfinished. Synthetic before/after research captures are in visual-language.md.

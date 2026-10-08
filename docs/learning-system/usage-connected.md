@@ -123,3 +123,23 @@ New problems keep an explicit Problem statement section separate from reference
 solutions. Protected preview shows only that declared section; legacy explanations
 stay hidden until a recorded reveal. Declared problem URLs open their source.
 Search accepts exact DOI forms and stable record UUIDs as well as ordinary words.
+
+
+Research now keeps related questions and implementations in the reading context.
+Actions (Ctrl+.) opens a keyboard list: arrows select, Enter acts, Escape dismisses.
+Start implementation creates a connected project; an existing Git directory is
+optional. Open implementation uses the existing terminal and Neovim. It does not
+execute the repository's code. A run created under that implementation records the
+observed commit, working-tree state and observation time; missing storage remains
+explicitly unavailable. A dirty commit reference does not contain uncommitted edits.
+
+Neovim launched this way keeps the initiating vault and record identity. Observation
+and gold-snippet capture mappings connect their new records to that implementation,
+even after the global active vault changes. Outside this handoff, the existing
+active-vault behavior remains available. Container/environment profiles are still a
+separate unfinished acceptance gate.
+
+Compare prediction and observation starts with the run's original hypothesis.
+Ctrl+Enter saves the comparison and its code snapshot. Questions, implementations,
+runs and artifacts remain separate notes with durable relationships. Alt+Left and
+Alt+Right return through working contexts without searching for filenames.

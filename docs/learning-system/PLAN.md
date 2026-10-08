@@ -97,3 +97,9 @@ frontiers, explicit review plans, local Zotero read/import projections, native
 reader locators, child-owned parent references and capture commit receipts.
 Native acceptance and remaining journey gaps stay in validation.md. Research,
 course and Lab are not declared complete because their primitives exist.
+
+
+The next research/development slice adds contextual action navigation, visible
+questions/implementations, an existing-repository Neovim handoff, code snapshots
+for experiment runs, and initiating-scope Neovim captures. Native connected-record
+acceptance passes; full reader/annotation/execution journeys remain in the ledger.

@@ -86,3 +86,16 @@ region, moves capture to a short dialog, separates timeline/connections, and mak
 the inspector optional. Pink and existing Wrayth type remain consistent. See
 validation.md and scripts/check-noesis-desktop.py for behavioral evidence; these
 images alone do not establish that a journey works.
+
+
+## Research context comparison
+
+[Before: permanent operations](assets/research-before.png) ·
+[After: connected questions and implementation](assets/research-after.png).
+
+The same synthetic paper, question and implementation are present in both captures
+at 1000×650 Qt units. The updated context makes existing work discoverable alongside
+the source; creation and administrative actions move into a keyboard action list.
+Source opening and exact reading position remain immediately available. Resource
+labels reflect the medium, and courses belong in Learn rather than Research.
+The native connected-record route is verified separately in validation.md.
