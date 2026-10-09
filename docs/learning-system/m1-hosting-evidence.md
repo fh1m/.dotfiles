@@ -179,3 +179,18 @@ The original restored native reader gate remains unresolved; no timeout increase
 or empty-profile pass clears it.
 
 No personal-vault mutations or live installation have occurred.
+
+
+## Superseding live rollout evidence, 2026-10-10
+
+The product recovery slice deployed the standalone host, desktop registration and
+Wrayth bridge with scoped backups. Production AppId/ShellId are
+`org.fh1m.Noesis`; canonical config is `~/.config/quickshell/noesis/shell.qml`.
+The previous embedded launcher was still running before this rollout despite
+the pushed source. Wrayth retained its original PID through bridge reloads.
+Native production launch, Hide (worker/watch stopped), same-instance resume,
+Close and app restart passed. Study is workspace 7, presented between Code and
+Sim without changing existing IDs; the app uses actual full-screen mode.
+See [product recovery](product-recovery.md) for exact limitations and retained
+fixture screenshots. This supersedes the earlier unverified-live-rollout status,
+but does not close the Zotero restore or human learner-trial gates.

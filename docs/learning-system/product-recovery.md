@@ -114,7 +114,26 @@ as cosmetic. The implemented slice is reviewable; it is not a V1 completion clai
 
 ## Live rollout
 
-Pending final scoped installation and production identity/lifecycle verification.
+Scoped installation is live. The canonical production config is
+`~/.config/quickshell/noesis/shell.qml`, with AppId and ShellId
+`org.fh1m.Noesis`; its desktop entry uses the same identity. The actual launcher,
+Super+Ctrl+O binding and ScreenPad bridge route to this independent host.
+The embedded writable host is removed from normal Wrayth composition.
+
+Production proof: one independent instance opened on workspace 7 (`Study`) in
+actual full-screen mode at 1920x1080 logical. Cold launch to visible worker/watch
+was 1.43s; one warm Hide/resume sample was 0.669s; Close completed in 0.35s.
+These are single observations, not percentile budgets. Observed process RSS was
+174MiB and PSS 122MiB, not incremental system-memory cost. Five-minute idle,
+long-run memory trends and physical input latency remain unmeasured this slice.
+
+Private production screenshots were inspected but are not committed. Wrayth
+remained PID 2146193 through hot reloads and independent app shutdown/restart.
+The three existing external windows retained their addresses and workspaces;
+all 50 personal vault Markdown hashes remained unchanged. Ten native lifecycle
+fault cases passed again after the window-state changes. There was no portal
+identity registration warning in production; the log did contain a Qt base64
+API deprecation warning. The learner trial and full release gates remain open.
 The installer records backups and hash-checked rollback in
 `~/.local/state/noesis-deployments/`; machine-local preferences were separately
 preserved in a permission-restricted rollout directory. Production build identity
