@@ -326,6 +326,33 @@ class Workflows(unittest.TestCase):
         self.assertNotIn(task['id'],[r['id'] for r in next_actions(index)])
         self.assertEqual(index.timeline(task['id'])[0]['assistance'],['reference'])
 
+    def test_planned_check_assessment_is_explicit_and_preserved(self):
+        from datetime import datetime,timezone,timedelta
+        task=create(self.root,'task','Reconstruct a mechanism')
+        plan=record_activity(self.root,task['path'],'review-plan','Explain without notes',action='schedule',stage='later')
+        path=self.root/plan['path'];props,body=parse(path.read_text())
+        props['due']=(datetime.now(timezone.utc)-timedelta(days=1)).isoformat()
+        path.write_text(render(props,body))  # Disposable due-time fixture, not learner data.
+        index=self.index()
+        self.assertIn(task['id'],[row['id'] for row in next_actions(index)])
+        unrelated=record_activity(self.root,task['path'],'attempt','Unrelated practice',outcome='succeeded',assistance=['none'])
+        index.reconcile();self.assertIn(task['id'],[row['id'] for row in next_actions(index)])
+        incomplete=record_activity(self.root,task['path'],'attempt-start',mode='derive',review_plan_id=plan['id'])
+        record_activity(self.root,task['path'],'attempt','Interrupted reconstruction',attempt_id=incomplete['id'],outcome='incomplete',assistance=['none'])
+        index.reconcile();self.assertIn(task['id'],[row['id'] for row in next_actions(index)])
+        start=record_activity(self.root,task['path'],'attempt-start',mode='derive',review_plan_id=plan['id'])
+        result=record_activity(self.root,task['path'],'attempt','Missing an assumption',attempt_id=start['id'],outcome='failed',assistance=['none'])
+        self.assertEqual(result['review_plan_id'],plan['id'])
+        index.reconcile();self.assertNotIn(task['id'],[row['id'] for row in next_actions(index)])
+        with self.assertRaises(ValueError):record_activity(self.root,task['path'],'attempt-start',mode='derive',review_plan_id=plan['id'])
+        other=create(self.root,'task','Another task')
+        with self.assertRaises(ValueError):record_activity(self.root,other['path'],'attempt-start',mode='derive',review_plan_id=plan['id'])
+        self.assertNotIn('review_plan_id',unrelated)
+        index.close()
+        rebuilt=self.index()
+        self.assertEqual(next(event for event in rebuilt.timeline(task['id']) if event['id']==result['id'])['review_plan_id'],plan['id'])
+        self.assertNotIn(task['id'],[row['id'] for row in next_actions(rebuilt)])
+
     def test_reveal_is_retained_and_independent_retry_gets_new_identity(self):
         task = create(self.root, 'task', 'Protected problem')
         started = record_activity(self.root, task['path'], 'attempt-start', mode='derive')

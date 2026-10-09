@@ -199,6 +199,11 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
    plans=[event for event in cli('timeline',transfer['id'])['activities'] if event['event']=='review-plan']
    assert len(plans)==1 and plans[0]['stage']=='later' and plans[0]['action']=='schedule',plans
    print('Native changed-task transfer: separate identity, independent transfer attempt and learner-selected later reconstruction plan')
+   action(5);assert state()['attempt'] and state()['reference_hidden'],state()
+   type_text('reconstructed changed solution without notes');reported(4);action(0)
+   reviewed=[event for event in cli('timeline',transfer['id'])['activities'] if event['event']=='attempt' and event.get('review_plan_id')==plans[0]['id']]
+   assert len(reviewed)==1 and reviewed[0]['assistance']==['none'] and reviewed[0]['outcome']=='succeeded'
+   print('Native selected check performed explicitly: protected reconstruction and outcome link retained; no automatic capability award')
    shortcut('CTRL','2');shortcut('CTRL','k');type_text('scoped');shortcut('','Down');shortcut('','Return');time.sleep(.5)
    assert state()['selected']==str(capability_file.relative_to(vault))
    client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==process.pid and c['title'].startswith('Noesis'))
@@ -211,7 +216,11 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
    recovered=[event for event in cli('timeline',problem['id'])['activities'] if event['event']=='attempt']
    assert [(event['outcome'],event['assistance']) for event in recovered]==[('failed',['none']),('succeeded',['reference']),('succeeded',['none'])]
    assert len([event for event in cli('timeline',capability['id'])['activities'] if event['event']=='capability-decision'])==1
-   print('Three attempts and scoped evidence decision recovered after cache deletion and application restart')
+   restored_transfer=cli('timeline',transfer['id'])['activities']
+   assert len([event for event in restored_transfer if event['event']=='attempt'])==2
+   assert len([event for event in restored_transfer if event.get('review_plan_id')==plans[0]['id'] and event['event']=='attempt'])==1
+   assert any(event['id']==plans[0]['id'] for event in restored_transfer)
+   print('Original attempts, scoped decision, transfer and performed check recovered after cache deletion and application restart')
 
 
 

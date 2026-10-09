@@ -105,6 +105,12 @@ Item {
  function submitCapture(){if(root.captureVault!==Oasis.activeVault){Oasis.error="Vault changed. Return to the capture’s vault before saving.";return;}root.captureSubmission=capture.text;Oasis.run(["capture",capture.text]);}
  function courseSummary(){let c=workflow.counts;if(!c)return "";let material=[],assessment=[];if(c.lectures.total)material.push("Lectures "+c.lectures.consumed+" / "+c.lectures.total+" viewed");if(c.readings.total)material.push("Readings "+c.readings.consumed+" / "+c.readings.total+" read");if(c.other_units.total)material.push((selected.source_kind==="book"?"Chapters / sections ":workflow.kind==="path"?"Path steps ":"Other units ")+c.other_units.consumed+" / "+c.other_units.total+" consumed");if(c.assignments.total)assessment.push((selected.source_kind==="book"?"Exercises ":"Assignments ")+c.assignments.reported_success+" / "+c.assignments.total+" reported success");if(c.projects.total)assessment.push("Projects "+c.projects.reported_success+" / "+c.projects.total+" reported success");return [material.join(" · "),assessment.join(" · ")].filter(line=>line!=="").join("\n")||"No outline recorded yet. Add lessons, readings or problems as you work.";}
  function studyUpdate(status){let state={};if(position.text.trim()||!status)state=locatorKind.currentText==="location"?{position:position.text}:{locator:{kind:locatorKind.currentText,value:position.text}};if(root.selected.source_kind==="paper"||root.selected.type==="paper")state.reading_pass=readingPass.currentText;if(status)state.status=status;return state;}
+ function pendingCheck(){
+  let referenced=new Set();history.forEach(event=>{if(event.previous_plan)referenced.add(event.previous_plan);(event.resolves_plans||[]).forEach(id=>referenced.add(id));});
+  let heads=history.filter(event=>event.event==="review-plan"&&!referenced.has(event.id));
+  if(heads.length!==1||heads[0].action==="retire"||history.some(event=>["attempt","review"].includes(event.event)&&["failed","partial","succeeded"].includes(event.outcome)&&event.review_plan_id===heads[0].id))return null;
+  return heads[0];
+ }
  function contextActions(){
   let items=[];let add=(action,label,reason)=>items.push({action:action,label:label,reason:reason||""});let kind=selected.type;
   if(!selected.id||Oasis.working)return items;
@@ -124,10 +130,12 @@ Item {
   if(kind==="path")add("path","Use path for Today","Suggestions use this path’s frontier and gates");
   if(selected.bibliography_projection&&!referenceHidden)add("bibliography","Open bibliography","Zotero-owned projection stays separate from your analysis");
   if(kind==="artifact")add("checksum","Check checksum","Inspect the referenced artifact without changing it");
+  if(["task","problem"].includes(kind)&&!activeAttempt&&pendingCheck())add("perform-check","Perform planned check","Start a protected assessment of your selected check; saving the outcome preserves its result");
   return items;
  }
  function contextAction(action){
   if(action==="evidence"){let entry=history.slice().reverse().find(event=>["attempt","review"].includes(event.event));if(entry)evidenceDialog.begin(entry);}
+  else if(action==="perform-check"){let plan=pendingCheck();if(plan){contextTab="Work";saveEvent("attempt-start",{mode:mode.currentText,scope:selected.title||selected.path,review_plan_id:plan.id});}}
   else if(action==="transfer")createDialog.begin("task",selected.id,true);
   else if(action==="question")createDialog.begin("question",selected.id);
   else if(action==="implementation")createDialog.begin("project",selected.id);
