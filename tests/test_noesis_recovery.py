@@ -87,5 +87,32 @@ class Recovery(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'Unsafe'):legacy.restore_reader(snapshot,self.home/'malicious')
         self.assertFalse((self.home/'malicious').exists())
 
+    @unittest.skipUnless(shutil.which('restic'), 'Restic package required')
+    def test_reader_snapshot_encrypted_restore_and_repeated_backup(self):
+        reader=self.home/'Zotero';reader.mkdir()
+        with closing(sqlite3.connect(reader/'zotero.sqlite')) as db,db:
+            db.execute('CREATE TABLE annotations(id TEXT,page INTEGER,comment TEXT)')
+            db.execute('INSERT INTO annotations VALUES(?,?,?)',('native-key',3,'Reconstruct independently'))
+        (reader/'paper.pdf').write_bytes(b'%PDF-1.4 synthetic fixture')
+        (reader/'recording.mcap').write_bytes(b'external recording')
+        with patch.object(legacy,'STATE',self.home/'snapshots'):
+            snapshot=legacy.backup_readers([reader])[0]
+        self.assertNotIn('recording.mcap',snapshot['files'])
+        self.assertIn('recording.mcap',snapshot['external'])
+        report=recovery.backup(self.root,self.home/'restic',[snapshot['snapshot']])
+        restored=self.home/'recovered'
+        result=recovery.restore(report['snapshot_id'],restored,self.home/'restic')
+        reader_copy=self.home/'reader-copy'
+        legacy.restore_reader(Path(result['reader_states'][0]['path']),reader_copy)
+        with closing(sqlite3.connect(reader_copy/'zotero.sqlite')) as db:
+            self.assertEqual(db.execute('SELECT * FROM annotations').fetchone(),('native-key',3,'Reconstruct independently'))
+        second=recovery.backup(restored,self.home/'restic')
+        second_copy=self.home/'second-recovery';again=recovery.restore(second['snapshot_id'],second_copy,self.home/'restic')
+        self.assertEqual(len(again['reader_states']),1)
+        with closing(sqlite3.connect(Path(again['reader_states'][0]['path'])/'zotero.sqlite')) as db:
+            self.assertEqual(db.execute('SELECT page FROM annotations').fetchone()[0],3)
+        self.assertEqual((second_copy/'prediction.md').read_text(),(self.root/'prediction.md').read_text())
+
+
 
 if __name__ == '__main__':unittest.main()

@@ -115,7 +115,7 @@ fixture acceptance are reported separately. **The first release is not complete.
 
 | Milestone | Accepted implementation / evidence | Remaining release gate |
 |---|---|---|
-| P0 | Existing safe writes/receipts/backup tests retained; executable calibration restored through Restic into a distinct location. | Complete interruption/concurrency matrix and meaningful native reader-state restoration. |
+| P0 | Existing safe writes/receipts/backup tests retained; executable calibration restored through Restic. Populated native Zotero annotations and PDF restored through encrypted recovery and reader restart; repeated backups preserve reader state. | Complete interruption/concurrency matrix and verified retention policy. |
 | P1 | Opt-in bounded registered-vault Continue/Search; results carry owner identities; native selection/capture writes only to owner. Explicit restored-location replacement and new-identity fork, with interruption tests. Nonblocking cross-vault references survive moves. | Cross-vault contextual gate/deadlock policy and GUI relationship creation; disappearance/reappearance and conflict acceptance at larger scale. |
 | P2 | Populated isolated Zotero 10 profile with genuine Transformer PDF, native annotation edits/deletion, three retained import projections, stable resource UUID and learner prose. Installed API version/annotation omissions repaired. | Native PDF page/annotation handoff and equation → implementation → actual paper verification journey. |
 | P3 | Reviewable outline import with modules, six lectures, readings, two assignments and project; interruption retry avoids duplicates, consumption and assessment separate. Native import dialog accepted. | Learner-facing reorder/replacement controls and complete lesson/prerequisite/assignment/resume journey. |
@@ -123,7 +123,7 @@ fixture acceptance are reported separately. **The first release is not complete.
 | P5 | Executed trusted calibration with generated data, Git revision, units, CSV/figure references, contradictory original hypothesis, held-out check, unavailable-artifact report and restored comparisons. | Native Lab measurement/artifact composition and complete tool handoff. This is not hardware evidence or paper reproduction. |
 | P6 | Proportional typography retained; display-title projections, grouped Learn, bounded preview, visible statement and contextual controls. Address-scoped Workspace/Tiled/Window controls, compact companion and repeated lifecycle measurements. | Full corrected desktop run; complete realistic visual-state matrix, disconnected ScreenPad, physical input latency and sustained idle/shell stability. |
 | P7 | Completed/retired/parked material excluded from Continue; owner-scoped suggestions retain reasons. | All journey-specific recommendation cases and learner priority controls. |
-| P8 | Automated suites, repeated temporary-home installation and privacy separation retained; 10k index benchmark remains within budget. | Full native/recovery/portability acceptance, Distrobox bridge and configured off-device destination. |
+| P8 | Automated suites, repeated temporary-home installation and privacy separation retained; 10k index benchmark remains within budget. | Full native/recovery/portability acceptance and Distrobox bridge. Off-device destination remains deliberately unconfigured; preservation strategy is documented. |
 
 No real vault was populated, relocated, merged or migrated for these tests.
 Optional tracking integrations stay outside this release. Quickshell remains the

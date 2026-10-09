@@ -78,8 +78,39 @@ with tempfile.TemporaryDirectory(prefix='noesis-zotero-acceptance-') as folder:
    assert parse(path.read_text())[1].endswith(analysis)
    index=Index(vault);index.reconcile();assert index.record(first['resource_id'])['props']['zotero_attachment_key']==attachment;index.close()
    print('PASS: genuine PDF, native annotation edits/deletion, three retained projections, stable resource UUID and preserved learner prose; production imports use GET only.')
+   recovered_annotation=create({'itemType':'annotation','parentItem':attachment,'annotationType':'highlight','annotationText':'Restoration acceptance','annotationComment':'Recover the original question at page three.','annotationColor':'#ffd400','annotationPageLabel':'3','annotationSortIndex':'00002|000100|00000','annotationPosition':json.dumps({'pageIndex':2,'rects':[[50,400,400,420]]})})
+   # Close only the isolated reader before the fresh consistent snapshot.
+   os.killpg(process.pid,signal.SIGTERM);process.wait(timeout=10)
+   import importlib.machinery,importlib.util
+   from unittest.mock import patch
+   from noesis.recovery import backup,restore
+   loader=importlib.machinery.SourceFileLoader('reader_backup',str(repo/'home/.local/bin/sensei-learning-backup'))
+   spec=importlib.util.spec_from_loader(loader.name,loader);reader_backup=importlib.util.module_from_spec(spec);loader.exec_module(reader_backup)
+   with patch.object(reader_backup,'STATE',profile/'snapshots'):
+    snapshot=reader_backup.backup_readers([data])[0]
+   assert snapshot['database_sources']['zotero.sqlite']['mode']=='sqlite-online-backup'
+   preserved=backup(vault,profile/'restic',[snapshot['snapshot']])
+   result=restore(preserved['snapshot_id'],profile/'restored-vault',profile/'restic')
+   restored_data=profile/'restored-data'
+   reader_backup.restore_reader(Path(result['reader_states'][0]['path']),restored_data)
+   preferences['extensions.zotero.dataDir']=str(restored_data)
+   # The snapshot belongs to this fixture; never overwrite a live real reader.
+   (profile/'prefs.js').write_text('\n'.join('user_pref('+json.dumps(k)+', '+json.dumps(v)+');' for k,v in preferences.items()))
+   process=subprocess.Popen([str(Path.home()/'.local/bin/zotero'),'--new-instance','--profile',str(profile)],stdout=log,stderr=log,start_new_session=True)
+   for _ in range(100):
+    try:
+     with opener.open('http://127.0.0.1:23119/api/',timeout=1) as r:server=r.headers['Zotero-Server-ID']
+     break
+    except OSError:time.sleep(.1)
+   else:raise RuntimeError('Restored reader startup timed out')
+   native=request('users/0/items/'+recovered_annotation)['data']
+   assert native['annotationPageLabel']=='3' and native['annotationComment']=='Recover the original question at page three.'
+   native_pdf=request('users/0/items/'+attachment)['links']['enclosure']['href']
+   from urllib.parse import urlsplit,unquote
+   restored_pdf=Path(unquote(urlsplit(native_pdf).path));assert restored_pdf.is_relative_to(restored_data) and restored_pdf.read_bytes()==pdf
+   print('PASS: encrypted Restic snapshot restored into a new reader directory; native Zotero restart recovered the annotation, page label, question and original PDF.')
    print('Reader page/annotation navigation is a separate native acceptance gate.')
   finally:
-   os.killpg(process.pid,signal.SIGTERM)
+   if process.poll() is None:os.killpg(process.pid,signal.SIGTERM)
    try:process.wait(timeout=10)
    except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);process.wait()
