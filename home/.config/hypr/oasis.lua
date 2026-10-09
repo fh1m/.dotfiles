@@ -1,4 +1,8 @@
 -- Noesis integration; sourced by custom-setup.lua. No blur or idle work.
+-- Scoped live reapplication must not duplicate shortcut handlers.
+hl.unbind("SUPER + CTRL + O")
+hl.unbind("SUPER + 7")
+hl.unbind("SUPER + SHIFT + 7")
 hl.bind("SUPER + CTRL + O", hl.dsp.exec_cmd("@HOME@/.local/bin/noesis window"))
 hl.window_rule({
  name = "oasis-neovim-surface",
