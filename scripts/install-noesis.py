@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Scoped Noesis deployment and hash-checked rollback; dry run by default."""
-import argparse,datetime,hashlib,importlib.util,json,os,shutil
+import argparse,datetime,hashlib,importlib.util,json,os,shutil,subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('installer',ROOT/'scripts/install.py');installer=importlib.util.module_from_spec(spec);spec.loader.exec_module(installer)
@@ -17,6 +17,19 @@ def install(home,apply=False,bridge=False):
  targets=[(str(p.relative_to(ROOT/'home')),installer.render(p.read_bytes(),home,'zenbook'),p.stat().st_mode&0o777,None) for p in files(bridge)]
  targets.append(('.config/quickshell/noesis/ui',None,None,'../../../.local/share/sensei-learning/ui'))
  if bridge:targets.append(('.config/quickshell/wrayth/noesis-ui',None,None,'../../../.local/share/sensei-learning/ui'))
+ revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+ hashes={relative:hashlib.sha256(data).hexdigest() for relative,data,mode,link in targets if data is not None}
+ build={'version':1,'commit':revision,'files':hashes,'source_dirty':bool(subprocess.check_output(['git','status','--porcelain','--','home','scripts/install-noesis.py'],cwd=ROOT,text=True).strip())}
+ targets.append(('.local/share/sensei-learning/build.json',(json.dumps(build,sort_keys=True,indent=2)+'\n').encode(),0o644,None))
+ # Install shared dependencies before the live shell entry can reload them.
+ def phase(target):
+  path=target[0]
+  if path=='.config/quickshell/wrayth/shell.qml':return 4
+  if target[3]:return 2
+  if path.startswith('.config/quickshell/wrayth/'):return 3
+  if path.startswith('.local/share/sensei-learning/noesis/'):return 0
+  return 1
+ targets.sort(key=phase)
  for relative,data,mode,link in targets:
   dest=home/relative
   if link and dest.is_symlink() and os.readlink(dest)==link:continue
