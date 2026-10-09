@@ -1,0 +1,43 @@
+{
+  "capture": "Native Qt Quick window-content render; excludes other desktop layers",
+  "fixture_only": true,
+  "baseline": "feee017",
+  "captures": [
+    {
+      "image": "course-before.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-before.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "practice-before.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    }
+  ]
+}

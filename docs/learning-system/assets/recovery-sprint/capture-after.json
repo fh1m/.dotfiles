@@ -1,0 +1,691 @@
+{
+  "capture": "Native Qt Quick window-content render; excludes other desktop layers",
+  "fixture_only": true,
+  "baseline": null,
+  "captures": [
+    {
+      "image": "course-after.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-after.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1920-1.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "workspace",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1920-1.25.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "workspace",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1920-1.5.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "workspace",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1920-2.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "workspace",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1440-1.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1440-1.25.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1440-1.5.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1440-2.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1000-1.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1000-1.25.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1000-1.5.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-1000-2.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-500-1.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-500-1.25.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-500-1.5.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-500-2.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1920-1.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "workspace",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1920-1.25.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "workspace",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1920-1.5.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "workspace",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1920-2.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "workspace",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1440-1.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1440-1.25.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1440-1.5.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1440-2.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1000-1.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1000-1.25.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1000-1.5.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-1000-2.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-500-1.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-500-1.25.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-500-1.5.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "course-500-2.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Learn"
+      }
+    },
+    {
+      "image": "practice-after.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1920-1.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "workspace",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1920-1.25.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "workspace",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1920-1.5.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "workspace",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1920-2.png",
+      "state": {
+        "width": 1916,
+        "height": 1032,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "workspace",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1440-1.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1440-1.25.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1440-1.5.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1440-2.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1000-1.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1000-1.25.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1000-1.5.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-1000-2.png",
+      "state": {
+        "width": 1000,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-500-1.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-500-1.25.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.25,
+        "reading_scale": 1.25,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-500-1.5.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1.5,
+        "reading_scale": 1.5,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-500-2.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-compact-statement.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-compact-reasoning.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-compact-actions.png",
+      "state": {
+        "width": 500,
+        "height": 650,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "normal",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "research-current.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Research"
+      }
+    },
+    {
+      "image": "lab-current.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Lab"
+      }
+    },
+    {
+      "image": "today-current.png",
+      "state": {
+        "width": 1440,
+        "height": 880,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 1,
+        "reading_scale": 1,
+        "presentation": "normal",
+        "section": "Today"
+      }
+    }
+  ]
+}

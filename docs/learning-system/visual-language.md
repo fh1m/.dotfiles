@@ -8,8 +8,8 @@ not replace the roadmap or equate a pleasing screenshot with working journeys.
 | Observed pattern | Noesis decision | Reference |
 |---|---|---|
 | Linear separates orientation from content and reduces the prominence of supporting controls. | Quiet navigation; predictable location header; a focused context with optional inspector. Strong pink is reserved for focus, selection and a primary action. | [Linear design refresh](https://linear.app/now/behind-the-latest-design-refresh) |
-| Linear's peek lets someone inspect a row without losing the surrounding list. Its screenshot was inspected alongside the documented keyboard behavior. | A selected context preserves the work list and navigation history. Read, Work, History and Connections disclose different operations. | [Peek](https://linear.app/docs/peek) |
-| Notion offers side, center and full-page opening according to view and purpose. | Contexts open alongside a list; short capture/creation flows use a centered dialog; rich technical editing opens in the owning application. | [Database view layouts](https://www.notion.com/help/views-filters-and-sorts) |
+| Linear's peek lets someone inspect a row without losing the surrounding list. Its screenshot was inspected alongside the documented keyboard behavior. | Opening a serious activity enters its working page. Returning to the collection restores selection and scroll; history and connections are contextual support. | [Peek](https://linear.app/docs/peek) |
+| Notion offers side, center and full-page opening according to view and purpose. | Serious contexts open as full working pages; short capture/creation flows use a centered dialog; rich technical editing opens in the owning application. | [Database view layouts](https://www.notion.com/help/views-filters-and-sorts) |
 | Raycast gives lists a predictable arrow/Enter/Escape grammar and separates actions from search results. | Arrow/Enter navigation; visible shortcuts; capture and contextual actions do not fill every list row. Existing Ctrl+K search remains stable. | [Keyboard behavior](https://manual.raycast.com/keyboard-shortcuts) |
 | Readwise Reader supports keyboard annotation and hiding sidebars to regain reading space. | Inspector and reference visibility are deliberate controls. Reference exposure is recorded, and an interrupted attempt remains recoverable. | [Reading and annotations](https://docs.readwise.io/reader/docs/faqs/highlights-tags-notes) |
 | Obsidian already distinguishes clean reading from editing and supports the technical content the learner owns. | Native Markdown previews give orientation. Equations, Canvas, diagrams and rich editing use Obsidian; Noesis does not pretend to replace it. | [Read and edit](https://obsidian.md/help/edit-and-read) |
@@ -25,14 +25,14 @@ Noesis tokens. It retains the desktop's dark/pink identity with explicit colors
 and fonts, without importing Wrayth's Theme, Appearance or service graph.
 
 - Type: 13 caption, 14 control, 15 general UI, 17 reading prose, 18 section,
-  22 page heading and 28 object title. Prose uses Adwaita Sans; code uses Iosevka.
+  22 page heading and 28 object title. UI and prose use the installed Zed Sans; code uses ZedMono Nerd Font Mono.
   Interface and reading scales are independent, adjustable through Settings to
   200%. Reflow and scrolling preserve critical actions at larger scales.
 - Space: 4 / 8 / 12 / 16 / 24 / 32 logical pixels. Normal controls are at least
   40 high; collection rows at least 64 and expand for important wrapped text.
-- Surfaces: black canvas and the two existing dark Wrayth surfaces. Rows use
+- Surfaces: Wrayth warm neutrals, #090807 outer shell, #141210 working content and #1e1b18 raised controls. Rows use
   whitespace and selection backgrounds, not a stack of bordered cards.
-- Borders: field affordances, focus and an actual pane boundary. An inactive
+- Borders: field bottom rules, focus, popups and an actual pane boundary. An inactive
   button does not need its own frame. Focus is visible for every control.
 - Pink: current selection, primary action and focus, with dark selection ink.
   Error, warning and success use distinct colors and textual labels. Ordinary
@@ -104,7 +104,7 @@ labels reflect the medium, and courses belong in Learn rather than Research.
 The native connected-record route is verified separately in validation.md.
 
 
-Interface prose now uses the installed Adwaita Sans, with the existing data font reserved for technical metadata. Today must explain its selected-vault scope and distinguish existing notes from recorded active work. No empty suggestion section or duplicate capture invitation should displace onboarding.
+Interface prose now uses the requested Zed Sans, with Zed Mono reserved for code and machine identifiers. Today must explain its selected-vault scope and distinguish existing notes from recorded active work. No empty suggestion section or duplicate capture invitation should displace onboarding.
 
 ## Actual screenshot corrections in this continuation
 
@@ -161,3 +161,18 @@ Recorded code/version metadata stays secondary. Original plots retain their visu
 fidelity rather than being recolored by the shell. Local figure rows are not
 duplicated in the generic relation list. Keyboard paging and specialist handoff
 keep long technical content usable without adding a browser renderer.
+
+## Product recovery slice, 2026-10-10
+
+Course and Practice now own their working compositions. Opening a serious activity
+removes the collection from the working area; a visible Back returns to it. Course
+keeps an expandable outline beside the lesson objective, source and local notes.
+Practice keeps statement and reasoning beside each other when they fit, and uses
+a reachable selector with separate scroll regions when they do not. At large text
+scales, supporting context and actions reflow or scroll; font size is preserved.
+Routine controls use filled affordances instead of rectangular outlines. Selected
+buttons also carry an underline; keyboard focus has a visible outline.
+
+See [retained native comparisons and remaining gates](product-recovery.md).
+Research, Lab and Today have inherited controls, palette and navigation; their
+purpose-built redesign remains unfinished.

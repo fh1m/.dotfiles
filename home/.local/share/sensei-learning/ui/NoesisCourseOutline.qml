@@ -17,6 +17,7 @@ ColumnLayout {
  property bool busy:false
  property bool editing:false
  property string selectedMember:""
+ property string activeLesson:""
  signal openMember(var row)
  signal moveMember(string identity,string direction)
  signal loadMore()
@@ -53,13 +54,11 @@ ColumnLayout {
    width:ListView.view.width
    spacing:NoesisStyle.sm
    RowLayout {Layout.fillWidth:true;spacing:NoesisStyle.sm
-    NoesisRow {Layout.fillWidth:true;title:modelData.title;subtitle:root.label(modelData);highlighted:root.editing&&list.currentIndex===index
-     onClicked:{if(root.busy)return;if(root.editing){list.currentIndex=index;root.selectedMember=modelData.id;list.forceActiveFocus();}else root.openMember(modelData);}}
-    NoesisButton {visible:modelData.unit_kind==="module"&&!root.editing;text:root.expandedModule===modelData.id?"Collapse":"Expand";enabled:!root.busy
-     onClicked:{if(root.expandedModule===modelData.id){root.expandedModule="";root.moduleRows=[];}else{root.expandedModule=modelData.id;root.moduleRows=[];root.expandModule(modelData,false);}}}
+    NoesisRow {Layout.fillWidth:true;title:(modelData.unit_kind==="module"?(root.expandedModule===modelData.id?"▾ ":"▸ "):"")+modelData.title;subtitle:modelData.unit_kind==="module"?"Lessons and assessments":root.label(modelData);highlighted:root.editing&&list.currentIndex===index
+     onClicked:{if(root.busy)return;if(root.editing){list.currentIndex=index;root.selectedMember=modelData.id;list.forceActiveFocus();}else if(modelData.unit_kind==="module"){if(root.expandedModule===modelData.id){root.expandedModule="";root.moduleRows=[];}else {root.expandedModule=modelData.id;root.moduleRows=[];root.expandModule(modelData,false);}}else root.openMember(modelData);}}
    }
    ColumnLayout {visible:root.expandedModule===modelData.id;Layout.fillWidth:true;Layout.leftMargin:NoesisStyle.lg;spacing:NoesisStyle.sm
-    Repeater {model:parent.visible?root.moduleRows:[];delegate:NoesisRow {required property var modelData;Layout.fillWidth:true;title:modelData.title;subtitle:root.label(modelData);onClicked:root.openMember(modelData)}}
+    Repeater {model:parent.visible?root.moduleRows:[];delegate:NoesisRow {required property var modelData;Layout.fillWidth:true;title:modelData.title;highlighted:root.activeLesson===modelData.id;subtitle:root.label(modelData);onClicked:root.openMember(modelData)}}
     NoesisButton {visible:root.moduleCursor!=="";text:"More lessons";enabled:!root.busy;onClicked:root.expandModule(modelData,true)}
     Text {visible:!root.busy&&root.moduleRows.length===0;text:"No lessons in this module yet.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;wrapMode:Text.Wrap;Layout.fillWidth:true}
    }

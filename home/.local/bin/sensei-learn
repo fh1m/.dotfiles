@@ -665,7 +665,7 @@ def main():
                 if args.context_json is not None:
                     context=json.loads(args.context_json)
                     if not isinstance(context,dict):raise ValueError('Context must be an object')
-                    state['context']={k:context.get(k) for k in ['id','path','title','type','vault','vault_id','session_state','surface','context_tab','read_anchor']}
+                    state['context']={k:context.get(k) for k in ['id','path','title','type','vault','vault_id','session_state','surface','context_tab','read_anchor','course']}
                 if any(value is not None for value in [args.width,args.height,args.drafts_json,True if args.drafts_stdin else None,args.path_scope,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet,args.presentation,args.collection,args.pending_json,args.instance_json,args.visible,args.placement,args.study_workspace,args.return_behavior]):
                     store(file,state)
                     from noesis.hosting import process_start

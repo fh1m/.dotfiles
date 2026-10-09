@@ -4,6 +4,8 @@ import Quickshell
 import Quickshell.Io
 Singleton {
  id:root
+ property var buildIdentity:({commit:"development",source_dirty:true})
+ FileView {path:"@HOME@/.local/share/sensei-learning/build.json";printErrors:false;onLoaded:{try{root.buildIdentity=JSON.parse(text());}catch(error){root.error="Installed build identity could not be read.";}}}
  property var state:({notes:[],files:[],vaults:[],gates:[],reviews:[],questions:[],projects:[],labs:[],sources:[]})
  property bool leaseHeld:false
  property bool preferencesReady:false
@@ -104,7 +106,7 @@ Singleton {
  Timer {interval:15000;running:operation.running;onTriggered:{root.error="This action is taking longer than expected; inspect the result before retrying.";}}
  Process {id:requestResolver;command:["@HOME@/.local/bin/noesis","host-request","--stdin-line"];stdinEnabled:true;onStarted:write(root.requestFrame);stdout:StdioCollector {onStreamFinished:{try{let resolved=JSON.parse(text);root.openRequest=resolved;if(resolved.vault&&resolved.vault!==root.activeVault)root.choose(resolved.vault);root.open();}catch(error){root.markRequest(root.pendingRequest.request_id,"rejected",String(error));}}}stderr:StdioCollector {onStreamFinished:if(text.trim())root.markRequest(root.pendingRequest.request_id,"rejected",text.trim())}onExited:code=>{if(code!==0)root.markRequest(root.pendingRequest.request_id,"rejected","Requested owner or record is unavailable; no context was changed.");}}
  IpcHandler {target:"noesis";
-  function hello():string{return JSON.stringify({version:1,host:root.standalone?"standalone":"embedded",host_ready:root.hostReady,instance:root.instance,visible:root.windowOpen,working:root.working,exit_pending:root.exitRequested,uncertain:root.uncertainReceipt});}
+  function hello():string{return JSON.stringify({version:1,build:root.buildIdentity,host:root.standalone?"standalone":"embedded",host_ready:root.hostReady,instance:root.instance,visible:root.windowOpen,working:root.working,exit_pending:root.exitRequested,uncertain:root.uncertainReceipt});}
   function open():void{root.open();}
   function hide():void{root.hide();}
   function close():void{root.hide();}

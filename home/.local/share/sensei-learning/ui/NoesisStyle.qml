@@ -4,8 +4,8 @@ import Quickshell
 Singleton {
  property real interfaceScale:1
  property real readingScale:1
- readonly property string uiFont:"Adwaita Sans"
- readonly property string codeFont:"Iosevka Nerd Font Mono"
+ readonly property string uiFont:"Zed Sans"
+ readonly property string codeFont:"ZedMono Nerd Font Mono"
  readonly property int caption:Math.round(13*interfaceScale)
  readonly property int label:Math.round(14*interfaceScale)
  readonly property int body:Math.round(17*readingScale)
@@ -23,8 +23,8 @@ Singleton {
  readonly property int row:Math.round(64*interfaceScale)
  readonly property int radius:5
  readonly property int readingWidth:Math.round(760*readingScale)
- readonly property color canvas:"#000000"
- readonly property color surface:"#141210"
+ readonly property color canvas:"#141210"
+ readonly property color surface:"#090807"
  readonly property color hover:"#1e1b18"
  readonly property color ink:"#e8e2da"
  readonly property color secondary:"#a9a29a"

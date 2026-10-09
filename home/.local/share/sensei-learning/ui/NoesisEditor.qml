@@ -9,5 +9,7 @@ TextArea {
  color:NoesisStyle.ink;placeholderTextColor:NoesisStyle.quiet
  selectionColor:NoesisStyle.accent;selectedTextColor:NoesisStyle.selectionInk
  padding:NoesisStyle.md;wrapMode:TextEdit.Wrap
- background:Rectangle {radius:NoesisStyle.radius;color:NoesisStyle.surface;border.width:1;border.color:root.activeFocus?NoesisStyle.accent:NoesisStyle.rule}
+ background:Rectangle {radius:NoesisStyle.radius;color:NoesisStyle.hover
+  Rectangle {anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;height:2;visible:root.activeFocus;color:NoesisStyle.accent}
+ }
 }
