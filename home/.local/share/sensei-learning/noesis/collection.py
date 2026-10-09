@@ -56,28 +56,53 @@ def project(request,get_index):
                 'scope_errors':errors,'availability':'partial' if errors else 'ready',
                 'empty_reason':'data-unavailable' if errors and not count else 'no-records' if not count else 'no-active-work' if not resumes and not actions else 'nothing-due' if not actions else None}
     cursor=request.get('cursor')
-    position={'scope':0,'offset':0,'signature':signature}
+    indexes={};generations={};owners={}
+    for root in roots:
+        try:
+            if not root.is_dir():raise ValueError("Registered vault storage is unavailable")
+            if not identity(root):raise ValueError("Managed vault identity is unavailable")
+            index=get_index(root,not cursor)
+            indexes[str(root)]=index;generations[str(root)]=[index.cache_identity,index.generation]
+            owners[str(root)]=index.manifest['vault_id']
+        except (ValueError,OSError,sqlite3.Error) as error:
+            errors.append({'vault':str(root),'message':str(error)})
+    offsets={str(root):0 for root in roots}
     if cursor:
         try:position=json.loads(cursor)
         except (ValueError,TypeError):raise ValueError('Invalid collection cursor')
+        if not isinstance(position,dict):raise ValueError('Invalid collection cursor')
         if position.get('signature')!=signature:raise ValueError('Collection scope changed; restart search')
-        if type(position.get('scope')) is not int or type(position.get('offset')) is not int or not 0<=position['scope']<len(roots) or position['offset']<0:raise ValueError('Invalid collection cursor')
-    records=[];size=0;scope=position['scope'];offset=position['offset'];next_cursor=None
-    while scope<len(roots) and len(records)<50:
-        try:
-            if not roots[scope].is_dir():raise ValueError("Registered vault storage is unavailable")
-            if not identity(roots[scope]):raise ValueError("Managed vault identity is unavailable")
-            index=get_index(roots[scope],not cursor)
-            page=index.query(request.get('query',''),request.get('kind'),offset,50-len(records),resource_kinds=request.get('resource_kinds'))
-            consumed=0
-            for row in page['records']:
-                item=annotate(index,row);item_size=len(json.dumps(item).encode())
-                if item_size>58*1024:raise ValueError('Summary cannot fit bounded response')
-                if size+item_size>58*1024:break
-                records.append(item);size+=item_size;consumed+=1
-            if consumed<len(page['records']):offset+=consumed;break
-            if page['cursor'] is not None:offset=page['cursor'];break
-        except (ValueError,OSError,sqlite3.Error) as error:errors.append({'vault':str(roots[scope]),'message':str(error)})
-        scope+=1;offset=0
-    if scope<len(roots):next_cursor=json.dumps({'scope':scope,'offset':offset,'signature':signature},separators=(',',':'))
-    return {'records':records,'cursor':next_cursor,'scope_errors':errors,'availability':'partial' if errors else 'ready'}
+        if position.get('generations')!=generations or position.get('owners')!=owners:
+            raise ValueError('Learning collection changed; refresh search before loading more')
+        offsets=position.get('offsets')
+        if not isinstance(offsets,dict) or set(offsets)!={str(root) for root in roots} or any(type(n) is not int or n<0 for n in offsets.values()):
+            raise ValueError('Invalid collection cursor')
+    query=request.get('query','')
+    if not isinstance(query,str):raise ValueError('Search query must be text')
+    query=query.strip();candidates=[];pages={}
+    for root,index in indexes.items():
+        page=index.query(query,request.get('kind'),offsets[root],50,
+                         resource_kinds=request.get('resource_kinds'),relevance=True)
+        pages[root]=page
+        for row in page['records']:
+            # SQL's identity/alias tier is checked against this owning index only.
+            alias=query.lower()
+            import re
+            if re.match(r'^(https?://(dx\.)?doi\.org/|doi:)',alias):alias='doi:'+re.sub(r'^(https?://(dx\.)?doi\.org/|doi:)','',alias)
+            elif re.match(r'^10\.\d{4,9}/',alias):alias='doi:'+alias
+            exact=query==row['id'] or bool(query and index.db.execute('SELECT 1 FROM aliases WHERE path=? AND alias=?',(row['path'],alias)).fetchone())
+            # SQLite lower() folds ASCII only; match it for stable Unicode paging.
+            title=row['title'].translate(str.maketrans('ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'))
+            rank=0 if exact else 1 if query and title==query.lower() else 2 if query and title.startswith(query.lower()) else 3
+            candidates.append((rank,title,root,row['path'],annotate(index,row)))
+    candidates.sort(key=lambda item:item[:4])
+    records=[];size=0
+    for *_,item in candidates:
+        item_size=len(json.dumps(item).encode())
+        if item_size>58*1024:raise ValueError('Summary cannot fit bounded response')
+        if len(records)==50 or size+item_size>58*1024:break
+        records.append(item);size+=item_size;offsets[item['vault']]+=1
+    more=len(candidates)>len(records) or any(page['cursor'] is not None for page in pages.values())
+    next_cursor=json.dumps({'offsets':offsets,'signature':signature,'generations':generations,'owners':owners},separators=(',',':')) if more else None
+    return {'records':records,'cursor':next_cursor,'generations':generations,
+            'scope_errors':errors,'availability':'partial' if errors else 'ready'}

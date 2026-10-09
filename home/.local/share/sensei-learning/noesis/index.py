@@ -30,6 +30,7 @@ class Index:
             CREATE TABLE IF NOT EXISTS records(path TEXT PRIMARY KEY, stamp TEXT,
               id TEXT, kind TEXT, title TEXT, props TEXT, body TEXT);
             CREATE INDEX IF NOT EXISTS identities ON records(id);
+            CREATE TABLE IF NOT EXISTS cache_identity(token TEXT);
             CREATE TABLE IF NOT EXISTS meta(generation INTEGER);
             INSERT INTO meta SELECT 0 WHERE NOT EXISTS(SELECT 1 FROM meta);
             CREATE VIRTUAL TABLE IF NOT EXISTS search USING fts5(path UNINDEXED,title,body);
@@ -44,6 +45,10 @@ class Index:
             CREATE TABLE IF NOT EXISTS states(id TEXT PRIMARY KEY,status TEXT,state TEXT);
             CREATE INDEX IF NOT EXISTS state_status ON states(status);
         ''')
+        with self.db:
+            if not self.db.execute('SELECT token FROM cache_identity').fetchone():
+                self.db.execute('INSERT INTO cache_identity VALUES(?)',(str(uuid.uuid4()),))
+        self.cache_identity=self.db.execute('SELECT token FROM cache_identity').fetchone()[0]
         if self.db.execute('PRAGMA user_version').fetchone()[0] != 6:
             with self.db:
                 for table in ('records', 'search', 'activities', 'relationships', 'aliases', 'states'):
@@ -152,7 +157,7 @@ class Index:
     def generation(self):
         return self.db.execute('SELECT generation FROM meta').fetchone()[0]
 
-    def query(self, query='', kind=None, cursor=0, limit=50, resource_kinds=None):
+    def query(self, query='', kind=None, cursor=0, limit=50, resource_kinds=None, relevance=False):
         if not isinstance(query, str):raise ValueError('Search query must be text')
         query = query.strip()
         limit = min(50, max(1, int(limit)))
@@ -177,7 +182,14 @@ class Index:
         sql = "SELECT records.path,records.id,kind,title,states.status,COALESCE(json_extract(states.state,'$.material.source_kind'),json_extract(records.props,'$.source_kind')) FROM records LEFT JOIN states ON states.id=records.id"
         if where:
             sql += ' WHERE ' + ' AND '.join(where)
-        rows = list(self.db.execute(sql + ' ORDER BY path LIMIT ? OFFSET ?', args + [limit + 1, cursor]))
+        order='path'
+        if relevance:
+            # One deterministic ordering shared by every owner in a collection.
+            order='lower(substr(title,1,256)),path'
+            if query:
+                order='CASE WHEN records.id=? OR records.path IN (SELECT path FROM aliases WHERE alias=?) THEN 0 WHEN lower(substr(title,1,256))=? THEN 1 WHEN substr(lower(substr(title,1,256)),1,length(?))=? THEN 2 ELSE 3 END,'+order
+                args.extend([query,alias,query.lower(),query.lower(),query.lower()])
+        rows = list(self.db.execute(sql + ' ORDER BY '+order+' LIMIT ? OFFSET ?', args + [limit + 1, cursor]))
         results, size = [], 0
         for row in rows[:limit]:
             item = dict(zip(('path', 'id', 'type', 'title', 'status', 'source_kind'), row))
