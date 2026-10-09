@@ -218,3 +218,19 @@ no outline yet; this rollout does not fabricate one or alter learning content.
 Live workspace-switch verification also caught stale monitor IPC in the standalone
 host. The desk now refreshes monitor/workspace projections on compositor events;
 leaving Study hides it and returning restores it without an idle polling loop.
+
+## ScreenPad density follow-up
+
+Owner feedback reopened the desk layout: repeated header/footer actions consumed
+too much height and unbounded-looking panes obscured their roles. The desk now
+uses two borderless working surfaces, one compact location bar, source actions
+in pane headers, and a source/notes default. Default typography is reduced
+slightly across the shared system while retaining Zed families and user scales.
+Figures fit the available viewport instead of consuming a scaled fixed height.
+The root README links the [native UI gallery](ui-gallery.md), including retained
+same-fixture before/after images and explicit measurement limits.
+
+The native fixture now focuses its configured main monitor before each restart,
+matching the production launcher. A failed check exposed the earlier fixture
+opening on the ScreenPad after pointer interaction; its 550px fullscreen geometry
+was a display-placement error, not a reason to relax the viewport assertion.

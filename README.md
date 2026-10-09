@@ -84,4 +84,4 @@ python3 scripts/doctor.py
 ### Noesis — learn anything, build something
 
 Subject vaults, small prerequisite gates, real experiments and reconstructive reviews.
-Obsidian holds the evidence; Neovim stays the workbench. [Learning workflow →](docs/learning-system/README.md)
+Obsidian holds the evidence; Neovim stays the workbench. [Learning workflow →](docs/learning-system/README.md) · [Native UI gallery →](docs/learning-system/ui-gallery.md)

@@ -41,26 +41,23 @@ PanelWindow {
  color:NoesisStyle.canvas
  Rectangle {id:deskSurface;anchors.fill:parent;color:NoesisStyle.canvas
   ColumnLayout {
-   anchors.fill:parent;anchors.margins:NoesisStyle.xl;spacing:NoesisStyle.md
+   anchors.fill:parent;anchors.margins:NoesisStyle.lg;spacing:NoesisStyle.sm
    RowLayout {
     Layout.fillWidth:true;spacing:NoesisStyle.md
-    Text {font.hintingPreference:Font.PreferFullHinting;text:"Study desk";color:NoesisStyle.accent;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;font.bold:true;renderType:Text.NativeRendering}
-    Text {font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;text:desk.workspace?.selected.title||"Choose an activity on the main display";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;font.bold:true;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
+    Text {font.hintingPreference:Font.PreferFullHinting;text:"Study / "+(desk.workspace?.ownerLabel||"Desk");color:NoesisStyle.accent;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.uiText;font.bold:true;renderType:Text.NativeRendering}
+    Text {font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;text:desk.workspace?.selected.title||"Choose an activity on the main display";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.uiText;font.bold:true;elide:Text.ElideRight;renderType:Text.NativeRendering}
     NoesisButton {text:desk.split?"One pane":"Two panes";onClicked:{desk.split=!desk.split;desk.saveLayout();}}
     NoesisButton {text:"Focus main page";onClicked:Quickshell.execDetached(["hyprctl","dispatch",'hl.dsp.focus({monitor='+JSON.stringify(NoesisController.mainMonitor)+'})'])}
-    NoesisButton {text:"Hide Noesis";onClicked:NoesisController.close()}
+    NoesisButton {text:"Use ScreenPad for tools";variant:"tertiary";onClicked:{desk.enabledByUser=false;desk.saveLayout();}}
    }
    SplitView {
     id:panes;Layout.fillWidth:true;Layout.fillHeight:true;orientation:Qt.Horizontal
     onResizingChanged:if(!resizing)desk.saveLayout()
-    handle:Rectangle {implicitWidth:24;color:NoesisStyle.canvas;Rectangle {anchors.centerIn:parent;width:2;height:parent.height;color:parent.SplitHandle.hovered?NoesisStyle.rule:"transparent"}}
+    handle:Rectangle {implicitWidth:12;color:NoesisStyle.canvas;Rectangle {anchors.centerIn:parent;width:2;height:parent.height;color:parent.SplitHandle.hovered?NoesisStyle.rule:"transparent"}}
     NoesisStudyPane {id:leftPane;workspace:desk.workspace;paneKey:"left";view:"source";SplitView.fillWidth:!desk.split;SplitView.preferredWidth:panes.width*Math.min(.75,Math.max(.25,NoesisController.layouts.StudyDesk?.ratio||.5));SplitView.minimumWidth:Math.min(380*NoesisStyle.interfaceScale,panes.width*.4);onLayoutEdited:{desk.saveLayout();desk.requestFrame();}}
-    NoesisStudyPane {id:rightPane;workspace:desk.workspace;paneKey:"right";view:"context";visible:desk.split;SplitView.fillWidth:true;SplitView.minimumWidth:Math.min(380*NoesisStyle.interfaceScale,panes.width*.4);onLayoutEdited:{desk.saveLayout();desk.requestFrame();}}
+    NoesisStudyPane {id:rightPane;workspace:desk.workspace;paneKey:"right";view:"notes";visible:desk.split;SplitView.fillWidth:true;SplitView.minimumWidth:Math.min(380*NoesisStyle.interfaceScale,panes.width*.4);onLayoutEdited:{desk.saveLayout();desk.requestFrame();}}
    }
-   RowLayout {Layout.fillWidth:true
-    Text {font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;text:"Owner: "+(desk.workspace?.ownerLabel||"");color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;renderType:Text.NativeRendering}
-    NoesisButton {text:"Use ScreenPad for tools";variant:"tertiary";onClicked:{desk.enabledByUser=false;desk.saveLayout();}}
-   }
+
   }
  }
  IpcHandler {target:"noesis-study-desk";function state():string{return JSON.stringify({frame_serial:desk.frameSerial,visible:desk.visible,screen:desk.screen?.name,width:desk.width,height:desk.height,view:desk.view,right_view:rightPane.view,left_label:leftPane.surfaceLabel,right_label:rightPane.surfaceLabel,split:desk.split,record:desk.workspace?.selected.id||"",source_blocks:leftPane.blocks.length,active_workspace:desk.activeWorkspace});}function repaintNow():int{desk.requestFrame();return desk.frameSerial;}function showView(value:string):void{if(leftPane.surfaces.includes(value)){leftPane.view=value;desk.saveLayout();}}}
