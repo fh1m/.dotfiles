@@ -61,7 +61,8 @@ human educational effectiveness. Baselines use feee017 QML with the same fixture
 Supporting surfaces are retained for honest review, **not claimed as completed
 redesigns**: [Research](assets/recovery-sprint/research-current.png),
 [Lab](assets/recovery-sprint/lab-current.png), [Today](assets/recovery-sprint/today-current.png).
-The Lab capture has a hypothesis, not fabricated measurements/figure evidence.
+The dual-screen Lab fixture adds an explicitly illustrative synthetic curve and
+an unavailable artifact. It does not establish a measured engineering result.
 
 `capture-after.json` records logical size, Qt DPR, application scales and window
 presentation for every capture. The owner's latest decision makes a full-screen
@@ -72,8 +73,9 @@ Earlier broader size matrices remain in Git history; they are not the current
 acceptance focus. Full-screen is Qt's actual window state, independently checked
 against the compositor, rather than a maximized-window label.
 
-Study appears between Code and Sim with a book glyph. Workspace order is
-1,2,3,7,4,5,6 so existing workspace IDs and windows are preserved. Super+7 opens
+Study appears between Code and Sim with a book glyph. Following the owner's
+numbering correction, the order is Terminal 1, Web 2, Code 3, Study 4, Sim 5,
+Work 6 and Misc 7. Super+4 opens
 Study; Super+Ctrl+O launches/resumes Noesis there. Other tools' existing windows
 are never relocated. Full screen is the default; normal, maximized and tiled
 presentation remain explicit options.
@@ -120,7 +122,7 @@ Scoped installation is live. The canonical production config is
 Super+Ctrl+O binding and ScreenPad bridge route to this independent host.
 The embedded writable host is removed from normal Wrayth composition.
 
-Production proof: one independent instance opened on workspace 7 (`Study`) in
+Production proof: one independent instance opened on workspace 4 (`Study`) in
 actual full-screen mode at 1920x1080 logical. Cold launch to visible worker/watch
 was 1.43s; one warm Hide/resume sample was 0.669s; Close completed in 0.35s.
 These are single observations, not percentile budgets. Observed process RSS was
@@ -138,3 +140,68 @@ The installer records backups and hash-checked rollback in
 `~/.local/state/noesis-deployments/`; machine-local preferences were separately
 preserved in a permission-restricted rollout directory. Production build identity
 is `~/.local/share/sensei-learning/build.json`, exposed by `noesis hello`.
+
+
+## Two-display Study extension
+
+The main display remains the full-screen working page. On the installed ScreenPad
+(1920x550 logical, DPR 2), a full-display configurable study workbench follows the same
+selected activity and owner. It shares the existing adapter and controller: no
+second learning worker, learning watcher, index, mutation queue or draft store.
+In Practice, Source on the second display gives reasoning the main working area;
+Context restores the statement/reasoning composition on the main display.
+Only the problem statement is shown while reference material is protected.
+PDFs and videos still use specialist tools; this is a bounded native preview.
+
+The desk is visible only in full-screen Study, hides with Noesis or when the main
+display leaves Study, and falls back to the original main-page composition when
+the ScreenPad is unavailable. Each of its two resizable panes independently selects Source, Context, Notes &
+reasoning, Figures & artifacts, or Reference preview. Views and pane proportions
+are saved in machine-local preferences; sources, notes, context and figures
+scroll independently. Notes use the same live draft as the main page. Protected
+references and artifacts remain hidden until deliberate exposure on the main
+page. “Use ScreenPad for tools” releases the panel for Obsidian, PDFs, videos or
+other native apps, and “Show Study desk” returns without losing the draft. The old
+compact Wrayth companion is suppressed while Noesis is open to avoid two overlays.
+Existing external tool windows are not moved into the study layout.
+
+Native fixture review captures: [main Practice](assets/recovery-sprint/practice-study.png),
+[second-display problem](assets/recovery-sprint/practice-second-display.png),
+[second-display Context](assets/recovery-sprint/practice-second-context.png),
+[200% problem](assets/recovery-sprint/practice-second-display-200.png), and
+[200% Context](assets/recovery-sprint/practice-second-context-200.png).
+Real pointer clicks change pane content, edit the shared draft, release/restore the ScreenPad, and
+preserve the active attempt through Hide/resume.
+Physical unplug/replug and a sustained two-display learner trial remain open gates.
+
+Renumbering is an explicit owner-requested correction to the earlier stable-ID
+choice. Live workspace identities are migrated together with their existing
+contents (Study 7→4, Sim 4→5, Work 5→6, Misc 6→7), retaining their monitors.
+The scoped `oasis.lua` rules and shortcuts override earlier workspace defaults;
+unrelated locally modified `custom-setup.lua` is preserved.
+
+
+The current panes follow the selected activity; independently pinning different
+records across owners is not implemented. Native scientific content remains
+bounded. Full Canvas/maps, rich equations, PDFs and arbitrary application windows
+use their specialist tools rather than being embedded in the panel. The free
+ScreenPad control makes room for those tools without moving existing windows.
+
+
+A controlled native mode probe found that installed Hyprland 0.56.2 treats
+`set/unset` as the default toggle for floating-state commands. Noesis now uses
+explicit `enable/disable`, verifies the native fullscreen acknowledgement before
+layout dispatch, and verifies normal-mode geometry. This removes repeated
+floating/tiled flips rather than concealing them with longer waits.
+[Installed-version toggle parser](https://github.com/hyprwm/Hyprland/blob/v0.56.2/src/config/lua/bindings/LuaBindingsInternal.cpp).
+
+The two-display native fixture passed pointer selection, shared draft editing,
+protected-reference checks, display release/return and restart recovery. Main
+images use native Qt window rendering; second-display images capture the actual
+DP-2 compositor after a frame-present barrier and a privacy check. Visual review
+caught and corrected a selector-label mismatch and stale presented frames.
+Activity changes now clear the previous source preview until its owned response
+arrives. [Figures beside notes](assets/recovery-sprint/lab-second-figures-notes.png)
+and [shared reasoning](assets/recovery-sprint/practice-second-notes.png) are
+retained synthetic-fixture evidence. No new dual-display performance or human
+usability result is inferred from the earlier single-display measurements.

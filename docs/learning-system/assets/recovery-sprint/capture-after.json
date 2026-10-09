@@ -1,5 +1,5 @@
 {
-  "capture": "Native Qt Quick window-content render; excludes other desktop layers",
+  "capture": "Native Qt Quick main-window render; second-display compositor capture requires the sole full-display overlay to be the disposable fixture",
   "fixture_only": true,
   "baseline": null,
   "captures": [
@@ -49,6 +49,16 @@
         "reading_scale": 1,
         "presentation": "fullscreen",
         "section": "Learn"
+      }
+    },
+    {
+      "image": "lesson-second-display.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "source",
+        "screen": "DP-2",
+        "source_blocks": 4
       }
     },
     {
@@ -109,6 +119,16 @@
         "reading_scale": 1,
         "presentation": "fullscreen",
         "section": "Learn"
+      }
+    },
+    {
+      "image": "course-second-display.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "source",
+        "screen": "DP-2",
+        "source_blocks": 2
       }
     },
     {
@@ -184,6 +204,26 @@
       }
     },
     {
+      "image": "practice-second-display.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "source",
+        "screen": "DP-2",
+        "source_blocks": 1
+      }
+    },
+    {
+      "image": "practice-second-context.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "context",
+        "screen": "DP-2",
+        "source_blocks": 1
+      }
+    },
+    {
       "image": "practice-1920-1.25.png",
       "state": {
         "width": 1920,
@@ -217,6 +257,68 @@
         "reading_scale": 2,
         "presentation": "fullscreen",
         "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-study-200.png",
+      "state": {
+        "width": 1920,
+        "height": 1080,
+        "qt_device_pixel_ratio": 2,
+        "interface_scale": 2,
+        "reading_scale": 2,
+        "presentation": "fullscreen",
+        "section": "Practice"
+      }
+    },
+    {
+      "image": "practice-second-display-200.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "source",
+        "screen": "DP-2",
+        "source_blocks": 1
+      }
+    },
+    {
+      "image": "practice-second-context-200.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "context",
+        "screen": "DP-2",
+        "source_blocks": 1
+      }
+    },
+    {
+      "image": "practice-second-notes.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "notes",
+        "screen": "DP-2",
+        "source_blocks": 1
+      }
+    },
+    {
+      "image": "practice-second-artifacts-empty.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "figures",
+        "screen": "DP-2",
+        "source_blocks": 1
+      }
+    },
+    {
+      "image": "practice-second-reference-protected.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "reference",
+        "screen": "DP-2",
+        "source_blocks": 0
       }
     },
     {
@@ -301,6 +403,16 @@
         "reading_scale": 1,
         "presentation": "fullscreen",
         "section": "Lab"
+      }
+    },
+    {
+      "image": "lab-second-figures-notes.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "figures",
+        "screen": "DP-2",
+        "source_blocks": 4
       }
     },
     {

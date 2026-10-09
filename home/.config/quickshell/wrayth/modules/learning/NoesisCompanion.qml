@@ -10,7 +10,7 @@ PanelWindow {
  IpcHandler {target:"noesis-companion";function state():string{return JSON.stringify({visible:companion.visible,screen:companion.screen?.name,width:companion.width,height:companion.height,context:LearningBridge.NoesisBridge.currentContext.id||""});}}
  readonly property var companionScreen:Quickshell.screens.find(s=>s.name==="DP-2")||null
  screen:companionScreen
- visible:companionScreen!==null&&!!LearningBridge.NoesisBridge.currentContext.id&&LearningBridge.NoesisBridge.currentContext.vault===LearningBridge.NoesisBridge.activeVault
+ visible:!LearningBridge.NoesisBridge.windowOpen&&companionScreen!==null&&!!LearningBridge.NoesisBridge.currentContext.id&&LearningBridge.NoesisBridge.currentContext.vault===LearningBridge.NoesisBridge.activeVault
  anchors {top:true;right:true}
  margins {top:52;right:16}
  implicitWidth:Math.min(480,(companionScreen?.width||480)-32)
