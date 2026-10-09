@@ -135,3 +135,12 @@ synthetic course in the running native application. The outline now has an expli
 Arrange action, visible scrollbar and bounded lesson pages. The normal-window
 restore is centered so its controls remain on-screen. These captures demonstrate
 composition, not learner comprehension or completed course acceptance.
+
+## Reader handoff and lesson replacement
+
+Replacement uses the shared compact dialog/input tokens and a reason in human terms.
+Source metadata stays contextual; replacement does not rename a learner's note.
+Use Hide when the compositor cannot honor Qt minimization. A normal/workspace source
+handoff preserves context, stops its worker and gives the specialist reader focus;
+tiled mode keeps the two working surfaces visible. The native reader is the authority
+for PDF fidelity and saved-page acceptance, rather than an attractive preview.

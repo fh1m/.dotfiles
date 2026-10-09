@@ -33,6 +33,7 @@ Item {
  property var relations:[]
  property var artifactInfo:({})
  property var workflow:({})
+ property var activityHead:null
  readonly property bool checkOpen:reviewDialog.opened
  readonly property string checkStageName:checkStage.currentText
  readonly property int checkPurposeLength:checkPurpose.text.length
@@ -104,6 +105,7 @@ Item {
  function quickCapture(){captureVault=Oasis.activeVault;capture.text=Oasis.drafts[captureVault+":capture"]||"";captureDialog.open();capture.forceActiveFocus();}
  function submitCapture(){if(root.captureVault!==Oasis.activeVault){Oasis.error="Vault changed. Return to the capture’s vault before saving.";return;}root.captureSubmission=capture.text;Oasis.run(["capture",capture.text]);}
  function courseSummary(){let c=workflow.counts;if(!c)return "";let material=[],assessment=[];if(c.lectures.total)material.push("Lectures "+c.lectures.consumed+" / "+c.lectures.total+" viewed");if(c.readings.total)material.push("Readings "+c.readings.consumed+" / "+c.readings.total+" read");if(c.other_units.total)material.push((selected.source_kind==="book"?"Chapters / sections ":workflow.kind==="path"?"Path steps ":"Other units ")+c.other_units.consumed+" / "+c.other_units.total+" consumed");if(c.assignments.total)assessment.push((selected.source_kind==="book"?"Exercises ":"Assignments ")+c.assignments.reported_success+" / "+c.assignments.total+" reported success");if(c.projects.total)assessment.push("Projects "+c.projects.reported_success+" / "+c.projects.total+" reported success");return [material.join(" · "),assessment.join(" · ")].filter(line=>line!=="").join("\n")||"No outline recorded yet. Add lessons, readings or problems as you work.";}
+ function openSource(){Oasis.run(["read-resource",selected.path,"--target-id",selected.id,"--reader",selected.zotero_uri?"zotero":"sioyek"]);}
  function studyUpdate(status){let state={};if(position.text.trim()||!status)state=locatorKind.currentText==="location"?{position:position.text}:{locator:{kind:locatorKind.currentText,value:position.text}};if(root.selected.source_kind==="paper"||root.selected.type==="paper")state.reading_pass=readingPass.currentText;if(status)state.status=status;return state;}
  function pendingCheck(){
   let referenced=new Set();history.forEach(event=>{if(event.previous_plan)referenced.add(event.previous_plan);(event.resolves_plans||[]).forEach(id=>referenced.add(id));});
@@ -131,11 +133,13 @@ Item {
   if(selected.bibliography_projection&&!referenceHidden)add("bibliography","Open bibliography","Zotero-owned projection stays separate from your analysis");
   if(kind==="artifact")add("checksum","Check checksum","Inspect the referenced artifact without changing it");
   if(["task","problem"].includes(kind)&&!activeAttempt&&pendingCheck())add("perform-check","Perform planned check","Start a protected assessment of your selected check; saving the outcome preserves its result");
+  if(kind==="unit"&&[undefined,null,"lecture","video","reading","chapter","section"].includes(selected.unit_kind)&&!referenceHidden)add("material","Replace lesson material","Keep this lesson and its history; start the new source without inheriting completion");
   return items;
  }
  function contextAction(action){
   if(action==="evidence"){let entry=history.slice().reverse().find(event=>["attempt","review"].includes(event.event));if(entry)evidenceDialog.begin(entry);}
   else if(action==="perform-check"){let plan=pendingCheck();if(plan){contextTab="Work";saveEvent("attempt-start",{mode:mode.currentText,scope:selected.title||selected.path,review_plan_id:plan.id});}}
+  else if(action==="material")materialDialog.begin(root.selected,root.activityHead);
   else if(action==="transfer")createDialog.begin("task",selected.id,true);
   else if(action==="question")createDialog.begin("question",selected.id);
   else if(action==="implementation")createDialog.begin("project",selected.id);
@@ -173,7 +177,7 @@ Item {
     let result=response.result;
     if(result.errors){if(result.errors.length)Oasis.error=JSON.stringify(result.errors);root.load(false);root.refreshContext();return;}
     if(response.request_id===root.latest){root.loading=false;root.home=result;if(result.scope_errors?.length)Oasis.error="Some learning vaults are unavailable. Available results are shown; refresh after recovery.";root.rows=response.request_id===root.appendSerial?Array.from(new Map(root.rows.concat(result.records||[]).map(row=>[row.vault+":"+(row.id||row.path),row])).values()):(result.records||[]);root.cursor=result.cursor===null||result.cursor===undefined?"":String(result.cursor);}
-    if(response.request_id===root.detailSerial){root.contextLoading=false;root.body=result.body||"";root.documentPreview=result.preview||({blocks:[]});root.artifactInfo=result.artifact||({});root.workflow=result.overview||({});root.selectedState=result.state||({});root.activeAttempt=result.attempt?.id||"";if(root.activeAttempt){root.referenceHidden=root.revealedAttempt!==root.activeAttempt;mode.currentIndex=Math.max(0,mode.model.indexOf(result.attempt.mode||"derive"));}if(!root.activeAttempt&&result.props?.practice_mode==="transfer")mode.currentIndex=4;if(result.attempt_conflict)Oasis.error="Multiple unfinished attempts need explicit resolution.";root.selected=Object.assign({},root.selected,result.props||{},{path:result.path,title:result.display_title||root.selected.title});Oasis.currentContext=Object.assign({},root.selected,{vault:Oasis.activeVault,session_state:result.state?.status||""});Oasis.savePreferences();position.text=String(result.state?.locator?.value??result.state?.position??"");locatorKind.currentIndex=result.state?.locator?Math.max(0,locatorKind.model.indexOf(result.state.locator.kind)):0;readingPass.currentIndex=Math.max(0,readingPass.model.indexOf(result.state?.reading_pass||"survey"));if(result.state?.conflict)Oasis.error=result.state.conflict;}
+    if(response.request_id===root.detailSerial){root.contextLoading=false;root.body=result.body||"";root.documentPreview=result.preview||({blocks:[]});root.artifactInfo=result.artifact||({});root.workflow=result.overview||({});root.selectedState=result.state||({});root.activityHead=result.activity_head||null;root.activeAttempt=result.attempt?.id||"";if(root.activeAttempt){root.referenceHidden=root.revealedAttempt!==root.activeAttempt;mode.currentIndex=Math.max(0,mode.model.indexOf(result.attempt.mode||"derive"));}if(!root.activeAttempt&&result.props?.practice_mode==="transfer")mode.currentIndex=4;if(result.attempt_conflict)Oasis.error="Multiple unfinished attempts need explicit resolution.";root.selected=Object.assign({},root.selected,result.props||{},result.effective_source||{},result.resolved_source||{},{path:result.path,title:result.display_title||root.selected.title});Oasis.currentContext=Object.assign({},root.selected,{vault:Oasis.activeVault,session_state:result.state?.status||""});Oasis.savePreferences();position.text=String(result.state?.locator?.value??result.state?.position??"");locatorKind.currentIndex=result.state?.locator?Math.max(0,locatorKind.model.indexOf(result.state.locator.kind)):0;readingPass.currentIndex=Math.max(0,readingPass.model.indexOf(result.state?.reading_pass||"survey"));if(result.state?.conflict)Oasis.error=result.state.conflict;}
     if(response.request_id===root.outlineSerial){root.outlineLoading=false;root.outlineRows=response.request_id===root.outlineAppendSerial?root.outlineRows.concat(result.records||[]):result.records||[];root.outlineCursor=result.cursor===null||result.cursor===undefined?"":String(result.cursor);}
     if(response.request_id===root.capabilitySerial){evidenceDialog.capabilities=result.records||[];evidenceDialog.loading=false;}
     if(response.request_id===root.capabilityDetailSerial){evidenceDialog.detail(result);evidenceDialog.loading=false;}
@@ -197,6 +201,7 @@ Item {
  Shortcut {sequence:"Ctrl+N";onActivated:root.section==="Today"?root.quickCapture():createDialog.begin(root.section==="Lab"?"experiment":root.section==="Practice"?"task":"resource","")}
  Shortcut {sequence:"Ctrl+Shift+O";enabled:root.section==="Learn";onActivated:outlineDialog.begin(["course","path"].includes(root.workflow.kind)?root.selected:null)}
  Shortcut {sequence:"Ctrl+Shift+K";onActivated:{root.collectionScope=!root.collectionScope;root.load(false);}}
+ Shortcut {sequence:"Ctrl+Shift+Return";enabled:!!root.selected.id&&["paper","resource","course","unit"].includes(root.selected.type)&&!root.referenceHidden&&!Oasis.working;onActivated:root.openSource()}
  Shortcut {sequence:"Ctrl+K";onActivated:search.forceActiveFocus()}
  Shortcut {sequence:"Ctrl+Shift+N";onActivated:root.quickCapture()}
  Shortcut {sequence:"Ctrl+1";onActivated:root.section="Today"}
@@ -318,7 +323,7 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
       Repeater {model:root.workflow.evidence||[];delegate:NoesisRow {required property var modelData;Layout.fillWidth:true;title:(modelData.decision||"Unavailable")+" · "+(modelData.criterion||"evidence");subtitle:(modelData.outcome||"unknown")+" · "+(modelData.assistance||["unknown"]).join(", ")+" · "+(modelData.scope||"scope unknown");enabled:!!modelData.path&&!root.referenceHidden;onClicked:Oasis.note(modelData.path)}}
      }
      Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
-      NoesisButton {text:root.selected.source_kind==="video"||root.selected.source_kind==="playlist"?"Continue video ↗":root.selected.local_file||root.selected.zotero_attachment_key?"Open PDF ↗":"Open source ↗";enabled:!root.referenceHidden;visible:["paper","resource","course","unit"].includes(root.selected.type);onClicked:Oasis.run(["read-resource",root.selected.path,"--target-id",root.selected.id,"--reader",root.selected.zotero_uri?"zotero":"sioyek"])}
+      NoesisButton {text:root.selected.source_kind==="video"||root.selected.source_kind==="playlist"?"Continue video ↗":root.selected.local_file||root.selected.zotero_attachment_key?"Open PDF ↗":"Open source ↗";enabled:!root.referenceHidden;visible:["paper","resource","course","unit"].includes(root.selected.type);hint:"Ctrl+Shift+Enter";onClicked:root.openSource()}
       NoesisButton {text:"Open problem ↗";visible:root.selected.source_kind==="problem-statement"&&!!root.selected.source;onClicked:Oasis.run(["read-resource",root.selected.path,"--target-id",root.selected.id])}
       NoesisButton {text:"Open implementation ↗";visible:!!root.selected.repository||!!root.selected.code_snapshot?.repository;enabled:!root.referenceHidden&&!Oasis.working;onClicked:Oasis.run(["open-project",root.selected.id])}
       NoesisButton {text:"More";hint:"Ctrl+.";enabled:root.contextActions().length>0;onClicked:actionDialog.begin(root.contextActions())}
@@ -409,6 +414,7 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
   Shortcut {sequence:"Ctrl+Return";enabled:comparisonDialog.visible;onActivated:if(saveComparison.enabled)saveComparison.clicked()}
   Connections {target:Oasis;function onFinished(ok){if(comparisonDialog.submitting){comparisonDialog.submitting=false;if(ok){comparisonDialog.close();predicted.text="";observed.text="";conditions.text="";conclusion.text="";}}}}
  }
+ NoesisMaterialDialog {id:materialDialog;parent:Overlay.overlay}
  NoesisDialog {id:reviewDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(440,root.width-48);modal:true;title:"Plan a later check"
   property bool submitting:false
   property var target:({})

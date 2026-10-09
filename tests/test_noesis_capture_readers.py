@@ -30,10 +30,25 @@ class CaptureReaders(unittest.TestCase):
   other=str(uuid.uuid4());path=capture(self.root,'Another prediction',operation_id=other);path.unlink()
   self.assertTrue(operation_status(self.root,other)['record_unavailable'])
   with self.assertRaises(ValueError):capture(self.root,'Another prediction',operation_id=other)
+ def test_reader_launch_reuses_page_window_and_reports_failed_or_uncertain_start(self):
+  from noesis.readers import launch
+  import subprocess
+  from unittest.mock import Mock
+  command=['sioyek','--page','3','lesson.pdf'];process=Mock();process.poll.return_value=None
+  with patch('subprocess.Popen',return_value=process),patch('time.sleep'),patch('subprocess.run',return_value=Mock(returncode=0)) as repeated:
+   self.assertIs(launch(command),process)
+   self.assertEqual(repeated.call_args.args[0],['sioyek','--reuse-window','--page','3','lesson.pdf'])
+  process.poll.return_value=134
+  with patch('subprocess.Popen',return_value=process),patch('time.sleep'),patch('subprocess.run') as repeated:
+   with self.assertRaisesRegex(ValueError,'could not start'):launch(command)
+   repeated.assert_not_called()
+  process.poll.return_value=None
+  with patch('subprocess.Popen',return_value=process),patch('time.sleep'),patch('subprocess.run',side_effect=subprocess.TimeoutExpired(command,5)):
+   with self.assertRaisesRegex(ValueError,'may have opened'):launch(command)
  def test_reader_locations_and_missing_artifact(self):
   pdf=self.root/'paper.pdf';pdf.write_bytes(b'synthetic')
   args=command(self.root,{'local_file':'paper.pdf'},{'locator':{'kind':'page','value':8}})
-  self.assertEqual(args[-3:],['--page','8',str(pdf)])
+  self.assertEqual(args[-5:],['--page','8','--yloc','1',str(pdf)])
   args=command(self.root,{'zotero_attachment_key':'ATTACH01'},{'locator':{'kind':'page','value':8}},'zotero')
   self.assertEqual(args,['xdg-open','zotero://open-pdf/library/items/ATTACH01?page=8'])
   args=command(self.root,{'source':'https://www.youtube.com/watch?v=synthetic&list=course'},{'locator':{'kind':'timestamp','seconds':3723}})

@@ -84,11 +84,19 @@ def restore(archive,destination):
   for folder in system['directories']:safe(stage,folder).mkdir(parents=True,exist_ok=True)
   stage.rename(destination)
  print(destination)
+def reader_roots():
+ # Sioyek 2.0 portable uses XDG_CONFIG_HOME (or HOME) as a base for its
+ # .local/share/Sioyek directory. Keep historical and distro locations readable.
+ config=Path(os.environ.get('XDG_CONFIG_HOME') or HOME)
+ data=Path(os.environ.get('XDG_DATA_HOME') or HOME/'.local/share')
+ candidates=[HOME/'Zotero',HOME/'.local/share/Sioyek',config/'.local/share/Sioyek',data/'sioyek',HOME/'.config/sioyek']
+ return list(dict.fromkeys(path.expanduser().resolve() for path in candidates))
+
 def backup_readers(roots=None):
  STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
  with (STATE/'.lock').open('a') as stream:
   os.chmod(stream.name,0o600);fcntl.flock(stream,fcntl.LOCK_EX)
-  return _backup_readers(roots or [HOME/'Zotero',HOME/'.local/share/Sioyek'])
+  return _backup_readers(roots if roots is not None else reader_roots())
 
 def _backup_readers(roots):
  import sqlite3,shutil,time
@@ -135,7 +143,7 @@ def _backup_readers(roots):
     records[str(relative)]=sha(target)
    manifest={'source':str(root),'files':records,'external':external,'database_sources':database_sources,'restore':'Close the reader, verify checksums, restore into a NEW data directory; never overwrite a live database.'}
    latest=dest.parent/'latest.json'
-   if latest.exists() and json.loads(latest.read_text()).get('files')==records and json.loads(latest.read_text()).get('external',{})==external:
+   if latest.exists() and json.loads(latest.read_text()).get('source')==str(root) and json.loads(latest.read_text()).get('files')==records and json.loads(latest.read_text()).get('external',{})==external:
     shutil.rmtree(dest);previous=json.loads(latest.read_text());reports.append(previous);print('Reader unchanged: '+str(root));continue
    atomic_json(dest/'manifest.json',manifest);store_latest={'snapshot':str(dest),**manifest};atomic_json(latest,store_latest);reports.append(store_latest)
    print('Reader snapshot: '+str(dest))

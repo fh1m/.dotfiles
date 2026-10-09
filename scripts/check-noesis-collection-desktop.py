@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory(prefix='noesis-collection-ui-') as temporary:
     expression='hl.dsp.send_shortcut({mods='+json.dumps(mods)+',key='+json.dumps(key)+',window='+json.dumps('address:'+client['address'])+'})'
     subprocess.run(['hyprctl','dispatch',expression],check=True,capture_output=True);time.sleep(.15)
    key('CTRL','6');key('CTRL + SHIFT','k');time.sleep(.5);assert state()['collection']
-   key('CTRL','k')
+   key('CTRL','k');key('CTRL','a')
    for letter in 'CS reasoning':key('','space' if letter==' ' else letter)
    time.sleep(.5);assert state()['rows']==1
    key('','Down');key('','Return');time.sleep(1)
@@ -51,7 +51,7 @@ with tempfile.TemporaryDirectory(prefix='noesis-collection-ui-') as temporary:
    current=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'])) if c['address']==client['address']);x,y=current['at'];w,h=current['size']
    subprocess.run(['grim','-g',f'{x},{y} {w}x{h}','/tmp/noesis-cross-vault-native.png'],check=True)
    outline=home/'outline.json'
-   entries=[{'key':'lecture'+str(n),'kind':'unit','title':'Lecture '+str(n),'fields':{'unit_kind':'lecture'}} for n in range(6)]
+   entries=[{'key':'lecture'+str(n),'kind':'unit','title':'Lecture '+str(n),'fields':{'unit_kind':'lecture','source_kind':'video','source':'https://www.youtube.com/watch?v=synthetic'+str(n)}} for n in range(6)]
    entries += [{'key':'reading'+str(n),'kind':'unit','title':'Reading '+str(n),'fields':{'unit_kind':'reading'}} for n in range(2)]
    entries += [{'key':'assignment'+str(n),'kind':'task','title':'Assignment '+str(n)} for n in range(2)]
    entries += [{'key':'project','kind':'project','title':'Course project'}]
@@ -76,10 +76,38 @@ with tempfile.TemporaryDirectory(prefix='noesis-collection-ui-') as temporary:
    current=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'])) if c['address']==client['address']);x,y=current['at'];w,h=current['size']
    subprocess.run(['grim','-g',f'{x},{y} {w}x{h}','/tmp/noesis-outline-native.png'],check=True)
    print('PASS: native outline review/create; six lectures, two readings, two assignments, project; no competence awarded')
+   # Replace a completed lesson through the native UI, preserving its old source/place.
+   lesson=next(row for row in lectures if row['title']=='Lecture 3')
+   note=roots[0]/lesson['path'];original_note=note.read_bytes()
+   saved=command('event','--vault',str(roots[0]),lesson['path'],'study','--target-id',lesson['id'],'--data',json.dumps({'state':{'status':'read','locator':{'kind':'timestamp','value':'6:12'}}}))
+   key('CTRL','k');key('CTRL','a')
+   for letter in 'Lecture 3':key('','space' if letter==' ' else letter)
+   time.sleep(.5);key('','Down');key('','Return');time.sleep(.8)
+   assert state()['selected']==lesson['path'],state()
+   key('CTRL','period')
+   for _ in range(4):key('','Down')
+   key('','Return');time.sleep(.3)
+   def type_source(text):
+    for letter in text:
+     if letter==':':key('SHIFT','semicolon');key('','Right')
+     elif letter=='?':key('SHIFT','slash')
+     else:key('',{'/':'slash','.':'period',' ':'space','-':'minus','=':'equal'}.get(letter,letter))
+   type_source('https://example.org/replacement');key('','Tab');type_source('clearer explanation')
+   current=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'])) if c['address']==client['address']);x,y=current['at'];w,h=current['size']
+   subprocess.run(['grim','-g',f'{x},{y} {w}x{h}','/tmp/noesis-material-dialog-native.png'],check=True)
+   key('CTRL','Return');time.sleep(.8)
+   changes=[event for event in command('timeline','--vault',str(roots[0]),lesson['id'])['activities'] if event['event']=='material-change']
+   assert len(changes)==1 and changes[0]['previous']==saved['id'],(changes,state())
+   assert changes[0]['previous_position']['locator']['seconds']==372
+   assert changes[0]['source_snapshot']['source'].endswith('synthetic3')
+   assert changes[0]['state']['status']=='queued' and changes[0]['state']['locator'] is None
+   assert changes[0]['state']['material']['source']=='https://example.org/replacement'
+   assert note.read_bytes()==original_note and not state()['error'],state()
+   print('PASS: native source replacement preserves lesson identity/prose, old timestamp/source and resets consumption/place')
    large=home/'large-outline.json'
    large.write_text(json.dumps({'version':1,'title':'Long outline','entries':[{'key':str(n),'kind':'unit','title':'Extended lecture '+str(n),'fields':{'unit_kind':'lecture'}} for n in range(123)]}))
    command('course-import','--vault',str(roots[0]),str(large),'--apply','--operation-id',str(uuid.uuid4()))
-   key('CTRL','k')
+   key('CTRL','k');key('CTRL','a')
    for letter in 'Long outline':key('','space' if letter==' ' else letter)
    time.sleep(.7);key('','Down');key('','Return');time.sleep(.8)
    assert state()['outline_rows']==50,state()

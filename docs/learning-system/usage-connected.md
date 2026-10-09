@@ -225,3 +225,16 @@ assistance. A failed, partial or successful result fulfills the plan without cla
 competence; failures remain failures. Unknown or incomplete outcomes leave the
 check pending. Choose another check deliberately when a retry is useful. Ordinary
 practice does not fulfill a check just because it happened more recently.
+
+## Replace a lesson and resume its reader
+
+In a lecture or reading context, open the action menu and choose **Replace lesson
+material**. Enter a source URL or existing local document and a short reason. The
+lesson identity, notes, earlier positions and assessments remain intact; the new
+material starts without a saved place. Finish an active attempt before replacing it.
+Whole new book editions can be separate resources rather than replacing every unit.
+
+Save a page, section or timestamp in Read. **Ctrl+Shift+Enter** opens the source at
+the supported saved location. Workspace/normal mode hands focus to the reader and
+hides Noesis; reopen it with Super+Ctrl+O or the companion Resume action. Tiled mode
+keeps the study context beside the reader. **Hide** also preserves unfinished drafts.

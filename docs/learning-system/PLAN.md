@@ -117,8 +117,8 @@ fixture acceptance are reported separately. **The first release is not complete.
 |---|---|---|
 | P0 | Existing safe writes/receipts/backup tests retained; executable calibration restored through Restic. Populated native Zotero annotations and PDF restored through encrypted recovery and reader restart; repeated backups preserve reader state. | Complete interruption/concurrency matrix and verified retention policy. |
 | P1 | Opt-in bounded registered-vault Continue/Search; results carry owner identities; native selection/capture writes only to owner. Explicit restored-location replacement and new-identity fork, with interruption tests; newly registered identities support replacement after original-storage loss. Nonblocking cross-vault references survive moves. | Cross-vault contextual gate/deadlock policy and GUI relationship creation; disappearance/reappearance and conflict acceptance at larger scale. |
-| P2 | Populated isolated Zotero 10 profile with genuine Transformer PDF, native annotation edits/deletion, three retained import projections, stable resource UUID and learner prose. Installed API version/annotation omissions repaired. | Native PDF page/annotation handoff and equation → implementation → actual paper verification journey. |
-| P3 | Reviewable outline import with modules, six lectures, readings, two assignments and project; interruption retry avoids duplicates, consumption and assessment separate. Native import into new/existing courses accepted, immutable Arrange with keyboard focus recovery and 123-lesson pagination. | Material replacement and complete lesson/prerequisite/assignment/resume journey. |
+| P2 | Populated isolated Zotero 10 profile with genuine Transformer PDF, native annotation edits/deletion, three retained import projections, stable resource UUID and learner prose. Installed API version/annotation omissions repaired. | Native annotation-specific handoff and equation → implementation → actual paper verification journey. Sioyek page handoff and restored reader position accepted on authored PDF. |
+| P3 | Reviewable outline import with modules, six lectures, readings, two assignments and project; interruption retry avoids duplicates, consumption and assessment separate. Native import into new/existing courses accepted, immutable Arrange with keyboard focus recovery and 123-lesson pagination. | Complete lesson/prerequisite/assignment/resume journey. Native material replacement preserves previous source, position and assessment evidence. |
 | P4 | Distinct failed, assisted and independent attempts; durable restart/cache-loss recovery; learner criterion decisions. Native changed-task transfer, seven-day check scheduling and explicit protected check assessment survive cache deletion/restart. | Long history usability and realistic elapsed-time returning-learner acceptance. |
 | P5 | Executed trusted calibration with generated data, Git revision, units, CSV/figure references, contradictory original hypothesis, held-out check, unavailable-artifact report and restored comparisons. | Native Lab measurement/artifact composition and complete tool handoff. This is not hardware evidence or paper reproduction. |
 | P6 | Proportional typography retained; display-title projections, grouped Learn, bounded preview, visible statement and contextual controls. Address-scoped Workspace/Tiled/Window controls, compact companion and repeated lifecycle measurements. | Complete realistic visual-state matrix, disconnected ScreenPad, physical input latency and sustained live-shell stability. Five-minute isolated open idle passed at 0.0133% of one CPU core. |
@@ -128,3 +128,20 @@ fixture acceptance are reported separately. **The first release is not complete.
 No real vault was populated, relocated, merged or migrated for these tests.
 Optional tracking integrations stay outside this release. Quickshell remains the
 host pending evidence that isolation benefits justify another application runtime.
+
+## V1 boundary and next acceptance cycle
+
+V1 essentials remain reliable courses, papers, independent practice, experiments,
+owner-aware cross-vault navigation, readable native working surfaces and tested
+recovery. Sophisticated recommendation models, specialized experiment services,
+advanced spaced-repetition integrations and external dashboards are post-V1. This
+does not defer honest histories, safe writes or learner-controlled evidence.
+
+The next cycle closes complete journeys rather than adding record types: course →
+lesson → prerequisite → assignment → assessment → resume; paper annotations →
+reconstruction → implementation → executable verification; failed practice →
+assistance → changed-problem transfer → an explicitly performed later check; and
+experiment → measurement/artifact → comparison. Cross-vault relevance and cursor
+stability must be independently reproduced before search acceptance is closed.
+A realistic disposable learning day will distinguish automated native interaction
+evidence from human usability observations. The release remains partial.

@@ -2,6 +2,8 @@
 from pathlib import Path
 from urllib.parse import urlsplit,urlunsplit,parse_qsl,urlencode
 from .persistence import contained
+from .materials import effective_props
+from .index import local_relationship
 
 def command(root, props, state, reader='sioyek'):
     locator=state.get('locator') or {}
@@ -24,7 +26,7 @@ def command(root, props, state, reader='sioyek'):
         if not path.is_file():raise ValueError('Linked artifact unavailable; its learning record is preserved')
         if reader=='sioyek' and path.suffix.lower()=='.pdf':
             binary=Path.home()/'.local/bin/sioyek'
-            return [str(binary) if binary.exists() else 'sioyek']+(['--page',str(page)] if page else [])+[str(path)]
+            return [str(binary) if binary.exists() else 'sioyek']+(['--page',str(page),'--yloc','1'] if page else [])+[str(path)]
         return ['xdg-open',str(path)]
     source=str(props.get('source') or '')
     url=urlsplit(source)
@@ -43,9 +45,29 @@ def resource_props(index, identity):
     for _ in range(20):
         if current in seen:raise ValueError('Cyclic resource containment')
         seen.add(current)
-        props=index.record(current,include_body=False,include_attempt=False)['props']
+        record=index.record(current,include_body=False,include_attempt=False)
+        if record['state'].get('conflict'):raise ValueError('Resolve conflicting material history before opening its source')
+        props=effective_props(record['props'],record['state'])
         if any(props.get(key) for key in ('local_file','source','zotero_uri')):return props
-        parents=list(index.db.execute("SELECT source FROM relationships WHERE target=? AND relation IN ('contains','orders')",(current,)))
+        parents=list(index.db.execute("SELECT source FROM relationships r WHERE target=? AND relation IN ('contains','orders','assigns') AND "+local_relationship('r'),(current,index.manifest['vault_id'],index.manifest['vault_id'])))
         if len(parents)!=1:return props
         current=parents[0][0]
     raise ValueError('Resource containment is too deep; open its source explicitly')
+
+
+def launch(args):
+    """Open a specialist; repeat Sioyek's page IPC after its first document loads.
+
+    The installed 2.0 portable build ignores page positioning on cold startup.
+    A bounded second request reuses the same document/window, without polling,
+    database edits or a permanent reader process owned by Noesis.
+    """
+    import subprocess,time
+    process=subprocess.Popen(args,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+    if '--page' in args and str(args[-1]).lower().endswith('.pdf'):
+        time.sleep(1)
+        if process.poll() not in (None,0):raise ValueError('The PDF reader could not start; the saved position remains intact')
+        try:result=subprocess.run([args[0],'--reuse-window',*args[1:]],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,timeout=5)
+        except subprocess.TimeoutExpired as error:raise ValueError('The reader may have opened, but its page request was not acknowledged; the saved place is preserved') from error
+        if result.returncode:raise ValueError('The PDF reader could not apply the saved page; its learning history remains intact')
+    return process
