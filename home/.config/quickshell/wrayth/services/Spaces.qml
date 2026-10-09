@@ -6,7 +6,7 @@ import Quickshell.Hyprland
 
 // What the ScreenPad's workspace indicator shows. It tracks the main display,
 // so focusing a ScreenPad app or the bottom bar cannot change its selection.
-// The indicator is always exactly six slots wide: the numbered workspaces
+// The indicator is always seven regular slots wide: the numbered workspaces
 // holding the active one, or -- while any special workspace is visible -- the
 // special workspaces themselves.
 //
@@ -15,10 +15,11 @@ import Quickshell.Hyprland
 Singleton {
     id: root
 
-    readonly property int perPage: 6
-    readonly property var workspaceNames: ["Terminal", "Web", "Code", "Sim", "Work", "Misc"]
+    readonly property int perPage: 7
+    readonly property var workspaceIds: [1, 2, 3, 7, 4, 5, 6]
+    readonly property var workspaceNames: ["Terminal", "Web", "Code", "Sim", "Work", "Misc", "Study"]
 
-    readonly property var workspaceGlyphs: ["\uf120", "\uf0ac", "\uf121", "\uf1b2", "\uf0b1", "\uf07b"]
+    readonly property var workspaceGlyphs: ["\uf120", "\uf0ac", "\uf121", "\uf1b2", "\uf0b1", "\uf07b", "\uf518"]
 
     // Special workspaces carry a name; these are the ones worth a word rather
     // than the first four letters of whatever Hyprland calls them.
@@ -53,7 +54,7 @@ Singleton {
         return specialLabels[name] ?? name.slice(0, 4).toUpperCase();
     }
 
-    // The five slots. A numbered page is always five; a special page is padded
+    // Regular slots use the configured order; a special page is padded
     // with empty slots, because the indicator's width is fixed and a short page
     // must not shrink it.
     readonly property var slots: {
@@ -76,7 +77,7 @@ Singleton {
         }
         const page = 0;
         for (let i = 0; i < perPage; i++) {
-            const id = page * perPage + i + 1;
+            const id = workspaceIds[i];
             out.push({
                 label: workspaceNames[id - 1] ?? `${id}`.padStart(2, "0"),
                 glyph: workspaceGlyphs[id - 1] ?? "",
@@ -126,7 +127,7 @@ Singleton {
 
     // Which slot the bar's accent line runs to, or -1 when none is lit.
     readonly property int activeIndex: special ? slots.findIndex(slot => slot.active)
-                                                : activeId >= 1 && activeId <= perPage ? activeId - 1 : -1
+                                                : workspaceIds.indexOf(activeId)
 
     function activate(slot: var): void {
         if (slot.empty)

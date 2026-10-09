@@ -14,15 +14,15 @@ NoesisDialog {
  anchors.centerIn:parent
  onOpened:{errorMessage="";location.text="";reason.text="";sourceType.currentIndex=0;medium.currentIndex=Math.max(0,medium.model.indexOf(target.source_kind||"video"));location.forceActiveFocus();}
  contentItem:ColumnLayout {spacing:NoesisStyle.md
-  Text {text:root.target.title||"Lesson";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;wrapMode:Text.Wrap;Layout.fillWidth:true}
-  Text {text:"The lesson and your notes stay intact. Previous material and positions remain in History. The new source starts unread, without a saved place.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
+  Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;text:root.target.title||"Lesson";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;wrapMode:Text.Wrap;Layout.fillWidth:true}
+  Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;text:"The lesson and your notes stay intact. Previous material and positions remain in History. The new source starts unread, without a saved place.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
   RowLayout {Layout.fillWidth:true
    NoesisSelect {id:sourceType;model:["Source URL","Local document"];Layout.fillWidth:true;Accessible.name:"Replacement source location type"}
    NoesisSelect {id:medium;model:["video","pdf","article","documentation","book"];Layout.fillWidth:true;Accessible.name:"Replacement medium"}
   }
   NoesisField {id:location;placeholderText:sourceType.currentIndex===0?"https://…":"Path to the existing document";Layout.fillWidth:true;Accessible.name:"Replacement material location"}
   NoesisField {id:reason;placeholderText:"Why use this material instead?";Layout.fillWidth:true;Accessible.name:"Replacement reason"}
-  Text {visible:root.errorMessage!=="";text:root.errorMessage;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true;Accessible.name:"Replacement error"}
+  Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;visible:root.errorMessage!=="";text:root.errorMessage;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true;Accessible.name:"Replacement error"}
   NoesisButton {id:save;text:"Replace material";primary:true;hint:"Ctrl+Enter";enabled:location.text.trim()!==""&&reason.text.trim()!==""&&!NoesisController.working&&root.vaultScope===NoesisController.activeVault;onClicked:{let material={source_kind:medium.currentText};material[sourceType.currentIndex===0?"source":"local_file"]=location.text.trim();root.submitting=true;NoesisController.run(["event",root.target.path,"material-change","--target-id",root.target.id,"--evidence",reason.text.trim(),"--data",JSON.stringify({material:material,expected_head:root.expectedHead})]);}}
  }
  Shortcut {sequence:"Ctrl+Return";enabled:root.opened;onActivated:if(save.enabled)save.clicked()}

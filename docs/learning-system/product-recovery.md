@@ -24,12 +24,16 @@ Compact Practice switches between these retained surfaces; attempt context and
 reference reveal remain reachable. History and other operations are supporting
 context. Outcome recording remains the existing protected, receipt-backed workflow.
 
-Zed Sans is the requested UI/prose family; ZedMono Nerd Font Mono is the installed
+Zed Sans is the requested UI/prose family ([original Zed font source](https://github.com/zed-industries/zed-fonts)); ZedMono Nerd Font Mono is the installed
 Zed Mono family for code. Disposable font configuration includes the real installed
 font directory. Bengali and mathematical fallback fonts are installed. Colors
 match Wrayth's warm dark surfaces and pink identity. Routine buttons/fields/editor
-surfaces no longer have a rectangle outline. Raised fills, selected underlines,
-focus outlines and measured hover/pressed states distinguish controls.
+surfaces no longer have a rectangle outline. Text uses explicit native glyph
+rendering and full hinting; UI rows follow the interface scale independently of
+reading prose. There are no tooltips. Back/Forward/Refresh have visible names,
+and compact navigation explains its destinations. Tonal regions, raised action fills, bold selection, keyboard-focus underlines
+and hover/pressed states distinguish controls without surrounding everything
+with borders. Focused inputs retain a narrow accent marker.
 
 ## Responsibilities and preservation
 
@@ -60,29 +64,34 @@ redesigns**: [Research](assets/recovery-sprint/research-current.png),
 The Lab capture has a hypothesis, not fabricated measurements/figure evidence.
 
 `capture-after.json` records logical size, Qt DPR, application scales and window
-presentation for every capture. Course, lesson and Practice each have 16 size/scale
-captures: requested 1920x1080, 1440x880, 1000x650 and 500x650 at 100/125/150/200%.
-Full-display actual content is 1916x1032 due compositor reservations; the other
-logical viewport targets were verified. DPR was 2, recorded separately from text
-scale. Normal/workspace/tiled states were exercised. Compact 200% keeps the chosen
-font sizes and reaches actions through reflow/scrolling. Not all content fits
-simultaneously, and larger Course headings require scrolling before body content.
+presentation for every capture. The owner's latest decision makes a full-screen
+Study workspace the primary review environment: 1920x1080 logical at
+100/125/150/200% application scales, with Qt DPR recorded separately. One compact
+200% recovery check retains reachable statement/reasoning and attempt actions.
+Earlier broader size matrices remain in Git history; they are not the current
+acceptance focus. Full-screen is Qt's actual window state, independently checked
+against the compositor, rather than a maximized-window label.
 
+Study appears between Code and Sim with a book glyph. Workspace order is
+1,2,3,7,4,5,6 so existing workspace IDs and windows are preserved. Super+7 opens
+Study; Super+Ctrl+O launches/resumes Noesis there. Other tools' existing windows
+are never relocated. Full screen is the default; normal, maximized and tiled
+presentation remain explicit options.
 Native pointer input expands a module and opens its lesson. Native keyboard input
 edits notes. Tests verify outline return, Hide/reopen and Close/restart preserve
 the exact lesson, draft, parent course and expanded module. Checks also prove
 four concurrent launches use one instance, reject wrong owners, preserve private
 projection permissions, exclude embedded/standalone writable hosts, and isolate
 Wrayth/Noesis restarts. Scoped installation is idempotent; rollback refuses later
-edits and preserves unrelated files. 114 backend core tests pass. Ten lifecycle
+edits and preserves unrelated files. 130 core/compatibility tests pass. Ten lifecycle
 fault cases passed during this slice, including debounce, pending mutation/import,
 failed save and forced termination; handoff delay in that suite is simulated.
 
 Actual fill/token contrast: ordinary ink on working surface 14.52:1; secondary on
 raised fill 6.79:1; disabled quiet text 5.66:1; selected pink on raised fill 4.63:1;
-dark primary text on pink 5.05:1; field bottom rule on working surface 4.31:1;
-error text 7.96:1; pressed secondary text 11.13:1. Focus also has an outline and
-selected state an underline. These checks and captures are WCAG-inspired desktop
+dark primary text on pink 5.05:1;
+error text 7.96:1; pressed secondary text 11.13:1. Keyboard focus underlines the action label;
+selected controls also change weight and fill. These checks and captures are WCAG-inspired desktop
 evidence, not formal conformance or a complete accessibility audit.
 
 ## Remaining release gates

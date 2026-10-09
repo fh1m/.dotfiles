@@ -82,7 +82,7 @@ def launch(home,*,embedded=False,owner=None,vault_id=None,record_id=None,capture
                 if selected:child_environment['NOESIS_MAIN_MONITOR']=selected['name']
             if prefs.get('placement','dedicated')=='dedicated' and os.environ.get('HYPRLAND_INSTANCE_SIGNATURE'):
                 if selected:subprocess.run(['hyprctl','dispatch','hl.dsp.focus({monitor='+json.dumps(selected['name'])+'})'],check=True,capture_output=True)
-                workspace=prefs.get('study_workspace','Noesis')
+                workspace=prefs.get('study_workspace','Study')
                 if not workspace or any(ord(c)<32 for c in workspace):raise ValueError('Invalid study workspace name')
                 subprocess.run(['hyprctl','dispatch','hl.dsp.focus({workspace='+json.dumps('name:'+workspace)+'})'],check=True,capture_output=True)
             fd=os.open(state/'application.log',os.O_WRONLY|os.O_CREAT|os.O_APPEND,0o600)

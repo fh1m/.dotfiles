@@ -13,3 +13,8 @@ hl.window_rule({
  match = { class = "^org.fh1m.Noesis$" },
  tile = true, no_blur = true,
 })
+
+-- Study is shown between Code and Sim; existing workspace IDs stay stable.
+hl.workspace_rule({ workspace = "7", default_name = "Study", persistent = true, monitor = "eDP-1" })
+hl.bind("SUPER + 7", hl.dsp.focus({ workspace = "7" }))
+hl.bind("SUPER + SHIFT + 7", hl.dsp.window.move({ workspace = "7" }))

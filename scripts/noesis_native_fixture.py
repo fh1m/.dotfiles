@@ -5,7 +5,8 @@ REPO=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('installer',REPO/'scripts/install.py');installer=importlib.util.module_from_spec(spec);spec.loader.exec_module(installer)
 QS=str(Path.home()/'.local/opt/sensei-quickshell/bin/qs')
 class Fixture:
- def __init__(self,delay=None,fail_preferences=False,fail_receipt=False):
+ def __init__(self,delay=None,fail_preferences=False,fail_receipt=False,expected_practice_rows=1):
+  self.expected_practice_rows=expected_practice_rows
   self.home=Path(tempfile.mkdtemp(prefix='noesis-lifecycle-'));installer.install(self.home,True)
   self.env=dict(os.environ,HOME=str(self.home),XDG_CONFIG_HOME=str(self.home/'.config'),XDG_CACHE_HOME=str(self.home/'.cache'),XDG_STATE_HOME=str(self.home/'.local/state'),NOESIS_WINDOW_MODE='normal',QS_DISABLE_CRASH_HANDLER='1',NOESIS_QS=QS)
   self.vault=self.home/'vault';(self.vault/'System').mkdir(parents=True)
@@ -26,7 +27,7 @@ class Fixture:
  def start(self):
   self.log=(self.home/'qml.log').open('a');self.process=subprocess.Popen([QS,'-p',str(self.config),'--no-color'],env=self.env,stdout=self.log,stderr=self.log,start_new_session=True)
   self.wait(lambda s:s['visible'] and s['worker'])
-  self.ipc('noesis-window','section','Practice');self.wait(lambda s:s['rows']==1)
+  self.ipc('noesis-window','section','Practice');self.wait(lambda s:s['rows']==self.expected_practice_rows)
   self.ipc('noesis-window','select','problem.md');self.wait(lambda s:s['selected']=='problem.md' and s['preview_length']>0)
   self.client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==self.process.pid and c['title'].startswith('Noesis'))
   subprocess.run(['hyprctl','dispatch','hl.dsp.focus({window='+json.dumps('address:'+self.client['address'])+'})'],check=True,capture_output=True)

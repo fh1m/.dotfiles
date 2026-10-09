@@ -15,17 +15,17 @@ NoesisDialog {
  function results(records){if(opened&&vaultScope===NoesisController.activeVault){rows=records.filter(row=>row.id!==target.id);matches.currentIndex=rows.length?0:-1;}}
  contentItem:ColumnLayout {
   spacing:NoesisStyle.md
-  Text {text:"What do you need for this lesson or problem? Reuse material in this vault.";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
+  Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;text:"What do you need for this lesson or problem? Reuse material in this vault.";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
   NoesisField {id:lookup;Layout.fillWidth:true;placeholderText:"Find a concept, prerequisite or exercise";onTextEdited:delay.restart();Keys.onDownPressed:{if(root.rows.length){matches.currentIndex=0;matches.forceActiveFocus();}}}
   ListView {id:matches;Layout.fillWidth:true;Layout.preferredHeight:Math.min(200,root.rows.length*NoesisStyle.row);model:root.rows;clip:true;keyNavigationEnabled:true
    Keys.onReturnPressed:{if(currentIndex>=0){root.chosen=root.rows[currentIndex];reason.forceActiveFocus();}}
    delegate:NoesisRow {required property var modelData;width:ListView.view.width;title:modelData.title;subtitle:modelData.type;highlighted:root.chosen.id===modelData.id;onClicked:{root.chosen=modelData;reason.forceActiveFocus();}}
    ScrollBar.vertical:ScrollBar {}
   }
-  Text {visible:!!root.chosen.id;text:"Prerequisite · "+(root.chosen.title||"");Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
+  Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;visible:!!root.chosen.id;text:"Prerequisite · "+(root.chosen.title||"");Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
   NoesisField {id:reason;Layout.fillWidth:true;placeholderText:"Why is this needed here?";Accessible.name:"Prerequisite reason"}
   NoesisSelect {id:role;Layout.fillWidth:true;model:["Required before continuing","Study alongside","Optional deeper study"];Accessible.name:"Prerequisite role"}
-  Text {text:"This connects the material. It does not claim that you understand it or award capability.";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+  Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;text:"This connects the material. It does not claim that you understand it or award capability.";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
   NoesisButton {id:save;text:"Connect prerequisite";primary:true;hint:"Ctrl+Enter";enabled:!!root.chosen.id&&reason.text.trim()!==""&&!NoesisController.working&&root.vaultScope===NoesisController.activeVault;onClicked:{root.submitting=true;NoesisController.run(["link",root.target.id,root.chosen.id,"prerequisite","--role",["gate","parallel","deep-descent"][role.currentIndex],"--reason",reason.text]);}}
  }
  Timer {id:delay;interval:150;onTriggered:root.search(lookup.text)}

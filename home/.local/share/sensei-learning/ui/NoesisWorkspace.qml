@@ -303,24 +303,24 @@ Rectangle {
   anchors.fill:parent;spacing:0
   Rectangle {visible:!root.compact&&!root.focusMode;Layout.preferredWidth:Math.max(184,168*NoesisStyle.interfaceScale);Layout.fillHeight:true;color:NoesisStyle.surface
    ColumnLayout {anchors.fill:parent;anchors.margins:NoesisStyle.lg;spacing:NoesisStyle.xs
-    Text {textFormat:Text.PlainText;text:"YOUR WORKSPACE";color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;Layout.topMargin:NoesisStyle.sm;Layout.bottomMargin:NoesisStyle.md}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"YOUR WORKSPACE";color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;Layout.topMargin:NoesisStyle.sm;Layout.bottomMargin:NoesisStyle.md}
     Repeater {model:root.sections;delegate:NoesisButton {required property string modelData;variant:"tertiary";text:modelData;Layout.fillWidth:true;textAlignment:Text.AlignLeft;highlighted:root.section===modelData;onClicked:root.section=modelData;Accessible.name:modelData+" workspace";hint:"Ctrl+"+(root.sections.indexOf(modelData)+1)}}
     Item {Layout.fillHeight:true}
     NoesisButton {text:"Quick capture";visible:root.section!=="Today";Layout.fillWidth:true;textAlignment:Text.AlignLeft;onClicked:root.quickCapture();hint:"Ctrl+Shift+N"}
     NoesisButton {text:"Find anything";Layout.fillWidth:true;textAlignment:Text.AlignLeft;onClicked:search.forceActiveFocus();hint:"Ctrl+K"}
-    Text {textFormat:Text.PlainText;text:"VAULT";color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;Layout.topMargin:NoesisStyle.lg}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"VAULT";color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;Layout.topMargin:NoesisStyle.lg}
     NoesisSelect {Layout.fillWidth:true;model:(NoesisController.state.vaults||[]).map(v=>v.name);currentIndex:(NoesisController.state.vaults||[]).findIndex(v=>v.path===NoesisController.activeVault);onActivated:{let v=NoesisController.state.vaults[currentIndex];if(v)NoesisController.choose(v.path);}}
    }
   }
   ColumnLayout {Layout.fillWidth:true;Layout.fillHeight:true;spacing:0
    Flow {Layout.fillWidth:true;Layout.margins:NoesisStyle.lg;spacing:NoesisStyle.sm
     NoesisButton {text:"Workspaces";visible:root.compact&&!root.tight&&!root.focusMode;onClicked:navigationDrawer.open()}
-    NoesisButton {text:"Navigation";visible:root.compact&&root.tight&&!root.focusMode;onClicked:navigationActions.begin([{action:"workspaces",label:"Choose workspace"},{action:"search",label:"Search learning records"},{action:"browse",label:"Browse this collection"},{action:"details",label:"Inspect context"},{action:"forward",label:"Go forward"}])}
-    NoesisButton {variant:"tertiary";text:root.focusMode?"Leave Focus":"Focus";highlighted:root.focusMode;visible:!!root.selected.id;hint:"Ctrl+Shift+F";onClicked:root.toggleFocus()}
-    NoesisButton {variant:"tertiary";text:"← "+root.section;visible:!!root.selected.id&&!root.tight&&!root.focusMode;onClicked:root.returnCollection()}
-    NoesisButton {variant:"tertiary";visible:root.navigationIndex>0;text:"←";enabled:!!root.selected.id||root.navigationIndex>0;onClicked:root.back();Accessible.name:"Back";hint:"Alt+Left"}
-    NoesisButton {variant:"tertiary";text:"→";visible:!root.tight&&root.navigationIndex+1<root.navigation.length;enabled:root.navigationIndex+1<root.navigation.length;onClicked:root.forward();Accessible.name:"Forward";hint:"Alt+Right"}
-    Text {textFormat:Text.PlainText;visible:!root.compact&&!root.selected.id;text:root.section;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.heading;width:Math.max(100,implicitWidth);elide:Text.ElideRight}
+    NoesisButton {text:"Navigation";visible:root.compact&&root.tight&&!root.focusMode;onClicked:navigationActions.begin([{action:"workspaces",label:"Choose workspace"},{action:"search",label:"Search learning records"},{action:"return",label:"Return to "+root.section+" collection"},{action:"back",label:"Previous activity",reason:"Alt+Left"},{action:"details",label:"Inspect context"},{action:"forward",label:"Go forward"}])}
+    NoesisButton {variant:"tertiary";text:root.focusMode?"Leave focus":"Focus view";highlighted:root.focusMode;visible:!!root.selected.id;hint:"Ctrl+Shift+F";onClicked:root.toggleFocus()}
+    NoesisButton {variant:"tertiary";text:"← Back to "+root.section;visible:!!root.selected.id&&!root.tight&&!root.focusMode;onClicked:root.returnCollection()}
+    NoesisButton {variant:"tertiary";visible:root.navigationIndex>0&&!root.tight;text:"Previous activity";enabled:!!root.selected.id||root.navigationIndex>0;onClicked:root.back();Accessible.name:"Back";hint:"Alt+Left"}
+    NoesisButton {variant:"tertiary";text:"Next in history";visible:!root.tight&&root.navigationIndex+1<root.navigation.length;enabled:root.navigationIndex+1<root.navigation.length;onClicked:root.forward();Accessible.name:"Forward";hint:"Alt+Right"}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:!root.compact&&!root.selected.id;text:root.section;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.heading;width:Math.max(100,implicitWidth);elide:Text.ElideRight}
     NoesisSelect {visible:root.compact&&!!root.selected.id&&!root.focusMode&&!root.courseWorking&&root.section!=="Practice";model:["Read","Work","History","Connections"];currentIndex:model.indexOf(root.contextTab);Accessible.name:"Working page section";onActivated:root.contextTab=currentText}
     NoesisButton {text:"Details";visible:root.compact&&!root.tight&&!!root.selected.id&&!root.focusMode;onClicked:root.inspectorOpen=!root.inspectorOpen}
     NoesisButton {text:"Search";visible:root.compact&&!root.tight&&!root.focusMode;onClicked:searchPopup.open()}
@@ -328,7 +328,7 @@ Rectangle {
     NoesisButton {text:"+ New";hint:"Ctrl+N · create in this workspace";visible:!root.selected.id&&root.section!=="Today"&&!root.compact&&!root.focusMode;onClicked:{let items=[{action:"resource",label:root.section==="Lab"?"Begin an experiment":root.section==="Practice"?"Begin a problem":"Add a resource"}];if(root.section==="Learn")items=items.concat([{action:"outline",label:"Import a course outline",reason:"Ctrl+Shift+O"},{action:"path",label:"Start a learning path"}]);if(root.section==="Research")items.push({action:"zotero",label:"Import from Zotero"});items.push({action:"capture",label:"Capture a thought",reason:"Ctrl+Shift+N"});startDialog.begin(items);}}
     NoesisButton {text:"+ Capture";visible:root.section==="Today";primary:true;onClicked:root.quickCapture()}
     NoesisButton {text:root.collectionScope?"All learning vaults":"This vault";hint:"Ctrl+Shift+K · read scope; saves stay in the owning vault";visible:["Today","Library"].includes(root.section);highlighted:root.collectionScope;onClicked:{root.collectionScope=!root.collectionScope;root.load(false);}}
-    NoesisButton {visible:!root.compact&&!root.focusMode;text:"↻";onClicked:root.send("reconcile");Accessible.name:"Refresh"}
+    NoesisButton {visible:!root.compact&&!root.focusMode;text:"Refresh";onClicked:root.send("reconcile");Accessible.name:"Refresh"}
    }
    SplitView {id:workingSplit;Layout.fillWidth:true;Layout.fillHeight:true;Layout.leftMargin:NoesisStyle.lg;Layout.rightMargin:NoesisStyle.lg;orientation:Qt.Horizontal
     handle:Rectangle {implicitWidth:8;color:SplitHandle.hovered?NoesisStyle.rule:NoesisStyle.surface}
@@ -337,7 +337,7 @@ Rectangle {
      Flow {visible:root.section==="Learn"&&!root.query;Layout.fillWidth:true;spacing:NoesisStyle.sm
       Repeater {model:["Paths & courses","Concepts","Sources"];delegate:NoesisButton {required property string modelData;text:modelData;highlighted:root.learnGroup===modelData;onClicked:{root.learnGroup=modelData;root.load(false);}}}
      }
-     Text {visible:root.section!=="Today";textFormat:Text.PlainText;text:({Today:"Pick up a thread. Follow your curiosity.",Learn:"Paths, courses and the ideas that connect them.",Research:"Read with a question. Return with an explanation.",Practice:"Preserve the struggle. Make the next attempt independent.",Lab:"From prediction to measurement.",Library:"Everything saved, ready to connect."})[root.section];color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;Layout.fillWidth:true}
+     Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;visible:root.section!=="Today";textFormat:Text.PlainText;text:({Today:"Pick up a thread. Follow your curiosity.",Learn:"Paths, courses and the ideas that connect them.",Research:"Read with a question. Return with an explanation.",Practice:"Preserve the struggle. Make the next attempt independent.",Lab:"From prediction to measurement.",Library:"Everything saved, ready to connect."})[root.section];color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;Layout.fillWidth:true}
      NoesisTodayPage {id:todayPage;visible:root.section==="Today"&&!root.query&&!root.selected.id&&!root.loading;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:0;context:root.home;quiet:NoesisController.quiet;collectionScope:root.collectionScope;pathScoped:NoesisController.pathScope!=="";busy:NoesisController.working
       onOpenContext:row=>root.openWork(row)
       onToggleQuiet:{NoesisController.quiet=!NoesisController.quiet;NoesisController.savePreferences();root.load(false);}
@@ -345,7 +345,7 @@ Rectangle {
       onStart:kind=>createDialog.begin(kind==="paper"?"resource":kind,"",false,kind==="paper"?"paper":kind==="resource"?"course":undefined)
       onBrowse:root.section="Library"
      }
-     Text {textFormat:Text.PlainText;visible:root.loading;text:"Loading your workspace…";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+     Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:root.loading;text:"Loading your workspace…";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
      ListView {id:list;visible:root.section!=="Today"||!!root.query||!!root.selected.id;Layout.fillWidth:true;Layout.fillHeight:true;clip:true;model:root.rows;keyNavigationEnabled:true;reuseItems:true;spacing:NoesisStyle.xs
       Keys.onReturnPressed:if(currentIndex>=0)root.openWork(root.rows[currentIndex])
       delegate:NoesisRow {required property var modelData;required property int index;width:list.width;title:modelData.title||modelData.path;subtitle:(modelData.vault_name?modelData.vault_name+" · ":"")+(modelData.reason||((modelData.source_kind||modelData.type||"")+(modelData.status?" · "+modelData.status:"")));highlighted:root.selected.id===modelData.id;onClicked:{list.currentIndex=index;root.openWork(modelData);}}
@@ -357,12 +357,12 @@ Rectangle {
     ColumnLayout {visible:!!root.selected.id&&!root.browseOpen&&!root.query;SplitView.fillWidth:true;SplitView.minimumWidth:Math.min(480,workingSplit.width);spacing:NoesisStyle.md
      RowLayout {visible:!root.compact&&!root.courseWorking&&root.section!=="Practice";Layout.fillWidth:true
       ColumnLayout {Layout.fillWidth:true;spacing:NoesisStyle.xs
-       Text {textFormat:Text.PlainText;text:String(root.selected.unit_kind||root.selected.source_kind||({task:"problem",prerequisite:"prerequisite",unit:"lesson"})[root.selected.type]||root.selected.type||"context").toUpperCase();color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
-       Text {textFormat:Text.PlainText;text:root.selected.title||root.selected.imported_title||root.selected.path||"";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.heading;wrapMode:Text.Wrap;Layout.fillWidth:true}
+       Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:String(root.selected.unit_kind||root.selected.source_kind||({task:"problem",prerequisite:"prerequisite",unit:"lesson"})[root.selected.type]||root.selected.type||"context").toUpperCase();color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+       Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:root.selected.title||root.selected.imported_title||root.selected.path||"";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.heading;wrapMode:Text.Wrap;Layout.fillWidth:true}
       }
       NoesisButton {text:"Today priority";visible:!["activity","relationship","artifact"].includes(root.selected.type);onClicked:priorityDialog.begin()}
       NoesisButton {text:"Details";highlighted:root.inspectorOpen;onClicked:root.inspectorOpen=!root.inspectorOpen;hint:"Ctrl+I"}
-      NoesisButton {text:"×";onClicked:{root.stashDraft();root.selected=({});}
+      NoesisButton {visible:false;text:"Return to collection";onClicked:{root.stashDraft();root.selected=({});}
        Accessible.name:"Close context"}
      }
      Flow {visible:!root.compact&&!root.courseWorking&&root.section!=="Practice";Layout.fillWidth:true;spacing:NoesisStyle.xs
@@ -370,9 +370,9 @@ Rectangle {
       Item {Layout.fillWidth:true}
       NoesisButton {text:"Open note ↗";enabled:!root.referenceHidden;onClicked:NoesisController.note(root.selected.path)}
      }
-     Label {visible:root.contextLoading;text:"Opening context…";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
-     Label {visible:root.selected.type==="artifact";text:(root.artifactInfo.availability||"Artifact reference")+" · "+(root.artifactInfo.location||"");color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
-     Label {visible:false;text:root.workflow.latest_comparison?"Last reported result · "+(root.workflow.latest_comparison.observed||root.workflow.latest_comparison.conclusion||"Open history for evidence"):"Preserve a prediction, connect a run and compare what happened.";color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+     Label {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;visible:root.contextLoading;text:"Opening context…";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+     Label {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;visible:root.selected.type==="artifact";text:(root.artifactInfo.availability||"Artifact reference")+" · "+(root.artifactInfo.location||"");color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+     Label {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;visible:false;text:root.workflow.latest_comparison?"Last reported result · "+(root.workflow.latest_comparison.observed||root.workflow.latest_comparison.conclusion||"Open history for evidence"):"Preserve a prediction, connect a run and compare what happened.";color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
      NoesisCourseStudio {id:courseStudio;visible:root.courseWorking;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:0;course:root.courseRecord.id?root.courseRecord:root.selected;lesson:root.selected;rows:root.courseMembers;cursor:root.courseCursor;preview:root.documentPreview;learningContext:root.learningContext;summary:root.courseProgress;notes:root.evidence.text;savedPlace:String(root.selectedState.locator?.value??root.selectedState.position??"");busy:NoesisController.working||root.outlineLoading
       onOpenMember:row=>root.courseOpen(row)
       onExpandModule:(row,more)=>{root.outlineLoading=true;root.moduleAppend=more;root.moduleSerial=root.send("outline",{record_id:row.id,cursor:more?Number(courseStudio.moduleCursor):0});}
@@ -389,21 +389,21 @@ Rectangle {
      }
      ScrollView {id:readScroll;visible:root.contextTab==="Read"&&!root.courseWorking;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:0;clip:true
       ColumnLayout {id:readingColumn;width:readScroll.availableWidth;spacing:NoesisStyle.md
-     Text {textFormat:Text.PlainText;visible:root.compact;text:root.selected.title||root.selected.path||"";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.heading;wrapMode:Text.Wrap;Layout.fillWidth:true}
-     Label {visible:false;text:root.courseSummary();color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+     Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:root.compact;text:root.selected.title||root.selected.path||"";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.heading;wrapMode:Text.Wrap;Layout.fillWidth:true}
+     Label {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;visible:false;text:root.courseSummary();color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
      NoesisLabPage {id:experimentContext;source:root.selected;busy:NoesisController.working;onOpenCode:NoesisController.run(["open-project",root.selected.id]);onRecordComparison:comparisonDialog.open();onBeginRun:root.contextAction("run");onConnectArtifact:root.contextAction("artifact");visible:["project","experiment"].includes(root.workflow.kind)&&!root.referenceHidden;Layout.fillWidth:true;context:root.workflow;onOpenArtifact:row=>root.select(row)}
      NoesisLearningContext {visible:!root.referenceHidden;Layout.fillWidth:true;context:root.learningContext;busy:NoesisController.working;onOpenContext:row=>root.select(row);onReviewReadiness:row=>readinessDialog.begin(row)}
-     Text {textFormat:Text.PlainText;visible:root.contextTab==="Read"&&["paper","project","experiment"].includes(root.workflow.kind)&&root.readingRelations.length>0&&!root.referenceHidden;text:root.workflow.kind==="paper"?"Questions and implementations":"Runs, evidence and source context";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;Layout.fillWidth:true}
+     Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:root.contextTab==="Read"&&["paper","project","experiment"].includes(root.workflow.kind)&&root.readingRelations.length>0&&!root.referenceHidden;text:root.workflow.kind==="paper"?"Questions and implementations":"Runs, evidence and source context";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;Layout.fillWidth:true}
      ListView {visible:root.contextTab==="Read"&&["paper","project","experiment"].includes(root.workflow.kind)&&root.readingRelations.length>0&&!root.referenceHidden;Layout.fillWidth:true;Layout.preferredHeight:Math.min(420,root.height*.42,root.readingRelations.length*NoesisStyle.row);clip:true;model:root.referenceHidden?[]:root.readingRelations
       delegate:NoesisRow {required property var modelData;width:ListView.view.width;title:modelData.other_title||modelData.other_id;subtitle:(modelData.other_type||"context")+(modelData.other_status?" · "+modelData.other_status:"");enabled:!!modelData.other_path&&!root.referenceHidden;onClicked:root.select({id:modelData.other_id,path:modelData.other_path,title:modelData.other_title,type:modelData.other_type,vault:modelData.other_vault||NoesisController.activeVault})}
       ScrollBar.vertical:ScrollBar {}
      }
-     Text {textFormat:Text.PlainText;visible:!!root.selected.code_snapshot&&!["project","experiment"].includes(root.workflow.kind);Layout.fillWidth:true;wrapMode:Text.Wrap;text:{let code=root.selected.code_snapshot;if(!code)return "";if(code.availability==="unavailable")return "Code unavailable · "+code.repository;return "Code · "+(code.commit?code.commit.slice(0,12):"no committed revision yet")+(code.dirty?" · uncommitted changes present":" · clean working tree")+"
+     Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:!!root.selected.code_snapshot&&!["project","experiment"].includes(root.workflow.kind);Layout.fillWidth:true;wrapMode:Text.Wrap;text:{let code=root.selected.code_snapshot;if(!code)return "";if(code.availability==="unavailable")return "Code unavailable · "+code.repository;return "Code · "+(code.commit?code.commit.slice(0,12):"no committed revision yet")+(code.dirty?" · uncommitted changes present":" · clean working tree")+"
 Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
      ColumnLayout {visible:root.workflow.kind==="capability";Layout.fillWidth:true;spacing:NoesisStyle.sm
-      Text {textFormat:Text.PlainText;text:"Assessment criteria";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
-      Repeater {model:root.workflow.criteria||[];delegate:Text {textFormat:Text.PlainText;required property var modelData;text:"• "+String(modelData);color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;Layout.fillWidth:true}}
-      Text {textFormat:Text.PlainText;text:"Learner evidence decisions · scoped, never a mastery percentage";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;Layout.fillWidth:true;wrapMode:Text.Wrap}
+      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Assessment criteria";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+      Repeater {model:root.workflow.criteria||[];delegate:Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;required property var modelData;text:"• "+String(modelData);color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;Layout.fillWidth:true}}
+      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Learner evidence decisions · scoped, never a mastery percentage";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;Layout.fillWidth:true;wrapMode:Text.Wrap}
       Repeater {model:root.workflow.evidence||[];delegate:NoesisRow {required property var modelData;Layout.fillWidth:true;title:(modelData.decision||"Unavailable")+" · "+(modelData.criterion||"evidence");subtitle:(modelData.outcome||"unknown")+" · "+(modelData.assistance||["unknown"]).join(", ")+" · "+(modelData.scope||"scope unknown");enabled:!!modelData.path&&!root.referenceHidden;onClicked:NoesisController.note(modelData.path)}}
      }
      Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
@@ -416,7 +416,7 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
      }
      NoesisButton {text:root.readingPlaceOpen?"Hide reading place":"Reading pass & saved place";visible:root.tight&&root.workflow.kind==="paper";highlighted:root.readingPlaceOpen;onClicked:root.readingPlaceOpen=!root.readingPlaceOpen}
      RowLayout {Layout.fillWidth:true;visible:(!root.tight||root.readingPlaceOpen)&&(root.selected.source_kind==="paper"||root.selected.type==="paper")
-      Text {textFormat:Text.PlainText;text:"Reading pass";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Reading pass";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
       NoesisSelect {id:readingPass;model:["survey","detail","reconstruct","verify"];Layout.fillWidth:true;Accessible.name:"Reading pass"}
      }
      Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm;visible:(!root.tight||root.workflow.kind!=="paper"||root.readingPlaceOpen)&&root.contextTab==="Read"&&["paper","resource","course","unit"].includes(root.selected.type)&&root.selected.unit_kind!=="module"&&(!["course","path"].includes(root.workflow.kind)||!!root.selected.source||!!root.selected.local_file)
@@ -424,12 +424,12 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
       NoesisField {id:position;width:Math.min(360,parent.width);placeholderText:"Resume at page, section or timestamp"}
       NoesisButton {text:"Save place";enabled:!NoesisController.working;onClicked:root.saveEvent("study",{state:root.studyUpdate()})}
      }
-     Text {textFormat:Text.PlainText;visible:root.contextTab==="Read";text:"Equations, diagrams and editing open in Obsidian.";color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;wrapMode:Text.Wrap;Layout.fillWidth:true}       NoesisResearchPage {id:researchPage;displayTitle:root.selected.title||"";visible:root.workflow.kind==="paper"&&!root.referenceHidden;Layout.fillWidth:true;context:root.workflow;preview:root.documentPreview;revisions:root.sourceRevisions;revisionCursor:root.revisionCursor;revisionNewerCursor:root.revisionNewerCursor;currentProjection:root.selected.zotero_projection||"";viewportHeight:readScroll.availableHeight;onPageAnnotations:cursor=>root.loadAnnotations(cursor);onChooseSnapshot:path=>root.loadAnnotations(null,path);onPageRevisions:cursor=>root.loadSourceRevisions(cursor)}
+     Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:root.contextTab==="Read";text:"Equations, diagrams and editing open in Obsidian.";color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;wrapMode:Text.Wrap;Layout.fillWidth:true}       NoesisResearchPage {id:researchPage;displayTitle:root.selected.title||"";visible:root.workflow.kind==="paper"&&!root.referenceHidden;Layout.fillWidth:true;context:root.workflow;preview:root.documentPreview;revisions:root.sourceRevisions;revisionCursor:root.revisionCursor;revisionNewerCursor:root.revisionNewerCursor;currentProjection:root.selected.zotero_projection||"";viewportHeight:readScroll.availableHeight;onPageAnnotations:cursor=>root.loadAnnotations(cursor);onChooseSnapshot:path=>root.loadAnnotations(null,path);onPageRevisions:cursor=>root.loadSourceRevisions(cursor)}
        ColumnLayout {Layout.fillWidth:true;spacing:NoesisStyle.lg;visible:!root.referenceHidden&&root.workflow.kind!=="paper"
-        Repeater {model:root.referenceHidden?[]:root.documentPreview.blocks||[];delegate:TextEdit {required property var modelData;Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;text:modelData.text;readOnly:true;selectByMouse:true;textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;color:modelData.kind==="caption"?NoesisStyle.secondary:NoesisStyle.ink;font.family:modelData.kind==="code"?NoesisStyle.codeFont:NoesisStyle.uiFont;font.pixelSize:modelData.kind==="heading"?(modelData.level===1?NoesisStyle.heading:modelData.level===2?NoesisStyle.sectionHeading:NoesisStyle.subheading):modelData.kind==="code"?NoesisStyle.label:NoesisStyle.body;font.bold:modelData.kind==="heading";Accessible.name:"Document preview"}}
-        Text {textFormat:Text.PlainText;visible:(root.documentPreview.specialist_features||[]).length>0||!!root.documentPreview.truncated;text:"Open the original for "+(root.documentPreview.specialist_features||[]).join(", ")+(root.documentPreview.truncated?" and the complete document":"")+".";color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+        Repeater {model:root.referenceHidden?[]:root.documentPreview.blocks||[];delegate:TextEdit {renderType:TextEdit.NativeRendering;font.hintingPreference:Font.PreferFullHinting;required property var modelData;Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;text:modelData.text;readOnly:true;selectByMouse:true;textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;color:modelData.kind==="caption"?NoesisStyle.secondary:NoesisStyle.ink;font.family:modelData.kind==="code"?NoesisStyle.codeFont:NoesisStyle.uiFont;font.pixelSize:modelData.kind==="heading"?(modelData.level===1?NoesisStyle.heading:modelData.level===2?NoesisStyle.sectionHeading:NoesisStyle.subheading):modelData.kind==="code"?NoesisStyle.label:NoesisStyle.body;font.bold:modelData.kind==="heading";Accessible.name:"Document preview"}}
+        Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:(root.documentPreview.specialist_features||[]).length>0||!!root.documentPreview.truncated;text:"Open the original for "+(root.documentPreview.specialist_features||[]).join(", ")+(root.documentPreview.truncated?" and the complete document":"")+".";color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
        }
-       TextEdit {visible:root.referenceHidden;Layout.fillWidth:true;text:root.workflow.statement||"Reference hidden. Reconstruct before revealing.";readOnly:true;selectByMouse:true;textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
+       TextEdit {renderType:TextEdit.NativeRendering;font.hintingPreference:Font.PreferFullHinting;visible:root.referenceHidden;Layout.fillWidth:true;text:root.workflow.statement||"Reference hidden. Reconstruct before revealing.";readOnly:true;selectByMouse:true;textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
 
       }
      }
@@ -463,7 +463,7 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
 
    }
    RowLayout {Layout.fillWidth:true;Layout.margins:NoesisStyle.md;visible:!!root.selected.id||NoesisController.error!==""||NoesisController.message!==""||NoesisController.working
-    Text {textFormat:Text.PlainText;text:NoesisController.working?(NoesisController.specialistHandoff?"Opening…":"Saving…"):NoesisController.error||((NoesisController.message?NoesisController.message+" · ":"")+"Owner: "+root.ownerLabel);color:NoesisController.error?NoesisStyle.error:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:NoesisController.working?(NoesisController.specialistHandoff?"Opening…":"Saving…"):NoesisController.error||((NoesisController.message?NoesisController.message+" · ":"")+"Owner: "+root.ownerLabel);color:NoesisController.error?NoesisStyle.error:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
     NoesisButton {text:"Inspect pending action";visible:NoesisController.uncertainReceipt;onClicked:pendingExit.open()}
     NoesisButton {text:"Stop";visible:NoesisController.working;onClicked:NoesisController.cancel()}
    }
@@ -472,14 +472,14 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
  Component {id:inspectorContent;
   Rectangle {color:NoesisStyle.surface
      ColumnLayout {anchors.fill:parent;anchors.margins:NoesisStyle.lg;spacing:NoesisStyle.lg
-      Text {textFormat:Text.PlainText;text:"CONTEXT";color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
-      Text {textFormat:Text.PlainText;text:root.selected.title||root.selected.path||"";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;wrapMode:Text.Wrap;Layout.fillWidth:true}
-      Text {textFormat:Text.PlainText;text:"Owner: "+root.ownerLabel;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;wrapMode:Text.Wrap;Layout.fillWidth:true}
-      Text {textFormat:Text.PlainText;text:root.selected.path||"";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
-      Text {textFormat:Text.PlainText;text:root.selected.confidence!==undefined?"Legacy confidence: "+root.selected.confidence+" / 5 · self-report":"Evidence stays scoped. Assistance stays visible.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
+      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"CONTEXT";color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:root.selected.title||root.selected.path||"";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;wrapMode:Text.Wrap;Layout.fillWidth:true}
+      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Owner: "+root.ownerLabel;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;wrapMode:Text.Wrap;Layout.fillWidth:true}
+      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:root.selected.path||"";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
+      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:root.selected.confidence!==undefined?"Legacy confidence: "+root.selected.confidence+" / 5 · self-report":"Evidence stays scoped. Assistance stays visible.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
       ListView {visible:root.workflow.kind==="paper";Layout.fillWidth:true;Layout.fillHeight:true;clip:true;model:root.referenceHidden?[]:root.workflow.annotations||[];spacing:NoesisStyle.md
        header:Column {width:parent.width;spacing:NoesisStyle.sm
-        Text {width:parent.width;textFormat:Text.PlainText;text:root.workflow.projection_error||((root.workflow.annotation_count||0)+" imported annotations · snapshot "+(root.workflow.source_version??""));color:root.workflow.projection_error?NoesisStyle.error:NoesisStyle.secondary;wrapMode:Text.Wrap;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+        Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;width:parent.width;textFormat:Text.PlainText;text:root.workflow.projection_error||((root.workflow.annotation_count||0)+" imported annotations · snapshot "+(root.workflow.source_version??""));color:root.workflow.projection_error?NoesisStyle.error:NoesisStyle.secondary;wrapMode:Text.Wrap;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
         Flow {width:parent.width;spacing:NoesisStyle.sm
          NoesisButton {text:"Previous annotations";visible:!!root.workflow.newer_cursor;onClicked:root.loadAnnotations(root.workflow.newer_cursor)}
          NoesisButton {text:"More annotations";visible:!!root.workflow.cursor;onClicked:root.loadAnnotations(root.workflow.cursor)}
@@ -487,9 +487,9 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
         }
        }
        delegate:Column {required property var modelData;width:ListView.view.width;spacing:NoesisStyle.sm
-        Text {textFormat:Text.PlainText;text:"ZOTERO · "+(modelData.page_label?"PAGE "+modelData.page_label:modelData.native_id);color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
-        Text {textFormat:Text.PlainText;text:modelData.text||"";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;width:parent.width;visible:text!==""}
-        Text {textFormat:Text.PlainText;text:modelData.comment?"Comment: "+modelData.comment:"";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;width:parent.width;visible:text!==""}
+        Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"ZOTERO · "+(modelData.page_label?"PAGE "+modelData.page_label:modelData.native_id);color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+        Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:modelData.text||"";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;width:parent.width;visible:text!==""}
+        Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:modelData.comment?"Comment: "+modelData.comment:"";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;width:parent.width;visible:text!==""}
        }
       }
       Item {Layout.fillHeight:true;visible:root.workflow.kind!=="paper"}
@@ -507,16 +507,16 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
    NoesisButton {text:"Settings";Layout.fillWidth:true;onClicked:{navigationDrawer.close();root.openSettings();}}
   }}
  }
- NoesisActionDialog {id:navigationActions;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-32);height:Math.min(520,root.height-32);title:"Navigation";onChosen:action=>{if(action==="workspaces")navigationDrawer.open();else if(action==="search")searchPopup.open();else if(action==="browse")root.browseOpen=!root.browseOpen;else if(action==="details")root.inspectorOpen=!root.inspectorOpen;else if(action==="forward")root.forward();}}
+ NoesisActionDialog {id:navigationActions;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-32);height:Math.min(520,root.height-32);title:"Navigate your learning";onChosen:action=>{if(action==="workspaces")navigationDrawer.open();else if(action==="search")searchPopup.open();else if(action==="return")root.returnCollection();else if(action==="back")root.back();else if(action==="details")root.inspectorOpen=!root.inspectorOpen;else if(action==="forward")root.forward();}}
  NoesisDialog {id:pendingExit;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(650,root.width-32);height:Math.min(560,root.height-32);title:"Unresolved action"
   contentItem:ScrollView {id:pendingScroll;clip:true;contentWidth:availableWidth
    ColumnLayout {width:pendingScroll.availableWidth;spacing:NoesisStyle.lg
-    Text {textFormat:Text.PlainText;text:"Noesis cannot verify whether this action committed. Inspect the owning record and receipt before repeating it. Closing keeps this reference for recovery.";color:NoesisStyle.warning;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;Layout.fillWidth:true}
-    Text {textFormat:Text.PlainText;text:"Vault: "+(NoesisController.pendingOperation.vault||NoesisController.operationVault)+"
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Noesis cannot verify whether this action committed. Inspect the owning record and receipt before repeating it. Closing keeps this reference for recovery.";color:NoesisStyle.warning;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;Layout.fillWidth:true}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Vault: "+(NoesisController.pendingOperation.vault||NoesisController.operationVault)+"
 Action: "+(NoesisController.pendingOperation.kind||NoesisController.operationKind)+"
 "+(NoesisController.pendingOperation.receipt_supported===false?"Local tracking reference: ":"Operation: ")+(NoesisController.pendingOperation.id||NoesisController.operationId||"receipt unavailable");color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;wrapMode:Text.Wrap;Layout.fillWidth:true}
     NoesisButton {text:"Check receipt again";visible:NoesisController.pendingOperation.receipt_supported!==false;enabled:!!NoesisController.operationId&&!NoesisController.working;onClicked:{pendingExit.close();NoesisController.checkCancelled();}}
-    Text {textFormat:Text.PlainText;visible:NoesisController.pendingOperation.receipt_supported===false;text:"This import has a local tracking reference, not a backend receipt. Compare the owning records and preserved import source before repeating it.";color:NoesisStyle.warning;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;Layout.fillWidth:true}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:NoesisController.pendingOperation.receipt_supported===false;text:"This import has a local tracking reference, not a backend receipt. Compare the owning records and preserved import source before repeating it.";color:NoesisStyle.warning;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;Layout.fillWidth:true}
     NoesisButton {text:"I inspected the import";visible:NoesisController.pendingOperation.receipt_supported===false;onClicked:{NoesisController.pendingOperation=({});NoesisController.operationId="";NoesisController.uncertainReceipt=false;NoesisController.error="";NoesisController.message="Interrupted import marked as inspected. No records were changed or replayed.";NoesisController.savePreferences();pendingExit.close();}}
     NoesisButton {text:"Close keeping unresolved action";variant:"danger";onClicked:{pendingExit.close();NoesisController.requestExit(true);}}
    }
@@ -539,13 +539,13 @@ Action: "+(NoesisController.pendingOperation.kind||NoesisController.operationKin
   property bool submitting:false
   function begin(){target=Object.assign({},root.selected);vaultScope=NoesisController.activeVault;pinChoice.currentIndex=(root.selectedState.pin??root.selected.pin)?1:0;priorityChoice.currentIndex=Math.max(0,["normal","high","quiet"].indexOf(root.selectedState.manual_priority||root.selected.manual_priority||"normal"));submitting=false;open();pinChoice.forceActiveFocus();}
   contentItem:ScrollView {id:priorityScroll;clip:true;contentWidth:availableWidth;ColumnLayout {width:priorityScroll.availableWidth;spacing:NoesisStyle.lg
-   Text {Layout.fillWidth:true;textFormat:Text.PlainText;text:priorityDialog.target.title||priorityDialog.target.path||"";wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading}
-   Text {Layout.fillWidth:true;textFormat:Text.PlainText;text:"Pin keeps eligible work at the top. High raises its priority. Quiet silences suggestions, including pins, while preserving resume context. Completed work stays excluded; these controls do not award competence.";wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
-   Text {textFormat:Text.PlainText;text:"Pin";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;textFormat:Text.PlainText;text:priorityDialog.target.title||priorityDialog.target.path||"";wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;textFormat:Text.PlainText;text:"Pin keeps eligible work at the top. High raises its priority. Quiet silences suggestions, including pins, while preserving resume context. Completed work stays excluded; these controls do not award competence.";wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Pin";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
    NoesisSelect {id:pinChoice;Layout.fillWidth:true;model:["Not pinned","Pinned"];Accessible.name:"Today pin"}
-   Text {textFormat:Text.PlainText;text:"Suggestion priority";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Suggestion priority";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
    NoesisSelect {id:priorityChoice;Layout.fillWidth:true;model:["Normal","High","Quiet"];Accessible.name:"Today suggestion priority"}
-   Text {Layout.fillWidth:true;textFormat:Text.PlainText;text:"Owner: "+priorityDialog.vaultScope;wrapMode:Text.Wrap;color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;textFormat:Text.PlainText;text:"Owner: "+priorityDialog.vaultScope;wrapMode:Text.Wrap;color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
   }}
   footer:Flow {spacing:NoesisStyle.sm
    NoesisButton {text:"Cancel";onClicked:priorityDialog.close()}
@@ -558,13 +558,13 @@ Action: "+(NoesisController.pendingOperation.kind||NoesisController.operationKin
   Shortcut {sequence:"Ctrl+Return";enabled:attemptSettings.visible;onActivated:attemptSettings.close()}
   footer:NoesisButton {text:"Done";variant:"secondary";onClicked:attemptSettings.close()}
   contentItem:ScrollView {id:attemptScroll;clip:true;contentWidth:availableWidth;ScrollBar.horizontal.policy:ScrollBar.AlwaysOff;ColumnLayout {width:attemptScroll.availableWidth;spacing:NoesisStyle.lg
-   Text {textFormat:Text.PlainText;text:"Mode";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Mode";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
    NoesisSelect {id:mode;model:["pattern","interface","derive","build","transfer"];currentIndex:2;Layout.fillWidth:true;Accessible.name:"Attempt mode"}
-   Text {textFormat:Text.PlainText;text:"Reported outcome";visible:!!root.activeAttempt;color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Reported outcome";visible:!!root.activeAttempt;color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
    NoesisSelect {id:outcome;model:["unknown","incomplete","failed","partial","succeeded"];Layout.fillWidth:true;visible:!!root.activeAttempt;Accessible.name:"Reported outcome"}
-   Text {textFormat:Text.PlainText;text:"Declared assistance";visible:!!root.activeAttempt;color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Declared assistance";visible:!!root.activeAttempt;color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
    NoesisSelect {id:assistance;model:["unknown","none","hint","reference","collaborator","agent"];Layout.fillWidth:true;visible:!!root.activeAttempt;Accessible.name:"Declared assistance"}
-   Text {textFormat:Text.PlainText;text:"Saved reference exposure stays in the attempt history.";color:NoesisStyle.secondary;font.pixelSize:NoesisStyle.caption;font.family:NoesisStyle.uiFont;wrapMode:Text.Wrap;Layout.fillWidth:true}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Saved reference exposure stays in the attempt history.";color:NoesisStyle.secondary;font.pixelSize:NoesisStyle.caption;font.family:NoesisStyle.uiFont;wrapMode:Text.Wrap;Layout.fillWidth:true}
 
   }}
  }
@@ -573,21 +573,21 @@ Action: "+(NoesisController.pendingOperation.kind||NoesisController.operationKin
   footer:NoesisButton {text:"Done";variant:"secondary";onClicked:settingsDialog.close()}
   contentItem:ScrollView {id:settingsScroll;clip:true;contentWidth:availableWidth;ScrollBar.horizontal.policy:ScrollBar.AlwaysOff;ScrollBar.vertical.policy:ScrollBar.AlwaysOn
    ColumnLayout {width:Math.max(0,settingsScroll.availableWidth-16);spacing:NoesisStyle.lg
-    Text {textFormat:Text.PlainText;text:"Window presentation";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
-    NoesisSelect {model:["Workspace","Tiled","Window"];currentIndex:["workspace","tiled","normal"].indexOf(NoesisController.presentationMode);Layout.fillWidth:true;Accessible.name:"Window presentation";onActivated:{NoesisController.presentationMode=["workspace","tiled","normal"][currentIndex];NoesisController.savePreferences();}}
-    Text {textFormat:Text.PlainText;text:"Interface size";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Window presentation";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
+    NoesisSelect {model:["Full screen","Maximized","Tiled","Window"];currentIndex:["fullscreen","workspace","tiled","normal"].indexOf(NoesisController.presentationMode);Layout.fillWidth:true;Accessible.name:"Window presentation";onActivated:{NoesisController.presentationMode=["fullscreen","workspace","tiled","normal"][currentIndex];NoesisController.savePreferences();}}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Interface size";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
     NoesisSelect {model:["100%","125%","150%","200%"];currentIndex:[1,1.25,1.5,2].indexOf(NoesisStyle.interfaceScale);Layout.fillWidth:true;Accessible.name:"Interface size";onActivated:{NoesisStyle.interfaceScale=[1,1.25,1.5,2][currentIndex];NoesisController.savePreferences();}}
-    Text {textFormat:Text.PlainText;text:"Reading size";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Reading size";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
     NoesisSelect {model:["100%","125%","150%","200%"];currentIndex:[1,1.25,1.5,2].indexOf(NoesisStyle.readingScale);Layout.fillWidth:true;Accessible.name:"Reading size";onActivated:{NoesisStyle.readingScale=[1,1.25,1.5,2][currentIndex];NoesisController.savePreferences();}}
-    Text {textFormat:Text.PlainText;text:"Open new windows on";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Open new windows on";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
     NoesisSelect {model:["Current workspace","Dedicated study workspace"];currentIndex:NoesisController.placement==="dedicated"?1:0;Layout.fillWidth:true;Accessible.name:"Workspace placement";onActivated:{NoesisController.placement=currentIndex?"dedicated":"current";NoesisController.savePreferences();}}
-    Text {textFormat:Text.PlainText;text:"Study workspace name";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont;visible:NoesisController.placement==="dedicated"}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Study workspace name";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont;visible:NoesisController.placement==="dedicated"}
     NoesisField {text:NoesisController.studyWorkspace;visible:NoesisController.placement==="dedicated";Layout.fillWidth:true;Accessible.name:"Study workspace name";onEditingFinished:{if(text.trim()){NoesisController.studyWorkspace=text.trim();NoesisController.savePreferences();}}}
-    Text {textFormat:Text.PlainText;text:"After opening a specialist tool";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"After opening a specialist tool";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
     NoesisSelect {model:["Hide Noesis","Keep Noesis visible"];currentIndex:NoesisController.returnBehavior==="hide"?0:1;Layout.fillWidth:true;Accessible.name:"Specialist handoff behavior";onActivated:{NoesisController.returnBehavior=currentIndex?"stay":"hide";NoesisController.savePreferences();}}
-    Text {textFormat:Text.PlainText;text:"Preferred display";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Preferred display";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
     NoesisSelect {model:Quickshell.screens.map(s=>s.name);currentIndex:model.indexOf(NoesisController.mainMonitor);Layout.fillWidth:true;Accessible.name:"Preferred display";onActivated:{NoesisController.mainMonitor=currentText;NoesisController.savePreferences();}}
-    Text {textFormat:Text.PlainText;text:"Workspace changes apply on the next launch. Existing tool windows stay where they are.";color:NoesisStyle.secondary;font.pixelSize:NoesisStyle.caption;font.family:NoesisStyle.uiFont;wrapMode:Text.Wrap;Layout.fillWidth:true}
+    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Workspace changes apply on the next launch. Existing tool windows stay where they are.";color:NoesisStyle.secondary;font.pixelSize:NoesisStyle.caption;font.family:NoesisStyle.uiFont;wrapMode:Text.Wrap;Layout.fillWidth:true}
 
    }
   }
@@ -597,13 +597,13 @@ Action: "+(NoesisController.pendingOperation.kind||NoesisController.operationKin
   property var target:({})
   property string vaultScope:""
   onOpened:{target=Object.assign({},root.selected);vaultScope=NoesisController.activeVault;predicted.text=target.hypothesis||"";observed.forceActiveFocus();}
-  background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;border.width:1;border.color:NoesisStyle.rule}
+  background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;}
   contentItem:ColumnLayout {spacing:NoesisStyle.md
    NoesisField {id:predicted;Layout.fillWidth:true;placeholderText:"Original prediction or hypothesis"}
    NoesisField {id:observed;Layout.fillWidth:true;placeholderText:"Observed result, with units and uncertainty"}
    NoesisField {id:conditions;Layout.fillWidth:true;placeholderText:"Configuration and code commit · optional"}
    NoesisEditor {id:conclusion;Layout.fillWidth:true;Layout.preferredHeight:120;placeholderText:"Discrepancy, evidence and what to test next…"}
-   Text {textFormat:Text.PlainText;text:"A successful run does not establish the hypothesis. This preserves the comparison as reported evidence.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"A successful run does not establish the hypothesis. This preserves the comparison as reported evidence.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
    NoesisButton {id:saveComparison;text:"Save comparison";hint:"Ctrl+Enter";primary:true;enabled:predicted.text.trim()!==""&&observed.text.trim()!==""&&conclusion.text.trim()!==""&&!NoesisController.working&&comparisonDialog.vaultScope===NoesisController.activeVault;onClicked:{comparisonDialog.submitting=true;NoesisController.run(["event",comparisonDialog.target.path,"comparison","--target-id",comparisonDialog.target.id,"--evidence",conclusion.text,"--data",JSON.stringify({prediction:predicted.text,observed:observed.text,configuration:conditions.text,code_snapshot:comparisonDialog.target.code_snapshot||null,conclusion:conclusion.text,assessment:"learner-reported"})]);}}
   }
   Shortcut {sequence:"Ctrl+Return";enabled:comparisonDialog.visible;onActivated:if(saveComparison.enabled)saveComparison.clicked()}
@@ -616,12 +616,12 @@ function onFinished(ok){if(comparisonDialog.submitting){comparisonDialog.submitt
   property var target:({})
   property string vaultScope:""
   onOpened:{target=Object.assign({},root.selected);vaultScope=NoesisController.activeVault;checkPurpose.forceActiveFocus();}
-  background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;border.width:1;border.color:NoesisStyle.rule}
+  background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;}
   contentItem:ColumnLayout {spacing:NoesisStyle.lg
    NoesisSelect {id:checkStage;model:["retry","later","maintenance"];Layout.fillWidth:true}
    NoesisSelect {id:checkAction;model:["schedule","snooze","retire"];Layout.fillWidth:true}
    NoesisEditor {id:checkPurpose;Layout.fillWidth:true;Layout.preferredHeight:100;placeholderText:"What will you reconstruct or verify?"}
-   Text {textFormat:Text.PlainText;text:"Defaults: 1, 7 or 30 days. A convenience policy, not a competence estimate.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Defaults: 1, 7 or 30 days. A convenience policy, not a competence estimate.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
    NoesisButton {id:saveReview;text:"Save plan";hint:"Ctrl+Enter";primary:true;enabled:checkPurpose.text.trim()!==""&&!NoesisController.working&&reviewDialog.vaultScope===NoesisController.activeVault;onClicked:{reviewDialog.submitting=true;NoesisController.run(["event",reviewDialog.target.path,"review-plan","--target-id",reviewDialog.target.id,"--evidence",checkPurpose.text,"--data",JSON.stringify({stage:checkStage.currentText,action:checkAction.currentText})]);}}
   }
   Shortcut {sequence:"Ctrl+Return";enabled:reviewDialog.visible;onActivated:if(saveReview.enabled)saveReview.clicked()}
@@ -642,10 +642,10 @@ function onFinished(ok){if(reviewDialog.submitting){reviewDialog.submitting=fals
   parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48)
   function begin(row){target=Object.assign({},row,{contextId:root.selected.id});vaultScope=NoesisController.activeVault;readinessReason.text="";readinessChoice.currentIndex=row.readiness==="passed"?0:1;submitting=false;open();readinessReason.forceActiveFocus();}
   contentItem:ColumnLayout {spacing:NoesisStyle.md
-   Text {textFormat:Text.PlainText;text:readinessDialog.target.title||"";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:readinessDialog.target.title||"";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading}
    NoesisEditor {id:readinessReason;Layout.fillWidth:true;Layout.preferredHeight:140;placeholderText:"What can you now explain or do? What still needs work?"}
    NoesisSelect {id:readinessChoice;Layout.fillWidth:true;model:["Ready for this lesson","Needs more work"]}
-   Text {textFormat:Text.PlainText;text:"Your decision applies to this lesson's prerequisite. It does not award general competence or change earlier evidence.";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Your decision applies to this lesson's prerequisite. It does not award general competence or change earlier evidence.";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
    NoesisButton {id:saveReadiness;text:"Save readiness decision";primary:true;hint:"Ctrl+Enter";enabled:readinessReason.text.trim()!==""&&!NoesisController.working&&readinessDialog.vaultScope===NoesisController.activeVault;onClicked:{readinessDialog.submitting=true;NoesisController.run(["event",readinessDialog.target.relationship_path,"disposition","--target-id",readinessDialog.target.relationship_id,"--evidence",readinessReason.text,"--data",JSON.stringify({state:readinessChoice.currentIndex===0?"passed":"active",actor:"learner",scope:readinessDialog.target.contextId})]);}}
   }
   Shortcut {sequence:"Ctrl+Return";enabled:readinessDialog.opened;onActivated:if(saveReadiness.enabled)saveReadiness.clicked()}
@@ -655,10 +655,10 @@ function onFinished(ok){if(readinessDialog.submitting){readinessDialog.submittin
  NoesisPrerequisiteDialog {id:prerequisiteDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48);onSearch:query=>{root.prerequisiteSerial=root.send("query",{query:query,kind:["concept","capability","task","problem","unit","prerequisite"]});}}
  NoesisCreateDialog {id:createDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48);onCreated:record=>root.select(record)}
  NoesisDialog {id:captureDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48);modal:true;title:"Quick capture";closePolicy:Popup.CloseOnEscape
-  background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;border.color:NoesisStyle.rule;border.width:1}
+  background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;}
   contentItem:ColumnLayout {spacing:NoesisStyle.lg
    NoesisEditor {id:capture;Keys.onPressed:event=>{if((event.key===Qt.Key_Return||event.key===Qt.Key_Enter)&&(event.modifiers&Qt.ControlModifier)){event.accepted=true;if(capture.text.trim()&&!NoesisController.working)root.submitCapture();}}Layout.fillWidth:true;Layout.preferredHeight:160;placeholderText:"A thought, source, snippet or observation…";onTextChanged:if(root.captureVault)captureDraftSave.restart();Accessible.name:"Quick capture"}
-   Text {textFormat:Text.PlainText;text:"No classification needed. Connect it when you are ready.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"No classification needed. Connect it when you are ready.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
    RowLayout {Layout.fillWidth:true
     NoesisButton {text:"Keep draft";onClicked:captureDialog.close()}
     Item {Layout.fillWidth:true}
