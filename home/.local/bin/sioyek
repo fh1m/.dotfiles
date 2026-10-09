@@ -1,4 +1,6 @@
 #!/bin/sh
 # Official portable release: isolate bundled Qt from the shell's custom Qt.
+# This portable Qt build ships xcb only; use XWayland even when the host selects Wayland.
+export QT_QPA_PLATFORM=xcb
 unset QT_PLUGIN_PATH QT_QPA_PLATFORM_PLUGIN_PATH LD_LIBRARY_PATH
 exec "@HOME@/.local/opt/sioyek-2.0.0/AppRun" "$@"

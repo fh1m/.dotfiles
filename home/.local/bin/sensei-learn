@@ -525,7 +525,7 @@ def library_action(root,args):
     if not path.is_file() or path.suffix!='.md':raise ValueError('Choose a Markdown learning record')
     relative=str(path.relative_to(root))
     if args.command=='read-resource':
-        from noesis.readers import command as reader_command, resource_props
+        from noesis.readers import command as reader_command, resource_props,launch as reader_launch
         from noesis.index import Index
         props,_=note_text(path.read_text())
         if args.target_id and props.get('id')!=args.target_id:raise ValueError('Resource identity changed; refresh before opening')
@@ -536,7 +536,7 @@ def library_action(root,args):
             record=index.record(props['id'],include_body=False,include_attempt=False)
             command=reader_command(root,resource_props(index,props['id']),record.get('state',{}),args.reader)
         finally:index.close()
-        subprocess.Popen(command,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+        reader_launch(command)
         print(json.dumps({"message":"Source opened in its native application"}));return 0
     if args.command=='progress':
         state={'position':args.position}
@@ -569,7 +569,7 @@ def main():
         if cmd == 'link':
             p.add_argument('source');p.add_argument('target');p.add_argument('relation');p.add_argument('--target-vault');p.add_argument('--role');p.add_argument('--reason',default='');p.add_argument('--exit-task');p.add_argument('--context');p.add_argument('--order',type=int)
         if cmd == 'event':
-            p.add_argument('path');p.add_argument('event',choices=['study','resolution','attempt-start','attempt','review','review-plan','assistance','comparison','correction','capability-decision','session-state','disposition']);p.add_argument('--evidence',default='');p.add_argument('--data',default='{}')
+            p.add_argument('path');p.add_argument('event',choices=['study','resolution','attempt-start','attempt','review','review-plan','assistance','comparison','correction','capability-decision','session-state','disposition','material-change']);p.add_argument('--evidence',default='');p.add_argument('--data',default='{}')
         if cmd == 'next':p.add_argument('--quiet',action='store_true');p.add_argument('--path-id')
         if cmd == 'context':p.add_argument('record_id');p.add_argument('--role',default='tutor')
         if cmd == 'migrate':p.add_argument('--apply',action='store_true')

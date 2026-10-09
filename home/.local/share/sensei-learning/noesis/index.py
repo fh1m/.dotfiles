@@ -174,7 +174,7 @@ class Index:
             if not isinstance(resource_kinds,list) or any(not isinstance(value,str) for value in resource_kinds):raise ValueError('Resource kinds must be a list of source kinds')
             where.append("(kind!='resource' OR json_extract(records.props,'$.source_kind') IN ("+','.join('?' for _ in resource_kinds)+'))')
             args.extend(resource_kinds)
-        sql = "SELECT records.path,records.id,kind,title,states.status,json_extract(records.props,'$.source_kind') FROM records LEFT JOIN states ON states.id=records.id"
+        sql = "SELECT records.path,records.id,kind,title,states.status,COALESCE(json_extract(states.state,'$.material.source_kind'),json_extract(records.props,'$.source_kind')) FROM records LEFT JOIN states ON states.id=records.id"
         if where:
             sql += ' WHERE ' + ' AND '.join(where)
         rows = list(self.db.execute(sql + ' ORDER BY path LIMIT ? OFFSET ?', args + [limit + 1, cursor]))
@@ -211,7 +211,10 @@ class Index:
             file = Path(location).expanduser() if location else None
             artifact = {'location': location, 'availability': 'available' if file and file.exists() else 'artifact unavailable', 'expected_checksum': metadata.get('sha256')}
         unfinished = unfinished_attempts(self.timeline(identity)) if include_attempt else []
-        return {'path': path, 'display_title':display_title(metadata,path), 'props': metadata, 'body': body, 'state': state, 'activity_head': head, 'artifact': artifact,
+        from .materials import effective_props
+        effective=effective_props(metadata,state)
+        effective_source={key:effective.get(key) for key in ('source','source_kind','local_file','zotero_uri','zotero_attachment_key')}
+        return {'effective_source':effective_source,'path': path, 'display_title':display_title(metadata,path), 'props': metadata, 'body': body, 'state': state, 'activity_head': head, 'artifact': artifact,
                 'attempt': unfinished[0] if len(unfinished) == 1 else None, 'attempt_conflict': len(unfinished) > 1}
 
     def timeline(self, identity):

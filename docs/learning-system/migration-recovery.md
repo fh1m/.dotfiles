@@ -96,3 +96,13 @@ private machine-local registry. An explicit `vault-register RESTORED --replace-l
 It keeps a registry rollback copy and changes no Obsidian registration or learner
 content. A legacy missing location without a recorded identity cannot be silently
 verified; keep the restored copy intact and resolve its registration deliberately.
+
+## Portable reader location and restoration
+
+Sioyek profile discovery includes historical HOME/.local/share/Sioyek, the portable
+XDG_CONFIG_HOME/.local/share/Sioyek location, distro XDG_DATA_HOME/sioyek and reader
+configuration. Equal files in different profiles retain distinct source ownership.
+SQLite online backup avoids copying a live database inconsistently. Native restore
+acceptance reopened an isolated profile at its saved PDF page and retained bookmark
+rows. No real reader database was edited for acceptance. Existing snapshots remain;
+retention/pruning and an actual off-device destination are still unaccepted gates.

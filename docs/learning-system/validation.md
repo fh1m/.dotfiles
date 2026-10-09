@@ -461,3 +461,42 @@ early in this automated fixture; this is not evidence of seven days of human
 retention. The first run caught an invalid QML pane assignment; the corrected run
 completed with no QML warnings/errors. Long-history usability and realistic
 returning-learner inspection remain open. No data migration is required.
+
+## Lesson replacement and native reader recovery — 2026-10-09
+
+93 core and 16 compatibility tests pass. New source-version tests cover expected-head
+conflicts, concurrent replacement, interruption before/after publication, idempotent
+retry, source inheritance, UUID collisions, moves and cache loss. Attempts retain
+the source edition captured at their start. An unfinished attempt blocks replacing
+its lesson material; new attempts use the replacement without changing old evidence.
+
+`python3 scripts/check-noesis-collection-desktop.py` passed native reviewable course
+creation, six lectures, two readings, two assignments and project, keyboard Arrange,
+lesson replacement and 123-row append pagination. Original note bytes and old study
+positions were preserved. Startup 558.45 ms; warm opening p95 212.15 ms over twelve
+cycles; animation frame p95 16.968 ms over 1,200 samples. Isolated RSS ranged from
+194,920 to 195,292 KiB. These are fixture-process measurements, not physical input
+latency or the incremental memory of the live Wrayth shell.
+
+`python3 scripts/check-noesis-reader-desktop.py` passed with an isolated portable
+Sioyek 2.0.0 profile and authored six-page PDF. The saved lesson opens visibly at
+page 3, gains actual compositor focus, and recovers selection after cache deletion
+and restart. The reader bookmark database was consistently backed up, restored to
+a new profile, and reopened visibly at page 3 without a page command. The test found
+that this portable build stores data beneath XDG_CONFIG_HOME/.local/share/Sioyek;
+backup discovery now includes that location as well as historical/distro locations.
+
+Cold Sioyek loading ignored its initial page request; a bounded second supported
+reuse-window request applies the locator after loading. Its wrapper explicitly uses
+the shipped XCB platform. On this compositor Qt minimization did not hide Noesis:
+the control now says Hide and safely preserves drafts/context while stopping the
+worker. Normal/workspace reader handoff hides Noesis; tiled handoff keeps both views.
+
+The screenshots below are actual native captures of disposable authored fixtures,
+not private-vault screenshots or human usability studies. Automated interactions
+prove the recorded behavior, not learning efficacy. Zotero annotation-specific
+handoff and the complete course/prerequisite/assignment journey remain open.
+
+![Native lesson replacement](assets/material-replacement-native.png)
+![Native saved PDF page](assets/sioyek-page-native.png)
+![Native restored reader position](assets/sioyek-restored-native.png)

@@ -20,6 +20,16 @@ legacy = importlib.util.module_from_spec(spec);loader.exec_module(legacy)
 
 
 class Recovery(unittest.TestCase):
+    def test_portable_reader_discovery_and_same_name_profiles_keep_ownership(self):
+        with patch.object(legacy,'HOME',self.home),patch.dict('os.environ',{'XDG_CONFIG_HOME':str(self.home/'.config'),'XDG_DATA_HOME':str(self.home/'.local/share')}):
+            original=self.home/'.local/share/Sioyek';portable=self.home/'.config/.local/share/Sioyek'
+            self.assertIn(original,legacy.reader_roots());self.assertIn(portable,legacy.reader_roots())
+            for root in (original,portable):root.mkdir(parents=True);(root/'prefs_user.config').write_text('A synthetic preference')
+            with patch.object(legacy,'STATE',self.home/'snapshots'):
+                reports=legacy.backup_readers([original,portable])
+            self.assertEqual([report['source'] for report in reports],[str(original),str(portable)])
+            self.assertNotEqual(reports[0]['snapshot'],reports[1]['snapshot'])
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.home = Path(self.temp.name)

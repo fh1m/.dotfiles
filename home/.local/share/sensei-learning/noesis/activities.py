@@ -74,7 +74,7 @@ def review_heads(timeline):
 def progress_state(props, timeline):
     baseline = {k: props.get(k) for k in ('progress_current', 'progress_total', 'position', 'status')}
     states, heads = {}, set()
-    events=[event for event in timeline if event.get('event') in ('study', 'session-state', 'disposition', 'resolution','outline-order')]
+    events=[event for event in timeline if event.get('event') in ('study', 'session-state', 'disposition', 'resolution','outline-order','material-change')]
     for event in causal_order(events,'previous','resolves'):
         previous = event.get('previous')
         if previous is not None and previous not in states:
@@ -89,6 +89,9 @@ def progress_state(props, timeline):
             order=update['unit_order']
             if not isinstance(order,list) or len(order)>1000 or any(not isinstance(value,str) for value in order) or len(set(order))!=len(order):raise ValueError('Invalid outline order')
             for value in order:uuid.UUID(value)
+        if event['event']=='material-change':
+            from .materials import validate
+            validate(update.get('material'))
         state.update(update)
         states[event['id']] = state
         heads.discard(previous)
@@ -104,7 +107,7 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
     request_hash = checksum(json.dumps({'target': expected_id or relative, 'event': event, 'evidence': evidence, 'fields': fields}, sort_keys=True, default=str))
     if any(key in fields for key in ('id', 'type', 'noesis_schema', 'target', 'timestamp', 'provenance', 'path')):
         raise ValueError('Reserved activity metadata cannot be supplied')
-    if event not in ('study', 'resolution', 'attempt-start', 'attempt', 'review', 'review-plan', 'assistance', 'comparison', 'correction', 'capability-decision', 'session-state', 'disposition', 'artifact-check','outline-order'):
+    if event not in ('study', 'resolution', 'attempt-start', 'attempt', 'review', 'review-plan', 'assistance', 'comparison', 'correction', 'capability-decision', 'session-state', 'disposition', 'artifact-check','outline-order','material-change'):
         raise ValueError('Unknown activity event')
     with lock(root):
         from .scopes import assert_unique
@@ -190,7 +193,22 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                 session = index.record(fields['session'])
                 if session['props'].get('type') not in ('session', 'practice-session'):
                     raise ValueError('Session reference must target a session')
-            if event=='outline-order':
+            if event=='material-change':
+                from .materials import validate
+                if props.get('type')!='unit' or props.get('unit_kind') not in (None,'lecture','video','reading','chapter','section'):
+                    raise ValueError('Replace a lesson, reading or chapter source; assessments retain their own task identity')
+                if not evidence.strip():raise ValueError('Explain why this lesson source is being replaced')
+                material=validate(fields.pop('material',None),root)
+                state,previous=progress_state(props,index.timeline(identity))
+                if 'expected_head' not in fields or fields.pop('expected_head')!=previous:
+                    raise ValueError('Lesson changed concurrently; reload before replacing its material')
+                if unfinished_attempts(index.timeline(identity)):raise ValueError('Finalize the unfinished attempt before replacing its material')
+                from .materials import source_snapshot
+                fields['source_snapshot']=source_snapshot(index,identity)
+                fields['previous_position']={key:state.get(key) for key in ('position','locator','status','material_revision')}
+                state.update(material=material,position=None,locator=None,status='queued',progress_current=None,progress_total=None)
+                fields.update(state=state,previous=previous)
+            elif event=='outline-order':
                 from .courses import is_outline,order_ids
                 if not is_outline(props):raise ValueError('This record has no educational outline')
                 update=fields.get('state')
@@ -213,7 +231,10 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                     raise ValueError('Unsupported reading pass')
                 if 'position' in update and 'locator' not in update:update['locator']=None
                 state.update(update)
-                source={key:props[key] for key in ('bibliography_projection','zotero_projection','zotero_version','zotero_attachment_key','local_file','source','source_kind','doi','arxiv','revision','edition') if props.get(key)}
+                from .materials import source_snapshot
+                try:source=source_snapshot(index,identity)
+                except ValueError as error:source={};fields['source_unavailable']=str(error)
+                if state.get('material_revision'):fields['material_revision']=state['material_revision']
                 if source:fields['source_snapshot']=source
                 validate_progress(state.get('progress_current'), state.get('progress_total'))
                 fields.update(state=state, previous=previous)
@@ -222,10 +243,21 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                     raise ValueError('Assessment needs actual evidence')
                 if fields.get('outcome', 'unknown') not in ('unknown', 'incomplete', 'failed', 'partial', 'succeeded'):
                     raise ValueError('Unsupported assessment outcome')
+            if event in ('attempt-start','attempt','review'):
+                from .materials import source_snapshot
+                if fields.get('attempt_id'):
+                    fields['source_snapshot']=started.get('source_snapshot')
+                    if started.get('material_revision'):fields['material_revision']=started['material_revision']
+                else:
+                    try:fields['source_snapshot']=source_snapshot(index,identity)
+                    except ValueError as error:fields['source_unavailable']=str(error)
+                    state,_=progress_state(props,index.timeline(identity))
+                    if state.get('material_revision'):fields['material_revision']=state['material_revision']
             now = datetime.now(timezone.utc)
             record = dict(fields, id=str(uuid.uuid4()), noesis_schema=2, type='activity', event=event,
                 target={'vault_id': meta['vault_id'], 'record_id': identity}, timestamp=now.isoformat(),
                 operation_id=operation_id or str(uuid.uuid4()), provenance='noesis-file-inspection' if event=='artifact-check' else 'learner-reported', request_hash=request_hash)
+            if event=='material-change':record['state']['material_revision']=record['id']
             if event == 'resolution':
                 if not evidence.strip():raise ValueError('Resolution needs a learner explanation')
                 state, _ = progress_state(props, index.timeline(identity) + [record])

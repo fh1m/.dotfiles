@@ -40,6 +40,14 @@ def serve(resolve):
                 elif action == 'record':
                     result = index.record(request['record_id'])
                     result['overview'] = overview(index, request['record_id'])
+                    if result['props'].get('type') in ('unit','resource','paper','course'):
+                        from .readers import resource_props
+                        from .materials import SOURCE_KEYS
+                        try:
+                            source=resource_props(index,request['record_id'])
+                            result['resolved_source']={key:source.get(key) for key in SOURCE_KEYS}
+                            result['source_owner']={'vault_id':index.manifest['vault_id'],'record_id':source.get('id')}
+                        except ValueError as error:result['source_unavailable']=str(error)
                     from .presentation import preview
                     result['preview']=preview(result['body'],result['display_title'])
                     result['body_truncated'] = len(result['body']) > 32000

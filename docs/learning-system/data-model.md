@@ -70,3 +70,13 @@ rejected until their global deadlock semantics are accepted.
 Primary references: [Quickshell FloatingWindow](https://quickshell.org/docs/v0.3.0/types/Quickshell/FloatingWindow/),
 [Hyprland dispatcher implementation for 0.56.2](https://github.com/hyprwm/Hyprland/blob/v0.56.2/src/config/lua/bindings/LuaBindingsDispatchers.cpp),
 [Qt FrameAnimation](https://doc.qt.io/qt-6/qml-qtquick-frameanimation.html).
+
+## Versioned lesson material
+
+A material-change activity replaces a lesson's effective source, not its UUID or
+learner prose. It records a reason, previous source snapshot, previous locator and
+expected study head. The new source begins queued with an unknown position and
+total; it never inherits completion from the replaced material. Later study and
+assessment events carry the resolved source owner/version and material revision.
+Finalized attempts retain their start-time source snapshot. Blocking unfinished
+attempts prevents silently switching their evidence to a different lesson source.
