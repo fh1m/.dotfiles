@@ -19,7 +19,7 @@ Singleton {
     readonly property var workspaceIds: [1, 2, 3, 7, 4, 5, 6]
     readonly property var workspaceNames: ["Terminal", "Web", "Code", "Sim", "Work", "Misc", "Study"]
 
-    readonly property var workspaceGlyphs: ["\uf120", "\uf0ac", "\uf121", "\uf1b2", "\uf0b1", "\uf07b", "\uf518"]
+    readonly property var workspaceGlyphs: ["\uf120", "\uf0ac", "\uf121", "\uf1b2", "\uf0b1", "\uf07b", "\uf02d"]
 
     // Special workspaces carry a name; these are the ones worth a word rather
     // than the first four letters of whatever Hyprland calls them.
