@@ -500,3 +500,24 @@ handoff and the complete course/prerequisite/assignment journey remain open.
 ![Native lesson replacement](assets/material-replacement-native.png)
 ![Native saved PDF page](assets/sioyek-page-native.png)
 ![Native restored reader position](assets/sioyek-restored-native.png)
+
+## Cross-vault search coherence — 2026-10-09
+
+Collection search merges bounded per-owner result pages using identity/alias, exact
+title, title prefix and remaining-match tiers. It no longer exhausts one vault
+before considering a better match in another. Deterministic title/path/owner ties
+and per-owner offsets preserve pagination. Cursors bind scope, filters, owning
+UUIDs, index generations and cache incarnation; changed indexed records, rebuilt
+caches or changed availability require refreshing rather than skipping results.
+Append requests reuse incrementally invalidated indexes and do not add full scans.
+
+Regression fixtures cover global relevance, page boundaries, record changes,
+missing storage, malformed cursors and equal-generation cache reconstruction.
+Native collection acceptance passed keyboard owner selection/capture, course import,
+replacement, append results, tiled/normal geometry and stopped closed workers.
+The native run measured startup 509.83 ms, animation frame p95 16.943 ms and warm
+opening p95 161.93 ms. These remain isolated automated fixture measurements; they
+are not a human learning-day usability finding. Cache-incarnation refusal is
+automated model coverage added after this native run.
+
+Current automated total: 97 core tests and 16 compatibility tests pass.

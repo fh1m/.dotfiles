@@ -238,3 +238,9 @@ Save a page, section or timestamp in Read. **Ctrl+Shift+Enter** opens the source
 the supported saved location. Workspace/normal mode hands focus to the reader and
 hides Noesis; reopen it with Super+Ctrl+O or the companion Resume action. Tiled mode
 keeps the study context beside the reader. **Hide** also preserves unfinished drafts.
+
+Collection search considers matches across all selected authorized vaults. Each
+result keeps its owning vault. If indexed material changes while paging, refresh
+the search: the application refuses an obsolete page rather than silently skipping
+or duplicating results. An unavailable vault is reported while fresh queries can
+still show the available scopes.

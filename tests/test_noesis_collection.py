@@ -51,6 +51,47 @@ class Collection(unittest.TestCase):
         self.assertEqual(len(set(ids)),62)
         with self.assertRaisesRegex(ValueError,'scope changed'):
             project(dict(request,vaults=[str(self.roots[0])],cursor=page['cursor']),self.index)
+    def test_global_relevance_precedes_vault_name_and_body_matches(self):
+        create(self.roots[0],'concept','Background notes','Estimator appears only in prose')
+        prefix=create(self.roots[0],'concept','Estimator design')
+        exact=create(self.roots[1],'concept','Estimator')
+        result=project(self.request('collection-query',query='Estimator'),self.index)
+        self.assertEqual([row['id'] for row in result['records'][:2]],[exact['id'],prefix['id']])
+        self.assertEqual(result['records'][0]['vault'],str(self.roots[1]))
+
+    def test_cursor_refuses_changed_records_and_availability(self):
+        for n in range(55):create(self.roots[0],'concept',f'Concept {n}')
+        request=self.request('collection-query',query='Concept')
+        page=project(request,self.index)
+        create(self.roots[0],'concept','Concept newly inserted')
+        self.index(self.roots[0],True)  # Same incremental invalidation contract as the worker.
+        with self.assertRaisesRegex(ValueError,'collection changed'):
+            project(dict(request,cursor=page['cursor']),self.index)
+        fresh=project(request,self.index)
+        import shutil
+        shutil.rmtree(self.roots[1])
+        with self.assertRaisesRegex(ValueError,'collection changed'):
+            project(dict(request,cursor=fresh['cursor']),self.index)
+        available=project(request,self.index)
+        self.assertEqual(available['availability'],'partial')
+        self.assertEqual(len(available['records']),50)
+
+    def test_cursor_refuses_cache_rebuild_even_when_generation_matches(self):
+        for n in range(51):create(self.roots[0],'concept',f'Concept {n}')
+        request=self.request('collection-query')
+        page=project(request,self.index)
+        key=str(self.roots[0]);index=self.indexes.pop(key)
+        database=Path(index.db.execute('PRAGMA database_list').fetchone()[2])
+        index.close();database.unlink()
+        with self.assertRaisesRegex(ValueError,'collection changed'):
+            project(dict(request,cursor=page['cursor']),self.index)
+
+    def test_invalid_cursor_does_not_dispatch_queries(self):
+        request=self.request('collection-query')
+        for cursor in ('[]','null','bad'):
+            with self.assertRaisesRegex(ValueError,'Invalid collection cursor'):
+                project(dict(request,cursor=cursor),self.index)
+
     def test_unregistered_and_duplicate_scopes_refused(self):
         unknown=self.home/'Unknown';unknown.mkdir()
         with self.assertRaisesRegex(ValueError,'not registered'):project(self.request('collection-query',vaults=[str(unknown)]),self.index)
