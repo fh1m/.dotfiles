@@ -32,8 +32,8 @@ def overview(index, identity):
         statement=re.search(r'(?ms)^## Problem statement\r?\n(.*?)(?=^## |\Z)',root.get('body',''))
         return {'kind':'practice','statement':statement.group(1).strip() if statement else None,'source_role':'learner-declared problem statement; reference and history remain separate'}
     if kind in ('experiment','project','lab'):
-        comparisons=[event for event in index.timeline(identity) if event.get('event')=='comparison']
-        return {'kind':'project' if kind=='project' else 'experiment','hypothesis':root['props'].get('hypothesis'),'latest_comparison':comparisons[-1] if comparisons else None,'summary':'Prediction, reported observation and conclusion remain separate'}
+        from .experiments import context
+        return context(index,root)
     if kind=='capability':
         decisions=[event for event in index.timeline(identity) if event.get('event')=='capability-decision']
         evidence=[]
@@ -60,6 +60,7 @@ def overview(index, identity):
     counts={bucket:{'total':0,'consumed':0,'reported_success':0,'independent_reported_success':0} for bucket in ('lectures','readings','assignments','projects','other_units')}
     for record_id,record_kind,raw in rows[:1000]:
         props=json.loads(raw)
+        if record_kind=='unit' and props.get('unit_kind')=='module':continue
         bucket='assignments' if record_kind in ('task','problem') else 'projects' if record_kind=='project' else {'lecture':'lectures','video':'lectures','reading':'readings','assignment':'assignments'}.get(props.get('unit_kind'),'other_units')
         counts[bucket]['total']+=1
         record=index.record(record_id)

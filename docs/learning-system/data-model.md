@@ -80,3 +80,22 @@ total; it never inherits completion from the replaced material. Later study and
 assessment events carry the resolved source owner/version and material revision.
 Finalized attempts retain their start-time source snapshot. Blocking unfinished
 attempts prevents silently switching their evidence to a different lesson source.
+
+## Lesson context and readiness
+
+Bounded lesson projections expose owning outline/module, contextual prerequisites,
+assigned problems, their latest reported outcome/assistance and the next ordered
+lesson. Modules organize material and do not enter consumption totals. Next-lesson
+selection uses durable ordering beyond the first outline page. Relations with
+foreign endpoint ownership never become local educational members.
+
+Readiness is a learner-authored disposition on the specific prerequisite relationship,
+with reason and originating lesson scope. It never changes the concept's competence
+or erases attempts. Independent reported success alone does not clear a gate. The
+learner may reopen readiness with a new disposition. Relationship creation now
+accepts operation receipts and safely retries after interrupted publication.
+
+Lab projections retain the original hypothesis, captured code snapshot, configuration,
+latest comparison and referenced artifacts. Only bounded local PNG figures are
+previewed; other media remain references. An execution receipt is evidence of a
+recorded execution, not proof that a hypothesis or personal competence is established.

@@ -521,3 +521,61 @@ are not a human learning-day usability finding. Cache-incarnation refusal is
 automated model coverage added after this native run.
 
 Current automated total: 97 core tests and 16 compatibility tests pass.
+
+## Connected learning cycle — 2026-10-09
+
+107 core and 16 compatibility tests pass. New coverage checks bounded lesson
+context, source ownership, foreign UUID collisions, latest reported assessment,
+next lessons beyond the first 50 rows, durable reordering, module semantics,
+explicit prerequisite readiness, interrupted link publication and idempotent
+receipts. Lab tests preserve prediction/comparison differences, missing data,
+relative artifacts and bounded local PNG previews. No remote images are fetched.
+
+`python3 scripts/check-noesis-learning-day.py` installs into a disposable HOME and
+uses real QML/compositor keyboard delivery. It resumes a CS NAND reconstruction
+from another owning vault; follows a six-lecture mathematics outline with two
+readings, two assignments and a project; connects an existing prerequisite through
+the native dialog; records an assessment and explicit lesson-scoped readiness;
+returns to the exact lesson, completes an assignment, and inspects separate counts.
+Original Markdown bytes remain unchanged. Cache deletion and native restart
+recover position, prerequisite decisions and assignment assessment.
+
+The same fixture opens a genuine paper's source context and committed implementation
+record, then a generated gyroscope experiment with actually executed code, CSV,
+configuration, original contradicted prediction, units, next test and a loaded local
+PNG. Image.Ready and keyboard scrolling are asserted; screenshots supplement these
+interaction checks. Generated sensor data is not hardware evidence. The authored
+attention forward implementation passes an analytic case, 100 scalar-reference
+cases, uniform-query and dimension checks. Maximum error is 4.440892098500626e-16;
+the omitted-scale counterexample differs by 0.6129702930334808. This verifies Eq. 1
+of [Attention Is All You Need](https://arxiv.org/html/1706.03762v7#S3.SS2.SSS1), not
+training, gradients, translation benchmarks or independent learner competence.
+
+A prerequisite assessment and return used 14 non-text key actions, compared with
+17 before Ctrl+Enter primary attempt/save actions. Opening the prerequisite and
+returning themselves require two shortcuts. Full-day action totals include search,
+workspace changes, explicit assistance/outcome selection and readiness; they exclude
+fixture CLI setup and count typed characters separately. Native context recovery
+was 0.597 seconds in the latest recorded run (84 non-text actions; 362 typed characters). Controlled key pacing is not human task time
+and these injected interactions are not human usability observations.
+
+The populated isolated Zotero run also passed genuine PDF/annotation import, revisions,
+preserved learner prose, moved-paper relationships and the executed equation route.
+It then failed at native reader restart after encrypted restoration: the API accepted
+a connection but did not answer before startup timeout. Recovery is **not accepted**
+for this cycle. The harness now retains reader preferences, waits for native children
+instead of only the launcher shell, and bounds startup by wall-clock time. Its
+corrected restore rerun remains pending: a normal Zotero instance owns the local API
+and was left untouched. Earlier successful recovery evidence is retained, but does
+not erase this failed run. Sioyek's separately accepted native restore is unaffected.
+
+All screenshots in this section are native disposable fixtures. No personal notes,
+reader data, vault registration or project repository was modified for acceptance.
+No framework replacement, speculative package installation or untrusted code
+execution was introduced. Complete physical-input/live-shell/monitor-disconnection
+acceptance and the configured off-device destination remain outside these results.
+
+![Native lesson context](assets/lesson-context-day-native.png)
+![Native course assessment separation](assets/course-day-native.png)
+![Native experiment comparison](assets/lab-day-native.png)
+![Native experiment figure](assets/lab-figure-native.png)

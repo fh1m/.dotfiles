@@ -26,7 +26,7 @@ def resolve(reference):
     finally:index.close()
 
 
-def link(root,source,target,relation,target_vault,reason=''):
+def link(root,source,target,relation,target_vault,reason='',operation_id=None):
     # Cross-vault contextual gates need a global deadlock policy; do not flatten them.
     if relation not in ('references','supports','exercises','pursues'):raise ValueError('Cross-vault links currently support references, supports, exercises and pursues')
     root=Path(root).resolve();target_vault=Path(target_vault).expanduser().resolve()
@@ -39,4 +39,4 @@ def link(root,source,target,relation,target_vault,reason=''):
     from .models import create
     return create(root,'relationship',relation+' '+source[:8]+' to '+target[:8],reason,fields={
         'source':source,'target':target,'source_ref':{'vault_id':own_id,'record_id':source},
-        'target_ref':{'vault_id':other_id,'record_id':target},'relation':relation,'reason':reason})
+        'target_ref':{'vault_id':other_id,'record_id':target},'relation':relation,'reason':reason},operation_id=operation_id)

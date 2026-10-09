@@ -244,3 +244,27 @@ result keeps its owning vault. If indexed material changes while paging, refresh
 the search: the application refuses an obsolete page rather than silently skipping
 or duplicating results. An unavailable vault is reported while fresh queries can
 still show the available scopes.
+
+## Study a lesson without losing the course
+
+Open a course/module outline and select the current lesson. Its reading view shows
+**Before this lesson**, **Exercises and assignments**, and **Next lesson**. Click a
+row or use Ctrl+Alt+Down for the first prerequisite, Ctrl+Alt+Right for the first
+assignment, Ctrl+Alt+Left to return to the owning outline, and Ctrl+Alt+Up for the
+next lesson. Alt+Left returns to the previous context with its saved place intact.
+
+Use **Connect a prerequisite** (Ctrl+Shift+P) to find existing material in the same
+vault and explain its role. After working through it, **Ready to continue?**
+(Ctrl+Alt+R for the first gate) records your explicit lesson-scoped readiness decision.
+Successful attempts alone never clear this gate or award general competence.
+
+In Work, Ctrl+Enter starts an attempt or saves its outcome; select outcome and
+assistance explicitly. Ctrl+Tab leaves the reasoning editor for the controls.
+Ctrl+Enter in a dialog saves that dialog. Reference exposure remains attached even
+when you subsequently choose none. Ctrl+PageDown/PageUp scrolls the reading context.
+
+Lab shows original prediction, captured commit/configuration, latest observation,
+units, uncertainty, conclusion and next test. Data/figure rows open their artifact
+context; local bounded PNG figures preview in place. Missing files retain their
+references and histories. Open the implementation in the existing editor and run
+your chosen code deliberately; Noesis does not execute imported code automatically.

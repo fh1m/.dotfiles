@@ -144,3 +144,17 @@ Use Hide when the compositor cannot honor Qt minimization. A normal/workspace so
 handoff preserves context, stops its worker and gives the specialist reader focus;
 tiled mode keeps the two working surfaces visible. The native reader is the authority
 for PDF fidelity and saved-page acceptance, rather than an attractive preview.
+
+## Connected lesson and experiment surfaces
+
+Lessons group prerequisites and assigned assessments beside their resume state.
+Outline-return and next-lesson actions replace repeated searching. Modules have
+structural labels, with no consumption counters. Primary attempt/save actions
+share Ctrl+Enter; modal dialogs keep precedence. Completion messages clear when
+changing contexts so earlier assessments do not appear to describe a new experiment.
+
+Lab uses restrained headings for prediction, configuration, comparison and figures.
+Recorded code/version metadata stays secondary. Original plots retain their visual
+fidelity rather than being recolored by the shell. Local figure rows are not
+duplicated in the generic relation list. Keyboard paging and specialist handoff
+keep long technical content usable without adding a browser renderer.

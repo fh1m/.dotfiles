@@ -221,7 +221,8 @@ class Index:
         if metadata.get('type') == 'artifact':
             location = metadata.get('location', metadata.get('local_file', ''))
             file = Path(location).expanduser() if location else None
-            artifact = {'location': location, 'availability': 'available' if file and file.exists() else 'artifact unavailable', 'expected_checksum': metadata.get('sha256')}
+            if file and not file.is_absolute():file=contained(self.root,location)
+            artifact = {'location': str(file) if file else location, 'availability': 'available' if file and file.exists() else 'artifact unavailable', 'expected_checksum': metadata.get('sha256')}
         unfinished = unfinished_attempts(self.timeline(identity)) if include_attempt else []
         from .materials import effective_props
         effective=effective_props(metadata,state)

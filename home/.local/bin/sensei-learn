@@ -567,6 +567,7 @@ def main():
         if cmd == 'recover':p.add_argument('snapshot');p.add_argument('--dest',type=Path,required=True)
         if cmd == 'record':p.add_argument('--operation-id');p.add_argument('kind',choices=KINDS);p.add_argument('title');p.add_argument('--body',default='');p.add_argument('--data',default='{}');p.add_argument('--parent-id');p.add_argument('--relation',default='contains');p.add_argument('--order',type=int)
         if cmd == 'link':
+            p.add_argument('--operation-id')
             p.add_argument('source');p.add_argument('target');p.add_argument('relation');p.add_argument('--target-vault');p.add_argument('--role');p.add_argument('--reason',default='');p.add_argument('--exit-task');p.add_argument('--context');p.add_argument('--order',type=int)
         if cmd == 'event':
             p.add_argument('path');p.add_argument('event',choices=['study','resolution','attempt-start','attempt','review','review-plan','assistance','comparison','correction','capability-decision','session-state','disposition','material-change']);p.add_argument('--evidence',default='');p.add_argument('--data',default='{}')
@@ -682,8 +683,8 @@ def main():
             if args.target_vault:
                 if any(value is not None for value in (args.role,args.exit_task,args.context,args.order)):raise ValueError('Cross-vault educational gate/order contexts require a global policy; use a nonblocking connection')
                 from noesis.references import link as cross_link
-                result=cross_link(root,args.source,args.target,args.relation,args.target_vault,args.reason)
-            else:result=relationship(root,args.source,args.target,args.relation,args.role,args.reason,args.exit_task,args.context,args.order)
+                result=cross_link(root,args.source,args.target,args.relation,args.target_vault,args.reason,args.operation_id)
+            else:result=relationship(root,args.source,args.target,args.relation,args.role,args.reason,args.exit_task,args.context,args.order,args.operation_id)
             print(json.dumps(result,default=str));return 0
         if args.command=='event':
             fields=json.loads(args.data)
