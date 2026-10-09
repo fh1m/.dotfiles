@@ -214,3 +214,7 @@ then verifies it. The live check confirmed 1920×1080 logical fullscreen on Stud
 contents were retained; the original Wrayth process remained running. The scoped
 backup preserves the unrelated custom setup. The selected personal course has
 no outline yet; this rollout does not fabricate one or alter learning content.
+
+Live workspace-switch verification also caught stale monitor IPC in the standalone
+host. The desk now refreshes monitor/workspace projections on compositor events;
+leaving Study hides it and returning restores it without an idle polling loop.

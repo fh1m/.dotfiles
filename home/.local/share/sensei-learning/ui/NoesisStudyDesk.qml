@@ -25,6 +25,7 @@ PanelWindow {
  readonly property var deskScreen:Quickshell.screens.find(s=>s.name!==NoesisController.mainMonitor&&s.name==="DP-2")||null
  readonly property var studyMonitor:Hyprland.monitors.values.find(m=>m.name===NoesisController.mainMonitor)||null
  readonly property string activeWorkspace:studyMonitor?.lastIpcObject?.activeWorkspace?.name||studyMonitor?.activeWorkspace?.name||""
+ Connections {target:Hyprland;function onRawEvent(event:HyprlandEvent):void{if(["workspace","focusedmon","moveworkspace","renameworkspace","monitoradded","monitorremoved"].includes(event.name)){Hyprland.refreshWorkspaces();Hyprland.refreshMonitors();}}}
  readonly property bool fixture:Quickshell.env("NOESIS_STUDY_DESK_FIXTURE")==="1"
  function restoreLayout(){let p=NoesisController.layouts.StudyDesk||{};if(leftPane.surfaces.includes(p.left_view))leftPane.view=p.left_view;if(rightPane.surfaces.includes(p.right_view))rightPane.view=p.right_view;if(typeof p.split==="boolean")split=p.split;if(typeof p.enabled==="boolean")enabledByUser=p.enabled;}
  function saveLayout(){NoesisController.layouts=Object.assign({},NoesisController.layouts,{StudyDesk:{left_view:leftPane.view,right_view:rightPane.view,split:split,enabled:enabledByUser,ratio:Math.min(.75,Math.max(.25,leftPane.width/Math.max(1,panes.width)))}});NoesisController.savePreferences();}
