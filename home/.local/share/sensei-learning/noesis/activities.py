@@ -155,6 +155,14 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                 fields['previous_plan']=heads[0]['id'] if len(heads)==1 else None
                 fields['interval_days']=days
                 fields['due']=(datetime.now(timezone.utc)+timedelta(days=days)).isoformat() if fields['action']!='retire' else None
+            if fields.get('review_plan_id'):
+                if event not in ('attempt-start','review'):
+                    raise ValueError('Choose the planned check when starting its assessment')
+                heads=review_heads(index.timeline(identity))
+                if len(heads)!=1 or heads[0]['id']!=fields['review_plan_id'] or heads[0].get('action')=='retire':
+                    raise ValueError('Check plan changed; reload before starting its assessment')
+                if any(entry.get('event') in ('attempt','review') and entry.get('outcome') in ('failed','partial','succeeded') and entry.get('review_plan_id')==fields['review_plan_id'] for entry in index.timeline(identity)):
+                    raise ValueError('This check already has an assessment; schedule another deliberately')
             if fields.get('attempt_id'):
                 started = index.record(fields['attempt_id'])['props']
                 if started.get('event') != 'attempt-start' or started.get('target', {}).get('record_id') != identity:
@@ -162,6 +170,7 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                 if event == 'attempt':
                     if any(e.get('event') == 'attempt' and e.get('attempt_id') == fields['attempt_id'] for e in index.timeline(identity)):
                         raise ValueError('Attempt already finalized; start an independent retry')
+                    if started.get('review_plan_id'):fields['review_plan_id']=started['review_plan_id']
                     exposures = set(fields.get('assistance', ['unknown']))
                     for entry in index.timeline(identity):
                         if entry.get('attempt_id') == fields['attempt_id'] and entry.get('event') == 'assistance':

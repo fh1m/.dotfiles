@@ -438,3 +438,26 @@ now uses a host-valid working directory and rendered host paths. Files outside G
 no longer inherit an unrelated working-directory commit. No container was started,
 package installed or guest configuration overwritten. Headless editor acceptance
 is integration evidence, not a visual editor usability test.
+
+
+## Planned check execution — 2026-10-09
+
+P4/P7: **Perform planned check** now starts a protected attempt explicitly linked
+to the learner-selected plan. Finalization retains that link and assistance history.
+A failed, partial or successful result fulfills the selected check; unknown or
+incomplete work leaves it pending. Ordinary practice cannot silently discharge a
+plan. Stale, retired, foreign-target and already-assessed plans are refused. No
+capability is awarded and no next review date is selected automatically.
+
+84 core and 16 compatibility tests pass. A due-time disposable fixture verifies
+that unrelated success and incomplete assessment leave the due action visible,
+while an explicitly linked failed result preserves its failure and removes that
+fulfilled plan from suggestions. No real activity timestamps were changed.
+
+The native desktop script passed changed-task transfer, explicit check start with
+reference hidden, independent reconstruction, outcome save and cache-loss/restart
+recovery of both transfer attempts and the plan. The seven-day check was performed
+early in this automated fixture; this is not evidence of seven days of human
+retention. The first run caught an invalid QML pane assignment; the corrected run
+completed with no QML warnings/errors. Long-history usability and realistic
+returning-learner inspection remain open. No data migration is required.

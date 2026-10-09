@@ -62,11 +62,13 @@ def next_actions(index, quiet=False, path_id=None):
             if status not in inactive+('read','extracted','succeeded'):
                 next_units.add(target);break
     from .activities import review_heads
-    plans={}
+    plans={};assessed_plans=set()
     for target, in index.db.execute("SELECT DISTINCT target FROM activities WHERE json_extract(props,'$.event')='review-plan'"):
-        try:plans[target]=review_heads(index.timeline(target))
+        timeline=index.timeline(target)
+        assessed_plans.update(event.get('review_plan_id') for event in timeline if event.get('event') in ('attempt','review') and event.get('outcome') in ('failed','partial','succeeded'))
+        try:plans[target]=review_heads(timeline)
         except ValueError:plans[target]=[]
-    plan_ids={head[0]['id'] for head in plans.values() if len(head)==1}
+    plan_ids={head[0]['id'] for head in plans.values() if len(head)==1 and head[0]['id'] not in assessed_plans}
     candidates = []
     now = datetime.now(timezone.utc).isoformat()
     for path, identity, kind, raw, derived_raw, pinned in index.db.execute("""SELECT r.path,r.id,r.kind,r.props,s.state,json_extract(r.props,'$.pin') FROM records r

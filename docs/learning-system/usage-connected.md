@@ -216,3 +216,12 @@ host bridge and host Noesis configuration. An explicit NOESIS_VAULT still takes
 precedence. A supported existing host-spawn is required; Noesis does not install it
 automatically. Code provenance records the selected file's repository, and reports
 uncommitted changes instead of presenting unrelated commits as evidence.
+
+
+To answer a scheduled problem check, use **Perform planned check** in the contextual
+menu. This starts a protected attempt linked to that specific plan. Write your
+reconstruction before revealing references, then save the outcome and declared
+assistance. A failed, partial or successful result fulfills the plan without claiming
+competence; failures remain failures. Unknown or incomplete outcomes leave the
+check pending. Choose another check deliberately when a retry is useful. Ordinary
+practice does not fulfill a check just because it happened more recently.
