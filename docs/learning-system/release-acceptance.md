@@ -2,7 +2,11 @@
 
 **V1 is not release-complete.** This is the current acceptance report, not a claim
 that passing model tests establish learning efficacy. The existing PLAN.md remains
-the authoritative burn-down; validation.md contains reproducible evidence.
+the historical phase ledger. [v1-roadmap.md](v1-roadmap.md) is the current execution
+burn-down; [m1-hosting-evidence.md](m1-hosting-evidence.md) records the staged independent
+host and sequential UI checks. The real learner trial and complete native restoration
+remain release gates. Configured off-device protection is deferred by the owner to
+post-V1; it is not a core release completion gate.
 
 | Milestone | Accepted and reproduced | Status / blocking V1 | Ready for learner use |
 |---|---|---|---|
@@ -14,7 +18,7 @@ the authoritative burn-down; validation.md contains reproducible evidence.
 | P5 experiments | Executed generated-data calibration, code/configuration, CSV/PNG, contradicted prediction, units, comparison, next test; native figure loading/scrolling; unavailable and foreign artifacts tested. | Software experiment slice accepted. Complete external-tool handoff still partial. No hardware or full-paper reproduction claim. | Yes for scoped experiment records and artifacts. |
 | P6 desktop | Native lesson/course/paper/Lab fixture states, keyboard actions, restoration, existing window modes/companion; inspected actual native screenshots. Quickshell retained. | Partial. Full visual matrix, physical input timing, disconnected ScreenPad and sustained live-shell acceptance remain. | Ready for local learner trial; not certified across every monitor state. |
 | P7 guidance | Completed material excluded from Continue; explained next actions; a gate clears only after explicit lesson-scoped learner readiness and can be reopened. | Partial. Remaining journey cases and priority controls. Sophisticated recommendation models are post-V1. | Basic transparent suggestions yes. |
-| P8 hardening | 107 core + 16 compatibility tests; temporary-home installation; earlier 10k and Distrobox acceptance retained; private-data boundaries and native cache-loss restart. | Partial. Reader regression, complete portability/native gates and a configured verified off-device destination remain. | Local use yes; laptop-loss protection is not configured. |
+| P8 hardening | Earlier 107 core + 16 compatibility acceptance remains authoritative; staged additions now pass 112 core tests. Temporary-home installation; earlier 10k and Distrobox evidence retained; private-data boundaries and native cache-loss restart. | Partial. Reader regression, independent-host production registration, complete portability/native gates and human trial remain. Off-device configuration is deferred by owner to post-V1. | Local use yes; laptop-loss protection is not configured. |
 
 ## Reproduced learning day
 
@@ -40,17 +44,19 @@ See [native screenshots and test details](validation.md#connected-learning-cycle
 
 ## Explicit remaining gates
 
-1. Repeat the isolated Zotero restore with the corrected harness. It now preserves
-   preferences and waits for the native process, not only its launcher. A normal
-   Zotero instance currently owns the API; the harness refuses to reuse it. The
-   observed restore timeout is unresolved until a new native run passes.
+1. The corrected populated Zotero restore still fails at native startup. Controlled
+   empty-profile restarts do not clear that gate. Preserve diagnostics and finish a
+   populated native recovery check; personal Zotero sessions are never repurposed.
 2. Finish annotation-specific navigation and the complete specialist-tool handoffs.
 3. Complete long-history/returning-learner, unavailable-storage/conflict and remaining
    desktop/portability checks. Retain measured performance limits from validation.md;
    the learning-day recovery measurement does not establish physical input latency.
-4. Configure an actual off-device repository and independently recover it. The
-   [encrypted preservation strategy](migration-recovery.md#off-device-protection-remains-unconfigured)
-   is viable but unconfigured; local recovery is not laptop-loss protection.
+4. Complete independent-host production registration, sustained lifecycle and the
+   owner's 20–30-minute learner trial, then fix critical feedback before release.
+
+Configured off-device protection is deferred by the owner to post-V1. The
+[encrypted preservation strategy](migration-recovery.md#off-device-protection-remains-unconfigured)
+remains documented; local recovery is not laptop-loss protection.
 
 Post-V1: sophisticated recommendation models, optional MLflow/DVC services,
 advanced spaced-repetition integration, external dashboards and global blocking

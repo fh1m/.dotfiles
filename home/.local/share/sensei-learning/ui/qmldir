@@ -1,0 +1,26 @@
+singleton NoesisController 1.0 NoesisController.qml
+singleton NoesisStyle 1.0 NoesisStyle.qml
+NoesisActionDialog 1.0 NoesisActionDialog.qml
+NoesisButton 1.0 NoesisButton.qml
+NoesisCourseOutline 1.0 NoesisCourseOutline.qml
+NoesisCreateDialog 1.0 NoesisCreateDialog.qml
+NoesisDialog 1.0 NoesisDialog.qml
+NoesisEditor 1.0 NoesisEditor.qml
+NoesisEmpty 1.0 NoesisEmpty.qml
+NoesisEvidenceDialog 1.0 NoesisEvidenceDialog.qml
+NoesisExperimentContext 1.0 NoesisExperimentContext.qml
+NoesisField 1.0 NoesisField.qml
+NoesisLearningContext 1.0 NoesisLearningContext.qml
+NoesisMaterialDialog 1.0 NoesisMaterialDialog.qml
+NoesisOutlineDialog 1.0 NoesisOutlineDialog.qml
+NoesisPrerequisiteDialog 1.0 NoesisPrerequisiteDialog.qml
+NoesisRow 1.0 NoesisRow.qml
+NoesisSelect 1.0 NoesisSelect.qml
+NoesisWindow 1.0 NoesisWindow.qml
+NoesisWorkspace 1.0 NoesisWorkspace.qml
+NoesisZoteroDialog 1.0 NoesisZoteroDialog.qml
+NoesisPracticePage 1.0 NoesisPracticePage.qml
+NoesisCoursePage 1.0 NoesisCoursePage.qml
+NoesisResearchPage 1.0 NoesisResearchPage.qml
+NoesisLabPage 1.0 NoesisLabPage.qml
+NoesisTodayPage 1.0 NoesisTodayPage.qml

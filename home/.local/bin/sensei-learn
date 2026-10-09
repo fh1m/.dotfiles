@@ -45,8 +45,12 @@ def store(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp = tempfile.mkstemp(dir=path.parent, prefix='.learning-')
     try:
-        with os.fdopen(fd, 'w') as f: json.dump(data, f, indent=2); f.write('\n')
+        with os.fdopen(fd, 'w') as f:
+            json.dump(data, f, indent=2);f.write('\n');f.flush();os.fsync(f.fileno())
         os.replace(temp, path)
+        directory=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY)
+        try:os.fsync(directory)
+        finally:os.close(directory)
     finally:
         if os.path.exists(temp): os.unlink(temp)
 
@@ -555,7 +559,7 @@ def library_action(root,args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project']:
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','host-request','host-lease']:
         p = commands.add_parser(cmd); p.add_argument('--vault')
         if cmd == 'open-project':p.add_argument('record_id')
         if cmd == 'artifact-check':p.add_argument('record_id');p.add_argument('--operation-id')
@@ -600,18 +604,52 @@ def main():
         if cmd == 'import-csl':p.add_argument('source');p.add_argument('--dry-run',action='store_true')
         if cmd == 'import-notes':p.add_argument('source');p.add_argument('--resource',required=True)
         if cmd == 'read-resource':p.add_argument('--target-id');p.add_argument('path');p.add_argument('--reader',choices=['sioyek','zotero','default'],default='sioyek')
+        if cmd == 'window':p.add_argument('--embedded',action='store_true');p.add_argument('--owner');p.add_argument('--vault-id');p.add_argument('--record-id');p.add_argument('--capture',action='store_true')
+        if cmd == 'host-request':p.add_argument('--stdin-line',action='store_true')
+        if cmd == 'window-state':p.add_argument('--interface-scale',type=float);p.add_argument('--reading-scale',type=float);p.add_argument('--layouts-json');p.add_argument('--pending-json');p.add_argument('--instance-json');p.add_argument('--visible',choices=['on','off']);p.add_argument('--placement',choices=['current','dedicated']);p.add_argument('--study-workspace');p.add_argument('--return-behavior',choices=['hide','stay'])
         if cmd == 'window-state':p.add_argument('--presentation',choices=['workspace','tiled','normal']);p.add_argument('--collection',choices=['on','off']);p.add_argument('--drafts-json');p.add_argument('--drafts-stdin',action='store_true');p.add_argument('--path-scope');p.add_argument('--path-scope-vault');p.add_argument('--width',type=int);p.add_argument('--height',type=int);p.add_argument('--workspace',choices=['Today','Learn','Research','Practice','Lab','Library']);p.add_argument('--list-ratio',type=float);p.add_argument('--context-json');p.add_argument('--monitor');p.add_argument('--quiet',choices=['on','off'])
         if cmd == 'cli': p.add_argument('obsidian_command'); p.add_argument('options', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     try:
         if args.command == 'init': initialize(args); return 0
         if args.command=='window':
-            executable=HOME/'.local/opt/sensei-quickshell/bin/qs'
-            return subprocess.run([str(executable) if executable.exists() else 'qs','-c','wrayth','ipc','call','noesis','open']).returncode
+            from noesis.hosting import launch
+            print(json.dumps(launch(HOME,embedded=args.embedded,owner=args.owner,vault_id=args.vault_id,record_id=args.record_id,capture=args.capture)));return 0
+        if args.command=='host-lease':
+            import fcntl
+            directory=HOME/'.local/state/sensei-learning';directory.mkdir(parents=True,exist_ok=True);directory.chmod(0o700)
+            with (directory/'host.lease').open('a+') as lease:
+                try:fcntl.flock(lease,fcntl.LOCK_EX|fcntl.LOCK_NB)
+                except BlockingIOError:
+                    print('unavailable',flush=True);return 1
+                print('acquired',flush=True);sys.stdin.read()
+            return 0
+        if args.command=='host-request':
+            from noesis.hosting import resolve_request
+            print(json.dumps(resolve_request(json.loads(sys.stdin.readline()))));return 0
         if args.command=='window-state':
             file=HOME/'.local/state/sensei-learning/window.json'
             with vault_lock(file.parent):
                 state=json.loads(file.read_text()) if file.exists() else {}
+                file.parent.chmod(0o700)
+                if file.exists() and state.get('version',1)<2 and not file.with_name('window.v1.rollback.json').exists():
+                    store(file.with_name('window.v1.rollback.json'),state)
+                state['version']=2
+                for option in ['interface_scale','reading_scale']:
+                    value=getattr(args,option)
+                    if value is not None:
+                        if not 1<=value<=2:raise ValueError('Text scale must be between 100% and 200%')
+                        state[option]=value
+                for option,key in [('pending_json','pending_operation'),('instance_json','instance'),('layouts_json','layouts')]:
+                    value=getattr(args,option)
+                    if value is not None:
+                        payload=json.loads(value)
+                        if not isinstance(payload,dict):raise ValueError('Host state must be an object')
+                        state[key]=payload
+                for option in ['placement','study_workspace','return_behavior']:
+                    value=getattr(args,option)
+                    if value is not None:state[option]=value
+                if args.visible is not None:state['visible']=args.visible=='on'
                 if args.width is not None and args.height is not None:state.update(width=min(1800,max(360,args.width)),height=min(1000,max(300,args.height)))
                 if args.drafts_json is not None or args.drafts_stdin:
                     drafts=json.loads(sys.stdin.readline() if args.drafts_stdin else args.drafts_json)
@@ -627,8 +665,16 @@ def main():
                 if args.context_json is not None:
                     context=json.loads(args.context_json)
                     if not isinstance(context,dict):raise ValueError('Context must be an object')
-                    state['context']={k:context.get(k) for k in ['id','path','title','type','vault','session_state']}
-                if any(value is not None for value in [args.width,args.height,args.drafts_json,True if args.drafts_stdin else None,args.path_scope,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet,args.presentation,args.collection]):store(file,state)
+                    state['context']={k:context.get(k) for k in ['id','path','title','type','vault','vault_id','session_state','surface','context_tab','read_anchor']}
+                if any(value is not None for value in [args.width,args.height,args.drafts_json,True if args.drafts_stdin else None,args.path_scope,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet,args.presentation,args.collection,args.pending_json,args.instance_json,args.visible,args.placement,args.study_workspace,args.return_behavior]):
+                    store(file,state)
+                    from noesis.hosting import process_start
+                    instance=state.get('instance',{})
+                    context=state.get('context',{})
+                    projected={k:context.get(k) for k in ['id','path','title','type','vault','vault_id','surface','session_state','context_tab','read_anchor']}
+                    projected['title']=str(projected.get('title') or '')[:240]
+                    projected['path']=str(projected.get('path') or '')[:4096]
+                    store(file.with_name('companion.json'),{'version':1,'instance':dict(instance,start_ticks=process_start(instance.get('pid',0))),'updated_at':time.time(),'visible':state.get('visible',False),'context':projected})
             print(file.read_text() if file.exists() else '{"width":1440,"height":880}');return 0
         if args.command=='course-import':
             from noesis.outlines import plan,apply as apply_outline

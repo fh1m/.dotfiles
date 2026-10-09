@@ -233,6 +233,27 @@ class Index:
     def timeline(self, identity):
         return [dict(json.loads(raw), path=path) for path, raw in self.db.execute('SELECT path,props FROM activities WHERE target=? ORDER BY timestamp,path', (identity,))]
 
+    def timeline_page(self, identity, cursor=None):
+        """Latest chronological page, with owner/record/cache/generation-bound older pages."""
+        import base64
+        scope={'version':1,'owner':self.manifest.get('vault_id'),'record':identity,
+               'cache':self.cache_identity,'generation':self.generation}
+        offset=0
+        if cursor:
+            try:
+                value=json.loads(base64.b64decode(cursor,validate=True))
+                if not isinstance(value,dict) or any(value.get(k)!=v for k,v in scope.items()):
+                    raise ValueError('History changed or belongs to another context; reload history')
+                offset=value['offset']
+                if type(offset) is not int or not 0<=offset<2**63 or offset%50:raise ValueError('Invalid history cursor')
+            except (TypeError,KeyError,json.JSONDecodeError,UnicodeError,base64.binascii.Error) as error:
+                raise ValueError('Invalid history cursor') from error
+        rows=list(self.db.execute('SELECT path,props FROM activities WHERE target=? ORDER BY timestamp DESC,path DESC LIMIT 51 OFFSET ?', (identity,offset)))
+        activities=[dict(json.loads(raw),path=path) for path,raw in reversed(rows[:50])]
+        next_cursor=base64.b64encode(json.dumps(dict(scope,offset=offset+50),separators=(',',':')).encode()).decode() if len(rows)>50 else None
+        newer_cursor=base64.b64encode(json.dumps(dict(scope,offset=max(0,offset-50)),separators=(',',':')).encode()).decode() if offset else None
+        return {'activities':activities,'cursor':next_cursor,'newer_cursor':newer_cursor,'generation':self.generation}
+
     def relations(self, identity):
         result = []
         for path, raw in self.db.execute('SELECT path,props FROM relationships WHERE source=? OR target=? ORDER BY path LIMIT 50', (identity, identity)):

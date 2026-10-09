@@ -1,0 +1,426 @@
+{
+  "baseline": "aca05d1",
+  "files": {
+    "home/.config/quickshell/wrayth/config/NoesisStyle.qml": {
+      "imports": [
+        "QtQuick",
+        "Quickshell",
+        "qs.config"
+      ],
+      "singleton_symbols": [
+        "Appearance.duration.state",
+        "Appearance.font.data",
+        "Theme.widgetAccent",
+        "Theme.widgetBorder",
+        "Theme.widgetFaint",
+        "Theme.widgetMuted",
+        "Theme.widgetRaised",
+        "Theme.widgetSurface",
+        "Theme.widgetText"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisActionDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "qs.config"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisButton.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "qs.config"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisCompanion.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Layouts",
+        "Quickshell",
+        "Quickshell.Io",
+        "qs.components",
+        "qs.config",
+        "qs.services"
+      ],
+      "singleton_symbols": [
+        "Oasis.activeVault",
+        "Oasis.captureRequested",
+        "Oasis.currentContext",
+        "Oasis.open",
+        "Oasis.run"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [
+        "noesis-companion"
+      ],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisCourseOutline.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "qs.config"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisCreateDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "Quickshell",
+        "qs.config",
+        "qs.services"
+      ],
+      "singleton_symbols": [
+        "Oasis.activeVault",
+        "Oasis.operationResult",
+        "Oasis.run",
+        "Oasis.working"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "qs.config"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisEditor.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "qs.config"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisEmpty.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Layouts",
+        "qs.config"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisEvidenceDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "qs.config",
+        "qs.services"
+      ],
+      "singleton_symbols": [
+        "Oasis.activeVault",
+        "Oasis.run",
+        "Oasis.working"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 1
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisExperimentContext.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "qs.config"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisField.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "qs.config"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisLearningContext.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "qs.config"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisMaterialDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "qs.config",
+        "qs.services"
+      ],
+      "singleton_symbols": [
+        "Oasis.activeVault",
+        "Oasis.error",
+        "Oasis.run",
+        "Oasis.working"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisOutlineDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "qs.config",
+        "qs.services"
+      ],
+      "singleton_symbols": [
+        "Oasis.activeVault",
+        "Oasis.operationKind",
+        "Oasis.operationResult",
+        "Oasis.operationUuid",
+        "Oasis.run",
+        "Oasis.working"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisPrerequisiteDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "qs.config",
+        "qs.services"
+      ],
+      "singleton_symbols": [
+        "Oasis.activeVault",
+        "Oasis.run",
+        "Oasis.working"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 1
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisRow.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "qs.config"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisSelect.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "qs.config"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisWindow.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "Quickshell",
+        "Quickshell.Io",
+        "qs.components",
+        "qs.config",
+        "qs.services",
+        "\"../dropdowns\" as Content"
+      ],
+      "singleton_symbols": [
+        "Oasis.activeVault",
+        "Oasis.close",
+        "Oasis.drafts",
+        "Oasis.error",
+        "Oasis.legacyInterface",
+        "Oasis.mainMonitor",
+        "Oasis.message",
+        "Oasis.operationKind",
+        "Oasis.operationVault",
+        "Oasis.presentationMode",
+        "Oasis.preview",
+        "Oasis.refresh",
+        "Oasis.savePreferences",
+        "Oasis.state",
+        "Oasis.windowHeight",
+        "Oasis.windowOpen",
+        "Oasis.windowWidth",
+        "Oasis.working",
+        "Theme.widgetAccent",
+        "Theme.widgetMuted",
+        "Theme.widgetSurface"
+      ],
+      "processes": [
+        "clientLookup",
+        "modeDispatch",
+        "presentationCheck",
+        "geometryWrite"
+      ],
+      "file_views": [],
+      "ipc_targets": [
+        "noesis-window"
+      ],
+      "timers": 3
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisWorkspace.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "Quickshell",
+        "Quickshell.Io",
+        "qs.components",
+        "qs.config",
+        "qs.services"
+      ],
+      "singleton_symbols": [
+        "Oasis.activeVault",
+        "Oasis.cancel",
+        "Oasis.choose",
+        "Oasis.collectionScope",
+        "Oasis.currentContext",
+        "Oasis.drafts",
+        "Oasis.error",
+        "Oasis.listRatio",
+        "Oasis.message",
+        "Oasis.note",
+        "Oasis.operationKind",
+        "Oasis.operationResult",
+        "Oasis.pathScope",
+        "Oasis.preview",
+        "Oasis.quiet",
+        "Oasis.run",
+        "Oasis.savePreferences",
+        "Oasis.setPathScope",
+        "Oasis.state",
+        "Oasis.windowOpen",
+        "Oasis.working",
+        "Oasis.workspace"
+      ],
+      "processes": [
+        "worker",
+        "watch"
+      ],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 4
+    },
+    "home/.config/quickshell/wrayth/modules/learning/NoesisZoteroDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "Quickshell",
+        "Quickshell.Io",
+        "qs.config",
+        "qs.services"
+      ],
+      "singleton_symbols": [
+        "Oasis.activeVault",
+        "Oasis.error",
+        "Oasis.operationResult",
+        "Oasis.run",
+        "Oasis.working"
+      ],
+      "processes": [
+        "reader"
+      ],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 1
+    },
+    "home/.config/quickshell/wrayth/services/Oasis.qml": {
+      "imports": [
+        "QtQuick",
+        "Quickshell",
+        "Quickshell.Io"
+      ],
+      "singleton_symbols": [
+        "ShellState.dropdown"
+      ],
+      "processes": [
+        "watch",
+        "snapshot",
+        "operation",
+        "receipt",
+        "reader",
+        "preferences"
+      ],
+      "file_views": [
+        "\"@HOME@/.config/sensei-learning/config.json\"",
+        "root.activeVault?root.activeVault+\"/\"+(root.state.frontier_path||\"00 Home/Current Frontier.md\"):\"\"",
+        "\"@HOME@/.local/state/sensei-learning/window.json\""
+      ],
+      "ipc_targets": [
+        "noesis",
+        "oasis"
+      ],
+      "timers": 3
+    }
+  }
+}

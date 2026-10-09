@@ -26,7 +26,7 @@ ShellRoot {
     BottomBar {}
     BarEdges {}
     Dropdowns {}
-    LearningUi.NoesisWindow {}
+    Loader {active:Quickshell.env("NOESIS_HOST")==="embedded";sourceComponent:Component {LearningUi.NoesisWindow {}}}
     LearningUi.NoesisCompanion {}
     DeckOverlay {}
     NotificationLayer {}

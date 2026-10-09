@@ -39,6 +39,7 @@ def serve(resolve):
                     result = index.query(request.get('query', ''), request.get('kind'), request.get('cursor') or 0,resource_kinds=request.get('resource_kinds'))
                 elif action == 'record':
                     result = index.record(request['record_id'])
+                    result['owner']={'vault_id':index.manifest['vault_id'],'registered_location':key}
                     result['overview'] = overview(index, request['record_id'])
                     from .courses import learning_context
                     result['learning_context']=learning_context(index,request['record_id'])
@@ -58,7 +59,13 @@ def serve(resolve):
                     from .courses import outline
                     result=outline(index,request['record_id'],request.get('cursor') or 0)
                 elif action == 'timeline':
-                    result = {'activities': index.timeline(request['record_id'])[-50:]}
+                    result = index.timeline_page(request['record_id'],request.get('cursor'))
+                elif action == 'annotations':
+                    from .sources import annotations
+                    result = annotations(index,request['record_id'],request.get('cursor'),request.get('projection'))
+                elif action == 'annotation-revisions':
+                    from .sources import annotation_revisions
+                    result = annotation_revisions(index,request['record_id'],request.get('cursor'))
                 elif action == 'relations':
                     result = {'relationships': index.relations(request['record_id'])}
                 elif action == 'today':

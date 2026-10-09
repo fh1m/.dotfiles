@@ -73,6 +73,8 @@ def review_heads(timeline):
 
 def progress_state(props, timeline):
     baseline = {k: props.get(k) for k in ('progress_current', 'progress_total', 'position', 'status')}
+    if props.get('pin') is not None:baseline['pin']=bool(props['pin'])
+    if props.get('manual_priority') in ('normal','high','quiet'):baseline['manual_priority']=props['manual_priority']
     states, heads = {}, set()
     events=[event for event in timeline if event.get('event') in ('study', 'session-state', 'disposition', 'resolution','outline-order','material-change')]
     for event in causal_order(events,'previous','resolves'):
@@ -85,6 +87,9 @@ def progress_state(props, timeline):
                 raise ValueError('Resolution must name all conflicting heads and selected predecessor')
             heads.clear()
         update = event['state'] if isinstance(event['state'], dict) else {'status': event['state']}
+        if 'pin' in update and type(update['pin']) is not bool:raise ValueError('Invalid durable pin state')
+        if 'manual_priority' in update and update['manual_priority'] not in ('normal','high','quiet'):
+            raise ValueError('Invalid durable manual priority')
         if 'unit_order' in update:
             order=update['unit_order']
             if not isinstance(order,list) or len(order)>1000 or any(not isinstance(value,str) for value in order) or len(set(order))!=len(order):raise ValueError('Invalid outline order')
@@ -223,8 +228,13 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                 state, previous = progress_state(props, index.timeline(identity))
                 update = fields.pop('state')
                 if event in ('session-state', 'disposition') and isinstance(update, str):update = {'status': update}
-                if not isinstance(update, dict) or set(update) - {'progress_current', 'progress_total', 'position', 'status', 'reading_pass', 'locator'}:
+                if not isinstance(update, dict) or set(update) - {'progress_current', 'progress_total', 'position', 'status', 'reading_pass', 'locator','pin','manual_priority'}:
                     raise ValueError('Invalid study state fields')
+                if set(update)&{'pin','manual_priority'} and event!='disposition':
+                    raise ValueError('Manual guidance controls require an explicit disposition')
+                if 'pin' in update and type(update['pin']) is not bool:raise ValueError('Pin must be true or false')
+                if 'manual_priority' in update and update['manual_priority'] not in ('normal','high','quiet'):
+                    raise ValueError('Choose normal, high or quiet manual priority')
                 if update.get('locator') is not None:
                     update['locator'],update['position']=normalize_locator(update['locator'])
                 if update.get('reading_pass') is not None and update['reading_pass'] not in ('survey','detail','reconstruct','verify'):

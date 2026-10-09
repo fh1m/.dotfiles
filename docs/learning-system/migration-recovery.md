@@ -105,4 +105,30 @@ configuration. Equal files in different profiles retain distinct source ownershi
 SQLite online backup avoids copying a live database inconsistently. Native restore
 acceptance reopened an isolated profile at its saved PDF page and retained bookmark
 rows. No real reader database was edited for acceptance. Existing snapshots remain;
-retention/pruning and an actual off-device destination are still unaccepted gates.
+Retention/pruning remains unaccepted. Configuring an off-device destination is
+**deferred by the owner to post-V1**, not a V1 completion gate. Local copies do not
+protect against loss of this laptop.
+
+### Zotero startup failure — recoverable manual path, not accepted restoration
+
+The corrected populated-reader restore test still fails at native startup. The
+cause is unresolved. Two isolated empty-profile controls also reproduced an
+unchanged-data restart failure while direct and restored copies started; those
+controls do not establish recovery of real PDF/annotation state. Do not increase
+timeouts or describe the regression as repaired on this evidence.
+
+If automatic restoration does not start, preserve the original profile, database,
+attachments and verified snapshot. Keep the failed restored copy and its diagnostics.
+Do not replace a running personal reader database or terminate a personal session.
+The manual recovery route is to restore another copy into a new location, use a
+separate Zotero profile with that copy's data directory, and inspect it independently
+after the personal session has been closed by its owner. Verify database integrity,
+library items, attachment paths, the selected PDF and its native annotations before
+adopting the restored location. Retain the preceding copies throughout inspection.
+
+Until that populated native check succeeds, the preserved Noesis annotation
+snapshot can be read in the notebook and the original available PDF can be opened
+in Sioyek. This preserves access to imported source context and learner evidence;
+it does not certify restored editable Zotero annotations or exact native reader
+state. This manual route is documented for recovery and still needs a populated
+acceptance run. The native Zotero restoration release gate remains unresolved.

@@ -7,9 +7,9 @@ hl.window_rule({
  no_blur = true,
 })
 
--- A normal persistent application window, always initially on the main panel.
+-- Placement is chosen by Noesis; existing specialist windows retain their workspaces.
 hl.window_rule({
  name = "noesis-learning-window",
- match = { title = "^Noesis — Learning workspace$" },
+ match = { class = "^org.fh1m.Noesis$" },
  tile = true, no_blur = true,
 })
