@@ -58,3 +58,60 @@ def move(root,parent,child,direction,operation_id=None):
         return record_activity(root,record['path'],'outline-order','Moved one outline item '+direction,
             operation_id=operation_id,expected_id=parent,expected_head=progress_state(record['props'],index.timeline(parent))[1],move_child=child,move_direction=direction,state={'unit_order':identities})
     finally:index.close()
+
+
+def learning_context(index,identity):
+    """Bounded lesson navigation; assessment is reported evidence, never competence."""
+    record=index.record(identity,include_body=False,include_attempt=False)
+    props=record['props']
+    if props.get('type') not in ('unit','stage','task','problem','concept','prerequisite'):
+        return None
+    owner=index.manifest['vault_id']
+    def summary(identity):
+        item=index.record(identity,include_body=False,include_attempt=False)
+        fields=item['props'];state=item['state']
+        latest_row=index.db.execute("SELECT props FROM activities WHERE target=? AND json_extract(props,'$.event') IN ('attempt','review') ORDER BY timestamp DESC,path DESC LIMIT 1",(identity,)).fetchone()
+        latest=json.loads(latest_row[0]) if latest_row else None
+        return {'id':identity,'path':item['path'],'title':item['display_title'],
+                'type':fields.get('type'),'unit_kind':fields.get('unit_kind'),
+                'status':state.get('status'),'position':state.get('position'),
+                'assessment':{'outcome':latest.get('outcome','unknown'),
+                              'assistance':latest.get('assistance',['unknown']),
+                              'timestamp':latest.get('timestamp')} if latest else None,
+                'vault':str(index.root),'vault_id':owner}
+    relations=index.db.execute("SELECT props FROM relationships r WHERE (source=? OR target=?) AND "+local_relationship('r')+" ORDER BY path LIMIT 51",(identity,identity,owner,owner)).fetchall()
+    parents=[];prerequisites=[];assignments=[];unavailable=[]
+    for raw, in relations[:50]:
+        edge=json.loads(raw)
+        try:
+            if edge['target']==identity and edge['relation'] in ('contains','orders','assigns'):
+                item=summary(edge['source'])
+                if item['id'] not in {r['id'] for r in parents}:parents.append(item)
+            if edge['source']==identity and edge['relation']=='assigns':assignments.append(summary(edge['target']))
+            if edge['source']==identity and edge['relation']=='prerequisite':
+                item=summary(edge.get('exit_task') or edge['target'])
+                item.update(role=edge.get('role'),reason=edge.get('reason'),relationship_id=edge['id'],
+                            relationship_path=index.record(edge['id'],include_body=False,include_attempt=False)['path'],
+                            readiness=index.record(edge['id'],include_body=False,include_attempt=False)['state'].get('status'))
+                prerequisites.append(item)
+        except ValueError as error:unavailable.append(str(error))
+    next_lesson=None
+    for parent in parents:
+        if not is_outline(index.record(parent['id'],include_body=False,include_attempt=False)['props']):continue
+        ordering=index.record(parent['id'],include_body=False,include_attempt=False)['state'].get('unit_order') or []
+        next_row=index.db.execute("""WITH members AS (
+            SELECT child.id,child.path,child.kind,state.status,json_extract(child.props,'$.unit_kind') AS unit_kind,
+              MIN(COALESCE(sequence.key,100000+COALESCE(json_extract(edge.props,'$.order'),10000))) AS rank
+            FROM relationships edge JOIN records child ON child.id=edge.target
+            LEFT JOIN states state ON state.id=child.id
+            LEFT JOIN json_each(?) sequence ON sequence.value=child.id
+            WHERE edge.source=? AND edge.relation IN ('contains','orders','assigns','pursues')
+            AND """+local_relationship('edge')+""" GROUP BY child.id)
+            SELECT following.id FROM members following JOIN members current ON current.id=?
+            WHERE (following.rank>current.rank OR (following.rank=current.rank AND following.path>current.path))
+            AND following.kind IN ('unit','stage') AND COALESCE(following.unit_kind,'')!='module'
+            AND COALESCE(following.status,'') NOT IN ('read','extracted','complete','passed','skipped','parked','retired','abandoned')
+            ORDER BY following.rank,following.path LIMIT 1""",(json.dumps(ordering),parent['id'],owner,owner,identity)).fetchone()
+        if next_row:next_lesson=summary(next_row[0]);break
+    return {'parents':parents,'prerequisites':prerequisites,'assignments':assignments,
+            'next_lesson':next_lesson,'truncated':len(relations)>50,'unavailable':unavailable}

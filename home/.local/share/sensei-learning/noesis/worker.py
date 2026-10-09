@@ -40,6 +40,8 @@ def serve(resolve):
                 elif action == 'record':
                     result = index.record(request['record_id'])
                     result['overview'] = overview(index, request['record_id'])
+                    from .courses import learning_context
+                    result['learning_context']=learning_context(index,request['record_id'])
                     if result['props'].get('type') in ('unit','resource','paper','course'):
                         from .readers import resource_props
                         from .materials import SOURCE_KEYS

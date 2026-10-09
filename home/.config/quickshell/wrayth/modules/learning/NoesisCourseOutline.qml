@@ -50,7 +50,7 @@ ColumnLayout {
    highlighted:root.editing&&ListView.isCurrentItem
    onClicked:{if(root.busy)return;if(root.editing){list.currentIndex=index;root.selectedMember=modelData.id;list.forceActiveFocus();}else root.openMember(modelData);}
   }
-  ScrollBar.vertical:ScrollBar {policy:ScrollBar.AlwaysOn}
+  ScrollBar.vertical:ScrollBar {policy:ScrollBar.AsNeeded}
  }
  NoesisButton {text:"Load more lessons";hint:"Ctrl+Shift+PageDown";visible:root.cursor!=="";enabled:!root.busy;onClicked:root.loadMore()}
 }

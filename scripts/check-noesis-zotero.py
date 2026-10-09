@@ -5,10 +5,35 @@ The test authorizes writes only to its own temporary profile; Noesis remains rea
 """
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-import hashlib,json,os,signal,socket,subprocess,sys,tempfile,time
+import hashlib,json,os,re,signal,socket,subprocess,sys,tempfile,time
 from urllib.parse import urlencode
 from urllib.request import Request,build_opener,ProxyHandler
 repo=Path(__file__).resolve().parents[1]
+def stop_reader(process):
+ # The launcher is a shell; wait for its native process, not only the shell PID.
+ members=[]
+ for entry in Path('/proc').iterdir():
+  if not entry.name.isdigit():continue
+  try:
+   fields=(entry/'stat').read_text().rsplit(')',1)[1].split()
+   if int(fields[2])==process.pid and fields[0]!='Z':members.append(int(entry.name))
+  except (OSError,ValueError,IndexError):pass
+ try:os.killpg(process.pid,signal.SIGTERM)
+ except ProcessLookupError:pass
+ deadline=time.monotonic()+10
+ while time.monotonic()<deadline:
+  alive=[]
+  for pid in members:
+   try:
+    fields=Path(f'/proc/{pid}/stat').read_text().rsplit(')',1)[1].split()
+    if int(fields[2])==process.pid and fields[0]!='Z':alive.append(pid)
+   except (OSError,ValueError,IndexError):pass
+  if not alive:break
+  time.sleep(.05)
+ else:
+  try:os.killpg(process.pid,signal.SIGKILL)
+  except ProcessLookupError:pass
+ process.wait(timeout=5)
 sys.path.insert(0,str(repo/'home/.local/share/sensei-learning'))
 from noesis.persistence import migration,parse,publish,render,checksum
 from noesis.zotero import import_item
@@ -23,18 +48,20 @@ with tempfile.TemporaryDirectory(prefix='noesis-zotero-acceptance-') as folder:
  with (profile/'zotero.log').open('w') as log:
   process=subprocess.Popen([str(Path.home()/'.local/bin/zotero'),'--new-instance','--profile',str(profile)],stdout=log,stderr=log,start_new_session=True)
   try:
-   for _ in range(100):
+   deadline=time.monotonic()+30
+   for _ in range(300):
+    if time.monotonic()>deadline:break
     try:
      with opener.open('http://127.0.0.1:23119/api/',timeout=1) as r:server=r.headers['Zotero-Server-ID']
      break
     except OSError:time.sleep(.1)
-   else:raise RuntimeError('Isolated Zotero API startup timed out')
+   if time.monotonic()>deadline:raise RuntimeError('Isolated Zotero API startup timed out')
    def authorize():
     req=Request('http://127.0.0.1:23119/api/local/authorize',data=json.dumps({'appName':'Noesis disposable release acceptance'}).encode(),headers={'Zotero-Server-ID':server,'Content-Type':'application/json'},method='POST')
     with opener.open(req,timeout=30) as r:return json.loads(r.read())
    with ThreadPoolExecutor(max_workers=1) as pool:
     pending=pool.submit(authorize)
-    for _ in range(100):
+    for _ in range(300):
      clients=json.loads(subprocess.check_output(['hyprctl','clients','-j']))
      own=[c for c in clients if c['title']=='Local API Authorization' and os.getpgid(c['pid'])==process.pid]
      if own:break
@@ -70,6 +97,19 @@ with tempfile.TemporaryDirectory(prefix='noesis-zotero-acceptance-') as folder:
     item=request('users/0/items/'+key);changed=dict(item['data']);changed[field]=value
     request('users/0/items/'+key,changed,'PUT',{'If-Unmodified-Since-Version':str(item['version'])})
    second=import_item(vault,paper)
+   # A genuine source annotation now leads to an authored, executed equation check.
+   from noesis_attention_fixture import run as verify_attention
+   paper_bytes=path.read_bytes()
+   native_annotation=request('users/0/items/'+annotation)
+   checked=verify_attention(vault,first['resource_id'],{'native_id':annotation,'attachment_key':attachment,'version':native_annotation['version'],'projection':second['projection'],'page_label':'3','pdf_sha256':hashlib.sha256(pdf).hexdigest()},profile)
+   assert path.read_bytes()==paper_bytes
+   moved=vault/'Moved paper.md';path.rename(moved);path=moved
+   index=Index(vault)
+   try:
+    index.reconcile()
+    assert index.relations(checked['question']['id'])[0]['other_id']==first['resource_id']
+   finally:index.close()
+   print('PASS: actual Zotero annotation → mathematical question/reconstruction → committed authored implementation → executed Eq. 1 checks; moved paper relationships survive. This is not full Transformer reproduction or independent learner evidence.')
    item=request('users/0/items/'+annotation);request('users/0/items/'+annotation,None,'DELETE',{'If-Unmodified-Since-Version':str(item['version'])})
    third=import_item(vault,paper)
    assert len({r['projection'] for r in (first,second,third)})==3
@@ -80,7 +120,7 @@ with tempfile.TemporaryDirectory(prefix='noesis-zotero-acceptance-') as folder:
    print('PASS: genuine PDF, native annotation edits/deletion, three retained projections, stable resource UUID and preserved learner prose; production imports use GET only.')
    recovered_annotation=create({'itemType':'annotation','parentItem':attachment,'annotationType':'highlight','annotationText':'Restoration acceptance','annotationComment':'Recover the original question at page three.','annotationColor':'#ffd400','annotationPageLabel':'3','annotationSortIndex':'00002|000100|00000','annotationPosition':json.dumps({'pageIndex':2,'rects':[[50,400,400,420]]})})
    # Close only the isolated reader before the fresh consistent snapshot.
-   os.killpg(process.pid,signal.SIGTERM);process.wait(timeout=10)
+   stop_reader(process)
    import importlib.machinery,importlib.util
    from unittest.mock import patch
    from noesis.recovery import backup,restore
@@ -95,14 +135,19 @@ with tempfile.TemporaryDirectory(prefix='noesis-zotero-acceptance-') as folder:
    reader_backup.restore_reader(Path(result['reader_states'][0]['path']),restored_data)
    preferences['extensions.zotero.dataDir']=str(restored_data)
    # The snapshot belongs to this fixture; never overwrite a live real reader.
-   (profile/'prefs.js').write_text('\n'.join('user_pref('+json.dumps(k)+', '+json.dumps(v)+');' for k,v in preferences.items()))
+   saved_prefs=(profile/'prefs.js').read_text()
+   restored_pref='user_pref("extensions.zotero.dataDir", '+json.dumps(str(restored_data))+');'
+   saved_prefs=re.sub(r'user_pref\("extensions\.zotero\.dataDir",.*?\);',lambda match:restored_pref,saved_prefs)
+   (profile/'prefs.js').write_text(saved_prefs)
    process=subprocess.Popen([str(Path.home()/'.local/bin/zotero'),'--new-instance','--profile',str(profile)],stdout=log,stderr=log,start_new_session=True)
-   for _ in range(100):
+   deadline=time.monotonic()+30
+   for _ in range(300):
+    if time.monotonic()>deadline:break
     try:
      with opener.open('http://127.0.0.1:23119/api/',timeout=1) as r:server=r.headers['Zotero-Server-ID']
      break
     except OSError:time.sleep(.1)
-   else:raise RuntimeError('Restored reader startup timed out')
+   if time.monotonic()>deadline:raise RuntimeError('Restored reader startup timed out')
    native=request('users/0/items/'+recovered_annotation)['data']
    assert native['annotationPageLabel']=='3' and native['annotationComment']=='Recover the original question at page three.'
    native_pdf=request('users/0/items/'+attachment)['links']['enclosure']['href']
@@ -111,6 +156,5 @@ with tempfile.TemporaryDirectory(prefix='noesis-zotero-acceptance-') as folder:
    print('PASS: encrypted Restic snapshot restored into a new reader directory; native Zotero restart recovered the annotation, page label, question and original PDF.')
    print('Reader page/annotation navigation is a separate native acceptance gate.')
   finally:
-   if process.poll() is None:os.killpg(process.pid,signal.SIGTERM)
-   try:process.wait(timeout=10)
-   except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);process.wait()
+   diagnostic=Path('/tmp/noesis-zotero-last.log');diagnostic.write_text((profile/'zotero.log').read_text());diagnostic.chmod(0o600)
+   stop_reader(process)

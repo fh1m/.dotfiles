@@ -117,14 +117,15 @@ def _create(root, kind, title, body='', fields=None, operation_id=None, request_
         journal['status']='committed';publish(journal_path,json.dumps(journal,indent=2),checksum(original))
     return dict(props, path=str(path.relative_to(root)))
 
-def relationship(root, source, target, relation, role=None, reason='', exit_task=None, context=None, order=None):
+def relationship(root, source, target, relation, role=None, reason='', exit_task=None, context=None, order=None, operation_id=None):
     with lock(root):
         from .scopes import assert_unique
         assert_unique(root)
-        return _relationship(root,source,target,relation,role,reason,exit_task,context,order)
+        return _relationship(root,source,target,relation,role,reason,exit_task,context,order,operation_id)
 
 
-def _relationship(root, source, target, relation, role=None, reason='', exit_task=None, context=None, order=None):
+def _relationship(root, source, target, relation, role=None, reason='', exit_task=None, context=None, order=None, operation_id=None):
+    if operation_id:uuid.UUID(operation_id)
     if relation not in ('contains', 'orders', 'assigns', 'supports', 'exercises', 'pursues', 'prerequisite', 'investigates', 'produces', 'references'):
         raise ValueError('Unsupported relationship')
     if relation == 'prerequisite' and role not in ('gate', 'parallel', 'deep-descent'):
@@ -151,5 +152,6 @@ def _relationship(root, source, target, relation, role=None, reason='', exit_tas
         meta=json.loads(manifest_path(root).read_text())
         fields = dict(source=source, target=target, source_ref={'vault_id':meta['vault_id'],'record_id':source}, target_ref={'vault_id':meta['vault_id'],'record_id':target}, relation=relation, role=role, reason=reason,
                       exit_task=exit_task, context=context, order=order)
-        return _create(root, 'relationship', relation + ' ' + source[:8] + ' to ' + target[:8], reason, fields)
+        request_hash=checksum(json.dumps(fields,sort_keys=True))
+        return _create(root, 'relationship', relation + ' ' + source[:8] + ' to ' + target[:8], reason, fields,operation_id,request_hash)
     finally:index.close()

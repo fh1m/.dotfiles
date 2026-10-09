@@ -31,9 +31,13 @@ Item {
  property string captureSubmission:""
  property string captureVault:""
  property var relations:[]
+ readonly property var readingRelations:["project","experiment"].includes(workflow.kind)?relations.filter(row=>!(workflow.artifacts||[]).some(artifact=>artifact.id===row.other_id&&(!row.other_vault||row.other_vault===Oasis.activeVault))):relations
  property var artifactInfo:({})
  property var workflow:({})
+ property var learningContext:({})
  property var activityHead:null
+ readonly property bool modalOpen:[captureDialog,createDialog,prerequisiteDialog,readinessDialog,reviewDialog,comparisonDialog,evidenceDialog,materialDialog,outlineDialog,actionDialog,startDialog].some(dialog=>dialog.opened||dialog.visible)
+ readonly property int loadedFigures:experimentContext.loadedFigures
  readonly property bool checkOpen:reviewDialog.opened
  readonly property string checkStageName:checkStage.currentText
  readonly property int checkPurposeLength:checkPurpose.text.length
@@ -59,6 +63,7 @@ Item {
  property int detailSerial:0
  property int historySerial:0
  property int relationSerial:0
+ property int prerequisiteSerial:0
  property int capabilitySerial:0
  property int capabilityDetailSerial:0
  property string submittedEvidence:""
@@ -69,6 +74,7 @@ Item {
  readonly property string reportedOutcome:outcome.currentText
  readonly property string declaredAssistance:assistance.currentText
  readonly property int captureLength:capture.text.length
+ readonly property real readScrollFraction:readScroll.ScrollBar.vertical.position
  readonly property real readViewportHeight:readScroll.availableHeight
  readonly property real readContentHeight:readingColumn.implicitHeight
  readonly property bool captureOpen:captureDialog.opened
@@ -96,7 +102,7 @@ Item {
  function loadOutline(append){if(!selected.id)return;outlineLoading=true;outlineSerial=send("outline",{record_id:selected.id,cursor:append?Number(outlineCursor):0});outlineAppendSerial=append?outlineSerial:0;}
  function select(row,fromHistory){
   if(row.vault&&row.vault!==Oasis.activeVault){if(Oasis.working){Oasis.error="Finish the current save before switching context.";return;}stashDraft();pendingSelection=Object.assign({},row,{fromHistory:!!fromHistory});Oasis.choose(row.vault);return;}
-  stashDraft();if(!fromHistory&&row.id!==selected.id){navigation=navigation.slice(0,navigationIndex+1).concat([Object.assign({},row)]);navigationIndex=navigation.length-1;}contextLoading=true;contextTab=["task","problem"].includes(row.type)?"Work":"Read";let changed=row.id!==selected.id;if(changed){activeAttempt="";revealedAttempt="";revealingTarget="";}selectedVault=Oasis.activeVault;selected=Object.assign({},row,{vault:Oasis.activeVault});Oasis.currentContext=Object.assign({},row,{vault:Oasis.activeVault});Oasis.savePreferences();body="";artifactInfo=({});workflow=({});selectedState=({});history=[];evidence.text=Oasis.drafts[draftKey(row)]||"";relations=[];outlineRows=[];outlineCursor="";outlineSerial=0;if(changed)referenceHidden=section==="Practice";if(contextTab==="Work")Qt.callLater(()=>evidence.forceActiveFocus());if(row.id){detailSerial=send("record",{record_id:row.id});historySerial=send("timeline",{record_id:row.id});relationSerial=send("relations",{record_id:row.id});loadOutline(false);}else Oasis.preview(row.path);}
+  stashDraft();if(!fromHistory&&row.id!==selected.id){navigation=navigation.slice(0,navigationIndex+1).concat([Object.assign({},row)]);navigationIndex=navigation.length-1;}contextLoading=true;contextTab=["task","problem"].includes(row.type)?"Work":"Read";let changed=row.id!==selected.id;if(changed){activeAttempt="";revealedAttempt="";revealingTarget="";Oasis.message="";}selectedVault=Oasis.activeVault;selected=Object.assign({},row,{vault:Oasis.activeVault});Oasis.currentContext=Object.assign({},row,{vault:Oasis.activeVault});Oasis.savePreferences();body="";artifactInfo=({});workflow=({});learningContext=({});selectedState=({});history=[];evidence.text=Oasis.drafts[draftKey(row)]||"";relations=[];outlineRows=[];outlineCursor="";outlineSerial=0;if(changed)referenceHidden=section==="Practice";if(contextTab==="Work")Qt.callLater(()=>evidence.forceActiveFocus());if(row.id){detailSerial=send("record",{record_id:row.id});historySerial=send("timeline",{record_id:row.id});relationSerial=send("relations",{record_id:row.id});loadOutline(false);}else Oasis.preview(row.path);}
  function refreshContext(){if(!selected.id)return;let tab=contextTab;select(selected,true);contextTab=tab;}
  function draftKey(row){return (row.id===selected.id?selectedVault:Oasis.activeVault)+":"+row.id;}
  function stashDraft(){if(selected.id){let next=Object.assign({},Oasis.drafts);next[draftKey(selected)]=evidence.text;Oasis.drafts=next;Oasis.savePreferences();}}
@@ -119,7 +125,7 @@ Item {
   if(["task","problem"].includes(kind)&&history.some(event=>["attempt","review"].includes(event.event))&&!referenceHidden&&!activeAttempt)add("evidence","Review latest evidence","Judge a scoped result against a capability criterion");
   if(!referenceHidden)add("question","Ask a question","Preserve the uncertainty and your current explanation");
   if(workflow.kind==="paper"&&!referenceHidden)add("implementation","Start implementation","Connect a Git repository to this paper");
-  if(["path","course","resource"].includes(kind))add("unit","Add lesson or chapter","Each unit keeps its own position and history");
+  if(["path","course","resource"].includes(kind)||kind==="unit"&&selected.unit_kind==="module")add("unit","Add lesson or chapter","Each unit keeps its own position and history");
   if(["path","course","resource","unit"].includes(kind))add("task","Add problem","Assessment stays separate from consumption");
   if(["project","experiment","lab"].includes(kind))add("run","Add experiment run","Preserve a new prediction and code revision");
   if(["paper","project","experiment","lab"].includes(kind)||selected.source_kind==="paper")add("artifact","Connect data, figure or code","Reference the original output without copying it");
@@ -134,11 +140,13 @@ Item {
   if(kind==="artifact")add("checksum","Check checksum","Inspect the referenced artifact without changing it");
   if(["task","problem"].includes(kind)&&!activeAttempt&&pendingCheck())add("perform-check","Perform planned check","Start a protected assessment of your selected check; saving the outcome preserves its result");
   if(kind==="unit"&&[undefined,null,"lecture","video","reading","chapter","section"].includes(selected.unit_kind)&&!referenceHidden)add("material","Replace lesson material","Keep this lesson and its history; start the new source without inheriting completion");
+  if(["unit","stage","task","problem"].includes(kind)&&!referenceHidden)add("prerequisite","Connect a prerequisite","Reuse an existing concept or problem; explain why it matters here");
   return items;
  }
  function contextAction(action){
   if(action==="evidence"){let entry=history.slice().reverse().find(event=>["attempt","review"].includes(event.event));if(entry)evidenceDialog.begin(entry);}
   else if(action==="perform-check"){let plan=pendingCheck();if(plan){contextTab="Work";saveEvent("attempt-start",{mode:mode.currentText,scope:selected.title||selected.path,review_plan_id:plan.id});}}
+  else if(action==="prerequisite")prerequisiteDialog.begin(root.selected);
   else if(action==="material")materialDialog.begin(root.selected,root.activityHead);
   else if(action==="transfer")createDialog.begin("task",selected.id,true);
   else if(action==="question")createDialog.begin("question",selected.id);
@@ -164,7 +172,7 @@ Item {
  Connections {target:Oasis;
   function onWindowOpenChanged(){root.watchTransition=true;watch.running=Oasis.windowOpen&&Oasis.activeVault!=="";}
   function onCaptureRequested(){root.quickCapture();}
-  function onActiveVaultChanged(){root.stashDraft();captureDialog.close();evidenceDialog.close();capabilitySerial=0;capabilityDetailSerial=0;actionDialog.close();startDialog.close();createDialog.close();outlineDialog.close();reviewDialog.close();comparisonDialog.close();root.watchTransition=true;watch.running=false;refresh.stop();root.changedPaths=[];root.reconcileAll=false;Qt.callLater(()=>watch.running=Oasis.windowOpen&&Oasis.activeVault!=="");root.rows=[];root.selected=({});root.body="";root.history=[];root.detailSerial=0;root.historySerial=0;root.relationSerial=0;root.outlineSerial=0;root.outlineRows=[];if(worker.running)root.send("reconcile");if(root.pendingSelection.vault===Oasis.activeVault){let pending=root.pendingSelection;root.pendingSelection=({});Qt.callLater(()=>root.select(pending,pending.fromHistory));}}
+  function onActiveVaultChanged(){root.stashDraft();captureDialog.close();evidenceDialog.close();capabilitySerial=0;capabilityDetailSerial=0;actionDialog.close();startDialog.close();prerequisiteDialog.close();readinessDialog.close();createDialog.close();outlineDialog.close();reviewDialog.close();comparisonDialog.close();root.watchTransition=true;watch.running=false;refresh.stop();root.changedPaths=[];root.reconcileAll=false;Qt.callLater(()=>watch.running=Oasis.windowOpen&&Oasis.activeVault!=="");root.rows=[];root.selected=({});root.body="";root.history=[];root.detailSerial=0;root.historySerial=0;root.relationSerial=0;root.outlineSerial=0;root.outlineRows=[];if(worker.running)root.send("reconcile");if(root.pendingSelection.vault===Oasis.activeVault){let pending=root.pendingSelection;root.pendingSelection=({});Qt.callLater(()=>root.select(pending,pending.fromHistory));}}
   function onFinished(ok){if(root.revealingTarget){if(ok&&Oasis.operationResult.event==="assistance"&&Oasis.operationResult.target?.record_id===root.revealingTarget&&root.selected.id===root.revealingTarget){root.revealedAttempt=root.activeAttempt;root.referenceHidden=false;}root.revealingTarget="";}if(ok){if(Oasis.operationResult.event==="attempt-start"&&Oasis.operationResult.target?.record_id===root.selected.id){root.activeAttempt=Oasis.operationResult.id;root.referenceHidden=true;outcome.currentIndex=0;assistance.currentIndex=0;}else if(Oasis.operationResult.event==="attempt"&&Oasis.operationResult.target?.record_id===root.selected.id){root.activeAttempt="";root.revealedAttempt="";root.referenceHidden=false;if(evidence.text===root.submittedEvidence){evidence.text="";root.stashDraft();}}root.send("reconcile");root.refreshContext();}}
  }
  Process {
@@ -173,16 +181,17 @@ Item {
   stdout:SplitParser {onRead:line=>{
    try{
     let response=JSON.parse(line);if(response.vault&&response.vault!==Oasis.activeVault)return;
-    if(response.error){if(![root.latest,root.detailSerial,root.historySerial,root.relationSerial,root.reconcileSerial,root.capabilitySerial,root.capabilityDetailSerial].includes(response.request_id))return;root.loading=false;root.contextLoading=false;root.outlineLoading=false;Oasis.error=response.error;return;}
+    if(response.error){if(![root.latest,root.detailSerial,root.historySerial,root.relationSerial,root.reconcileSerial,root.capabilitySerial,root.capabilityDetailSerial,root.prerequisiteSerial].includes(response.request_id))return;root.loading=false;root.contextLoading=false;root.outlineLoading=false;Oasis.error=response.error;return;}
     let result=response.result;
     if(result.errors){if(result.errors.length)Oasis.error=JSON.stringify(result.errors);root.load(false);root.refreshContext();return;}
     if(response.request_id===root.latest){root.loading=false;root.home=result;if(result.scope_errors?.length)Oasis.error="Some learning vaults are unavailable. Available results are shown; refresh after recovery.";root.rows=response.request_id===root.appendSerial?Array.from(new Map(root.rows.concat(result.records||[]).map(row=>[row.vault+":"+(row.id||row.path),row])).values()):(result.records||[]);root.cursor=result.cursor===null||result.cursor===undefined?"":String(result.cursor);}
-    if(response.request_id===root.detailSerial){root.contextLoading=false;root.body=result.body||"";root.documentPreview=result.preview||({blocks:[]});root.artifactInfo=result.artifact||({});root.workflow=result.overview||({});root.selectedState=result.state||({});root.activityHead=result.activity_head||null;root.activeAttempt=result.attempt?.id||"";if(root.activeAttempt){root.referenceHidden=root.revealedAttempt!==root.activeAttempt;mode.currentIndex=Math.max(0,mode.model.indexOf(result.attempt.mode||"derive"));}if(!root.activeAttempt&&result.props?.practice_mode==="transfer")mode.currentIndex=4;if(result.attempt_conflict)Oasis.error="Multiple unfinished attempts need explicit resolution.";root.selected=Object.assign({},root.selected,result.props||{},result.effective_source||{},result.resolved_source||{},{path:result.path,title:result.display_title||root.selected.title});Oasis.currentContext=Object.assign({},root.selected,{vault:Oasis.activeVault,session_state:result.state?.status||""});Oasis.savePreferences();position.text=String(result.state?.locator?.value??result.state?.position??"");locatorKind.currentIndex=result.state?.locator?Math.max(0,locatorKind.model.indexOf(result.state.locator.kind)):0;readingPass.currentIndex=Math.max(0,readingPass.model.indexOf(result.state?.reading_pass||"survey"));if(result.state?.conflict)Oasis.error=result.state.conflict;}
+    if(response.request_id===root.detailSerial){root.contextLoading=false;root.body=result.body||"";root.documentPreview=result.preview||({blocks:[]});root.artifactInfo=result.artifact||({});root.workflow=result.overview||({});root.learningContext=result.learning_context||({});root.selectedState=result.state||({});root.activityHead=result.activity_head||null;root.activeAttempt=result.attempt?.id||"";if(root.activeAttempt){root.referenceHidden=root.revealedAttempt!==root.activeAttempt;mode.currentIndex=Math.max(0,mode.model.indexOf(result.attempt.mode||"derive"));}if(!root.activeAttempt&&result.props?.practice_mode==="transfer")mode.currentIndex=4;if(result.attempt_conflict)Oasis.error="Multiple unfinished attempts need explicit resolution.";root.selected=Object.assign({},root.selected,result.props||{},result.effective_source||{},result.resolved_source||{},{path:result.path,title:result.display_title||root.selected.title});Oasis.currentContext=Object.assign({},root.selected,{vault:Oasis.activeVault,session_state:result.state?.status||""});Oasis.savePreferences();position.text=String(result.state?.locator?.value??result.state?.position??"");locatorKind.currentIndex=result.state?.locator?Math.max(0,locatorKind.model.indexOf(result.state.locator.kind)):0;readingPass.currentIndex=Math.max(0,readingPass.model.indexOf(result.state?.reading_pass||"survey"));if(result.state?.conflict)Oasis.error=result.state.conflict;}
     if(response.request_id===root.outlineSerial){root.outlineLoading=false;root.outlineRows=response.request_id===root.outlineAppendSerial?root.outlineRows.concat(result.records||[]):result.records||[];root.outlineCursor=result.cursor===null||result.cursor===undefined?"":String(result.cursor);}
     if(response.request_id===root.capabilitySerial){evidenceDialog.capabilities=result.records||[];evidenceDialog.loading=false;}
     if(response.request_id===root.capabilityDetailSerial){evidenceDialog.detail(result);evidenceDialog.loading=false;}
     if(response.request_id===root.historySerial)root.history=result.activities||[];
     if(response.request_id===root.relationSerial)root.relations=result.relationships||[];
+    if(response.request_id===root.prerequisiteSerial)prerequisiteDialog.results(result.records||[]);
    }catch(error){Oasis.error="Query response failed: "+String(error);}
   }}
   stderr:StdioCollector {onStreamFinished:if(text.trim())Oasis.error=text.trim()}
@@ -197,11 +206,20 @@ Item {
   onExited:code=>{if(code!==0&&Oasis.windowOpen&&!root.watchTransition)Oasis.error="Filesystem watch stopped; refresh to reconcile."}}
  Timer {id:refresh;interval:250;onTriggered:{root.send("reconcile",{paths:root.reconcileAll||root.changedPaths.length>1000?null:root.changedPaths});root.changedPaths=[];root.reconcileAll=false;}}
  Timer {id:searchDelay;interval:150;onTriggered:root.load(false)}
+ Shortcut {sequence:"Ctrl+Return";enabled:root.contextTab==="Work"&&!!root.selected.id&&!Oasis.working&&!root.modalOpen&&(!root.activeAttempt||evidence.text.trim()!=="");onActivated:root.contextAction(root.activeAttempt?"attempt-save":"attempt-start")}
  Shortcut {sequence:"Ctrl+.";enabled:!!root.selected.id&&!Oasis.working&&root.contextActions().length>0;onActivated:actionDialog.begin(root.contextActions())}
  Shortcut {sequence:"Ctrl+N";onActivated:root.section==="Today"?root.quickCapture():createDialog.begin(root.section==="Lab"?"experiment":root.section==="Practice"?"task":"resource","")}
  Shortcut {sequence:"Ctrl+Shift+O";enabled:root.section==="Learn";onActivated:outlineDialog.begin(["course","path"].includes(root.workflow.kind)?root.selected:null)}
  Shortcut {sequence:"Ctrl+Shift+K";onActivated:{root.collectionScope=!root.collectionScope;root.load(false);}}
  Shortcut {sequence:"Ctrl+Shift+Return";enabled:!!root.selected.id&&["paper","resource","course","unit"].includes(root.selected.type)&&!root.referenceHidden&&!Oasis.working;onActivated:root.openSource()}
+ Shortcut {sequence:"Ctrl+Alt+Left";enabled:!!root.selected.id&&!root.referenceHidden&&!!root.learningContext.parents?.length&&!Oasis.working;onActivated:root.select(root.learningContext.parents[0])}
+ Shortcut {sequence:"Ctrl+Alt+Down";enabled:!!root.selected.id&&!root.referenceHidden&&!!root.learningContext.prerequisites?.length&&!Oasis.working;onActivated:root.select(root.learningContext.prerequisites[0])}
+ Shortcut {sequence:"Ctrl+Alt+Right";enabled:!!root.selected.id&&!root.referenceHidden&&!!root.learningContext.assignments?.length&&!Oasis.working;onActivated:root.select(root.learningContext.assignments[0])}
+ Shortcut {sequence:"Ctrl+Alt+Up";enabled:!!root.selected.id&&!root.referenceHidden&&!!root.learningContext.next_lesson&&!Oasis.working;onActivated:root.select(root.learningContext.next_lesson)}
+ Shortcut {sequence:"Ctrl+Alt+R";enabled:!!root.selected.id&&!root.referenceHidden&&!Oasis.working&&(root.learningContext.prerequisites||[]).some(row=>row.role==="gate");onActivated:readinessDialog.begin(root.learningContext.prerequisites.find(row=>row.role==="gate"))}
+ Shortcut {sequence:"Ctrl+Shift+P";enabled:["unit","stage","task","problem"].includes(root.selected.type)&&!root.referenceHidden&&!Oasis.working;onActivated:prerequisiteDialog.begin(root.selected)}
+ Shortcut {sequence:"Ctrl+PgDown";enabled:root.contextTab==="Read"&&!!root.selected.id&&!root.modalOpen;onActivated:readScroll.ScrollBar.vertical.position=Math.min(1-readScroll.ScrollBar.vertical.size,readScroll.ScrollBar.vertical.position+readScroll.ScrollBar.vertical.size*.85)}
+ Shortcut {sequence:"Ctrl+PgUp";enabled:root.contextTab==="Read"&&!!root.selected.id&&!root.modalOpen;onActivated:readScroll.ScrollBar.vertical.position=Math.max(0,readScroll.ScrollBar.vertical.position-readScroll.ScrollBar.vertical.size*.85)}
  Shortcut {sequence:"Ctrl+K";onActivated:search.forceActiveFocus()}
  Shortcut {sequence:"Ctrl+Shift+N";onActivated:root.quickCapture()}
  Shortcut {sequence:"Ctrl+1";onActivated:root.section="Today"}
@@ -304,17 +322,19 @@ Item {
      }
      Label {visible:root.contextLoading;text:"Opening context…";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont}
      Label {visible:root.selected.type==="artifact";text:(root.artifactInfo.availability||"Artifact reference")+" · "+(root.artifactInfo.location||"");color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont}
-     Label {visible:root.workflow.kind==="experiment"||root.workflow.kind==="project";text:root.workflow.latest_comparison?"Last reported result · "+(root.workflow.latest_comparison.observed||root.workflow.latest_comparison.conclusion||"Open history for evidence"):"Preserve a prediction, connect a run and compare what happened.";color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont}
+     Label {visible:false;text:root.workflow.latest_comparison?"Last reported result · "+(root.workflow.latest_comparison.observed||root.workflow.latest_comparison.conclusion||"Open history for evidence"):"Preserve a prediction, connect a run and compare what happened.";color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont}
      ScrollView {id:readScroll;visible:root.contextTab==="Read";Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:0;clip:true
       ColumnLayout {id:readingColumn;width:readScroll.availableWidth;spacing:NoesisStyle.md
      Label {visible:!!root.workflow.counts&&root.contextTab==="Read";text:root.courseSummary();color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont}
+     NoesisExperimentContext {id:experimentContext;visible:["project","experiment"].includes(root.workflow.kind)&&!root.referenceHidden;Layout.fillWidth:true;context:root.workflow;onOpenArtifact:row=>root.select(row)}
+     NoesisLearningContext {visible:!root.referenceHidden;Layout.fillWidth:true;context:root.learningContext;busy:Oasis.working;onOpenContext:row=>root.select(row);onReviewReadiness:row=>readinessDialog.begin(row)}
      NoesisCourseOutline {id:courseOutline;visible:root.contextTab==="Read"&&["course","path"].includes(root.workflow.kind)&&!root.referenceHidden;Layout.fillWidth:true;parentId:root.selected.id||"";rows:root.outlineRows;cursor:root.outlineCursor;busy:Oasis.working||root.outlineLoading;onOpenMember:row=>root.select(row);onMoveMember:(identity,direction)=>Oasis.run(["outline-move",root.selected.id,identity,direction]);onLoadMore:root.loadOutline(true);onImportOutline:outlineDialog.begin(root.selected)}
-     Text {visible:root.contextTab==="Read"&&["paper","project","experiment"].includes(root.workflow.kind)&&root.relations.length>0&&!root.referenceHidden;text:root.workflow.kind==="paper"?"Questions and implementations":"Runs, evidence and source context";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;Layout.fillWidth:true}
-     ListView {visible:root.contextTab==="Read"&&["paper","project","experiment"].includes(root.workflow.kind)&&root.relations.length>0&&!root.referenceHidden;Layout.fillWidth:true;Layout.preferredHeight:Math.min(420,root.height*.42,root.relations.length*NoesisStyle.row);clip:true;model:root.referenceHidden?[]:root.relations
+     Text {visible:root.contextTab==="Read"&&["paper","project","experiment"].includes(root.workflow.kind)&&root.readingRelations.length>0&&!root.referenceHidden;text:root.workflow.kind==="paper"?"Questions and implementations":"Runs, evidence and source context";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;Layout.fillWidth:true}
+     ListView {visible:root.contextTab==="Read"&&["paper","project","experiment"].includes(root.workflow.kind)&&root.readingRelations.length>0&&!root.referenceHidden;Layout.fillWidth:true;Layout.preferredHeight:Math.min(420,root.height*.42,root.readingRelations.length*NoesisStyle.row);clip:true;model:root.referenceHidden?[]:root.readingRelations
       delegate:NoesisRow {required property var modelData;width:ListView.view.width;title:modelData.other_title||modelData.other_id;subtitle:(modelData.other_type||"context")+(modelData.other_status?" · "+modelData.other_status:"");enabled:!!modelData.other_path&&!root.referenceHidden;onClicked:root.select({id:modelData.other_id,path:modelData.other_path,title:modelData.other_title,type:modelData.other_type,vault:modelData.other_vault||Oasis.activeVault})}
       ScrollBar.vertical:ScrollBar {}
      }
-     Text {visible:!!root.selected.code_snapshot;Layout.fillWidth:true;wrapMode:Text.Wrap;text:{let code=root.selected.code_snapshot;if(!code)return "";if(code.availability==="unavailable")return "Code unavailable · "+code.repository;return "Code · "+(code.commit?code.commit.slice(0,12):"no committed revision yet")+(code.dirty?" · uncommitted changes present":" · clean working tree")+"
+     Text {visible:!!root.selected.code_snapshot&&!["project","experiment"].includes(root.workflow.kind);Layout.fillWidth:true;wrapMode:Text.Wrap;text:{let code=root.selected.code_snapshot;if(!code)return "";if(code.availability==="unavailable")return "Code unavailable · "+code.repository;return "Code · "+(code.commit?code.commit.slice(0,12):"no committed revision yet")+(code.dirty?" · uncommitted changes present":" · clean working tree")+"
 Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
      ColumnLayout {visible:root.workflow.kind==="capability";Layout.fillWidth:true;spacing:NoesisStyle.sm
       Text {text:"Assessment criteria";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
@@ -323,7 +343,7 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
       Repeater {model:root.workflow.evidence||[];delegate:NoesisRow {required property var modelData;Layout.fillWidth:true;title:(modelData.decision||"Unavailable")+" · "+(modelData.criterion||"evidence");subtitle:(modelData.outcome||"unknown")+" · "+(modelData.assistance||["unknown"]).join(", ")+" · "+(modelData.scope||"scope unknown");enabled:!!modelData.path&&!root.referenceHidden;onClicked:Oasis.note(modelData.path)}}
      }
      Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
-      NoesisButton {text:root.selected.source_kind==="video"||root.selected.source_kind==="playlist"?"Continue video ↗":root.selected.local_file||root.selected.zotero_attachment_key?"Open PDF ↗":"Open source ↗";enabled:!root.referenceHidden;visible:["paper","resource","course","unit"].includes(root.selected.type);hint:"Ctrl+Shift+Enter";onClicked:root.openSource()}
+      NoesisButton {text:root.selected.source_kind==="video"||root.selected.source_kind==="playlist"?"Continue video ↗":root.selected.local_file||root.selected.zotero_attachment_key?"Open PDF ↗":"Open source ↗";enabled:!root.referenceHidden;visible:["paper","resource","course","unit"].includes(root.selected.type)&&!!(root.selected.source||root.selected.local_file||root.selected.zotero_attachment_key);hint:"Ctrl+Shift+Enter";onClicked:root.openSource()}
       NoesisButton {text:"Open problem ↗";visible:root.selected.source_kind==="problem-statement"&&!!root.selected.source;onClicked:Oasis.run(["read-resource",root.selected.path,"--target-id",root.selected.id])}
       NoesisButton {text:"Open implementation ↗";visible:!!root.selected.repository||!!root.selected.code_snapshot?.repository;enabled:!root.referenceHidden&&!Oasis.working;onClicked:Oasis.run(["open-project",root.selected.id])}
       NoesisButton {text:"More";hint:"Ctrl+.";enabled:root.contextActions().length>0;onClicked:actionDialog.begin(root.contextActions())}
@@ -332,7 +352,7 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
       Text {text:"Reading pass";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
       NoesisSelect {id:readingPass;model:["survey","detail","reconstruct","verify"];Layout.fillWidth:true;Accessible.name:"Reading pass"}
      }
-     RowLayout {Layout.fillWidth:true;visible:root.contextTab==="Read"&&["paper","resource","course","unit"].includes(root.selected.type)
+     RowLayout {Layout.fillWidth:true;visible:root.contextTab==="Read"&&["paper","resource","course","unit"].includes(root.selected.type)&&root.selected.unit_kind!=="module"&&(!["course","path"].includes(root.workflow.kind)||!!root.selected.source||!!root.selected.local_file)
       NoesisSelect {id:locatorKind;model:["location","page","section","exercise","timestamp"];Layout.preferredWidth:110;Accessible.name:"Resume location kind"}
       NoesisField {id:position;Layout.fillWidth:true;placeholderText:"Resume at page, section or timestamp"}
       NoesisButton {text:"Save place";enabled:!Oasis.working;onClicked:root.saveEvent("study",{state:root.studyUpdate()})}
@@ -357,8 +377,8 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
        NoesisSelect {id:assistance;model:["unknown","none","hint","reference","collaborator","agent"];Layout.fillWidth:true;visible:!!root.activeAttempt}
       }
       RowLayout {Layout.fillWidth:true
-       NoesisButton {text:"Start attempt";primary:true;visible:!root.activeAttempt;enabled:!Oasis.working;onClicked:root.saveEvent("attempt-start",{mode:mode.currentText,scope:root.selected.title||root.selected.path})}
-       NoesisButton {text:"Save outcome";primary:true;visible:!!root.activeAttempt;enabled:!Oasis.working&&evidence.text.trim()!=="";onClicked:root.saveEvent("attempt",{outcome:outcome.currentText,assistance:[assistance.currentText],mode:mode.currentText,assessment:"learner-reported",scope:root.selected.title||root.selected.path})}
+       NoesisButton {text:"Start attempt";hint:"Ctrl+Enter";primary:true;visible:!root.activeAttempt;enabled:!Oasis.working;onClicked:root.saveEvent("attempt-start",{mode:mode.currentText,scope:root.selected.title||root.selected.path})}
+       NoesisButton {text:"Save outcome";hint:"Ctrl+Enter";primary:true;visible:!!root.activeAttempt;enabled:!Oasis.working&&evidence.text.trim()!=="";onClicked:root.saveEvent("attempt",{outcome:outcome.currentText,assistance:[assistance.currentText],mode:mode.currentText,assessment:"learner-reported",scope:root.selected.title||root.selected.path})}
        NoesisButton {text:root.referenceHidden?"Reveal reference":"Hide reference";enabled:!Oasis.working;onClicked:{if(root.referenceHidden){root.revealingTarget=root.selected.id;root.saveEvent("assistance",{assistance:["reference"],scope:"Noesis preview"});}else{root.referenceHidden=true;root.revealedAttempt="";}}}
        NoesisButton {text:"Plan a check";onClicked:reviewDialog.open()}
        Item {Layout.fillWidth:true}
@@ -436,6 +456,25 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
  NoesisActionDialog {id:actionDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(520,root.width-48);onChosen:action=>root.contextAction(action)}
  NoesisActionDialog {id:startDialog;title:"Start something";parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(520,root.width-48);onChosen:action=>{if(action==="outline")outlineDialog.begin(null);else if(action==="zotero")zoteroDialog.open();else if(action==="capture")root.quickCapture();else createDialog.begin(action==="path"?"path":root.section==="Lab"?"experiment":root.section==="Practice"?"task":"resource","");}}
  NoesisOutlineDialog {id:outlineDialog;onImported:course=>root.select(course)}
+ NoesisDialog {
+  id:readinessDialog
+  property var target:({})
+  property string vaultScope:""
+  property bool submitting:false
+  title:"Is this prerequisite usable here?"
+  parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48)
+  function begin(row){target=Object.assign({},row,{contextId:root.selected.id});vaultScope=Oasis.activeVault;readinessReason.text="";readinessChoice.currentIndex=row.readiness==="passed"?0:1;submitting=false;open();readinessReason.forceActiveFocus();}
+  contentItem:ColumnLayout {spacing:NoesisStyle.md
+   Text {text:readinessDialog.target.title||"";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading}
+   NoesisEditor {id:readinessReason;Layout.fillWidth:true;Layout.preferredHeight:140;placeholderText:"What can you now explain or do? What still needs work?"}
+   NoesisSelect {id:readinessChoice;Layout.fillWidth:true;model:["Ready for this lesson","Needs more work"]}
+   Text {text:"Your decision applies to this lesson's prerequisite. It does not award general competence or change earlier evidence.";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+   NoesisButton {id:saveReadiness;text:"Save readiness decision";primary:true;hint:"Ctrl+Enter";enabled:readinessReason.text.trim()!==""&&!Oasis.working&&readinessDialog.vaultScope===Oasis.activeVault;onClicked:{readinessDialog.submitting=true;Oasis.run(["event",readinessDialog.target.relationship_path,"disposition","--target-id",readinessDialog.target.relationship_id,"--evidence",readinessReason.text,"--data",JSON.stringify({state:readinessChoice.currentIndex===0?"passed":"active",actor:"learner",scope:readinessDialog.target.contextId})]);}}
+  }
+  Shortcut {sequence:"Ctrl+Return";enabled:readinessDialog.opened;onActivated:if(saveReadiness.enabled)saveReadiness.clicked()}
+  Connections {target:Oasis;function onFinished(ok){if(readinessDialog.submitting){readinessDialog.submitting=false;if(ok)readinessDialog.close();}}}
+ }
+ NoesisPrerequisiteDialog {id:prerequisiteDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48);onSearch:query=>{root.prerequisiteSerial=root.send("query",{query:query,kind:["concept","capability","task","problem","unit","prerequisite"]});}}
  NoesisCreateDialog {id:createDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48);onCreated:record=>root.select(record)}
  NoesisDialog {id:captureDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48);modal:true;title:"Quick capture";closePolicy:Popup.CloseOnEscape
   background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;border.color:NoesisStyle.rule;border.width:1}
