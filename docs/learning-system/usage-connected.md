@@ -3,8 +3,7 @@
 Open with Super+Ctrl+O or `noesis window`. Ctrl+1–6 selects Today, Learn,
 Research, Practice, Lab and Library. Ctrl+K searches; Ctrl+Shift+N focuses capture. Ctrl+N creates the current
 workspace’s resource, problem or experiment; Ctrl+Enter saves its dialog.
-Drag the pane divider to adjust the list/context ratio. The previous UI remains
-available from the window header. The ScreenPad companion appears for a selected
+Drag the pane divider to adjust the list/context ratio. The previous UI is available only with the development option enabled. The ScreenPad companion appears for a selected
 context; closing the main window stops its worker and filesystem watch.
 
 Review and apply migration as described in migration-recovery.md before recording
@@ -180,3 +179,40 @@ They do not execute HTML or load remote images. Full equations, tables, images,
 Canvas and diagrams open through **Open note** in Obsidian; source PDFs open in
 Zotero/Sioyek through their supported handoffs. Source prose is never rewritten
 for presentation. File paths remain available in Details.
+
+
+## Course outlines and arranging lessons
+
+In Learn, **New → Import a course outline** reviews a local outline before
+publication. Select an existing course and press Ctrl+Shift+O (or use its empty
+outline action) to add lessons to that course without replacing its note.
+The review lists lessons, readings and assignments; repeating the same reviewed
+import reuses their identities. A sample manifest is in examples/course-outline.json.
+
+Choose **Arrange** on the course outline, select a lesson and use the arrow
+buttons or Alt+Up/Down. Ctrl+Shift+R enters or leaves Arrange. Changes are immutable
+activities; positions, attempts, original prose and source links stay intact.
+Load more lessons (Ctrl+Shift+PageDown) appends another 50 rows. Module rows open
+their own outline. Native tests cover a 123-lesson course, not just six items.
+
+For scripts, use `noesis course-import --vault PATH FILE --apply --operation-id UUID
+--expected-digest REVIEW_DIGEST --course-id EXISTING_UUID`. Omit course-id to create
+a course. `noesis outline-move --vault PATH COURSE_UUID UNIT_UUID up|down
+--operation-id UUID` uses the current durable history head and refuses stale edits.
+Replacing material is a separate unfinished acceptance gate; rearranging does not
+silently replace a source or erase old evidence.
+
+
+After an independent successful problem attempt, open its contextual menu and
+choose **Try a changed problem**. Write the new statement; Noesis creates a separate
+problem linked to the original and selects transfer mode. Earlier assistance and
+failures remain in the original history. **Plan a check** schedules a learner-chosen
+later assessment; scheduling is not a claim that the assessment has been performed.
+Use Ctrl+Enter to save the check dialog and Ctrl+Shift+Tab to move backward out of
+the reasoning editor.
+
+Inside an existing Distrobox environment, the Neovim capture integration uses the
+host bridge and host Noesis configuration. An explicit NOESIS_VAULT still takes
+precedence. A supported existing host-spawn is required; Noesis does not install it
+automatically. Code provenance records the selected file's repository, and reports
+uncommitted changes instead of presenting unrelated commits as evidence.

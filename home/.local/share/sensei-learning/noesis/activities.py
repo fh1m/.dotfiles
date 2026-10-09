@@ -74,7 +74,7 @@ def review_heads(timeline):
 def progress_state(props, timeline):
     baseline = {k: props.get(k) for k in ('progress_current', 'progress_total', 'position', 'status')}
     states, heads = {}, set()
-    events=[event for event in timeline if event.get('event') in ('study', 'session-state', 'disposition', 'resolution')]
+    events=[event for event in timeline if event.get('event') in ('study', 'session-state', 'disposition', 'resolution','outline-order')]
     for event in causal_order(events,'previous','resolves'):
         previous = event.get('previous')
         if previous is not None and previous not in states:
@@ -85,6 +85,10 @@ def progress_state(props, timeline):
                 raise ValueError('Resolution must name all conflicting heads and selected predecessor')
             heads.clear()
         update = event['state'] if isinstance(event['state'], dict) else {'status': event['state']}
+        if 'unit_order' in update:
+            order=update['unit_order']
+            if not isinstance(order,list) or len(order)>1000 or any(not isinstance(value,str) for value in order) or len(set(order))!=len(order):raise ValueError('Invalid outline order')
+            for value in order:uuid.UUID(value)
         state.update(update)
         states[event['id']] = state
         heads.discard(previous)
@@ -100,7 +104,7 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
     request_hash = checksum(json.dumps({'target': expected_id or relative, 'event': event, 'evidence': evidence, 'fields': fields}, sort_keys=True, default=str))
     if any(key in fields for key in ('id', 'type', 'noesis_schema', 'target', 'timestamp', 'provenance', 'path')):
         raise ValueError('Reserved activity metadata cannot be supplied')
-    if event not in ('study', 'resolution', 'attempt-start', 'attempt', 'review', 'review-plan', 'assistance', 'comparison', 'correction', 'capability-decision', 'session-state', 'disposition', 'artifact-check'):
+    if event not in ('study', 'resolution', 'attempt-start', 'attempt', 'review', 'review-plan', 'assistance', 'comparison', 'correction', 'capability-decision', 'session-state', 'disposition', 'artifact-check','outline-order'):
         raise ValueError('Unknown activity event')
     with lock(root):
         from .scopes import assert_unique
@@ -177,7 +181,18 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                 session = index.record(fields['session'])
                 if session['props'].get('type') not in ('session', 'practice-session'):
                     raise ValueError('Session reference must target a session')
-            if event in ('study', 'session-state', 'disposition'):
+            if event=='outline-order':
+                from .courses import is_outline,order_ids
+                if not is_outline(props):raise ValueError('This record has no educational outline')
+                update=fields.get('state')
+                if not isinstance(update,dict) or set(update)!={'unit_order'}:raise ValueError('Outline order requires only its ordered member IDs')
+                ordered=update['unit_order']
+                if not isinstance(ordered,list) or len(ordered)>1000 or any(not isinstance(value,str) for value in ordered) or len(set(ordered))!=len(ordered):raise ValueError('Outline members must be unique IDs')
+                if set(ordered)!=set(order_ids(index,identity)):raise ValueError('Outline members changed; reload before arranging')
+                state,previous=progress_state(props,index.timeline(identity))
+                if 'expected_head' not in fields or fields.pop('expected_head')!=previous:raise ValueError('Outline changed concurrently; reload before arranging')
+                state.update(update);fields.update(state=state,previous=previous)
+            elif event in ('study', 'session-state', 'disposition'):
                 state, previous = progress_state(props, index.timeline(identity))
                 update = fields.pop('state')
                 if event in ('session-state', 'disposition') and isinstance(update, str):update = {'status': update}

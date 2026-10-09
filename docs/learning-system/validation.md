@@ -372,3 +372,69 @@ manifests are now generated metadata rather than files hashing themselves.
 Automated total after this slice: 76 core + 16 compatibility tests.
 Native reader handoff, broader fault injection and explicit verified retention
 remain separate gates.
+
+
+## Course continuity and idle acceptance — 2026-10-09
+
+P1/P3/P6 slice: paged course outlines, immutable Arrange, existing-course import,
+and normal-window placement. The Python suites passed 81 core and 16 compatibility
+tests. Regression cases cover repeated moves with the correct causal head, stale
+head refusal, unchanged learner notes, cache deletion, 123 direct members,
+interrupted import retry, existing-parent preservation and explicit restored
+replacement after original-storage loss. No actual private vault was modified.
+
+`NOESIS_IDLE_SECONDS=300 python3 scripts/check-noesis-collection-desktop.py`
+passed in the real native desktop using a disposable HOME. Actual keyboard actions
+reviewed/created the six-lecture course, moved a lesson down and back up, retained
+focus and two separate ordering events, and appended 50 → 100 → 123 lessons in a
+larger outline. Importing that outline again into its selected existing course
+retained 123 lessons instead of duplicating them. Cross-vault capture remained in
+its owner. Workspace/Tiled/Window geometry and main-display containment passed.
+
+Measured on that run: startup 556.67 ms; instrumented animation-frame p95 16.894 ms
+(1,200 samples); five-minute open idle average 0.0133% of one CPU core across the
+isolated shell, query worker and watcher, after the test animation stopped; warm
+open p95 109.24 ms across twelve cycles. Shell RSS ranged 191,072–191,432 KiB during
+those cycles, ending at 191,392 KiB. Closing stopped both worker and watcher. QML
+emitted no warnings/errors. These are fixture/process measurements, not physical
+input latency, the live Wrayth shell's incremental memory, or a long-term leak proof.
+
+Native failures found and repaired before acceptance: ListView selection resetting
+on model replacement; lightweight query omitting the activity head needed by a
+second move; import path appending on dialog reopening; normal resize retaining an
+off-screen tiled position. The test waits for import completion rather than treating
+old course counts as proof of a committed import.
+
+Material replacement and the complete lesson/prerequisite/assignment/reader journey
+remain open. The changed-task transfer/later-check native run is recorded separately
+when it completes; this section does not claim that acceptance in advance.
+
+
+## Practice, owner isolation and container acceptance — 2026-10-09
+
+The current suites pass 83 core and 16 compatibility tests. A reproduced UUID
+collision between different vaults previously included an unrelated local unit in
+a course through a foreign relationship. Outline, course counts and path policies
+now require both owning endpoints to be local; foreign Connections still resolve
+against the actual owning vault. A copied foreign activity is preserved but reported
+by Doctor and cannot alter local progress. Cache schema 6 revalidates these derived
+projections without migrating learner files.
+
+`python3 scripts/check-noesis-desktop.py` passed the native disposable workflow:
+failed → assisted → independent results remain distinct; a new changed problem
+retains its source relationship, starts in transfer mode and records an independent
+attempt; a learner-selected seven-day later check is saved. Modal review shortcuts
+and backward editor focus were repaired after actual failed interaction tests.
+Cache deletion/restart preserves the original attempts and criterion decision.
+Executing the scheduled review and inspecting long attempt histories remain open.
+These are automated native interactions, not human usability observations.
+
+`python3 scripts/check-noesis-container.py --container auv-ros2` passed against the
+already-running Ubuntu 22.04 container with its existing host-spawn 1.6.0. Actual
+host-bridge capture retries are idempotent. Headless guest Neovim captures resolve
+the host vault, host file path and target owner, including host-config fallback.
+The test exposed guest working-directory and guest-HOME assumptions; the bridge
+now uses a host-valid working directory and rendered host paths. Files outside Git
+no longer inherit an unrelated working-directory commit. No container was started,
+package installed or guest configuration overwritten. Headless editor acceptance
+is integration evidence, not a visual editor usability test.

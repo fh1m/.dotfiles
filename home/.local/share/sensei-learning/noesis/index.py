@@ -7,6 +7,12 @@ from .persistence import notes, parse, contained, manifest_path
 from .presentation import display_title
 
 
+def local_relationship(alias):
+    """SQL ownership predicate; supply the current vault UUID for both endpoints."""
+    if alias not in ('r','edge','edges'):raise ValueError('Unknown relationship query alias')
+    return ' AND '.join("(json_extract("+alias+".props,'$."+endpoint+"_ref.vault_id') IS NULL OR json_extract("+alias+".props,'$."+endpoint+"_ref.vault_id')=?)" for endpoint in ('source','target'))
+
+
 class Index:
     def __init__(self, root, cache=None):
         self.root = Path(root).resolve()
@@ -38,11 +44,11 @@ class Index:
             CREATE TABLE IF NOT EXISTS states(id TEXT PRIMARY KEY,status TEXT,state TEXT);
             CREATE INDEX IF NOT EXISTS state_status ON states(status);
         ''')
-        if self.db.execute('PRAGMA user_version').fetchone()[0] != 5:
+        if self.db.execute('PRAGMA user_version').fetchone()[0] != 6:
             with self.db:
                 for table in ('records', 'search', 'activities', 'relationships', 'aliases', 'states'):
                     self.db.execute('DELETE FROM ' + table)
-                self.db.execute('PRAGMA user_version=5')
+                self.db.execute('PRAGMA user_version=6')
 
     def close(self):
         self.db.close()
@@ -80,6 +86,11 @@ class Index:
                         uuid.UUID(str(props.get('id', '')))
                     if props.get('type') == 'activity' and not isinstance(props.get('target'), dict):
                         raise ValueError('Activity needs a structured durable target')
+                    if props.get('type')=='activity' and props.get('noesis_schema')==2:
+                        target=props['target']
+                        uuid.UUID(str(target.get('record_id','')))
+                        if target.get('vault_id')!=self.manifest.get('vault_id'):
+                            raise ValueError('Activity belongs to another vault; preserve it and resolve ownership before applying its history')
                     if props.get('external_aliases') is not None and not isinstance(props['external_aliases'], list):
                         raise ValueError('External aliases must be a list')
                     if props.get('parent_ref'):

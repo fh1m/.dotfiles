@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 from .presentation import display_title
+from .index import local_relationship
 
 
 def overview(index, identity):
@@ -52,10 +53,10 @@ def overview(index, identity):
     rows=index.db.execute('''WITH RECURSIVE members(id) AS (
         SELECT ? UNION SELECT r.target FROM relationships r JOIN members m ON r.source=m.id
         JOIN records target ON target.id=r.target
-        WHERE r.relation IN ('contains','orders','assigns','pursues','investigates')
-        OR (r.relation='references' AND target.kind='project'))
+        WHERE (r.relation IN ('contains','orders','assigns','pursues','investigates')
+        OR (r.relation='references' AND target.kind='project')) AND '''+local_relationship('r')+''')
         SELECT records.id,records.kind,records.props FROM records JOIN members ON members.id=records.id
-        WHERE records.id!=? AND kind IN ('unit','stage','task','problem','project') LIMIT 1001''',(identity,identity)).fetchall()
+        WHERE records.id!=? AND kind IN ('unit','stage','task','problem','project') LIMIT 1001''',(identity,index.manifest['vault_id'],index.manifest['vault_id'],identity)).fetchall()
     counts={bucket:{'total':0,'consumed':0,'reported_success':0,'independent_reported_success':0} for bucket in ('lectures','readings','assignments','projects','other_units')}
     for record_id,record_kind,raw in rows[:1000]:
         props=json.loads(raw)
@@ -74,13 +75,13 @@ def today(index, context_id=None, path_id=None, quiet=False):
     from .policies import next_actions
     resume=None
     identities=[context_id] if context_id else []
-    identities.extend(row[0] for row in index.db.execute('SELECT target FROM activities ORDER BY timestamp DESC LIMIT 20'))
+    identities.extend(row[0] for row in index.db.execute("SELECT target FROM activities WHERE json_extract(props,'$.event')!='outline-order' ORDER BY timestamp DESC LIMIT 20"))
     for identity in identities:
         try:
             record=index.record(identity)
         except (ValueError,TypeError):continue
         if record['state'].get('conflict') or record['props'].get('type') in ('activity','relationship') or record['state'].get('status') in ('retired','abandoned','parked','read','extracted','complete','passed','skipped'):continue
-        events=index.timeline(identity)
+        events=[event for event in index.timeline(identity) if event.get('event')!='outline-order']
         resume={'id':identity,'path':record['path'],'title':display_title(record['props'],record['path']),
                 'type':record['props'].get('type','note'),'position':(record['state'].get('locator') or {}).get('value') or record['state'].get('position') or '',
                 'last_worked':events[-1].get('timestamp') if events else None,'unfinished_attempt':bool(record['attempt']),

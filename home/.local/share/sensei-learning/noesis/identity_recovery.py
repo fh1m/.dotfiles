@@ -14,16 +14,19 @@ def replace_location(restored,original):
     restored=Path(restored).resolve();original=Path(original).resolve()
     if restored==original or not restored.is_dir():raise ValueError('Choose a distinct restored vault directory')
     value=identity(restored)
-    if not value or identity(original)!=value:raise ValueError('Replacement requires matching vault identities')
+    if not value:raise ValueError('Replacement requires a managed restored vault identity')
     path=registry_path();path.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
     with open(path.with_suffix('.lock'),'a') as stream:
         os.chmod(stream.name,0o600);fcntl.flock(stream,fcntl.LOCK_EX)
-        if original not in locations():raise ValueError('Original location is not registered')
+        if original not in locations(include_missing=True):raise ValueError('Original location is not registered')
         others={p for p in locations()-{original,restored} if identity(p)==value}
         if others:raise ValueError('Additional duplicate locations require explicit resolution')
         text=read_content(path) if path.exists() else None
         data=json.loads(text) if text else {'version':1,'locations':[]}
         if data.get('version')!=1:raise ValueError('Unsupported location registry')
+        original_identity=identity(original) if original.is_dir() else data.get('identities',{}).get(str(original))
+        if original_identity!=value:raise ValueError('Replacement requires matching vault identities; missing originals need a previously recorded registration identity')
+        data.setdefault('identities',{})[str(restored)]=value
         data['locations']=sorted((set(data.get('locations',[]))-{str(original)})|{str(restored)})
         data.setdefault('replacements',{})[str(original)]={'path':str(restored),'vault_id':value}
         # The prior local registry is retained for rollback; native registry is untouched.

@@ -106,7 +106,9 @@ class Development(unittest.TestCase):
         config=self.home/'.config/sensei-learning/config.json';config.parent.mkdir(parents=True)
         config.write_text(json.dumps({'active_vault':str(self.home/'another vault')}))
         result=self.home/'bridge.json';script=self.home/'bridge.lua'
-        plugin=Path(__file__).resolve().parents[1]/'home/.config/nvim/after/plugin/sensei-learning.lua'
+        source=Path(__file__).resolve().parents[1]/'home/.config/nvim/after/plugin/sensei-learning.lua'
+        plugin=self.home/'sensei-learning.lua'
+        plugin.write_text(source.read_text().replace('@HOME@',str(self.home)))
         script.write_text('''vim.system=function(argv,options,callback)
   vim.fn.writefile({vim.json.encode(argv)},'''+json.dumps(str(result))+''')
   callback({code=0})

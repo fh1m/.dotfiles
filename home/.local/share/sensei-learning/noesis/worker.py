@@ -44,6 +44,9 @@ def serve(resolve):
                     result['preview']=preview(result['body'],result['display_title'])
                     result['body_truncated'] = len(result['body']) > 32000
                     result['body'] = result['body'][:32000]
+                elif action == 'outline':
+                    from .courses import outline
+                    result=outline(index,request['record_id'],request.get('cursor') or 0)
                 elif action == 'timeline':
                     result = {'activities': index.timeline(request['record_id'])[-50:]}
                 elif action == 'relations':
