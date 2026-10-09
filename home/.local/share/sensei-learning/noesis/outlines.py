@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import uuid
 from .models import create
-from .persistence import checksum,contained,lock,publish
+from .persistence import checksum,contained,lock,publish,manifest_path
 
 
 def plan(source):
@@ -32,16 +32,38 @@ def plan(source):
     return {'title':title,'source':str(source),'digest':checksum(raw),'entries':review,'count':len(review),'status':'review'}
 
 
-def apply(root,source,operation_id,expected_digest=None):
+def apply(root,source,operation_id,expected_digest=None,course_id=None):
     reviewed=plan(source)
     if expected_digest and reviewed['digest']!=expected_digest:raise ValueError('Outline changed since review; review again')
     namespace=uuid.UUID(operation_id)
+    manifest=json.loads(manifest_path(root).read_text())
+    if manifest.get("noesis_schema")!=2:raise ValueError("Migrate the vault before importing an outline")
+    course=None
+    if course_id:
+        from .index import Index
+        from .courses import is_outline
+        index=Index(root)
+        try:
+            health=index.reconcile()
+            if health['errors']:raise ValueError('Resolve index errors before importing an outline')
+            record=index.record(course_id,include_body=False,include_attempt=False)
+            if not is_outline(record['props']):raise ValueError('Choose an existing course, book, path or module')
+            course={'id':record['props']['id'],'path':record['path'],'type':record['props']['type'],'title':record['display_title']}
+        finally:index.close()
     # Persist the namespace before publication; reopening the dialog can retry safely.
-    journal=contained(root,'.Noesis/Outlines/'+reviewed['digest']+'.json')
+    journal=contained(root,'.Noesis/Outlines/'+reviewed['digest']+('-'+course_id if course_id else '')+'.json')
+    if course_id:
+        original_journal=contained(root,'.Noesis/Outlines/'+reviewed['digest']+'.json')
+        if original_journal.exists():
+            prior=json.loads(original_journal.read_text())
+            if prior.get('course_id')==course_id or record['props'].get('operation_id')==str(uuid.uuid5(uuid.UUID(prior['operation_id']),'course')):
+                journal=original_journal
     with lock(root):
+        from .scopes import assert_unique
+        assert_unique(root)
         if journal.exists():namespace=uuid.UUID(json.loads(journal.read_text())['operation_id'])
         else:publish(journal,json.dumps({'operation_id':str(namespace),'digest':reviewed['digest'],'status':'preparing'}))
-    course=create(root,'resource',reviewed['title'],fields={'source_kind':'course','outline_sha256':reviewed['digest']},operation_id=str(uuid.uuid5(namespace,'course')))
+    course=course or create(root,'resource',reviewed['title'],fields={'source_kind':'course','outline_sha256':reviewed['digest']},operation_id=str(uuid.uuid5(namespace,'course')))
     records={'course':course}
     for entry in reviewed['entries']:
         kind=entry['kind'];fields=entry.get('fields',{})

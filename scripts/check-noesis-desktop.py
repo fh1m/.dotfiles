@@ -188,6 +188,17 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
    assert [(event['outcome'],event['assistance']) for event in attempts]==[('failed',['none']),('succeeded',['reference']),('succeeded',['none'])]
    assert len({event['attempt_id'] for event in attempts})==3
    print('Native practice: independent failure → reference-assisted success → independent retry; explicit scoped learner decision preserved')
+   action(4);type_text('changed problem');shortcut('','Tab');shortcut('','Tab');type_text('changed constraints');shortcut('CTRL','Return');time.sleep(.7)
+   transfer_file=next((vault/'Records/task').glob('changed problem*'));transfer,_=parse(transfer_file.read_text())
+   assert transfer['parent_ref']['record_id']==problem['id'] and transfer['parent_ref']['relation']=='references' and transfer['practice_mode']=='transfer'
+   assert state()['reference_hidden'],state()
+   action(0);type_text('independent changed solution');reported(4);action(0)
+   transferred=[event for event in cli('timeline',transfer['id'])['activities'] if event['event']=='attempt']
+   assert len(transferred)==1 and transferred[0]['mode']=='transfer' and transferred[0]['assistance']==['none']
+   action(3);type_text('reconstruct with new constraints');shortcut('CTRL + SHIFT','Tab');shortcut('SHIFT','Tab');shortcut('','Home');shortcut('','Down');shortcut('CTRL','Return');time.sleep(.6)
+   plans=[event for event in cli('timeline',transfer['id'])['activities'] if event['event']=='review-plan']
+   assert len(plans)==1 and plans[0]['stage']=='later' and plans[0]['action']=='schedule',plans
+   print('Native changed-task transfer: separate identity, independent transfer attempt and learner-selected later reconstruction plan')
    shortcut('CTRL','2');shortcut('CTRL','k');type_text('scoped');shortcut('','Down');shortcut('','Return');time.sleep(.5)
    assert state()['selected']==str(capability_file.relative_to(vault))
    client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==process.pid and c['title'].startswith('Noesis'))

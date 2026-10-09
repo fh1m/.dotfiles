@@ -555,7 +555,7 @@ def library_action(root,args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','open-project']:
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project']:
         p = commands.add_parser(cmd); p.add_argument('--vault')
         if cmd == 'open-project':p.add_argument('record_id')
         if cmd == 'artifact-check':p.add_argument('record_id');p.add_argument('--operation-id')
@@ -581,7 +581,8 @@ def main():
         if cmd in ('use','vault-register'): p.add_argument('path')
         if cmd=='vault-register':p.add_argument('--replace-location')
         if cmd=='vault-fork':p.add_argument('source');p.add_argument('--dest',required=True)
-        if cmd=='course-import':p.add_argument('source');p.add_argument('--apply',action='store_true');p.add_argument('--operation-id');p.add_argument('--expected-digest')
+        if cmd=='outline-move':p.add_argument('parent_id');p.add_argument('child_id');p.add_argument('direction',choices=['up','down']);p.add_argument('--operation-id')
+        if cmd=='course-import':p.add_argument('source');p.add_argument('--apply',action='store_true');p.add_argument('--operation-id');p.add_argument('--expected-digest');p.add_argument('--course-id')
         if cmd == 'capture':p.add_argument('--context-id');p.add_argument('--operation-id');p.add_argument('text', nargs='?');p.add_argument('--stdin-line',action='store_true'); p.add_argument('--agent', action='store_true');p.add_argument('--kind',choices=['capture','snippet','question'],default='capture')
         if cmd == 'new': p.add_argument('--folder'); p.add_argument('kind'); p.add_argument('title'); p.add_argument('--open', action='store_true')
         if cmd == 'search': p.add_argument('query', nargs='?', default='')
@@ -632,7 +633,7 @@ def main():
             from noesis.outlines import plan,apply as apply_outline
             if args.apply:
                 if not args.operation_id:raise ValueError('An explicit operation ID is required for retryable outline import')
-                print(json.dumps(apply_outline(vault(args.vault),args.source,args.operation_id,args.expected_digest)))
+                print(json.dumps(apply_outline(vault(args.vault),args.source,args.operation_id,args.expected_digest,args.course_id)))
             else:print(json.dumps(plan(args.source)))
             return 0
         if args.command=='vault-fork':
@@ -674,6 +675,9 @@ def main():
             fields=json.loads(args.data)
             if not isinstance(fields,dict):raise ValueError('Record data must be an object')
             print(json.dumps(create_record(root,args.kind,args.title,args.body,fields,args.parent_id,args.relation,args.order,args.operation_id),default=str));return 0
+        if args.command=='outline-move':
+            from noesis.courses import move
+            print(json.dumps(move(root,args.parent_id,args.child_id,args.direction,args.operation_id)));return 0
         if args.command=='link':
             if args.target_vault:
                 if any(value is not None for value in (args.role,args.exit_task,args.context,args.order)):raise ValueError('Cross-vault educational gate/order contexts require a global policy; use a nonblocking connection')
@@ -685,7 +689,7 @@ def main():
             fields=json.loads(args.data)
             if not isinstance(fields,dict):raise ValueError('Event data must be an object')
             print(json.dumps(record_activity(root,args.path,args.event,args.evidence,args.operation_id,expected_id=args.target_id,**fields),default=str));return 0
-        if args.command in ['next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','open-project']:
+        if args.command in ['next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project']:
             index=Index(root)
             try:
                 index.reconcile()

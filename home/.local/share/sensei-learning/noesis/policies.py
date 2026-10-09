@@ -2,6 +2,7 @@
 from datetime import datetime, timezone
 import json
 from .presentation import display_title
+from .index import local_relationship
 
 
 def path_scope(index, path_id):
@@ -9,9 +10,9 @@ def path_scope(index, path_id):
     root = index.record(path_id)
     if root['props'].get('type') != 'path':raise ValueError('Recommendation scope must name a path')
     return {row[0] for row in index.db.execute("""WITH RECURSIVE scope(id) AS (
-        SELECT ? UNION SELECT target FROM relationships WHERE context=?
+        SELECT ? UNION SELECT target FROM relationships r WHERE context=? AND """+local_relationship('r')+"""
         UNION SELECT edges.target FROM relationships edges JOIN scope ON edges.source=scope.id
-        WHERE edges.relation IN ('contains','orders','assigns','pursues','investigates')) SELECT id FROM scope""",(path_id,path_id))}
+        WHERE edges.relation IN ('contains','orders','assigns','pursues','investigates') AND """+local_relationship('edges')+""") SELECT id FROM scope""",(path_id,path_id,*([index.manifest['vault_id']]*4)))}
 
 
 
@@ -20,7 +21,7 @@ def parked_contexts(index):
     blocked={row[0] for row in index.db.execute("SELECT id FROM states WHERE status IN ('parked','abandoned','retired','skipped')")}
     if not blocked:return blocked
     parents={};children={}
-    for source,target in index.db.execute("SELECT source,target FROM relationships WHERE relation IN ('contains','orders','assigns','investigates')"):
+    for source,target in index.db.execute("SELECT source,target FROM relationships r WHERE relation IN ('contains','orders','assigns','investigates') AND "+local_relationship('r'),(index.manifest['vault_id'],index.manifest['vault_id'])):
         parents.setdefault(target,set()).add(source);children.setdefault(source,set()).add(target)
     remaining={target:len(values) for target,values in parents.items()}
     queue=list(blocked)
@@ -47,12 +48,14 @@ def next_actions(index, quiet=False, path_id=None):
     for source,target,raw,status,parent_status in index.db.execute("""SELECT r.source,r.target,r.props,s.status,parent_state.status
         FROM relationships r JOIN records child ON child.id=r.target AND child.kind='unit'
         JOIN records parent ON parent.id=r.source LEFT JOIN states s ON s.id=r.target
-        LEFT JOIN states parent_state ON parent_state.id=r.source WHERE r.relation IN ('orders','contains')"""):
+        LEFT JOIN states parent_state ON parent_state.id=r.source WHERE r.relation IN ('orders','contains') AND """+local_relationship('r'),(index.manifest['vault_id'],index.manifest['vault_id'])):
         edge=json.loads(raw)
         if type(edge.get('order')) is not int:continue
         ordered.add(target)
         if parent_status in inactive:continue
-        grouped.setdefault(source,[]).append((edge['order'],target,status))
+        sequence=record(source)['state'].get('unit_order') or []
+        rank=sequence.index(target) if target in sequence else len(sequence)+edge['order']
+        grouped.setdefault(source,[]).append((rank,target,status))
     next_units=set()
     for steps in grouped.values():
         for _,target,status in sorted(steps):

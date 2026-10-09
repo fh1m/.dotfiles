@@ -77,6 +77,8 @@ def register(root):
         data=json.loads(original) if original else {'version':1,'locations':[]}
         if data.get('version')!=1:raise ValueError('Unsupported Noesis location registry version; nothing changed')
         data['locations']=sorted(set(data.get('locations',[]))|{str(root)})
+        value=identity(root)
+        if value:data.setdefault('identities',{})[str(root)]=value
         text=json.dumps(data,indent=2)+'\n'
         if text!=original:publish(path,text,checksum(original) if original else None)
         return {'path':str(root),'vault_id':identity(root),'noesis_registered':True,

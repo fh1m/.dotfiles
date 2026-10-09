@@ -125,3 +125,13 @@ The course screenshot exposed a clipped header and raw JSON footer during testin
 both were corrected and the same fixture recaptured before deployment.
 
 [Native course outline fixture](assets/course-outline-native.png) · [Native cross-vault fixture](assets/cross-vault-native.png). Both are disposable application captures, not private vault or desktop images.
+
+
+### Course outline interaction, same-content native comparison
+
+[Before Arrange](assets/course-outline-before-arrange-native.png) and
+[After Arrange](assets/course-outline-native.png) use the same six-lecture
+synthetic course in the running native application. The outline now has an explicit
+Arrange action, visible scrollbar and bounded lesson pages. The normal-window
+restore is centered so its controls remain on-screen. These captures demonstrate
+composition, not learner comprehension or completed course acceptance.

@@ -87,3 +87,12 @@ older projections from the same owning source, while older Restic snapshots stay
 available. Large recordings and attachments above 25 MiB are explicit external
 references requiring their own protection. Automatic reader-copy pruning is
 suspended until a verified retention policy is configured.
+
+
+### Replacement when the original storage is unavailable
+
+New Noesis registrations retain the vault UUID alongside their location in the
+private machine-local registry. An explicit `vault-register RESTORED --replace-location ORIGINAL` can therefore verify the identity after the original disk disappears.
+It keeps a registry rollback copy and changes no Obsidian registration or learner
+content. A legacy missing location without a recorded identity cannot be silently
+verified; keep the restored copy intact and resolve its registration deliberately.

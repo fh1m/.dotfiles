@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Synthetic native cross-vault selection, scoped capture, drafts and window modes."""
-import importlib.util,json,os,subprocess,tempfile,time
+import importlib.util,json,os,subprocess,tempfile,time,uuid
 from pathlib import Path
 repo=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('installer',repo/'scripts/install.py');installer=importlib.util.module_from_spec(spec);spec.loader.exec_module(installer)
@@ -63,9 +63,41 @@ with tempfile.TemporaryDirectory(prefix='noesis-collection-ui-') as temporary:
    key('CTRL','Return');time.sleep(.6);key('CTRL','Return');time.sleep(1.5)
    counts=state()['overview_counts'];assert counts['lectures']['total']==6 and counts['assignments']['total']==2 and counts['projects']['total']==1,state()
    assert counts['assignments']['reported_success']==0
+   course=next(row for row in command('query','--vault',str(roots[0]),'Calibration')['records'] if row['type']=='resource')
+   key('CTRL + SHIFT','r');key('ALT','Down');time.sleep(.8)
+   ordering=[event for event in command('timeline','--vault',str(roots[0]),course['id'])['activities'] if event['event']=='outline-order']
+   assert len(ordering)==1
+   lectures=command('query','--vault',str(roots[0]),'Lecture')['records']
+   assert ordering[0]['state']['unit_order'][:2]==[lectures[1]['id'],lectures[0]['id']]
+   assert state()['outline_index']==1 and state()['outline_focused'],state()
+   key('ALT','Up');time.sleep(.8);assert not state()['error'],state();key('CTRL + SHIFT','r')
+   assert len([event for event in command('timeline','--vault',str(roots[0]),course['id'])['activities'] if event['event']=='outline-order'])==2
+   print('PASS: native Arrange mode/Alt arrows preserve two immutable ordering events and consumption/assessment state')
    current=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'])) if c['address']==client['address']);x,y=current['at'];w,h=current['size']
    subprocess.run(['grim','-g',f'{x},{y} {w}x{h}','/tmp/noesis-outline-native.png'],check=True)
    print('PASS: native outline review/create; six lectures, two readings, two assignments, project; no competence awarded')
+   large=home/'large-outline.json'
+   large.write_text(json.dumps({'version':1,'title':'Long outline','entries':[{'key':str(n),'kind':'unit','title':'Extended lecture '+str(n),'fields':{'unit_kind':'lecture'}} for n in range(123)]}))
+   command('course-import','--vault',str(roots[0]),str(large),'--apply','--operation-id',str(uuid.uuid4()))
+   key('CTRL','k')
+   for letter in 'Long outline':key('','space' if letter==' ' else letter)
+   time.sleep(.7);key('','Down');key('','Return');time.sleep(.8)
+   assert state()['outline_rows']==50,state()
+   key('CTRL + SHIFT','Next');time.sleep(.6);assert state()['outline_rows']==100,state()
+   key('CTRL + SHIFT','Next');time.sleep(.6);assert state()['outline_rows']==123,state()
+   print('PASS: native course outline pages append 50 → 100 → 123 lessons')
+   key('CTRL + SHIFT','o')
+   for letter in str(large):
+    if letter=='_':key('SHIFT','minus')
+    else:key('',{'/':'slash','-':'minus','.':'period'}.get(letter,letter))
+   key('CTRL','Return');time.sleep(.6);key('CTRL','Return')
+   deadline=time.monotonic()+20
+   while state()['outline_import_open'] or state()['working']:
+    assert time.monotonic()<deadline,state();time.sleep(.1)
+   time.sleep(.3)
+   assert state()['overview_counts']['lectures']['total']==123,state()
+   assert not state()['error'],state()
+   print('PASS: native existing-course import retry retains 123 lessons without duplicating the course or units')
    # Actual focused-window shortcut exercises the same product mode control.
    for expected in ('workspace','tiled','normal'):
     key('CTRL + ALT','m');time.sleep(.6);assert state()['presentation']==expected,state()
@@ -73,8 +105,27 @@ with tempfile.TemporaryDirectory(prefix='noesis-collection-ui-') as temporary:
     print('Mode:',expected,{'width':state()['width'],'height':state()['height'],'floating':current['floating'],'fullscreen':current['fullscreen']})
     assert (current['fullscreen']==1)==(expected=='workspace'),current
     assert current['floating']==(expected!='tiled'),current
+    assert current['at'][0]>=0 and current['at'][1]>=44,current
+    assert current['at'][0]+current['size'][0]<=1920 and current['at'][1]+current['size'][1]<=1080,current
    frames=json.loads(ipc('performance','stop'));frames.sort()
    print('Instrumented Qt animation-frame p95 ms:',round(frames[int(.95*(len(frames)-1))],3),'samples:',len(frames))
+   idle_seconds=int(os.environ.get('NOESIS_IDLE_SECONDS','0'))
+   if idle_seconds:
+    def descendants(pid):
+     result=[pid]
+     try:
+      for child in Path(f'/proc/{pid}/task/{pid}/children').read_text().split():result+=descendants(int(child))
+     except FileNotFoundError:pass
+     return result
+    def cpu_ticks(pid):
+     values=Path(f'/proc/{pid}/stat').read_text().rsplit(')',1)[1].split()
+     return int(values[11])+int(values[12])
+    ids=descendants(process.pid);before={pid:cpu_ticks(pid) for pid in ids};idle_start=time.monotonic()
+    while time.monotonic()-idle_start<idle_seconds:time.sleep(min(5,idle_seconds-(time.monotonic()-idle_start)))
+    elapsed=time.monotonic()-idle_start
+    cpu=100*sum(cpu_ticks(pid)-before[pid] for pid in ids)/os.sysconf('SC_CLK_TCK')/elapsed
+    print('Open idle average percent of one CPU core:',round(cpu,4),'seconds:',round(elapsed,1),'processes:',len(ids))
+    assert cpu<.1,(cpu,ids)
    memory=[];warm=[]
    def rss():return int(next(line.split()[1] for line in Path('/proc/'+str(process.pid)+'/status').read_text().splitlines() if line.startswith('VmRSS:')))
    for _ in range(12):
