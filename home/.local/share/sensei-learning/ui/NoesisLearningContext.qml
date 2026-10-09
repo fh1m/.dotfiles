@@ -21,7 +21,7 @@ ColumnLayout {
    visible:modelData.rows.length>0
    Layout.fillWidth:true
    spacing:NoesisStyle.sm
-   Text {text:modelData.title;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.subheading}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;text:modelData.title;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.subheading}
    Repeater {model:modelData.rows;delegate:ColumnLayout {
     required property var modelData
     Layout.fillWidth:true;spacing:NoesisStyle.xs
@@ -33,5 +33,5 @@ ColumnLayout {
   }
  }
  NoesisButton {visible:!!root.context.next_lesson;text:"Next lesson · "+(root.context.next_lesson?.title||"");hint:"Ctrl+Alt+Up";enabled:!root.busy;onClicked:root.openContext(root.context.next_lesson)}
- Text {visible:!!root.context.truncated||(root.context.unavailable||[]).length>0;text:"Some related material is unavailable or beyond this preview. Open Connections or the outline for more context.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;wrapMode:Text.Wrap;Layout.fillWidth:true}
+ Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;visible:!!root.context.truncated||(root.context.unavailable||[]).length>0;text:"Some related material is unavailable or beyond this preview. Open Connections or the outline for more context.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;wrapMode:Text.Wrap;Layout.fillWidth:true}
 }

@@ -171,7 +171,10 @@ Practice keeps statement and reasoning beside each other when they fit, and uses
 a reachable selector with separate scroll regions when they do not. At large text
 scales, supporting context and actions reflow or scroll; font size is preserved.
 Routine controls use filled affordances instead of rectangular outlines. Selected
-buttons also carry an underline; keyboard focus has a visible outline.
+controls use weight and tonal fills; keyboard focus underlines the action label.
+Focused inputs have a narrow accent marker. Course outline and problem statement
+are bounded by tonal surfaces and generous gutters instead of frames. Study is
+the default full-screen workspace, shown between Code and Sim.
 
 See [retained native comparisons and remaining gates](product-recovery.md).
 Research, Lab and Today have inherited controls, palette and navigation; their

@@ -8,6 +8,7 @@ Singleton {
  readonly property string codeFont:"ZedMono Nerd Font Mono"
  readonly property int caption:Math.round(13*interfaceScale)
  readonly property int label:Math.round(14*interfaceScale)
+ readonly property int uiText:Math.round(15*interfaceScale)
  readonly property int body:Math.round(17*readingScale)
  readonly property int subheading:Math.round(18*interfaceScale)
  readonly property int sectionHeading:Math.round(18*interfaceScale)

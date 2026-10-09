@@ -18,11 +18,11 @@ NoesisDialog {
  title:"From Zotero"
  onOpened:{vaultScope=NoesisController.activeVault;records=[];serverId="";cursor=-1;error="";search.text="";refresh();search.forceActiveFocus();}
  function refresh(append){if(reader.running)return;appending=!!append;querySent=search.text;reader.command=["@HOME@/.local/bin/noesis","zotero-search",querySent,"--cursor",String(append?cursor:0)];if(append&&serverId)reader.command=reader.command.concat(["--server-id",serverId]);reader.running=true;}
- background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;border.width:1;border.color:NoesisStyle.rule}
+ background:Rectangle {color:NoesisStyle.canvas;radius:NoesisStyle.radius;}
  contentItem:ColumnLayout {spacing:NoesisStyle.md
-  Text {text:"Bibliography and original annotations remain in Zotero.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;Layout.fillWidth:true;wrapMode:Text.Wrap}
+  Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;text:"Bibliography and original annotations remain in Zotero.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;Layout.fillWidth:true;wrapMode:Text.Wrap}
   NoesisField {id:search;placeholderText:"Search your Zotero library";Layout.fillWidth:true;onTextChanged:debounce.restart()}
-  Text {text:root.error|| (reader.running?"Searching Zotero…":"Select a source to import");color:root.error?NoesisStyle.accent:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
+  Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;text:root.error|| (reader.running?"Searching Zotero…":"Select a source to import");color:root.error?NoesisStyle.accent:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
   ListView {Layout.fillWidth:true;Layout.fillHeight:true;clip:true;model:root.records
    delegate:NoesisRow {required property var modelData;width:ListView.view.width;title:modelData.title;subtitle:modelData.type;enabled:!NoesisController.working;onClicked:{root.importing=true;NoesisController.run(["zotero-import",modelData.key,"--server-id",root.serverId]);}}
    ScrollBar.vertical:ScrollBar {}
