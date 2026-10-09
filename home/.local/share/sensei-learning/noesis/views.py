@@ -9,24 +9,16 @@ def overview(index, identity):
     root=index.record(identity)
     kind=root['props'].get('type')
     if kind=='paper' or kind=='resource' and root['props'].get('source_kind')=='paper':
-        annotations=[]
-        projection=root['props'].get('zotero_projection')
-        if projection:
-            from .persistence import contained,parse
-            try:
-                _,body=parse(contained(index.root,projection).read_text())
-                payload=json.loads(body.split('```json\n',1)[1].split('\n```',1)[0])
-                for child in payload.get('children',[]):
-                    data=child.get('data',{})
-                    if data.get('itemType')!='annotation':continue
-                    annotations.append({'native_id':child.get('key'),'source_version':child.get('version'),
-                                        'text':data.get('annotationText',''),'comment':data.get('annotationComment',''),
-                                        'page_label':data.get('annotationPageLabel',''),'position':data.get('annotationPosition'),
-                                        'authority':'Zotero; imported snapshot'})
-            except (ValueError,OSError,IndexError):return {'kind':'paper','annotations':[],'projection_unavailable':True}
-        return {'kind':'paper','annotations':annotations[:50],'annotations_truncated':len(annotations)>50,
-                'projection':projection,'bibliography':root['props'].get('bibliography_projection'),
+        from .sources import annotations, bibliography
+        result={'kind':'paper','annotations':[], 'bibliography':root['props'].get('bibliography_projection'),
                 'summary':'Source annotations and learner analysis remain separate'}
+        try:result.update(annotations(index,identity))
+        except (ValueError,OSError,TypeError) as error:
+            result.update(projection_unavailable=True,projection_error=str(error))
+        try:result['bibliographic_summary']=bibliography(index,root)
+        except (ValueError,OSError,TypeError) as error:result['bibliography_error']=str(error)
+        result['annotations_truncated']=bool(result.get('cursor'))
+        return result
     if kind in ('task','problem'):
         import re
         statement=re.search(r'(?ms)^## Problem statement\r?\n(.*?)(?=^## |\Z)',root.get('body',''))

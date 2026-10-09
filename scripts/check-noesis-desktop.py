@@ -16,6 +16,9 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
   (vault/f'concept-{number:03}.md').write_text(f'---\nid: 33333333-3333-4333-8333-{number:012}\nnoesis_schema: 2\ntype: concept\ntitle: Connected concept {number:03}\n---\nA synthetic technical explanation.')
  (home/'.config/sensei-learning').mkdir(exist_ok=True);(home/'.config/sensei-learning/config.json').write_text(json.dumps({'active_vault':str(vault)}))
  config=home/'.config/quickshell/wrayth';(config/'shell.qml').write_text('import QtQuick\nimport Quickshell\nimport "modules/learning" as LearningUi\nimport qs.services\nShellRoot { LearningUi.NoesisWindow {} LearningUi.NoesisCompanion {} Component.onCompleted:Oasis.open() }\n')
+ if os.environ.get('NOESIS_TEST_HOST')=='standalone':
+  config=home/'.config/quickshell/noesis'
+  p=config/'shell.qml';p.write_text(p.read_text().replace('org.fh1m.Noesis','org.fh1m.Noesis.Acceptance'))
  env=dict(os.environ,NOESIS_WINDOW_MODE="normal",HOME=str(home),XDG_CONFIG_HOME=str(home/'.config'),XDG_CACHE_HOME=str(home/'.cache'),XDG_STATE_HOME=str(home/'.local/state'))
  binary=os.environ.get('NOESIS_QS',str(Path.home()/'.local/opt/sensei-quickshell/bin/qs'))
  log=home/'qml.log'
@@ -101,7 +104,7 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
    current=state();counts=current['overview_counts'];assert current['selected']==course['path'] and current['context_tab']=='Read'
    assert counts['lectures']['total']==6 and counts['lectures']['consumed']==2 and counts['assignments']['reported_success']==0 and counts['projects']['reported_success']==0
    scale=client['size'][0]/current['width'];resize(1000,650)
-   current=state();assert current['read_viewport_height']>100 and current['read_content_height']>current['read_viewport_height']
+   current=state();print('Compact course state:',json.dumps(current),flush=True);assert current['read_viewport_height']>100 and current['read_content_height']>current['read_viewport_height']
    print('Course: 2/6 consumed; assignments/projects untouched; compact context scrolls:',current['read_viewport_height'],current['read_content_height'])
    client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==process.pid and c['title'].startswith('Noesis'))
    x,y=client['at'];w,h=client['size'];subprocess.run(['grim','-g',f'{x},{y} {w}x{h}','/tmp/noesis-course-compact.png'],check=True)
@@ -167,10 +170,11 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
     for _ in range(index):shortcut('','Down')
     shortcut('','Return');time.sleep(.5)
    def reported(outcome_steps):
-    shortcut('CTRL','Tab');shortcut('','Tab');shortcut('','Home')
+    action(state()['context_actions'].index('attempt-settings'));shortcut('','Tab');shortcut('','Home')
     for _ in range(outcome_steps):shortcut('','Down')
     shortcut('','Tab');shortcut('','Home');shortcut('','Down') # explicitly declare no outside assistance
     current=state();assert current['reported_outcome']==('failed' if outcome_steps==2 else 'succeeded') and current['declared_assistance']=='none',current
+    shortcut('CTRL','Return')
    action(0);type_text('failed prediction');reported(2);action(0)
    attempts=[event for event in cli('timeline',problem['id'])['activities'] if event['event']=='attempt']
    assert len(attempts)==1 and attempts[0]['outcome']=='failed' and attempts[0]['assistance']==['none']
@@ -229,4 +233,4 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
 
   finally:process.terminate();process.wait(timeout=5);print(log.read_text()[-5000:])
  print(log.read_text()[-5000:])
- assert 'WARN' not in log.read_text() and 'ERROR' not in log.read_text(), 'Native QML emitted warnings or errors'
+ assert not any(('WARN' in line or 'ERROR' in line) and 'Could not register app ID' not in line for line in log.read_text().splitlines()), 'Native QML emitted warnings or errors'

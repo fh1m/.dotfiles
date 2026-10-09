@@ -20,22 +20,25 @@ application's colors, commercial dashboard layout or private design process.
 
 ## Visual grammar
 
-`config/NoesisStyle.qml` is the shared source for Noesis tokens. Colors inherit
-Wrayth's Theme; fonts inherit Appearance. Noesis-specific components use these
-tokens without changing the rest of the desktop.
+`home/.local/share/sensei-learning/ui/NoesisStyle.qml` is the shared source for
+Noesis tokens. It retains the desktop's dark/pink identity with explicit colors
+and fonts, without importing Wrayth's Theme, Appearance or service graph.
 
-- Type: 12 caption, 13 control, 15 body, 22 section heading, 30 major title.
-  Interface/body use the established proportional UI family. Code uses the
-  established data family. Sentence case controls; uppercase is limited to small
-  section labels.
-- Space: 4 / 8 / 12 / 16 / 24 / 32 logical pixels. Controls are 34 high; dense
-  two-line rows are 62. Dialogs and main regions align on this scale.
+- Type: 13 caption, 14 control, 15 general UI, 17 reading prose, 18 section,
+  22 page heading and 28 object title. Prose uses Adwaita Sans; code uses Iosevka.
+  Interface and reading scales are independent, adjustable through Settings to
+  200%. Reflow and scrolling preserve critical actions at larger scales.
+- Space: 4 / 8 / 12 / 16 / 24 / 32 logical pixels. Normal controls are at least
+  40 high; collection rows at least 64 and expand for important wrapped text.
 - Surfaces: black canvas and the two existing dark Wrayth surfaces. Rows use
   whitespace and selection backgrounds, not a stack of bordered cards.
 - Borders: field affordances, focus and an actual pane boundary. An inactive
   button does not need its own frame. Focus is visible for every control.
-- Pink: current selection, primary action, focus and actionable errors. Status
-  meaning is expressed with text as well as color.
+- Pink: current selection, primary action and focus, with dark selection ink.
+  Error, warning and success use distinct colors and textual labels. Ordinary
+  text targets 4.5:1; large text and meaningful boundaries/focus target 3:1.
+  Composited normal, hover, focus, disabled, error and selected states must be
+  checked; token arithmetic alone does not complete acceptance.
 - Motion: existing state-transition duration. No decorative animation or
   continuously updating graph. Lists remain virtualized.
 - Popovers/dialogs: clear title, one purpose, predictable action placement,

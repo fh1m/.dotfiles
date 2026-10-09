@@ -50,6 +50,17 @@ def install(home, apply=False, hardware='generic'):
         temp.write_bytes(data)
         temp.chmod(source.stat().st_mode & 0o777)
         temp.replace(dest)
+    # Keep the QML module inside the config's scanner boundary without copying it.
+    for relative in ['.config/quickshell/noesis/ui','.config/quickshell/wrayth/noesis-ui']:
+        module_link=home/relative
+        module_target='../../../.local/share/sensei-learning/ui'
+        if not module_link.is_symlink() or os.readlink(module_link)!=module_target:
+            changes.append(relative)
+            if apply:
+                module_link.parent.mkdir(parents=True,exist_ok=True)
+                if module_link.exists() or module_link.is_symlink():
+                    raise RuntimeError('Noesis module link conflicts with an existing path')
+                module_link.symlink_to(module_target,target_is_directory=True)
     if apply:
         # Wrayth's helpers remain linked to their retained upstream sources.
         bindir = home / '.local/bin'

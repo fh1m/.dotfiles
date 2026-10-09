@@ -1,6 +1,6 @@
 # Noesis: connected learning, research and engineering
 
-Approved implementation specification, 2026-10-08. Supersedes the earlier architecture in legacy-ledger.md.
+Backend specification, 2026-10-08. The [revised V1 roadmap](v1-roadmap.md) governs the proposed application execution sequence and is approved for implementation. Hosting parity must pass before adaptive redesign. The data/safety contracts below remain authoritative.
 
 Markdown remains authoritative. Zotero owns bibliography/original annotations;
 Noesis owns versioned projections and separate readable activity records. SQLite

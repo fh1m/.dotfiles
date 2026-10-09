@@ -1,0 +1,53 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Quickshell
+NoesisDialog {
+ id:root
+ property string kind:"resource"
+ property string parentId:""
+ property string vaultScope:""
+ property bool submitting:false
+ property string submittedOperation:""
+ property bool transfer:false
+ property bool saved:false
+ property bool initialized:false
+ property string mediumPreference:""
+ readonly property string draftKey:vaultScope+":form:create:"+kind+":"+parentId+":"+String(transfer)+":"+mediumPreference
+ function stashDraft(){if(!initialized||saved)return;let next=Object.assign({},NoesisController.drafts);next[draftKey]=JSON.stringify({name:name.text,details:details.text,source:source.text,repository:repository.text,revision:revision.text,medium:medium.currentIndex});NoesisController.drafts=next;NoesisController.savePreferences();}
+ function discardDraft(){let next=Object.assign({},NoesisController.drafts);delete next[draftKey];NoesisController.drafts=next;NoesisController.savePreferences();}
+ onClosed:if(!saved)stashDraft()
+ Timer {id:formSave;interval:500;onTriggered:root.stashDraft()}
+ Connections {target:NoesisController;function onFlushRequested(){formSave.stop();root.stashDraft();}}
+ signal created(var record)
+ modal:true
+ width:560
+ height:Math.min(700,(parent?.height||800)-32)
+ title:transfer?"Try a changed problem":kind==="unit"?"Add a lesson or chapter":kind==="question"?"Preserve a question":kind==="task"?"Add a problem":kind==="experiment"?"Create an experiment":kind==="artifact"?"Connect data, a figure or code":kind==="path"?"Create a learning path":kind==="project"?"Connect an implementation":kind==="capability"?"Define a capability":"Save a resource"
+ closePolicy:Popup.CloseOnEscape
+ function begin(recordKind,parent,isTransfer,preferredMedium){initialized=false;saved=false;mediumPreference=preferredMedium||"";transfer=!!isTransfer;vaultScope=NoesisController.activeVault;kind=recordKind;parentId=parent||"";name.text="";details.text="";source.text="";repository.text="";revision.text="";medium.currentIndex=Math.max(0,medium.model.indexOf(preferredMedium||""));submitting=false;initialized=true;try{let draft=JSON.parse(NoesisController.drafts[draftKey]||"null");if(draft){name.text=draft.name||"";details.text=draft.details||"";source.text=draft.source||"";repository.text=draft.repository||"";revision.text=draft.revision||"";medium.currentIndex=Math.max(0,Math.min(medium.count-1,draft.medium||0));}}catch(error){}open();name.forceActiveFocus();}
+ background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;border.width:1;border.color:NoesisStyle.rule}
+ contentItem:ScrollView {id:form;clip:true;contentWidth:availableWidth;ScrollBar.horizontal.policy:ScrollBar.AlwaysOff
+ ColumnLayout {width:form.availableWidth;spacing:NoesisStyle.lg
+  Text {textFormat:Text.PlainText;text:"Title";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+  NoesisField {id:name;onTextChanged:if(root.initialized&&root.visible)formSave.restart();Accessible.name:"Learning object title";placeholderText:root.kind==="unit"?"Lesson or chapter title":"Title";Layout.fillWidth:true}
+  Text {textFormat:Text.PlainText;visible:root.kind==="resource"||root.kind==="unit";text:root.kind==="unit"?"Lesson kind":"Source kind";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+  NoesisSelect {id:medium;onCurrentIndexChanged:if(root.initialized&&root.visible)formSave.restart();Accessible.name:"Source or lesson kind";visible:root.kind==="resource"||root.kind==="unit";Layout.fillWidth:true;model:root.kind==="unit"?["lecture","reading","chapter","section","video","assignment","module"]:["paper","book","course","video","playlist","article","docs","dataset","other"]}
+  Text {textFormat:Text.PlainText;visible:["resource","unit","artifact","task"].includes(root.kind);text:"Source or file · optional";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+  NoesisField {id:source;onTextChanged:if(root.initialized&&root.visible)formSave.restart();Accessible.name:"Source URL or local file";visible:["resource","unit","artifact","task"].includes(root.kind);placeholderText:root.kind==="artifact"?"Existing file path or source URL":"Source URL or local PDF path · optional";Layout.fillWidth:true}
+  Text {textFormat:Text.PlainText;visible:root.kind==="project";text:"Git repository · optional";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+  NoesisField {id:repository;onTextChanged:if(root.initialized&&root.visible)formSave.restart();visible:root.kind==="project";Layout.fillWidth:true;placeholderText:"Existing Git repository path · optional";Accessible.name:"Implementation repository"}
+  Text {textFormat:Text.PlainText;visible:root.kind==="artifact";text:"Artifact revision · optional";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+  NoesisField {id:revision;onTextChanged:if(root.initialized&&root.visible)formSave.restart();Accessible.name:"Artifact revision";visible:root.kind==="artifact";Layout.fillWidth:true;placeholderText:"Code commit, dataset version or configuration · optional"}
+  Text {textFormat:Text.PlainText;text:root.kind==="experiment"?"Prediction":root.kind==="task"?"Statement and criterion":root.kind==="capability"?"Assessment criteria":"Purpose and context";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+  ScrollView {id:detailsScroll;Layout.fillWidth:true;Layout.preferredHeight:Math.max(140,NoesisStyle.control*3);clip:true;NoesisEditor {id:details;onTextChanged:if(root.initialized&&root.visible)formSave.restart();width:detailsScroll.availableWidth;Accessible.name:"Learning object details";placeholderText:root.kind==="capability"?"Assessment criteria · one per line":root.kind==="task"?"Problem statement and criterion. Keep reference solutions separate.":root.kind==="question"?"What is unclear? Preserve your current explanation.":root.kind==="experiment"?"Your prediction, assumptions and what you want to measure…":"Why this matters now · optional"}}
+  Text {text:root.parentId?"Connected to your current context. Identity and history are automatic.":"You can add lessons, problems and evidence as you work.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;Layout.fillWidth:true}
+  Text {Layout.fillWidth:true;visible:NoesisController.error!=="";textFormat:Text.PlainText;text:NoesisController.error;wrapMode:Text.Wrap;color:NoesisStyle.error;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;Accessible.name:"Save error"}
+ }}
+ footer:Flow {spacing:NoesisStyle.sm
+   NoesisButton {text:"Keep draft";onClicked:root.close()}
+   NoesisButton {id:saveButton;text:"Save";hint:"Ctrl+Enter";primary:true;enabled:name.text.trim()!==""&&!NoesisController.working&&!NoesisController.uncertainReceipt&&!NoesisController.exitRequested&&root.vaultScope===NoesisController.activeVault;onClicked:{let fields={};if(["resource","unit","artifact","task"].includes(root.kind)){if(root.kind==="resource")fields.source_kind=medium.currentText;let link=source.text.trim();if(/^https?:\/\//.test(link)){fields.source=link;fields.external_aliases=["url:"+link];if(/^https?:\/\/(dx\.)?doi\.org\//i.test(link)){fields.doi=link.replace(/^https?:\/\/(dx\.)?doi\.org\//i,"");fields.external_aliases.push("doi:"+fields.doi.toLowerCase());}}else if(/^10\.\d{4,9}\//.test(link)){fields.doi=link;fields.source="https://doi.org/"+link;fields.external_aliases=["doi:"+link.toLowerCase()];}else if(/^arxiv:/i.test(link)){fields.arxiv=link.slice(6);fields.source="https://arxiv.org/abs/"+fields.arxiv;}else if(link)fields.local_file=link;}if(root.kind==="task"){fields.source_kind="problem-statement";if(root.transfer)fields.practice_mode="transfer";}if(root.kind==="unit")fields.unit_kind=medium.currentText;if(root.kind==="artifact"&&revision.text.trim())fields.revision=revision.text.trim();if(root.kind==="capability")fields.criteria=details.text.split(/\r?\n/).map(line=>line.trim()).filter(line=>line!=="");if(root.kind==="experiment")fields.hypothesis=details.text;if(root.kind==="project"&&repository.text.trim())fields.repository=repository.text.trim();let args=["record",root.kind,name.text,"--body",root.kind==="task"?"## Problem statement\n\n"+details.text:details.text,"--data",JSON.stringify(fields)];if(root.parentId)args.push("--parent-id",root.parentId,"--relation",root.transfer?"references":root.kind==="task"?"assigns":root.kind==="capability"?"pursues":"contains");NoesisController.run(args);root.submittedOperation=NoesisController.operationId;root.submitting=root.submittedOperation!=="";}}
+ }
+ Shortcut {sequence:"Ctrl+Return";enabled:root.visible;onActivated:if(saveButton.enabled)saveButton.clicked()}
+ Connections {target:NoesisController;function onFinished(ok){if(root.submitting&&root.submittedOperation===NoesisController.operationId){root.submitting=false;if(ok){root.saved=true;root.discardDraft();root.created(NoesisController.operationResult);root.close();}}}}
+}
