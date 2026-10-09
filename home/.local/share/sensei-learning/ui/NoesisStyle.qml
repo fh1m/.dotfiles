@@ -8,20 +8,20 @@ Singleton {
  readonly property string codeFont:"ZedMono Nerd Font Mono"
  readonly property int caption:Math.round(13*interfaceScale)
  readonly property int label:Math.round(14*interfaceScale)
- readonly property int uiText:Math.round(15*interfaceScale)
- readonly property int body:Math.round(17*readingScale)
- readonly property int subheading:Math.round(18*interfaceScale)
- readonly property int sectionHeading:Math.round(18*interfaceScale)
- readonly property int heading:Math.round(22*interfaceScale)
- readonly property int title:Math.round(28*interfaceScale)
+ readonly property int uiText:Math.round(14*interfaceScale)
+ readonly property int body:Math.round(16*readingScale)
+ readonly property int subheading:Math.round(16*interfaceScale)
+ readonly property int sectionHeading:Math.round(16*interfaceScale)
+ readonly property int heading:Math.round(20*interfaceScale)
+ readonly property int title:Math.round(25*interfaceScale)
  readonly property int xs:4
  readonly property int sm:8
  readonly property int md:12
  readonly property int lg:16
  readonly property int xl:24
  readonly property int page:32
- readonly property int control:Math.round(40*interfaceScale)
- readonly property int row:Math.round(64*interfaceScale)
+ readonly property int control:Math.round(36*interfaceScale)
+ readonly property int row:Math.round(56*interfaceScale)
  readonly property int radius:5
  readonly property int readingWidth:Math.round(760*readingScale)
  readonly property color canvas:"#141210"

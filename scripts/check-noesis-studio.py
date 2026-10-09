@@ -42,6 +42,9 @@ with patch('pathlib.Path.home',return_value=f.home):
 shell=f.config/'shell.qml';q=shell.read_text().replace('LearningUi.NoesisWindow {}','LearningUi.NoesisWindow {id:fixtureWindow}')
 q=q.replace('import QtQuick','import QtQuick\nimport QtTest',1)
 q=q.replace('ShellRoot {',r'''ShellRoot {
+ property bool measureFrames:false
+ property var frameSamples:[]
+ FrameAnimation {running:measureFrames;onTriggered:if(frameTime>0)frameSamples.push(frameTime*1000)}
  TestCase {id:deskInput;parent:fixtureWindow.studyDesk.applicationSurface;visible:false;name:"NoesisDeskReview";when:false}
  function findNamed(item,name){if(item.objectName===name)return item;for(let child of item.children||[]){let found=findNamed(child,name);if(found)return found;}return null;}
  TestCase {id:nativeInput;parent:fixtureWindow.applicationSurface;visible:false;name:"NoesisStudioReview";when:false}
@@ -49,6 +52,8 @@ q=q.replace('ShellRoot {',r'''ShellRoot {
  function findSurface(item){if(item.visible&&["Problem statement","Your reasoning"].includes(item.currentText))return item;for(let child of item.children||[]){let found=findSurface(child);if(found)return found;}return null;}
  function findEditor(item){if(item.visible&&item.enabled&&item.placeholderText&&item.placeholderText.indexOf("Explain the idea")===0)return item;for(let child of item.children||[]){let found=findEditor(child);if(found)return found;}return null;}
  IpcHandler {target:"studio-fixture";
+  function framesStart():void{frameSamples=[];measureFrames=true;}
+  function framesStop():string{measureFrames=false;return JSON.stringify(frameSamples);}
   function chooseDesk(side:string,index:int):string{let item=findNamed(fixtureWindow.studyDesk.applicationSurface,"studySurface-"+side);if(!item)return "missing selector";if(!item.popup.visible)deskInput.mouseClick(item,item.width/2,item.height/2);deskInput.wait(60);let list=item.popup.contentItem;list.forceLayout();list.positionViewAtIndex(index,ListView.Contain);deskInput.wait(60);let choice=list.itemAtIndex(index);if(!choice)return "missing popup choice visible="+item.popup.visible+" count="+list.count+" y="+list.contentY;deskInput.mouseClick(choice,choice.width/2,choice.height/2);deskInput.wait(60);return item.currentText;}
   function notesDesk():string{let item=findNamed(fixtureWindow.studyDesk.applicationSurface,"studyNotes-left");if(!item)return "missing notes";deskInput.mouseClick(item,40,40);deskInput.keyClick(Qt.Key_X);deskInput.keyClick(Qt.Key_Y);return item.text;}
 
@@ -94,7 +99,11 @@ def click(label):assert f.ipc('studio-fixture','click',label)=='clicked',label
 def resize(width,height,scale):
  f.ipc('studio-fixture','scale',str(scale))
  if width!=1920:f.ipc('studio-fixture','geometry',str(width),str(height))
- f.ipc('studio-fixture','mode','fullscreen' if width==1920 else 'normal');f.wait(lambda s:not s['mode_pending'] and abs(s['width']-width)<5 and abs(s['height']-height)<5);time.sleep(.3)
+ f.ipc('studio-fixture','mode','fullscreen' if width==1920 else 'normal')
+ try:f.wait(lambda s:not s['mode_pending'] and abs(s['width']-width)<5 and abs(s['height']-height)<5)
+ except AssertionError:
+  print('MODE FAILURE',width,height,scale,{k:f.state().get(k) for k in ['width','height','error','presentation','mode_pending']},flush=True);raise
+ time.sleep(.3)
  time.sleep(.5)
  state=f.state()
  assert abs(state['width']-width)<5 and abs(state['height']-height)<5,state
@@ -160,6 +169,12 @@ try:
     time.sleep(.5);desk_capture('lab-second-figures-notes')
 
   f.ipc('noesis-window','section','Today');f.wait(lambda s:not s['selected'] and not s['working']);time.sleep(.5);capture('today-current');resize(1920,1080,1);capture('today-study')
+ f.ipc('studio-fixture','framesStart');time.sleep(3)
+ frames=sorted(json.loads(f.ipc('studio-fixture','framesStop')))
+ memory={}
+ for line in Path(f'/proc/{f.process.pid}/smaps_rollup').read_text().splitlines():
+  if line.startswith(('Rss:','Pss:')):memory[line.split(':')[0]+'_KiB']=int(line.split()[1])
+ (evidence/'render-performance.json').write_text(json.dumps({'instrumented_animation_frame_p95_ms':round(frames[int(.95*(len(frames)-1))],2),'samples':len(frames),'memory':memory,'note':'Three-second fixture instrumentation; not physical input latency or sustained-session proof.'},indent=2)+'\n')
  warnings=[line for line in (f.home/'qml.log').read_text().splitlines() if ('WARN' in line or 'ERROR' in line) and 'Could not register app ID' not in line];assert not warnings,warnings
  (evidence/('capture-'+phase+'.json')).write_text(json.dumps({'capture':'Native Qt Quick main-window render; second-display compositor capture requires the sole full-display overlay to be the disposable fixture','fixture_only':True,'baseline':'feee017' if phase=='before' else None,'captures':reports},indent=2))
  print('PASS: native renders retained:',evidence,flush=True)
