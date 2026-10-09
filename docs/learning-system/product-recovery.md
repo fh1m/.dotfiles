@@ -205,3 +205,12 @@ arrives. [Figures beside notes](assets/recovery-sprint/lab-second-figures-notes.
 and [shared reasoning](assets/recovery-sprint/practice-second-notes.png) are
 retained synthetic-fixture evidence. No new dual-display performance or human
 usability result is inferred from the earlier single-display measurements.
+
+Live deployment initially exposed the production tile rule overriding Qt's
+startup fullscreen request. Noesis now repairs that state using an explicit,
+address-scoped fullscreen-state command when native acknowledgement differs,
+then verifies it. The live check confirmed 1920×1080 logical fullscreen on Study
+4 and a 1920×550 ScreenPad desk. Existing external client identities and workspace
+contents were retained; the original Wrayth process remained running. The scoped
+backup preserves the unrelated custom setup. The selected personal course has
+no outline yet; this rollout does not fabricate one or alter learning content.
