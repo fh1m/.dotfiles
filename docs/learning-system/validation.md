@@ -347,7 +347,28 @@ it does not silently pretend annotations were deleted. Production imports remain
 GET-only. Test authorization applies only to a disposable profile.
 
 The authoritative remaining P0–P8 gates are in PLAN.md. Native PDF page/annotation
-navigation, transfer/review, outline reorder/replacement, reader-state restoration,
+navigation, transfer/review, outline reorder/replacement, other native reader-state/position acceptance,
 Distrobox, disconnected ScreenPad and complete long-term/input/idle acceptance
 remain open. Off-device protection is not configured; the encrypted strategy is
 in migration-recovery.md. This evidence is not a complete-release claim.
+
+
+### P0 reader recovery follow-through
+
+The populated Zotero acceptance now closes its isolated reader, snapshots the
+fresh native SQLite database consistently, includes that verified reader snapshot
+in encrypted Restic, restores into a new directory, and restarts native Zotero
+against the restored directory. Its actual annotation comment, page label and
+original PDF bytes are recovered. This is native application/data recovery,
+not a claim that PDF page navigation has been accepted.
+
+Reader snapshots are serialized, publish manifests atomically, detect attachments
+changing while copied, and classify large media as explicit external references.
+They do not automatically prune potentially unique recovery copies. Restic can
+include up to four verified owning reader snapshots. A restored vault carries
+those snapshots into subsequent backups without copying a changing live database.
+The repeated-backup test also exposed a self-manifest checksum defect; recovery
+manifests are now generated metadata rather than files hashing themselves.
+Automated total after this slice: 76 core + 16 compatibility tests.
+Native reader handoff, broader fault injection and explicit verified retention
+remain separate gates.

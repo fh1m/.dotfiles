@@ -58,3 +58,32 @@ Restic's supported repository-copy workflow; run repository checks and restore a
 snapshot to a new location before enabling retention. Never prune the only
 verified copy. No remote destination or credentials have been invented or
 configured by this implementation. Local recovery does not protect laptop loss.
+
+
+## Encrypt verified reader snapshots alongside learning data
+
+Use the reader snapshot path printed by the existing reader-backup routine,
+checking `database_sources` in its manifest. An open Zotero fallback to its internal
+backup is explicitly timestamped; it is not claimed to be fresh. For a guaranteed
+current snapshot, close that reader deliberately before its normal backup.
+
+```sh
+noesis backup --vault /path/to/vault --restic --reader-snapshot /path/to/reader-snapshot
+```
+
+The command validates containment and every snapshot checksum before including
+reader state in encrypted recovery. It does not copy a live database into the
+vault. After `noesis recover SNAPSHOT --dest /new/vault`, its response identifies
+recovered reader-snapshot directories. Restore one into another new directory:
+
+```sh
+sensei-learning-backup --restore-reader /new/vault/RecoveredReaderState/0 --dest /new/reader-data
+```
+
+Select that new data directory in the reader's supported settings before opening
+it. Never overwrite the running profile. Recovered reader snapshots remain in
+subsequent encrypted vault backups; explicitly supplied newer snapshots replace
+older projections from the same owning source, while older Restic snapshots stay
+available. Large recordings and attachments above 25 MiB are explicit external
+references requiring their own protection. Automatic reader-copy pruning is
+suspended until a verified retention policy is configured.

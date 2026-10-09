@@ -84,17 +84,28 @@ def restore(archive,destination):
   for folder in system['directories']:safe(stage,folder).mkdir(parents=True,exist_ok=True)
   stage.rename(destination)
  print(destination)
-def backup_readers():
+def backup_readers(roots=None):
+ STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+ with (STATE/'.lock').open('a') as stream:
+  os.chmod(stream.name,0o600);fcntl.flock(stream,fcntl.LOCK_EX)
+  return _backup_readers(roots or [HOME/'Zotero',HOME/'.local/share/Sioyek'])
+
+def _backup_readers(roots):
  import sqlite3,shutil,time
- for root in [HOME/'Zotero',HOME/'.local/share/Sioyek']:
+ reports=[]
+ for root in roots:
+  root=Path(root).resolve()
   if not root.is_dir():continue
   dest=STATE/'readers'/root.name/datetime.now().strftime('%Y%m%d-%H%M%S-%f')
   dest.mkdir(parents=True,exist_ok=True);dest.chmod(0o700)
-  records={};database_sources={}
+  records={};database_sources={};external={}
   try:
    for p in root.rglob('*'):
     if not p.is_file() or p.is_symlink() or p.name.startswith('fulltext') or p.name.endswith(('-wal','-shm','-journal','.bak')):continue
-    relative=p.relative_to(root);target=dest/relative;target.parent.mkdir(parents=True,exist_ok=True)
+    relative=p.relative_to(root)
+    if p.stat().st_size>25*1024*1024 and p.suffix not in {'.sqlite','.db'} or p.suffix.lower() in {'.mcap','.bag','.mp4','.mkv'}:
+     external[str(relative)]={'location':str(p),'size':p.stat().st_size,'availability':'external; not backed up here'};continue
+    target=dest/relative;target.parent.mkdir(parents=True,exist_ok=True)
     if p.suffix in ['.sqlite','.db']:
      candidates=[p]
      # Zotero may hold an exclusive runtime lock; its own last-consistent backup
@@ -118,18 +129,23 @@ def backup_readers():
        if source:source.close()
       target.unlink(missing_ok=True)
      if error:raise ValueError(str(error)+': close '+root.name+' and retry backup')
-    else:shutil.copy2(p,target)
+    else:
+     before=p.stat();shutil.copy2(p,target);after=p.stat()
+     if (before.st_mtime_ns,before.st_size,before.st_ino)!=(after.st_mtime_ns,after.st_size,after.st_ino):raise ValueError('Reader file changed while staging: '+str(relative))
     records[str(relative)]=sha(target)
-   manifest={'source':str(root),'files':records,'database_sources':database_sources,'restore':'Close the reader, verify checksums, restore into a NEW data directory; never overwrite a live database.'}
+   manifest={'source':str(root),'files':records,'external':external,'database_sources':database_sources,'restore':'Close the reader, verify checksums, restore into a NEW data directory; never overwrite a live database.'}
    latest=dest.parent/'latest.json'
-   if latest.exists() and json.loads(latest.read_text()).get('files')==records:
-    shutil.rmtree(dest);print('Reader unchanged: '+str(root));continue
-   (dest/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n');store_latest={'snapshot':str(dest),**manifest};latest.write_text(json.dumps(store_latest,indent=2)+'\n')
+   if latest.exists() and json.loads(latest.read_text()).get('files')==records and json.loads(latest.read_text()).get('external',{})==external:
+    shutil.rmtree(dest);previous=json.loads(latest.read_text());reports.append(previous);print('Reader unchanged: '+str(root));continue
+   atomic_json(dest/'manifest.json',manifest);store_latest={'snapshot':str(dest),**manifest};atomic_json(latest,store_latest);reports.append(store_latest)
    print('Reader snapshot: '+str(dest))
    if any(v['mode']=='native-last-consistent-backup' for v in database_sources.values()):print('Zotero was open: snapshot uses its timestamped last internal backup, not a claim of live freshness.')
-   for old in sorted((p for p in dest.parent.iterdir() if p.is_dir()),reverse=True)[7:]:shutil.rmtree(old)
+   # Retain recovery copies until explicit verified retention is configured.
+   # A fresh checksum alone is not proof that a native reader restore works.
   except Exception:
    shutil.rmtree(dest);raise
+
+ return reports
 
 def restore_reader(snapshot,destination):
  """Verify a reader snapshot in isolation; never write a live reader profile."""
