@@ -30,7 +30,10 @@ def operation_status(root, operation_id):
             witness=contained(root,'.Noesis/Operations/'+operation_id+'.json')
             witness_state=json.loads(witness.read_text()).get('status') if witness.exists() else None
             committed=witness_state=='committed'
-            return {'operation_id': operation_id, 'status': 'committed' if rows or committed else 'uncertain' if witness_state=='preparing' else 'not-committed', 'records': rows, 'record_unavailable':bool(committed and not rows)}
+            execution=contained(root,'.Noesis/Executions/'+operation_id+'.json')
+            execution_state=json.loads(execution.read_text()).get('status') if execution.exists() else None
+            status='committed' if rows or committed else 'uncertain' if witness_state=='preparing' or execution_state=='started' else 'not-committed'
+            return {'operation_id': operation_id, 'status': status, 'records': rows, 'record_unavailable':bool(committed and not rows)}
         finally:index.close()
 
 

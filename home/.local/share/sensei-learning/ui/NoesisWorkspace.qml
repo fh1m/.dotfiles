@@ -33,6 +33,7 @@ Rectangle {
  property var frontier:({items:[]})
  property int frontierSerial:0
  property int claimSerial:0
+ readonly property bool convolutionWorking:selected.type==="concept"&&(selected.learning_demo==="convolution-1d"||/^convolution(\b|\s|·)/i.test(selected.title||""))
  readonly property bool investigationWorking:["concept","question","capability"].includes(selected.type)&&["Read","Work"].includes(contextTab)
  readonly property bool readingWorking:contextTab==="Read"&&!!selected.id&&!courseWorking&&!investigationWorking&&!["paper","project","experiment","capability"].includes(workflow.kind)&&["resource","unit","stage","note"].includes(selected.type)
  function loadFrontier(cursor){frontierSerial=send("frontier",{record_id:selected.id,cursor:cursor||null});}
@@ -204,7 +205,7 @@ Rectangle {
   if(kind==="artifact")add("checksum","Check checksum","Inspect the referenced artifact without changing it");
   if(["task","problem"].includes(kind)&&!activeAttempt&&pendingCheck())add("perform-check","Perform planned check","Start a protected assessment of your selected check; saving the outcome preserves its result");
   if(kind==="unit"&&[undefined,null,"lecture","video","reading","chapter","section"].includes(selected.unit_kind)&&!referenceHidden)add("material","Replace lesson material","Keep this lesson and its history; start the new source without inheriting completion");
-  if(["unit","stage","task","problem"].includes(kind)&&!referenceHidden)add("prerequisite","Connect a prerequisite","Reuse an existing concept or problem; explain why it matters here");
+  if(["unit","stage","task","problem","concept","question"].includes(kind)&&!referenceHidden)add("prerequisite","Connect a prerequisite","Reuse an existing concept or problem; explain why it matters here");
   if(["task","problem"].includes(kind))add("attempt-settings","Attempt settings","Choose the mode, reported outcome and declared assistance");
   if(!["activity","relationship","artifact"].includes(kind))add("priority","Today priority","Pin, prioritize or quiet eligible work without changing completion");
   add("history","Learning history","Inspect preserved attempts, notes and evidence");add("connections","Connected context","Inspect source, prerequisites and related work");return items;
@@ -285,7 +286,7 @@ Rectangle {
   onExited:code=>{if(code!==0&&NoesisController.windowOpen&&!root.watchTransition)NoesisController.error="Filesystem watch stopped; refresh to reconcile."}}
  Timer {id:refresh;interval:250;onTriggered:{root.send("reconcile",{paths:root.reconcileAll||root.changedPaths.length>1000?null:root.changedPaths});root.changedPaths=[];root.reconcileAll=false;}}
  Timer {id:searchDelay;interval:150;onTriggered:root.load(false)}
- Shortcut {sequence:"Ctrl+Return";enabled:root.contextTab==="Work"&&!!root.selected.id&&!NoesisController.working&&!root.modalOpen&&(!root.activeAttempt||evidence.text.trim()!=="");onActivated:root.contextAction(root.activeAttempt?"attempt-save":"attempt-start")}
+ Shortcut {sequence:"Ctrl+Return";enabled:!(root.convolutionWorking&&root.investigationWorking)&&root.contextTab==="Work"&&!!root.selected.id&&!NoesisController.working&&!root.modalOpen&&(!root.activeAttempt||evidence.text.trim()!=="");onActivated:root.contextAction(root.activeAttempt?"attempt-save":"attempt-start")}
  Shortcut {sequence:"Ctrl+.";enabled:!!root.selected.id&&!NoesisController.working&&root.contextActions().length>0;onActivated:actionDialog.begin(root.contextActions())}
  Shortcut {sequence:"Ctrl+N";onActivated:root.section==="Today"?root.quickCapture():createDialog.begin(root.section==="Lab"?"experiment":root.section==="Practice"?"task":"resource","")}
  Shortcut {sequence:"Ctrl+Shift+O";enabled:root.section==="Learn";onActivated:outlineDialog.begin(["course","path"].includes(root.workflow.kind)?root.selected:null)}
@@ -358,7 +359,7 @@ Rectangle {
       onOpenContext:row=>root.openWork(row)
       onToggleQuiet:{NoesisController.quiet=!NoesisController.quiet;NoesisController.savePreferences();root.load(false);}
       onClearPathScope:{NoesisController.setPathScope("");root.load(false);}
-      onStart:kind=>createDialog.begin(kind==="paper"?"resource":kind,"",false,kind==="paper"?"paper":kind==="resource"?"course":undefined)
+      onStart:kind=>{if(kind==="convolution-example")createDialog.beginConvolution();else createDialog.begin(kind==="paper"?"resource":kind,"",false,kind==="paper"?"paper":kind==="resource"?"course":undefined);}
       onBrowse:root.section="Library"
      }
      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:root.loading;text:"Loading your workspace…";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
@@ -403,7 +404,22 @@ Rectangle {
       onSavePlace:value=>root.saveEvent("study",{state:{position:value}})
       onReviewReadiness:row=>readinessDialog.begin(row)
      }
-     NoesisInvestigationPage {id:investigation;learningContext:root.learningContext;onReviewReadiness:row=>readinessDialog.begin(row);visible:root.investigationWorking;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:0;record:root.selected;lastAssessment:root.history.slice().reverse().find(event=>["attempt","review"].includes(event.event))||({});frontier:root.frontier;preview:root.documentPreview;claimCursor:root.workflow.claim_cursor||"";claimNewerCursor:root.workflow.claim_newer_cursor||"";claims:root.workflow.kind==="capability"?root.workflow.evidence||[]:[];notes:root.evidence.text;depth:root.selectedState.depth||root.selected.investigation?.depth||"normal";status:root.selectedState.status||root.selected.status||"active";attemptId:root.activeAttempt;referenceHidden:root.referenceHidden;busy:root.contextLoading||!NoesisController.hostReady||NoesisController.working||NoesisController.uncertainReceipt||NoesisController.exitRequested
+     NoesisConvolutionPage {id:convolutionPage;objectName:"convolution-page";workspace:root;visible:root.investigationWorking&&root.convolutionWorking;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:0;record:root.selected;frontier:root.frontier;learningContext:root.learningContext;notes:root.evidence.text;attemptId:root.activeAttempt;protectedReference:root.referenceHidden;lastAssessment:root.history.slice().reverse().find(event=>["attempt","review"].includes(event.event))||({});busy:root.contextLoading||!NoesisController.hostReady||NoesisController.working||NoesisController.uncertainReceipt||NoesisController.exitRequested
+      onConnectPrerequisite:prerequisiteDialog.begin(root.selected)
+      onNotesEdited:value=>{root.evidence.text=value;draftSave.restart();}
+      onOpenMember:row=>root.openWork(row)
+      onOpenNote:NoesisController.note(root.selected.path)
+      onAskQuestion:details=>{createDialog.begin("question",root.selected.id);createDialog.prefill(details);}
+      onPreserveNote:root.saveEvent("study",{state:{}})
+      onStartChanged:config=>root.saveEvent("attempt-start",{mode:"derive",scope:"Changed convolution case: "+convolutionPage.describe(config),convolution_case:config,assistance:["none"]})
+      onEvaluateAttempt:attemptSettings.open()
+      onShowHistory:root.contextTab="History"
+      onReviewEvidence:{if(convolutionPage.lastAssessment.id)evidenceDialog.begin(convolutionPage.lastAssessment);}
+      onInvestigateFailure:createDialog.begin("question",root.selected.id,false,"",convolutionPage.lastAssessment)
+      onRevealReference:root.contextAction("reference")
+     }
+     NoesisInvestigationPage {id:investigation;learningContext:root.learningContext;onReviewReadiness:row=>readinessDialog.begin(row);visible:root.investigationWorking&&!root.convolutionWorking;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:0;record:root.selected;lastAssessment:root.history.slice().reverse().find(event=>["attempt","review"].includes(event.event))||({});frontier:root.frontier;preview:root.documentPreview;claimCursor:root.workflow.claim_cursor||"";claimNewerCursor:root.workflow.claim_newer_cursor||"";claims:root.workflow.kind==="capability"?root.workflow.evidence||[]:[];notes:root.evidence.text;depth:root.selectedState.depth||root.selected.investigation?.depth||"normal";status:root.selectedState.status||root.selected.status||"active";attemptId:root.activeAttempt;referenceHidden:root.referenceHidden;busy:root.contextLoading||!NoesisController.hostReady||NoesisController.working||NoesisController.uncertainReceipt||NoesisController.exitRequested
+      onConnectPrerequisite:prerequisiteDialog.begin(root.selected)
       onNotesEdited:value=>{root.evidence.text=value;draftSave.restart();}
       onPreserveNote:root.saveEvent("study",{state:{}})
       onStartAttempt:root.saveEvent("attempt-start",{mode:"derive",scope:root.selected.title,assistance:["none"]})

@@ -666,3 +666,38 @@ Scoped installation tests pass: dry run, two idempotent installs, rollback,
 later-edit protection and unrelated-file preservation. Existing backend acceptance
 remains 130 core plus 16 compatibility tests from the preceding slice; these were
 not rerun for this QML-only continuation.
+
+## Convolution reference lesson, 2026-10-10
+
+- 137 core tests and 16 compatibility tests pass. New cases cover reversal, boundary,
+  stride, invalid inputs, protected-parent checks, prediction receipts, actual NumPy
+  match/mismatch, code revision/dirty state, duplicate execution refusal, interrupted
+  execution uncertainty and known-failure provenance.
+- Full native disposable journey passes: predict then reveal, keyboard boundary
+  manipulation, create Git implementation/ordinary Lab, actual matching/failing/
+  corrected code execution, native editor and isolated Obsidian return, actual figure,
+  protected changed-case failure, evidence-linked question, optional prerequisite
+  descent and exact question restart/return. No automatic competence claim.
+- Today’s editable example entry creates a durable concept only after Save. Existing
+  implementations are reopened after deletion of the local implementation preference;
+  Lab/code/evidence remain authoritative and are not duplicated. Ctrl+Enter performs
+  the native primary action.
+- Generic Frontier native regression passes independently of the lesson adapter.
+- Ten native lifecycle/fault cases pass: draft debounce, active mutation/import,
+  simulated handoff, failed save, forced termination, unavailable receipt and
+  interrupted import. Simulated handoff is labelled; convolution additionally tests
+  real tools. Scoped installer repeatability/rollback/later-edit protection passes.
+- Native before/after, arithmetic, Lab, restart and ScreenPad captures are retained
+  under `assets/convolution/`; 100/150/200% scales exercise reflow and scrolling.
+  Capture conditions and the short instrumented frame sample are in
+  `assets/convolution/acceptance.json`. This does not measure physical input latency
+  or a sustained learning session.
+- Actual `[1,2,3]` with `[2,1,-1]`: zero-boundary convolution `[5,7,1]`;
+  repeated-edge `[4,7,7]`. Executed matched NumPy results `[4,7,7]`; deliberately
+  wrong code `[0,0,0]` fails, corrected committed code matches. NumPy 2.5.3,
+  Python 3.14.7; tolerance rtol/atol 1e-10. Values are examples/agent validation,
+  not real sensor measurements or independently demonstrated owner understanding.
+
+Populated Zotero restoration, full cross-domain journeys, sustained desktop tests
+and the real owner learner trial remain release gates. Off-device configuration is
+owner-deferred; existing local recovery and historical acceptance remain authoritative.

@@ -559,8 +559,10 @@ def library_action(root,args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','host-request','host-lease']:
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','convolution-observe','convolution-prepare','convolution-check','host-request','host-lease']:
         p = commands.add_parser(cmd); p.add_argument('--vault')
+        if cmd in ('convolution-observe','convolution-prepare','convolution-check'):
+            p.add_argument('record_id');p.add_argument('--configuration',required=True);p.add_argument('--prediction',required=True);p.add_argument('--operation-id',required=True)
         if cmd == 'open-project':p.add_argument('record_id')
         if cmd == 'artifact-check':p.add_argument('record_id');p.add_argument('--operation-id')
         if cmd == 'zotero-import':p.add_argument('key');p.add_argument('--server-id')
@@ -703,6 +705,10 @@ def main():
         if args.command in ('resource','progress','attempt','import-csl','import-notes','record','link','event','capture','new','update','review','canvas','attach','practice','adopt','enable-drawing','promote'):
             from noesis.scopes import assert_unique
             assert_unique(root)
+        if args.command in ('convolution-observe','convolution-prepare','convolution-check'):
+            from noesis import convolution
+            action={'convolution-observe':convolution.observe,'convolution-prepare':convolution.prepare,'convolution-check':convolution.check}[args.command]
+            print(json.dumps(action(root,args.record_id,json.loads(args.configuration),args.prediction,args.operation_id)));return 0
         if args.command=='open-project':
             from noesis.development import command as development_command
             index=Index(root)

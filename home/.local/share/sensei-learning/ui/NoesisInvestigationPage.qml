@@ -7,6 +7,7 @@ ColumnLayout {
  property var record:({})
  property var learningContext:({})
  signal reviewReadiness(var row)
+ signal connectPrerequisite()
  property var frontier:({items:[]})
  property var preview:({blocks:[]})
  property var claims:[]
@@ -76,6 +77,7 @@ ColumnLayout {
     NoesisButton {visible:!root.referenceHidden&&(root.preview.blocks||[]).length>2;text:root.mechanismExpanded?"Collapse mechanism notes":"Read mechanism & source notes";onClicked:root.mechanismExpanded=!root.mechanismExpanded}
     NoesisButton {text:"Open derivation in Obsidian ↗";visible:!root.referenceHidden;enabled:!root.busy;onClicked:root.openNote()}
     NoesisButton {visible:root.attemptId;text:"Reveal reference deliberately";enabled:root.referenceHidden&&!root.busy;onClicked:root.revealReference()}
+    NoesisButton {text:"Connect a deeper mechanism";visible:!root.referenceHidden;enabled:!root.busy;onClicked:root.connectPrerequisite()}
     NoesisLearningContext {visible:!root.referenceHidden;Layout.fillWidth:true;context:Object.assign({},root.learningContext,{parents:[]});prerequisiteHeading:"Mechanisms that matter here";scopeLabel:"this investigation";busy:root.busy;onOpenContext:row=>root.openMember(row);onReviewReadiness:row=>root.reviewReadiness(row)}
     ColumnLayout {visible:!root.referenceHidden;Layout.fillWidth:true;spacing:NoesisStyle.sm
      Text {textFormat:Text.PlainText;Layout.fillWidth:true;text:"What the evidence supports";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
