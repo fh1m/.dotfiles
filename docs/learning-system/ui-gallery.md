@@ -96,6 +96,35 @@ After:
 
 ![Problem beside notes](assets/recovery-sprint/practice-second-display.png)
 
+## Keep a supporting source while working elsewhere
+
+The left pane keeps the earlier lesson; the right pane names the active lesson's
+shared draft. These are real native ScreenPad captures of disposable course records,
+including a long source used to verify scroll restoration. No learner achievement
+is represented. **Keep here**, **Follow active activity**, **Refresh kept context**
+and **Open kept activity on main** have explicit labels; no tooltips are required.
+
+![Kept source beside another activity's notes](assets/recovery-sprint/kept-lesson-beside-active-notes.png)
+
+At 200% text scale the controls reflow; the source scrolls and the notes retain their
+own region. One pane remains available when more reading width is useful.
+
+![Kept prerequisite context beside active notes](assets/recovery-sprint/kept-context-beside-active-notes.png)
+
+![Kept source at 200%](assets/recovery-sprint/kept-lesson-2.png)
+
+Unavailable records clear their previews. During a protected attempt, kept material
+is concealed; switching vaults does not substitute a record with a colliding UUID.
+
+![Missing source remains explicit](assets/recovery-sprint/kept-source-unavailable.png)
+
+![Protected attempt conceals supporting material](assets/recovery-sprint/kept-source-protected-attempt.png)
+
+Figures can also stay visible while the main page returns to Today. The chart is
+explicitly synthetic fixture data, not a Mongla measurement.
+
+![Kept Lab figures](assets/recovery-sprint/kept-lab-figures.png)
+
 ## Figures and interpretation
 
 The curve is explicitly illustrative fixture data, not an instrument measurement.
@@ -137,7 +166,7 @@ return, Close/restart draft recovery and compact reasoning access are checked by
 and [short rendering sample](assets/recovery-sprint/render-performance.json)
 record the measured conditions. Frame intervals are not physical input latency.
 Your sustained learner trial is still required. Rich maps, full equations and PDFs
-remain specialist-tool handoffs; unrelated records cannot yet be pinned per pane.
+remain specialist-tool handoffs; sources, context and figures can now be kept read-only per pane within their active owning vault. Notes always follow the active activity.
 
 Design references: [Linear's calmer interface](https://linear.app/now/behind-the-latest-design-refresh)
 for quiet chrome and predictable action locations; [Notion student dashboards](https://www.notion.com/templates/category/student-dashboards),

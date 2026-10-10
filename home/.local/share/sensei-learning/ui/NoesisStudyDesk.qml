@@ -21,16 +21,16 @@ PanelWindow {
  Connections {target:desk.workspace?.evidence;function onTextChanged(){desk.requestFrame();}}
  property bool split:true
  property bool enabledByUser:true
- readonly property bool hasSource:leftPane.view==="source"||(split&&rightPane.view==="source")
+ readonly property bool hasSource:!leftPane.isKept&&leftPane.view==="source"||(split&&!rightPane.isKept&&rightPane.view==="source")
  readonly property var deskScreen:Quickshell.screens.find(s=>s.name!==NoesisController.mainMonitor&&s.name==="DP-2")||null
  readonly property var studyMonitor:Hyprland.monitors.values.find(m=>m.name===NoesisController.mainMonitor)||null
  readonly property string activeWorkspace:studyMonitor?.lastIpcObject?.activeWorkspace?.name||studyMonitor?.activeWorkspace?.name||""
  Connections {target:Hyprland;function onRawEvent(event:HyprlandEvent):void{if(["workspace","focusedmon","moveworkspace","renameworkspace","monitoradded","monitorremoved"].includes(event.name)){Hyprland.refreshWorkspaces();Hyprland.refreshMonitors();}}}
  readonly property bool fixture:Quickshell.env("NOESIS_STUDY_DESK_FIXTURE")==="1"
- function restoreLayout(){let p=NoesisController.layouts.StudyDesk||{};if(leftPane.surfaces.includes(p.left_view))leftPane.view=p.left_view;if(rightPane.surfaces.includes(p.right_view))rightPane.view=p.right_view;if(typeof p.split==="boolean")split=p.split;if(typeof p.enabled==="boolean")enabledByUser=p.enabled;}
- function saveLayout(){NoesisController.layouts=Object.assign({},NoesisController.layouts,{StudyDesk:{left_view:leftPane.view,right_view:rightPane.view,split:split,enabled:enabledByUser,ratio:Math.min(.75,Math.max(.25,leftPane.width/Math.max(1,panes.width)))}});NoesisController.savePreferences();}
+ function restoreLayout(){let p=NoesisController.layouts.StudyDesk||{};for(let pair of [[leftPane,p.left_kept],[rightPane,p.right_kept]]){let value=pair[1];if(value?.version===1&&typeof value.id==="string"&&typeof value.vault==="string"&&typeof value.vault_id==="string"){pair[0].kept=value;pair[0].keptAnchors=(pair[0]===leftPane?p.left_kept_anchors:p.right_kept_anchors)||({source:0,context:0,figures:0});}}if(leftPane.surfaces.includes(p.left_view))leftPane.view=p.left_view;if(rightPane.surfaces.includes(p.right_view))rightPane.view=p.right_view;if(typeof p.split==="boolean")split=p.split;if(typeof p.enabled==="boolean")enabledByUser=p.enabled;}
+ function saveLayout(){NoesisController.layouts=Object.assign({},NoesisController.layouts,{StudyDesk:{left_view:leftPane.view,right_view:rightPane.view,left_kept:leftPane.kept,right_kept:rightPane.kept,left_kept_anchors:leftPane.keptAnchors,right_kept_anchors:rightPane.keptAnchors,split:split,enabled:enabledByUser,ratio:Math.min(.75,Math.max(.25,leftPane.width/Math.max(1,panes.width)))}});NoesisController.savePreferences();}
  Component.onCompleted:if(NoesisController.preferencesReady)restoreLayout()
- Connections {target:NoesisController;function onPreferencesReadyChanged(){if(NoesisController.preferencesReady)desk.restoreLayout();}}
+ Connections {target:NoesisController;function onPreferencesReadyChanged(){if(NoesisController.preferencesReady)desk.restoreLayout();}function onFlushRequested(){leftPane.flushLayout();rightPane.flushLayout();desk.saveLayout();}}
  screen:deskScreen
  visible:enabledByUser&&NoesisController.standalone&&NoesisController.windowOpen&&NoesisController.presentationMode==="fullscreen"&&deskScreen!==null&&(fixture||activeWorkspace===NoesisController.studyWorkspace)
  anchors {top:true;bottom:true;left:true;right:true}
@@ -60,5 +60,5 @@ PanelWindow {
 
   }
  }
- IpcHandler {target:"noesis-study-desk";function state():string{return JSON.stringify({frame_serial:desk.frameSerial,visible:desk.visible,screen:desk.screen?.name,width:desk.width,height:desk.height,view:desk.view,right_view:rightPane.view,left_label:leftPane.surfaceLabel,right_label:rightPane.surfaceLabel,split:desk.split,record:desk.workspace?.selected.id||"",source_blocks:leftPane.blocks.length,active_workspace:desk.activeWorkspace});}function repaintNow():int{desk.requestFrame();return desk.frameSerial;}function showView(value:string):void{if(leftPane.surfaces.includes(value)){leftPane.view=value;desk.saveLayout();}}}
+ IpcHandler {target:"noesis-study-desk";function state():string{return JSON.stringify({frame_serial:desk.frameSerial,visible:desk.visible,screen:desk.screen?.name,width:desk.width,height:desk.height,view:desk.view,right_view:rightPane.view,left_label:leftPane.surfaceLabel,right_label:rightPane.surfaceLabel,left_problem:leftPane.problem,right_problem:rightPane.problem,left_source_scroll:leftPane.sourceAnchor,split:desk.split,record:desk.workspace?.selected.id||"",left_kept:leftPane.kept.id||"",left_kept_ready:leftPane.keptReady,left_kept_scroll:leftPane.keptAnchors.source||0,left_kept_error:leftPane.keptError,left_kept_protected:leftPane.keptProtected,right_kept:rightPane.kept.id||"",source_blocks:leftPane.blocks.length,active_workspace:desk.activeWorkspace});}function repaintNow():int{desk.requestFrame();return desk.frameSerial;}function showView(value:string):void{if(leftPane.surfaces.includes(value)){leftPane.view=value;desk.saveLayout();}}}
 }

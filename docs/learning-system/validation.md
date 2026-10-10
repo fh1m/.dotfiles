@@ -634,3 +634,35 @@ failed preferences, simulated handoff, forced termination and unavailable receip
 do not promise graceful shutdown under power loss or establish actual specialist
 application return behavior. Scoped dry run, two idempotent installations, rollback,
 later-edit protection and unrelated-file preservation also pass.
+
+
+### 2026-10-10 — supporting context without changing draft ownership
+
+Native dual-display acceptance passes for per-pane Source, Context and Figures
+keeping. A kept lesson stays beside another lesson’s notes with exact owning vault
+and UUID. Tests cover native pointer selection, scroll preservation, source moves,
+missing/reappearing records, a colliding UUID in another owner, Hide/return and
+Close/restart, including closing during the scroll-save debounce. Notes always
+follow the active activity; kept content is read only and is concealed during
+protected attempts. The existing main worker supplies these projections. No second
+learning index or authoritative record schema was introduced.
+
+Actual compositor captures are retained in [the gallery](ui-gallery.md), including
+100%, 150% and 200% kept-source states, contextual prerequisites, unavailable source,
+protected attempt and synthetic Lab figure. Visual review confirms separated source
+and reasoning areas with reflowed controls; the 200% shallow ScreenPad leaves less
+reading height and relies on independent scrolling. This is not owner usability
+acceptance. Ordinary lesson navigation protection also now requires a nonempty
+matching active attempt, fixing concealment after Hide/return.
+
+The 189-frame studio sample is **16.52 ms p95**, process RSS **331588 KiB**,
+PSS **302425 KiB**. This three-second fixture measurement is not physical input
+latency, sustained memory evidence or a claim of improvement over earlier samples.
+Authentic executable YOLO/DSA/bottom-up/Mongla journeys, full multi-tool round trips,
+populated Zotero restoration and the owner learner trial remain incomplete.
+
+Native Frontier regression and all ten shutdown fault cases pass for this slice.
+Scoped installation tests pass: dry run, two idempotent installs, rollback,
+later-edit protection and unrelated-file preservation. Existing backend acceptance
+remains 130 core plus 16 compatibility tests from the preceding slice; these were
+not rerun for this QML-only continuation.
