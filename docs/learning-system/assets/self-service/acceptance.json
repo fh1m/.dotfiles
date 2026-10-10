@@ -1,9 +1,9 @@
 {
-  "source_commit": "8fcb5a12569fcf6d5eef1420c268e63a1190a965",
+  "source_commit": "c75153858fe5c176449db1272cc8e1c79f9113cc",
   "dirty": true,
   "empty_vault": true,
   "record_creation": "native mouse and key interactions only",
-  "fixture": "/var/tmp/noesis-lifecycle-91kgsmrd",
+  "fixture": "/var/tmp/noesis-lifecycle-ah9ssg2x",
   "passed": [
     "Today start",
     "URL manual title",
@@ -34,6 +34,7 @@
     "owner usability not tested"
   ],
   "learner_achievement": false,
-  "code_revision": "920f43d059d392db69c3b10b924ee6a3a03541bf",
-  "executed_cases": 5
+  "code_revision": "d7f9d9c020191980c9ed04700afbd08e2d2e5388",
+  "executed_cases": 5,
+  "isolated_zotero_port": 23129
 }

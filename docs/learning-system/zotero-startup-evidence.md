@@ -27,3 +27,7 @@ A separate disposable application-copy check passed dry run, application, idempo
 Minimal managed vaults need no legacy `types` map: bibliography imports now use the supported `Notes` fallback. Source-supplied ISO dates and publication names are retained without invented metadata. The empty-vault native bibliography journey is separate from PDF attachment/annotation-specific navigation.
 
 Native annotation selection and precise page return remain acceptance gates. The broader interruption/storage/fault matrix and real learner trial also remain open. Local restoration success is not off-device protection; off-device configuration is deferred by the owner. Code execution is not demonstrated learner understanding.
+
+## Actual personal-profile connection
+
+The personal profile had the local API disabled by the vendor default. While Zotero was closed, only that preference was enabled, with a private preference backup at `/home/fh1m/.local/state/noesis-zotero-compat/local-api-20261010-201902/manifest.json`. The installed native application then started successfully and both root API and populated-item GET requests passed. No personal library writes were performed. Zotero was left open for the owner. Enabling the local API does not authorize Noesis to write bibliography data; its adapter remains GET-only.

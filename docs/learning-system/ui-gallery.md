@@ -280,3 +280,13 @@ for course-centered organization. Marketplace popularity is not a verified usage
 ![Fullscreen Start learning at 200% application scale](assets/self-service/start-learning-200-percent.png)
 
 ![Native ScreenPad](assets/self-service/screenpad.png)
+
+### Typography and reachable search
+
+Bundled Zed Sans Regular/Bold/Italic, shared scale tokens, Zed Mono for code. Qt native FontInfo confirms actual faces; main 1920×1080 and ScreenPad 1920×550 logical, DPR 2.
+
+![Visible search to Start learning](assets/self-service/search-start-route.png)
+
+![Bangla and mathematical notation in native input](assets/self-service/unicode-typography.png)
+
+![Unavailable PDF reports an error without losing its record](assets/self-service/unavailable-source-error.png)

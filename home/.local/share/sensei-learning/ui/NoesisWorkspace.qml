@@ -88,7 +88,7 @@ Rectangle {
  function loadAnnotations(cursor,projection){annotationSerial=send("annotations",{record_id:selected.id,cursor:cursor,projection:projection||workflow.projection||selected.zotero_projection});}
  property var learningContext:({})
  property var activityHead:null
- readonly property bool modalOpen:windowLayerOpen||practicePage.contextOpen||[priorityDialog,navigationActions,pendingExit,navigationDrawer,inspectorDrawer,searchPopup,settingsDialog,attemptSettings,captureDialog,createDialog,prerequisiteDialog,readinessDialog,reviewDialog,comparisonDialog,evidenceDialog,materialDialog,outlineDialog,actionDialog,startDialog].some(dialog=>dialog.opened||dialog.visible)
+ readonly property bool modalOpen:windowLayerOpen||practicePage.contextOpen||[priorityDialog,navigationActions,pendingExit,navigationDrawer,inspectorDrawer,searchPopup,helpDialog,learningStart,zoteroDialog,settingsDialog,attemptSettings,captureDialog,createDialog,prerequisiteDialog,readinessDialog,reviewDialog,comparisonDialog,evidenceDialog,materialDialog,outlineDialog,actionDialog,startDialog].some(dialog=>dialog.opened||dialog.visible)
  readonly property int loadedFigures:experimentContext.loadedFigures
  readonly property bool checkOpen:reviewDialog.opened
  readonly property bool priorityOpen:priorityDialog.opened
@@ -303,7 +303,7 @@ Rectangle {
  Shortcut {sequence:"Ctrl+PgUp";enabled:["Read","Work"].includes(root.contextTab)&&!!root.selected.id&&!root.modalOpen;onActivated:{let bar=(root.contextTab==="Work"?practiceHost:readScroll).ScrollBar.vertical;bar.position=Math.max(0,bar.position-bar.size*.85);}}
  Shortcut {sequence:"Ctrl+Shift+F";enabled:!!root.selected.id&&!root.modalOpen;onActivated:root.toggleFocus()}
  Shortcut {sequence:"Escape";enabled:root.focusMode&&!root.modalOpen;onActivated:root.focusMode=false}
- Shortcut {sequence:"Ctrl+K";onActivated:{if(root.compact)searchPopup.open();else search.forceActiveFocus();}}
+ Shortcut {sequence:"Ctrl+K";onActivated:{searchPopup.open();}}
  Shortcut {sequence:"Ctrl+Shift+N";onActivated:root.quickCapture()}
  Shortcut {sequence:"Ctrl+1";onActivated:root.section="Today"}
  Shortcut {sequence:"Ctrl+2";onActivated:root.section="Learn"}
@@ -324,7 +324,7 @@ Rectangle {
     Repeater {model:root.sections;delegate:NoesisButton {required property string modelData;variant:"tertiary";text:modelData;Layout.fillWidth:true;textAlignment:Text.AlignLeft;highlighted:root.section===modelData;onClicked:root.section=modelData;Accessible.name:modelData+" workspace";hint:"Ctrl+"+(root.sections.indexOf(modelData)+1)}}
     Item {Layout.fillHeight:true}
     NoesisButton {text:"Quick capture";visible:root.section!=="Today";Layout.fillWidth:true;textAlignment:Text.AlignLeft;onClicked:root.quickCapture();hint:"Ctrl+Shift+N"}
-    NoesisButton {text:"Find anything";Layout.fillWidth:true;textAlignment:Text.AlignLeft;onClicked:search.forceActiveFocus();hint:"Ctrl+K"}
+    NoesisButton {text:"Find anything";Layout.fillWidth:true;textAlignment:Text.AlignLeft;onClicked:searchPopup.open();hint:"Ctrl+K"}
     Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"VAULT";color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;Layout.topMargin:NoesisStyle.lg}
     NoesisSelect {Layout.fillWidth:true;model:(NoesisController.state.vaults||[]).map(v=>v.name);currentIndex:(NoesisController.state.vaults||[]).findIndex(v=>v.path===NoesisController.activeVault);onActivated:{let v=NoesisController.state.vaults[currentIndex];if(v)NoesisController.choose(v.path);}}
    }

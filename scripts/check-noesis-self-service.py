@@ -66,7 +66,9 @@ def capture(name):
  assert path.exists()
 try:
  from noesis_self_service_zotero import SourceLibrary
- source_library=SourceLibrary(f.home)
+ source_library=SourceLibrary(f.home,port=23129)
+ # Test-owned endpoint only: never reuse the owner's running Zotero on 23119.
+ adapter=f.home/'.local/share/sensei-learning/noesis/zotero.py';adapter.write_text(adapter.read_text().replace('127.0.0.1:23119','127.0.0.1:23129'))
  f.start(resume=True);f.ipc('journey-fixture','init');time.sleep(1)
  if '--zotero-only' not in sys.argv:
   capture('empty-today');click('Help');time.sleep(.4);capture('user-guide');click('Close guide')

@@ -1,10 +1,34 @@
 {
+  "resolved_fonts": {
+    "ui": "Zed Sans",
+    "ui_style": "Regular",
+    "bold": "Zed Sans",
+    "bold_style": "Bold",
+    "code": "ZedMono Nerd Font Mono",
+    "code_fixed_pitch": true
+  },
+  "bangla_math_unicode_input": true,
+  "normal_logical_size": [
+    1440,
+    880
+  ],
+  "main_logical_fullscreen": [
+    1920,
+    1080
+  ],
+  "screenpad_logical": [
+    1920,
+    550
+  ],
+  "device_pixel_ratio": 2,
+  "search_start_route": true,
+  "missing_pdf_handoff_reports_error": true,
   "exact_record_restart": true,
   "start_draft_close_restart": true,
   "fullscreen": true,
   "interface_reading_scale_200_percent": true,
   "screenpad_owned_native_capture": true,
-  "frame_p95_ms": 16.263243,
+  "frame_p95_ms": 16.253165,
   "frame_samples": 64,
   "physical_input_latency_measured": false,
   "learner_achievement": false
