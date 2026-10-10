@@ -55,6 +55,12 @@ def serve(resolve):
                     result['preview']=preview(result['body'],result['display_title'])
                     result['body_truncated'] = len(result['body']) > 32000
                     result['body'] = result['body'][:32000]
+                elif action == 'claims':
+                    from .frontier import claim_page
+                    result = claim_page(index, request['record_id'], request.get('cursor'))
+                elif action == 'frontier':
+                    from .frontier import frontier
+                    result = frontier(index, request['record_id'], request.get('cursor'))
                 elif action == 'outline':
                     from .courses import outline
                     result=outline(index,request['record_id'],request.get('cursor') or 0)

@@ -2,6 +2,10 @@
 
 **Study → attempt → understand → build → revisit.** A connected learning workspace, not another pile of tabs.
 
+[Concept investigation and Knowledge Frontier: native before/after review](ui-gallery.md#concept-investigation-and-knowledge-frontier).
+The [current learning-engine slice](frontier-evidence.md) keeps claims scoped to actual
+evidence and carries the remaining release gates forward.
+
 ![Noesis on the main display](assets/noesis-workspace.png)
 
 ## Start

@@ -190,10 +190,12 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
             if event == 'capability-decision':
                 if fields.get('actor') != 'learner':
                     raise ValueError('Capability acceptance requires an explicit learner decision')
-                if props.get('type') != 'capability' or not fields.get('criterion') or not fields.get('evidence_id') or not evidence.strip():
+                if props.get('type') != 'capability' or not fields.get('criterion') or not (fields.get('evidence_id') or fields.get('evidence_refs')) or not evidence.strip():
                     raise ValueError('Learner capability decision needs capability, criterion, evidence ID and explanation')
                 if fields.get('decision') not in ('accept', 'reject', 'withdraw'):
                     raise ValueError('Explicit accept, reject or withdraw decision required')
+                from .frontier import validate_claim
+                validate_claim(index, identity, fields)
             if fields.get('session'):
                 session = index.record(fields['session'])
                 if session['props'].get('type') not in ('session', 'practice-session'):
@@ -228,7 +230,7 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                 state, previous = progress_state(props, index.timeline(identity))
                 update = fields.pop('state')
                 if event in ('session-state', 'disposition') and isinstance(update, str):update = {'status': update}
-                if not isinstance(update, dict) or set(update) - {'progress_current', 'progress_total', 'position', 'status', 'reading_pass', 'locator','pin','manual_priority'}:
+                if not isinstance(update, dict) or set(update) - {'progress_current', 'progress_total', 'position', 'status', 'reading_pass', 'locator','pin','manual_priority','depth'}:
                     raise ValueError('Invalid study state fields')
                 if set(update)&{'pin','manual_priority'} and event!='disposition':
                     raise ValueError('Manual guidance controls require an explicit disposition')
@@ -239,6 +241,9 @@ def record_activity(root, relative, event, evidence='', operation_id=None, **fie
                     update['locator'],update['position']=normalize_locator(update['locator'])
                 if update.get('reading_pass') is not None and update['reading_pass'] not in ('survey','detail','reconstruct','verify'):
                     raise ValueError('Unsupported reading pass')
+                if 'depth' in update:
+                    from .frontier import DEPTHS
+                    if update['depth'] not in DEPTHS:raise ValueError('Choose quick, normal, deep or research-grade investigation depth')
                 if 'position' in update and 'locator' not in update:update['locator']=None
                 state.update(update)
                 from .materials import source_snapshot
