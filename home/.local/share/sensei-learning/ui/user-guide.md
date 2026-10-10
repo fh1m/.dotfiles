@@ -17,6 +17,8 @@ Choose **Start learning** in the toolbar, or press **Ctrl+N**. Paste a URL or en
 - **Article / Documentation:** choose the format, save its URL, then use **Open original source**. Capture your explanation alongside the bounded native preview. Noesis is not a browser.
 - **Paper / PDF:** choose a local file or use Zotero search. A manually entered paper is not automatically a Zotero bibliography. Zotero imports preserve source identity and annotations; repeat imports must retain authored analysis.
 
+Keep Zotero running for **Choose from Zotero**. Its local API must be enabled in Zotero’s Advanced settings; Noesis uses read-only requests and does not require permission to write to the bibliography. If Zotero is unavailable, use the original URL/file and import later.
+
 Use **Set a reading place**, enter a page, section or timestamp, and **Save reading place**. Saved places are context, not proof that a lesson was understood. Use **Ask a source-linked question** to preserve uncertainty. **Save study note** preserves your explanation in activity history.
 
 ## Rich thinking in Obsidian
@@ -50,6 +52,8 @@ The Study desk follows your selected activity. Choose source, context, notes, fi
 ## Search, ownership and settings
 
 **Ctrl+K** opens search and also offers Start learning from a new source. [Find existing work](noesis:search). Today and Library can show **This vault** or the already authorized learning collection. Opening a cross-vault result selects its actual owner; saves retain that owner. Newly discovered storage is not automatically authorized.
+
+Noesis uses bundled Zed Sans for UI and reading, and Zed Mono for code. Headings, controls, notes and the ScreenPad share the same type tokens.
 
 Settings control interface and reading scales, window presentation and workspace preferences. Study fullscreen uses the configured main display with a fallback. Existing external windows are not forcibly moved.
 

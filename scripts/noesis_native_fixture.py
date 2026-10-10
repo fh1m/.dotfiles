@@ -9,6 +9,12 @@ class Fixture:
   self.expected_practice_rows=expected_practice_rows
   self.home=Path(tempfile.mkdtemp(prefix='noesis-lifecycle-'));installer.install(self.home,True)
   self.env=dict(os.environ,HOME=str(self.home),XDG_CONFIG_HOME=str(self.home/'.config'),XDG_CACHE_HOME=str(self.home/'.cache'),XDG_STATE_HOME=str(self.home/'.local/state'),NOESIS_WINDOW_MODE='normal',QS_DISABLE_CRASH_HANDLER='1',NOESIS_QS=QS)
+  # Fonts are read-only desktop assets, not personal learning content. Preserve
+  # actual font coverage even though this fixture uses an isolated HOME.
+  from xml.sax.saxutils import escape
+  font_config=self.home/'fontconfig.xml'
+  font_config.write_text('<fontconfig><include>/etc/fonts/fonts.conf</include>'+''.join('<dir>'+escape(str(Path.home()/directory))+'</dir>' for directory in ('.fonts','.local/share/fonts'))+'</fontconfig>')
+  self.env['FONTCONFIG_FILE']=str(font_config)
   self.vault=self.home/'vault';(self.vault/'System').mkdir(parents=True)
   self.vault_id=str(uuid.uuid4());self.record_id=str(uuid.uuid4())
   (self.vault/'System/System.json').write_text(json.dumps({'directories':['Notes'],'noesis_schema':2,'vault_id':self.vault_id}))

@@ -1,0 +1,11 @@
+{
+  "source": "https://github.com/zed-industries/zed-fonts/releases/tag/1.2.0",
+  "release": "1.2.0",
+  "license": "SIL Open Font License 1.1",
+  "sha256": {
+    "zed-sans-italic.ttf": "9eea448d1951aa46f887683d8e5f29780c38f53aacc92484a8cc30ee0a1260ac",
+    "zed-sans-bold.ttf": "1bcf85be4773ae993314a8bef6f1b3dc85a61bd0ed809063cf596da5348ae969",
+    "zed-sans-regular.ttf": "110d1a500b2c5dc0d30474b91f1d4e41f1cde5af499b6cdb62327e89e4cbed6b",
+    "zed-sans-bolditalic.ttf": "a82dd55aa150841e01dfe84bbd8e4135e8866a88df46e042a91a5baa112ce5b7"
+  }
+}

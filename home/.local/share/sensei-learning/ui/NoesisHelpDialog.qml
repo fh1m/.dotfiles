@@ -18,7 +18,7 @@ NoesisDialog {
   Repeater {model:[{file:"start-learning",label:"Start from a source or your own question"},{file:"documentation-workspace",label:"Keep the source, notes and questions connected"},{file:"prerequisite-question",label:"Investigate a mechanism and return to your question"}]
    delegate:ColumnLayout {required property var modelData;Layout.fillWidth:true;spacing:NoesisStyle.sm
     Text {Layout.fillWidth:true;text:modelData.label;wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading}
-    Image {Layout.fillWidth:true;Layout.preferredHeight:width*.61;source:Qt.resolvedUrl("guide-images/"+modelData.file+".png");fillMode:Image.PreserveAspectFit;asynchronous:true;Accessible.name:modelData.label+" · agent-labelled disposable native screenshot"}
+    Image {Layout.fillWidth:true;Layout.preferredHeight:width*.61;source:root.visible?Qt.resolvedUrl("guide-images/"+modelData.file+".png"):"";sourceSize.width:Math.min(1600,Math.ceil(width*Screen.devicePixelRatio));fillMode:Image.PreserveAspectFit;asynchronous:true;Accessible.name:modelData.label+" · agent-labelled disposable native screenshot"}
     NoesisButton {text:"View full screenshot";onClicked:Quickshell.execDetached(["xdg-open",String(Qt.resolvedUrl("guide-images/"+modelData.file+".png"))])}
    }
   }

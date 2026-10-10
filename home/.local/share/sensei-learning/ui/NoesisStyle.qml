@@ -4,7 +4,11 @@ import Quickshell
 Singleton {
  property real interfaceScale:1
  property real readingScale:1
- readonly property string uiFont:"Zed Sans"
+ FontLoader {id:regularFace;source:Qt.resolvedUrl("fonts/zed-sans-regular.ttf")}
+ FontLoader {source:Qt.resolvedUrl("fonts/zed-sans-bold.ttf")}
+ FontLoader {source:Qt.resolvedUrl("fonts/zed-sans-italic.ttf")}
+ FontLoader {source:Qt.resolvedUrl("fonts/zed-sans-bolditalic.ttf")}
+ readonly property string uiFont:regularFace.name||"Zed Sans"
  readonly property string codeFont:"ZedMono Nerd Font Mono"
  readonly property int caption:Math.round(13*interfaceScale)
  readonly property int label:Math.round(14*interfaceScale)
