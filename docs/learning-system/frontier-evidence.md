@@ -53,7 +53,7 @@ and [captured conditions](assets/frontier/after.json) retain the native window r
 The fixture adds an equivalent Item viewport around existing application content so
 native popup overlays are included in capture. Images are not composed mockups or
 captures of personal vaults. Main-display DPR is 2; application text scale is recorded
-separately. A 177-frame instrumented sample measured p95 17.223 ms. This is frame
+separately. A 184-frame instrumented sample measured p95 17.158 ms. This is frame
 interval, not physical input latency or sustained human-use acceptance.
 
 The synthetic 10,000-record benchmark measured rebuild 3.554 s, query p95 29.641 ms,
@@ -62,6 +62,16 @@ Existing shutdown checks passed all ten debounce, pending mutation/import, faile
 uncertain-receipt and forced-exit scenarios. Scoped installer checks passed two installs,
 rollback and protection of later edits/unrelated files. Tests do not establish educational
 effectiveness.
+
+## Owner feedback and response
+
+The owner reported that starting reconstruction, finding missing mechanisms and
+judging evidence were all unclear. The page now states the sequence directly, uses
+‘Try explaining without notes’, ‘Questions still open’ and ‘Assess what this attempt
+demonstrates’, and explains when assessment becomes available. A saved result is
+required before that action is enabled. Study-depth settings are collapsed by default.
+Native interaction checks passed after this change; the owner has not yet confirmed
+that it resolves the usability problem in actual learning.
 
 ## Release boundary and remaining work
 

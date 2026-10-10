@@ -174,7 +174,7 @@ try:
         state = json.loads(fixture.ipc('frontier-fixture', 'state'))
         assert state['investigation'] and len(state['frontier']['items']) >= 4, state
         assert fixture.ipc('frontier-fixture', 'typeNotes').lower().startswith('pad')
-        assert fixture.ipc('frontier-fixture', 'click', 'Start independent reconstruction') == 'clicked'
+        assert fixture.ipc('frontier-fixture', 'click', 'Try explaining without notes') == 'clicked'
         fixture.wait(lambda state: bool(state['attempt']) and state['reference_hidden'])
         capture('reconstruction-protected')
         fixture.ipc('noesis','hide')
@@ -201,13 +201,13 @@ try:
         capture('concept-200-reasoning')
         fixture.ipc('frontier-fixture', 'scale', '1')
         time.sleep(.3)
-        assert fixture.ipc('frontier-fixture', 'click', 'Record reconstruction result') == 'clicked'
+        assert fixture.ipc('frontier-fixture', 'click', 'Record how the attempt went') == 'clicked'
         time.sleep(.25)
         result=fixture.ipc('frontier-fixture', 'choose', 'attempt-outcome', '3');assert result == 'partial', result
         assert fixture.ipc('frontier-fixture', 'choose', 'attempt-assistance', '1') == 'none'
         assert fixture.ipc('frontier-fixture', 'click', 'Save reconstruction result') == 'clicked'
         fixture.wait(lambda state: not state['attempt'] and not state['working'] and 'attempt' in json.loads(fixture.ipc('frontier-fixture','state'))['history'])
-        assert fixture.ipc('frontier-fixture', 'click', 'Make an understanding claim') == 'clicked'
+        assert fixture.ipc('frontier-fixture', 'click', 'Assess what this attempt demonstrates') == 'clicked'
         time.sleep(.5)
         capture('claim-picker')
         result=fixture.ipc('frontier-fixture', 'clickName', 'claim-capability-row');assert result == 'clicked', (result, fixture.state(), fixture.ipc('frontier-fixture','debug'))
