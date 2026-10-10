@@ -65,6 +65,8 @@ def create(root, kind, title, body='', fields=None, parent_id=None, relation='co
                 parent=index.record(parent_id,include_body=False,include_attempt=False)['props']
                 repository=parent.get('repository') or (parent.get('code_snapshot') or {}).get('repository')
                 if kind=='experiment' and repository:
+                    if parent.get('code_entrypoint') and not fields.get('code_entrypoint'):
+                        fields['code_entrypoint']=parent['code_entrypoint']
                     from .development import snapshot
                     try:fields['code_snapshot']=snapshot(repository)
                     except (ValueError,OSError):fields['code_snapshot']={'repository':repository,'availability':'unavailable'}

@@ -2,6 +2,8 @@ import json, sys, tempfile, unittest, uuid
 from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'home/.local/share/sensei-learning'))
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"scripts"))
+from noesis_authored_examples import CONVOLUTION
 from noesis import convolution as c
 from noesis.activities import record_activity,operation_status
 from noesis.models import create
@@ -14,6 +16,9 @@ class Convolution(unittest.TestCase):
  def tearDown(self):self.p.stop();self.tmp.cleanup()
  def test_boundaries_reversal_and_stride(self):
   self.assertEqual(c.calculate(self.config)['outputs'],[5,7,1]);self.assertEqual(c.calculate(dict(self.config,boundary='edge'))['outputs'],[4,7,7]);self.assertEqual(c.calculate(dict(self.config,convention='correlation'))['outputs'],[-1,1,7]);self.assertEqual(c.calculate(dict(self.config,stride=2))['outputs'],[5,1])
+ def test_starter_is_unaided(self):
+  self.assertIn("NotImplementedError",c.TEMPLATE)
+  self.assertNotIn("weights =",c.TEMPLATE)
  def test_invalid_inputs(self):
   for change in ({'kernel':[1,2]},{'stride':True},{'signal':[1,2,float('nan')]},{'boundary':'reflect'},{'kernel':[1000]}):
    with self.assertRaises(ValueError):c.calculate(dict(self.config,**change))
@@ -22,7 +27,9 @@ class Convolution(unittest.TestCase):
   build=c.prepare(self.root,self.concept['id'],self.config,'Predict matched conventions',str(uuid.uuid4()));record_activity(self.root,self.concept['path'],'attempt-start',assistance=['none'])
   with self.assertRaisesRegex(ValueError,'protected'):c.check(self.root,build['id'],self.config,'Predict match',str(uuid.uuid4()))
  def test_execution_is_actual_and_never_replays(self):
-  build_op=str(uuid.uuid4());build=c.prepare(self.root,self.concept['id'],self.config,'Predict matched conventions',build_op);self.assertEqual(c.prepare(self.root,self.concept['id'],self.config,'Predict matched conventions',build_op)['id'],build['id']);op=str(uuid.uuid4());a=c.check(self.root,build['id'],self.config,'Predict match',op);self.assertTrue(a['observed']['agrees']);self.assertEqual(a['observed']['actual'],[5,7,1]);self.assertEqual(a['observed']['oracle'],[5,7,1]);self.assertFalse(a['observed']['code_snapshot']['dirty']);self.assertEqual(operation_status(self.root,op)['status'],'committed')
+  build_op=str(uuid.uuid4());build=c.prepare(self.root,self.concept['id'],self.config,'Predict matched conventions',build_op);self.assertEqual(c.prepare(self.root,self.concept['id'],self.config,'Predict matched conventions',build_op)['id'],build['id']);script=Path(build["repository"])/"convolution.py";script.write_text(CONVOLUTION);
+  import subprocess
+  subprocess.run(["git","-C",build["repository"],"add","convolution.py"],check=True);subprocess.run(["git","-C",build["repository"],"-c","user.name=Agent validation","-c","user.email=test@invalid.example","commit","-qm","Agent-authored reconstruction"],check=True);op=str(uuid.uuid4());a=c.check(self.root,build['id'],self.config,'Predict match',op);self.assertTrue(a['observed']['agrees']);self.assertEqual(a['observed']['actual'],[5,7,1]);self.assertEqual(a['observed']['oracle'],[5,7,1]);self.assertFalse(a['observed']['code_snapshot']['dirty']);self.assertEqual(operation_status(self.root,op)['status'],'committed')
   with self.assertRaisesRegex(ValueError,'already committed'):c.check(self.root,build['id'],self.config,'Predict match',op)
   script=Path(build['repository'])/'convolution.py';script.write_text('def convolve(*args): return [0,0,0]\n');a=c.check(self.root,build['id'],self.config,'Predict mismatch',str(uuid.uuid4()));self.assertFalse(a['observed']['agrees']);self.assertTrue(a['observed']['code_snapshot']['dirty'])
  def test_interrupted_reservation_stays_uncertain(self):

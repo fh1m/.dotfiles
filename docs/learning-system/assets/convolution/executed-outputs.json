@@ -32,13 +32,13 @@
       },
       "prediction": "agent example predicts repeated samples alter both edges",
       "code_snapshot": {
-        "repository": "/var/tmp/noesis-lifecycle-43eat878/vault/Implementations/Convolution/3cde93d6-49b1-40e9-8ced-440181638452",
-        "commit": "51b8f04eb6d21a6d3c304ec93705eea90b425f67",
+        "repository": "/var/tmp/noesis-lifecycle-11v_fyi5/vault/Implementations/Convolution/f50908c3-392b-4683-9476-74edd69ef8ee",
+        "commit": "534aa80ab7f0a18209fb584a0b38fad71e7c8bec",
         "dirty": false,
-        "observed_at": "2026-10-10T06:34:13.067698+00:00",
+        "observed_at": "2026-10-10T13:02:01.791777+00:00",
         "authority": "Git working tree; uncommitted changes are not captured by the commit"
       },
-      "code_sha256": "2c3ac382473972929e480ad5ad187d26966d6557ef793bb0589d4d1806f89ba1",
+      "code_sha256": "b00ac2a9e699e10e7a53da27533efe8fc170c20fe3139e693b13fc941d45af86",
       "execution": "explicit local Python invocation",
       "learner_achievement": false,
       "starter_authorship": "Noesis supplied; not learner-authored",
@@ -78,10 +78,10 @@
       },
       "prediction": "agent example predicts repeated samples alter both edges",
       "code_snapshot": {
-        "repository": "/var/tmp/noesis-lifecycle-43eat878/vault/Implementations/Convolution/3cde93d6-49b1-40e9-8ced-440181638452",
-        "commit": "f5fe20ab7a2afe1a7819eca479d4db3a7ba345c6",
+        "repository": "/var/tmp/noesis-lifecycle-11v_fyi5/vault/Implementations/Convolution/f50908c3-392b-4683-9476-74edd69ef8ee",
+        "commit": "c090e7c68908b518d556c8780ee254d6521fa3af",
         "dirty": false,
-        "observed_at": "2026-10-10T06:34:18.306651+00:00",
+        "observed_at": "2026-10-10T13:02:07.083716+00:00",
         "authority": "Git working tree; uncommitted changes are not captured by the commit"
       },
       "code_sha256": "703a62d43c5df726a46faaa7b287d4fb6c391fb5376962b5ce08a381cb7dbd8d",
@@ -124,10 +124,10 @@
       },
       "prediction": "agent example predicts repeated samples alter both edges",
       "code_snapshot": {
-        "repository": "/var/tmp/noesis-lifecycle-43eat878/vault/Implementations/Convolution/3cde93d6-49b1-40e9-8ced-440181638452",
-        "commit": "0a6493bc71df0bd6343fcae954c6531f239979b1",
+        "repository": "/var/tmp/noesis-lifecycle-11v_fyi5/vault/Implementations/Convolution/f50908c3-392b-4683-9476-74edd69ef8ee",
+        "commit": "dfa2975e30727f8e98edd069af466e1a1fa88426",
         "dirty": false,
-        "observed_at": "2026-10-10T06:34:20.438327+00:00",
+        "observed_at": "2026-10-10T13:02:09.289728+00:00",
         "authority": "Git working tree; uncommitted changes are not captured by the commit"
       },
       "code_sha256": "aefc6ab4b087d464e0fcf6f472aa3b7232d6015ce87608794d54eef19d3dbb77",

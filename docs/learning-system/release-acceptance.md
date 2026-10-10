@@ -105,3 +105,12 @@ one reference lesson's software journey, not YOLO, DSA, Mongla or the entire P0â
 release. The populated Zotero restore regression remains unresolved. Owner learner
 understanding, delayed retention and sustained usability require personal testing.
 Off-device configuration remains explicitly deferred by owner.
+
+### Dijkstra software slice
+
+The [Dijkstra acceptance](dijkstra-evidence.md) now demonstrates the shared
+Practice/Frontier/Git/Lab learning thread in a second domain, with real executions,
+assistance-preserving transfer and restart. It does not close P0â€“P8, certify the
+owner's learning, resolve Zotero restoration, or implement YOLO/ADRC. Human
+usability and unfamiliar independent transfer remain owner-trial acceptance.
+Off-device backup configuration remains explicitly deferred by owner.

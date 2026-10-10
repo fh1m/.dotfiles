@@ -37,4 +37,4 @@ def command(props):
         file=contained(Path(state['repository']),entry)
         if not file.is_file():raise ValueError('Code entry point is unavailable; the repository reference is preserved')
     return [str(terminal),'--title','Noesis · '+str(props.get('title','Implementation')),
-            '--working-directory',state['repository'],'-e','nvim',entry or '.']
+            '--working-directory',state['repository'],'-e','nvim',*(['--',entry] if entry else ['.'])]

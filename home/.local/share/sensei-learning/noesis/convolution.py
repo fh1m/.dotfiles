@@ -71,22 +71,13 @@ def observe(root, identity, value, prediction, operation_id):
         learner_achievement=False)
 
 
-TEMPLATE = '''"""Starter supplied by Noesis. Reconstruct/replace it; its authorship is not yours.
+TEMPLATE = ''''"""Unaided reconstruction skeleton supplied by Noesis, not learner work.
 Centered odd kernel; same-length centers, explicit padding and optional subsampling.
+convolution reverses the kernel; correlation keeps its written order.
+Implement the mechanism yourself before running the explicit comparison.
 """
 def convolve(signal, kernel, boundary="zero", stride=1, convention="convolution"):
-    weights = kernel[::-1] if convention == "convolution" else kernel
-    radius = len(kernel) // 2
-    output = []
-    for center in range(0, len(signal), stride):
-        total = 0
-        for j, weight in enumerate(weights):
-            i = center + j - radius
-            sample = signal[i] if 0 <= i < len(signal) else (
-                0 if boundary == "zero" else signal[max(0, min(len(signal)-1, i))])
-            total += sample * weight
-        output.append(total)
-    return output
+    raise NotImplementedError("Reconstruct weighted sampling, boundary handling and stride here")
 '''
 
 # This runner owns the oracle. The editable implementation cannot submit a self-reported verdict.
@@ -128,12 +119,12 @@ def prepare(root, identity, value, prediction, operation_id):
             directory.mkdir(parents=True)
             publish(directory/'convolution.py', TEMPLATE)
             publish(directory/'.gitignore', 'observations/\n__pycache__/\n')
-            publish(directory/'README.md', '# Convolution reconstruction\n\nStarter authored by Noesis; execution is not understanding.\n\nEdit convolution.py, commit your revision, then use Run local comparison in Noesis.\nOracle: explicit radius padding → NumPy valid convolution/correlation → stride subsampling.\n')
+            publish(directory/'README.md', '# Convolution reconstruction\n\nEmpty reconstruction skeleton supplied by Noesis; no completed algorithm is included. Execution is not understanding.\n\nEdit convolution.py, commit your revision, then use Run local comparison in Noesis.\nOracle: explicit radius padding → NumPy valid convolution/correlation → stride subsampling.\n')
             subprocess.run(['git','init','-q',str(directory)],check=True)
             subprocess.run(['git','-C',str(directory),'add','.'],check=True)
             subprocess.run(['git','-C',str(directory),'-c','user.name=Noesis starter','-c','user.email=starter@invalid.example','commit','-qm','Noesis supplied convolution starter'],check=True)
     return create(root, 'experiment', 'Convolution · reconstruct and compare',
-        '## Original prediction\n'+prediction+'\n\n## Reconstruction\nOpen the implementation, replace the supplied starter, and commit your changes. Then run a matched comparison.\n',
+        '## Original prediction\n'+prediction+'\n\n## Reconstruction\nOpen the implementation, implement the empty skeleton, and commit your changes. Then run a matched comparison.\n',
         fields={'demo':'convolution-1d','repository':str(directory),'code_snapshot':snapshot(directory),
                 'configuration':c,'hypothesis':prediction,'code_entrypoint':'convolution.py','starter_authorship':'Noesis supplied; not learner-authored'},
         parent_id=identity, relation='references', operation_id=operation_id)

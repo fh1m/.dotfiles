@@ -1,0 +1,436 @@
+{
+  "authorship": "Agent-authored disposable acceptance, not owner understanding",
+  "executions": [
+    {
+      "stage": "skeleton",
+      "report": {
+        "evidence_kind": "software-test",
+        "learner_achievement": false,
+        "conventions": "directed graph, nonnegative integer weights, explicit isolated vertices, infinity for unreachable",
+        "implementation_sha256": "b525ebaf177172397e65383af0e030d42db9e80fc3c9a39356b5e09ed1af3f16",
+        "code_revision": "c1cda6af058cc81574cbf3fb01e223569ce81462",
+        "working_tree_dirty": false,
+        "oracle": "Bellman-Ford plus hand-checked expected distances; tests are inspectable, not reference-hidden",
+        "cases": [
+          {
+            "case": "discovery is not finalization",
+            "error": "NotImplementedError: Reconstruct relaxation and greedy finalization here",
+            "expected": {
+              "A": 0,
+              "B": 2,
+              "C": 1
+            },
+            "agrees": false
+          },
+          {
+            "case": "stale queue entry",
+            "error": "NotImplementedError: Reconstruct relaxation and greedy finalization here",
+            "expected": {
+              "S": 0,
+              "A": 3,
+              "B": 2,
+              "T": 5
+            },
+            "agrees": false
+          },
+          {
+            "case": "zero weights and cycle",
+            "error": "NotImplementedError: Reconstruct relaxation and greedy finalization here",
+            "expected": {
+              "S": 0,
+              "A": 0,
+              "B": 0
+            },
+            "agrees": false
+          },
+          {
+            "case": "disconnected vertex",
+            "error": "NotImplementedError: Reconstruct relaxation and greedy finalization here",
+            "expected": {
+              "S": 0,
+              "A": 3,
+              "X": "unreachable"
+            },
+            "agrees": false
+          },
+          {
+            "case": "parallel and equal cost edges",
+            "error": "NotImplementedError: Reconstruct relaxation and greedy finalization here",
+            "expected": {
+              "S": 0,
+              "A": 2,
+              "B": 2
+            },
+            "agrees": false
+          },
+          {
+            "case": "single vertex",
+            "error": "NotImplementedError: Reconstruct relaxation and greedy finalization here",
+            "expected": {
+              "S": 0
+            },
+            "agrees": false
+          },
+          {
+            "case": "negative counterexample must be rejected",
+            "error": "NotImplementedError: Reconstruct relaxation and greedy finalization here",
+            "expected": "ValueError",
+            "agrees": false
+          },
+          {
+            "case": "unreachable negative edge must be rejected",
+            "error": "NotImplementedError: Reconstruct relaxation and greedy finalization here",
+            "expected": "ValueError",
+            "agrees": false
+          }
+        ],
+        "all_agree": false
+      }
+    },
+    {
+      "stage": "wrong",
+      "report": {
+        "evidence_kind": "software-test",
+        "learner_achievement": false,
+        "conventions": "directed graph, nonnegative integer weights, explicit isolated vertices, infinity for unreachable",
+        "implementation_sha256": "8d4b61611c41292770bba315f2587e3d6ab991a10ab49592b5fa7eadeeacbec6",
+        "code_revision": "3cdb2c63e266118133e64a1ed2e97845ff99b6a3",
+        "working_tree_dirty": false,
+        "oracle": "Bellman-Ford plus hand-checked expected distances; tests are inspectable, not reference-hidden",
+        "cases": [
+          {
+            "case": "discovery is not finalization",
+            "observed": {
+              "A": 0,
+              "B": 10,
+              "C": 1
+            },
+            "expected": {
+              "A": 0,
+              "B": 2,
+              "C": 1
+            },
+            "agrees": false
+          },
+          {
+            "case": "stale queue entry",
+            "observed": {
+              "S": 0,
+              "A": 8,
+              "B": 2,
+              "T": 10
+            },
+            "expected": {
+              "S": 0,
+              "A": 3,
+              "B": 2,
+              "T": 5
+            },
+            "agrees": false
+          },
+          {
+            "case": "zero weights and cycle",
+            "observed": {
+              "S": 0,
+              "A": 0,
+              "B": 4
+            },
+            "expected": {
+              "S": 0,
+              "A": 0,
+              "B": 0
+            },
+            "agrees": false
+          },
+          {
+            "case": "disconnected vertex",
+            "observed": {
+              "S": 0,
+              "A": 3,
+              "X": "unreachable"
+            },
+            "expected": {
+              "S": 0,
+              "A": 3,
+              "X": "unreachable"
+            },
+            "agrees": true
+          },
+          {
+            "case": "parallel and equal cost edges",
+            "observed": {
+              "S": 0,
+              "A": 9,
+              "B": 2
+            },
+            "expected": {
+              "S": 0,
+              "A": 2,
+              "B": 2
+            },
+            "agrees": false
+          },
+          {
+            "case": "single vertex",
+            "observed": {
+              "S": 0
+            },
+            "expected": {
+              "S": 0
+            },
+            "agrees": true
+          },
+          {
+            "case": "negative counterexample must be rejected",
+            "observed": "ValueError",
+            "expected": "ValueError",
+            "agrees": true
+          },
+          {
+            "case": "unreachable negative edge must be rejected",
+            "observed": "ValueError",
+            "expected": "ValueError",
+            "agrees": true
+          }
+        ],
+        "all_agree": false
+      }
+    },
+    {
+      "stage": "corrected",
+      "report": {
+        "evidence_kind": "software-test",
+        "learner_achievement": false,
+        "conventions": "directed graph, nonnegative integer weights, explicit isolated vertices, infinity for unreachable",
+        "implementation_sha256": "982103207679841d371ce2f07808ae6ecff241d07ac2f8dc849bef20a3f8e18f",
+        "code_revision": "8c953efec29bfa0566c4101fc7a794909e4eef48",
+        "working_tree_dirty": false,
+        "oracle": "Bellman-Ford plus hand-checked expected distances; tests are inspectable, not reference-hidden",
+        "cases": [
+          {
+            "case": "discovery is not finalization",
+            "observed": {
+              "A": 0,
+              "B": 2,
+              "C": 1
+            },
+            "expected": {
+              "A": 0,
+              "B": 2,
+              "C": 1
+            },
+            "agrees": true
+          },
+          {
+            "case": "stale queue entry",
+            "observed": {
+              "S": 0,
+              "A": 3,
+              "B": 2,
+              "T": 5
+            },
+            "expected": {
+              "S": 0,
+              "A": 3,
+              "B": 2,
+              "T": 5
+            },
+            "agrees": true
+          },
+          {
+            "case": "zero weights and cycle",
+            "observed": {
+              "S": 0,
+              "A": 0,
+              "B": 0
+            },
+            "expected": {
+              "S": 0,
+              "A": 0,
+              "B": 0
+            },
+            "agrees": true
+          },
+          {
+            "case": "disconnected vertex",
+            "observed": {
+              "S": 0,
+              "A": 3,
+              "X": "unreachable"
+            },
+            "expected": {
+              "S": 0,
+              "A": 3,
+              "X": "unreachable"
+            },
+            "agrees": true
+          },
+          {
+            "case": "parallel and equal cost edges",
+            "observed": {
+              "S": 0,
+              "A": 2,
+              "B": 2
+            },
+            "expected": {
+              "S": 0,
+              "A": 2,
+              "B": 2
+            },
+            "agrees": true
+          },
+          {
+            "case": "single vertex",
+            "observed": {
+              "S": 0
+            },
+            "expected": {
+              "S": 0
+            },
+            "agrees": true
+          },
+          {
+            "case": "negative counterexample must be rejected",
+            "observed": "ValueError",
+            "expected": "ValueError",
+            "agrees": true
+          },
+          {
+            "case": "unreachable negative edge must be rejected",
+            "observed": "ValueError",
+            "expected": "ValueError",
+            "agrees": true
+          }
+        ],
+        "all_agree": true
+      }
+    },
+    {
+      "stage": "transfer",
+      "report": {
+        "evidence_kind": "software-test",
+        "learner_achievement": false,
+        "conventions": "directed graph, nonnegative integer weights, explicit isolated vertices, infinity for unreachable",
+        "implementation_sha256": "982103207679841d371ce2f07808ae6ecff241d07ac2f8dc849bef20a3f8e18f",
+        "code_revision": "8c953efec29bfa0566c4101fc7a794909e4eef48",
+        "working_tree_dirty": false,
+        "oracle": "Bellman-Ford plus hand-checked expected distances; tests are inspectable, not reference-hidden",
+        "cases": [
+          {
+            "case": "discovery is not finalization",
+            "observed": {
+              "A": 0,
+              "B": 2,
+              "C": 1
+            },
+            "expected": {
+              "A": 0,
+              "B": 2,
+              "C": 1
+            },
+            "agrees": true
+          },
+          {
+            "case": "stale queue entry",
+            "observed": {
+              "S": 0,
+              "A": 3,
+              "B": 2,
+              "T": 5
+            },
+            "expected": {
+              "S": 0,
+              "A": 3,
+              "B": 2,
+              "T": 5
+            },
+            "agrees": true
+          },
+          {
+            "case": "zero weights and cycle",
+            "observed": {
+              "S": 0,
+              "A": 0,
+              "B": 0
+            },
+            "expected": {
+              "S": 0,
+              "A": 0,
+              "B": 0
+            },
+            "agrees": true
+          },
+          {
+            "case": "disconnected vertex",
+            "observed": {
+              "S": 0,
+              "A": 3,
+              "X": "unreachable"
+            },
+            "expected": {
+              "S": 0,
+              "A": 3,
+              "X": "unreachable"
+            },
+            "agrees": true
+          },
+          {
+            "case": "parallel and equal cost edges",
+            "observed": {
+              "S": 0,
+              "A": 2,
+              "B": 2
+            },
+            "expected": {
+              "S": 0,
+              "A": 2,
+              "B": 2
+            },
+            "agrees": true
+          },
+          {
+            "case": "single vertex",
+            "observed": {
+              "S": 0
+            },
+            "expected": {
+              "S": 0
+            },
+            "agrees": true
+          },
+          {
+            "case": "transfer - distances to a destination via reversed edges",
+            "observed": {
+              "T": 0,
+              "A": 3,
+              "B": 2,
+              "C": 3,
+              "X": "unreachable"
+            },
+            "expected": {
+              "T": 0,
+              "A": 3,
+              "B": 2,
+              "C": 3,
+              "X": "unreachable"
+            },
+            "agrees": true
+          },
+          {
+            "case": "negative counterexample must be rejected",
+            "observed": "ValueError",
+            "expected": "ValueError",
+            "agrees": true
+          },
+          {
+            "case": "unreachable negative edge must be rejected",
+            "observed": "ValueError",
+            "expected": "ValueError",
+            "agrees": true
+          }
+        ],
+        "all_agree": true
+      }
+    }
+  ]
+}

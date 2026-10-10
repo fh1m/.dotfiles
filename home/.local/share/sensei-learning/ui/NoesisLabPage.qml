@@ -6,6 +6,7 @@ ColumnLayout {
  id:root
  property var context:({})
  property var source:({})
+ property var notesPreview:({blocks:[]})
  property bool busy:false
  property bool detailsOpen:false
  readonly property int loadedFigures:experiment.loadedFigures
@@ -23,6 +24,8 @@ ColumnLayout {
   NoesisButton {text:root.detailsOpen?"Hide run details":"Run details";highlighted:root.detailsOpen;onClicked:root.detailsOpen=!root.detailsOpen}
  }
  Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:!root.context.hypothesis;text:root.context.kind==="project"?"Begin a run to preserve a prediction, configuration and code revision before measuring.":"No original prediction is recorded for this run. Preserve its limitations alongside any comparison.";wrapMode:Text.Wrap;Layout.fillWidth:true;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
+ NoesisDocument {visible:root.context.kind==="project"&&!root.detailsOpen;Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;framed:false;blocks:(root.notesPreview.blocks||[]).slice(0,2);onOpenOriginal:NoesisController.note(root.source.path)}
  NoesisExperimentContext {id:experiment;Layout.fillWidth:true;context:root.context;detailsVisible:root.detailsOpen;onOpenArtifact:row=>root.openArtifact(row)}
+ NoesisDocument {visible:root.detailsOpen;Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;framed:false;blocks:root.notesPreview.blocks||[];onOpenOriginal:NoesisController.note(root.source.path)}
  Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:root.context.kind==="experiment"&&!root.context.latest_comparison;text:"No comparison recorded. A planned check or linked output does not establish that this run was performed.";wrapMode:Text.Wrap;Layout.fillWidth:true;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
 }

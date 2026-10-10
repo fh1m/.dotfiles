@@ -1,5 +1,46 @@
 # Noesis native UI review
 
+## Dijkstra through the shared learning thread
+
+Actual native Noesis using agent-authored disposable records. Before UI: `dcfcb01`;
+after: this slice. Main Study 1920×1080 logical, normal window recorded in acceptance;
+ScreenPad 1920×550 logical, DPR 2. Application scales 100% and 200% are separate
+from DPR. No private learning content is shown. The initial page remains familiar;
+the substantive change is the connected failure, implementation and transfer flow.
+
+![Before: original Practice working page](assets/dijkstra/before-study.png)
+
+![After: the same problem in Study](assets/dijkstra/after-study.png)
+
+![Protected original reasoning](assets/dijkstra/first-protected-attempt.png)
+
+![ScreenPad: statement beside shared reasoning](assets/dijkstra/statement-beside-reasoning.png)
+
+![Failure creates a question tied to its exact attempt](assets/dijkstra/failure-to-question.png)
+
+![Question and remaining invariant](assets/dijkstra/invariant-question.png)
+
+![Optional mechanism descent](assets/dijkstra/optional-invariant-descent.png)
+
+![Shared thread navigation, collapsed out of the working surface](assets/dijkstra/shared-thread-navigation.png)
+
+![Explicit comparison with readable fields](assets/dijkstra/reported-execution-comparison.png)
+
+![Actual code output and separately labelled Lab comparison](assets/dijkstra/lab-executed-evidence.png)
+
+![Protected changed destination graph](assets/dijkstra/independent-changed-problem.png)
+
+![Original question and draft recovered after restart](assets/dijkstra/exact-question-after-restart.png)
+
+![ScreenPad resumes the same question](assets/dijkstra/resumed-question-screenpad.png)
+
+![Practice at 200% application scale](assets/dijkstra/protected-attempt-200.png)
+
+![Comparison at 200%, with scrolling and a fixed Save action](assets/dijkstra/comparison-200.png)
+
+[Workflow and limitations](dijkstra-evidence.md) · [actual executed outputs](assets/dijkstra/executed-outputs.json).
+These images validate native rendering and interaction; the owner learner trial remains open.
+
 ## Convolution reference lesson
 
 Same agent-authored disposable concept, before at `bf0d8f2` and after this slice.
