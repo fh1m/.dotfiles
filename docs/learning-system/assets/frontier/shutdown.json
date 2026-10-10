@@ -1,0 +1,45 @@
+{
+  "fixture_only": true,
+  "cases": [
+    {
+      "case": "Window-manager Close flushes draft debounce",
+      "result": "passed"
+    },
+    {
+      "case": "Window-manager failed save reopens with input",
+      "result": "passed"
+    },
+    {
+      "case": "Close during draft debounce",
+      "result": "passed"
+    },
+    {
+      "case": "Close during mutation waits for completion",
+      "result": "passed"
+    },
+    {
+      "case": "Close during pending import",
+      "result": "passed"
+    },
+    {
+      "case": "Close during simulated specialist handoff",
+      "result": "passed"
+    },
+    {
+      "case": "Failed save retains application and input",
+      "result": "passed"
+    },
+    {
+      "case": "Forced termination recovers durable draft and inspects receipt",
+      "result": "passed"
+    },
+    {
+      "case": "Unavailable receipt blocks ordinary exit and survives acknowledged exit/restart",
+      "result": "passed"
+    },
+    {
+      "case": "Interrupted import without receipt preserves scope and requires inspection",
+      "result": "passed"
+    }
+  ]
+}

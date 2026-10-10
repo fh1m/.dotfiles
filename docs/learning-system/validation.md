@@ -602,3 +602,35 @@ The gallery retains same-content Read before/after captures. Source Markdown, st
 identities and historical activities are unchanged. Rich equation rendering remains a
 specialist responsibility; generic top-level History/Connections navigation still
 needs further product refinement. These are explicit limits, not completed M2–M5 gates.
+
+
+### 2026-10-10 — failure, prerequisite and delayed-evidence continuation
+
+**130 core tests and 16 compatibility tests pass**, together with scoped installation
+and rollback checks. The current native Frontier harness verifies failed/partial
+assessment → exact owned question, preserved editorial exposure, optional Mongla
+PID mechanism descent → source → exact return/restart, and an explicit retained
+ability assessment that rejects an unmet interval. Retention time is simulated in
+the disposable fixture; it is not observed owner retention. No Mongla controller,
+ROS command or firmware was executed.
+
+The 184-frame native sample records **17.13 ms p95**. This is instrumented frame
+timing, not physical input latency or sustained-session performance. Native screenshots
+and capture identities remain in [the gallery](ui-gallery.md) and
+[Frontier evidence](assets/frontier/after.json). The owner trial, authentic executable
+learning journeys, complete specialist-tool round trips, supporting-context pinning
+and populated Zotero restoration remain release gates.
+
+The current dual-display studio run also passes native course/lesson navigation,
+shared ScreenPad notes, protected references, Hide/return and Close/restart drafts.
+Its separate 189-frame sample is 16.54 ms p95, with process RSS 277760 KiB and
+PSS 207001 KiB. This short fixture sample does not establish a sustained memory
+trend or a complete disconnected-monitor matrix. Existing ordinary creation-form
+draft keys are preserved; assessment-linked questions use an additional attempt key.
+
+All ten shutdown fault cases pass again, including debounce, active mutation/import,
+failed preferences, simulated handoff, forced termination and unavailable receipts.
+[Sanitized current results](assets/frontier/shutdown.json) are retained. These checks
+do not promise graceful shutdown under power loss or establish actual specialist
+application return behavior. Scoped dry run, two idempotent installations, rollback,
+later-edit protection and unrelated-file preservation also pass.

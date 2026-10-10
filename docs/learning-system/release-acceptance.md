@@ -1,10 +1,11 @@
-# Noesis V1 acceptance — 2026-10-09
+# Noesis V1 acceptance — updated 2026-10-10
 
 **V1 is not release-complete.** This is the current acceptance report, not a claim
 that passing model tests establish learning efficacy. The existing PLAN.md remains
 the historical phase ledger. [v1-roadmap.md](v1-roadmap.md) is the current execution
-burn-down; [m1-hosting-evidence.md](m1-hosting-evidence.md) records the staged independent
-host and sequential UI checks. The real learner trial and complete native restoration
+burn-down; [m1-hosting-evidence.md](m1-hosting-evidence.md) records the original staged independent
+host checks. The subsequent scoped live deployment and learning-engine evidence
+are recorded in [frontier-evidence.md](frontier-evidence.md). The real learner trial and complete native restoration
 remain release gates. Configured off-device protection is deferred by the owner to
 post-V1; it is not a core release completion gate.
 
@@ -17,8 +18,8 @@ post-V1; it is not a core release completion gate.
 | P4 practice/evidence | Failed, assisted, independent and changed-task transfer histories; reference protection; selected plan distinct from performed assessment; learner criterion decisions. Ctrl+Enter reduces attempt/save friction. | Partial. Long-history usability and returning-learner inspection remain. Controlled-time or early fixture checks do not prove human delayed retention. | Yes for recording honest attempts and explicit checks. |
 | P5 experiments | Executed generated-data calibration, code/configuration, CSV/PNG, contradicted prediction, units, comparison, next test; native figure loading/scrolling; unavailable and foreign artifacts tested. | Software experiment slice accepted. Complete external-tool handoff still partial. No hardware or full-paper reproduction claim. | Yes for scoped experiment records and artifacts. |
 | P6 desktop | Native lesson/course/paper/Lab fixture states, keyboard actions, restoration, existing window modes/companion; inspected actual native screenshots. Quickshell retained. | Partial. Full visual matrix, physical input timing, disconnected ScreenPad and sustained live-shell acceptance remain. | Ready for local learner trial; not certified across every monitor state. |
-| P7 guidance | Completed material excluded from Continue; explained next actions; a gate clears only after explicit lesson-scoped learner readiness and can be reopened. | Partial. Remaining journey cases and priority controls. Sophisticated recommendation models are post-V1. | Basic transparent suggestions yes. |
-| P8 hardening | Earlier 107 core + 16 compatibility acceptance remains authoritative; staged additions now pass 112 core tests. Temporary-home installation; earlier 10k and Distrobox evidence retained; private-data boundaries and native cache-loss restart. | Partial. Reader regression, independent-host production registration, complete portability/native gates and human trial remain. Off-device configuration is deferred by owner to post-V1. | Local use yes; laptop-loss protection is not configured. |
+| P7 guidance | Completed material excluded from Continue; explained next actions; a gate clears only after explicit lesson-scoped learner readiness and can be reopened. | Partial. Manual priorities/pins are implemented; remaining journey-specific guidance cases need acceptance. Sophisticated recommendation models are post-V1. | Basic transparent suggestions yes. |
+| P8 hardening | Earlier 107 core + 16 compatibility acceptance remains authoritative; current learning-engine additions pass 130 core tests. Temporary-home installation; earlier 10k and Distrobox evidence retained; private-data boundaries and native cache-loss restart. | Partial. Reader regression, complete portability/native gates, sustained lifecycle and human trial remain. Independent-host registration and scoped live rollout are verified. Off-device configuration is deferred by owner to post-V1. | Local use yes; laptop-loss protection is not configured. |
 
 ## Reproduced learning day
 
@@ -51,7 +52,7 @@ See [native screenshots and test details](validation.md#connected-learning-cycle
 3. Complete long-history/returning-learner, unavailable-storage/conflict and remaining
    desktop/portability checks. Retain measured performance limits from validation.md;
    the learning-day recovery measurement does not establish physical input latency.
-4. Complete independent-host production registration, sustained lifecycle and the
+4. Complete sustained lifecycle and the
    owner's 20–30-minute learner trial, then fix critical feedback before release.
 
 Configured off-device protection is deferred by the owner to post-V1. The
@@ -81,3 +82,15 @@ silently deferred. No framework rewrite or speculative dependency is needed.
 - **Recover:** Follow migration-recovery.md: restore into a new location, verify,
   then explicitly replace the registered location or fork its identity. Never
   overwrite a running reader database or the only verified recovery copy.
+
+
+## Learning-engine continuation
+
+The native investigation, formatted reading/reasoning, source-linked failure question,
+contextual prerequisite descent and explicit delayed-retention form are implemented.
+Actual source/data contracts and tests are described in [frontier-evidence.md](frontier-evidence.md).
+Mongla's PID/control journey uses inspected pinned repository source; no vehicle code
+was run and no underwater result or owner competence was inferred. Later milestones
+remain in scope: genuine detector/DSA/bottom-up journeys, full specialist-tool returns,
+safe ScreenPad support pinning, reliability cases and the owner's real learner trial.
+Controlled-clock retention is software validation, not human delayed retention.

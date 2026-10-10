@@ -14,7 +14,7 @@ sys.path.insert(0, str(REPO / 'home/.local/share/sensei-learning'))
 from noesis.models import create
 from noesis.activities import record_activity
 
-fixture = Fixture()
+fixture = Fixture(expected_practice_rows=2)
 baseline = '--before' in sys.argv
 evidence = REPO / 'docs/learning-system/assets/frontier'
 evidence.mkdir(parents=True, exist_ok=True)
@@ -87,12 +87,44 @@ print(json.dumps(dict(author='agent-authored validation', learner_achievement=Fa
                 'revision': project['code_snapshot']['commit'], 'evidence_kind': 'software-run'})
     from noesis.models import relationship
     relationship(fixture.vault, paper['id'], concept['id'], 'references', reason='Investigate the mechanism used by convolutional detectors; versions remain separate.')
-    start = record_activity(fixture.vault, question['path'], 'attempt-start', 'Synthetic UI fixture prediction; not owner achievement.', assistance=['none'])
-    assessment = record_activity(fixture.vault, question['path'], 'attempt', 'Synthetic UI fixture outcome; not owner achievement.',
-                                 attempt_id=start['id'], outcome='succeeded', assistance=['none'], scope='Three-element signal, zero padding')
-    record_activity(fixture.vault, capability['path'], 'capability-decision', 'Synthetic UI fixture judgment; not owner achievement.',
-        actor='learner', criterion=capability['criteria'][0], dimension='explain', decision='accept',
-        evidence_id=assessment['id'], scope='Three-element signal, zero padding', evidence_kind='explanation', confidence='low', independent=False)
+    from datetime import datetime, timezone, timedelta
+    with patch('noesis.activities.datetime') as synthetic_clock:
+        synthetic_clock.now.return_value=datetime.now(timezone.utc)-timedelta(days=8)
+        start = record_activity(fixture.vault, question['path'], 'attempt-start', 'Synthetic UI fixture prediction; not owner achievement.', assistance=['none'])
+        assessment = record_activity(fixture.vault, question['path'], 'attempt', 'Synthetic UI fixture outcome; not owner achievement.',
+                                     attempt_id=start['id'], outcome='succeeded', assistance=['none'], scope='Three-element signal, zero padding')
+        record_activity(fixture.vault, capability['path'], 'capability-decision', 'Synthetic UI fixture judgment; not owner achievement.',
+            actor='learner', criterion=capability['criteria'][0], dimension='explain', decision='accept',
+            evidence_id=assessment['id'], scope='Three-element signal, zero padding', evidence_kind='explanation', confidence='low', independent=False)
+    delayed = record_activity(fixture.vault, question['path'], 'review', 'Synthetic elapsed-time fixture assessment; not owner retention.', outcome='succeeded', assistance=['unknown'], scope='Three-element signal, zero padding')
+    graph_problem=create(fixture.vault,'task','Shortest paths · predict before settling a vertex',
+        '## Problem statement\nA directed graph has nonnegative weighted edges. Find the shortest distance from the start to each vertex.\n\n'
+        '### Changed case\nA vertex can be discovered with one distance and reached later by a cheaper route. Explain when a distance can become permanent.\n\n'
+        '### Constraints\nDisconnected vertices are allowed. State what would fail if negative edges were admitted.',fields={'source_kind':'problem-statement'})
+    graph_start=record_activity(fixture.vault,graph_problem['path'],'attempt-start','Synthetic validation first approach; not owner reasoning.',assistance=['none'])
+    graph_failed=record_activity(fixture.vault,graph_problem['path'],'attempt','Synthetic failure: confused discovery with finalization.',attempt_id=graph_start['id'],outcome='failed',assistance=['editorial'],scope='Nonnegative shortest paths')
+    # Public Mongla source inspected at a fixed commit, never executed here.
+    mongla_revision='8083365f88bb629080b987e97124cd070dd95bcd'
+    mongla_url='https://github.com/fh1m/mongla_ws/blob/'+mongla_revision+'/'
+    mongla=create(fixture.vault,'project','Mongla · PID and control boundaries',
+        '## Engineering question\nWhich feedback loop owns depth and heading, and what can its current evidence establish?\n\n'
+        '## Boundaries to inspect\nThe host command code, board firmware and offline control bench are distinct. A bench result is not an in-water result.\n\n'
+        '## Continuation\nInspect yaw approach behavior and the sign convention before comparing control changes. No controller was run in this Noesis fixture.',
+        fields={'source':'https://github.com/fh1m/mongla_ws','source_revision':mongla_revision})
+    pid_question=create(fixture.vault,'question','Why does Mongla taper its yaw command near the target?',
+        '## Current inquiry\nCompare a hard command floor with a tapered approach. Predict whether dead zone, inertia and sampling can produce a limit cycle.\n\n'
+        '## Source boundary\nInspect motion_yaw.py at the pinned source revision. Separate this host-side path from the Hengla board-control bench.\n\n'
+        '## Still unknown\nWhich effects have been measured on this hull, which are model assumptions, and which need a water test?',
+        parent_id=mongla['id'],relation='investigates')
+    sampling=create(fixture.vault,'concept','Sampling, error and PID state',
+        '## Mechanism to reconstruct\nExplain how sample interval changes accumulated error and the derivative estimate. State the units.\n\n'
+        '## Smallest changed case\nChange the interval while holding the continuous-time gains fixed. Predict what happens if the implementation treats gains per sample instead.',
+        parent_id=pid_question['id'],relation='contains')
+    relationship(fixture.vault,pid_question['id'],sampling['id'],'prerequisite',role='deep-descent',reason='Explain the sampled control mechanism without blocking source inspection.',context=pid_question['id'])
+    yaw_source=create(fixture.vault,'resource','Mongla yaw implementation · inspected source',
+        '## Inspect this implementation\nTrace the approach-band floor, integral limits, derivative convention and stale-feedback behavior.\n\n'
+        '## Evidence boundary\nReading source does not establish tuning quality or underwater performance.',
+        parent_id=pid_question['id'],relation='references',fields={'source_kind':'docs','source':mongla_url+'src/mongla_control/mongla_control/motion_yaw.py','source_revision':mongla_revision})
     # Same record UUID in another authorized disposable owner must remain distinct.
     import uuid
     from noesis.persistence import render
@@ -127,13 +159,14 @@ text = text.replace('ShellRoot {', '''ShellRoot {
  FrameAnimation {running:measuring;onTriggered:if(frameTime>0)frameSamples.push(frameTime*1000)}
  TestCase {id:input;parent:window.contentItem;visible:false;name:"FrontierInput";when:false}
  function find(item,predicate){if(predicate(item))return item;for(let child of item.children||[]){let found=find(child,predicate);if(found)return found;}return null;}
+ function scrollTo(item){let parent=item.parent;while(parent){if(typeof parent.contentY==="number"&&typeof parent.contentHeight==="number"){for(let n=0;n<40;n++){let point=item.mapToItem(parent,0,0);if(point.y>=0&&point.y+item.height<=parent.height)return true;input.mouseWheel(parent,Math.max(1,parent.width/2),Math.max(1,parent.height/2),0,point.y<0?240:-240);input.wait(30);}return false;}parent=parent.parent;}return true;}
  IpcHandler {target:"frontier-fixture";
   function framesStart():void{frameSamples=[];measuring=true;}
   function framesStop():string{measuring=false;return JSON.stringify(frameSamples);}
   function init():void{let workspace=find(window.contentItem,item=>typeof item.openWork==="function");workspace.reviewOverlay.parent=window.reviewSurface;}
   function open(payload:string):void{let row=JSON.parse(Qt.atob(payload));window.applicationSurface.children[0];let workspace=find(window.contentItem,item=>typeof item.openWork==="function");workspace.openWork(row);}
   function capture(path:string):void{window.reviewSurface.grabToImage(result=>result.saveToFile(path));}
-  function click(label:string):string{let item=find(window.contentItem,item=>item.visible&&item.enabled&&item.text===label&&typeof item.clicked==="function");if(!item)return "missing:"+label;if(!input.waitForPolish(item.parent,1500))return "layout pending:"+label;input.mouseClick(item,item.width/2,item.height/2);return "clicked";}
+  function click(label:string):string{let item=find(window.contentItem,item=>item.visible&&item.enabled&&(item.text===label||item.title===label)&&typeof item.clicked==="function");if(!item)return "missing:"+label;if(!scrollTo(item))return "unreachable:"+label;input.wait(250);if(!input.waitForPolish(item.parent,1500))return "layout pending:"+label;if(item.title===label){input.mouseClick(item,item.width/2,item.height/2);return "clicked";}let activated=false;let mark=()=>{activated=true;};item.clicked.connect(mark);input.mouseClick(item,item.width/2,item.height/2);input.wait(50);item.clicked.disconnect(mark);return activated?"clicked":"not activated:"+label;}
   function choose(name:string,index:int):string{let item=find(window.contentItem,item=>item.objectName===name);if(!item)return "missing";item.forceActiveFocus();input.keyClick(Qt.Key_Home);for(let n=0;n<index;n++)input.keyClick(Qt.Key_Down);input.wait(80);return item.currentText;}
   function debug():string{let result=[];function scan(item){if(item.objectName)result.push({name:item.objectName,visible:item.visible,width:item.width,height:item.height});for(let child of item.children||[])scan(child);}scan(window.contentItem);return JSON.stringify(result);}
   function clickName(name:string):string{let item=find(window.contentItem,item=>item.objectName===name);if(!item)return "missing";input.mouseClick(item,item.width/2,item.height/2);return "clicked";}
@@ -242,7 +275,25 @@ try:
         assert fixture.ipc('frontier-fixture', 'choose', 'attempt-assistance', '1') == 'none'
         assert fixture.ipc('frontier-fixture', 'click', 'Save reconstruction result') == 'clicked'
         fixture.wait(lambda state: not state['attempt'] and not state['working'] and 'attempt' in json.loads(fixture.ipc('frontier-fixture','state'))['history'])
-        assert fixture.ipc('frontier-fixture', 'click', 'Assess what this attempt demonstrates') == 'clicked'
+        assert fixture.ipc('frontier-fixture','click','Investigate what blocked this attempt') == 'clicked'
+        assert fixture.ipc('frontier-fixture','typeField','record-title','What makes the changed boundary fail?')
+        assert fixture.ipc('frontier-fixture','typeField','record-purpose','Preserve the missing mechanism without declaring success')
+        capture('failure-to-question')
+        assert fixture.ipc('frontier-fixture','click','Save') == 'clicked'
+        fixture.wait(lambda state: 'what makes the changed boundary fail?' in state['selected'].lower() and not state['working'])
+        from noesis.index import Index
+        index=Index(fixture.vault)
+        try:
+            index.reconcile()
+            created=index.record(index.db.execute('SELECT id FROM records WHERE path=?',(fixture.state()['selected'],)).fetchone()[0])['props']
+            assert created['parent_ref']['record_id']==concept['id'] and created['evidence_refs'][0]['vault_id']==fixture.vault_id
+            basis=index.record(created['evidence_refs'][0]['record_id'])['props']
+            assert basis['outcome']=='partial' and basis['target']['record_id']==concept['id']
+        finally:index.close()
+        assert fixture.ipc('frontier-fixture','click','← Return to Convolution · understand the mechanism') == 'clicked'
+        fixture.wait(lambda state: state['selected']==concept['path'] and 'attempt' in json.loads(fixture.ipc('frontier-fixture','state'))['history'])
+        time.sleep(.3)
+        result=fixture.ipc('frontier-fixture', 'click', 'Assess what this attempt demonstrates');assert result=='clicked',result
         time.sleep(.5)
         capture('claim-picker')
         result=fixture.ipc('frontier-fixture', 'clickName', 'claim-capability-row');assert result == 'clicked', (result, fixture.state(), fixture.ipc('frontier-fixture','debug'))
@@ -270,6 +321,64 @@ try:
         assert fixture.ipc('frontier-fixture','click','Save') == 'clicked'
         fixture.wait(lambda state: 'filter mechanism' in state['selected'] and not state['working'])
         capture('new-investigation')
+        open_record(graph_problem)
+        capture('dsa-failed-attempt')
+        assert fixture.ipc('frontier-fixture','click','Investigate the missing mechanism') == 'clicked'
+        assert fixture.ipc('frontier-fixture','typeField','record-title','When can a shortest distance become permanent?')
+        assert fixture.ipc('frontier-fixture','typeField','record-purpose','Explain the invariant before attempting a changed graph')
+        assert fixture.ipc('frontier-fixture','click','Save') == 'clicked'
+        fixture.wait(lambda state: 'when can a shortest distance become permanent?' in state['selected'].lower() and not state['working'])
+        index=Index(fixture.vault)
+        try:
+            index.reconcile()
+            inquiry=index.record(index.db.execute('SELECT id FROM records WHERE path=?',(fixture.state()['selected'],)).fetchone()[0])['props']
+            assert inquiry['parent_ref']['record_id']==graph_problem['id'] and inquiry['evidence_refs'][0]['record_id']==graph_failed['id']
+            assert index.record(graph_failed['id'])['props']['assistance']==['editorial']
+        finally:index.close()
+        capture('dsa-missing-invariant')
+        fixture.ipc('frontier-fixture','mode','fullscreen')
+        fixture.wait(lambda state: state['presentation']=='fullscreen' and not state['mode_pending'])
+        open_record(pid_question)
+        capture('mongla-pid-inquiry')
+        result=fixture.ipc('frontier-fixture','click','Sampling, error and PID state');assert result=='clicked',result
+        fixture.wait(lambda state: state['selected']==sampling['path'])
+        capture('mongla-pid-descent')
+        assert fixture.ipc('frontier-fixture','click','← Return to Why does Mongla taper its yaw command near the target?') == 'clicked'
+        fixture.wait(lambda state: state['selected']==pid_question['path'])
+        assert fixture.ipc('frontier-fixture','click','Mongla yaw implementation · inspected source') == 'clicked'
+        fixture.wait(lambda state: state['selected']==yaw_source['path'])
+        fixture.ipc('frontier-fixture','back')
+        fixture.wait(lambda state: state['selected']==pid_question['path'])
+        capture('mongla-pid-return')
+        fixture.exit()
+        fixture.start()
+        fixture.ipc('frontier-fixture','init')
+        fixture.ipc('frontier-fixture','back')
+        fixture.wait(lambda state: state['selected']==pid_question['path'])
+        open_record(question)
+        assert fixture.ipc('frontier-fixture','click','Assess what this attempt demonstrates') == 'clicked'
+        time.sleep(.4)
+        assert fixture.ipc('frontier-fixture','clickName','claim-capability-row') == 'clicked'
+        time.sleep(.3)
+        assert fixture.ipc('frontier-fixture','choose','claim-dimension','7') == 'Demonstrate retention after a delay'
+        assert fixture.ipc('frontier-fixture','choose','retention-basis','1').startswith('Can explain')
+        assert fixture.ipc('frontier-fixture','typeField','retention-days','3650') == '3650'
+        assert fixture.ipc('frontier-fixture','typeField','claim-reason','Synthetic later assessment; not owner retention')
+        assert fixture.ipc('frontier-fixture','click','Save decision') != 'clicked', 'Future interval must not certify retention'
+        capture('retention-not-yet')
+        assert fixture.ipc('frontier-fixture','typeField','retention-days','7') == '7'
+        time.sleep(.3)
+        capture('retention-assessment')
+        assert fixture.ipc('frontier-fixture','click','Save decision') == 'clicked'
+        fixture.wait(lambda state: not state['working'] and not state['error'])
+        from noesis.index import Index
+        from noesis.frontier import claims
+        index=Index(fixture.vault)
+        try:
+            index.reconcile()
+            retained=next(row for row in claims(index,capability['id']) if row['dimension']=='retained')
+            assert retained['interval_days']==7 and retained['decision']=='accept' and not retained['independent']
+        finally:index.close()
         open_record(concept)
         owned_row = dict(id=concept['id'], path='same-id.md', title='Another owner, same identity', type='concept', vault=str(other_vault), vault_id=other_owner)
         fixture.ipc('frontier-fixture', 'open', base64.b64encode(json.dumps(owned_row).encode()).decode())
@@ -283,7 +392,7 @@ try:
         'fixture_only': True, 'baseline': '433d2d1', 'captures': reports, 'performance':performance,
         'capture_method':'Native Qt Quick viewport with an equivalent Item wrapper retaining the native popup overlay; no compositing or private desktop capture',
         'source_hashes':{str(path.relative_to(REPO)):hashlib.sha256(path.read_bytes()).hexdigest() for path in (REPO/'home/.local/share/sensei-learning/ui').glob('*.qml')} if not baseline else {},
-        'assertions': ['working page', 'native typing', 'protected reconstruction', 'durable navigation and draft', '200% reflow', 'native result and explicit claim', 'executed agent-authored convolution oracle comparison'] if not baseline else []}, indent=2))
+        'assertions': ['working page', 'native typing', 'protected reconstruction', 'durable navigation and draft', '200% reflow', 'native result and explicit claim', 'executed agent-authored convolution oracle comparison', 'failed DSA attempt to owned question with editorial preserved', 'Mongla optional mechanism descent and exact source return', 'retention interval rejects future evidence and records explicit assessment'] if not baseline else []}, indent=2))
     print('PASS: native investigation evidence retained at', evidence)
 finally:
     fixture.stop()

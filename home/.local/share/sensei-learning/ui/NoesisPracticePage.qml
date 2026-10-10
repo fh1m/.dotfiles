@@ -21,10 +21,12 @@ Rectangle {
  property bool busy:false
  property string contextTitle:""
  property string settingsLabel:""
+ property var lastAssessment:({})
+ signal investigateFailure()
  property alias editor:evidence
  readonly property real statementHeight:statementScroll.height
  readonly property real reasoningViewportHeight:reasoningScroll.height
- readonly property real minimumWorkingHeight:200+(attemptLabel.visible?attemptLabel.implicitHeight:0)+controls.implicitHeight+(contextHeading.visible?contextHeading.implicitHeight:0)+(surfaceSwitch.visible?surfaceSwitch.implicitHeight:0)+reasonHeading.implicitHeight+editorGuide.implicitHeight+NoesisStyle.md*5+NoesisStyle.lg*2
+ readonly property real minimumWorkingHeight:200+(lastResult.visible?lastResult.implicitHeight:0)+(attemptLabel.visible?attemptLabel.implicitHeight:0)+controls.implicitHeight+(contextHeading.visible?contextHeading.implicitHeight:0)+(surfaceSwitch.visible?surfaceSwitch.implicitHeight:0)+reasonHeading.implicitHeight+editorGuide.implicitHeight+NoesisStyle.md*5+NoesisStyle.lg*2
  signal draftChanged()
  signal startAttempt()
  signal saveAttempt()
@@ -35,6 +37,7 @@ Rectangle {
  ColumnLayout {anchors.fill:parent;anchors.margins:NoesisStyle.lg;spacing:NoesisStyle.md
       Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;id:contextHeading;visible:!!root.contextTitle&&!root.compact;Layout.fillWidth:true;textFormat:Text.PlainText;text:root.contextTitle;wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.title;font.bold:true}
       Label {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;id:attemptLabel;visible:!root.compact;text:root.attemptId?root.referenceHidden?"Independent attempt in progress · reference protected":"Attempt in progress · reference revealed; exposure remains recorded":"Predict first. Preserve the reasoning before checking it.";color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+      Text {id:lastResult;visible:!root.attemptId&&!!root.lastAssessment.id;Layout.fillWidth:true;text:"Latest recorded result: "+(root.lastAssessment.outcome||"unknown")+" · assistance: "+(root.lastAssessment.assistance||["unknown"]).join(", ")+". A new attempt preserves this history.";textFormat:Text.PlainText;wrapMode:Text.Wrap;color:root.lastAssessment.outcome==="failed"?NoesisStyle.warning:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}
       RowLayout {id:surfaceSwitch;Layout.fillWidth:true;spacing:NoesisStyle.sm;visible:root.compact||root.externalStatement
        NoesisSelect {Layout.fillWidth:true;Layout.minimumWidth:(root.width-2*NoesisStyle.lg-NoesisStyle.sm)*.52;model:["Problem statement","Your reasoning"];currentIndex:root.thinking?1:0;Accessible.name:"Thinking surface";onActivated:root.thinking=currentIndex===1}
        NoesisButton {text:"Problem & attempt";Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:(root.width-2*NoesisStyle.lg-NoesisStyle.sm)*.4;variant:"secondary";onClicked:problemContext.open();Accessible.name:"Problem title and attempt context"}
@@ -60,6 +63,7 @@ Rectangle {
        NoesisButton {text:"Start independent attempt";hint:"Ctrl+Enter";primary:true;visible:!root.attemptId;enabled:!root.busy;onClicked:root.startAttempt()}
        NoesisButton {text:"Record attempt outcome";hint:"Ctrl+Enter";primary:true;visible:!!root.attemptId;enabled:!root.busy&&evidence.text.trim()!=="";onClicked:root.saveAttempt()}
        NoesisButton {visible:!root.compact;text:root.referenceHidden?"Reveal reference":"Hide reference";enabled:!root.busy;onClicked:root.revealReference()}
+       NoesisButton {text:"Investigate the missing mechanism";visible:!root.attemptId&&["failed","partial"].includes(root.lastAssessment.outcome);enabled:!root.busy;onClicked:root.investigateFailure()}
        NoesisButton {text:"Plan a check";visible:!root.compact;onClicked:root.planCheck()}
        NoesisButton {text:"Outcome & assistance";visible:!!root.attemptId&&!root.compact;onClicked:root.configureAttempt()}
        NoesisButton {text:root.compact?"Attempt options":"History & next steps";onClicked:root.showActions();hint:"Ctrl+."}

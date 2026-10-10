@@ -74,6 +74,20 @@ def create(root, kind, title, body='', fields=None, parent_id=None, relation='co
                     order=max([n for n in existing if type(n) is int],default=-1)+1
                 fields['parent_ref']={'vault_id':meta['vault_id'],'record_id':parent_id,'relation':relation,'order':order}
             finally:index.close()
+        if kind=='question' and fields.get('evidence_refs') is not None:
+            from .frontier import evidence_record
+            refs=fields['evidence_refs']
+            if not isinstance(refs,list) or not 1<=len(refs)<=8 or not parent_id:
+                raise ValueError('An attempt-linked question needs its original context and bounded evidence references')
+            index=Index(root)
+            try:
+                index.reconcile()
+                for ref in refs:
+                    evidence=evidence_record(index,ref)['props']
+                    if (ref['vault_id']!=index.manifest['vault_id'] or evidence.get('event') not in ('attempt','review')
+                            or evidence.get('target')!={'vault_id':index.manifest['vault_id'],'record_id':parent_id}):
+                        raise ValueError('Question evidence must be an assessment of its exact owning context')
+            finally:index.close()
         if kind=='project' and fields.get('repository'):
             from .development import snapshot
             fields['code_snapshot']=snapshot(fields['repository'])

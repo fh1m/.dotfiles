@@ -5,6 +5,8 @@ import QtQuick.Layouts
 ColumnLayout {
  id:root
  property var record:({})
+ property var learningContext:({})
+ signal reviewReadiness(var row)
  property var frontier:({items:[]})
  property var preview:({blocks:[]})
  property var claims:[]
@@ -30,7 +32,7 @@ ColumnLayout {
  readonly property var questions:(frontier.items||[]).filter(row=>row.type==="question"&&row.id!==record.id&&!["answered","resolved","complete","retired","abandoned"].includes(row.status))
  readonly property var capabilities:(frontier.items||[]).filter(row=>row.type==="capability"&&row.id!==record.id)
  readonly property var origin:frontier.origin||(frontier.items||[]).find(row=>row.id===frontier.parent_ref?.record_id)
- readonly property var supporting:(frontier.items||[]).filter(row=>!["question","capability"].includes(row.type)&&row.id!==record.id&&row.id!==origin?.id)
+ readonly property var supporting:(frontier.items||[]).filter(row=>!["question","capability"].includes(row.type)&&row.id!==record.id&&row.id!==origin?.id&&!(learningContext.prerequisites||[]).some(context=>context.id===row.id))
  readonly property real sourceAnchor:sourceScroll.ScrollBar.vertical.position
  readonly property real notesAnchor:notesScroll.ScrollBar.vertical.position
  signal notesEdited(string value)
@@ -40,6 +42,7 @@ ColumnLayout {
  signal revealReference()
  signal openNote()
  signal askQuestion()
+ signal investigateFailure()
  signal defineCapability()
  signal openMember(var row)
  signal chooseDepth(string value)
@@ -50,9 +53,11 @@ ColumnLayout {
  function restoreAnchors(view){reasoningOnly=view.reasoning_only===true;mechanismExpanded=view.mechanism_expanded===true;Qt.callLater(()=>{sourceScroll.ScrollBar.vertical.position=Math.max(0,Math.min(1-sourceScroll.ScrollBar.vertical.size,view.source_anchor||0));notesScroll.ScrollBar.vertical.position=Math.max(0,Math.min(1-notesScroll.ScrollBar.vertical.size,view.notes_anchor||0));});}
 
  Text {textFormat:Text.PlainText;Layout.fillWidth:true;text:root.record.title||"Investigation";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.title;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
+ Repeater {model:root.referenceHidden?[]:root.frontier.prompting_evidence||[];delegate:Text {required property var modelData;Layout.fillWidth:true;text:modelData.availability||("This question came from a "+modelData.outcome+" attempt · assistance: "+(modelData.assistance||["unknown"]).join(", ")+". Return to the original context to inspect its history.");textFormat:Text.PlainText;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}}
+
  Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
-  NoesisButton {text:root.attemptId?"Record how the attempt went":root.lastAssessment.id?"Try again without notes":"Try explaining without notes";primary:!!root.attemptId||!root.lastAssessment.id;enabled:!root.busy;onClicked:root.attemptId?root.evaluateAttempt():root.startAttempt()}
-  NoesisButton {text:"Open derivation in Obsidian ↗";enabled:!root.busy&&!root.referenceHidden;onClicked:root.openNote()}
+  NoesisButton {text:root.attemptId?"Record how the attempt went":root.lastAssessment.id?"Assess what this attempt demonstrates":"Try explaining without notes";primary:true;enabled:!root.busy&&(!root.lastAssessment.id||!!root.attemptId||!root.referenceHidden);onClicked:root.attemptId?root.evaluateAttempt():root.lastAssessment.id?root.reviewEvidence():root.startAttempt()}
+  NoesisButton {visible:!!root.lastAssessment.id&&!root.attemptId;text:"Try again without notes";enabled:!root.busy;onClicked:root.startAttempt()}
   NoesisButton {text:"Add an unanswered question";enabled:!root.busy;onClicked:root.askQuestion()}
   NoesisButton {text:root.reasoningOnly?"Show question & evidence":"Show reasoning";visible:root.compact;highlighted:root.reasoningOnly;onClicked:root.reasoningOnly=!root.reasoningOnly}
  }
@@ -69,7 +74,9 @@ ColumnLayout {
     NoesisDocument {Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;framed:false;blocks:root.referenceHidden?[]:(root.mechanismExpanded?(root.preview.blocks||[]):(root.preview.blocks||[]).slice(0,2));onOpenOriginal:root.openNote()}
     Text {textFormat:Text.PlainText;Layout.fillWidth:true;visible:root.referenceHidden||!(root.preview.blocks||[]).length;text:root.referenceHidden?"Reference hidden for this attempt. The question stays in the title; reconstruct before consulting your notes.":"What problem makes this mechanism necessary? Write a question, predict a simple case, then test your explanation.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
     NoesisButton {visible:!root.referenceHidden&&(root.preview.blocks||[]).length>2;text:root.mechanismExpanded?"Collapse mechanism notes":"Read mechanism & source notes";onClicked:root.mechanismExpanded=!root.mechanismExpanded}
+    NoesisButton {text:"Open derivation in Obsidian ↗";visible:!root.referenceHidden;enabled:!root.busy;onClicked:root.openNote()}
     NoesisButton {visible:root.attemptId;text:"Reveal reference deliberately";enabled:root.referenceHidden&&!root.busy;onClicked:root.revealReference()}
+    NoesisLearningContext {visible:!root.referenceHidden;Layout.fillWidth:true;context:Object.assign({},root.learningContext,{parents:[]});prerequisiteHeading:"Mechanisms that matter here";scopeLabel:"this investigation";busy:root.busy;onOpenContext:row=>root.openMember(row);onReviewReadiness:row=>root.reviewReadiness(row)}
     ColumnLayout {visible:!root.referenceHidden;Layout.fillWidth:true;spacing:NoesisStyle.sm
      Text {textFormat:Text.PlainText;Layout.fillWidth:true;text:"What the evidence supports";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
      Text {textFormat:Text.PlainText;Layout.fillWidth:true;text:"These are specific abilities you have chosen to assess. Open one to see the work behind its judgment.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
@@ -112,8 +119,8 @@ ColumnLayout {
      Text {textFormat:Text.PlainText;Layout.fillWidth:true;visible:!!root.lastAssessment.id&&!root.attemptId;text:"Latest attempt: "+(root.lastAssessment.outcome||"unknown")+" · recorded assistance: "+(root.lastAssessment.assistance||["unknown"]).join(", ");color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
      Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
       NoesisButton {text:"Save as a study note";enabled:root.notes.trim()!==""&&!root.busy;onClicked:root.preserveNote()}
+      NoesisButton {visible:!root.attemptId&&["failed","partial"].includes(root.lastAssessment.outcome);text:"Investigate what blocked this attempt";enabled:!root.busy;onClicked:root.investigateFailure()}
       NoesisButton {text:"Review evidence & history";enabled:!root.busy;onClicked:root.showHistory()}
-      NoesisButton {text:"Assess what this attempt demonstrates";primary:!!root.lastAssessment.id&&!root.attemptId;enabled:!!root.lastAssessment.id&&!root.attemptId&&!root.referenceHidden&&!root.busy;onClicked:root.reviewEvidence()}
      }
      Flow {visible:root.record.type==="question";Layout.fillWidth:true;spacing:NoesisStyle.sm
       NoesisButton {text:root.status==="parked"?"Resume this question":"Park this question";enabled:!root.busy;onClicked:root.disposition(root.status==="parked"?"active":"parked")}

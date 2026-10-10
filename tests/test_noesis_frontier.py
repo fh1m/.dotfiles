@@ -172,6 +172,34 @@ class Frontier(unittest.TestCase):
         finally:
             index.close()
 
+    def test_attempt_question_keeps_exact_context_and_rejects_unrelated_evidence(self):
+        index=Index(self.root)
+        try:
+            index.reconcile()
+            owner=index.manifest['vault_id']
+        finally:index.close()
+        refs=[{'vault_id':owner,'record_id':self.assessment['id']}]
+        question=create(self.root,'question','Why did the boundary change?', 'Preserve the failed explanation.',
+                        parent_id=self.question['id'],relation='investigates',fields={'evidence_refs':refs})
+        self.assertEqual(question['evidence_refs'],refs)
+        from noesis.models import relationship
+        from noesis.courses import learning_context
+        mechanism=create(self.root,'concept','Sample interval','A deeper mechanism')
+        relationship(self.root,question['id'],mechanism['id'],'prerequisite',role='deep-descent',context=question['id'],reason='Explain this missing mechanism without blocking current work')
+        index=Index(self.root)
+        try:
+            index.reconcile()
+            context=learning_context(index,question['id'])
+            self.assertEqual(context['prerequisites'][0]['role'],'deep-descent')
+            projected=frontier(index,question['id'])
+            self.assertEqual(projected['prompting_evidence'][0]['id'],self.assessment['id'])
+        finally:index.close()
+
+        with self.assertRaisesRegex(ValueError,'exact owning context'):
+            create(self.root,'question','Unrelated evidence','',parent_id=self.capability['id'],fields={'evidence_refs':refs})
+        with self.assertRaisesRegex(ValueError,'original context'):
+            create(self.root,'question','Missing context','',fields={'evidence_refs':refs})
+
     def test_retention_requires_performed_later_assessment_not_schedule(self):
         from datetime import datetime, timezone, timedelta
         first = self.decision()
@@ -189,6 +217,8 @@ class Frontier(unittest.TestCase):
             index.reconcile()
             retained = next(row for row in claims(index, self.capability['id']) if row['dimension'] == 'retained')
             self.assertEqual(retained['decision'], 'accept')
+            self.assertEqual(retained['interval_days'],1)
+            self.assertEqual(retained['retained_from'],first['id'])
             self.assertFalse(retained['independent'])
         finally:
             index.close()
