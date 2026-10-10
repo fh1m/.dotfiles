@@ -7,7 +7,7 @@ from noesis_native_fixture import Fixture, REPO, installer, QS
 sys.path.insert(0,str(REPO/'home/.local/share/sensei-learning'))
 from noesis.models import create,relationship
 from noesis.index import Index
-from noesis.convolution import TEMPLATE
+from noesis_authored_examples import CONVOLUTION as TEMPLATE
 
 f=Fixture();baseline='--before' in sys.argv;f.env['NOESIS_STUDY_DESK_FIXTURE']='1';f.env['NVIM_APPNAME']='noesis-pilot'
 evidence=REPO/'docs/learning-system/assets/convolution';evidence.mkdir(parents=True,exist_ok=True)
@@ -112,6 +112,7 @@ try:
  assert f.ipc('convolution-fixture','choose','convolution-boundary','1')=='Repeat edge sample';type_field('convolution-prediction','agent example predicts repeated samples alter both edges');click('Save prediction & reveal output');wait(lambda s:s['result'].get('observed',{}).get('outputs')==[4,7,7]);capture('repeated-boundary')
  # Build uses ordinary experiment/artifact records and a local Git scaffold.
  click('Build a minimal version');click('Create local implementation & Lab');wait(lambda s:bool(s['implementation'].get('id')));build=state()['implementation'];capture('build-ready')
+ directory=Path(build['repository']);assert 'NotImplementedError' in (directory/'convolution.py').read_text();(directory/'convolution.py').write_text('# Agent-authored validation, not owner reconstruction.\n'+TEMPLATE);subprocess.run(['git','-C',str(directory),'add','convolution.py'],check=True);subprocess.run(['git','-C',str(directory),'-c','user.name=Noesis agent validation','-c','user.email=validation@invalid.example','commit','-qm','Agent-authored reconstruction from skeleton'],check=True)
  click('Run local comparison');wait(lambda s:bool(s['buildResult'].get('observed',{}).get('agrees')));capture('executed-comparison')
  outputs=[state()['buildResult']['observed']]
  directory=Path(build['repository']);assert directory.is_relative_to(f.vault)

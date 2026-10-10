@@ -60,6 +60,26 @@ class Development(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'Neovim is unavailable'):command({'repository':str(self.repo)})
         with self.assertRaisesRegex(ValueError,'Connect an implementation'):command({})
 
+    def test_run_keeps_exact_code_entry_and_observes_current_revision(self):
+        (self.repo/'algorithm.py').write_text('# Example skeleton')
+        self.git('add','algorithm.py');self.git('commit','-qm','Example skeleton')
+        project=create(self.root,'project','Code reconstruction',fields={'repository':str(self.repo),'code_entrypoint':'algorithm.py'})
+        (self.repo/'algorithm.py').write_text('# Authored example revision')
+        self.git('add','algorithm.py');self.git('commit','-qm','Authored example revision')
+        experiment=create(self.root,'experiment','Check a changed case',parent_id=project['id'])
+        self.assertEqual(experiment['code_entrypoint'],'algorithm.py')
+        self.assertEqual(experiment['code_snapshot']['commit'],self.git('rev-parse','HEAD'))
+        self.assertNotEqual(experiment['code_snapshot']['commit'],project['code_snapshot']['commit'])
+
+    def test_exact_code_file_handoff_cannot_escape_or_become_an_option(self):
+        helper=self.home/'.local/bin/sensei-terminal';helper.parent.mkdir(parents=True);helper.write_text('synthetic helper')
+        entry=self.repo/'--example.py';entry.write_text('# Example only')
+        with patch('noesis.development.shutil.which',return_value='/usr/bin/nvim'):
+            argv=command({'repository':str(self.repo),'code_entrypoint':'--example.py'})
+            self.assertEqual(argv[-3:],['nvim','--','--example.py'])
+            with self.assertRaises(ValueError):command({'repository':str(self.repo),'code_entrypoint':'../outside.py'})
+            with self.assertRaisesRegex(ValueError,'unavailable'):command({'repository':str(self.repo),'code_entrypoint':'missing.py'})
+
     def test_creation_receipt_survives_repository_disconnect(self):
         operation=str(uuid.uuid4());fields={'repository':str(self.repo)}
         project=create(self.root,'project','Durable implementation',fields=fields,operation_id=operation)

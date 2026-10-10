@@ -224,3 +224,14 @@ This leaves personal content untouched during deployment while making the lesson
 available for ongoing use, rather than requiring the acceptance fixture to survive.
 Ctrl+Enter invokes the current primary action or opens the protected attempt's result
 settings; it never silently saves an unknown outcome instead of requesting judgment.
+
+## Shared Dijkstra journey
+
+The [Dijkstra slice](dijkstra-evidence.md) reuses the existing investigation page
+and frontier relationships. Its native acceptance preserves an original failed
+Practice attempt, evidence-linked question, optional mechanism and return, empty
+Git skeleton, actual failed/corrected tests, concept reflection, protected transfer
+with irreversible assistance and exact question/draft recovery after restart.
+There is no algorithm-specific page, learning score or new evidence authority.
+Actual outputs and native images are retained separately from synthetic learner
+outcomes. Human learning effectiveness and the owner's trial remain unproven.

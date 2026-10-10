@@ -65,3 +65,17 @@ This ordering is a recommendation after convolution, not implementation of those
 three domains. Original P0–P8 gates remain in force; populated Zotero restoration,
 full cross-domain journeys and the owner's sustained learner trial remain open.
 Off-device repository configuration remains deferred by owner, post-V1.
+
+## Dijkstra generalization slice
+
+[Dijkstra acceptance](dijkstra-evidence.md) now exercises the shared thread through
+Practice failure, exact assessment-linked question, optional invariant descent,
+Git/editor reconstruction, actual adversarial tests, Lab artifacts, deliberate
+reference exposure, changed-problem retry and restart. No Dijkstra page or new
+authoritative thread record was needed. `code_entrypoint` was already supported;
+the creation UI now exposes it and experiment runs inherit it from their parent.
+Convolution's new starters are empty skeletons too.
+
+This closes the automated Dijkstra software journey, not the owner's independent
+understanding or every original release gate. YOLO and ADRC remain later slices;
+this implementation does not begin either.

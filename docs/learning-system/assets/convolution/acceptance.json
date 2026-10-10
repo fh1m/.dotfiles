@@ -201,7 +201,7 @@
       "image": "question-after-restart.png",
       "kind": "native Qt window render including popups",
       "conditions": {
-        "width": 939,
+        "width": 1920,
         "height": 1080,
         "presentation": "fullscreen"
       },
@@ -281,7 +281,7 @@
     }
   ],
   "performance": {
-    "frame_p95_ms": 16.517,
+    "frame_p95_ms": 16.305,
     "samples": 189,
     "note": "Three-second instrumented native frame interval; not input latency or sustained learning."
   },
@@ -296,18 +296,5 @@
     "restart ownership and draft recovery",
     "real editor and isolated Obsidian return",
     "no automatic mastery"
-  ],
-  "base_commit": "bf0d8f22c2d3e5c6a69d005a6eb74e12e75f9ba9",
-  "source_sha256": {
-    "home/.local/bin/sensei-learn": "17f86a773365e92d2397b1b6accd325bb7e589c5e65982a65997c984fd6d3197",
-    "home/.local/share/sensei-learning/noesis/convolution.py": "1f05a93205bb468dd46ce6059895d7a12fe0168c38e3e3c79be7b63e2c6b3d06",
-    "home/.local/share/sensei-learning/noesis/activities.py": "095bbb391a7e2e698c477d636d93690aaf514bd3f1c674b39ecef4bc733fc9de",
-    "home/.local/share/sensei-learning/noesis/development.py": "e342dea2c503f48d64e7f0cb6fb9c0bf8dfe2b044503cb5c760afe719826f0e8",
-    "home/.local/share/sensei-learning/ui/NoesisConvolutionPage.qml": "584a0fd2bccfdd7dce1c1d7b4eb12c1192443e013b552a19cb02a2022ea079d4",
-    "home/.local/share/sensei-learning/ui/NoesisWorkspace.qml": "b092a6484cf5977082829a26617104c00361188c59a832763a44296839df229c",
-    "home/.local/share/sensei-learning/ui/NoesisController.qml": "545262bd910299a828f7686c527298c25f17d8cc056e6a000716aeff88aa12d7",
-    "home/.local/share/sensei-learning/ui/NoesisCreateDialog.qml": "04fc64bfc20a3d5eedb3039de3d9ed233388632b7db93d9c6f55112ef11baf86",
-    "home/.local/share/sensei-learning/ui/NoesisStudyPane.qml": "e105caa0e55ed287c0d488e01e64a9829c5032c2da27bbee1d19ba2a3dfcf80f",
-    "home/.local/share/sensei-learning/ui/NoesisTodayPage.qml": "c8e7c4c01750e8fea1d865aa895f9beb03b83a84ed79774800a51e394e11f163"
-  }
+  ]
 }

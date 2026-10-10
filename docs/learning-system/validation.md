@@ -701,3 +701,35 @@ not rerun for this QML-only continuation.
 Populated Zotero restoration, full cross-domain journeys, sustained desktop tests
 and the real owner learner trial remain release gates. Off-device configuration is
 owner-deferred; existing local recovery and historical acceptance remain authoritative.
+
+## Dijkstra shared-thread acceptance — 2026-10-10
+
+- **142 core tests and 16 compatibility tests pass.** The additions cover empty
+  convolution reconstruction, actual skeleton failure, independent expected graph
+  cases, exact contained editor file/option handling and inherited code context.
+- `check-noesis-dijkstra.py` passes a complete disposable native journey: original
+  failed Practice reasoning, exact assessment-linked question, nonblocking invariant
+  visit/return, real editor skeleton and executions, Git revisions, Lab comparisons
+  and checked artifacts, reusable concept reflection, isolated Obsidian exact note,
+  changed destination graph with recorded reference exposure and unaided retry,
+  and exact original-question/draft recovery after graceful restart.
+- The corrected implementation agrees with eight initial cases; the separately
+  revealed changed graph agrees too. All output and Git history are retained in
+  [Dijkstra evidence](dijkstra-evidence.md). These are agent-authored test outcomes,
+  not learner achievements or a correctness proof.
+- Actual native normal/fullscreen, ScreenPad and 200% screenshots were inspected.
+  Inspection found and corrected workspace routing, clipped comparison fields,
+  an oversized/clipped thread drawer and a Practice minimum-height binding loop.
+  Final Dijkstra and convolution native journeys report no application QML warnings;
+  their distinct disposable application IDs lack production portal registration.
+- Final Dijkstra three-second animation-frame p95: **16.235ms**, 189 samples. This
+  is not physical input latency, a sustained memory/lifecycle trend or a human trial.
+- The existing convolution native journey passes after its new starter becomes an
+  empty skeleton. Existing implementations/history are preserved.
+- Ten native shutdown/uncertainty scenarios pass; scoped installer dry run, twice
+  repeated installation, rollback and later-edit protection pass. Personal Wrayth
+  is not restarted during fixture validation or scoped Noesis deployment.
+
+Owner usability/learning observation remains required. Populated Zotero restoration,
+remaining original P0–P8 fault/journey gates and other cross-domain slices remain
+open; off-device configuration remains owner-deferred.

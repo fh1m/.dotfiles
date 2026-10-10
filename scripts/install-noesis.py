@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('installer',ROOT/'scripts/install.py');installer=importlib.util.module_from_spec(spec);spec.loader.exec_module(installer)
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() and not path.is_symlink() else None
 def files(bridge=False):
- prefixes=['.config/quickshell/noesis','.local/share/sensei-learning/ui','.local/share/sensei-learning/noesis']
+ prefixes=['.config/quickshell/noesis','.local/share/sensei-learning/ui','.local/share/sensei-learning/noesis','.local/share/sensei-learning/examples']
  exact=['.local/bin/sensei-learn','.local/bin/noesis','.local/share/applications/org.fh1m.Noesis.desktop','.local/share/icons/hicolor/scalable/apps/org.fh1m.Noesis.svg']
  if bridge:
   prefixes+=['.config/quickshell/wrayth/modules/learning']

@@ -105,7 +105,7 @@ ColumnLayout {
     }
     ColumnLayout {visible:!root.referenceHidden&&root.supporting.length>0;Layout.fillWidth:true;spacing:NoesisStyle.sm
      Text {textFormat:Text.PlainText;Layout.fillWidth:true;text:"Sources, applications & deeper mechanisms";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
-     Repeater {model:root.supporting;delegate:NoesisRow {required property var modelData;Layout.fillWidth:true;title:modelData.title;subtitle:({resource:"Source",paper:"Paper",concept:"Mechanism",project:"Implementation",experiment:"Experiment",artifact:"Artifact",path:"Learning path"})[modelData.type]||modelData.type;onClicked:root.openMember(modelData)}}
+     Repeater {model:root.supporting;delegate:NoesisRow {required property var modelData;Layout.fillWidth:true;title:modelData.title;subtitle:({resource:"Source",paper:"Paper",concept:"Mechanism",project:"Implementation",experiment:"Experiment",artifact:"Artifact",task:"Problem",path:"Learning path"})[modelData.type]||modelData.type;onClicked:root.openMember(modelData)}}
     }
    }
   }
