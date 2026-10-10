@@ -13,7 +13,7 @@ Rectangle {
  property bool collectionScope:NoesisController.collectionScope
  onCollectionScopeChanged:{NoesisController.collectionScope=collectionScope;NoesisController.savePreferences();}
  property var pendingSelection:({})
- function applyLaunch(){let request=NoesisController.openRequest;if(!request.request_id||!worker.running)return;if(request.vault&&request.vault!==NoesisController.activeVault)return;if(request.record){root.section=request.surface||({concept:"Learn",question:"Learn",capability:"Learn",paper:"Research",resource:request.record.source_kind==="paper"?"Research":"Learn",course:"Learn",unit:"Learn",task:"Practice",problem:"Practice",project:"Lab",experiment:"Lab",lab:"Lab"})[request.record.type]||"Library";root.select(Object.assign({},request.record,{id:request.record.record_id}));}if(request.action==="capture")quickCapture();NoesisController.markRequest(request.request_id,"ready");NoesisController.openRequest=({});}
+ function applyLaunch(){let request=NoesisController.openRequest;if(!request.request_id||!worker.running)return;if(request.vault&&request.vault!==NoesisController.activeVault)return;if(request.record){root.section=request.surface||({concept:"Learn",question:"Learn",capability:"Learn",paper:"Research",resource:request.record.source_kind==="paper"?"Research":"Learn",course:"Learn",unit:"Learn",task:"Practice",problem:"Practice",project:"Lab",experiment:"Lab",lab:"Lab"})[request.record.type]||"Library";root.select(Object.assign({},request.record,{id:request.record.record_id}));}if(request.action==="capture")quickCapture();if(request.action==="start")startLearning();NoesisController.markRequest(request.request_id,"ready");NoesisController.openRequest=({});}
 
  property bool loading:false
  property bool contextLoading:false
@@ -80,6 +80,7 @@ Rectangle {
  property var sourceRevisions:[]
  property string revisionCursor:""
  property string revisionNewerCursor:""
+ function startLearning(){learningStart.begin();}
  function beginRecord(kind,medium){createDialog.begin(kind,"",false,medium);}
  function focusTodayQuiet(){todayPage.focusQuiet();}
  function focusSourceRevision(){researchPage.focusRevision();}
@@ -189,7 +190,7 @@ Rectangle {
   if(!selected.id||NoesisController.working)return items;
   if(["task","problem"].includes(kind)&&history.some(event=>["attempt","review"].includes(event.event))&&!referenceHidden&&!activeAttempt)add("evidence","Review latest evidence","Judge a scoped result against a capability criterion");
   if(!referenceHidden)add("question","Ask a question","Preserve the uncertainty and your current explanation");
-  if(["paper","task","problem","concept","question"].includes(workflow.kind)||["task","problem","concept","question"].includes(kind)){if(!activeAttempt)add("implementation","Connect implementation","Connect your own Git repository; no code is executed");}
+  if(["paper","task","problem","concept","question"].includes(workflow.kind)||["task","problem","concept","question","resource","unit","course"].includes(kind)){if(!activeAttempt)add("implementation","Connect implementation","Connect your own Git repository; no code is executed");}
   if(["path","course","resource"].includes(kind)||kind==="unit"&&selected.unit_kind==="module")add("unit","Add lesson or chapter","Each unit keeps its own position and history");
   if(["path","course","resource","unit"].includes(kind))add("task","Add problem","Assessment stays separate from consumption");
   if(["project","experiment","lab"].includes(kind))add("run","Add experiment run","Preserve a new prediction and code revision");
@@ -288,7 +289,7 @@ Rectangle {
  Timer {id:searchDelay;interval:150;onTriggered:root.load(false)}
  Shortcut {sequence:"Ctrl+Return";enabled:!(root.convolutionWorking&&root.investigationWorking)&&root.contextTab==="Work"&&!!root.selected.id&&!NoesisController.working&&!root.modalOpen&&(!root.activeAttempt||evidence.text.trim()!=="");onActivated:root.contextAction(root.activeAttempt?"attempt-save":"attempt-start")}
  Shortcut {sequence:"Ctrl+.";enabled:!!root.selected.id&&!NoesisController.working&&root.contextActions().length>0;onActivated:actionDialog.begin(root.contextActions())}
- Shortcut {sequence:"Ctrl+N";onActivated:root.section==="Today"?root.quickCapture():createDialog.begin(root.section==="Lab"?"experiment":root.section==="Practice"?"task":"resource","")}
+ Shortcut {sequence:"Ctrl+N";onActivated:root.startLearning()}
  Shortcut {sequence:"Ctrl+Shift+O";enabled:root.section==="Learn";onActivated:outlineDialog.begin(["course","path"].includes(root.workflow.kind)?root.selected:null)}
  Shortcut {sequence:"Ctrl+Shift+K";onActivated:{root.collectionScope=!root.collectionScope;root.load(false);}}
  Shortcut {sequence:"Ctrl+Shift+Return";enabled:!!root.selected.id&&["paper","resource","course","unit"].includes(root.selected.type)&&!root.referenceHidden&&!NoesisController.working;onActivated:root.openSource()}
@@ -342,7 +343,8 @@ Rectangle {
     NoesisButton {text:"Search";visible:root.compact&&!root.tight&&!root.focusMode;onClicked:searchPopup.open()}
     NoesisField {id:search;visible:!root.compact&&!root.focusMode&&!root.selected.id;Keys.onDownPressed:{list.forceActiveFocus();list.currentIndex=0;}width:Math.min(320,Math.max(180,root.width*.25));placeholderText:"Search · Ctrl+K";onTextChanged:{root.query=text;searchDelay.restart();}Accessible.name:"Search learning records"}
     NoesisButton {text:"+ New";hint:"Ctrl+N · create in this workspace";visible:!root.selected.id&&root.section!=="Today"&&!root.compact&&!root.focusMode;onClicked:{let items=[{action:"resource",label:root.section==="Lab"?"Begin an experiment":root.section==="Practice"?"Begin a problem":"Add a resource"}];if(root.section==="Learn")items=items.concat([{action:"concept",label:"Investigate a concept"},{action:"outline",label:"Import a course outline",reason:"Ctrl+Shift+O"},{action:"path",label:"Start a learning path"}]);if(root.section==="Research")items.push({action:"zotero",label:"Import from Zotero"});items.push({action:"capture",label:"Capture a thought",reason:"Ctrl+Shift+N"});startDialog.begin(items);}}
-    NoesisButton {text:"+ Capture";visible:root.section==="Today";primary:true;onClicked:root.quickCapture()}
+    NoesisButton {text:"Help";variant:"tertiary";onClicked:helpDialog.open()}
+    NoesisButton {text:"Start learning";primary:!root.selected.id;onClicked:root.startLearning()}
     NoesisButton {text:root.collectionScope?"All learning vaults":"This vault";hint:"Ctrl+Shift+K · read scope; saves stay in the owning vault";visible:["Today","Library"].includes(root.section);highlighted:root.collectionScope;onClicked:{root.collectionScope=!root.collectionScope;root.load(false);}}
     NoesisButton {visible:!root.compact&&!root.focusMode;text:"Refresh";onClicked:root.send("reconcile");Accessible.name:"Refresh"}
    }
@@ -359,7 +361,7 @@ Rectangle {
       onOpenContext:row=>root.openWork(row)
       onToggleQuiet:{NoesisController.quiet=!NoesisController.quiet;NoesisController.savePreferences();root.load(false);}
       onClearPathScope:{NoesisController.setPathScope("");root.load(false);}
-      onStart:kind=>{if(kind==="convolution-example")createDialog.beginConvolution();else createDialog.begin(kind==="paper"?"resource":kind,"",false,kind==="paper"?"paper":kind==="resource"?"course":undefined);}
+      onStart:kind=>{if(kind==="start")root.startLearning();else if(kind==="convolution-example")createDialog.beginConvolution();else createDialog.begin(kind==="paper"?"resource":kind,"",false,kind==="paper"?"paper":kind==="resource"?"course":undefined);}
       onBrowse:root.section="Library"
      }
      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:root.loading;text:"Loading your workspace…";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
@@ -422,6 +424,7 @@ Rectangle {
       onConnectPrerequisite:prerequisiteDialog.begin(root.selected)
       onNotesEdited:value=>{root.evidence.text=value;draftSave.restart();}
       onPreserveNote:root.saveEvent("study",{state:{}})
+      onShowActions:actionDialog.begin(root.contextActions())
       onStartAttempt:root.saveEvent("attempt-start",{mode:"derive",scope:root.selected.title,assistance:["none"]})
       onEvaluateAttempt:attemptSettings.open()
       onRevealReference:root.contextAction("reference")
@@ -442,6 +445,7 @@ Rectangle {
       onOpenNote:NoesisController.note(root.selected.path)
       onNotesEdited:value=>{root.evidence.text=value;draftSave.restart();}
       onPreserveNotes:root.saveEvent("study",{state:{}})
+      onShowActions:actionDialog.begin(root.contextActions())
       onAskQuestion:createDialog.begin("question",root.selected.id)
       onSavePlace:(value,kind)=>{position.text=value;locatorKind.currentIndex=Math.max(0,locatorKind.model.indexOf(kind));root.saveEvent("study",{state:root.studyUpdate()});}
       onOpenQuestion:row=>root.openWork({id:row.other_id,path:row.other_path,title:row.other_title,type:row.other_type,vault:row.other_vault||NoesisController.activeVault})
@@ -480,7 +484,7 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
      }
      Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm;visible:(!root.tight||root.workflow.kind!=="paper"||root.readingPlaceOpen)&&root.contextTab==="Read"&&["paper","resource","course","unit"].includes(root.selected.type)&&root.selected.unit_kind!=="module"&&(!["course","path"].includes(root.workflow.kind)||!!root.selected.source||!!root.selected.local_file)
       NoesisSelect {id:locatorKind;model:["location","page","section","exercise","timestamp"];Accessible.name:"Resume location kind"}
-      NoesisField {id:position;width:Math.min(360,parent.width);placeholderText:"Resume at page, section or timestamp"}
+      NoesisField {id:position;objectName:"source-reading-place";width:Math.min(360,parent.width);placeholderText:"Resume at page, section or timestamp"}
       NoesisButton {text:"Save place";enabled:!NoesisController.working;onClicked:root.saveEvent("study",{state:root.studyUpdate()})}
      }
      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:root.contextTab==="Read"&&!["project","experiment"].includes(root.workflow.kind);text:"Equations, diagrams and editing open in Obsidian.";color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;wrapMode:Text.Wrap;Layout.fillWidth:true}       NoesisResearchPage {id:researchPage;displayTitle:root.selected.title||"";visible:root.workflow.kind==="paper"&&!root.referenceHidden;Layout.fillWidth:true;context:root.workflow;preview:root.documentPreview;revisions:root.sourceRevisions;revisionCursor:root.revisionCursor;revisionNewerCursor:root.revisionNewerCursor;currentProjection:root.selected.zotero_projection||"";viewportHeight:readScroll.availableHeight;onPageAnnotations:cursor=>root.loadAnnotations(cursor);onChooseSnapshot:path=>root.loadAnnotations(null,path);onPageRevisions:cursor=>root.loadSourceRevisions(cursor)}
@@ -585,7 +589,8 @@ Action: "+(NoesisController.pendingOperation.kind||NoesisController.operationKin
  }
  NoesisDialog {id:searchPopup;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(700,root.width-32);height:Math.min(600,root.height-32);title:"Search learning records";onOpened:compactSearch.forceActiveFocus()
   contentItem:ColumnLayout {spacing:NoesisStyle.md
-   NoesisField {id:compactSearch;Keys.onDownPressed:{compactResults.forceActiveFocus();compactResults.currentIndex=0;}Layout.fillWidth:true;placeholderText:"Title, concept or identifier";onTextChanged:{root.query=text;searchDelay.restart();}}
+   NoesisField {id:compactSearch;Keys.onDownPressed:{compactResults.forceActiveFocus();compactResults.currentIndex=0;}Layout.fillWidth:true;objectName:"learning-search";placeholderText:"Title, concept or identifier";onTextChanged:{root.query=text;searchDelay.restart();}}
+   NoesisButton {text:"Start learning from a new source";onClicked:{searchPopup.close();root.startLearning();}}
    ListView {id:compactResults;Layout.fillWidth:true;Layout.fillHeight:true;clip:true;model:root.rows;keyNavigationEnabled:true;Keys.onReturnPressed:{if(currentIndex>=0){root.select(root.rows[currentIndex]);compactSearch.text="";searchPopup.close();}}
     delegate:NoesisRow {required property var modelData;width:ListView.view.width;title:modelData.title||modelData.path;subtitle:modelData.vault_name||modelData.type;onClicked:{root.select(modelData);compactSearch.text="";searchPopup.close();}}
     ScrollBar.vertical:ScrollBar {}
@@ -693,7 +698,7 @@ function onFinished(ok){if(comparisonDialog.submitting){comparisonDialog.submitt
  Connections {target:NoesisController;
 function onFinished(ok){if(reviewDialog.submitting){reviewDialog.submitting=false;if(ok){reviewDialog.close();checkPurpose.text="";}}}}
  }
- NoesisZoteroDialog {id:zoteroDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(620,root.width-48);height:Math.min(480,root.height-80);onImported:record=>{let paths=(record.created||[]).concat(record.existing||[]);if(paths.length)root.select({id:record.resource_id,path:paths[0],type:"paper"});}}
+ NoesisZoteroDialog {id:zoteroDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(620,root.width-48);height:Math.min(480,root.height-80);onImported:record=>{let paths=(record.created||[]).concat(record.existing||[]);if(paths.length)root.openWork({id:record.resource_id,path:paths[0],type:"paper"});}}
  NoesisEvidenceDialog {id:evidenceDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48);onLookup:query=>{root.capabilitySerial=root.send("query",{kind:["capability"],query:query});};onMoreClaims:cursor=>{root.capabilityClaimsSerial=root.send("claims",{record_id:evidenceDialog.selected.id,cursor:cursor});};onInspect:identity=>{root.capabilityClaimsSerial=0;evidenceDialog.selected=({});evidenceDialog.loading=true;root.capabilityDetailSerial=root.send("record",{record_id:identity});}}
  NoesisActionDialog {id:actionDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(520,root.width-48);onChosen:action=>root.contextAction(action)}
  NoesisActionDialog {id:startDialog;title:"Start something";parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(520,root.width-48);onChosen:action=>{if(action==="outline")outlineDialog.begin(null);else if(action==="zotero")zoteroDialog.open();else if(action==="capture")root.quickCapture();else if(action==="concept")createDialog.begin("concept","");else createDialog.begin(action==="path"?"path":root.section==="Lab"?"experiment":root.section==="Practice"?"task":"resource","");}}
@@ -718,6 +723,8 @@ function onFinished(ok){if(reviewDialog.submitting){reviewDialog.submitting=fals
 function onFinished(ok){if(readinessDialog.submitting){readinessDialog.submitting=false;if(ok)readinessDialog.close();}}}
  }
  NoesisPrerequisiteDialog {id:prerequisiteDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48);onSearch:query=>{root.prerequisiteSerial=root.send("query",{query:query,kind:["concept","capability","task","problem","unit","prerequisite"]});}}
+ NoesisHelpDialog {id:helpDialog;parent:Overlay.overlay;anchors.centerIn:parent;onStartLearning:root.startLearning();onSearchRecords:searchPopup.open()}
+ NoesisStartDialog {id:learningStart;parent:Overlay.overlay;anchors.centerIn:parent;onBeginLearning:(kind,medium,source,title)=>createDialog.beginSource(kind,medium,source,title);onZotero:zoteroDialog.open()}
  NoesisCreateDialog {id:createDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48);onCreated:record=>root.openWork(record)}
  NoesisDialog {id:captureDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(560,root.width-48);modal:true;title:"Quick capture";closePolicy:Popup.CloseOnEscape
   background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius;}

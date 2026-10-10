@@ -10,6 +10,7 @@ Singleton {
  readonly property var currentContext:publisherLive?(projection.context||{}):({})
  readonly property string activeVault:currentContext.vault||""
  readonly property bool windowOpen:publisherLive&&projection.visible===true
+ function startLearning(){Quickshell.execDetached(["@HOME@/.local/bin/noesis","window","--start"]);}
  function open(){Quickshell.execDetached(["@HOME@/.local/bin/noesis","window"]);}
  function resume(){if(currentContext.id&&currentContext.vault_id)Quickshell.execDetached(["@HOME@/.local/bin/noesis","window","--owner",currentContext.vault,"--vault-id",currentContext.vault_id,"--record-id",currentContext.id]);else open();}
  function capture(){let command=["@HOME@/.local/bin/noesis","window","--capture"];if(currentContext.vault_id)command.push("--owner",currentContext.vault,"--vault-id",currentContext.vault_id);if(currentContext.id)command.push("--record-id",currentContext.id);Quickshell.execDetached(command);}

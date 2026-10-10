@@ -16,6 +16,7 @@ ColumnLayout {
  property bool placeOpen:false
  property string previousIdentity:""
  readonly property bool compact:width<1000*Math.max(NoesisStyle.interfaceScale,NoesisStyle.readingScale)
+ readonly property bool hasReading:protectedReference||(preview.blocks||[]).length>0
  readonly property bool hasSource:!!(record.source||record.local_file||record.zotero_attachment_key)
  readonly property real sourceAnchor:sourceScroll.ScrollBar.vertical.position
  readonly property real notesAnchor:notesScroll.ScrollBar.vertical.position
@@ -23,6 +24,7 @@ ColumnLayout {
  signal openNote()
  signal notesEdited(string value)
  signal preserveNotes()
+ signal showActions()
  signal askQuestion()
  signal openQuestion(var row)
  signal savePlace(string value,string kind)
@@ -31,11 +33,12 @@ ColumnLayout {
  spacing:NoesisStyle.md
  Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
   NoesisButton {visible:page.hasSource;text:page.savedPlace?"Resume source ↗":"Open original source ↗";primary:true;enabled:!page.busy&&!page.protectedReference;onClicked:page.openSource()}
+  NoesisButton {text:"Learning options";enabled:!page.busy&&!page.protectedReference;onClicked:page.showActions()}
   NoesisButton {text:"Edit complete note in Obsidian ↗";enabled:!page.busy&&!page.protectedReference;onClicked:page.openNote()}
-  NoesisButton {visible:page.compact;text:page.notesOnly?"Show reading":"Show notes & questions";highlighted:page.notesOnly;onClicked:page.notesOnly=!page.notesOnly}
+  NoesisButton {visible:page.compact&&page.hasReading;text:page.notesOnly?"Show reading":"Show notes & questions";highlighted:page.notesOnly;onClicked:page.notesOnly=!page.notesOnly}
  }
  SplitView {id:panes;Layout.fillWidth:true;Layout.fillHeight:true;orientation:Qt.Horizontal;handle:Item {implicitWidth:NoesisStyle.lg}
-  ScrollView {id:sourceScroll;visible:!page.compact||!page.notesOnly;SplitView.preferredWidth:panes.width*.57;SplitView.minimumWidth:0;SplitView.fillWidth:page.compact;clip:true;contentWidth:availableWidth;padding:NoesisStyle.xl;background:Rectangle {color:NoesisStyle.canvas;radius:NoesisStyle.radius}
+  ScrollView {id:sourceScroll;visible:page.hasReading&&(!page.compact||!page.notesOnly);SplitView.preferredWidth:panes.width*.57;SplitView.minimumWidth:0;SplitView.fillWidth:page.compact;clip:true;contentWidth:availableWidth;padding:NoesisStyle.xl;background:Rectangle {color:NoesisStyle.canvas;radius:NoesisStyle.radius}
    ColumnLayout {width:sourceScroll.availableWidth;spacing:NoesisStyle.lg
     Text {Layout.fillWidth:true;text:"Reading";textFormat:Text.PlainText;color:NoesisStyle.accent;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;renderType:Text.NativeRendering}
     NoesisDocument {Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;framed:false;blocks:page.protectedReference?[]:page.preview.blocks||[];originalAvailable:!page.protectedReference&&!page.busy;onOpenOriginal:page.openNote()}
@@ -43,11 +46,12 @@ ColumnLayout {
     Text {visible:!!page.preview.truncated;Layout.fillWidth:true;text:"This is a bounded preview. The complete note remains available in Obsidian.";textFormat:Text.PlainText;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}
    }
   }
-  ScrollView {id:notesScroll;visible:!page.compact||page.notesOnly;SplitView.fillWidth:true;SplitView.minimumWidth:0;clip:true;contentWidth:availableWidth;padding:NoesisStyle.xl;background:Rectangle {color:NoesisStyle.canvas;radius:NoesisStyle.radius}
+  ScrollView {id:notesScroll;visible:!page.hasReading||!page.compact||page.notesOnly;SplitView.fillWidth:true;SplitView.minimumWidth:0;clip:true;contentWidth:availableWidth;padding:NoesisStyle.xl;background:Rectangle {color:NoesisStyle.canvas;radius:NoesisStyle.radius}
    ColumnLayout {width:notesScroll.availableWidth;spacing:NoesisStyle.md
+    Text {visible:!page.hasReading;Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;text:"Read or watch in the original source; keep your reasoning, questions and place here. The ScreenPad can hold supporting context while you work.";wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;renderType:Text.NativeRendering}
     Text {Layout.fillWidth:true;text:"Your notes & questions";textFormat:Text.PlainText;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;renderType:Text.NativeRendering}
     Text {Layout.fillWidth:true;text:"Keep your own explanation separate from the source. Save a study note to preserve it in this activity’s history.";textFormat:Text.PlainText;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}
-    NoesisEditor {objectName:"reading-reasoning";Layout.fillWidth:true;Layout.preferredHeight:300*NoesisStyle.readingScale;text:page.notes;placeholderText:"What is the claim?\n\nHow would I explain or reconstruct it?\n\nWhat is still unclear?";Accessible.name:"Reading notes draft";onTextChanged:if(text!==page.notes)page.notesEdited(text)}
+    NoesisEditor {objectName:"reading-reasoning";Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;Layout.preferredHeight:300*NoesisStyle.readingScale;text:page.notes;placeholderText:"What is the claim?\n\nHow would I explain or reconstruct it?\n\nWhat is still unclear?";Accessible.name:"Reading notes draft";onTextChanged:if(text!==page.notes)page.notesEdited(text)}
     Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
      NoesisButton {text:"Save study note";primary:page.notes.trim()!=="";enabled:!page.busy&&page.notes.trim()!=="";onClicked:page.preserveNotes()}
      NoesisButton {text:"Ask a source-linked question";enabled:!page.busy;onClicked:page.askQuestion()}

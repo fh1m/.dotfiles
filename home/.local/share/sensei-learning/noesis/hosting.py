@@ -10,7 +10,7 @@ def process_start(pid):
 def resolve_request(request):
     if not isinstance(request,dict) or request.get('version')!=1:raise ValueError('Unsupported host request version')
     uuid.UUID(request['request_id'])
-    if request.get('action') not in ('open','resume','capture'):raise ValueError('Unsupported host action')
+    if request.get('action') not in ('open','resume','capture','start'):raise ValueError('Unsupported host action')
     result=dict(request)
     owner=request.get('owner')
     if not owner and request.get('action')=='capture':
@@ -42,13 +42,13 @@ def executable(home):
     preferred=Path(home)/'.local/opt/sensei-quickshell/bin/qs'
     return str(preferred) if preferred.exists() else 'qs'
 
-def launch(home,*,embedded=False,owner=None,vault_id=None,record_id=None,capture=False):
+def launch(home,*,embedded=False,owner=None,vault_id=None,record_id=None,capture=False,start=False):
     home=Path(home);qs=executable(home)
     config=(home/'.config/quickshell'/('wrayth' if embedded else 'noesis')).resolve()
     if not (config/'shell.qml').is_file():raise ValueError('Noesis host is not installed: '+str(config))
     state=home/'.local/state/sensei-learning';state.mkdir(parents=True,exist_ok=True);state.chmod(0o700)
     prefs=json.loads((state/'window.json').read_text()) if (state/'window.json').exists() else {}
-    request={'version':1,'request_id':str(uuid.uuid4()),'action':'capture' if capture else 'resume' if record_id else 'open'}
+    request={'version':1,'request_id':str(uuid.uuid4()),'action':'start' if start else 'capture' if capture else 'resume' if record_id else 'open'}
     if owner:
         from .scopes import identity
         request['owner']={'vault_id':vault_id or identity(Path(owner).expanduser().resolve()),'registered_location':str(Path(owner).expanduser().resolve())}

@@ -1,5 +1,7 @@
 # Connected Noesis usage
 
+Current controls are maintained in the [canonical Noesis user guide](user-guide.md). This document retains the earlier connected-workflow context.
+
 Open with Super+Ctrl+O or `noesis window`. Ctrl+1–6 selects Today, Learn,
 Research, Practice, Lab and Library. Ctrl+K searches; Ctrl+Shift+N focuses capture. Ctrl+N creates the current
 workspace’s resource, problem or experiment; Ctrl+Enter saves its dialog.

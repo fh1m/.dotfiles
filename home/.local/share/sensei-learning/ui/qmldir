@@ -33,3 +33,5 @@ NoesisStudyPane 1.0 NoesisStudyPane.qml
 NoesisInvestigationPage 1.0 NoesisInvestigationPage.qml
 NoesisNavigation 1.0 NoesisNavigation.qml
 NoesisConvolutionPage 1.0 NoesisConvolutionPage.qml
+NoesisStartDialog 1.0 NoesisStartDialog.qml
+NoesisHelpDialog 1.0 NoesisHelpDialog.qml

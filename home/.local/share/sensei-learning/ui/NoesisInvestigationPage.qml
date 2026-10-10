@@ -38,6 +38,7 @@ ColumnLayout {
  readonly property real notesAnchor:notesScroll.ScrollBar.vertical.position
  signal notesEdited(string value)
  signal preserveNote()
+ signal showActions()
  signal startAttempt()
  signal evaluateAttempt()
  signal revealReference()
@@ -59,6 +60,7 @@ ColumnLayout {
  Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
   NoesisButton {text:root.attemptId?"Record how the attempt went":root.lastAssessment.id?"Assess what this attempt demonstrates":"Try explaining without notes";primary:true;enabled:!root.busy&&(!root.lastAssessment.id||!!root.attemptId||!root.referenceHidden);onClicked:root.attemptId?root.evaluateAttempt():root.lastAssessment.id?root.reviewEvidence():root.startAttempt()}
   NoesisButton {visible:!!root.lastAssessment.id&&!root.attemptId;text:"Try again without notes";enabled:!root.busy;onClicked:root.startAttempt()}
+  NoesisButton {text:"Learning options";enabled:!root.busy&&!root.referenceHidden;onClicked:root.showActions()}
   NoesisButton {text:"Add an unanswered question";enabled:!root.busy;onClicked:root.askQuestion()}
   NoesisButton {text:root.reasoningOnly?"Show question & evidence":"Show reasoning";visible:root.compact;highlighted:root.reasoningOnly;onClicked:root.reasoningOnly=!root.reasoningOnly}
  }

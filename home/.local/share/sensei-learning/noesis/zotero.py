@@ -110,6 +110,11 @@ def import_item(root, key, api=None):
     if not data.get('title'):raise ValueError('Choose a titled bibliography item')
     csl = {'id': 'zotero:' + api.server_id + ':' + key, 'title': data['title'], 'DOI': data.get('DOI',''),
            'URL': data.get('url',''), 'author': [{'family': c.get('lastName',c.get('name','')), 'given':c.get('firstName','')} for c in data.get('creators',[])]}
+    # Preserve only source-supplied, unambiguous date precision; never infer a year.
+    date_value=str(data.get('date','')).strip()
+    if re.fullmatch(r'\d{4}(?:-\d{2}(?:-\d{2})?)?',date_value):
+        csl['issued']={'date-parts':[[int(part) for part in date_value.split('-')]]}
+    if data.get('publicationTitle'):csl['container-title']=data['publicationTitle']
     meta = json.loads(manifest_path(root).read_text())
     with tempfile.TemporaryDirectory() as folder:
         source = Path(folder)/'item.json';source.write_text(json.dumps([csl]))
