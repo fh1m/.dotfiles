@@ -582,7 +582,7 @@ acceptance and the configured off-device destination remain outside these result
 
 ## Learning-engine M1 validation — 2026-10-10
 
-The new concept investigation slice passes **124 core tests and 16 compatibility
+The new concept investigation slice passes **129 core tests and 16 compatibility
 tests**, scoped repeated-install/rollback checks and native keyboard/pointer testing
 through `scripts/check-noesis-frontier.py`. Native evidence includes working-page entry,
 protected reconstruction, draft/owner/navigation recovery across Hide and restart,
@@ -594,3 +594,11 @@ The populated Zotero native restore gate remains **unresolved**. A bounded isola
 control pass still failed unchanged-profile restart while copied empty profiles opened;
 empty-profile success is not populated annotation/PDF recovery. Off-device configuration
 remains owner-deferred, post-V1. These results do not replace the real learner trial.
+
+The native reading refinement also passes source typing, saved section, source-linked
+question creation and exact return; rendered table cells and protected source handoffs
+are asserted. Shared rendering is exercised in Course, Practice, Research and ScreenPad.
+The gallery retains same-content Read before/after captures. Source Markdown, stable
+identities and historical activities are unchanged. Rich equation rendering remains a
+specialist responsibility; generic top-level History/Connections navigation still
+needs further product refinement. These are explicit limits, not completed M2–M5 gates.

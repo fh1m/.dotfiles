@@ -81,7 +81,15 @@ def capture(name):
 def desk_capture(name):
  if "--dual" not in sys.argv:return
  state=json.loads(f.ipc('noesis-study-desk','state'));labels={'source':'Problem statement' if f.state()['section']=='Practice' else 'Source','context':'Context','notes':'Notes & reasoning','figures':'Figures & artifacts','reference':'Reference (protected)' if f.state()['reference_hidden'] else 'Reference preview'};assert state['left_label']==labels[state['view']] and state['right_label']==labels[state['right_view']],state;assert state['visible'] and state['width']==1920 and state['height']==550,state
- frame=int(f.ipc('noesis-study-desk','repaintNow'));f.wait(lambda s:json.loads(f.ipc('noesis-study-desk','state'))['frame_serial']>frame);time.sleep(.1)
+ frame=int(f.ipc('noesis-study-desk','repaintNow'))
+ try:f.wait(lambda s:json.loads(f.ipc('noesis-study-desk','state'))['frame_serial']>frame)
+ except AssertionError:
+  layers=json.loads(subprocess.check_output(['hyprctl','layers','-j']))['DP-2']['levels']['3']
+  if len(layers)==1 and layers[0]['pid']==f.process.pid and layers[0]['namespace']=='noesis-study-desk':
+   subprocess.run(['grim','-o','DP-2',str(evidence/(name+'-frame-failure.png'))],check=True,capture_output=True)
+  print('ScreenPad frame diagnostics:',f.ipc('noesis-study-desk','state'),layers,flush=True)
+  raise
+ time.sleep(.1)
  target=evidence/(name+'.png')
  if target.exists():target.unlink()
  # Capture exactly what the ScreenPad displays. Refuse any other overlay so

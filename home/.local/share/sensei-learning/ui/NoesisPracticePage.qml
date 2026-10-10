@@ -9,6 +9,9 @@ Rectangle {
  function showStatement(){thinking=false;}
  function showReasoning(){thinking=true;evidence.forceActiveFocus();}
  property string statement:""
+ property var statementPreview:({blocks:[]})
+ property bool originalProblemAvailable:false
+ signal openOriginalProblem()
  property bool referenceHidden:true
  property bool compact:false
  property bool externalStatement:false
@@ -41,7 +44,7 @@ Rectangle {
        ColumnLayout {id:statementPane;visible:!!root.statement&&(!(root.compact||root.externalStatement)||!root.thinking);SplitView.fillWidth:root.compact||root.externalStatement;SplitView.fillHeight:root.compact||root.externalStatement;SplitView.preferredWidth:practiceSplit.width*practiceSplit.storedRatio;SplitView.preferredHeight:practiceSplit.height*practiceSplit.storedRatio;SplitView.minimumHeight:80;SplitView.minimumWidth:Math.min(280,practiceSplit.width);spacing:NoesisStyle.sm
         Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Problem statement";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading}
         ScrollView {id:statementScroll;Layout.fillWidth:true;Layout.fillHeight:true;clip:true;background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius}
-         TextEdit {renderType:TextEdit.NativeRendering;font.hintingPreference:Font.PreferFullHinting;id:statementText;padding:NoesisStyle.lg;width:statementScroll.availableWidth;text:root.statement||"";readOnly:true;selectByMouse:true;wrapMode:TextEdit.Wrap;textFormat:TextEdit.PlainText;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;Accessible.name:"Problem statement"}
+         NoesisDocument {id:statementText;width:statementScroll.availableWidth;blocks:root.statementPreview.blocks||[];originalAvailable:root.originalProblemAvailable||!root.referenceHidden;originalAction:root.originalProblemAvailable?"Open original problem ↗":"View in complete note ↗";onOpenOriginal:if(root.originalProblemAvailable)root.openOriginalProblem();else if(!root.referenceHidden)NoesisController.note(NoesisController.currentContext.path)}
         }
        }
        ColumnLayout {visible:!(root.compact||root.externalStatement)||root.thinking;SplitView.fillWidth:true;SplitView.fillHeight:true;SplitView.minimumHeight:120;SplitView.minimumWidth:Math.min(320,practiceSplit.width);spacing:NoesisStyle.sm

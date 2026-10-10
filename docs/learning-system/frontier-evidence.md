@@ -53,15 +53,40 @@ and [captured conditions](assets/frontier/after.json) retain the native window r
 The fixture adds an equivalent Item viewport around existing application content so
 native popup overlays are included in capture. Images are not composed mockups or
 captures of personal vaults. Main-display DPR is 2; application text scale is recorded
-separately. A 184-frame instrumented sample measured p95 17.158 ms. This is frame
+separately. A 184-frame instrumented sample measured p95 17.164 ms. This is frame
 interval, not physical input latency or sustained human-use acceptance.
 
+The shared-page three-second sample measured p95 16.54 ms (189 frames), RSS 281916 KiB and PSS 211469 KiB. It is not a sustained memory trend.
+
 The synthetic 10,000-record benchmark measured rebuild 3.554 s, query p95 29.641 ms,
-Today 23.201 ms and capture 106.389 ms. All 124 core and 16 compatibility tests pass.
+Today 23.201 ms and capture 106.389 ms. All 129 core and 16 compatibility tests pass.
 Existing shutdown checks passed all ten debounce, pending mutation/import, failed-save,
 uncertain-receipt and forced-exit scenarios. Scoped installer checks passed two installs,
 rollback and protection of later edits/unrelated files. Tests do not establish educational
 effectiveness.
+
+## Native reading and activity separation
+
+The Read view now gives formatted source and learner reasoning separate, inset
+working areas. Reading position is optional disclosure rather than a permanent
+form. Source-linked questions return to their original owner, record and saved
+section; the return control has a stable row so loading context does not move the
+primary attempt action. Parent motivation is fetched independently of neighbor
+pagination. Saved source notes, Course lesson prose, Research analysis, Practice
+statements and ScreenPad source views use the same bounded native renderer.
+
+Generated formatting supports emphasis, checklists, nested lists, quotations,
+inline code, fenced code and small tables. Unsupported equations, diagrams, embeds
+and HTML have precise specialist handoffs, respecting hidden-reference protection.
+No source HTML executes or remote content loads. Original Markdown is unchanged.
+Native assertions verify actual table cells and absence of raw formatting markers.
+The source→saved section→question→return journey passes with real Qt pointer input.
+
+The cross-workspace native suite passes Course/lesson/outline navigation, shared
+notes, protected Practice, Research, Lab and dual-display captures. One earlier
+run missed a Lab ScreenPad frame acknowledgement; it remains recorded as a failed
+run, with failure-only diagnostics added. Two subsequent complete runs passed.
+This is not evidence of sustained-session reliability or human usability.
 
 ## Owner feedback and response
 
