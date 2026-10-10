@@ -579,3 +579,18 @@ acceptance and the configured off-device destination remain outside these result
 ![Native course assessment separation](assets/course-day-native.png)
 ![Native experiment comparison](assets/lab-day-native.png)
 ![Native experiment figure](assets/lab-figure-native.png)
+
+## Learning-engine M1 validation — 2026-10-10
+
+The new concept investigation slice passes **124 core tests and 16 compatibility
+tests**, scoped repeated-install/rollback checks and native keyboard/pointer testing
+through `scripts/check-noesis-frontier.py`. Native evidence includes working-page entry,
+protected reconstruction, draft/owner/navigation recovery across Hide and restart,
+partial result plus rejected scoped claim, concept creation and same-UUID cross-vault
+return. [Evidence and limits](frontier-evidence.md) and [native gallery](ui-gallery.md#concept-investigation-and-knowledge-frontier)
+retain actual renders and the remaining learning-engine M2–M5 work.
+
+The populated Zotero native restore gate remains **unresolved**. A bounded isolated
+control pass still failed unchanged-profile restart while copied empty profiles opened;
+empty-profile success is not populated annotation/PDF recovery. Off-device configuration
+remains owner-deferred, post-V1. These results do not replace the real learner trial.

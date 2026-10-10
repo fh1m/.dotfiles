@@ -27,20 +27,9 @@ def overview(index, identity):
         from .experiments import context
         return context(index,root)
     if kind=='capability':
-        decisions=[event for event in index.timeline(identity) if event.get('event')=='capability-decision']
-        evidence=[]
-        for decision in decisions[-50:]:
-            try:
-                supporting=index.record(decision['evidence_id'])
-                props=supporting['props']
-                evidence.append({'criterion':decision.get('criterion'),'decision':decision.get('decision'),
-                    'actor':decision.get('actor','unknown'),'decision_id':decision['id'],'evidence_id':decision['evidence_id'],
-                    'outcome':props.get('outcome','unknown'),'assistance':props.get('assistance',['unknown']),
-                    'scope':props.get('scope'), 'assessment':props.get('assessment','learner-reported'),
-                    'checked':props.get('timestamp'),'path':supporting['path']})
-            except ValueError:
-                evidence.append({'decision_id':decision['id'],'availability':'evidence unavailable'})
-        return {'kind':'capability','criteria':root['props'].get('criteria',[]),'evidence':evidence,'summary':'Scoped learner decisions; no mastery percentage'}
+        from .frontier import claim_page
+        return dict(claim_page(index, identity), kind='capability', criteria=root['props'].get('criteria',[]),
+                    summary='Complete-history reduction; scoped learner decisions, no mastery percentage')
     if kind not in ('path','course') and not (kind=='unit' and root['props'].get('unit_kind')=='module') and not (kind=='resource' and (root['props'].get('source_kind') or root['props'].get('medium')) in ('course','book','playlist')):return None
     rows=index.db.execute('''WITH RECURSIVE members(id) AS (
         SELECT ? UNION SELECT r.target FROM relationships r JOIN members m ON r.source=m.id

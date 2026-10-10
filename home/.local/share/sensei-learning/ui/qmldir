@@ -27,3 +27,5 @@ NoesisTodayPage 1.0 NoesisTodayPage.qml
 NoesisCourseStudio 1.0 NoesisCourseStudio.qml
 NoesisStudyDesk 1.0 NoesisStudyDesk.qml
 NoesisStudyPane 1.0 NoesisStudyPane.qml
+NoesisInvestigationPage 1.0 NoesisInvestigationPage.qml
+NoesisNavigation 1.0 NoesisNavigation.qml

@@ -228,7 +228,10 @@ class Index:
         effective=effective_props(metadata,state)
         effective_source={key:effective.get(key) for key in ('source','source_kind','local_file','zotero_uri','zotero_attachment_key')}
         return {'effective_source':effective_source,'path': path, 'display_title':display_title(metadata,path), 'props': metadata, 'body': body, 'state': state, 'activity_head': head, 'artifact': artifact,
-                'attempt': unfinished[0] if len(unfinished) == 1 else None, 'attempt_conflict': len(unfinished) > 1}
+                'attempt': unfinished[0] if len(unfinished) == 1 else None, 'attempt_conflict': len(unfinished) > 1,
+                'attempt_assistance': sorted({kind for event in self.timeline(identity) if len(unfinished)==1
+                    and event.get('event')=='assistance' and event.get('attempt_id')==unfinished[0]['id']
+                    for kind in event.get('assistance',['unknown'])}) if unfinished else []}
 
     def timeline(self, identity):
         return [dict(json.loads(raw), path=path) for path, raw in self.db.execute('SELECT path,props FROM activities WHERE target=? ORDER BY timestamp,path', (identity,))]

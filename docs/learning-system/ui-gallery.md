@@ -1,5 +1,34 @@
 # Noesis native UI review
 
+## Concept investigation and Knowledge Frontier
+
+Same-content native application renders of the Convolution → YOLO fixture. This is
+the learning-engine M1 slice; [implementation evidence and remaining gates](frontier-evidence.md)
+distinguish software checks from the still-required learner trial. No private content
+or actual owner achievement is represented by these synthetic records.
+
+Before, committed `433d2d1`:
+
+![Before: generic concept inspector](assets/frontier/concept-fullscreen-before.png)
+
+After: a question/mechanism region beside protected reconstruction, with bounded
+frontier and reachable sources, implementation and executed artifacts:
+
+![After: fullscreen concept investigation](assets/frontier/concept-fullscreen-after.png)
+
+![Normal window](assets/frontier/concept-after.png)
+
+![Explicit scoped evidence judgment](assets/frontier/understanding-claim-dialog.png)
+
+At 200% interface and reading scale, question and reasoning switch without shrinking:
+
+![Question at 200%](assets/frontier/concept-200-question.png)
+
+![Reasoning at 200%](assets/frontier/concept-200-reasoning.png)
+
+[Capture conditions](assets/frontier/after.json) record logical sizes and Qt DPR separately.
+
+
 These are actual native renders of disposable, meaningful fixtures. Main images
 capture Qt window contents; ScreenPad images capture the DP-2 compositor after
 frame presentation and a privacy check. No private learning content is published.

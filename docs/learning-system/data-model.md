@@ -99,3 +99,34 @@ Lab projections retain the original hypothesis, captured code snapshot, configur
 latest comparison and referenced artifacts. Only bounded local PNG figures are
 previewed; other media remain references. An execution receipt is evidence of a
 recorded execution, not proof that a hypothesis or personal competence is established.
+
+## Scoped understanding claims and investigations
+
+Schema 2 remains unchanged. New optional `capability-decision` fields are `dimension`
+(encountered/use/explain/derive/implement/predict-debug/transfer/retained), `scope`,
+`confidence` (unknown/low/medium/high), `evidence_kind`, and explicit boolean `independent`.
+`evidence_id` remains supported for local evidence; `evidence_refs` accepts one to eight
+exact `{vault_id, record_id}` references resolved through authorized ownership. Evidence
+is existing authored work or an activity, never another understanding decision.
+
+`supersedes` names an earlier decision for exactly the same capability, criterion,
+dimension and scope. Competing heads remain conflicts. Optional `resolves` must name
+all current heads explicitly; time order never silently resolves disagreement. Read
+models reduce the complete history before returning ten criteria per generation-bound
+page. Legacy decisions remain readable without inventing missing dimensions.
+
+Unaided accepted claims require a successful protected assessment and no recorded
+exposure for that attempt. This validates the recorded provenance; it cannot observe
+unreported outside help. Foreign evidence is attachable but foreign unaided provenance
+is conservatively uncertified here. `retained_from` and `interval_days` require an
+unwithdrawn, unconflicted earlier accepted scoped ability and actual later successful
+assessment, rather than a planned check. Confidence does not replace evidence.
+
+Investigation depth is an optional existing disposition `state.depth`, with quick,
+normal, deep or research-grade values. Existing `parent_ref` and relationships carry
+the motivation; concepts, questions, capabilities and specialist artifacts remain
+their original record types. No derived score becomes authoritative state.
+
+Machine-local `layouts["navigation-v1"]` stores at most 32 compact scoped entries
+(owner, record, path, surface and view anchors), separate from learner notes and draft
+authority. Reference visibility is revalidated against recorded assistance on restore.
