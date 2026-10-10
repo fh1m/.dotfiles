@@ -23,5 +23,5 @@ BarSurface {
          Text {text:root.detail;visible:root.detail!=="";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.widgetMuted}
      }
  }
- MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{if(root.target==="oasis"){LearningBridge.NoesisBridge.open();return;}if(root.page>=0)ShellState.monitorPage=root.page;ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdown(root.target);}}
+ MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{if(root.target==="oasis"){LearningBridge.NoesisBridge.startLearning();return;}if(root.page>=0)ShellState.monitorPage=root.page;ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdown(root.target);}}
 }

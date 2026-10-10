@@ -28,6 +28,7 @@ def import_csl(root, source, meta, resource_key, dry=False):
         from .persistence import supported_schema
         supported_schema(json.loads(manifest_path(root).read_text()))
         records, by_alias = {}, {}
+        requested_aliases = {alias for item in items for alias in aliases(item)}
         for path in notes(root):
             text = read_content(path)
             props, body = parse(text)
@@ -36,6 +37,7 @@ def import_csl(root, source, meta, resource_key, dry=False):
             if key in records:raise ValueError('Duplicate imported source identity')
             records[key] = (path, props, body, text)
             for alias in props.get('external_aliases', []):
+                if alias not in requested_aliases:continue
                 if alias in by_alias and by_alias[alias] != key:raise ValueError('Conflicting external alias')
                 by_alias[alias] = key
         for item in items:
@@ -64,7 +66,7 @@ def import_csl(root, source, meta, resource_key, dry=False):
                 existing.append(str(path.relative_to(root)))
             else:
                 title = re.sub(r'[\\/\n\r\x00-\x1f]', ' ', str(item['title'])).strip()[:130] or 'Paper'
-                path = contained(root, meta['types'].get('paper', 'Notes') + '/' + title + ' [' + key[:8] + '].md')
+                path = contained(root, meta.get('types', {}).get('paper', 'Notes') + '/' + title + ' [' + key[:8] + '].md')
                 props = {'id': str(uuid.uuid5(namespace, 'bibliography:' + str(key))), 'source_id': key, 'type': 'paper', 'status': 'queued', 'created': date.today().isoformat()}
                 body = '\n# ' + str(item['title']) + '\n\n## Why this paper?\n\n## Claims / model / assumptions\n\n## My reconstruction\n\n## Implementation and evidence\n\n## Questions / limitations / connections\n'
                 text = None

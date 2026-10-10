@@ -4,6 +4,10 @@ The connected foundation is implemented and deployed. Full P0–P8 release
 acceptance remains open. This ledger distinguishes tested behavior from remaining
 work; the presence of a module does not complete its milestone.
 
+## Current self-service and Zotero evidence, 2026-10-10
+
+The populated native Zotero encrypted restore regression is reproduced and fixed for the installed 10.0.6 build; see [diagnosis, compatibility boundary and rollback](zotero-startup-evidence.md). The broader fault matrix and native annotation-specific navigation remain open. Latest core suite: 145 passing tests, including empty-vault import, unrelated source-alias isolation and source bibliography-date regressions. See the [canonical user guide](user-guide.md) for the native self-service entry points.
+
 ## Observed verification, 2026-10-09
 
 - Sixteen existing factory/import tests and fifty-six new core/workflow/recovery/

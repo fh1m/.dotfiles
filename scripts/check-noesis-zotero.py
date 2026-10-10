@@ -41,12 +41,13 @@ from noesis.index import Index
 opener=build_opener(ProxyHandler({}))
 with socket.socket() as sock:
  if sock.connect_ex(('127.0.0.1',23119))==0:raise SystemExit('Existing Zotero API detected; close it deliberately before running this isolated test.')
-with tempfile.TemporaryDirectory(prefix='noesis-zotero-acceptance-') as folder:
+with tempfile.TemporaryDirectory(prefix='noesis-zotero-acceptance-',delete=False) as folder:
+ print('Retained isolated Zotero diagnostics:',folder,flush=True)
  profile=Path(folder);data=profile/'data';data.mkdir()
  preferences={'extensions.zotero.useDataDir':True,'extensions.zotero.dataDir':str(data),'extensions.zotero.httpServer.enabled':True,'extensions.zotero.httpServer.localAPI.enabled':True,'extensions.zotero.firstRun.skipFirefoxProfileAccessCheck':True}
  (profile/'prefs.js').write_text('\n'.join('user_pref('+json.dumps(k)+', '+json.dumps(v)+');' for k,v in preferences.items()))
  with (profile/'zotero.log').open('w') as log:
-  process=subprocess.Popen([str(Path.home()/'.local/bin/zotero'),'--new-instance','--profile',str(profile)],stdout=log,stderr=log,start_new_session=True)
+  process=subprocess.Popen([os.environ.get('NOESIS_ZOTERO_TEST_BINARY',str(Path.home()/'.local/bin/zotero')),'-ZoteroDebugText','--new-instance','--profile',str(profile)],stdout=log,stderr=log,start_new_session=True)
   try:
    deadline=time.monotonic()+30
    for _ in range(300):
@@ -139,7 +140,7 @@ with tempfile.TemporaryDirectory(prefix='noesis-zotero-acceptance-') as folder:
    restored_pref='user_pref("extensions.zotero.dataDir", '+json.dumps(str(restored_data))+');'
    saved_prefs=re.sub(r'user_pref\("extensions\.zotero\.dataDir",.*?\);',lambda match:restored_pref,saved_prefs)
    (profile/'prefs.js').write_text(saved_prefs)
-   process=subprocess.Popen([str(Path.home()/'.local/bin/zotero'),'--new-instance','--profile',str(profile)],stdout=log,stderr=log,start_new_session=True)
+   process=subprocess.Popen([os.environ.get('NOESIS_ZOTERO_TEST_BINARY',str(Path.home()/'.local/bin/zotero')),'-ZoteroDebugText','--new-instance','--profile',str(profile)],stdout=log,stderr=log,start_new_session=True)
    deadline=time.monotonic()+30
    for _ in range(300):
     if time.monotonic()>deadline:break

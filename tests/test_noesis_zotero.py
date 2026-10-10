@@ -56,6 +56,39 @@ class Zotero(unittest.TestCase):
         self.assertEqual(parse(path.read_text())[0]['imported_title'],'Corrected metadata')
         self.assertTrue(all(r.get_method()=='GET' for r in opener.requests))
         self.assertTrue(all(r.full_url.startswith('http://127.0.0.1:23119/api/') for r in opener.requests))
+    def test_empty_managed_vault_needs_no_legacy_type_map(self):
+        manifest=self.root/'System/System.json'
+        meta=json.loads(manifest.read_text());meta.pop('types',None)
+        manifest.write_text(json.dumps(meta))
+        result=import_item(self.root,'PAPER001',LocalAPI(opener=Opener()))
+        self.assertTrue(result['created'][0].startswith('Notes/'))
+        self.assertEqual(parse((self.root/result['created'][0]).read_text())[0]['type'],'paper')
+
+    def test_source_bibliography_date_and_publication_are_preserved(self):
+        opener=Opener();original=opener.open
+        def response(request,timeout):
+            result=original(request,timeout)
+            if request.full_url.endswith('/items/PAPER001'):
+                data=json.loads(result.getvalue());data['data'].update(date='2017-06',publicationTitle='Source proceedings')
+                return Response(data,opener.server)
+            return result
+        opener.open=response
+        result=import_item(self.root,'PAPER001',LocalAPI(opener=opener))
+        props=parse((self.root/result['created'][0]).read_text())[0]
+        self.assertEqual(props['imported_date'],{'date-parts':[[2017,6]]})
+
+    def test_unrelated_duplicate_source_views_do_not_block_paper_import(self):
+        from noesis.persistence import render
+        import uuid
+        for name in ('lecture','playlist'):
+            (self.root/(name+'.md')).write_text(render({'id':str(uuid.uuid4()),'noesis_schema':2,'type':'resource','title':name,'external_aliases':['url:https://example.test/video']},''))
+        result=import_item(self.root,'PAPER001',LocalAPI(opener=Opener()))
+        self.assertTrue(result['created'])
+        for name in ('lecture','playlist'):
+            props,body=parse((self.root/(name+'.md')).read_text());props['external_aliases']=['doi:10.synthetic/paper'];(self.root/(name+'.md')).write_text(render(props,body))
+        with self.assertRaisesRegex(ValueError,'Conflicting external alias'):
+            import_item(self.root,'PAPER001',LocalAPI(opener=Opener()))
+
     def test_item_and_library_versions_are_distinct(self):
         opener=Opener();original=opener.open
         def open_response(request,timeout):

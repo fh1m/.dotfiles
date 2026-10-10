@@ -2,6 +2,10 @@
 
 Status: approved for implementation by the owner on 2026-10-09. Revised 2026-10-09 following owner review. This document supersedes the V1 execution sequence; the existing data model, safety contracts and evidence ledger remain authoritative.
 
+## Current implementation evidence
+
+This document retains the approved architectural sequence. Current behavior and gates are reconciled in [release acceptance](release-acceptance.md), [self-service guide](user-guide.md) and [Zotero startup evidence](zotero-startup-evidence.md). The historical restored-startup failure described below is now reproduced and fixed for the installed Zotero 10.0.6 build; broader recovery and annotation-navigation gates remain.
+
 ## Release boundary and evidence
 
 Continue from `aca05d1`. Markdown learning records, stable IDs, existing histories, local encrypted backups, rebuildable indexes and prior native acceptance remain the foundation. V1 changes application hosting, composition and continuity. No backend rewrite, private-vault relocation, automatic competence awards or untrusted project execution is included.

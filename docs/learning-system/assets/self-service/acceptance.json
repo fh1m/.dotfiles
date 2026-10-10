@@ -1,0 +1,39 @@
+{
+  "source_commit": "8fcb5a12569fcf6d5eef1420c268e63a1190a965",
+  "dirty": true,
+  "empty_vault": true,
+  "record_creation": "native mouse and key interactions only",
+  "fixture": "/var/tmp/noesis-lifecycle-91kgsmrd",
+  "passed": [
+    "Today start",
+    "URL manual title",
+    "video resource",
+    "Ctrl N start",
+    "documentation resource",
+    "saved reading place",
+    "saved study note",
+    "linked source question",
+    "concept creation",
+    "optional prerequisite",
+    "descent and exact question return",
+    "playlist units created and reordered",
+    "isolated Obsidian exact note handoff",
+    "protected practice attempt and agent assistance",
+    "editor exact code handoff",
+    "five actual code cases",
+    "comparison and original output artifact",
+    "native Zotero source selection and import",
+    "owned paper reading place and question",
+    "paper implementation connection",
+    "launcher Start IPC route",
+    "unavailable local source preserved",
+    "restart"
+  ],
+  "limitations": [
+    "PDF attachment/annotation handoff not tested in this source-only fixture",
+    "owner usability not tested"
+  ],
+  "learner_achievement": false,
+  "code_revision": "920f43d059d392db69c3b10b924ee6a3a03541bf",
+  "executed_cases": 5
+}

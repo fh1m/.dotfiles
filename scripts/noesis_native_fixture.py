@@ -33,7 +33,12 @@ class Fixture:
   if not resume:
    self.ipc('noesis-window','section','Practice');self.wait(lambda s:s['rows']==self.expected_practice_rows)
    self.ipc('noesis-window','select','problem.md');self.wait(lambda s:s['selected']=='problem.md' and s['preview_length']>0)
-  self.client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==self.process.pid and c['title'].startswith('Noesis'))
+  deadline=time.monotonic()+5
+  while True:
+   clients=[c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==self.process.pid and c['title'].startswith('Noesis')]
+   if clients:self.client=clients[0];break
+   if time.monotonic()>=deadline:raise AssertionError('Native window did not map')
+   time.sleep(.05)
   subprocess.run(['hyprctl','dispatch','hl.dsp.focus({window='+json.dumps('address:'+self.client['address'])+'})'],check=True,capture_output=True)
  def ipc(self,target,method,*args):
   r=subprocess.run([QS,'-p',str(self.config),'ipc','call',target,method,*args],env=self.env,text=True,capture_output=True,timeout=5)
@@ -51,6 +56,8 @@ class Fixture:
    time.sleep(.05)
   raise AssertionError('Fixture wait timed out '+(self.home/'qml.log').read_text()[-4000:])
  def key(self,key,mods=''):
+  clients=[c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True)) if c['pid']==self.process.pid and c['title'].startswith('Noesis')]
+  if clients:self.client=clients[0]
   subprocess.run(['hyprctl','dispatch','hl.dsp.send_shortcut({mods='+json.dumps(mods)+',key='+json.dumps(key)+',window='+json.dumps('address:'+self.client['address'])+'})'],check=True,capture_output=True)
  def run(self,*args):
   result=json.loads(self.ipc('fixture','executeFixture',json.dumps({'args':args})))

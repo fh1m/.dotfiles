@@ -1,0 +1,11 @@
+{
+  "exact_record_restart": true,
+  "start_draft_close_restart": true,
+  "fullscreen": true,
+  "interface_reading_scale_200_percent": true,
+  "screenpad_owned_native_capture": true,
+  "frame_p95_ms": 16.263243,
+  "frame_samples": 64,
+  "physical_input_latency_measured": false,
+  "learner_achievement": false
+}

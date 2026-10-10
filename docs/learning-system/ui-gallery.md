@@ -260,3 +260,23 @@ for quiet chrome and predictable action locations; [Notion student dashboards](h
 [University Hub](https://www.notion.com/templates/university-hub-452) and
 [Easlo's Student Dashboard](https://www.notion.com/templates/easlos-student-dashboard)
 for course-centered organization. Marketplace popularity is not a verified usage ranking.
+
+## Self-service from an empty vault
+
+[Native walkthrough and canonical guide](user-guide.md). All screenshots use agent-labelled disposable records.
+
+![Start learning](assets/self-service/start-learning.png)
+
+![Documentation working page](assets/self-service/documentation-workspace.png)
+
+![Zotero paper](assets/self-service/zotero-paper.png)
+
+### The same documentation source: empty pane removed
+
+![Before: permanent empty reading pane](assets/self-service/documentation-before-empty-pane.png)
+
+![After: source handoff with dominant reasoning](assets/self-service/documentation-workspace.png)
+
+![Fullscreen Start learning at 200% application scale](assets/self-service/start-learning-200-percent.png)
+
+![Native ScreenPad](assets/self-service/screenpad.png)

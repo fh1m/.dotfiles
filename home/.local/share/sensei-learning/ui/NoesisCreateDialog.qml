@@ -17,6 +17,7 @@ NoesisDialog {
  property string mediumPreference:""
  readonly property string draftKey:vaultScope+":form:create:"+kind+":"+parentId+":"+String(transfer)+":"+mediumPreference+(promptingAttempt.id?":"+promptingAttempt.id:"")
  property string learningDemo:""
+ function beginSource(kind,medium,value,title){begin(kind,"",false,medium);name.text=title;source.text=value;stashDraft();}
  function beginConvolution(){begin("concept","",false,"convolution-example");if(!name.text.trim())name.text="Convolution";prefill("Example starting point · supplied by Noesis\nThis is an editable learning prompt, not completed learner work.\n\nMy question\nHow can the same local rule smooth a signal or detect a change?\n\nWhat remains uncertain\nPadding, reversal, stride and the limits of this small example.\n");}
  function prefill(value){if(!details.text.trim())details.text=value;}
  function stashDraft(){if(!initialized||saved)return;let next=Object.assign({},NoesisController.drafts);next[draftKey]=JSON.stringify({name:name.text,details:details.text,source:source.text,repository:repository.text,entry:entry.text,revision:revision.text,medium:medium.currentIndex});NoesisController.drafts=next;NoesisController.savePreferences();}
