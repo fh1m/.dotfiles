@@ -32,9 +32,9 @@ ColumnLayout {
   handle:Rectangle {implicitWidth:8;implicitHeight:8;color:SplitHandle.hovered?NoesisStyle.rule:NoesisStyle.surface}
   ColumnLayout {SplitView.fillWidth:true;SplitView.fillHeight:true;SplitView.minimumWidth:Math.min(360,split.width);SplitView.minimumHeight:180;spacing:NoesisStyle.sm
    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Purpose, questions and reconstruction";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
-   ScrollView {id:analysis;Layout.fillWidth:true;Layout.fillHeight:true;clip:true
+   ScrollView {id:analysis;padding:NoesisStyle.lg;background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius}contentWidth:availableWidth;Layout.fillWidth:true;Layout.fillHeight:true;clip:true
     Column {width:analysis.availableWidth;spacing:NoesisStyle.lg
-     Repeater {model:root.preview.blocks||[];delegate:TextEdit {renderType:TextEdit.NativeRendering;font.hintingPreference:Font.PreferFullHinting;required property var modelData;width:Math.min(parent.width,NoesisStyle.readingWidth);text:modelData.text;readOnly:true;selectByMouse:true;textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;color:modelData.kind==="caption"?NoesisStyle.secondary:NoesisStyle.ink;font.family:modelData.kind==="code"?NoesisStyle.codeFont:NoesisStyle.uiFont;font.pixelSize:modelData.kind==="heading"?NoesisStyle.sectionHeading:modelData.kind==="code"?NoesisStyle.label:NoesisStyle.body;font.bold:modelData.kind==="heading";Accessible.name:"Learner analysis preview"}}
+     NoesisDocument {width:parent.width;framed:false;blocks:root.preview.blocks||[];onOpenOriginal:NoesisController.note(root.context.path||NoesisController.currentContext.path)}
      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;width:parent.width;textFormat:Text.PlainText;visible:(root.preview.specialist_features||[]).length>0||!!root.preview.truncated;text:"Open the note for the complete document, equations and diagrams.";wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
     }
    }
@@ -47,7 +47,7 @@ ColumnLayout {
     NoesisButton {text:"More annotations";visible:!!root.context.cursor;onClicked:root.pageAnnotations(root.context.cursor)}
     NoesisButton {text:"Reload snapshot";visible:!!root.context.newer_cursor||!!root.context.projection_error;onClicked:root.pageAnnotations(null)}
    }
-   ScrollView {id:notebook;Layout.fillWidth:true;Layout.fillHeight:true;clip:true
+   ScrollView {id:notebook;padding:NoesisStyle.lg;background:Rectangle {color:NoesisStyle.surface;radius:NoesisStyle.radius}contentWidth:availableWidth;Layout.fillWidth:true;Layout.fillHeight:true;clip:true
     Column {width:notebook.availableWidth;spacing:NoesisStyle.lg
      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;width:parent.width;visible:!(root.context.annotations||[]).length;textFormat:Text.PlainText;text:root.context.projection_error?"The preserved import needs inspection. Your analysis remains available.":"No source annotations imported. Capture your questions independently or import the selected Zotero paper.";wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
      Repeater {model:root.context.annotations||[];delegate:Column {required property var modelData;width:parent.width;spacing:NoesisStyle.sm

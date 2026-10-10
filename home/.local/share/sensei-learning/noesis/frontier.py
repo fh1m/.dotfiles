@@ -203,9 +203,18 @@ def frontier(index, identity, cursor=None):
         items.append(item)
     encode = lambda position: base64.b64encode(json.dumps(dict(scope, offset=position), separators=(',', ':')).encode()).decode()
     parent = record['props'].get('parent_ref')
+    origin = None
+    if isinstance(parent, dict) and parent.get('vault_id') == scope['owner']:
+        try:
+            source = index.record(parent['record_id'], include_body=False, include_attempt=False)
+            origin = dict(id=source['props']['id'], path=source['path'], title=source['display_title'][:240],
+                          type=source['props'].get('type'), source_kind=source['props'].get('source_kind'),
+                          vault=str(index.root), vault_id=scope['owner'])
+        except (ValueError, KeyError, OSError):
+            pass  # Unavailable origin is explicit; do not substitute a same-UUID record.
     return {'owner': scope['owner'], 'record_id': identity, 'generation': index.generation,
             'items': items, 'cursor': encode(offset + 50) if len(rows) > 50 else None,
-            'newer_cursor': encode(offset - 50) if offset else None, 'parent_ref': parent,
+            'newer_cursor': encode(offset - 50) if offset else None, 'parent_ref': parent, 'origin': origin,
             'summary': 'Evidence, confidence and unanswered mechanisms remain separate.'}
 
 

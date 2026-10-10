@@ -29,7 +29,7 @@ ColumnLayout {
  readonly property bool compact:width<1000*NoesisStyle.interfaceScale
  readonly property var questions:(frontier.items||[]).filter(row=>row.type==="question"&&row.id!==record.id&&!["answered","resolved","complete","retired","abandoned"].includes(row.status))
  readonly property var capabilities:(frontier.items||[]).filter(row=>row.type==="capability"&&row.id!==record.id)
- readonly property var origin:(frontier.items||[]).find(row=>row.id===frontier.parent_ref?.record_id)
+ readonly property var origin:frontier.origin||(frontier.items||[]).find(row=>row.id===frontier.parent_ref?.record_id)
  readonly property var supporting:(frontier.items||[]).filter(row=>!["question","capability"].includes(row.type)&&row.id!==record.id&&row.id!==origin?.id)
  readonly property real sourceAnchor:sourceScroll.ScrollBar.vertical.position
  readonly property real notesAnchor:notesScroll.ScrollBar.vertical.position
@@ -51,22 +51,22 @@ ColumnLayout {
 
  Text {textFormat:Text.PlainText;Layout.fillWidth:true;text:root.record.title||"Investigation";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.title;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
  Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
-  NoesisButton {text:"← Return to motivation";visible:!!root.origin;onClicked:root.openMember(root.origin)}
   NoesisButton {text:root.attemptId?"Record how the attempt went":root.lastAssessment.id?"Try again without notes":"Try explaining without notes";primary:!!root.attemptId||!root.lastAssessment.id;enabled:!root.busy;onClicked:root.attemptId?root.evaluateAttempt():root.startAttempt()}
   NoesisButton {text:"Open derivation in Obsidian ↗";enabled:!root.busy&&!root.referenceHidden;onClicked:root.openNote()}
   NoesisButton {text:"Add an unanswered question";enabled:!root.busy;onClicked:root.askQuestion()}
   NoesisButton {text:root.reasoningOnly?"Show question & evidence":"Show reasoning";visible:root.compact;highlighted:root.reasoningOnly;onClicked:root.reasoningOnly=!root.reasoningOnly}
  }
+ NoesisButton {Layout.maximumWidth:root.width;text:root.origin?"← Return to "+root.origin.title:root.frontier.record_id===root.record.id?"Original motivation unavailable here · inspect Connections":"Loading original motivation…";visible:!!(root.record.parent_ref||root.frontier.parent_ref);enabled:!!root.origin&&!root.busy;onClicked:root.openMember(root.origin)}
  Text {textFormat:Text.PlainText;Layout.fillWidth:true;text:root.attemptId?(root.referenceHidden?"Reconstruction in progress · reference protected":"Reconstruction in progress · reference exposure recorded"):"Try an explanation → record the result → decide what it demonstrates. You can stop at any stage and return later.";color:NoesisStyle.secondary;wrapMode:Text.Wrap;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}
 
  SplitView {
   id:panes;Layout.fillWidth:true;Layout.fillHeight:true;orientation:Qt.Horizontal
   handle:Item {implicitWidth:NoesisStyle.lg}
   ScrollView {
-   id:sourceScroll;visible:!root.compact||!root.reasoningOnly;SplitView.preferredWidth:panes.width*.53;SplitView.minimumWidth:0;SplitView.fillWidth:root.compact;clip:true;contentWidth:availableWidth;ScrollBar.horizontal.policy:ScrollBar.AlwaysOff
+   id:sourceScroll;padding:NoesisStyle.lg;background:Rectangle {color:NoesisStyle.canvas;radius:NoesisStyle.radius}visible:!root.compact||!root.reasoningOnly;SplitView.preferredWidth:panes.width*.53;SplitView.minimumWidth:0;SplitView.fillWidth:root.compact;clip:true;contentWidth:availableWidth;ScrollBar.horizontal.policy:ScrollBar.AlwaysOff
    ColumnLayout {width:sourceScroll.availableWidth;spacing:NoesisStyle.lg
     Text {textFormat:Text.PlainText;Layout.fillWidth:true;text:"What are you trying to explain?";color:NoesisStyle.accent;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
-    Repeater {model:root.referenceHidden?[]:(root.mechanismExpanded?(root.preview.blocks||[]):(root.preview.blocks||[]).slice(0,2));delegate:TextEdit {required property var modelData;Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;text:modelData.text;readOnly:true;selectByMouse:true;textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;color:NoesisStyle.ink;font.family:modelData.kind==="code"?NoesisStyle.codeFont:NoesisStyle.uiFont;font.pixelSize:modelData.kind==="heading"?NoesisStyle.sectionHeading:NoesisStyle.body;font.bold:modelData.kind==="heading";renderType:TextEdit.NativeRendering}}
+    NoesisDocument {Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;framed:false;blocks:root.referenceHidden?[]:(root.mechanismExpanded?(root.preview.blocks||[]):(root.preview.blocks||[]).slice(0,2));onOpenOriginal:root.openNote()}
     Text {textFormat:Text.PlainText;Layout.fillWidth:true;visible:root.referenceHidden||!(root.preview.blocks||[]).length;text:root.referenceHidden?"Reference hidden for this attempt. The question stays in the title; reconstruct before consulting your notes.":"What problem makes this mechanism necessary? Write a question, predict a simple case, then test your explanation.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
     NoesisButton {visible:!root.referenceHidden&&(root.preview.blocks||[]).length>2;text:root.mechanismExpanded?"Collapse mechanism notes":"Read mechanism & source notes";onClicked:root.mechanismExpanded=!root.mechanismExpanded}
     NoesisButton {visible:root.attemptId;text:"Reveal reference deliberately";enabled:root.referenceHidden&&!root.busy;onClicked:root.revealReference()}

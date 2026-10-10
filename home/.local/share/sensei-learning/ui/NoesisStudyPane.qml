@@ -12,7 +12,7 @@ Rectangle {
  readonly property var surfaces:["source","context","notes","figures","reference"]
  readonly property string surfaceLabel:surfaceChoice.currentText
  readonly property bool problem:workspace?.section==="Practice"
- readonly property var blocks:!workspace?.selected.id?[]:view==="reference"?(workspace?.referenceHidden?[]:workspace?.documentPreview.blocks||[]):problem?[{kind:"paragraph",text:workspace?.workflow.statement||""}]:workspace?.referenceHidden?[]:(workspace?.documentPreview.blocks||[])
+ readonly property var blocks:!workspace?.selected.id?[]:view==="reference"?(workspace?.referenceHidden?[]:workspace?.documentPreview.blocks||[]):problem?(workspace?.workflow.statement_preview?.blocks||[]):workspace?.referenceHidden?[]:(workspace?.documentPreview.blocks||[])
  readonly property string identity:(workspace?.selected.vault||"")+":"+(workspace?.selected.id||"")
  property var positions:({})
  property string previousIdentity:""
@@ -31,7 +31,7 @@ Rectangle {
   id:sourceScroll;visible:pane.view==="source"||pane.view==="reference";Layout.fillWidth:true;Layout.fillHeight:true;clip:true;contentWidth:availableWidth
   ColumnLayout {width:sourceScroll.availableWidth;spacing:NoesisStyle.md
    Text {font.hintingPreference:Font.PreferFullHinting;visible:pane.blocks.length===0;Layout.fillWidth:true;text:pane.workspace?.referenceHidden&&(!pane.problem||pane.view==="reference")?"Reference is protected. Reveal it deliberately from the main working page.":pane.workspace?.contextLoading?"Loading the selected activity…":pane.workspace?.selected.id?"No native preview is available. Open the original or complete note.":"Choose an activity on the main display. Its source preview will follow here.";color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;wrapMode:Text.Wrap;renderType:Text.NativeRendering}
-   Repeater {model:pane.blocks;delegate:TextEdit {required property var modelData;Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;text:modelData.text||"";textFormat:TextEdit.PlainText;readOnly:true;selectByMouse:true;wrapMode:TextEdit.Wrap;color:NoesisStyle.ink;font.family:modelData.kind==="code"?NoesisStyle.codeFont:NoesisStyle.uiFont;font.pixelSize:modelData.kind==="heading"?NoesisStyle.sectionHeading:NoesisStyle.body;font.bold:modelData.kind==="heading";renderType:TextEdit.NativeRendering;font.hintingPreference:Font.PreferFullHinting}}
+   NoesisDocument {Layout.fillWidth:true;framed:false;blocks:pane.blocks;originalAvailable:!pane.workspace?.referenceHidden;onOpenOriginal:if(!pane.workspace?.referenceHidden)NoesisController.note(pane.workspace.selected.path)}
   }
  }
  ScrollView {

@@ -35,6 +35,25 @@ frame presentation and a privacy check. No private learning content is published
 Main display: 1920×1080 logical. ScreenPad: 1920×550 logical. Qt DPR: 2.
 Application interface/reading scale is separate from DPR.
 
+## Reading beside your own reasoning
+
+Same source note at 1920×1080 logical, 100% interface/reading scale. The old Read
+view left Markdown emphasis visible and replaced the table with a caption. The
+new native reading surface formats headings, emphasis, lists and tables, gives
+code and quotations their own treatment, and keeps notes/questions beside the
+source. Complete equations and diagrams open in Obsidian.
+
+![Before: generic raw reading preview](assets/frontier/formatted-reading-before.png)
+
+![After: formatted source and separate reasoning](assets/frontier/formatted-reading.png)
+
+![Native notes and source-linked question actions](assets/frontier/reading-with-notes.png)
+
+The fixture saves a section, creates a source-linked question, and returns to that
+exact source and section. Course lesson, Practice statement, Research analysis and
+ScreenPad source panes share the bounded renderer. Editing fields deliberately
+retain editable text; the source Markdown remains unchanged.
+
 ## ScreenPad — before and after
 
 Same synthetic problem, 100% text scale. The update removes the duplicate action

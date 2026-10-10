@@ -1,9 +1,9 @@
 {
-  "instrumented_animation_frame_p95_ms": 16.52,
+  "instrumented_animation_frame_p95_ms": 16.54,
   "samples": 189,
   "memory": {
-    "Rss_KiB": 272620,
-    "Pss_KiB": 195053
+    "Rss_KiB": 281916,
+    "Pss_KiB": 211469
   },
   "note": "Three-second fixture instrumentation; not physical input latency or sustained-session proof."
 }

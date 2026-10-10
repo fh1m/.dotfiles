@@ -139,6 +139,21 @@ class Frontier(unittest.TestCase):
         finally:
             index.close()
 
+    def test_motivation_is_reachable_on_every_frontier_page(self):
+        for number in range(52):
+            create(self.root, 'question', 'Child inquiry ' + str(number), parent_id=self.question['id'])
+        index = Index(self.root)
+        try:
+            index.reconcile()
+            first = frontier(index, self.question['id'])
+            second = frontier(index, self.question['id'], first['cursor'])
+            for page in (first, second):
+                self.assertEqual(page['origin']['id'], self.concept['id'])
+                self.assertEqual(page['origin']['vault_id'], index.manifest['vault_id'])
+                self.assertEqual(page['origin']['path'], self.concept['path'])
+        finally:
+            index.close()
+
     def test_criteria_beyond_first_page_remain_reachable(self):
         for number in range(24):
             self.decision(criterion='Specific mechanism ' + str(number))

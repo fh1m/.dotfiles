@@ -23,11 +23,19 @@ fontconfig.write_text('<fontconfig><include ignore_missing="yes">/etc/fonts/font
 fixture.env['FONTCONFIG_FILE'] = str(fontconfig)
 with patch('pathlib.Path.home', return_value=fixture.home):
     concept = create(fixture.vault, 'concept', 'Convolution · understand the mechanism',
-        '## What problem does this solve?\nCombine local measurements with a shared kernel to describe filtering.\n\n'
+        '## What problem does this solve?\nCombine **local measurements** with a shared kernel to describe *filtering*.\n\n'
         '## Reconstruct a minimal case\nLet x = [1, 2, 3], k = [1, 0, −1]. Predict the zero-padded discrete convolution before computing it.\n\n'
         '## Assumptions to inspect\nConvolution and cross-correlation use different kernel conventions. State which one you implement. Border conditions change edge results.\n\n'
         '## What remains unknown?\nHow do padding and stride affect the boundary? Which properties survive subsampling?\n\n'
         'বাংলা: ফলাফল দেখার আগে আপনার পূর্বানুমান লিখুন।')
+    reading = create(fixture.vault, 'resource', 'Kernel boundary conditions · reading desk',
+        '## What changes at an edge?\n**Keep the kernel convention fixed.** Compare the same signal under different boundary assumptions.\n\n'
+        '## Before computing\n- [ ] Predict the edge value\n  - [ ] State the boundary condition\n- [ ] Compare a changed case\n\n'
+        '## Conditions to compare\n| Condition | Meaning |\n| --- | --- |\n| Zero padding | Samples outside the signal are zero |\n| Repeated boundary | Extend the nearest edge sample |\n\n'
+        '## Minimal implementation\n```python\nedge = signal[0] if boundary == "repeat" else 0\n```\n\n'
+        '## Complete derivation\n$$\ny_n = \\sum_i x_i k_{n-i}\n$$\n\n'
+        '> A matching output is evidence about this case, not universal understanding.',
+        fields={'source_kind':'note'})
     question = create(fixture.vault, 'question', 'Why does the convolution boundary change?',
         '## Motivating question\nCan the same kernel produce different edge values when padding changes?\n\n'
         '## Prediction\nKeep the kernel convention fixed. Compare zero padding with repeated boundary samples.\n\n'
@@ -125,7 +133,7 @@ text = text.replace('ShellRoot {', '''ShellRoot {
   function init():void{let workspace=find(window.contentItem,item=>typeof item.openWork==="function");workspace.reviewOverlay.parent=window.reviewSurface;}
   function open(payload:string):void{let row=JSON.parse(Qt.atob(payload));window.applicationSurface.children[0];let workspace=find(window.contentItem,item=>typeof item.openWork==="function");workspace.openWork(row);}
   function capture(path:string):void{window.reviewSurface.grabToImage(result=>result.saveToFile(path));}
-  function click(label:string):string{let item=find(window.contentItem,item=>item.visible&&item.enabled&&item.text===label&&typeof item.clicked==="function");if(!item)return "missing:"+label;input.mouseClick(item,item.width/2,item.height/2);return "clicked";}
+  function click(label:string):string{let item=find(window.contentItem,item=>item.visible&&item.enabled&&item.text===label&&typeof item.clicked==="function");if(!item)return "missing:"+label;if(!input.waitForPolish(item.parent,1500))return "layout pending:"+label;input.mouseClick(item,item.width/2,item.height/2);return "clicked";}
   function choose(name:string,index:int):string{let item=find(window.contentItem,item=>item.objectName===name);if(!item)return "missing";item.forceActiveFocus();input.keyClick(Qt.Key_Home);for(let n=0;n<index;n++)input.keyClick(Qt.Key_Down);input.wait(80);return item.currentText;}
   function debug():string{let result=[];function scan(item){if(item.objectName)result.push({name:item.objectName,visible:item.visible,width:item.width,height:item.height});for(let child of item.children||[])scan(child);}scan(window.contentItem);return JSON.stringify(result);}
   function clickName(name:string):string{let item=find(window.contentItem,item=>item.objectName===name);if(!item)return "missing";input.mouseClick(item,item.width/2,item.height/2);return "clicked";}
@@ -133,9 +141,10 @@ text = text.replace('ShellRoot {', '''ShellRoot {
   function typeNotes():string{let item=find(window.contentItem,item=>item.objectName==="investigation-reasoning");if(!item)return "missing";input.mouseClick(item,30,30);input.keyClick(Qt.Key_P);input.keyClick(Qt.Key_A);input.keyClick(Qt.Key_D);return item.text;}
   function mode(value:string):void{LearningUi.NoesisController.presentationMode=value;window.applyPresentation();}
   function scale(value:real):void{LearningUi.NoesisStyle.interfaceScale=value;LearningUi.NoesisStyle.readingScale=value;}
-  function state():string{let workspace=find(window.contentItem,item=>typeof item.openWork==="function");return JSON.stringify({investigation:workspace.investigationWorking||false,frontier:workspace.frontier||{},history:workspace.history.map(row=>row.event),navigation:workspace.navigation.length,index:workspace.navigationIndex});}
+  function state():string{let workspace=find(window.contentItem,item=>typeof item.openWork==="function");return JSON.stringify({investigation:workspace.investigationWorking||false,frontier:workspace.frontier||{},history:workspace.history.map(row=>row.event),modalOpen:workspace.modalOpen,reading:workspace.readingWorking||false,locator:workspace.selectedState.locator||null,navigation:workspace.navigation.length,index:workspace.navigationIndex});}
   function collection():void{let workspace=find(window.contentItem,item=>typeof item.openWork==="function");workspace.returnCollection();}
   function back():void{let workspace=find(window.contentItem,item=>typeof item.openWork==="function");workspace.back();}
+  function readingState():string{let result={tables:0,rawFormatting:0,tableContent:false};function scan(item){if(item.visible&&item.value?.kind==="table")result.tables++;if(item.visible&&item.readOnly&&typeof item.getText==="function"){let text=item.getText(0,item.length);if(text.indexOf("Samples outside the signal are zero")>=0)result.tableContent=true;if(text.indexOf("**Keep the kernel")>=0||text.indexOf("| Condition |")>=0||text.indexOf("\\sum_i")>=0)result.rawFormatting++;}for(let child of item.children||[])scan(child);}scan(window.contentItem);return JSON.stringify(result);}
  }
 ''')
 shell.write_text(text)
@@ -170,9 +179,35 @@ try:
     fixture.ipc('frontier-fixture', 'mode', 'fullscreen')
     fixture.wait(lambda state: state['presentation'] == 'fullscreen' and state['width'] == 1920 and not state['mode_pending'])
     capture('concept-fullscreen-before' if baseline else 'concept-fullscreen-after')
+    if baseline:
+        open_record(reading)
+        capture('formatted-reading-before')
     if not baseline:
         state = json.loads(fixture.ipc('frontier-fixture', 'state'))
         assert state['investigation'] and len(state['frontier']['items']) >= 4, state
+        open_record(reading)
+        rendered=json.loads(fixture.ipc('frontier-fixture','readingState'))
+        assert rendered['tables']>=1 and rendered['tableContent'] and rendered['rawFormatting']==0, rendered
+        capture('formatted-reading')
+        assert fixture.ipc('frontier-fixture','typeField','reading-reasoning','my edge prediction needs checking') == 'my edge prediction needs checking'
+        capture('reading-with-notes')
+        assert fixture.ipc('frontier-fixture','click','Set a reading place') == 'clicked'
+        assert fixture.ipc('frontier-fixture','choose','reading-place-kind','2') == 'Section'
+        assert fixture.ipc('frontier-fixture','typeField','reading-place','boundary') == 'boundary'
+        assert fixture.ipc('frontier-fixture','click','Save reading place') == 'clicked'
+        fixture.wait(lambda state: not state['working'] and json.loads(fixture.ipc('frontier-fixture','state'))['locator'] == {'kind':'section','value':'boundary'})
+        assert fixture.ipc('frontier-fixture','click','Ask a source-linked question') == 'clicked'
+        assert fixture.ipc('frontier-fixture','typeField','record-title','boundary assumption') == 'boundary assumption'
+        assert fixture.ipc('frontier-fixture','typeField','record-purpose','does repeated padding change prediction') == 'does repeated padding change prediction'
+        assert fixture.ipc('frontier-fixture','click','Save') == 'clicked'
+        fixture.wait(lambda state: 'boundary assumption' in state['selected'] and not state['working'] and not json.loads(fixture.ipc('frontier-fixture','state'))['modalOpen'] and json.loads(fixture.ipc('frontier-fixture','state'))['frontier'].get('parent_ref',{}).get('record_id')==reading['id'])
+        assert fixture.ipc('frontier-fixture','click','← Return to Kernel boundary conditions · reading desk') == 'clicked'
+        try:
+            fixture.wait(lambda state: state['selected']==reading['path'] and json.loads(fixture.ipc('frontier-fixture','state'))['locator'] == {'kind':'section','value':'boundary'})
+        except AssertionError:
+            print('Source return diagnostics:', fixture.state()['selected'], fixture.ipc('frontier-fixture','state'), flush=True)
+            raise
+        open_record(concept)
         assert fixture.ipc('frontier-fixture', 'typeNotes').lower().startswith('pad')
         assert fixture.ipc('frontier-fixture', 'click', 'Try explaining without notes') == 'clicked'
         fixture.wait(lambda state: bool(state['attempt']) and state['reference_hidden'])

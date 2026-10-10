@@ -22,7 +22,9 @@ def overview(index, identity):
     if kind in ('task','problem'):
         import re
         statement=re.search(r'(?ms)^## Problem statement\r?\n(.*?)(?=^## |\Z)',root.get('body',''))
-        return {'kind':'practice','statement':statement.group(1).strip() if statement else None,'source_role':'learner-declared problem statement; reference and history remain separate'}
+        from .presentation import preview
+        text=statement.group(1).strip() if statement else None
+        return {'kind':'practice','statement':text,'statement_preview':preview(text or ''),'source_role':'learner-declared problem statement; reference and history remain separate'}
     if kind in ('experiment','project','lab'):
         from .experiments import context
         return context(index,root)

@@ -57,11 +57,16 @@ workspace but currently adds another lifecycle/deployment boundary without a
 measured requirement. Reconsider after demonstrated shell interference or a rich
 content requirement that specialist handoff cannot meet. No WebEngine is added.
 
-Display titles and bounded plain-text preview blocks are derived presentation;
+Display titles and bounded native preview blocks are derived presentation;
 source paths/prose stay authoritative and unchanged. Cache version 5 rebuilds the
 new titles. The collection worker reads at most sixteen explicitly selected,
 registered managed vaults, emits owner references and bounded pages, and surfaces
 partial unavailable storage rather than manufacturing empty progress.
+
+Reading projections generate safe inline formatting, typed checklists and bounded
+tables. Code stays verbatim; equations, diagrams, embeds and unsupported rich content
+receive an explicit specialist handoff. Source HTML is never executed and preview
+rendering fetches no remote images. These projections do not rewrite learner Markdown.
 
 Nonblocking cross-vault `references`, `supports`, `exercises` and `pursues` links
 resolve explicit vault/record IDs after moves. Blocking contextual gates remain
