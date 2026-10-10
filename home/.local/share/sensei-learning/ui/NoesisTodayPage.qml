@@ -40,6 +40,7 @@ ScrollView {
    NoesisButton {text:"Research paper";enabled:!root.busy;onClicked:root.start("paper")}
    NoesisButton {text:"Practice problem";enabled:!root.busy;onClicked:root.start("task")}
    NoesisButton {text:"Experiment";enabled:!root.busy;onClicked:root.start("experiment")}
+   NoesisButton {text:"Explore convolution · example";enabled:!root.busy;onClicked:root.start("convolution-example")}
    NoesisButton {text:"Browse library";onClicked:root.browse()}
   }
  }

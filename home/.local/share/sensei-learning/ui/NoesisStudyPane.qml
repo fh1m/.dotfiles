@@ -9,6 +9,7 @@ Rectangle {
  property var workspace:null
  property string paneKey:"left"
  property string view:"source"
+ property bool keptOptions:false
  property var kept:({})
  property var keptResult:({})
  property int keptSerial:0
@@ -58,9 +59,11 @@ Rectangle {
 
  }
  Flow {Layout.fillWidth:true;Layout.preferredHeight:implicitHeight;width:parent.width;spacing:NoesisStyle.sm
-  NoesisButton {text:pane.isKept?"Follow active activity":"Keep here";visible:["source","context","figures"].includes(pane.view);enabled:pane.isKept||!!pane.workspace?.selected.id&&!pane.workspace?.contextLoading&&!pane.workspace?.referenceHidden&&!pane.workspace?.activeAttempt;onClicked:if(pane.isKept)pane.followActivity();else pane.keepActivity()}
-  NoesisButton {text:"Refresh kept context";visible:pane.isKept;enabled:pane.keptOwnerAvailable&&!pane.keptProtected&&!pane.keptLoading;onClicked:pane.refreshKept(true)}
-  NoesisButton {text:"Open kept activity on main";visible:pane.isKept;enabled:pane.keptReady&&!pane.workspace?.contextLoading&&!NoesisController.working;onClicked:pane.workspace.openWork(pane.contentWorkspace.selected)}
+  NoesisButton {text:pane.isKept?"Follow active activity":"Keep here";visible:!pane.isKept&&["source","context","figures"].includes(pane.view);enabled:pane.isKept||!!pane.workspace?.selected.id&&!pane.workspace?.contextLoading&&!pane.workspace?.referenceHidden&&!pane.workspace?.activeAttempt;onClicked:if(pane.isKept)pane.followActivity();else pane.keepActivity()}
+  NoesisButton {text:pane.keptOptions?"Hide kept context options":"Kept context options";visible:pane.isKept;onClicked:pane.keptOptions=!pane.keptOptions}
+  NoesisButton {text:"Follow active activity";visible:pane.isKept&&pane.keptOptions;onClicked:pane.followActivity()}
+  NoesisButton {text:"Refresh kept context";visible:pane.isKept&&pane.keptOptions;enabled:pane.keptOwnerAvailable&&!pane.keptProtected&&!pane.keptLoading;onClicked:pane.refreshKept(true)}
+  NoesisButton {text:"Open kept activity on main";visible:pane.isKept&&pane.keptOptions;enabled:pane.keptReady&&!pane.workspace?.contextLoading&&!NoesisController.working;onClicked:pane.workspace.openWork(pane.contentWorkspace.selected)}
  }
  Text {textFormat:Text.PlainText;visible:pane.isKept;Layout.fillWidth:true;text:"Kept · "+(pane.kept.owner||"Owning vault")+" · "+(pane.keptResult.display_title||pane.kept.title||"Activity")+(pane.keptProtected?" · concealed":pane.keptError?" · unavailable":pane.keptLoading?" · refreshing":" · read only");wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption;renderType:Text.NativeRendering}
  ScrollView {

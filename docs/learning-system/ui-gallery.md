@@ -1,5 +1,51 @@
 # Noesis native UI review
 
+## Convolution reference lesson
+
+Same agent-authored disposable concept, before at `bf0d8f2` and after this slice.
+These are actual native renders/compositor captures, not design mockups. Main
+fullscreen: 1920×1080 logical; ScreenPad: 1920×550 logical; Qt DPR 2. No private
+HTML, vault notes or owner achievement is published.
+
+![Before: explanation and reconstruction](assets/convolution/before-study.png)
+
+![After: question, manipulable signal and reasoning](assets/convolution/after-study.png)
+
+![Normal window](assets/convolution/after-normal.png)
+
+![Reusable editable starting point from Today](assets/convolution/start-editable-investigation.png)
+
+![Prediction preserved beside the actual arithmetic](assets/convolution/prediction-and-calculation.png)
+
+![Minimal implementation and matched executed comparison](assets/convolution/executed-comparison.png)
+
+![Executed evidence in the existing Lab](assets/convolution/lab-executed-evidence.png)
+
+![ScreenPad actual figure beside shared reasoning](assets/convolution/screenpad-executed-figure.png)
+
+![Changed-case reconstruction with references protected](assets/convolution/changed-case-protected.png)
+
+![Honest failed attempt and separate assistance](assets/convolution/honest-failure-dialog.png)
+
+![Optional prerequisite and exact question return](assets/convolution/exact-question-return.png)
+
+![Question recovered after restart](assets/convolution/question-after-restart.png)
+
+At 200% scale the main page offers a reasoning/experiment switch while keeping the
+prediction and primary action visible. The ScreenPad remains independently scrollable.
+
+![Main study at 200%](assets/convolution/study-2.png)
+
+![Reasoning at 200%](assets/convolution/study-2-reasoning.png)
+
+![ScreenPad at 200%](assets/convolution/screenpad-2.png)
+
+[Conditions and native checks](assets/convolution/acceptance.json),
+[actual executed outputs](assets/convolution/executed-outputs.json), and
+[scope/limitations](frontier-evidence.md#convolution-reference-lesson-2026-10-10).
+
+---
+
 ## Concept investigation and Knowledge Frontier
 
 Same-content native application renders of the Convolution → YOLO fixture. This is

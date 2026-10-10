@@ -94,3 +94,14 @@ was run and no underwater result or owner competence was inferred. Later milesto
 remain in scope: genuine detector/DSA/bottom-up journeys, full specialist-tool returns,
 safe ScreenPad support pinning, reliability cases and the owner's real learner trial.
 Controlled-clock retention is software validation, not human delayed retention.
+
+### Convolution reference slice
+
+The bounded native prediction/manipulation → Git implementation → actual NumPy
+comparison → honest changed-case failure → linked question → optional prerequisite
+→ exact restart/return journey is implemented. Actual isolated Obsidian and editor
+handoffs are exercised; generated figures display in Lab and ScreenPad. This closes
+one reference lesson's software journey, not YOLO, DSA, Mongla or the entire P0–P8
+release. The populated Zotero restore regression remains unresolved. Owner learner
+understanding, delayed retention and sustained usability require personal testing.
+Off-device configuration remains explicitly deferred by owner.

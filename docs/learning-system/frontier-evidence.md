@@ -162,3 +162,65 @@ editorial exposure while creating its exact assessment-linked invariant question
 Its protected statement includes the changed case and constraints; no solution text
 is added to that statement. The 184-frame sample measures 17.13 ms p95, a short
 instrumented rendering sample rather than sustained performance or input latency.
+
+## Convolution reference lesson, 2026-10-10
+
+The concept now opens a native manipulation/reconstruction surface. Its progression
+is Question → Play → Build → Test → Explain → Next, with separate experiment and
+reasoning regions, a persistent prediction/primary-action area and collapsible
+sources/prerequisites. At enlarged scales it switches regions instead of shrinking
+text. Existing Zed Sans/Zed Mono typography and system surfaces are reused.
+
+The owner's private `Transistor to Browser.html` informed the staged pedagogical
+pattern. That HTML is a user-authored adaptation; George Hotz's original
+[fromthetransistor](https://github.com/geohot/fromthetransistor) is the cited inspiration,
+not the author of Noesis's implementation or its acceptance results.
+
+Play supports 3–8 bounded signal samples, odd kernels of size 1/3/5, zero/repeated-edge
+padding, convolution/correlation and strides 1–3. Prediction is stored before reveal;
+selected output positions display padded samples, weights, products and their sum.
+Connected implementations remain reachable through the derived Frontier even if
+the local implementation preference is deleted. Continuing an existing Lab reuses
+its exact owned record rather than creating another starter. Build explicitly creates a labelled supplied starter in a local Git repository and
+an ordinary linked experiment. Edit opens its exact contained code file in the
+existing terminal/editor workflow. Check explicitly executes that file and compares
+with NumPy under matched padding, valid mode and subsampling, recording prediction,
+actual/oracle output, tolerance, versions, commit, dirty state, code checksum and
+artifacts. Convolution reversal follows [NumPy's documented operation](https://numpy.org/doc/stable/reference/generated/numpy.convolve.html).
+Neural-network operations may instead use cross-correlation; this demonstration
+makes the convention explicit rather than equating all architectures.
+
+An execution request reserves a witness before running. Interrupted started requests
+remain uncertain and are not replayed. Known failures retain prediction/configuration
+and revision diagnostics. Graceful shutdown still uses the shared pending-operation
+receipt barrier; forced termination cannot promise a completed publication.
+
+Native disposable acceptance preserves a failed changed-case attempt with declared
+none assistance, then creates its assessment-linked question, connects a nonblocking
+weighted-sum prerequisite and returns to the exact question after restart. Real
+Alacritty/Neovim and isolated Obsidian handoffs passed. Obsidian owns the rich
+Markdown derivation; no plugin or notebook stack was installed. Supplied code and
+agent-authored validation are visibly labelled; none establishes owner understanding.
+The optional original YOLO link pins arXiv:1506.02640v1 and makes no detector claim.
+
+[Native images](ui-gallery.md#convolution-reference-lesson) and
+[executed outputs](assets/convolution/executed-outputs.json) retain actual evidence.
+The ScreenPad figure captures wait for frame presentation; an initial stale capture
+and a fixture's forced normal-mode restart were corrected in the harness, not
+misreported as production behavior. Fullscreen main and ScreenPad were visually
+inspected at 100%, 150% and 200%; this is not the complete original desktop matrix.
+
+[Reusable learning-thread contracts](learning-thread.md) describe existing authority,
+missing shared views and the next prioritized domains. There is no new authoritative
+thread record. Convolution is one bounded lesson adapter, not a generic simulator.
+P0–P8 release gates, populated Zotero restoration and the owner's genuine learner
+trial remain open. Off-device repository configuration remains owner-deferred.
+
+The reusable entry point is **Today → Explore convolution · example**. It opens an
+editable, labelled concept prompt; only Save creates it in the visible owning vault.
+It records no prediction, result or ability on the learner's behalf. The lesson marker
+survives a title change. Existing Convolution concepts also open the working surface.
+This leaves personal content untouched during deployment while making the lesson
+available for ongoing use, rather than requiring the acceptance fixture to survive.
+Ctrl+Enter invokes the current primary action or opens the protected attempt's result
+settings; it never silently saves an unknown outcome instead of requesting judgment.

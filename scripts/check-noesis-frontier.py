@@ -22,7 +22,7 @@ fontconfig = fixture.home / 'fonts.conf'
 fontconfig.write_text('<fontconfig><include ignore_missing="yes">/etc/fonts/fonts.conf</include><dir>' + str(Path.home() / '.local/share/fonts') + '</dir></fontconfig>')
 fixture.env['FONTCONFIG_FILE'] = str(fontconfig)
 with patch('pathlib.Path.home', return_value=fixture.home):
-    concept = create(fixture.vault, 'concept', 'Convolution · understand the mechanism',
+    concept = create(fixture.vault, 'concept', 'Discrete filtering · understand the mechanism',
         '## What problem does this solve?\nCombine **local measurements** with a shared kernel to describe *filtering*.\n\n'
         '## Reconstruct a minimal case\nLet x = [1, 2, 3], k = [1, 0, −1]. Predict the zero-padded discrete convolution before computing it.\n\n'
         '## Assumptions to inspect\nConvolution and cross-correlation use different kernel conventions. State which one you implement. Border conditions change edge results.\n\n'
@@ -290,7 +290,7 @@ try:
             basis=index.record(created['evidence_refs'][0]['record_id'])['props']
             assert basis['outcome']=='partial' and basis['target']['record_id']==concept['id']
         finally:index.close()
-        assert fixture.ipc('frontier-fixture','click','← Return to Convolution · understand the mechanism') == 'clicked'
+        assert fixture.ipc('frontier-fixture','click','← Return to Discrete filtering · understand the mechanism') == 'clicked'
         fixture.wait(lambda state: state['selected']==concept['path'] and 'attempt' in json.loads(fixture.ipc('frontier-fixture','state'))['history'])
         time.sleep(.3)
         result=fixture.ipc('frontier-fixture', 'click', 'Assess what this attempt demonstrates');assert result=='clicked',result
