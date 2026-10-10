@@ -21,7 +21,7 @@ NoesisDialog {
  property string submittedOperation:""
  signal lookup(string query)
  signal inspect(string identity)
- title:"Make an understanding claim"
+ title:"Assess what this attempt demonstrates"
  height:Math.min(780*NoesisStyle.interfaceScale,(parent?.height||900)-32)
  function begin(activity){provenanceOpen=false;evidence=activity;selected=({});criterionOptions=[];decision.currentIndex=0;dimension.currentIndex=0;confidence.currentIndex=0;attribution.currentIndex=0;resolution.currentIndex=0;evidenceKind.currentIndex=0;claimScope.text=activity.scope||"";capabilities=[];vaultScope=NoesisController.activeVault;filter.text="";criterion.text="";reasoning.text="";loading=true;open();lookup("");filter.forceActiveFocus();}
  function detail(record){currentClaims=record.overview?.evidence||[];selected=Object.assign({},record.props,{path:record.path});criterionOptions=Array.isArray(selected.criteria)?selected.criteria.filter(value=>typeof value==="string"):[];criterion.text=criterionOptions.length===1?criterionOptions[0]:"";if(criterionOptions.length===1)reasoning.forceActiveFocus();else if(criterionOptions.length>1)criteriaPicker.forceActiveFocus();else criterion.forceActiveFocus();}
@@ -34,7 +34,7 @@ NoesisDialog {
    Keys.onEnterPressed:if(currentIndex>=0)root.inspect(root.capabilities[currentIndex].id)
    delegate:NoesisRow {objectName:"claim-capability-row";required property var modelData;width:ListView.view.width;title:modelData.title;highlighted:root.selected.id===modelData.id;onClicked:root.inspect(modelData.id)}
    ScrollBar.vertical:ScrollBar {}
-   NoesisEmpty {anchors.fill:parent;visible:root.capabilities.length===0&&!root.loading;title:"Define the ability first";description:"Add a capability from a learning path, then judge this evidence against a scoped criterion."}
+   NoesisEmpty {anchors.fill:parent;visible:root.capabilities.length===0&&!root.loading;title:"Choose an ability to assess";description:"Define one from the investigation page, for example ‘Explain a boundary condition’, then compare this attempt with its criterion."}
   }
   RowLayout {visible:!!root.selected.id;Layout.fillWidth:true
    Text {textFormat:Text.PlainText;renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;text:root.selected.title||"Capability";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;elide:Text.ElideRight;Layout.fillWidth:true}
