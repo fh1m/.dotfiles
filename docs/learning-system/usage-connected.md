@@ -268,3 +268,22 @@ units, uncertainty, conclusion and next test. Data/figure rows open their artifa
 context; local bounded PNG figures preview in place. Missing files retain their
 references and histories. Open the implementation in the existing editor and run
 your chosen code deliberately; Noesis does not execute imported code automatically.
+
+
+## Supporting context on ScreenPad
+
+Choose Source, Context or Figures and select **Keep here** before opening another
+activity. The kept pane is read-only and labels its own activity and vault. Notes
+always belong to the activity selected on the main page; their header names it.
+Choosing Notes or Reference releases a kept context rather than redirecting edits.
+Use **Follow active activity** to resume automatic following, **Refresh kept context**
+after an external change, or **Open kept activity on main** to return to that exact
+record. Kept identity and scroll anchors survive Hide and Close; restored anchors
+are clamped to the available pane. The record content is fetched again, not stored
+as a second document or draft.
+
+Kept material is concealed during protected attempts and while the active activity
+is being checked. It is unavailable when its owning vault is not active, the record
+is missing, or ownership changes. Return to its owning vault before viewing it.
+No same-name or same-UUID foreign record is substituted. **One pane** gives a larger
+reading region; **Use ScreenPad for tools** releases the display for specialist apps.

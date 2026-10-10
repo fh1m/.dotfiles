@@ -1,6 +1,6 @@
 """Reusable disposable native fixture; never restarts Wrayth or opens personal data."""
 from pathlib import Path
-import importlib.util,json,os,signal,subprocess,tempfile,time,uuid,base64
+import importlib.util,json,os,signal,subprocess,tempfile,time,uuid
 REPO=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('installer',REPO/'scripts/install.py');installer=importlib.util.module_from_spec(spec);spec.loader.exec_module(installer)
 QS=str(Path.home()/'.local/opt/sensei-quickshell/bin/qs')
@@ -16,7 +16,7 @@ class Fixture:
   config=self.home/'.config/sensei-learning';config.mkdir(exist_ok=True);(config/'config.json').write_text(json.dumps({'active_vault':str(self.vault)}))
   self.config=self.home/'.config/quickshell/noesis'
   shell=self.config/'shell.qml';s=shell.read_text().replace('org.fh1m.Noesis','org.fh1m.Noesis.Fixture'+uuid.uuid4().hex)
-  s=s.replace('import Quickshell','import Quickshell\nimport Quickshell.Io',1).replace(' LearningUi.NoesisWindow {}',' LearningUi.NoesisWindow {}\n IpcHandler {target:"fixture";function executeFixture(args:string):string{LearningUi.NoesisController.run(JSON.parse(Qt.atob(args)));return JSON.stringify({working:LearningUi.NoesisController.working,error:LearningUi.NoesisController.error,kind:LearningUi.NoesisController.operationKind});}}')
+  s=s.replace('import Quickshell','import Quickshell\nimport Quickshell.Io',1).replace(' LearningUi.NoesisWindow {}',' LearningUi.NoesisWindow {}\n IpcHandler {target:"fixture";function executeFixture(args:string):string{LearningUi.NoesisController.run(JSON.parse(args).args);return JSON.stringify({working:LearningUi.NoesisController.working,error:LearningUi.NoesisController.error,kind:LearningUi.NoesisController.operationKind});}}')
   shell.write_text(s)
   s=s.replace('target:"fixture";','target:"fixture";function acknowledgeUncertainExit():void{LearningUi.NoesisController.requestExit(true);}')
   shell.write_text(s)
@@ -52,7 +52,7 @@ class Fixture:
  def key(self,key,mods=''):
   subprocess.run(['hyprctl','dispatch','hl.dsp.send_shortcut({mods='+json.dumps(mods)+',key='+json.dumps(key)+',window='+json.dumps('address:'+self.client['address'])+'})'],check=True,capture_output=True)
  def run(self,*args):
-  result=json.loads(self.ipc('fixture','executeFixture',base64.b64encode(json.dumps(args).encode()).decode()))
+  result=json.loads(self.ipc('fixture','executeFixture',json.dumps({'args':args})))
   if result['error']:raise AssertionError(result)
   return result
  def exit(self):self.ipc('noesis','exit');self.process.wait(timeout=8)

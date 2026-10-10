@@ -4,7 +4,7 @@
 Retains window-content renders, never captures unrelated personal desktop layers.
 Before mode renders the same content with committed feee017 QML.
 """
-import sys,json,time,subprocess,os
+import sys,json,time,subprocess,os,uuid
 from pathlib import Path
 from unittest.mock import patch
 from noesis_native_fixture import Fixture,REPO,installer,QS
@@ -52,9 +52,11 @@ q=q.replace('ShellRoot {',r'''ShellRoot {
  function findSurface(item){if(item.visible&&["Problem statement","Your reasoning"].includes(item.currentText))return item;for(let child of item.children||[]){let found=findSurface(child);if(found)return found;}return null;}
  function findEditor(item){if(item.visible&&item.enabled&&item.placeholderText&&item.placeholderText.indexOf("Explain the idea")===0)return item;for(let child of item.children||[]){let found=findEditor(child);if(found)return found;}return null;}
  IpcHandler {target:"studio-fixture";
+  function openFixtureRecord(record:string):void{fixtureWindow.workspacePage.openWork(JSON.parse(record));}
   function framesStart():void{frameSamples=[];measureFrames=true;}
   function framesStop():string{measureFrames=false;return JSON.stringify(frameSamples);}
   function chooseDesk(side:string,index:int):string{let item=findNamed(fixtureWindow.studyDesk.applicationSurface,"studySurface-"+side);if(!item)return "missing selector";if(!item.popup.visible)deskInput.mouseClick(item,item.width/2,item.height/2);deskInput.wait(60);let list=item.popup.contentItem;list.forceLayout();list.positionViewAtIndex(index,ListView.Contain);deskInput.wait(60);let choice=list.itemAtIndex(index);if(!choice)return "missing popup choice visible="+item.popup.visible+" count="+list.count+" y="+list.contentY;deskInput.mouseClick(choice,choice.width/2,choice.height/2);deskInput.wait(60);return item.currentText;}
+  function scrollKeptSource():real{let item=findNamed(fixtureWindow.studyDesk.applicationSurface,"studySource-left");deskInput.waitForPolish(item);deskInput.wait(300);let target=item.contentItem;deskInput.mouseWheel(target,Math.min(100,target.width/2),Math.min(100,target.height/2),0,-700);deskInput.wait(300);return target.contentY;}
   function notesDesk():string{let item=findNamed(fixtureWindow.studyDesk.applicationSurface,"studyNotes-left");if(!item)return "missing notes";deskInput.mouseClick(item,40,40);deskInput.keyClick(Qt.Key_X);deskInput.keyClick(Qt.Key_Y);return item.text;}
 
   function clickDesk(label:string):string{let item=findItem(fixtureWindow.studyDesk.applicationSurface,label);if(!item)return "missing:"+label;deskInput.mouseClick(item,item.width/2,item.height/2);return "clicked";}
@@ -80,15 +82,13 @@ def capture(name):
  state=f.state();reports.append({'image':name+'.png','state':{key:state[key] for key in ['width','height','qt_device_pixel_ratio','interface_scale','reading_scale','presentation','section'] if key in state}})
 def desk_capture(name):
  if "--dual" not in sys.argv:return
- state=json.loads(f.ipc('noesis-study-desk','state'));labels={'source':'Problem statement' if f.state()['section']=='Practice' else 'Source','context':'Context','notes':'Notes & reasoning','figures':'Figures & artifacts','reference':'Reference (protected)' if f.state()['reference_hidden'] else 'Reference preview'};assert state['left_label']==labels[state['view']] and state['right_label']==labels[state['right_view']],state;assert state['visible'] and state['width']==1920 and state['height']==550,state
+ state=json.loads(f.ipc('noesis-study-desk','state'));labels={'source':'Problem statement' if f.state()['section']=='Practice' else 'Source','context':'Context','notes':'Notes & reasoning','figures':'Figures & artifacts','reference':'Reference (protected)' if f.state()['reference_hidden'] else 'Reference preview'};left_expected=('Problem statement' if state.get('left_problem',f.state()['section']=='Practice') else 'Source') if state['view']=='source' else labels[state['view']];right_expected=('Problem statement' if state.get('right_problem',f.state()['section']=='Practice') else 'Source') if state['right_view']=='source' else labels[state['right_view']];assert state['left_label']==left_expected and state['right_label']==right_expected,state;assert state['visible'] and state['width']==1920 and state['height']==550,state
  frame=int(f.ipc('noesis-study-desk','repaintNow'))
- try:f.wait(lambda s:json.loads(f.ipc('noesis-study-desk','state'))['frame_serial']>frame)
- except AssertionError:
-  layers=json.loads(subprocess.check_output(['hyprctl','layers','-j']))['DP-2']['levels']['3']
-  if len(layers)==1 and layers[0]['pid']==f.process.pid and layers[0]['namespace']=='noesis-study-desk':
-   subprocess.run(['grim','-o','DP-2',str(evidence/(name+'-frame-failure.png'))],check=True,capture_output=True)
-  print('ScreenPad frame diagnostics:',f.ipc('noesis-study-desk','state'),layers,flush=True)
-  raise
+ # An unchanged, already-presented scene may not swap a new frame on update().
+ # Require an actual presented frame, then capture the compositor's visible pixels.
+ deadline=time.monotonic()+1
+ while time.monotonic()<deadline and json.loads(f.ipc('noesis-study-desk','state'))['frame_serial']<=frame:time.sleep(.05)
+ assert json.loads(f.ipc('noesis-study-desk','state'))['frame_serial']>0
  time.sleep(.1)
  target=evidence/(name+'.png')
  if target.exists():target.unlink()
@@ -133,18 +133,69 @@ try:
   for activity in ['lesson','course']:
    if activity=='course':click('← Course outline');f.wait(lambda s:s['selected']==course['path'])
    for width,height in sizes:
-    for scale in [1,1.25,1.5,2]:
+    for scale in ([1] if '--pin-only' in sys.argv else [1,1.25,1.5,2]):
      resize(width,height,scale);capture(f'{activity}-{width}-{scale}')
      if width==1920 and scale==1:
       capture(activity+'-study');desk_capture(activity+'-second-display')
    resize(1440,880,1)
   print('PASS: native pointer module/lesson navigation; keyboard notes; outline return; Hide/reopen; durable draft after Close',flush=True)
+  if '--dual' in sys.argv:
+   resize(1920,1080,1)
+   f.ipc('studio-fixture','openFixtureRecord',json.dumps(lessons[0]));f.wait(lambda s:s['selected']==lessons[0]['path'] and s['preview_length']>0)
+   assert f.ipc('studio-fixture','chooseDesk','left','0')=='Source'
+   source=f.vault/lessons[0]['path'];source.write_text(source.read_text()+'\n'+''.join('\nCase '+str(n+1)+' · '+['Parallel rows: change one constant. Predict when the equations become inconsistent.', 'Scale a row by a nonzero factor. Explain why its geometric constraint is unchanged.', 'Swap the equations. Explain which intermediate calculation changes and which solution set must remain.', 'Introduce a zero row. Distinguish redundant information from a contradictory constraint.', 'Make two rows nearly parallel. Predict how measurement error affects the intersection.', 'Add an extra equation. Predict when it adds information, repeats a constraint or contradicts it.'][n%6]+'\n' for n in range(30)))
+   assert f.ipc('studio-fixture','clickDesk','Keep here')=='clicked'
+   def kept_ready():return json.loads(f.ipc('noesis-study-desk','state'))['left_kept_ready']
+   f.wait(lambda s:kept_ready())
+   assert f.ipc('studio-fixture','clickDesk','Refresh kept context')=='clicked';f.wait(lambda s:kept_ready());time.sleep(.7)
+   anchor=float(f.ipc('studio-fixture','scrollKeptSource'));assert anchor>100,anchor
+   time.sleep(.7);anchor=json.loads(f.ipc('noesis-study-desk','state'))['left_source_scroll']
+   f.ipc('studio-fixture','openFixtureRecord',json.dumps(lessons[1]));f.wait(lambda s:s['selected']==lessons[1]['path'] and s['preview_length']>0);f.wait(lambda s:kept_ready())
+   assert json.loads(f.ipc('noesis-study-desk','state'))['left_kept']==lessons[0]['id']
+   time.sleep(.2);assert abs(json.loads(f.ipc('noesis-study-desk','state'))['left_source_scroll']-anchor)<8,(anchor,json.loads(f.ipc('noesis-study-desk','state')))
+   assert f.state()['draft_length']==0 and f.preferences()['drafts'][str(f.vault)+':'+lessons[0]['id']]=='ab'
+   time.sleep(.3);desk_capture('kept-lesson-beside-active-notes')
+   assert f.ipc('studio-fixture','chooseDesk','left','1')=='Context';time.sleep(.2);desk_capture('kept-context-beside-active-notes')
+   assert f.ipc('studio-fixture','chooseDesk','left','0')=='Source'
+   for scale in [1.5,2]:
+    resize(1920,1080,scale);desk_capture('kept-lesson-'+str(scale))
+   resize(1920,1080,1)
+   # Watch refreshes through the existing worker, including after file moves.
+   original=f.vault/lessons[0]['path'];moved=original.with_name('Moved kept lesson.md');original.rename(moved)
+   assert f.ipc('studio-fixture','clickDesk','Refresh kept context')=='clicked';f.wait(lambda s:kept_ready())
+   assert f.ipc('studio-fixture','clickDesk','Open kept activity on main')=='clicked';f.wait(lambda s:s['selected']==str(moved.relative_to(f.vault)) and s['draft_length']==2)
+   # A missing record stays unavailable rather than showing an old snapshot.
+   f.ipc('studio-fixture','openFixtureRecord',json.dumps(lessons[1]));f.wait(lambda s:s['selected']==lessons[1]['path'] and s['preview_length']>0)
+   moved.rename(moved.with_suffix('.missing'))
+   assert f.ipc('studio-fixture','clickDesk','Refresh kept context')=='clicked';f.wait(lambda s:bool(json.loads(f.ipc('noesis-study-desk','state'))['left_kept_error']))
+   assert json.loads(f.ipc('noesis-study-desk','state'))['source_blocks']==0
+   time.sleep(.3);desk_capture('kept-source-unavailable')
+   moved.with_suffix('.missing').rename(original)
+   assert f.ipc('studio-fixture','clickDesk','Refresh kept context')=='clicked';f.wait(lambda s:kept_ready())
+   # Switching owners must hide the kept record, including a colliding UUID.
+   other=f.home/'other-learning-vault';(other/'System').mkdir(parents=True);(other/'System/System.json').write_text(json.dumps({'directories':['Notes'],'noesis_schema':2,'vault_id':str(uuid.uuid4())}))
+   (other/'collision.md').write_text('---\nid: '+lessons[0]['id']+'\nnoesis_schema: 2\ntype: resource\ntitle: Foreign collision is never a substitute\n---\nForeign private fixture source.\n')
+   f.run('vault-register',str(other));f.wait(lambda s:not s['working']);f.run('use',str(other));f.wait(lambda s:s['vault']==str(other) and not s['working'])
+   assert not kept_ready() and json.loads(f.ipc('noesis-study-desk','state'))['source_blocks']==0
+   f.run('use',str(f.vault));f.wait(lambda s:s['vault']==str(f.vault) and not s['working']);f.ipc('studio-fixture','openFixtureRecord',json.dumps(lessons[1]));f.wait(lambda s:kept_ready())
+   f.ipc('noesis','hide');f.wait(lambda s:not s['worker']);f.ipc('noesis','open');f.wait(lambda s:s['worker'] and kept_ready())
+   final_anchor=float(f.ipc('studio-fixture','scrollKeptSource'));f.exit();assert abs(f.preferences()['layouts']['StudyDesk']['left_kept_anchors']['source']-final_anchor)<8;f.start();f.ipc('studio-fixture','mode','fullscreen');f.ipc('noesis-window','section','Learn');f.ipc('studio-fixture','openFixtureRecord',json.dumps(lessons[1]));f.wait(lambda s:not s['mode_pending'] and kept_ready())
+   assert json.loads(f.ipc('noesis-study-desk','state'))['left_kept']==lessons[0]['id']
+   # f.start selects the protected problem: kept sources must remain concealed.
+   f.ipc('noesis-window','section','Practice');f.ipc('noesis-window','select','problem.md');f.wait(lambda s:s['selected']=='problem.md' and s['reference_hidden'])
+   f.wait(lambda s:json.loads(f.ipc('noesis-study-desk','state'))['left_kept_protected'])
+   assert json.loads(f.ipc('noesis-study-desk','state'))['source_blocks']==0
+   time.sleep(.3);desk_capture('kept-source-protected-attempt')
+   assert f.ipc('studio-fixture','clickDesk','Follow active activity')=='clicked'
+   assert not json.loads(f.ipc('noesis-study-desk','state'))['left_kept']
+   print('PASS: native kept source identity, draft ownership, move/missing recovery, Hide/restart and protected concealment',flush=True)
+
  f.ipc('noesis-window','section','Practice');f.wait(lambda s:s['rows']>0);f.ipc('noesis-window','select','problem.md');f.wait(lambda s:s['preview_length']>0)
  click('Start independent attempt' if phase=='after' else 'Start attempt');f.wait(lambda s:bool(s['attempt']))
  time.sleep(.4);capture('practice-'+phase)
  if phase=='after':
   for width,height in sizes:
-   for scale in [1,1.25,1.5,2]:
+   for scale in ([1] if '--pin-only' in sys.argv else [1,1.25,1.5,2]):
     f.ipc('studio-fixture','scale',str(scale));f.ipc('studio-fixture','mode','fullscreen' if width==1920 else 'normal');f.wait(lambda s:not s['mode_pending']);time.sleep(.3)
     time.sleep(.5);capture(f'practice-{width}-{scale}')
     if width==1920 and scale in [1,2]:
@@ -175,6 +226,10 @@ try:
     assert f.ipc('studio-fixture','chooseDesk','left','3')=='Figures & artifacts'
     assert f.ipc('studio-fixture','chooseDesk','right','2')=='Notes & reasoning'
     time.sleep(.5);desk_capture('lab-second-figures-notes')
+    assert f.ipc('studio-fixture','clickDesk','Keep here')=='clicked';f.wait(lambda s:json.loads(f.ipc('noesis-study-desk','state'))['left_kept_ready'])
+    f.ipc('noesis-window','section','Today');f.wait(lambda s:not s['selected']);f.wait(lambda s:json.loads(f.ipc('noesis-study-desk','state'))['left_kept_ready']);time.sleep(.3);desk_capture('kept-lab-figures')
+    assert f.ipc('studio-fixture','clickDesk','Open kept activity on main')=='clicked';f.wait(lambda s:s['selected']==lab['path'] and s['loaded_figures']==1)
+    assert f.ipc('studio-fixture','clickDesk','Follow active activity')=='clicked'
 
   f.ipc('noesis-window','section','Today');f.wait(lambda s:not s['selected'] and not s['working']);time.sleep(.5);capture('today-current');resize(1920,1080,1);capture('today-study')
  f.ipc('studio-fixture','framesStart');time.sleep(3)

@@ -58,7 +58,7 @@
         "height": 550,
         "view": "source",
         "screen": "DP-2",
-        "source_blocks": 0
+        "source_blocks": 4
       }
     },
     {
@@ -168,14 +168,74 @@
       }
     },
     {
+      "image": "kept-lesson-beside-active-notes.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "source",
+        "screen": "DP-2",
+        "source_blocks": 34
+      }
+    },
+    {
+      "image": "kept-context-beside-active-notes.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "context",
+        "screen": "DP-2",
+        "source_blocks": 34
+      }
+    },
+    {
+      "image": "kept-lesson-1.5.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "source",
+        "screen": "DP-2",
+        "source_blocks": 34
+      }
+    },
+    {
+      "image": "kept-lesson-2.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "source",
+        "screen": "DP-2",
+        "source_blocks": 34
+      }
+    },
+    {
+      "image": "kept-source-unavailable.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "source",
+        "screen": "DP-2",
+        "source_blocks": 0
+      }
+    },
+    {
+      "image": "kept-source-protected-attempt.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "source",
+        "screen": "DP-2",
+        "source_blocks": 0
+      }
+    },
+    {
       "image": "practice-after.png",
       "state": {
-        "width": 1440,
-        "height": 880,
+        "width": 1920,
+        "height": 1080,
         "qt_device_pixel_ratio": 2,
         "interface_scale": 1,
         "reading_scale": 1,
-        "presentation": "normal",
+        "presentation": "fullscreen",
         "section": "Practice"
       }
     },
@@ -360,8 +420,8 @@
     {
       "image": "research-current.png",
       "state": {
-        "width": 500,
-        "height": 650,
+        "width": 1440,
+        "height": 880,
         "qt_device_pixel_ratio": 2,
         "interface_scale": 1,
         "reading_scale": 1,
@@ -407,6 +467,16 @@
     },
     {
       "image": "lab-second-figures-notes.png",
+      "state": {
+        "width": 1920,
+        "height": 550,
+        "view": "figures",
+        "screen": "DP-2",
+        "source_blocks": 4
+      }
+    },
+    {
+      "image": "kept-lab-figures.png",
       "state": {
         "width": 1920,
         "height": 550,
