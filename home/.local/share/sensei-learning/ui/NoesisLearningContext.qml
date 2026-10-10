@@ -6,6 +6,8 @@ ColumnLayout {
  id:root
  property var context:({})
  property bool busy:false
+ property string prerequisiteHeading:"Before this lesson"
+ property string scopeLabel:"this lesson"
  signal openContext(var row)
  signal reviewReadiness(var row)
  spacing:NoesisStyle.md
@@ -15,7 +17,7 @@ ColumnLayout {
   Repeater {model:root.context.parents||[];delegate:NoesisButton {required property var modelData;text:"← "+modelData.title;enabled:!root.busy;hint:"Ctrl+Alt+Left · return to outline";onClicked:root.openContext(modelData)}}
  }
  Repeater {
-  model:[{title:"Before this lesson",rows:root.context.prerequisites||[],kind:"prerequisite"},{title:"Exercises and assignments",rows:root.context.assignments||[],kind:"assignment"}]
+  model:[{title:root.prerequisiteHeading,rows:root.context.prerequisites||[],kind:"prerequisite"},{title:"Exercises and assignments",rows:root.context.assignments||[],kind:"assignment"}]
   delegate:ColumnLayout {
    required property var modelData
    visible:modelData.rows.length>0
@@ -26,7 +28,7 @@ ColumnLayout {
     required property var modelData
     Layout.fillWidth:true;spacing:NoesisStyle.xs
     NoesisRow {Layout.fillWidth:true;title:modelData.title
-     subtitle:(modelData.readiness==="passed"?"Ready for this lesson · ":modelData.role?({gate:"Blocking prerequisite",parallel:"Study alongside", "deep-descent":"Optional deeper study"})[modelData.role]+(modelData.reason?" · "+modelData.reason:"")+" · ":"")+root.assessmentLabel(modelData)
+     subtitle:(modelData.readiness==="passed"?"Ready for "+root.scopeLabel+" · ":modelData.role?({gate:"Blocking prerequisite",parallel:"Study alongside", "deep-descent":"Optional deeper study"})[modelData.role]+(modelData.reason?" · "+modelData.reason:"")+" · ":"")+root.assessmentLabel(modelData)
      enabled:!root.busy;onClicked:root.openContext(modelData)}
     NoesisButton {visible:modelData.role==="gate";hint:"Ctrl+Alt+R · review first blocking prerequisite";text:modelData.readiness==="passed"?"Review readiness":"Ready to continue?";enabled:!root.busy;onClicked:root.reviewReadiness(modelData)}
    }}

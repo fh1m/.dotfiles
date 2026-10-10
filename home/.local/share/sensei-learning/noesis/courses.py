@@ -64,7 +64,7 @@ def learning_context(index,identity):
     """Bounded lesson navigation; assessment is reported evidence, never competence."""
     record=index.record(identity,include_body=False,include_attempt=False)
     props=record['props']
-    if props.get('type') not in ('unit','stage','task','problem','concept','prerequisite'):
+    if props.get('type') not in ('unit','stage','task','problem','concept','prerequisite','question','capability'):
         return None
     owner=index.manifest['vault_id']
     def summary(identity):

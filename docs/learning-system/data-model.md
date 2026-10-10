@@ -135,3 +135,11 @@ their original record types. No derived score becomes authoritative state.
 Machine-local `layouts["navigation-v1"]` stores at most 32 compact scoped entries
 (owner, record, path, surface and view anchors), separate from learner notes and draft
 authority. Reference visibility is revalidated against recorded assistance on restore.
+
+
+Attempt-linked questions reuse optional owned `evidence_refs` and their existing
+`parent_ref`. Creation verifies every assessment belongs to that exact local parent;
+it does not rewrite the attempt or change recorded assistance. The Frontier resolves
+those stable identities on read and shows missing assessment evidence explicitly.
+No new record type or learning score is introduced. Retained-ability projections now
+include the earlier decision identity and learner-selected interval for native review.

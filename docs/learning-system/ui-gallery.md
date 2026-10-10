@@ -35,6 +35,33 @@ frame presentation and a privacy check. No private learning content is published
 Main display: 1920×1080 logical. ScreenPad: 1920×550 logical. Qt DPR: 2.
 Application interface/reading scale is separate from DPR.
 
+## Failed attempts, delayed checks and Mongla
+
+Native fixture captures: a partial attempt becomes a source-linked question;
+retention compares an earlier scoped ability with a later performed assessment.
+The elapsed interval is simulated fixture time, not observed owner retention.
+
+![Question from a partial attempt](assets/frontier/failure-to-question.png)
+
+A failed shortest-path attempt preserves editorial exposure and becomes a question
+about the missing invariant, without rewriting the original result.
+
+![Failed DSA attempt](assets/frontier/dsa-failed-attempt.png)
+
+![Question about the missing invariant](assets/frontier/dsa-missing-invariant.png)
+
+![Explicit delayed assessment](assets/frontier/retention-assessment.png)
+
+The Mongla inquiry uses inspected public source at a pinned revision. Optional
+sampling/PID descent preserves the original project and question. No controller,
+vehicle or firmware was executed during this fixture.
+
+![Mongla PID inquiry](assets/frontier/mongla-pid-inquiry.png)
+
+![Sampling and PID descent](assets/frontier/mongla-pid-descent.png)
+
+![Return to the control question](assets/frontier/mongla-pid-return.png)
+
 ## Reading beside your own reasoning
 
 Same source note at 1920×1080 logical, 100% interface/reading scale. The old Read

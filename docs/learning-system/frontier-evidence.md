@@ -59,7 +59,7 @@ interval, not physical input latency or sustained human-use acceptance.
 The shared-page three-second sample measured p95 16.54 ms (189 frames), RSS 281916 KiB and PSS 211469 KiB. It is not a sustained memory trend.
 
 The synthetic 10,000-record benchmark measured rebuild 3.554 s, query p95 29.641 ms,
-Today 23.201 ms and capture 106.389 ms. All 129 core and 16 compatibility tests pass.
+Today 23.201 ms and capture 106.389 ms. All 130 core and 16 compatibility tests pass.
 Existing shutdown checks passed all ten debounce, pending mutation/import, failed-save,
 uncertain-receipt and forced-exit scenarios. Scoped installer checks passed two installs,
 rollback and protection of later edits/unrelated files. Tests do not establish educational
@@ -103,8 +103,9 @@ that it resolves the usability problem in actual learning.
 M1 provides the concept/reconstruction/claim software slice. The owner's 20–30-minute
 trial and an actual delayed retention demonstration remain required. Foreign evidence
 can be attached, but foreign unaided assessments are conservatively not certified by
-this projection. Retention is validated by the backend but its native guided form is
-deferred to M2. Frontier relationships here are bounded local neighbors; the existing
+this projection. Retention now has a native guided form with earlier-ability selection, paged older
+judgments and an explicit interval. Its controlled-time fixture is not a real delayed
+learner demonstration. Frontier relationships here are bounded local neighbors; the existing
 owner-aware connections remain available, and a dedicated cross-vault frontier picker
 belongs to M3. Existing Obsidian handoff is reused; a complete native rich-derivation
 round trip has not been newly accepted in this slice.
@@ -124,3 +125,40 @@ reinterpret an empty-profile success as populated reader recovery.
 Off-device repository configuration remains **deferred by owner, post-V1**. Existing
 local backups and historical acceptance remain intact. Rollback uses the scoped
 installer manifest and restores application files without deleting learning records.
+
+
+## Continuation: failures, retained abilities and Mongla
+
+A saved partial/failed attempt now offers a source-linked question with exact owned
+assessment provenance. The original reasoning and assistance remain unchanged;
+creating a question does not establish success. The assessment action moves into the
+main action row after a saved result so it does not depend on finding a control below
+the reasoning editor. Context-loading guards protect actions during record transitions.
+
+Native retention assessment selects an earlier accepted scoped ability and a minimum
+delay, then checks the timestamp and outcome of the actual evidence. Future intervals
+cannot be accepted. Older judgments are pageable; confidence and unaided attribution
+remain separate. The native test uses an explicitly simulated eight-day interval and
+unknown-assistance later review, never an owner retention claim.
+
+Question/concept investigations now show contextual prerequisite roles and their
+reasons. Optional deep descent remains usable without turning into a global blocker.
+The Mongla fixture follows an actual public control question through a sampling/PID
+mechanism, inspected yaw source and return, preserving the originating project.
+Source inspection is pinned to `8083365f88bb629080b987e97124cd070dd95bcd` of
+[fh1m/mongla_ws](https://github.com/fh1m/mongla_ws/tree/8083365f88bb629080b987e97124cd070dd95bcd).
+No ROS command, vehicle-control code, firmware build or hardware interaction was run.
+Host-side motion code, Hengla firmware, offline board-code/plant simulation and actual
+vehicle observations remain distinct; their repository claims are not imported as
+Noesis learner achievements.
+
+The owner chose Mongla PID/control as the engineering trial. Authentic detector use,
+DSA transfer and bottom-up executable journeys, complete specialist-tool returns,
+ScreenPad context pinning, Zotero restoration and sustained owner usability acceptance
+remain open. This continuation closes specific software gaps, not the entire release.
+
+The final continuation native run also preserves a failed shortest-path attempt's
+editorial exposure while creating its exact assessment-linked invariant question.
+Its protected statement includes the changed case and constraints; no solution text
+is added to that statement. The 184-frame sample measures 17.13 ms p95, a short
+instrumented rendering sample rather than sustained performance or input latency.

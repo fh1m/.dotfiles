@@ -360,8 +360,8 @@
     {
       "image": "research-current.png",
       "state": {
-        "width": 1440,
-        "height": 880,
+        "width": 500,
+        "height": 650,
         "qt_device_pixel_ratio": 2,
         "interface_scale": 1,
         "reading_scale": 1,

@@ -148,6 +148,8 @@ def claims(index, identity):
                'evidence_kind': head.get('evidence_kind', 'not recorded'), 'independent': False,
                'checked': head.get('timestamp'), 'evidence_refs': references(index, head),
                'provenance': 'learner-reported', 'legacy': dimension is None}
+        if dimension == 'retained':
+            row.update(retained_from=head.get('retained_from'), interval_days=head.get('interval_days'))
         try:
             supporting = [evidence_record(index, ref) for ref in row['evidence_refs']]
             row['independent'] = bool(len(heads) == 1 and head.get('decision') == 'accept' and head.get('independent') is True and head.get('actor') == 'learner' and dimension in DIMENSIONS
@@ -212,9 +214,21 @@ def frontier(index, identity, cursor=None):
                           vault=str(index.root), vault_id=scope['owner'])
         except (ValueError, KeyError, OSError):
             pass  # Unavailable origin is explicit; do not substitute a same-UUID record.
+    prompting=[]
+    question_refs=record['props'].get('evidence_refs')
+    for ref in (question_refs if isinstance(question_refs,list) else [])[:8]:
+        try:
+            work=evidence_record(index,ref)
+            props=work['props']
+            prompting.append(dict(owner=ref['vault_id'],id=props['id'],event=props.get('event'),
+                                  outcome=props.get('outcome','unknown'),assistance=props.get('assistance',['unknown']),
+                                  title=work['display_title'][:240],path=work['path']))
+        except (ValueError,KeyError,OSError,TypeError):
+            prompting.append(dict(availability='Original assessment unavailable; its identity is preserved'))
     return {'owner': scope['owner'], 'record_id': identity, 'generation': index.generation,
             'items': items, 'cursor': encode(offset + 50) if len(rows) > 50 else None,
             'newer_cursor': encode(offset - 50) if offset else None, 'parent_ref': parent, 'origin': origin,
+            'prompting_evidence': prompting,
             'summary': 'Evidence, confidence and unanswered mechanisms remain separate.'}
 
 

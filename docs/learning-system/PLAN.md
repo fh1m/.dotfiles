@@ -151,3 +151,16 @@ It distinguishes reproduced slices, partial milestones, V1 blockers, learner-tri
 readiness and explicit post-V1 deferrals. It does not supersede failed recovery
 evidence with passing model tests. The native learning-day fixture now spans CS,
 mathematics, a genuine paper equation and an executed generated-data experiment.
+
+
+## Current source/deployment reconciliation — 2026-10-10
+
+The independent Quickshell host is now the verified live default; the old embedded
+host is rollback only. Study is workspace 4, fullscreen by owner preference. Current
+P0–P8 gates are carried in [release-acceptance.md](release-acceptance.md), and the
+approved learning-engine M1–M5 burn-down in [v1-roadmap.md](v1-roadmap.md). Historical
+statements above about pending isolation, Adwaita typography, unconfigured priorities
+or required global cross-vault gates are superseded. Global blocking educational policy
+is not in scope. The populated Zotero restore gate remains unresolved, and off-device
+configuration remains explicitly owner-deferred. Owner learning evidence and usability
+feedback cannot be replaced by synthetic fixtures.

@@ -146,3 +146,29 @@ After explicit approval: preserve unaccepted experiments; return to reviewed par
 Every milestone has a scoped backup, known rollback point and evidence ledger. Deploy only reviewed Noesis/UI/bridge/launcher/registration files. Host switch waits for pending writes, disables the other host and verifies one active host. Rollback restores host routing/UI/preferences with explicit preference-version handling; never deletes newly created learning records. No wholesale live installer, unrelated dotfiles overwrite, destructive migration or force-push is authorized.
 
 V1 completion requires journey, recovery, accessibility and learner-trial gates. Off-device setup, PySide6, MLflow/DVC, semantic recommendations, advanced repetition, replacement PDF/rich editors and inferred competence remain outside this release.
+
+
+## Current learning-engine burn-down — 2026-10-10
+
+This continuation uses the owner's approved five-slice first-principles evolution.
+The earlier four hosting/product milestones above remain historical execution context.
+No release-complete claim follows from implemented primitives or fixture screenshots.
+
+| Slice | Implemented and verified software | Remaining acceptance |
+|---|---|---|
+| M1 Frontier and semantics | Concept/question/capability investigation, scoped dimensional claims, exact owned evidence, conflicts, full-history reduction, local navigation and drafts; protected reconstruction and native explicit assessment. | Owner discovers and uses the flow comfortably; foreign unaided certification remains deliberately conservative. |
+| M2 deep journeys | Failure → owned question; contextual gate/parallel/deep-descent navigation; earlier ability → later performed retention assessment; native source-grounded Mongla PID inquiry/descent/source/return. | Actual detector/model-version journey, unfamiliar DSA transfer, executed Mongla/ADRC comparison with honest plant uncertainty, bottom-up executable journey; genuine elapsed-time learner evidence. |
+| M3 specialist tools | Existing exact-owner source/editor/repository handoffs retained. Mongla source inspection pinned to its actual public revision. | Complete new native round trips, annotation/source-edition acceptance, supported nonblocking cross-vault picker; pilot optional notebooks only for a reproduced missing workflow. |
+| M4 desktop product | Dedicated fullscreen Study 4, dual display, shared Zed typography, formatted source beside reasoning, scaled disclosure, main-row evidence assessment; fixture captures retained in gallery. | Safe supporting-context pinning, sustained multi-tool use and owner feedback. |
+| M5 integrated V1 | Core/compatibility tests, scoped installer backups/rollback and live host/hash identity verification. Existing local recovery acceptance retained. | Populated Zotero restore, remaining storage/conflict/long-history/portability cases, sustained lifecycle and owner trial. |
+
+The engineering learner trial is Mongla PID/control, selected by the owner. Inspect
+its source before choosing a controller or interpreting tests. Host commands, board
+control laws, offline plant simulation, bench measurements and water tests stay distinct.
+Noesis does not auto-run ROS, firmware builds or vehicle commands. No personal vault
+was populated for fixture acceptance. Off-device configuration remains owner-deferred.
+
+Current presentation follows the owner's later preferences: Zed Sans and Zed Mono,
+warm system surfaces, restrained pink, no tooltips, fullscreen Study between Code and
+Sim, and dynamic ScreenPad support. These supersede the earlier Adwaita/default-type
+recommendation; application text scaling remains independent of Qt DPR.
