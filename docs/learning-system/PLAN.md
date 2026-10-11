@@ -199,3 +199,10 @@ questions can be answered in-widget, and live desktop renders cleanly. Verified
 with 23 desktop/16 learning regressions, disposable tmux/PTY/auth fixtures, live
 workspace/focus checks and private visual inspection. Real upgrades and charging
 policy writes were not performed as tests. [Details](DESKTOP-CODE.md#october-11-interaction-follow-up).
+
+Desktop alignment follow-up: completed expanded battery typography, opposite-side
+Noesis/drawer placement, full active control/workspace rules, centered tab count
+and visible outline. Code now combines Operator tools and GitHub, with Agents in
+the next tab. Reused live telemetry with three-second polling only while visible.
+Both folded/expanded rails and the combined panel were inspected on the live
+machine; configuration reload passes. No subject content or new packages.

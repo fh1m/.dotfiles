@@ -9,6 +9,7 @@ Rectangle {
     property bool selected: false
     property bool pressed: false
     property bool showSelectionRule: true
+    property real selectionRuleWidth: 24
     property bool grouped: false
     radius: 0
     color: pressed ? Theme.surfaceTwo : hovered || selected ? Theme.surfaceOne : Theme.ink
@@ -23,7 +24,7 @@ Rectangle {
     Rectangle {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
-        width: root.selected && root.showSelectionRule ? 24 : 0
+        width: root.selected && root.showSelectionRule ? root.selectionRuleWidth : 0
         height: 2
         color: Theme.signalRed
         Behavior on width { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }

@@ -9,6 +9,7 @@ import qs.services
 DropdownFrame {
     id: root
     property Item searchInput:null
+    property string contributionInfo:""
     title: "fh1m / Code"
     katakana: CodeDesk.tab === 0 ? "GITHUB" : "AGENTS"
     implicitWidth: 1100
@@ -35,7 +36,6 @@ DropdownFrame {
             ControlTile {label:"Code";glyph:"\uf121";selected:CodeDesk.tab===0;implicitWidth:140;onActivated:CodeDesk.tab=0}
             ControlTile {label:"Agents";glyph:"\uf0e4";selected:CodeDesk.tab===1;implicitWidth:140;onActivated:CodeDesk.tab=1}
             ControlTile {label:"Refresh";glyph:"\uf021";implicitWidth:120;enabled:!CodeDesk.loading;onActivated:CodeDesk.refresh(true)}
-            ControlTile {label:"Operator tools";glyph:"\uf085";implicitWidth:160;onActivated:ShellState.dropdown="ident"}
         }
         NrLabel {textFormat:Text.PlainText;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:CodeDesk.tab===0?(CodeDesk.error || (CodeDesk.loading?"Refreshing GitHub…":root.ago(CodeDesk.data.fetchedAt)+(CodeDesk.data.stale?" · Cached":""))):(CodeDesk.provider===1?root.ago(CodeDesk.openCodeUsage.fetchedAt):(CodeDesk.usage.error||root.ago(CodeDesk.usage.fetchedAt)));color:CodeDesk.error?Theme.semanticAmber:Theme.paperMuted;pixelSize:12}
         Loader {
@@ -47,6 +47,7 @@ DropdownFrame {
         id:codePage
         Column {
             width:parent.width;spacing:12
+            OperatorBanner {width:parent.width}
             Row {spacing:20
                 NrLabel {textFormat:Text.PlainText;tracked:false;font.capitalization:Font.MixedCase;text:"@"+(CodeDesk.data.login||"fh1m");pixelSize:16;color:Theme.signalRed}
                 NrLabel {textFormat:Text.PlainText;tracked:false;font.capitalization:Font.MixedCase;text:(CodeDesk.data.repositoryCount?.totalCount??"—")+" repositories · "+(CodeDesk.data.followers?.totalCount??"—")+" followers · "+(CodeDesk.data.starredRepositories?.totalCount??"—")+" starred · "+(CodeDesk.data.contributionsCollection?.contributionCalendar?.totalContributions??"—")+" contributions / year";pixelSize:12}
@@ -60,14 +61,13 @@ DropdownFrame {
                         Repeater {model:modelData.contributionDays
                             Rectangle {required property var modelData;width:12;height:12;radius:2
                                 color: {const n=modelData.contributionCount;return n===0?Theme.surfaceTwo:Theme.alpha(Theme.signalRed,n<3?.3:n<6?.5:n<10?.75:1);}
-                                MouseArea {id:dayHover;anchors.fill:parent;hoverEnabled:true}
-                                ToolTip.visible:dayHover.containsMouse
-                                ToolTip.text:modelData.date+" · "+modelData.contributionCount+" contributions"
+                                MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:root.contributionInfo=modelData.date+" · "+modelData.contributionCount+" contributions"}
                             }
                         }
                     }
                 }
             }
+            Text {visible:root.contributionInfo!=="";text:root.contributionInfo;color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:11}
             TextField {id:search;Component.onCompleted:root.searchInput=search;Component.onDestruction:root.searchInput=null;width:parent.width;placeholderText:"Find a project…";placeholderTextColor:Theme.paperMuted;text:CodeDesk.query;onTextEdited:CodeDesk.query=text;color:Theme.paper;font.family:Appearance.font.ui;font.pixelSize:12;background:Rectangle{color:Theme.surfaceOne;border.color:search.activeFocus?Theme.signalRed:Theme.rule;radius:3} Keys.onEscapePressed:{CodeDesk.query="";event.accepted=true;}}
             Row {
                 width:parent.width;spacing:18
@@ -76,7 +76,7 @@ DropdownFrame {
                         ControlTile {implicitWidth:130;label:"Recent";glyph:"\uf017";selected:!CodeDesk.pinnedOnly;onActivated:CodeDesk.pinnedOnly=false}
                         ControlTile {implicitWidth:130;label:"Pinned";glyph:"\uf08d";selected:CodeDesk.pinnedOnly;onActivated:CodeDesk.pinnedOnly=true}
                     }
-                    ScrollView {width:parent.width;height:365;clip:true;contentWidth:availableWidth
+                    ScrollView {width:parent.width;height:300;clip:true;contentWidth:availableWidth
                         Column {width:parent.width;spacing:6
                             Repeater {model:CodeDesk.repositories
                                 Rectangle {required property var modelData;width:parent.width;height:81;radius:3;color:Theme.surfaceOne;border.color:CodeDesk.selectedRepo===modelData.nameWithOwner?Theme.signalRed:Theme.rule
@@ -100,7 +100,7 @@ DropdownFrame {
                             ControlTile {required property string modelData;required property int index;implicitWidth:103;label:modelData;glyph:["\uf0ae","\uf126","\uf188","\uf121"][index];selected:CodeDesk.feed===index;onActivated:CodeDesk.feed=index}
                         }
                     }
-                    ScrollView {width:parent.width;height:365;clip:true;contentWidth:availableWidth
+                    ScrollView {width:parent.width;height:300;clip:true;contentWidth:availableWidth
                         Column {width:parent.width;spacing:6
                             Repeater {model:CodeDesk.feed===0&&CodeDesk.selectedRepo?(CodeDesk.detail.runs?.workflow_runs??[]).slice(0,5):[]
                                 ControlTile {required property var modelData;implicitWidth:parent.width;label:modelData.name;detail:"CI · "+(modelData.conclusion||modelData.status);glyph:"\uf0ae";onActivated:CodeDesk.browse(modelData.html_url)}

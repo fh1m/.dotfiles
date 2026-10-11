@@ -44,7 +44,7 @@ Variants {
             onPaint: {
                 const p = getContext("2d")
                 p.reset()
-                const inset = 0, cut = 5, h = height
+                const inset = 0.75, cut = 5, h = height
                 p.fillStyle = "#000000"
                 p.beginPath()
                 p.moveTo(inset + cut, 0)
@@ -57,7 +57,7 @@ Variants {
                 p.lineTo(inset, cut)
                 p.closePath()
                 p.fill()
-                p.strokeStyle = Theme.rule; p.lineWidth = 1; p.stroke()
+                p.strokeStyle = Theme.alpha(Theme.signalRed, .38); p.lineWidth = 1.25; p.stroke()
             }
         }
         Repeater {
@@ -133,7 +133,7 @@ Variants {
         Rectangle {
             anchors.right: parent.right
             anchors.rightMargin: 10
-            y: 5
+            anchors.verticalCenter: parent.verticalCenter
             width: 92
             height: 19
             color: "#000000"
@@ -143,7 +143,7 @@ Variants {
             Rectangle { x: 1; y: 3; width: 2; height: parent.height - 6; color: Theme.signalRed }
             Text {
                 anchors.centerIn: parent
-                text: `TABS  ${marker.position} / ${marker.members.length}`
+                text: `Tabs  ${marker.position} / ${marker.members.length}`
                 color: Theme.paper
                 font.family: Appearance.font.telemetry
                 font.pixelSize: 11

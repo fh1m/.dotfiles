@@ -4,11 +4,19 @@ import qs.config
 import qs.services
 Item {
  id:root
- implicitWidth:64;implicitHeight:34
- BarSurface {anchors.fill:parent;grouped:true;hovered:pointer.containsMouse;pressed:pointer.pressed}
- Row {anchors.centerIn:parent;spacing:4
-  InstrumentIcon {id:mark;kind:Power.onBattery?"battery":"ac";level:Power.charge/100;ink:Power.charge<15&&Power.onBattery?Theme.paper:Theme.signalRed}
-  Text {anchors.verticalCenter:parent.verticalCenter;text:Power.present?Math.round(Power.charge)+"%":"AC";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.paperMuted}
+ property bool condensed:false
+ implicitWidth:condensed?48:112;implicitHeight:34
+ Behavior on implicitWidth {NumberAnimation {duration:Theme.motionTravel;easing.type:Easing.OutCubic}}
+ BarSurface {anchors.fill:parent;grouped:root.condensed;selected:ShellState.dropdown==="power";hovered:pointer.containsMouse;pressed:pointer.pressed}
+ Row {anchors.centerIn:parent;spacing:7
+  Item {width:24;height:30
+  InstrumentIcon {id:mark;anchors.horizontalCenter:parent.horizontalCenter;y:root.condensed?-2:3;kind:Power.onBattery?"battery":"ac";level:Power.charge/100;ink:Power.charge<15&&Power.onBattery?Theme.paper:Theme.signalRed}
+  Text {visible:root.condensed;anchors.horizontalCenter:parent.horizontalCenter;y:22;text:Power.present?Math.round(Power.charge)+"%":"AC";font.family:Appearance.font.barUi;font.pixelSize:8;color:Theme.paperMuted}
+  }
+  Column {visible:!root.condensed;anchors.verticalCenter:parent.verticalCenter;spacing:-1
+   Text {text:"Battery";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
+   Text {text:Math.round(Power.charge)+"% · "+(Power.onBattery?"Battery":"AC");font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.paperMuted}
+  }
  }
  SequentialAnimation {running:!Power.onBattery&&root.visible&&ShellState.ambientMotion;loops:Animation.Infinite;onRunningChanged:if(!running)mark.opacity=1
   NumberAnimation {target:mark;property:"opacity";from:1;to:.55;duration:1300}

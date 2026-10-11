@@ -204,3 +204,24 @@ focus actions created no sessions. `dev_001` and `dev_002` have no session group
 Misc reported DP-2/workspace 7/slot 6 through read-only IPC. Charging writes were not
 used as tests. Scoped rollback copies are in
 `~/.local/state/dotfiles-backups/desktop-followup-20261011`.
+
+### Alignment and glance view
+
+Battery now follows the same folded/expanded control contract as its neighbors:
+percentage below the compact icon, or under the Battery label when expanded.
+Noesis moved to the lower bar's machine side; drawer handles moved to the
+opposite ends. Active workspace rules span the entire icon-and-label area;
+the Noesis open-state rule spans its control. Tab counts are vertically centered
+and the inset tab outline is visible at a restrained pink intensity.
+
+Code's first tab combines a compact Operator tools banner with the GitHub overview.
+Agents remains the next tab. The banner reads existing machine telemetry every
+three seconds only while its Code view is open; missing values show unavailable
+rather than zero. Contribution-day details are click-driven, without hover tooltips.
+The separate operator deck remains available through middle-click. Existing tools
+are reused; there is no second stats backend or new dependency.
+
+Checked folded and expanded bars on both displays, the combined Code panel, its
+live CPU/RAM values, tab count and outline. Live QML reload succeeds. Rail IPC
+`bar-controls-<output>` exposes expand/state for reproducible layout checks.
+Follow-up rollback copies: `~/.local/state/dotfiles-backups/desktop-followup-20261011-alignment`.

@@ -16,6 +16,7 @@ BarSurface {
  property string detail:target==="monitor"?"Telemetry":""
  implicitWidth:(condensed?44:target==="monitor"?112:124)+(target==="oasis"?24:0);implicitHeight:34
  Behavior on implicitWidth { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
+ selectionRuleWidth:target==="oasis"?width-8:24
  grouped:condensed
  selected:target==="oasis"?LearningBridge.NoesisBridge.windowOpen:ShellState.dropdown===target;hovered:pointer.containsMouse;pressed:pointer.pressed
  Row {anchors.left:parent.left;anchors.leftMargin:10;anchors.verticalCenter:parent.verticalCenter;spacing:8
