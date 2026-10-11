@@ -8,12 +8,15 @@ import qs.services
 // or the special workspaces while one of those is up.
 Item {
     id: root
+    property string output:""
+    property bool compact:false
+    readonly property var monitorSlots:Spaces.slotsFor(output)
 
     // The bar draws the line under these, so it needs their pitch and which one
     // is lit. -1 leaves the line short rather than guessing.
-    readonly property int itemWidth: Appearance.metrics.workspaceWidth
+    readonly property int itemWidth: compact?38:Appearance.metrics.workspaceWidth
     readonly property int itemSpacing: 7
-    readonly property int activeIndex: Spaces.activeIndex
+    readonly property int activeIndex: monitorSlots.findIndex(s=>s.active)
 
     implicitWidth: slots.implicitWidth + 6
     implicitHeight: Appearance.metrics.workspaceHeight + 6
@@ -45,7 +48,7 @@ Item {
     spacing: root.itemSpacing
 
     Repeater {
-        model: Spaces.slots
+        model: root.monitorSlots
 
         Item {
             id: button
@@ -54,7 +57,7 @@ Item {
             readonly property bool active: modelData.active
             readonly property bool occupied: modelData.occupied??false
 
-            width: Appearance.metrics.workspaceWidth
+            width: root.itemWidth
             height: Appearance.metrics.workspaceHeight
             scale: 1
             Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
@@ -91,6 +94,7 @@ Item {
                 }
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
+                    visible:!root.compact
                     centred: true
                     text: button.modelData.label
                     font.capitalization: Font.MixedCase
@@ -114,7 +118,7 @@ Item {
                 // read as a blink rather than as an acknowledgement. The slot
                 // taking the accent and the bar's line sliding to it are the
                 // confirmation, and they are already animated.
-                onClicked: Spaces.activate(button.modelData)
+                onClicked: Spaces.activate(button.modelData,root.output)
             }
         }
     }

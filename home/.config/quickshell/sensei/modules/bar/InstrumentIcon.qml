@@ -10,10 +10,10 @@ Item {
     property bool muted: false
     implicitWidth: 24
     implicitHeight: 24
-    onKindChanged: Qt.callLater(() => iconCanvas.requestPaint())
-    onInkChanged: Qt.callLater(() => iconCanvas.requestPaint())
-    onLevelChanged: Qt.callLater(() => iconCanvas.requestPaint())
-    onMutedChanged: Qt.callLater(() => iconCanvas.requestPaint())
+    onKindChanged: Qt.callLater(() => { if (iconCanvas) iconCanvas.requestPaint(); })
+    onInkChanged: Qt.callLater(() => { if (iconCanvas) iconCanvas.requestPaint(); })
+    onLevelChanged: Qt.callLater(() => { if (iconCanvas) iconCanvas.requestPaint(); })
+    onMutedChanged: Qt.callLater(() => { if (iconCanvas) iconCanvas.requestPaint(); })
     Canvas {
         id: iconCanvas
         anchors.centerIn: parent
@@ -29,6 +29,10 @@ Item {
             } else if (root.kind === "battery" || root.kind === "ac") {
                 if(root.kind === "ac"){c.beginPath();c.moveTo(7,1);c.lineTo(7,6);c.moveTo(13,1);c.lineTo(13,6);c.moveTo(5,6);c.lineTo(15,6);c.lineTo(15,10);c.lineTo(12,13);c.lineTo(8,13);c.lineTo(5,10);c.closePath();c.stroke();c.beginPath();c.moveTo(10,13);c.lineTo(10,19);c.stroke();}
                 else {c.strokeRect(1,5,16,10);c.fillRect(18,8,2,4);c.fillRect(3,7,12*Math.max(0,Math.min(1,root.level)),6);}
+            } else if (root.kind === "external-display") {
+                c.strokeRect(1,2,18,12);c.beginPath();c.moveTo(10,14);c.lineTo(10,18);c.moveTo(6,18);c.lineTo(14,18);c.stroke();
+                c.globalAlpha=.7;c.fillRect(3,10,14*Math.max(0,Math.min(1,root.level)),2);c.globalAlpha=1;
+                c.beginPath();c.moveTo(12,5);c.lineTo(16,5);c.lineTo(16,9);c.moveTo(11,10);c.lineTo(16,5);c.stroke();
             } else if (root.kind === "monitor") {
                 c.strokeRect(1,2,18,12);c.beginPath();c.moveTo(5,10);c.lineTo(7,7);c.lineTo(10,10);c.lineTo(13,5);c.lineTo(16,8);c.stroke();
                 c.beginPath();c.moveTo(10,14);c.lineTo(10,18);c.moveTo(6,18);c.lineTo(14,18);c.stroke();

@@ -16,7 +16,7 @@ def render(data, home, hardware):
         text = re.sub(r'hl\.workspace_rule\(\{ workspace = "[16]", monitor = .*?\}\)\n', '', text)
         text = text.replace(', monitor = id == 6 and "DP-2" or "eDP-1"', '')
     if hardware == 'generic' and 'readonly property var bottomBarScreens: screens.filter' in text:
-        text = text.replace('readonly property var bottomBarScreens: screens.filter(s => s.name === "DP-2")', 'readonly property var bottomBarScreens: { const secondary=screens.find(s=>s.name==="DP-2"); return secondary?[secondary]:barScreens; }')
+        text = re.sub(r'readonly property var bottomBarScreens: screens.filter[^\n]*', 'readonly property var bottomBarScreens: { const secondary=screens.filter(s=>s.name==="DP-2" || externalScreens.some(e=>e.name===s.name)); return secondary.length?secondary:barScreens; }', text)
     return text.encode()
 
 def install(home, apply=False, hardware='generic'):

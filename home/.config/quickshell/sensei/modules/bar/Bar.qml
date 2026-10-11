@@ -20,8 +20,9 @@ Variants {
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "sensei-bar"
         anchors { top: true; left: true; right: true }
-        Component.onCompleted: ShellState.barWindow = bar
-        HoverHandler { onHoveredChanged: ShellState.barHovered = hovered }
+        Component.onCompleted: {ShellState.barWindow = bar;ShellState.registerBar(modelData.name+":top",bar);}
+        Component.onDestruction: ShellState.registerBar(modelData.name+":top",null)
+        HoverHandler { onHoveredChanged: {ShellState.barHovered = hovered;if(hovered)ShellState.barContext(bar.modelData.name);} }
         property bool inhibitReady: false
         property bool readoutsOpen: false
         Timer { interval: 1000; running: true; onTriggered: bar.inhibitReady = true }

@@ -20,6 +20,7 @@ import "modules/shortcuts" as ShortcutUi
 import qs.services
 
 ShellRoot {
+    property var externalDisplayState:ExternalDisplays.data
     property bool quietMode:DesktopTools.quiet
     Background {}
     ScanlineLayer {}

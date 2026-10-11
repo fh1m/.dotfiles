@@ -220,7 +220,7 @@ Scope {
         function state(): string { return JSON.stringify({events:CalendarDesk.events.length,error:CalendarDesk.error,clocks:CalendarDesk.clocks.length}); }
     }
     readonly property bool codeOpen: CodeDesk.opened
-    readonly property var dropdownNames: ["code", "docker", "spotify", "usb", "phone", "weather", "comic", "ident", "wifi", "bluetooth", "power", "system", "monitor", "clipboard", "displays", "sound", "calendar", "notifications"]
+    readonly property var dropdownNames: ["code", "docker", "spotify", "usb", "phone", "weather", "comic", "ident", "wifi", "bluetooth", "power", "system", "monitor", "clipboard", "external-display", "displays", "sound", "calendar", "notifications"]
 
     // Shared by `demo drag` and `demo dragFile`; see the note on them.
     function runDemoDrag(profile: string, file: string): string {
@@ -245,6 +245,8 @@ Scope {
                 return `unknown dropdown ${name}; one of ${root.dropdownNames.join(", ")}`;
             // Under the readout that owns it, so the panel hangs where a
             // click would have put it rather than in the middle of the bar.
+            // Keyboard/IPC openings must not inherit an earlier HDMI hover.
+            ShellState.dropdownOriginScreen = "";
             ShellState.dropdownAnchorX = ShellState.anchorFor(name);
             ShellState.dropdown = name;
             return name;

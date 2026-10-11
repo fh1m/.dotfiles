@@ -29,7 +29,12 @@ Singleton {
         return main ? [main] : screens.slice(0, 1);
     }
 
-    readonly property var bottomBarScreens: screens.filter(s => s.name === "DP-2")
+    readonly property var externalScreens: screens.filter(s => s.name.startsWith("HDMI-") || s.name === "SENSEI-HDMI-TEST")
+    readonly property var bottomBarScreens: screens.filter(s => s.name === "DP-2" || externalScreens.some(e=>e.name===s.name))
+    property string dropdownOriginScreen: ""
+    property var barWindows: ({})
+    function registerBar(output:string,window:var):void {const next=Object.assign({},barWindows);if(window)next[output]=window;else delete next[output];barWindows=next;}
+    function barContext(output:string):void {dropdownOriginScreen=output;}
 
     function focusedScreenName(): string {
         return Hyprland.focusedMonitor?.name ?? barScreens[0]?.name ?? "";

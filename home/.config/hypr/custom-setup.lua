@@ -19,15 +19,8 @@ hl.monitor({
     scale = 2,
 })
 
--- UX581GV: a predictable starting workspace on each built-in panel.
-hl.workspace_rule({ workspace = "1", monitor = "eDP-1", default = true })
-hl.workspace_rule({ workspace = "6", monitor = "DP-2", default = true })
-
--- Original GNOME workspace names, with numeric IDs retained for shortcuts.
-local workspace_names = { "Terminal", "Web", "Code", "Sim", "Work", "Misc" }
-for id, name in ipairs(workspace_names) do
-    hl.workspace_rule({ workspace = tostring(id), default_name = name, persistent = true, monitor = id == 6 and "DP-2" or "eDP-1" })
-end
+-- Any display attached to the NVIDIA HDMI port extends left at native mode.
+hl.monitor({output="HDMI-A-1",mode="preferred",position="auto-left",scale=1})
 
 -- Keep the motion, but do not spend Intel render time on blur or shadows.
 hl.config({
@@ -298,4 +291,10 @@ hl.bind("SUPER + CTRL + D", hl.dsp.exec_cmd("qs -c sensei ipc call workbench qui
 for _, direction in ipairs({"left", "right", "up", "down"}) do
  hl.unbind("SUPER + "..direction)
  hl.bind("SUPER + "..direction,hl.dsp.exec_cmd(os.getenv("HOME").."/.local/bin/sensei-focus "..direction))
+end
+
+-- Adjacent display focus and window transfer use the same directional arrows.
+for _, side in ipairs({{"LEFT","l"},{"RIGHT","r"}}) do
+    hl.bind("SUPER + CTRL + "..side[1],hl.dsp.focus({monitor=side[2]}))
+    hl.bind("SUPER + CTRL + SHIFT + "..side[1],hl.dsp.window.move({monitor=side[2]}))
 end

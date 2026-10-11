@@ -121,9 +121,17 @@ Singleton {
     // Which slot the bar's accent line runs to, or -1 when none is lit.
     readonly property int activeIndex: special ? -1 : workspaceIds.indexOf(activeId)
 
-    function activate(slot: var): void {
+    function slotsFor(output:string):var {
+        if(!output)return slots;
+        const monitor=Hyprland.monitors.values.find(m=>m.name===output)?.lastIpcObject;
+        const active=monitor?.activeWorkspace?.id;
+        const special=String(monitor?.specialWorkspace?.name||"").startsWith("special:");
+        return slots.map(s=>Object.assign({},s,{active:!special&&Number(s.target)===active}));
+    }
+    function activate(slot, output = "") {
         if (slot.empty)
             return;
+        if(output&&!slot.special){Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-displays","workspace",slot.target,output]);return;}
         if (slot.special)
             Hyprland.dispatch(`hl.dsp.workspace.toggle_special("${slot.target}")`);
         else

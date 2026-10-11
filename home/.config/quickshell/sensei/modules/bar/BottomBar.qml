@@ -14,10 +14,13 @@ Variants {
     model: ShellState.bottomBarScreens
     PanelWindow {
         id: bar
-        Component.onCompleted: ShellState.bottomBarWindow = bar
-        Component.onDestruction: if (ShellState.bottomBarWindow === bar) ShellState.bottomBarWindow = null
+        property string outputName: ""
+        Component.onCompleted: {outputName=modelData.name;if(outputName==="DP-2")ShellState.bottomBarWindow = bar;ShellState.registerBar(outputName+":bottom",bar);}
+        Component.onDestruction: {if (ShellState.bottomBarWindow === bar) ShellState.bottomBarWindow = null;ShellState.registerBar(outputName+":bottom",null);}
         required property ShellScreen modelData
-        IpcHandler {target:"bar-controls-"+bar.modelData.name;function expand(side:string,value:string):void {if(side==="left")bar.archiveOpen=value==="on";else if(side==="right")bar.machineOpen=value==="on";}function state():string {return JSON.stringify({left:bar.archiveOpen,right:bar.machineOpen});}}
+        IpcHandler {target:"bar-controls-"+bar.outputName;function expand(side:string,value:string):void {if(side==="left")bar.archiveOpen=value==="on";else if(side==="right")bar.machineOpen=value==="on";}function state():string {return JSON.stringify({left:bar.archiveOpen,right:bar.machineOpen});}}
+        readonly property bool external: ShellState.externalScreens.some(s=>s.name===outputName)
+        HoverHandler {onHoveredChanged:{ShellState.barHovered=hovered;if(hovered)ShellState.barContext(bar.outputName);}}
         property bool archiveOpen: false
         property bool machineOpen: false
         screen: modelData
@@ -33,7 +36,7 @@ Variants {
             anchors.leftMargin: 16
             anchors.verticalCenter: parent.verticalCenter
             spacing: 3
-            TrayGroup { anchors.verticalCenter: parent.verticalCenter }
+            TrayGroup { visible:!bar.external;anchors.verticalCenter: parent.verticalCenter }
             ArchiveButton { condensed: !bar.archiveOpen; anchors.verticalCenter: parent.verticalCenter }
             ArchiveButton { condensed: !bar.archiveOpen; target: "clipboard"; label: "Clipboard"; detail:"History"; glyph: "\uf0ea"; anchors.verticalCenter: parent.verticalCenter }
             ArchiveButton { condensed: !bar.archiveOpen; target: "phone"; label: "Phone"; detail:PhoneBridge.phoneNearby?"Nearby":PhoneBridge.ready?"Online":"Offline"; glyph: "\uf10b"; anchors.verticalCenter: parent.verticalCenter }
@@ -43,8 +46,8 @@ Variants {
             id: navigation
             anchors.centerIn: parent
             spacing: 10
-            PageMarker { anchors.verticalCenter: parent.verticalCenter }
-            Workspaces { id: workspaces; anchors.verticalCenter: parent.verticalCenter }
+            PageMarker { visible:!bar.external;anchors.verticalCenter: parent.verticalCenter }
+            Workspaces { id: workspaces;output:bar.external?bar.outputName:"";compact:bar.external&&bar.width<1500;anchors.verticalCenter: parent.verticalCenter }
         }
         Row {
             id:machineControls
@@ -53,7 +56,7 @@ Variants {
             ArchiveButton { condensed: !bar.machineOpen; target: "oasis"; label: "Noesis"; detail:LearningBridge.NoesisBridge.activeVault?"Build · understand":"Choose a vault"; glyph: "\uf02d"; anchors.verticalCenter: parent.verticalCenter }
             UsbBadge { condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
             SimLaunchpad { condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
-            DisplayBadge { output: "screenpad"; condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
+            DisplayBadge { output: bar.external?bar.outputName:bar.outputName==="DP-2"?"screenpad":"main"; condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
             anchors.right: parent.right
             anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter

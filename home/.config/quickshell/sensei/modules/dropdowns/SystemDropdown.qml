@@ -58,6 +58,12 @@ DropdownFrame {
                     ControlSlider { title: "Microphone gain"; maximum: 200; glyph: "\uf130"; level: Audio.micVolume * 100; onEdited: percent => { if (Audio.source?.audio) Audio.source.audio.volume = Math.min(2, percent / 100); } }
                     ControlSlider { title: "Main display"; glyph: "\uf108"; level: RobotBench.data.mainBrightness ?? 0; onEdited: percent => DisplayControls.setLevel("main", percent) }
                     ControlSlider { title: "ScreenPad"; glyph: "\uf26c"; level: RobotBench.data.brightness ?? 0; onEdited: percent => DisplayControls.setLevel("screenpad", percent) }
+                    Repeater {model:ExternalDisplays.displays
+                        Column {required property var modelData;width:parent.width
+                            ControlSlider {visible:modelData.ready;height:visible?implicitHeight:0;title:modelData.label+" · HDMI";glyph:"\uf26c";level:modelData.level??0;onEdited:percent=>ExternalDisplays.setLevel(modelData.output,percent)}
+                            Text {visible:!modelData.ready;width:parent.width;wrapMode:Text.Wrap;text:modelData.label+" · monitor brightness controls unavailable";color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:12}
+                        }
+                    }
                 }
             }
             WidgetSection { width: parent.width; title: "Power"; subtitle: `Battery ${Math.round(Power.charge)}% · ${Power.onBattery ? "battery" : "AC"}`; glyph: "\uf240"

@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+"""Event-driven HDMI layout, DDC brightness and a shared workspace pool."""
+import argparse
+import fcntl
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+STATE = Path(os.environ.get('XDG_CACHE_HOME', Path.home()/'.cache'))/'sensei-displays'
+DRM = Path('/sys/class/drm')
+
+
+def run(command, timeout=15):
+    return subprocess.check_output(command, text=True, stderr=subprocess.PIPE, timeout=timeout)
+
+
+def monitors():return json.loads(run(['hyprctl','monitors','-j']))
+def dispatch(expression):run(['hyprctl','dispatch',expression])
+def external(name):return name.startswith('HDMI-') or name=='SENSEI-HDMI-TEST'
+def selector(name):
+    if not re.fullmatch(r'[A-Za-z0-9_-]+',name):raise ValueError('Invalid output name')
+    return json.dumps(name)
+
+
+def connected():
+    result={}
+    for node in DRM.glob('card*-HDMI-*'):
+        try:
+            if (node/'status').read_text().strip()!='connected':continue
+            name=re.sub(r'^card\d+-','',node.name);edid=(node/'edid').read_bytes()
+            result[name]={'id':hashlib.sha256(edid).hexdigest(),'label':name}
+            for start in (54,72,90,108):
+                block=edid[start:start+18]
+                if block[:5]==b'\x00\x00\x00\xfc\x00':result[name]['label']=block[5:18].decode(errors='replace').strip()
+        except OSError:continue
+    return result
+
+
+def ddc_devices(text):
+    devices={};record={}
+    for line in text.splitlines()+['Display END']:
+        if re.match(r'^(?:Display |Invalid display)',line):
+            if record.get('valid') and 'output' in record and 'bus' in record:devices[record['output']]=record['bus']
+            record={'valid':line.startswith('Display ')}
+        bus=re.search(r'I2C bus:\s+/dev/i2c-(\d+)',line)
+        output=re.search(r'DRM connector:\s+card\d+-(HDMI-[A-Za-z0-9_-]+)',line)
+        if bus:record['bus']=int(bus[1])
+        if output:record['output']=output[1]
+    return devices
+
+
+def brightness(bus):
+    text=run(['ddcutil','--bus',str(bus),'getvcp','10','--terse'],timeout=12)
+    match=re.search(r'^VCP 10 C (\d+) (\d+)',text,re.M)
+    if not match or int(match[2])<=0:raise ValueError('Monitor does not expose brightness through DDC')
+    raw,maximum=map(int,match.groups())
+    return {'raw':raw,'maximum':maximum,'level':round(100*raw/maximum)}
+
+
+def read_state():
+    try:return json.loads((STATE/'state.json').read_text())
+    except (OSError,ValueError):return {}
+
+
+def write_state(data):
+    STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+    temp=STATE/('state.tmp-'+str(os.getpid()));temp.write_text(json.dumps(data));temp.chmod(0o600);temp.replace(STATE/'state.json')
+
+
+def optimal_mode(monitor):
+    modes=[]
+    for text in monitor.get('availableModes',[]):
+        match=re.fullmatch(r'(\d+)x(\d+)@(\d+(?:\.\d+)?)Hz',text)
+        if match:
+            width,height=int(match[1]),int(match[2]);rate=float(match[3])
+            modes.append((width*height,rate,width,height))
+    if not modes:return ('preferred',monitor['width'],monitor['height'],monitor.get('refreshRate',60))
+    _,rate,width,height=max(modes)
+    return (f'{width}x{height}@{rate:g}',width,height,rate)
+
+
+def configure(outputs):
+    for monitor in outputs:
+        if not external(monitor['name']):continue
+        mode,width,height,rate=optimal_mode(monitor)
+        scale=2 if width>=3200 and height>=1800 else 1
+        logical_width=round((height if monitor.get('transform',0)%2 else width)/scale)
+        mode_changed=(width!=monitor['width'] or height!=monitor['height'] or abs(rate-monitor.get('refreshRate',rate))>.1)
+        if mode_changed or monitor.get('scale',1)!=scale or monitor.get('x')!=-logical_width or monitor.get('y')!=0:
+            run(['hyprctl','eval','hl.monitor({output='+selector(monitor['name'])+',mode='+json.dumps(mode)+',position="'+str(-logical_width)+'x0",scale='+str(scale)+'})'])
+        if monitor.get('activeWorkspace',{}).get('id') not in range(1,7):
+            used={m.get('activeWorkspace',{}).get('id') for m in outputs}
+            chosen=next((i for i in (6,5,3,4,2,1) if i not in used),None)
+            if chosen:
+                focused=next((m['name'] for m in outputs if m.get('focused')),None)
+                dispatch('hl.dsp.workspace.move({workspace="'+str(chosen)+'",monitor='+selector(monitor['name'])+'})')
+                dispatch('hl.dsp.focus({workspace="'+str(chosen)+'"})')
+                if focused and focused!=monitor['name']:dispatch('hl.dsp.focus({monitor='+selector(focused)+'})')
+
+
+def sync(layout=True,notify=True):
+    previous=read_state();physical=connected();outputs=monitors()
+    if layout:configure(outputs)
+    old={d['output']:d for d in previous.get('displays',[])}
+    changed=any(name not in old or old[name].get('id')!=record['id'] or old[name].get('bus') is None for name,record in physical.items())
+    buses={name:d.get('bus') for name,d in old.items() if d.get('bus') is not None}
+    if physical and changed:
+        try:buses=ddc_devices(run(['ddcutil','detect','--brief'],timeout=20))
+        except (OSError,subprocess.SubprocessError):buses={}
+    data={'displays':[],'session':os.environ.get('HYPRLAND_INSTANCE_SIGNATURE',''),'outputs':[m['name'] for m in outputs if external(m['name'])]}
+    for name,record in physical.items():
+        record=dict(record,output=name,bus=buses.get(name),ready=False,active=name in data['outputs'])
+        if record['bus'] is not None:
+            try:record.update(brightness(record['bus']),ready=True)
+            except (OSError,ValueError,subprocess.SubprocessError):record['error']='DDC brightness unavailable; use the monitor controls'
+        else:record['error']='DDC brightness unavailable; use the monitor controls'
+        data['displays'].append(record)
+    if notify:
+        before=set(previous.get('outputs',[])) if previous.get('session')==data['session'] else set()
+        after=set(data['outputs'])
+        for name in sorted(after-before):
+            label=physical.get(name,{}).get('label',name)
+            subprocess.run(['notify-send','-a','Sensei','-i','video-display','Display connected',label+' · left of main display · shared workspaces'],check=False)
+        for name in sorted(before-after):
+            subprocess.run(['notify-send','-a','Sensei','-i','video-display','Display disconnected',name+' · workspaces returned to the remaining displays'],check=False)
+    write_state(data);return data
+
+
+def set_brightness(output,percent):
+    selector(output)
+    if not math.isfinite(percent) or not 0<=percent<=100:raise ValueError('Brightness must be between 0 and 100')
+    data=read_state();record=next((d for d in data.get('displays',[]) if d['output']==output),None)
+    actual=connected().get(output)
+    if not record or not record.get('ready') or not actual or actual['id']!=record.get('id'):
+        data=sync(layout=False,notify=False);record=next((d for d in data['displays'] if d['output']==output),None)
+    if not record or not record.get('ready'):raise ValueError('Monitor brightness is unavailable')
+    raw=round(percent*record['maximum']/100)
+    run(['ddcutil','--bus',str(record['bus']),'setvcp','10',str(raw)],timeout=12)
+    record.update(brightness(record['bus']))
+    write_state(data);return data
+
+
+def workspace(number,output=None):
+    if number not in range(1,8):raise ValueError('Workspace must be 1–7')
+    outputs=monitors()
+    current=next((m for m in outputs if m.get('focused')),outputs[0] if outputs else None)
+    name=output or (current['name'] if current else '')
+    target=next((m for m in outputs if m['name']==name),None)
+    if not target:raise ValueError('Display is not connected')
+    source=next((m for m in outputs if m.get('activeWorkspace',{}).get('id')==number),None)
+    shared=external(name) or name=='eDP-1'
+    if number!=7 and shared:
+        if source and source['name']!=name:
+            dispatch('hl.dsp.workspace.swap_monitors({monitor1='+selector(name)+',monitor2='+selector(source['name'])+'})')
+        elif not source:
+            dispatch('hl.dsp.workspace.move({workspace="'+str(number)+'",monitor='+selector(name)+'})')
+    dispatch('hl.dsp.focus({workspace="'+str(number)+'"})')
+
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
+    status=sub.add_parser('sync');status.add_argument('--no-layout',action='store_true');status.add_argument('--no-notify',action='store_true')
+    control=sub.add_parser('brightness');control.add_argument('output');control.add_argument('percent',type=float)
+    focus=sub.add_parser('workspace');focus.add_argument('number',type=int);focus.add_argument('output',nargs='?')
+    args=parser.parse_args()
+    # Navigation never waits for a slow monitor's I2C transaction.
+    if args.command=='workspace':
+        workspace(args.number,args.output);return
+    STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+    with (STATE/'lock').open('w') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX)
+        if args.command=='sync':print(json.dumps(sync(not args.no_layout,not args.no_notify)))
+        elif args.command=='brightness':print(json.dumps(set_brightness(args.output,args.percent)))
+
+if __name__=='__main__':
+    try:main()
+    except (OSError,ValueError,subprocess.SubprocessError) as error:
+        print(json.dumps({'error':str(error)}));sys.exit(1)

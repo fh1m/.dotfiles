@@ -25,7 +25,7 @@ Variants {
         // Keep-off-the-edge margin, and the gap below the bar.
         readonly property real edge: 12
         readonly property real gap: 8
-        readonly property bool bottomPanel: current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis"
+        readonly property bool bottomPanel: ShellState.externalScreens.some(s=>s.name===modelData?.name) || current === "external-display" || current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis"
         readonly property real surfaceInset: bottomPanel ? 0 : 6
 
         // Which panel the loader holds, and where the surface sits. Both lag
@@ -80,17 +80,17 @@ Variants {
         // is still behind the bar at the start of the slide.
         readonly property real slide: Theme.reducedMotion ? 0 : 6
 
-        IpcHandler {target:"popupmotion-"+popup.modelData.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,ready:popup.surfaceReady,width:popup.width,height:popup.height,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
+        IpcHandler {target:"popupmotion-"+popup.modelData?.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,ready:popup.surfaceReady,width:popup.width,height:popup.height,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
         screen: modelData
         color: "transparent"
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }
         visible: current !== "" && surfaceReady && !ShellState.externalDialogOpen
 
-        implicitWidth: Math.min(modelData.width - 2 * edge, 2 * surfaceInset + (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis" ? 1040 : current === "code" ? 1100 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "power" ? 500 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
+        implicitWidth: Math.min((modelData?.width ?? 1920) - 2 * edge, 2 * surfaceInset + ((current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis") ? 1040 : current === "external-display" ? 440 : current === "code" ? 1100 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "power" ? 500 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.
-        implicitHeight: Math.max(1, Math.min(modelData.height - Appearance.metrics.barHeight - 2 * gap, Math.round(panelHeight + 2 * surfaceInset)))
+        implicitHeight: Math.max(1, Math.min((modelData?.height ?? 1080) - Appearance.metrics.barHeight - 2 * gap, Math.round(panelHeight + 2 * surfaceInset)))
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "sensei-popup"
@@ -103,13 +103,13 @@ Variants {
         exclusiveZone: 0
 
         anchors {
-            top: !(popup.current === "monitor" || popup.current === "clipboard" || popup.current === "usb" || popup.current === "phone" || popup.current === "oasis")
-            bottom: popup.current === "monitor" || popup.current === "clipboard" || popup.current === "usb" || popup.current === "phone" || popup.current === "oasis"
+            top: !(popup.bottomPanel)
+            bottom: popup.bottomPanel
             left: true
         }
 
-        margins.top: (current === "calendar" || current === "weather") ? Appearance.metrics.barHeight + gap - surfaceInset : (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis") ? 0 : gap
-        margins.bottom: (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis") ? gap : 0
+        margins.top: (current === "calendar" || current === "weather") ? Appearance.metrics.barHeight + gap - surfaceInset : (popup.bottomPanel) ? 0 : gap
+        margins.bottom: (popup.bottomPanel) ? gap : 0
         // Under the readout that opened it, pulled back in if that would hang
         // the panel off the right edge. Both windows share an origin, so the
         // bar's x maps straight across.
@@ -191,8 +191,9 @@ Variants {
             function onDropdownChanged(): void {
                 const requested = ShellState.dropdown;
                 const bottom = requested === "monitor" || requested === "clipboard" || requested === "usb" || requested === "phone" || requested === "oasis";
-                const wantedScreen = (bottom ? (ShellState.bottomBarScreens[0] ?? ShellState.barScreens[0]) : ShellState.barScreens[0])?.name;
-                const want = popup.modelData.name === wantedScreen ? requested : "";
+                const origin=ShellState.screens.find(s=>s.name===ShellState.dropdownOriginScreen);
+                const wantedScreen = (origin ?? (bottom ? (ShellState.bottomBarScreens[0] ?? ShellState.barScreens[0]) : ShellState.barScreens[0]))?.name;
+                const want = popup.modelData?.name === wantedScreen ? requested : "";
 
                 // **The ID editor arms at once.** It is typed into the moment
                 // it opens, from a click on the bar -- and with the pointer
@@ -251,7 +252,7 @@ Variants {
         // another readout reaches it and switches dropdowns in one go.
         HyprlandFocusGrab {
             active: popup.grabArmed && popup.reveal > 0.99 && !openAnim.running && !swapAnim.running && !presentTimer.running && ShellState.dropdown === popup.current && !ShellState.externalDialogOpen
-            windows: [popup, ShellState.barWindow, ShellState.bottomBarWindow].filter(w => w !== null)
+            windows: [popup].concat(Object.values(ShellState.barWindows)).filter(w => w !== null)
             onCleared: if (popup.current !== "" && ShellState.dropdown === popup.current && popup.grabArmed && !ShellState.externalDialogOpen && popup.reveal > 0.99 && !openAnim.running && !swapAnim.running && !presentTimer.running && !focusReturn.running) outsideClose.restart()
         }
 
@@ -274,7 +275,7 @@ Variants {
             enabled: ShellState.dropdown === popup.current && popup.reveal > 0.85
             // Slides down into place from under the bar. Whatever is still above
             // the surface top is simply not drawn, so the bar hides it.
-            y: popup.surfaceInset + (popup.current === "monitor" || popup.current === "clipboard" || popup.current === "usb" || popup.current === "phone" || popup.current === "oasis" ? 1 : -1) * popup.slide * (1 - popup.reveal)
+            y: popup.surfaceInset + (popup.bottomPanel ? 1 : -1) * popup.slide * (1 - popup.reveal)
 
             // A dropdown that has an inner view open (the Wi-Fi settings view)
             // takes Escape to step back out of it first; otherwise Escape
@@ -342,6 +343,7 @@ Variants {
                     case "notifications": return notificationsPanel;
                     case "weather": return weatherPanel;
                     case "calendar": return calendarPanel;
+                    case "external-display": return externalDisplayPanel;
                     case "displays": return displaysPanel;
                     case "monitor": return monitorPanel;
                     case "clipboard": return clipboardPanel;
@@ -397,6 +399,7 @@ Variants {
             Component { id: notificationsPanel; NotificationCenter { width: holder.width } }
             Component { id: weatherPanel; WeatherDropdown { width: holder.width } }
             Component { id: calendarPanel; CalendarDropdown { width: holder.width } }
+            Component {id:externalDisplayPanel;ExternalDisplayDropdown {width:holder.width}}
             Component { id: displaysPanel; DisplayWallpapers { width: holder.width } }
             Component { id: monitorPanel; MonitorDropdown { width: holder.width } }
             Component { id: clipboardPanel; ClipboardDropdown { width: holder.width } }

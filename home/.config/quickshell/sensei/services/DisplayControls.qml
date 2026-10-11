@@ -10,11 +10,13 @@ Singleton {
     property var targets: ({})
     function adjustLevel(output: string, delta: real): void {
         const previous = targets[output];
-        const actual = output === "main" ? RobotBench.data.mainBrightness : RobotBench.data.brightness;
+        const actual = output === "main" ? RobotBench.data.mainBrightness : output === "screenpad"?RobotBench.data.brightness:ExternalDisplays.display(output)?.level;
+        if(!Number.isFinite(actual))return;
         const base = previous && Date.now() - previous.time < 2500 ? previous.level : actual;
         setLevel(output, base + delta);
     }
     function setLevel(output: string, percent: real): void {
+        if(output!=="main"&&output!=="screenpad"){ExternalDisplays.setLevel(output,percent);return;}
         const level = Math.max(1, Math.min(100, Math.round(percent)));
         targets[output] = {level: level, time: Date.now()};
         pending[output] = level;

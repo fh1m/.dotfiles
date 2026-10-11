@@ -20,6 +20,7 @@ grim
 slurp
 wf-recorder
 brightnessctl
+ddcutil
 playerctl
 pavucontrol
 nautilus
