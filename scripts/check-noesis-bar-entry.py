@@ -71,6 +71,8 @@ try:
  print('POPUP',ipc('showing'),ipc('capture',str(asset)),flush=True);deadline=time.monotonic()+5
  while not asset.exists() and time.monotonic()<deadline:time.sleep(.1)
  assert asset.exists()
+ subprocess.run(['hyprctl','dispatch','hl.dsp.send_shortcut({mods="",key="Escape"})'],check=True,capture_output=True);time.sleep(.2);assert ipc('showing')=='false'
+ ipc('menu');subprocess.run(['hyprctl','dispatch','hl.dsp.send_shortcut({mods="",key="space",window='+target+'})'],check=True,capture_output=True);time.sleep(.2)
  result=ipc('action','Start learning');assert result=='focused',result;subprocess.run(['hyprctl','dispatch','hl.dsp.send_shortcut({mods="",key="space"})'],check=True,capture_output=True);time.sleep(.8)
  assert f.hello()['instance']['pid']==app_pid
  assert json.loads(f.ipc('bar-app','state'))['modal']
@@ -79,7 +81,7 @@ try:
  f.wait(lambda s:s['capture_open']);assert f.hello()['instance']['pid']==app_pid
  warnings=[line for line in (f.home/'bar.log').read_text().splitlines() if ('WARN' in line or 'ERROR' in line) and 'Could not register app ID' not in line]
  assert not warnings,warnings
- result={'isolated_bar_native_click':True,'ordinary_open_single_instance':True,'warm_open_from_other_workspace':True,'start_menu':True,'capture_menu':True,'personal_wrayth_restarted':False,'fixture':str(f.home)}
+ result={'isolated_bar_native_click':True,'ordinary_open_single_instance':True,'warm_open_from_other_workspace':True,'start_menu':True,'capture_menu':True,'escape_dismissal':True,'personal_wrayth_restarted':False,'fixture':str(f.home)}
  (REPO/'docs/learning-system/assets/ux-finalization/bar-acceptance.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
 finally:
  if app_pid:

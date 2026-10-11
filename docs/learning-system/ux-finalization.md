@@ -31,6 +31,14 @@ The drawing, code and Obsidian commands retain their existing operations. Genuin
 
 Logical sizes, application text scales and Qt DPR are separate. No new physical input-latency or educational-effectiveness result is claimed.
 
+## Scoped live deployment
+
+Implementation commit: `1a40870c2014d601e0ab6a2313a2f5fb3bde20b7`. The scoped installer changed only five QML UI files, the canonical guide, the build manifest and ArchiveButton. Backup/rollback manifest: `/home/fh1m/.local/state/noesis-deployments/20261011-142122-289800/manifest.json`.
+
+The installed application was launched using the production launcher and verified as `org.fh1m.Noesis`, standalone, fullscreen on workspace 4. Repeated launch stayed in one process; Hide stopped worker/watch; return restored the instance; Close completed normally. All 119 installed manifest hashes matched. Wrayth remained PID 2795549 and pre-existing external windows remained present. Hashes of 79 authoritative learning files were unchanged. No private screenshots were captured. [Live verification](assets/ux-finalization/deployment-acceptance.json).
+
+The following documentation-only commit may update build identity without changing QML. Keep its build-only deployment backup and revert manifests in reverse deployment order when rolling back. The scoped installer refuses rollback over later edits.
+
 ## Next checkpoints
 
 The early owner trial is pending: 30 minutes with an unfamiliar source, without coached shortcuts. Observe discovering actions, source/reasoning visibility, question creation, tool return, ScreenPad usefulness and time spent managing the interface. Owner feedback should change the remaining design before it spreads across every workspace.
