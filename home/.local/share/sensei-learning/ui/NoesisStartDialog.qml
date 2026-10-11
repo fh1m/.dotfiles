@@ -7,7 +7,7 @@ NoesisDialog {
  property string vaultScope:""
  property bool restoring:false
  function stash(){if(restoring||!vaultScope)return;let drafts=Object.assign({},NoesisController.drafts);drafts[vaultScope+":start-learning"]=JSON.stringify({origin:origin.text,title:label.text,format:format.currentIndex});NoesisController.drafts=drafts;NoesisController.savePreferences();}
- signal beginLearning(string kind,string medium,string source,string title)
+ signal beginLearning(string kind,string medium,string source,string title,string question)
  signal zotero()
  modal:true
  title:"Start learning"
@@ -37,7 +37,7 @@ NoesisDialog {
  }
  footer:Flow {spacing:NoesisStyle.sm
   NoesisButton {text:"Cancel";onClicked:root.close()}
-  NoesisButton {text:"Continue";primary:true;enabled:root.vaultScope===NoesisController.activeVault&&!!NoesisController.activeVault&&(label.text.trim()!==""||origin.text.trim()!=="");onClicked:{let index=format.currentIndex;let kind=index===7?"question":index===8?"concept":index===9?"task":index===10?"experiment":"resource";let medium=["video","playlist","course","paper","book","article","docs"][index]||"";let source=origin.text.trim();let title=label.text.trim()||source;root.close();root.beginLearning(kind,medium,kind==="resource"||kind==="task"?source:"",title);let drafts=Object.assign({},NoesisController.drafts);delete drafts[root.vaultScope+":start-learning"];NoesisController.drafts=drafts;NoesisController.savePreferences();}}
+  NoesisButton {text:"Continue";primary:true;enabled:root.vaultScope===NoesisController.activeVault&&!!NoesisController.activeVault&&(label.text.trim()!==""||origin.text.trim()!=="");onClicked:{let index=format.currentIndex;let kind=index===7?"question":index===8?"concept":index===9?"task":index===10?"experiment":"resource";let medium=["video","playlist","course","paper","book","article","docs"][index]||"";let source=origin.text.trim();let title=label.text.trim()||source;root.close();let sourceLike=/^(https?:\/\/|file:\/\/|\/|10\.\d{4,9}\/|arxiv:)/i.test(source);root.beginLearning(kind,medium,["resource","task"].includes(kind)&&sourceLike?source:"",title,!sourceLike||["question","concept","experiment"].includes(kind)?source:"");let drafts=Object.assign({},NoesisController.drafts);delete drafts[root.vaultScope+":start-learning"];NoesisController.drafts=drafts;NoesisController.savePreferences();}}
  }
  Timer {id:draftSave;interval:500;onTriggered:root.stash()}
  FileDialog {id:filePicker;title:"Choose material to learn from";onAccepted:{origin.text=decodeURIComponent(String(selectedFile).replace(/^file:\/\//,""));root.suggest();}}

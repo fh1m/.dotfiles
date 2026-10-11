@@ -381,6 +381,10 @@ def snapshot(root):
                 'health':health,'frontier':'','gates':[],'reviews':[],'questions':[],'projects':[],'labs':[],'sources':[]}
         for key,kinds in [('questions',['question']),('projects',['project']),('labs',['experiment','lab']),('sources',['resource','paper','course'])]:
             result[key]=[dict(row,name=row['title']) for row in index.query(kind=kinds)['records']]
+        plugin=root/'.obsidian/plugins/obsidian-excalidraw-plugin/manifest.json'
+        enabled=root/'.obsidian/community-plugins.json'
+        try:result['freehand_available']=plugin.is_file() and json.loads(plugin.read_text()).get('id')=='obsidian-excalidraw-plugin' and 'obsidian-excalidraw-plugin' in json.loads(enabled.read_text())
+        except (OSError,ValueError,TypeError):result['freehand_available']=False
         return result
     finally:index.close()
 
@@ -559,11 +563,16 @@ def library_action(root,args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','convolution-observe','convolution-prepare','convolution-check','host-request','host-lease']:
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','convolution-observe','convolution-prepare','convolution-check','host-request','host-lease','drawing-create','scratch-create','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','artifact-reconnect','exploration-recover','scratch-outputs']:
         p = commands.add_parser(cmd); p.add_argument('--vault')
         if cmd in ('convolution-observe','convolution-prepare','convolution-check'):
             p.add_argument('record_id');p.add_argument('--configuration',required=True);p.add_argument('--prediction',required=True);p.add_argument('--operation-id',required=True)
-        if cmd == 'open-project':p.add_argument('record_id')
+        if cmd in ('open-project','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','scratch-outputs'):p.add_argument('record_id')
+        if cmd in ('drawing-create','scratch-create'):
+            p.add_argument('record_id');p.add_argument('--title',required=True);p.add_argument('--prediction',default='');p.add_argument('--code-file');p.add_argument('--mode',choices=['canvas','freehand'],default='canvas');p.add_argument('--operation-id',required=True)
+        if cmd in ('scratch-run','exploration-recover'):p.add_argument('--operation-id',required=True)
+        if cmd == 'artifact-reconnect':p.add_argument('record_id');p.add_argument('--location',required=True);p.add_argument('--title',required=True);p.add_argument('--operation-id',required=True)
+        if cmd == 'annotation-open':p.add_argument('--annotation-key',required=True);p.add_argument('--projection')
         if cmd == 'artifact-check':p.add_argument('record_id');p.add_argument('--operation-id')
         if cmd == 'zotero-import':p.add_argument('key');p.add_argument('--server-id')
         if cmd == 'zotero-search':p.add_argument('query',nargs='?',default='');p.add_argument('--cursor',type=int,default=0);p.add_argument('--server-id')
@@ -720,6 +729,37 @@ def main():
             finally:index.close()
             subprocess.Popen(command,env=dict(os.environ,NOESIS_VAULT=str(root),NOESIS_RECORD_ID=args.record_id),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
             print(json.dumps({'message':'Implementation opened in Neovim'}));return 0
+        if args.command=='scratch-outputs':
+            from noesis.exploration import target
+            props=target(root,args.record_id)['props']
+            if not props.get('scratch_directory'):raise ValueError('Choose a quick experiment')
+            directory=checked_path(root,props['scratch_directory'])
+            subprocess.Popen(['xdg-open',str(directory)],start_new_session=True);print(json.dumps({'opened':True}));return 0
+        if args.command=='exploration-recover':
+            from noesis.exploration import recover
+            print(json.dumps(recover(root,args.operation_id)));return 0
+        if args.command=='artifact-reconnect':
+            from noesis.exploration import reconnect
+            print(json.dumps(reconnect(root,args.record_id,args.location,args.title,args.operation_id,cli),default=str));return 0
+        if args.command in ('drawing-create','scratch-create','scratch-run','scratch-open','scratch-terminal','artifact-open'):
+            from noesis import exploration
+            if args.command in ('drawing-create','scratch-create'):
+                result=exploration.prepare(root,args.record_id,args.title,'scratch' if args.command=='scratch-create' else args.mode,args.operation_id,cli,args.prediction,args.code_file)
+                print(json.dumps(result));return 0
+            if args.command=='scratch-run':print(json.dumps(exploration.run(root,args.record_id,args.operation_id),default=str));return 0
+            if args.command=='artifact-open':
+                record,file=exploration.local_file(root,args.record_id)
+                if file.is_relative_to(root) and (file.suffix=='.canvas' or file.name.endswith('.excalidraw.md')):cli(root,'open','path='+str(file.relative_to(root)))
+                else:subprocess.Popen(['xdg-open',str(file)],start_new_session=True)
+            else:subprocess.Popen(exploration.open_code(root,args.record_id) if args.command=='scratch-open' else exploration.terminal_command(root,args.record_id),start_new_session=True)
+            print(json.dumps({'opened':True}));return 0
+        if args.command=='annotation-open':
+            from noesis.sources import annotation_command
+            index=Index(root)
+            try:
+                index.reconcile();command=annotation_command(index,args.record_id,args.annotation_key,args.projection)
+            finally:index.close()
+            subprocess.Popen(command['command'],start_new_session=True);print(json.dumps({'opened':True,'navigation':command['mode'],'message':command['message']}));return 0
         if args.command=='artifact-check':print(json.dumps(inspect_artifact(root,args.record_id,args.operation_id),default=str));return 0
         if args.command=='zotero-import':print(json.dumps(import_item(root,args.key,LocalAPI(server_id=args.server_id)),default=str));return 0
         if args.command=='operation-status':print(json.dumps(operation_status(root,args.operation_id),default=str));return 0

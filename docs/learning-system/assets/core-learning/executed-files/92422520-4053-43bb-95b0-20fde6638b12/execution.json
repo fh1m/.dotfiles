@@ -1,0 +1,42 @@
+{
+  "status": "completed",
+  "record_id": "581cae59-97d3-4242-b74e-dae1b19e606c",
+  "command": [
+    "/usr/sbin/python3",
+    "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/scratch.py"
+  ],
+  "cwd": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141",
+  "code_sha256": "a180b569a2704896cc6cc7e687edefe5749db99c73e9722c5faeb9f9c42265f1",
+  "prediction": "Reversed edges invalidate vertex-number order; a cycle has no valid ordering.",
+  "python": "3.14.7 (main, Aug 14 2026, 06:38:32) [GCC 16.2.1 20260810]",
+  "started_at": "2026-10-11T01:34:26.766856+00:00",
+  "learner_achievement": false,
+  "environment": {
+    "NOESIS_RUN_DIRECTORY": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/runs/92422520-4053-43bb-95b0-20fde6638b12"
+  },
+  "package_versions": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sympy": "1.14.0",
+    "matplotlib": "3.11.2"
+  },
+  "code_snapshot": {
+    "authority": "owned scratch file; no Git revision",
+    "sha256": "a180b569a2704896cc6cc7e687edefe5749db99c73e9722c5faeb9f9c42265f1"
+  },
+  "exit_code": 1,
+  "finished_at": "2026-10-11T01:34:26.874385+00:00",
+  "code_changed": false,
+  "outputs": [
+    {
+      "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/runs/92422520-4053-43bb-95b0-20fde6638b12/stdout.txt",
+      "sha256": "1d188076cddbfc45cad434793826834ac6f3c5cd8adaa01664a13a678a33c369",
+      "size": 19
+    },
+    {
+      "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/runs/92422520-4053-43bb-95b0-20fde6638b12/stderr.txt",
+      "sha256": "866ccd9194d4f0a2a77e8f96f00a51e75423fe3db74c5036ab76bf7ac41e9185",
+      "size": 392
+    }
+  ]
+}

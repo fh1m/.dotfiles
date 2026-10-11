@@ -1,0 +1,42 @@
+{
+  "status": "completed",
+  "record_id": "6f88f8bc-9b44-469f-ab26-072aaf7a6ff9",
+  "command": [
+    "/usr/sbin/python3",
+    "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/23fa4a5a-6cff-44ad-a3e2-e1d733f4f9c3/scratch.py"
+  ],
+  "cwd": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/23fa4a5a-6cff-44ad-a3e2-e1d733f4f9c3",
+  "code_sha256": "d5bb66af0ef5747f38fde83f530364fab089644b1389918095c53cd417eebed5",
+  "prediction": "Matched stable softmax and explicit row computation should agree; this is an equation check, not paper reproduction.",
+  "python": "3.14.7 (main, Aug 14 2026, 06:38:32) [GCC 16.2.1 20260810]",
+  "started_at": "2026-10-11T01:35:46.286736+00:00",
+  "learner_achievement": false,
+  "environment": {
+    "NOESIS_RUN_DIRECTORY": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/23fa4a5a-6cff-44ad-a3e2-e1d733f4f9c3/runs/639fd900-38aa-4c07-ba40-2480b5db1453"
+  },
+  "package_versions": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sympy": "1.14.0",
+    "matplotlib": "3.11.2"
+  },
+  "code_snapshot": {
+    "authority": "owned scratch file; no Git revision",
+    "sha256": "d5bb66af0ef5747f38fde83f530364fab089644b1389918095c53cd417eebed5"
+  },
+  "exit_code": 0,
+  "finished_at": "2026-10-11T01:35:46.847626+00:00",
+  "code_changed": false,
+  "outputs": [
+    {
+      "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/23fa4a5a-6cff-44ad-a3e2-e1d733f4f9c3/runs/639fd900-38aa-4c07-ba40-2480b5db1453/stdout.txt",
+      "sha256": "55b93c224ecaad6eaac7b1e76341a78483d98b94716ecc3cf7e721ee31b9162c",
+      "size": 191
+    },
+    {
+      "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/23fa4a5a-6cff-44ad-a3e2-e1d733f4f9c3/runs/639fd900-38aa-4c07-ba40-2480b5db1453/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    }
+  ]
+}

@@ -25,7 +25,7 @@ FloatingWindow {
  implicitWidth:Math.min(NoesisController.windowWidth,(mainScreen?.width||1920)-40)
  implicitHeight:Math.min(NoesisController.windowHeight,(mainScreen?.height||1080)-80)
  screen:mainScreen
- Connections {target:NoesisController;function onPresentationModeChanged(){win.presentationRetries=0;win.nativeStateRetries=0;win.presentationReady=false;win.applyPresentation();}function onOpenSerialChanged(){win.minimized=false;focusDelay.restart();}function onFinished(ok){if(ok&&NoesisController.operationVault===NoesisController.activeVault&&NoesisController.specialistHandoff&&NoesisController.presentationMode!=="tiled"&&NoesisController.returnBehavior==="hide"){if(!NoesisController.legacyInterface)content.item.stashDraft();NoesisController.close();}}}
+ Connections {target:NoesisController;function onPresentationModeChanged(){win.presentationRetries=0;win.nativeStateRetries=0;win.presentationReady=false;win.applyPresentation();}function onOpenSerialChanged(){win.minimized=false;focusDelay.restart();}function onFinished(ok){if(ok&&NoesisController.operationVault===NoesisController.activeVault&&NoesisController.specialistHandoff&&NoesisController.presentationMode!=="tiled"&&NoesisController.returnBehavior==="hide"){if(!NoesisController.legacyInterface)content.item.stashDraft();NoesisController.closeForTool();}}}
  NoesisStudyDesk {id:secondaryDesk;workspace:content.item}
  onClosed:NoesisController.requestExit()
  onVisibleChanged:if(visible){presentationRetries=0;presentationReady=false;focusDelay.restart();}
@@ -81,7 +81,7 @@ FloatingWindow {
     NoesisButton {variant:"tertiary";text:"Window";visible:win.width<700*NoesisStyle.interfaceScale;onClicked:windowActions.begin([{action:"settings",label:"Settings"},{action:"hide",label:"Hide and preserve context"},{action:"close",label:"Close application"},{action:"desk",label:secondaryDesk.enabledByUser?"Free ScreenPad for tools":"Show Study desk"}])}
     NoesisButton {variant:"tertiary";visible:secondaryDesk.deskScreen!==null&&NoesisController.standalone&&NoesisController.presentationMode==="fullscreen"&&win.width>=900*NoesisStyle.interfaceScale;text:secondaryDesk.enabledByUser?"Free ScreenPad":"Show Study desk";onClicked:{secondaryDesk.enabledByUser=!secondaryDesk.enabledByUser;secondaryDesk.saveLayout();}}
     NoesisButton {variant:"tertiary";visible:win.width>=700*NoesisStyle.interfaceScale;text:"Settings";onClicked:content.item.openSettings()}
-    NoesisButton {variant:"tertiary";visible:win.width>=700*NoesisStyle.interfaceScale;text:"Hide";onClicked:{if(!NoesisController.legacyInterface)content.item.stashDraft();NoesisController.close();}}
+    NoesisButton {variant:"tertiary";visible:win.width>=700*NoesisStyle.interfaceScale;text:"Hide";onClicked:{if(!NoesisController.legacyInterface)content.item.stashDraft();NoesisController.closeForTool();}}
     NoesisSelect {visible:win.width>=1200*NoesisStyle.interfaceScale;model:["Full screen","Maximized","Tiled","Window"];currentIndex:["fullscreen","workspace","tiled","normal"].indexOf(NoesisController.presentationMode);Accessible.name:"Window presentation";onActivated:{NoesisController.presentationMode=["fullscreen","workspace","tiled","normal"][currentIndex];NoesisController.savePreferences();win.applyPresentation();}}
 
     NoesisButton {variant:"tertiary";visible:win.width>=700*NoesisStyle.interfaceScale;text:NoesisController.exitRequested?"Finishing…":"Close";onClicked:NoesisController.requestExit()}

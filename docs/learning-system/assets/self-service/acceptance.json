@@ -1,9 +1,9 @@
 {
-  "source_commit": "c75153858fe5c176449db1272cc8e1c79f9113cc",
+  "source_commit": "3393b92ea3beb0263d9eb3d8e1c37785f7ab5ec7",
   "dirty": true,
   "empty_vault": true,
   "record_creation": "native mouse and key interactions only",
-  "fixture": "/var/tmp/noesis-lifecycle-ah9ssg2x",
+  "fixture": "/var/tmp/noesis-lifecycle-xve7q9l7",
   "passed": [
     "Today start",
     "URL manual title",
@@ -33,8 +33,5 @@
     "PDF attachment/annotation handoff not tested in this source-only fixture",
     "owner usability not tested"
   ],
-  "learner_achievement": false,
-  "code_revision": "d7f9d9c020191980c9ed04700afbd08e2d2e5388",
-  "executed_cases": 5,
-  "isolated_zotero_port": 23129
+  "learner_achievement": false
 }

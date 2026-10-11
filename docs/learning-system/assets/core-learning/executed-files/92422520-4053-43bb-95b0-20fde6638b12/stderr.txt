@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/scratch.py", line 4, in <module>
+    assert all(order.index(a)<order.index(b) for a,b in edges), "vertex-number order violates dependency"
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: vertex-number order violates dependency

@@ -1,4 +1,4 @@
-# Noesis V1 acceptance — updated 2026-10-10
+# Noesis V1 acceptance — updated 2026-10-11
 
 **V1 is not release-complete.** This is the current acceptance report, not a claim
 that passing model tests establish learning efficacy. The existing PLAN.md remains
@@ -13,13 +13,13 @@ post-V1; it is not a core release completion gate.
 |---|---|---|---|
 | P0 correctness/recovery | Safe writes, receipts, concurrent source replacement, interrupted link retry; encrypted local restoration and native Sioyek position recovery. | Partial. Populated native Zotero encrypted restoration now passes with the guarded local 10.0.6 compatibility fix. Broader fault matrix remains. No automatic pruning protects the sole verified copy. | Core writes yes; reader recovery requires the recorded caveats. |
 | P1 identity/ownership | Owner-aware cross-vault search/continuation, global relevance, generation/cache-bound cursors, moved references, duplicate refusal, explicit replacement/fork; native local prerequisite creation. | Partial. Larger disappearance/conflict acceptance remains. Cross-vault blocking educational gates are deliberately outside V1; nonblocking reusable connections remain supported, with exact owner navigation. | Yes for supported owner-aware navigation and local contextual gates. |
-| P2 research | Genuine PDF and populated Zotero annotation revisions; unchanged learner prose; annotation → question/reconstruction → committed authored implementation → executed attention Eq. 1 checks; paper move preserves links. | Partial. Native annotation-specific handoff remains open; the populated native encrypted restore rerun passes with the guarded compatibility fix. Full trained-Transformer reproduction is outside this product release's acceptance scope. | Import/reading/evidence route yes; annotation-specific navigation not certified. |
+| P2 research | Genuine PDF and populated Zotero annotation revisions; unchanged learner prose; annotation → question/reconstruction → committed authored implementation → executed attention Eq. 1 checks; paper move preserves links. | Partial. Native annotation-specific handoff is validated against the isolated installed 10.0.6 reader; the populated native encrypted restore rerun passes with the guarded compatibility fix. Full trained-Transformer reproduction is outside this product release's acceptance scope. | Import/reading/evidence route yes; exact supported annotation/page navigation verified; historical/deleted annotations use an explicit page fallback. |
 | P3 courses | Modules, six lectures, readings, two assignments, project; immutable ordering/material replacement; native prerequisite/assessment/readiness/return; exact place and results survive cache loss/restart. Modules do not inflate consumption. | Connected course fixture accepted. Complete source-reader/outline combination and returning-learner inspection remain partial. | Yes for the accepted course workflow. |
 | P4 practice/evidence | Failed, assisted, independent and changed-task transfer histories; reference protection; selected plan distinct from performed assessment; learner criterion decisions. Ctrl+Enter reduces attempt/save friction. | Partial. Long-history usability and returning-learner inspection remain. Controlled-time or early fixture checks do not prove human delayed retention. | Yes for recording honest attempts and explicit checks. |
-| P5 experiments | Executed generated-data calibration, code/configuration, CSV/PNG, contradicted prediction, units, comparison, next test; native figure loading/scrolling; unavailable and foreign artifacts tested. | Software experiment slice accepted. Complete external-tool handoff still partial. No hardware or full-paper reproduction claim. | Yes for scoped experiment records and artifacts. |
+| P5 experiments | Executed generated-data calibration, code/configuration, CSV/PNG, contradicted prediction, units, comparison, next test; native figure loading/scrolling; unavailable and foreign artifacts tested. | Software experiment slice accepted. Owned drawing, explicit terminal capture and native Obsidian/editor round trips are verified in core-learning-evidence.md; sustained owner use remains open. No hardware or full-paper reproduction claim. | Yes for scoped experiment records and artifacts. |
 | P6 desktop | Native lesson/course/paper/Lab fixture states, keyboard actions, restoration, existing window modes/companion; inspected actual native screenshots. Quickshell retained. | Partial. Full visual matrix, physical input timing, disconnected ScreenPad and sustained live-shell acceptance remain. | Ready for local learner trial; not certified across every monitor state. |
 | P7 guidance | Completed material excluded from Continue; explained next actions; a gate clears only after explicit lesson-scoped learner readiness and can be reopened. | Partial. Manual priorities/pins are implemented; remaining journey-specific guidance cases need acceptance. Sophisticated recommendation models are post-V1. | Basic transparent suggestions yes. |
-| P8 hardening | Earlier 107 core + 16 compatibility acceptance remains authoritative; current learning-engine additions pass 130 core tests. Temporary-home installation; earlier 10k and Distrobox evidence retained; private-data boundaries and native cache-loss restart. | Partial. Complete portability/native gates, sustained lifecycle and human trial remain. Independent-host registration and scoped live rollout are verified. Off-device configuration is deferred by owner to post-V1. | Local use yes; laptop-loss protection is not configured. |
+| P8 hardening | Earlier 107 core + 16 compatibility acceptance remains authoritative; current additions pass 157 core tests and 16 compatibility tests; native evidence is recorded in core-learning-evidence.md. Temporary-home installation; earlier 10k and Distrobox evidence retained; private-data boundaries and native cache-loss restart. | Partial. Complete portability/native gates, sustained lifecycle and human trial remain. Independent-host registration and scoped live rollout are verified. Off-device configuration is deferred by owner to post-V1. | Local use yes; laptop-loss protection is not configured. |
 
 ## Reproduced learning day
 
@@ -45,10 +45,12 @@ See [native screenshots and test details](validation.md#connected-learning-cycle
 
 ## Explicit remaining gates
 
-1. The corrected populated Zotero restore still fails at native startup. Controlled
-   empty-profile restarts do not clear that gate. Preserve diagnostics and finish a
-   populated native recovery check; personal Zotero sessions are never repurposed.
-2. Finish annotation-specific navigation and the complete specialist-tool handoffs.
+1. The populated Zotero encrypted restore passes on guarded 10.0.6; preserve the
+   version/hash guard and rollback described in zotero-startup-evidence.md. Broader
+   interrupted-publication and restore fault cases remain open.
+2. Supported annotation navigation, owned diagrams and terminal capture are verified
+   in core-learning-evidence.md. Unsupported external reader features require the
+   documented manual fallback; sustained specialist-tool use still needs owner review.
 3. Complete long-history/returning-learner, unavailable-storage/conflict and remaining
    desktop/portability checks. Retain measured performance limits from validation.md;
    the learning-day recovery measurement does not establish physical input latency.
@@ -102,7 +104,7 @@ comparison → honest changed-case failure → linked question → optional prer
 → exact restart/return journey is implemented. Actual isolated Obsidian and editor
 handoffs are exercised; generated figures display in Lab and ScreenPad. This closes
 one reference lesson's software journey, not YOLO, DSA, Mongla or the entire P0–P8
-release. The populated Zotero restore regression remains unresolved. Owner learner
+release. The populated Zotero restore regression is fixed for the guarded 10.0.6 build; see zotero-startup-evidence.md. Owner learner
 understanding, delayed retention and sustained usability require personal testing.
 Off-device configuration remains explicitly deferred by owner.
 

@@ -14,6 +14,8 @@ ColumnLayout {
  property string currentProjection:""
  readonly property var bibliography:context.bibliographic_summary||({})
  function focusRevision(){revisionSelect.forceActiveFocus();}
+ signal openAnnotation(var annotation)
+ signal askAnnotation(var annotation)
  signal pageAnnotations(var cursor)
  signal chooseSnapshot(string path)
  signal pageRevisions(var cursor)
@@ -41,7 +43,7 @@ ColumnLayout {
   }
   ColumnLayout {SplitView.preferredWidth:360*NoesisStyle.readingScale;SplitView.preferredHeight:split.height*.5;SplitView.minimumWidth:Math.min(280,split.width);SplitView.minimumHeight:180;spacing:NoesisStyle.sm
    Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;textFormat:Text.PlainText;text:"Annotation notebook · imported source";wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
-   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;textFormat:Text.PlainText;text:root.context.projection_error||((root.context.annotation_count||0)+" annotations · snapshot "+(root.context.source_version??"unavailable")+(root.context.historical_snapshot?" · preserved history":""));wrapMode:Text.Wrap;color:root.context.projection_error?NoesisStyle.error:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;textFormat:Text.PlainText;text:root.context.projection_error||((root.context.annotation_count||0)+(root.context.annotation_count===1?" annotation · snapshot ":" annotations · snapshot ")+(root.context.source_version??"unavailable")+(root.context.historical_snapshot?" · preserved history":""));wrapMode:Text.Wrap;color:root.context.projection_error?NoesisStyle.error:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
    Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
     NoesisButton {text:"Previous";visible:!!root.context.newer_cursor;onClicked:root.pageAnnotations(root.context.newer_cursor);Accessible.name:"Previous annotation page"}
     NoesisButton {text:"More annotations";visible:!!root.context.cursor;onClicked:root.pageAnnotations(root.context.cursor)}
@@ -52,6 +54,8 @@ ColumnLayout {
      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;width:parent.width;visible:!(root.context.annotations||[]).length;textFormat:Text.PlainText;text:root.context.projection_error?"The preserved import needs inspection. Your analysis remains available.":"No source annotations imported. Capture your questions independently or import the selected Zotero paper.";wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
      Repeater {model:root.context.annotations||[];delegate:Column {required property var modelData;width:parent.width;spacing:NoesisStyle.sm
       Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;width:parent.width;textFormat:Text.PlainText;text:(modelData.page_label?"Page "+modelData.page_label:modelData.native_id)+" · revision "+(modelData.source_version??"unknown");wrapMode:Text.Wrap;color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
+      NoesisButton {text:"Ask about this annotation";enabled:!NoesisController.working;onClicked:root.askAnnotation(modelData)}
+      NoesisButton {text:root.context.historical_snapshot?"Open preserved PDF page":"Open this annotation";enabled:!!modelData.attachment_key&&!NoesisController.working;onClicked:root.openAnnotation(modelData)}
       TextEdit {renderType:TextEdit.NativeRendering;font.hintingPreference:Font.PreferFullHinting;width:parent.width;visible:text!=="";text:modelData.text||"";readOnly:true;selectByMouse:true;textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;Accessible.name:"Imported annotation"}
       TextEdit {renderType:TextEdit.NativeRendering;font.hintingPreference:Font.PreferFullHinting;width:parent.width;visible:text!=="";text:modelData.comment?"Source comment: "+modelData.comment:"";readOnly:true;selectByMouse:true;textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
       Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;width:parent.width;visible:!modelData.attachment_key;textFormat:Text.PlainText;text:modelData.availability||"";wrapMode:Text.Wrap;color:NoesisStyle.warning;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}

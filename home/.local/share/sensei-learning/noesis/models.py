@@ -76,6 +76,14 @@ def create(root, kind, title, body='', fields=None, parent_id=None, relation='co
                     order=max([n for n in existing if type(n) is int],default=-1)+1
                 fields['parent_ref']={'vault_id':meta['vault_id'],'record_id':parent_id,'relation':relation,'order':order}
             finally:index.close()
+        if kind=='question' and fields.get('annotation_ref'):
+            reference=fields['annotation_ref']
+            if not isinstance(reference,dict) or reference.get('record_id')!=parent_id:raise ValueError('Annotation question must retain its paper parent')
+            from .sources import annotation_reference
+            index=Index(root)
+            try:
+                index.reconcile();fields['annotation_ref']=annotation_reference(index,parent_id,reference.get('annotation_key'),reference.get('projection'))
+            finally:index.close()
         if kind=='question' and fields.get('evidence_refs') is not None:
             from .frontier import evidence_record
             refs=fields['evidence_refs']

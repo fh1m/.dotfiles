@@ -4,9 +4,9 @@ The connected foundation is implemented and deployed. Full P0–P8 release
 acceptance remains open. This ledger distinguishes tested behavior from remaining
 work; the presence of a module does not complete its milestone.
 
-## Current self-service and Zotero evidence, 2026-10-10
+## Current core-learning and Zotero evidence, 2026-10-11
 
-The populated native Zotero encrypted restore regression is reproduced and fixed for the installed 10.0.6 build; see [diagnosis, compatibility boundary and rollback](zotero-startup-evidence.md). The broader fault matrix and native annotation-specific navigation remain open. Latest core suite: 145 passing tests, including empty-vault import, unrelated source-alias isolation and source bibliography-date regressions. See the [canonical user guide](user-guide.md) for the native self-service entry points.
+The populated native Zotero encrypted restore regression is reproduced and fixed for the installed 10.0.6 build; see [diagnosis, compatibility boundary and rollback](zotero-startup-evidence.md). The broader fault matrix remains open. Native annotation-specific selection and physical-page navigation pass in an isolated copy of this build; other versions and readers remain unverified. Latest core suite: 157 passing tests, including self-service, drawing, actual execution, ownership and source-projection regressions. See the [canonical user guide](user-guide.md) for the native self-service entry points.
 
 ## Observed verification, 2026-10-09
 
@@ -737,3 +737,14 @@ owner-deferred; existing local recovery and historical acceptance remain authori
 Owner usability/learning observation remains required. Populated Zotero restoration,
 remaining original P0–P8 fault/journey gates and other cross-domain slices remain
 open; off-device configuration remains owner-deferred.
+
+
+### 2026-10-11 — general visual thinking and executable exploration
+
+See [core learning evidence](core-learning-evidence.md) for the native empty-vault
+cross-domain harness, actual execution receipts, diagram/tool handoffs and remaining
+limits. The older populated-Zotero startup failure entries are historical: the guarded
+10.0.6 fix and populated encrypted restore success in
+[zotero startup evidence](zotero-startup-evidence.md) supersede them. Supported native
+annotation selection is now checked separately from bibliography-only import.
+Off-device configuration remains deferred; the owner's learner trial remains open.
