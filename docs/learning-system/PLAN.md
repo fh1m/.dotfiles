@@ -175,3 +175,16 @@ existing learning CLI checks pass. GitHub and both installed provider pages were
 visually inspected; quota child-process shutdown was checked live. Billing expiry
 and OpenCode provider balances are unavailable from these supported interfaces,
 and are not inferred. The broader Noesis redesign milestones above are unchanged.
+
+
+### Desktop follow-up — 2026-10-11
+
+Completed the separately authorized desktop slice: compact personal identity,
+quiet clock/weather, dot activity states, tray spacing, tab silhouette/selection,
+per-popup anchoring and missing-ScreenPad fallback; prompt timing/exit/tmux context;
+persistent in-widget package transactions; official Go quota adapter and corrected
+Console URL; Spotify passive closed-channel handling and bounded startup guard.
+Details and limitations: [DESKTOP-CODE.md](DESKTOP-CODE.md#october-11-polish).
+Validation: 17 desktop and 16 learning regressions, release player build, C build,
+zsh/Python syntax, scoped deployment and live QML reload. This does not declare
+the separate Noesis master redesign implemented or approved. No vault changes.

@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 import socket
+import sys
 import subprocess
 import tempfile
 import threading
@@ -56,10 +57,31 @@ class Adapters(unittest.TestCase):
     def test_opencode_aggregates_exclude_transcripts(self):
         m = load('sensei-code')
         result = subprocess.CompletedProcess([],0,'│Sessions            4 │\n│Total Cost          $1.20 │\nprivate transcript\n')
-        with patch.object(m.shutil,'which',return_value='/usr/bin/opencode'), patch.object(m,'run_owned',return_value=result), patch.object(m,'emit') as output:
+        with patch.object(m.shutil,'which',return_value='/usr/bin/opencode'), patch.object(m,'run_owned',return_value=result), patch.object(m,'opencode_go_usage',return_value={}), patch.object(m,'opencode_local_usage',return_value=None), patch.object(m,'emit') as output:
             m.opencode_snapshot()
             self.assertEqual(output.call_args.args[0]['stats'], {'Sessions':'4','Total Cost':'$1.20'})
             self.assertNotIn('transcript',json.dumps(output.call_args.args[0]))
+
+    def test_go_entitlement_failure_is_not_claimed_as_expiry(self):
+        import urllib.request, urllib.error
+        from unittest.mock import MagicMock
+        m=load('sensei-code')
+        with tempfile.TemporaryDirectory() as directory, patch.object(m,'HOME',Path(directory)), patch.object(m,'CACHE',Path(directory)/'cache'):
+            auth=m.HOME/'.local/share/opencode/auth.json';auth.parent.mkdir(parents=True);auth.write_text(json.dumps({'opencode-go':{'type':'api','key':'fake-test-key'}}))
+            opener=MagicMock();opener.open.side_effect=urllib.error.HTTPError('https://opencode.ai',403,'Forbidden',{},None)
+            with patch.object(urllib.request,'build_opener',return_value=opener):
+                result=m.opencode_go_usage()
+                self.assertEqual(result['kind'],'verify')
+                self.assertNotIn('fake-test-key',json.dumps(result))
+                self.assertEqual(m.opencode_go_usage()['kind'],'verify')
+                self.assertEqual(opener.open.call_count,1)
+
+    def test_go_quota_validates_dates_and_preserves_window_identity(self):
+        m=load('sensei-code')
+        payload={'usage':{'rolling':{'percent':80,'resetsAt':'2026-10-12T10:00:00Z','status':'ok'},'weekly':{'percent':101,'resetsAt':'bad'}}}
+        result=m.normalize_go_usage(payload)
+        self.assertEqual(list(result),['rolling'])
+        self.assertEqual(result['rolling']['percent'],80)
 
     def test_autotabs_excludes_nonordinary_windows(self):
         m = load('sensei-tabs')
@@ -68,6 +90,79 @@ class Adapters(unittest.TestCase):
         for change in ({'floating':True}, {'fullscreen':1}, {'pinned':True}, {'mapped':False}, {'workspace':{'id':-1}}):
             self.assertFalse(m.eligible(dict(base, **change), 3))
         self.assertFalse(m.eligible(base, 4))
+
+class PackageJobs(unittest.TestCase):
+    def test_interactive_transaction_preserves_id_and_output(self):
+        m=load('sensei-package-job')
+        with tempfile.TemporaryDirectory() as directory:
+            m.STATE=Path(directory)/'state'
+            script=str(ROOT/'home/.local/bin/sensei-package-job')
+            fake="import sys; print('Proceed with installation? [Y/n]',flush=True); answer=input(); print('accepted='+answer,flush=True); sys.exit(0 if answer=='y' else 1)"
+            wrapper="import importlib.machinery; m=importlib.machinery.SourceFileLoader('job',"+repr(script)+").load_module(); from pathlib import Path; m.STATE=Path("+repr(str(m.STATE))+"); m.command=lambda *_:"+repr([sys.executable,'-c',fake])+"; m.shutil.which=lambda _:None; m.run('repo','')"
+            child=subprocess.Popen([sys.executable,'-c',wrapper],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            try:
+                import time
+                deadline=time.monotonic()+4
+                state={}
+                while time.monotonic()<deadline:
+                    state=m.read_state()
+                    if 'Proceed' in state.get('log',''):break
+                    time.sleep(.05)
+                self.assertEqual(state['status'],'running')
+                with self.assertRaises(ValueError):m.send('wrong-job','y')
+                m.send(state['id'],'y')
+                out,err=child.communicate(timeout=4)
+                self.assertEqual(child.returncode,0,err)
+                result=m.read_state()
+                self.assertEqual(result['id'],state['id'])
+                self.assertEqual(result['status'],'done')
+                self.assertIn('accepted=y',result['log'])
+                self.assertEqual((m.STATE/'job.json').stat().st_mode&0o777,0o600)
+            finally:
+                if child.poll() is None:child.terminate();child.wait(timeout=3)
+
+    def test_rejects_package_shell_injection_and_detects_prompts(self):
+        m=load('sensei-package-job')
+        for name in ['../../tmp/file','bash; rm','$(command)']:
+            with self.assertRaises(ValueError):m.command('install',name)
+        self.assertEqual(m.phase('Proceed? [Y/n]','Starting'),'Your confirmation is needed')
+        self.assertEqual(m.command('flatpak'),['flatpak','update'])
+
+class OpenCodeDetails(unittest.TestCase):
+    def test_free_activity_does_not_treat_zero_cost_go_as_free(self):
+        import sqlite3,time
+        m=load('sensei-code')
+        with tempfile.TemporaryDirectory() as directory,patch.object(m,'HOME',Path(directory)):
+            database=m.HOME/'.local/share/opencode/opencode.db';database.parent.mkdir(parents=True)
+            with sqlite3.connect(database) as c:
+                c.execute('create table message(session_id text,time_created integer,data text)')
+                for provider,model in [('opencode','known-free'),('opencode-go','paid-model'),('opencode','unknown-zero')]:
+                    record={'role':'assistant','providerID':provider,'modelID':model,'cost':0,'tokens':{'input':10,'output':5},'secret-text':'must not export'}
+                    c.execute('insert into message values(?,?,?)',('session',int(time.time()*1000),json.dumps(record)))
+            d=m.opencode_local_usage()
+            self.assertEqual(d['freeResponses'],1)
+            self.assertEqual(d['freeTokens'],15)
+            self.assertEqual(d['goResponses'],1)
+            self.assertNotIn('secret-text',json.dumps(d))
+            self.assertNotIn('must not export',json.dumps(d))
+
+    def test_device_authorization_keeps_tokens_private(self):
+        m=load('sensei-opencode-connect')
+        with tempfile.TemporaryDirectory() as directory,patch.object(m,'STATE',Path(directory)/'state'),patch.object(m,'TOKEN',Path(directory)/'state/token.json'),patch.object(m,'emit') as output,patch.object(m.time,'sleep'),patch.object(m.subprocess,'Popen') as browser:
+            results=[{'verification_uri_complete':'https://opencode.ai/console/device?code=test','user_code':'test','device_code':'private-device','expires_in':60,'interval':2},
+                     {'access_token':'private-access','refresh_token':'private-refresh','expires_in':300},[{'id':'org','name':'Personal'}]]
+            with patch.object(m,'request',side_effect=results):m.connect()
+            self.assertEqual(m.TOKEN.stat().st_mode&0o777,0o600)
+            self.assertEqual(m.STATE.stat().st_mode&0o777,0o700)
+            self.assertNotIn('private-access',str(output.call_args_list))
+            self.assertNotIn('private-refresh',str(output.call_args_list))
+            browser.assert_called_once()
+
+    def test_authorization_rejects_foreign_browser_origin(self):
+        m=load('sensei-opencode-connect')
+        with patch.object(m,'request',return_value={'verification_uri_complete':'https://evil.test/'}),patch.object(m.subprocess,'Popen') as browser:
+            with self.assertRaises(ValueError):m.connect()
+            browser.assert_not_called()
 
 class NativeTransport(unittest.TestCase):
     @classmethod
@@ -80,23 +175,24 @@ class NativeTransport(unittest.TestCase):
     @classmethod
     def tearDownClass(cls): cls.temp.cleanup()
 
-    def request(self, action, fail_closed=False):
+    def request(self, action, fail_closed=False, event=None, snapshot=None):
         with tempfile.TemporaryDirectory() as directory:
             home = Path(directory)
             cfg = home/'.config/spotify-player'; cfg.mkdir(parents=True)
             cache = home/'.cache/sensei-spotify'; cache.mkdir(parents=True)
+            if event is not None:(cache/'native-event.json').write_text(json.dumps(event))
             server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             server.bind(('127.0.0.1',0)); server.settimeout(.8)
             (cfg/'app.toml').write_text('client_port = '+str(server.getsockname()[1])+'\n')
             bindir = home/'bin'; bindir.mkdir()
-            restart = bindir/'systemctl'; restart.write_text('#!/bin/sh\nexit 0\n'); restart.chmod(0o755)
+            restart = bindir/'systemctl'; restart.write_text('#!/bin/sh\nexit 99\n'); restart.chmod(0o755)
             calls = []
             def serve():
                 try:
                     while True:
                         raw, addr = server.recvfrom(65536)
                         calls.append(json.loads(raw))
-                        response = {'Err':list(b'channel closed')} if fail_closed else {'Ok':[]}
+                        response = {'Err':list(b'channel closed')} if fail_closed else {'Ok':list(json.dumps(snapshot).encode()) if snapshot is not None else []}
                         server.sendto(json.dumps(response).encode(),addr); server.sendto(b'',addr)
                 except socket.timeout: pass
             thread = threading.Thread(target=serve); thread.start()
@@ -111,10 +207,30 @@ class NativeTransport(unittest.TestCase):
             self.assertEqual(result.returncode,0,result.stdout)
             self.assertEqual(calls,[{'Playback':native}])
 
-    def test_restart_never_replays_mutation(self):
+    def test_closed_channel_never_restarts_or_replays_mutation(self):
         result, calls = self.request('next', fail_closed=True)
         self.assertNotEqual(result.returncode,0)
         self.assertEqual(calls,[{'Playback':'Next'}])
-        self.assertIn('restarted',json.loads(result.stdout)['error'])
+        self.assertIn('connection closed',json.loads(result.stdout)['error'])
+
+    def test_closed_status_does_not_retry_or_restart(self):
+        result, calls = self.request('status', fail_closed=True)
+        self.assertNotEqual(result.returncode,0)
+        self.assertEqual(calls,[{'Get':{'Key':'Playback'}}])
+        self.assertIn('connection closed',json.loads(result.stdout)['error'])
+
+    def test_released_local_event_cannot_replace_remote_playback(self):
+        import time
+        event={'released':True,'playing':True,'player_pid':os.getpid(),'time':time.time(),'progress':0,
+               'uri':'spotify:track:old','track':{'id':'old','uri':'spotify:track:old','duration':300000}}
+        snapshot={'is_playing':True,'progress_ms':12000,'device':{'name':'Remote speaker','id':'remote'},
+                  'item':{'id':'new','uri':'spotify:track:new','name':'Remote song','duration_ms':300000}}
+        result,calls=self.request('status',event=event,snapshot=snapshot)
+        self.assertEqual(result.returncode,0,result.stdout)
+        state=json.loads(result.stdout)
+        self.assertEqual(state['device'],'Remote speaker')
+        self.assertEqual(state['track']['id'],'new')
+        self.assertTrue(state['localReleased'])
+        self.assertEqual(calls,[{'Get':{'Key':'Playback'}}])
 
 if __name__ == '__main__': unittest.main()

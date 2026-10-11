@@ -191,7 +191,7 @@ Variants {
             function onDropdownChanged(): void {
                 const requested = ShellState.dropdown;
                 const bottom = requested === "monitor" || requested === "clipboard" || requested === "usb" || requested === "phone" || requested === "oasis";
-                const wantedScreen = (bottom ? ShellState.bottomBarScreens[0] : ShellState.barScreens[0])?.name;
+                const wantedScreen = (bottom ? (ShellState.bottomBarScreens[0] ?? ShellState.barScreens[0]) : ShellState.barScreens[0])?.name;
                 const want = popup.modelData.name === wantedScreen ? requested : "";
 
                 // **The ID editor arms at once.** It is typed into the moment

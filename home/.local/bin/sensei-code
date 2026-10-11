@@ -164,23 +164,111 @@ def account_state(data):
     return {'kind':'active', 'label':'Account active' if plan else 'Account connected · plan unavailable'}
 
 
-def opencode_snapshot():
+def normalize_go_usage(payload):
+    result = {}
+    if not isinstance(payload,dict) or not isinstance(payload.get('usage'),dict):return result
+    for name in ('rolling','weekly','monthly'):
+        item = (payload.get('usage') or {}).get(name) or {}
+        if not isinstance(item,dict):continue
+        percent, reset = item.get('percent'), item.get('resetsAt')
+        if isinstance(percent,(int,float)) and 0 <= percent <= 100 and isinstance(reset,str):
+            from datetime import datetime
+            try: datetime.fromisoformat(reset.replace('Z','+00:00'))
+            except ValueError: continue
+            result[name] = {'percent':percent,'resetsAt':reset,'status':item.get('status')}
+    return result
+
+
+def opencode_go_usage(force=False):
+    # Only this explicit Go integration reads the existing provider API key.
+    # The key stays in memory/HTTPS headers; never argv, logs, output or cache.
+    import hashlib
+    import urllib.request
+    import urllib.error
+    registry = HOME/'.local/share/opencode/auth.json'
+    registry_data=cached(registry)
+    auth=(registry_data.get('opencode-go') or {}) if isinstance(registry_data,dict) else {}
+    if not isinstance(auth,dict):auth={}
+    key = auth.get('key') if auth.get('type') == 'api' else None
+    if not isinstance(key,str) or not key: return {'kind':'signin','label':'Connect OpenCode Go to report subscription usage'}
+    path = CACHE/('go-'+hashlib.sha256(key.encode()).hexdigest()[:16]+'.json')
+    previous = cached(path)
+    if not isinstance(previous,dict):previous={}
+    if not force and time.time()-previous.get('checkedAt',0)<60:return previous
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs): return None
+    request = urllib.request.Request('https://opencode.ai/zen/go/v1/usage',headers={'Authorization':'Bearer '+key,'Accept':'application/json','User-Agent':'opencode/1.18.32'})
+    try:
+        with urllib.request.build_opener(NoRedirect).open(request,timeout=12) as response:
+            payload=json.loads(response.read(65536))
+        windows=normalize_go_usage(payload)
+        if not windows: raise ValueError('Unsupported quota response')
+        result={'kind':'exhausted' if any(w['status']=='rate-limited' or w['percent']>=100 for w in windows.values()) else 'active',
+                'label':'OpenCode Go','windows':windows,'fetchedAt':time.time(),'checkedAt':time.time()}
+        save(path,result)
+        return result
+    except urllib.error.HTTPError as error:
+        labels={401:('signin','Reconnect Go credentials'),403:('verify','Go subscription needs verification · check renewal in Console'),429:('unavailable','Usage service rate-limited · try again later')}
+        kind,label=labels.get(error.code,('unavailable','Go usage service unavailable'))
+        error.close()
+    except (OSError,ValueError,urllib.error.URLError):
+        kind,label='unavailable','Go usage could not be refreshed'
+    result=dict(previous,kind=kind,label=label,stale=bool(previous.get('windows')),checkedAt=time.time(),note='An entitlement error can be a provider-side fault; it does not prove your subscription expired.')
+    save(path,result)
+    return result
+
+
+def opencode_local_usage(days=30):
+    """Read only aggregate metadata in SQLite; never select message text or parts."""
+    import sqlite3
+    database=HOME/'.local/share/opencode/opencode.db'
+    if not database.exists(): return None
+    with sqlite3.connect(database.as_uri()+'?mode=ro',uri=True,timeout=2) as connection:
+        deadline=time.monotonic()+4
+        connection.set_progress_handler(lambda: int(time.monotonic()>deadline),1000)
+        rows=connection.execute("""SELECT json_extract(data,'$.providerID'),json_extract(data,'$.modelID'),
+            count(*),count(distinct session_id),coalesce(sum(json_extract(data,'$.cost')),0),
+            coalesce(sum(json_extract(data,'$.tokens.input')),0),coalesce(sum(json_extract(data,'$.tokens.output')),0),
+            coalesce(sum(json_extract(data,'$.tokens.cache.read')),0),coalesce(sum(json_extract(data,'$.tokens.cache.write')),0)
+            FROM message WHERE time_created>=? AND json_valid(data) AND json_extract(data,'$.role')='assistant'
+            GROUP BY 1,2 ORDER BY count(*) DESC""",(int((time.time()-days*86400)*1000) if days else 0,)).fetchall()
+    try: catalog=json.loads((HOME/'.cache/opencode/models.json').read_text())
+    except (OSError,ValueError):catalog={}
+    models=[]
+    for provider,model,count,sessions,cost,inputs,outputs,reads,writes in rows:
+        if provider not in ['opencode','opencode-go']:continue
+        rates=catalog.get(provider,{}).get('models',{}).get(model,{}).get('cost',{})
+        free=provider=='opencode' and (str(model).endswith('-free') or rates.get('input')==0 and rates.get('output')==0)
+        models.append({'provider':provider,'model':model,'responses':count,'sessions':sessions,'cost':cost,
+                       'input':inputs,'output':outputs,'cacheRead':reads,'cacheWrite':writes,'free':free})
+    return {'days':days,'models':models,'freeResponses':sum(m['responses'] for m in models if m['free']),
+            'freeTokens':sum(m['input']+m['output'] for m in models if m['free']),
+            'goResponses':sum(m['responses'] for m in models if m['provider']=='opencode-go'),
+            'freeQuotaNote':'Free-model activity is recorded locally. The provider does not publish a remaining free allowance here; zero cost alone is not proof of a free model.'}
+
+
+def opencode_snapshot(force=False,days=30):
     executable = shutil.which('opencode')
     if not executable:
         emit({'provider':'opencode','state':'Not installed','fetchedAt':time.time()}); return
-    # Installed v1 has no JSON stats flag. Parse only aggregate rows, never transcripts.
-    result = run_owned([executable,'stats','--pure','--days','7'], timeout=20)
-    if result.returncode:
-        emit({'provider':'opencode','state':'Local statistics unavailable','fetchedAt':time.time()}); return
-    import re
-    wanted = {'Sessions','Messages','Days','Total Cost','Avg Cost/Day','Avg Tokens/Session','Input','Output','Cache Read','Cache Write'}
-    stats = {}
-    for line in result.stdout.splitlines():
-        line = re.sub(r'\x1b\[[0-9;]*m', '', line).strip().strip('│').strip()
-        match = re.match(r'(.+?)\s{2,}(\S+)\s*$', line)
-        if match and match[1] in wanted: stats[match[1]] = match[2]
-    emit({'provider':'opencode','state':'Local usage · last 7 days','stats':stats,
-          'quotaNote':'Provider subscription balances are not exposed by this CLI. Local usage is not remaining quota.', 'fetchedAt':time.time()})
+    try: local=opencode_local_usage(days)
+    except Exception:local=None
+    if local is not None:
+        data={'provider':'opencode','state':'Recorded usage · '+('last '+str(days)+' days' if days else 'all time'),'local':local,'stats':{},'fetchedAt':time.time()}
+    else:
+        result = run_owned([executable,'stats','--pure','--days','7'], timeout=20)
+        import re
+        wanted={'Sessions','Messages','Days','Total Cost','Avg Cost/Day','Avg Tokens/Session','Input','Output','Cache Read','Cache Write'}
+        stats={}
+        for line in result.stdout.splitlines():
+            line=re.sub(r'\x1b\[[0-9;]*m','',line).strip().strip('│').strip()
+            match=re.match(r'(.+?)\s{2,}(\S+)\s*$',line)
+            if match and match[1] in wanted:stats[match[1]]=match[2]
+        data={'provider':'opencode','state':'Local usage · last 7 days' if result.returncode==0 else 'Local statistics unavailable','stats':stats,'fetchedAt':time.time()}
+    data['quotaNote']='Local tokens and cost are separate from provider quota.'
+    emit(data)
+    data['go']=opencode_go_usage(force)
+    emit(data)
 
 
 def codex_snapshot(watch=False):
@@ -259,6 +347,7 @@ def main():
     import signal
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--days',type=int,choices=[0,7,30],default=30)
     parser.add_argument('action', choices=['overview', 'details', 'repositories', 'activity', 'codex', 'codex-watch', 'opencode'])
     parser.add_argument('repo', nargs='?')
     parser.add_argument('--refresh', action='store_true')
@@ -267,7 +356,7 @@ def main():
     elif args.action == 'details': details(args.repo or '')
     elif args.action == 'repositories': repositories(args.repo or '')
     elif args.action == 'activity': activity(args.repo or '1')
-    elif args.action == 'opencode': opencode_snapshot()
+    elif args.action == 'opencode': opencode_snapshot(args.refresh,args.days)
     else:
         # SIGTERM from Quickshell closes both the adapter and its child server.
         import signal

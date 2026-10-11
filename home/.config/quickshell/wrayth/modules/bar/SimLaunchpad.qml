@@ -17,7 +17,10 @@ BarSurface {
     implicitWidth: condensed ? 44 : 94; implicitHeight: 34
     Behavior on implicitWidth { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
     grouped:condensed
-    selected: busy; hovered: pointer.containsMouse; pressed: pointer.pressed
+    property bool acknowledged: false
+    onBusyChanged: if(busy)acknowledged=false
+    showSelectionRule: false
+    selected: ShellState.dropdown==="monitor" && ShellState.monitorPage===2; hovered: pointer.containsMouse; pressed: pointer.pressed
     Row { anchors.left: parent.left; anchors.leftMargin: 10; anchors.verticalCenter: parent.verticalCenter; spacing: 6
         InstrumentIcon { kind: "gpu"; anchors.verticalCenter: parent.verticalCenter; ink: root.busy ? Theme.signalRed : Theme.alpha(Theme.signalRed, .62) }
         Column {visible:!root.condensed;anchors.verticalCenter:parent.verticalCenter;spacing:-1
@@ -25,8 +28,9 @@ BarSurface {
             Text {text:root.compute>0?"CUDA "+root.compute:root.graphics>0?"GPU "+root.graphics:root.gpu.state==="sleep"?"Asleep":root.gpu.processesKnown?"Ready":"--";font.family:Appearance.font.data;font.pixelSize:10;color:root.activity}
         }
     }
+    Rectangle {x:29;y:4;width:5;height:5;radius:2.5;visible:root.busy&&!root.acknowledged;color:Theme.signalRed}
     MouseArea {
         id: pointer; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: event => { if (event.button === Qt.RightButton) Quickshell.execDetached(["/home/fh1m/.local/bin/sim-console"]); else { ShellState.monitorPage = 2; ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x; ShellState.toggleDropdown("monitor"); } }
+        onClicked: event => { root.acknowledged=true; if (event.button === Qt.RightButton) Quickshell.execDetached(["/home/fh1m/.local/bin/sim-console"]); else { ShellState.monitorPage = 2; ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x; ShellState.toggleDropdown("monitor"); } }
     }
 }

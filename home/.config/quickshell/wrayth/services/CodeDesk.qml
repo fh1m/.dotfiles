@@ -7,7 +7,12 @@ Singleton {
     id: root
     property int tab: 0
     property int provider: 0
+    property int openCodeDays:30
     property var openCodeUsage: ({})
+    property var openCodeConnection: ({})
+    readonly property bool connectingOpenCode: consoleLogin.running
+    function disconnectOpenCode():void {consoleLogin.running=false;consoleLogout.running=true;}
+    function connectOpenCode():void {if(!consoleLogin.running){openCodeConnection={state:"starting",message:"Starting browser authorization…"};consoleLogin.running=true;}}
     property int feed: 0
     property bool pinnedOnly: false
     property int activityPage: 1
@@ -27,7 +32,7 @@ Singleton {
         return true;
     }
     function refresh(force) {
-        if (tab === 1 && provider === 1) { if(!openCode.running)openCode.running=true; return; }
+        if (tab === 1 && provider === 1) { if(!openCode.running){openCode.command=[Quickshell.env("HOME")+"/.local/bin/sensei-code","opencode","--days",String(openCodeDays)].concat(force?["--refresh"]:[]);openCode.running=true;} return; }
         if (tab === 1) { if (quota.running) quota.running = false; Qt.callLater(() => {if(root.opened && root.tab===1 && root.provider===0) quota.running=true;}); return; }
         if (overview.running) return;
         error = "";
@@ -55,7 +60,7 @@ Singleton {
         if (local) Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-dev", "open", local.path]);
         else browse(repo.url);
     }
-    onOpenedChanged: { if (opened) refresh(false); else {quota.running=false; openCode.running=false; overview.running=false; details.running=false; more.running=false; activity.running=false;} }
+    onOpenedChanged: { if (opened) refresh(false); else {quota.running=false; openCode.running=false; consoleLogin.running=false; overview.running=false; details.running=false; more.running=false; activity.running=false;} }
     onProviderChanged: {quota.running=false;openCode.running=false;if(opened && tab===1)refresh(false);}
     onTabChanged: {quota.running=false;openCode.running=false; if(opened) refresh(false);}
     Process {
@@ -82,7 +87,16 @@ Singleton {
     Process {
         id: openCode
         command: [Quickshell.env("HOME")+"/.local/bin/sensei-code", "opencode"]
-        stdout: SplitParser {onRead: line => {try {root.openCodeUsage=JSON.parse(line);}catch(e){root.openCodeUsage={state:"Local statistics unavailable"};}}}
+        stdout: SplitParser {onRead: line => {try {const d=JSON.parse(line);if(!d.go && root.openCodeUsage.go)d.go=root.openCodeUsage.go;root.openCodeUsage=d;}catch(e){root.openCodeUsage={state:"Local statistics unavailable"};}}}
     }
+    Process {id:consoleLogout;command:[Quickshell.env("HOME")+"/.local/bin/sensei-opencode-connect","disconnect"]
+        stdout:SplitParser {onRead:line=>{try{root.openCodeConnection=JSON.parse(line);}catch(e){}}}
+        onExited:root.refresh(true)
+    }
+    Process {id:consoleLogin;command:[Quickshell.env("HOME")+"/.local/bin/sensei-opencode-connect"]
+        stdout:SplitParser {onRead:line=>{try{root.openCodeConnection=JSON.parse(line);}catch(e){root.openCodeConnection={state:"error",message:"Invalid authorization response"};}}}
+        onExited:if(root.openCodeConnection.state==="connected")root.refresh(true)
+    }
+    Timer {interval:60000;repeat:true;running:root.opened && root.tab===1 && root.provider===1;onTriggered:root.refresh(false)}
     IpcHandler { target: "code"; function toggle():void {ShellState.publishAnchor("code",12);ShellState.toggleDropdown("code");} function state():string {return JSON.stringify({open:root.opened,tab:root.tab,loading:root.loading,repositories:root.repositories.length,quotaRunning:quota.running,error:root.error});} function subscriptions():void {root.tab=1;} function agent(name:string):void {if(name!=="codex" && name!=="opencode")return;root.provider=name==="opencode"?1:0;root.tab=1;} }
 }

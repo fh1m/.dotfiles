@@ -16,9 +16,9 @@ app-server account/rate-limit RPCs; no inference request or auth-file copying.
 It shows reported plan, remaining windows, exact reset dates, credits and resets.
 Exhausted usage, Free plan, missing sign-in and refresh failure are distinct.
 A Free plan offers renewal of paid access, but is not proof of billing expiry.
-The API does not expose a confirmed subscription-expiration date. OpenCode v1
-provides aggregate local seven-day sessions, messages, cost and tokens; these
-are not provider subscription balances. Claude integration is deferred.
+The API does not expose a confirmed subscription-expiration date. OpenCode uses read-only SQLite metadata aggregates with 7-day, 30-day and
+all-time views, falling back to CLI statistics on older layouts. Local activity
+is separate from provider subscription balances. Claude integration is deferred.
 
 Codex polling/notifications exist only while its tab is open. Closing the panel
 terminates owned adapters and child app-server processes. GitHub cache lives in
@@ -35,8 +35,11 @@ regrouping. Quickshell decorates each visible group; native titles remain a
 fallback if the shell is unavailable. Group strips stay inside window bounds.
 
 Spotify Next/Previous send one native command. Pending/loading skips are gated,
-never queued into multiple advances. A service recovery never replays a playback
-mutation. Media keys and widget controls share this gate. Popup reveal is 160 ms
+never queued into multiple advances. Closed-channel responses never restart the player or replay a playback
+mutation. Recovery is explicit in Account. Device-release events cancel queued
+local slider/control intent; native status cannot replace released playback.
+The startup pause guard expires after five seconds, so a later phone-initiated
+start is respected. Native queue preload runs on Playing, never on device release. Media keys and widget controls share this gate. Popup reveal is 160 ms
 with a 6 px shift; dismiss is 110 ms. `SENSEI_REDUCED_MOTION=1` removes reveal
 motion. No blur or continuously running animation was added.
 
@@ -45,7 +48,9 @@ motion. No blur or continuously running animation was added.
 `python3 -m unittest discover -s tests -p test_desktop_code.py -v`
 checks private caching, account states, OpenCode aggregate parsing, eligible
 windows, single playback commands and non-replay on service recovery.
-The existing 16 learning CLI tests also pass.
+The existing 16 learning CLI tests also pass. The desktop suite now has 17 tests,
+including closed-channel read safety, remote-device ownership, Go failure states
+and a real PTY/FIFO interactive transaction in a disposable fixture.
 
 Live checks on this laptop: six rapid skip inputs advanced one track; a later
 independent skip advanced one more. The third eligible test window grouped;
@@ -67,3 +72,94 @@ tmpfs; nothing was deleted.
 Interfaces verified against [Codex app-server](https://developers.openai.com/codex/app-server)
 and [OpenCode CLI](https://dev.opencode.ai/docs/cli/). Installed OpenCode v1 lacks
 the newer JSON stats option; the adapter parses only allowlisted aggregate rows.
+
+## October 11 polish
+
+The identity is a compact sensing/heading drawing, centered in its hit area with
+six pixels of left rail breathing room. The Spotify separator belongs to music,
+with 24 pixels before its album art. Weather is static, quieter text rather than
+a scrolling ticker. Notification and GPU activity use acknowledgement dots;
+opening their panels clears the dot. Tray targets have more spacing. Tab strips
+are inset from the window corner cuts and use a pink side marker instead of a
+second horizontal border. Popups use their own recorded anchor; bottom-panel
+routing falls back to the main display if the ScreenPad is absent.
+
+The zsh prompt keeps directory, branch and environment context on separate lines,
+without filled pink backgrounds. Its right side shows exit code, elapsed time and
+`tmux` only inside tmux. Timing uses zsh's built-in clock. New shells load it;
+existing interactive shells can run `source ~/.config/zsh/prompt.zsh`. A local
+50-build comparison measured 4.70 ms versus 1.41 ms for prompt construction before
+the final spacing changes; this is not a claim about whole-desktop speed.
+
+### Updates without a terminal
+
+System → Packages handles repository/AUR updates, install/removal, orphan cleanup,
+cache cleanup, logs, Flatpak and firmware as distinct actions. `sensei-package-job`
+launches an owned user systemd job, streams a bounded log, displays observed phases
+and accepts package-manager answers inside the widget. Authentication uses the
+existing Zenity password dialog through sudo askpass; passwords never go into
+job state. AUR review remains enabled. Stop requests delegate SIGINT, not SIGKILL.
+Closing the widget does not terminate a transaction. Reopen it to answer prompts;
+notifications announce confirmation requests and completion. Concurrent jobs are
+rejected. No overall completion percentage is invented.
+
+Private state and history live under `~/.local/state/sensei-packages` (0700/0600).
+A read-only transaction-log job ran through the real user unit and persisted its
+result. PTY confirmations were tested using a disposable command. A privileged
+full upgrade, authentication and firmware flash were not performed as validation.
+No packages or new dependencies were installed; Zenity and libnotify were already
+present. This is a frontend to the existing managers, not transactional rollback
+for package installation. Inspect the transaction log if an update fails.
+
+### OpenCode Go
+
+The OpenCode tab separates aggregate local usage from the official Go usage
+endpoint's rolling/weekly/monthly windows and exact reset dates. It reads only
+the configured Go API key in memory, sends it over HTTPS to the fixed endpoint,
+rejects redirects and caches allowlisted quota fields privately. No browser cookie
+extraction is used. Refresh runs only while this tab is visible. Previous quota
+windows remain visible but marked stale after a refresh failure.
+
+An initial request received HTTP 403. Repeating with OpenCode's client User-Agent
+succeeded. The configured Go key now returns all three windows, including a spent
+monthly allowance and its reset date; this is quota exhaustion, not subscription
+expiration. Network/entitlement failures still preserve last-good data with a
+verification state. Headers and API keys are never printed or committed.
+
+The widget has separate **Connect account**, **Refresh usage** and **Billing /
+renewal** actions. Connect implements OpenCode's device authorization flow:
+show the user code, open the official verification page, poll until approved,
+then refresh usage automatically. It does not merely open a workspace page.
+The panel's access/refresh tokens are stored only in
+`~/.local/state/sensei-code/opencode-console.json` (0600, parent 0700).
+They do not replace CLI providers. Disconnect removes only this panel connection.
+Closing the panel cancels an unfinished authorization. The Personal workspace
+is preferred; otherwise the first workspace by name follows the CLI's convention.
+Connected Console quota uses its `/api/go/status` meters, with the Go API key
+endpoint as fallback. These Console routes are upgrade-sensitive; unsupported
+responses fail safely. The public device-code endpoint and browser origin were
+verified; full browser authorization needs the user's approval and was validated
+with disposable fixtures rather than completing someone else's sign-in.
+
+Free-model activity comes from aggregate `message` metadata in the local database,
+not transcripts. A model is classified free from an explicit `-free` identity or
+the installed catalog's zero input/output prices, never solely from a zero charge.
+The panel shows responses, input/output tokens and per-model rows. Catalog-removed
+models retain their usage without an invented free/paid classification. A provider
+remaining free allowance is not inferred: no supported quota endpoint exposes it
+here. Period selectors make recent inactivity distinct from lifetime usage.
+
+The corrected billing button opens `https://opencode.ai/console/` (HTTP 200),
+replacing obsolete `/workspace` (404). No billing purchase is automated.
+
+Sources: [Go usage implementation](https://github.com/anomalyco/opencode/blob/dev/packages/console/app/src/routes/zen/go/v1/usage.ts),
+[reported entitlement failure](https://github.com/anomalyco/opencode/issues/49020),
+[official Console](https://dev.opencode.ai/v2/docs/console/).
+
+Scoped live backups are in
+`~/.local/state/dotfiles-backups/desktop-polish-20261011`; Git parent `5c2059d`
+retains the prior source. The rebuilt Spotify binary was activated while playback
+was paused. Phone-controlled acoustic playback has not been independently tested;
+the confirmed restart loop and unbounded startup pause mechanisms were repaired,
+and their safety paths were exercised without changing songs on a remote device.
+Private screenshots were inspected locally and were not added to the public repo.

@@ -25,11 +25,11 @@ Variants {
         screen: groupScreen
         color: "transparent"
         visible: groupScreen !== null && members.length > 1 && groupWorkspace === shownWorkspace && !group.hidden && !group.fullscreen && !ShellState.locked
-        implicitWidth: Math.max(1, (group?.size?.[0] ?? 1) - 16)
-        implicitHeight: 29
+        implicitWidth: Math.max(1, (group?.size?.[0] ?? 1) - 68)
+        implicitHeight: 26
         anchors { top: true; left: true }
-        margins.left: Math.max(0, (group?.at?.[0] ?? 0) + 8 - (monitor?.lastIpcObject?.x ?? 0))
-        margins.top: Math.max(0, (group?.at?.[1] ?? 0) - (monitor?.lastIpcObject?.y ?? 0) - 30)
+        margins.left: Math.max(0, (group?.at?.[0] ?? 0) + 34 - (monitor?.lastIpcObject?.x ?? 0))
+        margins.top: Math.max(0, (group?.at?.[1] ?? 0) - (monitor?.lastIpcObject?.y ?? 0) - 31)
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "sensei-tabs"
@@ -44,7 +44,7 @@ Variants {
             onPaint: {
                 const p = getContext("2d")
                 p.reset()
-                const inset = 0, cut = 5, h = height
+                const inset = 0, cut = 3, h = height
                 p.fillStyle = "#000000"
                 p.beginPath()
                 p.moveTo(inset + cut, 0)
@@ -119,10 +119,11 @@ Variants {
                 }
                 Rectangle {
                     visible: tab.current
-                    anchors.bottom: parent.bottom
-                    anchors.horizontalCenter: titleGroup.horizontalCenter
-                    width: Math.min(98, titleGroup.implicitWidth)
-                    height: 2
+                    x: 7
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 3
+                    height: 12
+                    radius: 1.5
                     color: Theme.signalRed
                 }
             }

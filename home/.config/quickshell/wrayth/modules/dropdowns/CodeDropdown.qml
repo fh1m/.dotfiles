@@ -160,6 +160,45 @@ DropdownFrame {
             }
             Column {width:parent.width;spacing:14;visible:CodeDesk.provider===1
                 NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:"OpenCode / "+(CodeDesk.openCodeUsage.state||"Loading local statistics…");pixelSize:16}
+                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:CodeDesk.openCodeUsage.go?.label||"Checking Go subscription…";wrapMode:Text.WordWrap;pixelSize:12;color:Theme.signalRed}
+                Row {width:parent.width;spacing:16
+                    Repeater {model:Object.keys(CodeDesk.openCodeUsage.go?.windows??{})
+                        Column {required property string modelData;width:(parent.width-32)/3;spacing:7
+                            readonly property var window: CodeDesk.openCodeUsage.go.windows[modelData]
+                            NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:({rolling:"5-hour window",weekly:"Weekly window",monthly:"Monthly window"})[modelData];pixelSize:11;color:Theme.paperMuted}
+                            NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:Math.max(0,100-window.percent).toFixed(0)+"% remaining";pixelSize:13;color:Theme.signalRed}
+                            Rectangle {width:parent.width;height:3;color:Theme.surfaceTwo;Rectangle {width:parent.width*Math.max(0,1-parent.parent.window.percent/100);height:3;color:Theme.signalRed}}
+                            NrLabel {tracked:false;font.capitalization:Font.MixedCase;pixelSize:10;color:Theme.paperMuted;text:"Resets "+new Date(window.resetsAt).toLocaleString(Qt.locale(),"d MMM · hh:mm AP")}
+                        }
+                    }
+                }
+                Row {spacing:10
+                    ControlTile {label:CodeDesk.connectingOpenCode?"Awaiting browser":"Connect account";glyph:"\uf084";enabled:!CodeDesk.connectingOpenCode;onActivated:CodeDesk.connectOpenCode()}
+                    ControlTile {visible:CodeDesk.openCodeConnection.state==="connected";label:"Disconnect";glyph:"\uf127";onActivated:CodeDesk.disconnectOpenCode()}
+                    ControlTile {label:"Refresh usage";glyph:"\uf021";onActivated:CodeDesk.refresh(true)}
+                    ControlTile {label:"Billing / renewal";glyph:"\uf013";onActivated:Quickshell.execDetached(["xdg-open","https://opencode.ai/console/"])}
+                }
+                NrLabel {visible:!!CodeDesk.openCodeConnection.message;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:(CodeDesk.openCodeConnection.code?"Code "+CodeDesk.openCodeConnection.code+" · ":"")+(CodeDesk.openCodeConnection.message||"");wrapMode:Text.WordWrap;pixelSize:11;color:Theme.paperMuted}
+                Row {spacing:8
+                    Repeater {model:[7,30,0]
+                        ControlTile {required property int modelData;label:modelData===0?"All time":modelData+" days";selected:CodeDesk.openCodeDays===modelData;onActivated:{CodeDesk.openCodeDays=modelData;CodeDesk.refresh(false);}}
+                    }
+                }
+                Row {visible:!!CodeDesk.openCodeUsage.local;width:parent.width;spacing:32
+                    Column {spacing:4;NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:"Free-model responses";pixelSize:11;color:Theme.paperMuted} NrLabel {tracked:false;text:root.metric(CodeDesk.openCodeUsage.local?.freeResponses??0);pixelSize:16;color:Theme.signalRed}}
+                    Column {spacing:4;NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:"Free-model tokens";pixelSize:11;color:Theme.paperMuted} NrLabel {tracked:false;text:root.metric(CodeDesk.openCodeUsage.local?.freeTokens??0);pixelSize:16;color:Theme.signalRed}}
+                    Column {spacing:4;NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:"Go responses";pixelSize:11;color:Theme.paperMuted} NrLabel {tracked:false;text:root.metric(CodeDesk.openCodeUsage.local?.goResponses??0);pixelSize:16;color:Theme.signalRed}}
+                }
+                NrLabel {visible:!!CodeDesk.openCodeUsage.local;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:CodeDesk.openCodeUsage.local?.freeQuotaNote||"";wrapMode:Text.WordWrap;pixelSize:10;color:Theme.paperMuted}
+                Column {width:parent.width;spacing:6;visible:!!CodeDesk.openCodeUsage.local
+                    Repeater {model:(CodeDesk.openCodeUsage.local?.models??[]).slice(0,10)
+                        Row {required property var modelData;spacing:14;width:parent.width
+                            NrLabel {width:340;tracked:false;font.capitalization:Font.MixedCase;text:modelData.model+(modelData.free?" · Free":modelData.provider==="opencode-go"?" · Go":" · OpenCode");pixelSize:11;color:Theme.paper;elide:Text.ElideRight}
+                            NrLabel {width:160;tracked:false;font.capitalization:Font.MixedCase;text:root.metric(modelData.responses)+" responses";pixelSize:11;color:Theme.signalRed}
+                            NrLabel {tracked:false;text:root.metric(modelData.input+modelData.output)+" tokens";pixelSize:11;color:Theme.paperMuted}
+                        }
+                    }
+                }
                 Flow {width:parent.width;spacing:18
                     Repeater {model:Object.keys(CodeDesk.openCodeUsage.stats??{})
                         Column {required property string modelData;width:180;spacing:4

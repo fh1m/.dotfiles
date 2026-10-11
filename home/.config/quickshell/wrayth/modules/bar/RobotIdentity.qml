@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import Quickshell
 import qs.config
 import qs.services
@@ -8,15 +9,21 @@ Item {
     implicitHeight: Appearance.metrics.barHeight
 
     Accessible.name: "fh1m · Code and agents"
-    implicitWidth: 60
-    // A small field robot: asymmetric eye, antenna and an open circuit frame.
+    implicitWidth: 44
+    // Sensor frame + heading + three measured waypoints: autonomy across mediums.
     Image {
         anchors.centerIn: parent
-        width: 38; height: 30
-        source: Qt.resolvedUrl("../../assets/fh1m-field-mark.svg")
+        width: 32; height: 32
+        source: Qt.resolvedUrl("../../assets/fh1m-autonomy.svg")
         opacity: badgeHover.containsMouse || ShellState.dropdown === "code" ? 1 : .86
         Behavior on opacity {NumberAnimation {duration:100}}
     }
+    ToolTip.visible: badgeHover.containsMouse
+    ToolTip.delay: 550
+    ToolTip.text: "fh1m / Autonomy systems · Sense. Model. Act."
+    function publish():void {const x=root.mapToItem(null,0,0).x;for(let name of ["code","ident","comic"])ShellState.publishAnchor(name,x);}
+    Component.onCompleted:Qt.callLater(publish)
+    onXChanged:publish()
     MouseArea {
         id: badgeHover
         hoverEnabled: true
@@ -25,13 +32,13 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
         onClicked: event => {
             if (event.button === Qt.RightButton) {
-                ShellState.publishAnchor("comic", 12);
+                root.publish();
                 ShellState.toggleDropdown("comic");
             } else if (event.button === Qt.MiddleButton || (event.modifiers & Qt.ShiftModifier)) {
-                ShellState.publishAnchor("ident", 12);
+                root.publish();
                 ShellState.toggleDropdown("ident");
             } else {
-                ShellState.publishAnchor("code", root.mapToItem(null, 0, 0).x);
+                root.publish();
                 ShellState.toggleDropdown("code");
             }
         }

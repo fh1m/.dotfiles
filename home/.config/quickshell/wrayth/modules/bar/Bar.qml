@@ -34,6 +34,7 @@ Variants {
         RobotIdentity {
             id: identity
             anchors.left: parent.left
+            anchors.leftMargin: 6
             anchors.top: parent.top
             width: implicitWidth
             height: bar.height
@@ -44,9 +45,9 @@ Variants {
         }
         SpotifyButton {
             anchors.left: identity.right
-            anchors.leftMargin: 13
+            anchors.leftMargin: 8
             height: bar.height
-            width: Math.min(implicitWidth,clock.x-identity.width-24)
+            width: Math.min(implicitWidth,clock.x-identity.x-identity.width-32)
             anchors.verticalCenter: parent.verticalCenter
         }
         Row {

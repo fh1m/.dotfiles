@@ -16,7 +16,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 typedef struct json_object J;
-static int recovered_closed_channel;
 static char store[4096], home[2048];
 static J *get(J *o, const char *k) {
   J *v = NULL;
@@ -151,28 +150,10 @@ static J *rpc(J *request) {
     for (size_t i = 0; i < count; i++)
       error_text[i] = (char)json_object_get_int(json_object_array_get_idx(err, i));
   }
-  if (err && !recovered_closed_channel &&
-      strstr(error_text, "channel closed")) {
-    recovered_closed_channel = 1;
-    json_object_put(envelope);
-    pid_t child = fork();
-    if (child == 0) {
-      execlp("systemctl", "systemctl", "--user", "restart",
-             "sensei-spotify.service", (char *)NULL);
-      _exit(127);
-    }
-    int result = 0;
-    if (child > 0 && waitpid(child, &result, 0) == child &&
-        WIFEXITED(result) && WEXITSTATUS(result) == 0) {
-      usleep(500000);
-      // A control may have reached the player before its response failed.
-      // Replaying Next/Previous (or another mutation) is never safe.
-      if (get(request, "Playback"))
-        fail("The player restarted. Check playback before sending another control.");
-      return rpc(request);
-    }
-    fail("Sensei, the Spotify player lost its session and could not restart.");
-  }
+  if (err && strstr(error_text, "channel closed"))
+    // Reading status or a failed control must never seize a Connect session.
+    // Recovery is explicit in Account; no restart and no replay here.
+    fail("Spotify connection closed. Playback on another device is untouched; reconnect this player in Account if needed.");
   if (err)
     fail("Sensei, Spotify rejected that control. Check the player in Account.");
   J *bytes = get(envelope, "Ok");
@@ -269,11 +250,11 @@ static J *status(J *d) {
   int native_playing = yes(get(event, "playing"));
   long long native_progress = num(get(event, "progress")) + (native_playing ? (long long)(age * 1000) : 0);
   int local_selection = !strlen(str(get(selection, "name"))) || !strcmp(str(get(selection, "name")), "Sensei · ZenBook Duo");
-  int native_owner = local_selection && native_playing && age >= 0 &&
+  int native_owner = !yes(get(event, "released")) && local_selection && native_playing && age >= 0 &&
       native_progress <= num(get(et, "duration")) + 2000 &&
       num(get(event, "player_pid")) > 0 && kill((pid_t)num(get(event, "player_pid")), 0) == 0;
 
-  if ((native_owner || (!strcmp(str(get(device, "name")), "Sensei · ZenBook Duo") && age >= 0 &&
+  if (!yes(get(event, "released")) && (native_owner || (!strcmp(str(get(device, "name")), "Sensei · ZenBook Duo") && age >= 0 &&
       (age < 8 || !strlen(str(get(track, "id")))))) &&
       strlen(str(get(et, "id")))) {
     if (strcmp(str(get(track, "uri")), str(get(event, "uri"))) ||
@@ -286,6 +267,7 @@ static J *status(J *d) {
   }
   boolean(o, "ready", d != NULL || native_owner || (local_selection && num(get(event, "player_pid")) > 0 && kill((pid_t)num(get(event, "player_pid")), 0) == 0));
   boolean(o, "playing", playing);
+  boolean(o, "localReleased", yes(get(event, "released")));
   boolean(o, "loading", loading);
   copy(o, "eventUri", get(event, "uri"));
   copy(o, "eventTime", get(event, "time"));
@@ -315,7 +297,7 @@ static void event(int argc, char **argv) {
     exit(0);
   const char *kind = argv[2], *uri = argv[3];
   if (strcmp(kind, "Loading") && strcmp(kind, "Changed") && strcmp(kind, "Playing") &&
-      strcmp(kind, "Paused"))
+      strcmp(kind, "Paused") && strcmp(kind, "Stopped"))
     exit(0);
   const char *id = strrchr(uri, ':');
   if (!id)
@@ -336,6 +318,7 @@ static void event(int argc, char **argv) {
     track = get(old, "track") ? json_object_get(get(old, "track")) : NULL;
   J *o = json_object_new_object();
   text(o, "uri", uri);
+  boolean(o, "released", !strcmp(kind, "Stopped"));
   boolean(o, "loading", !strcmp(kind, "Loading") || !strcmp(kind, "Changed"));
   integer(o, "player_pid", getppid());
   for (int i = 4; i + 1 < argc; ++i)
@@ -350,7 +333,7 @@ static void event(int argc, char **argv) {
   if (lock >= 0)
     close(lock);
   // A single next-track preload is event-driven, never a background poll.
-  if (!strcmp(kind, "Playing") || !strcmp(kind, "Paused")) {
+  if (!strcmp(kind, "Playing")) {
     J *queue = readfile("local-queue.json"), *uris = get(queue, "uris");
     if (uris && json_object_is_type(uris, json_type_array))
       for (size_t i = 0; i + 1 < json_object_array_length(uris); i++) {
@@ -452,6 +435,9 @@ static void music_start(int argc, char **argv) {
   int selected_local = !selection || !strlen(str(get(selection, "name"))) ||
       !strcmp(str(get(selection, "name")), "Sensei · ZenBook Duo");
   if (selection) json_object_put(selection);
+  J *last_event = readfile("native-event.json");
+  if (yes(get(last_event, "released"))) selected_local = 0;
+  if (last_event) json_object_put(last_event);
   J *d = selected_local ? NULL : playback();
   const char *device = str(get(get(d, "device"), "name"));
   if (*device && strcmp(device, "Sensei · ZenBook Duo")) {

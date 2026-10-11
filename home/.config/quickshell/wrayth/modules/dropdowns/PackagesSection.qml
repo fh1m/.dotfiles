@@ -8,22 +8,22 @@ Column {
  property bool updatesOnly:true
  property var selected:({})
  readonly property var rows:(updatesOnly?(DesktopExtras.packages.updates||[]):(DesktopExtras.packages.installed||[])).filter(p=>p.name.toLowerCase().includes(filter.text.toLowerCase()))
- Component.onCompleted:DesktopExtras.loadPackages()
+ Component.onCompleted:{DesktopExtras.loadPackages();DesktopExtras.loadPackageJob();}
  Text {width:parent.width;text:'󰏖 '+(DesktopExtras.packages.total||0)+' installed · '+(DesktopExtras.packages.official||0)+' pacman · '+(DesktopExtras.packages.foreign||0)+' AUR/local';font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetText;wrapMode:Text.Wrap}
  Row {spacing:7
-  ControlTile {implicitWidth:132;label:DesktopExtras.packagesLoading?'Checking…':'Check updates';enabled:!DesktopExtras.packagesLoading;onActivated:DesktopExtras.loadPackages(true)}
-  ControlTile {implicitWidth:132;label:'Upgrade all';onActivated:DesktopExtras.packageAction('all')}
-  ControlTile {implicitWidth:132;label:'Pacman only';onActivated:DesktopExtras.packageAction('repo')}
-  ControlTile {implicitWidth:132;label:'AUR only';onActivated:DesktopExtras.packageAction('aur')}
+  ControlTile {implicitWidth:132;label:DesktopExtras.packagesLoading?'Checking…':'Check';enabled:!DesktopExtras.packagesLoading;onActivated:DesktopExtras.loadPackages(true)}
+  ControlTile {implicitWidth:132;label:'Update all';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('all')}
+  ControlTile {implicitWidth:132;label:'Repositories';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('repo')}
+  ControlTile {implicitWidth:132;label:'AUR';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('aur')}
  }
  Row {spacing:7
   ControlTile {implicitWidth:170;label:'Updates · '+(DesktopExtras.packages.updates||[]).length;selected:root.updatesOnly;onActivated:root.updatesOnly=true}
   ControlTile {implicitWidth:170;label:'Installed';selected:!root.updatesOnly;onActivated:root.updatesOnly=false}
-  ControlTile {implicitWidth:170;label:'Transaction log';onActivated:DesktopExtras.packageAction('log')}
+  ControlTile {implicitWidth:170;label:'Transaction log';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('log')}
  }
  DeskTextField {placeholderTextColor:Theme.widgetMuted;selectionColor:Theme.widgetAccent;selectedTextColor:Theme.widgetText;id:filter;width:parent.width;height:36;placeholderText:'Filter packages or enter a package to install';color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:12;}
- Text {width:parent.width;text:DesktopExtras.packagesError||(DesktopExtras.packages.checked?'Last check: '+new Date(DesktopExtras.packages.checked*1000).toLocaleString():'Sensei, check updates to fetch current repository and AUR versions.');font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted;wrapMode:Text.Wrap}
- ListView {width:parent.width;height:300;clip:true;spacing:5;model:root.rows;ScrollBar.vertical:DeskScrollBar {}
+ Text {width:parent.width;text:DesktopExtras.packagesError||(DesktopExtras.packages.checked?'Last check: '+Qt.formatDateTime(new Date(DesktopExtras.packages.checked*1000),'ddd, d MMM yyyy · hh:mm AP'):'Sensei, check updates to fetch current repository and AUR versions.');font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted;wrapMode:Text.Wrap}
+ ListView {width:parent.width;height:DesktopExtras.packageJob.status==='idle'?300:150;clip:true;spacing:5;model:root.rows;ScrollBar.vertical:DeskScrollBar {}
   delegate:ChamferPanel {id:item;required property var modelData;width:ListView.view.width;height:48;fillColor:root.selected.name===modelData.name?Theme.alpha(Theme.widgetAccent,.14):Theme.widgetSurface;borderColor:root.selected.name===modelData.name?Theme.widgetAccent:Theme.widgetBorder;chamfer:6;scanlines:false
    Column {anchors.fill:parent;anchors.margins:7;spacing:3
     Text {width:parent.width;text:item.modelData.name+' · '+item.modelData.source;color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:13;elide:Text.ElideRight}
@@ -34,11 +34,31 @@ Column {
  }
  Text {width:parent.width;text:root.selected.name?'Selected: '+root.selected.name:'Select a package for details, update or removal';font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetAccent;elide:Text.ElideRight}
  Row {spacing:7
-  ControlTile {implicitWidth:132;label:'Update selected';enabled:!!root.selected.name;onActivated:DesktopExtras.packageAction('selected',root.selected.name)}
-  ControlTile {implicitWidth:132;label:'Details';enabled:!!root.selected.name;onActivated:DesktopExtras.packageAction('info',root.selected.name)}
-  ControlTile {implicitWidth:132;label:'Remove';enabled:!!root.selected.name;onActivated:DesktopExtras.packageAction('remove',root.selected.name)}
-  ControlTile {implicitWidth:132;label:'Install typed';enabled:!!filter.text.trim();onActivated:DesktopExtras.packageAction('install',filter.text.trim())}
+  ControlTile {implicitWidth:132;label:'Update';enabled:!!root.selected.name&&!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('selected',root.selected.name)}
+  ControlTile {implicitWidth:132;label:'Details';enabled:!!root.selected.name&&!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('info',root.selected.name)}
+  ControlTile {implicitWidth:132;label:'Remove';enabled:!!root.selected.name&&!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('remove',root.selected.name)}
+  ControlTile {implicitWidth:132;label:'Install';enabled:!!filter.text.trim()&&!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('install',filter.text.trim())}
  }
- Row {spacing:7;ControlTile {implicitWidth:170;label:'List orphans';onActivated:DesktopExtras.packageAction('orphans')}ControlTile {implicitWidth:170;label:'Clean cache';onActivated:DesktopExtras.packageAction('clean')}ControlTile {implicitWidth:170;label:'Remove orphans';onActivated:DesktopExtras.packageAction('orphan-clean')}}
- Text {width:parent.width;text:'Transactions open in Kitty for review. Selected AUR packages update individually; selected pacman packages include a full repository upgrade.';wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}
+ Row {spacing:7;ControlTile {implicitWidth:170;label:'List orphans';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('orphans')}ControlTile {implicitWidth:170;label:'Clean cache';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('clean')}ControlTile {implicitWidth:170;label:'Remove orphans';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('orphan-clean')}}
+ Flow {width:parent.width;spacing:7
+  ControlTile {implicitWidth:170;label:'Flatpak updates';glyph:'\uf1b2';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('flatpak')}
+  ControlTile {implicitWidth:170;label:'Firmware updates';glyph:'\uf2db';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('firmware')}
+ }
+ Column {width:parent.width;spacing:8;visible:DesktopExtras.packageJob.status!=='idle'||DesktopExtras.packageJobError!==''
+  Text {width:parent.width;text:DesktopExtras.packageJobError||((DesktopExtras.packageJob.action||'Update')+' · '+(DesktopExtras.packageJob.phase||'Starting'));textFormat:Text.PlainText;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.signalRed;wrapMode:Text.WordWrap}
+  ProgressBar {width:parent.width;height:5;visible:DesktopExtras.packageBusy;indeterminate:true}
+  ScrollView {id:transactionLog;width:parent.width;height:160;clip:true;contentWidth:availableWidth
+   TextArea {readOnly:true;text:DesktopExtras.packageJob.log||'Starting background transaction…';textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;font.family:Appearance.font.telemetry;font.pixelSize:10;color:Theme.paper;background:Rectangle{color:Theme.surfaceOne}}
+  }
+  Row {spacing:7;visible:DesktopExtras.packageBusy
+   DeskTextField {id:answer;width:240;height:36;placeholderText:'Response to package prompt';color:Theme.paper;font.pixelSize:12;onAccepted:{DesktopExtras.packageAnswer(text);text='';}}
+   ControlTile {implicitWidth:92;label:'Send';glyph:'\uf00c';onActivated:{DesktopExtras.packageAnswer(answer.text);answer.text='';}}
+   ControlTile {implicitWidth:155;label:'Request stop';glyph:'\uf04d';onActivated:DesktopExtras.packageCancel()}
+  }
+  Row {spacing:7;visible:DesktopExtras.packageBusy
+   ControlTile {implicitWidth:150;label:'Confirm (y)';glyph:'\uf00c';onActivated:DesktopExtras.packageAnswer('y')}
+   ControlTile {implicitWidth:150;label:'Decline (n)';glyph:'\uf00d';onActivated:DesktopExtras.packageAnswer('n')}
+  }
+ }
+ Text {width:parent.width;text:'Review transaction output and answer prompts here. Authentication uses a password dialog. Updates continue if this panel closes; a notification reports completion.';wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}
 }

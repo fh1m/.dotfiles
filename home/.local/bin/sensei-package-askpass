@@ -1,0 +1,3 @@
+#!/bin/sh
+# Password is returned directly to sudo; never written to disk or job output.
+exec zenity --password --title='Authenticate system update'

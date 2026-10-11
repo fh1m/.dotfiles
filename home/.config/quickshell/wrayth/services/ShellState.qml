@@ -105,6 +105,7 @@ Singleton {
     }
 
     function toggleDropdown(name: string): void {
+        if (dropdownAnchors[name] !== undefined) dropdownAnchorX = anchorFor(name);
         dropdown = dropdown === name ? "" : name;
         dropdownStamp++;
     }

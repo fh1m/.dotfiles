@@ -65,6 +65,7 @@ enum PlayerEvent {
         playable_id: PlayableId<'static>,
         position_ms: u32,
     },
+    Stopped { playable_id: PlayableId<'static> },
     EndOfTrack {
         playable_id: PlayableId<'static>,
     },
@@ -96,6 +97,7 @@ impl PlayerEvent {
                 playable_id.uri(),
                 position_ms.to_string(),
             ],
+            PlayerEvent::Stopped { playable_id } => vec!["Stopped".to_string(), playable_id.uri()],
             PlayerEvent::EndOfTrack { playable_id } => {
                 vec!["EndOfTrack".to_string(), playable_id.uri()]
             }
@@ -142,8 +144,8 @@ impl PlayerEvent {
                 playable_id: spotify_id_to_playable_id(&track_id)?,
                 position_ms,
             }),
-            player::PlayerEvent::Stopped { track_id, .. } => Some(PlayerEvent::Paused {
-                playable_id: spotify_id_to_playable_id(&track_id)?, position_ms:0,
+            player::PlayerEvent::Stopped { track_id, .. } => Some(PlayerEvent::Stopped {
+                playable_id: spotify_id_to_playable_id(&track_id)?,
             }),
             player::PlayerEvent::EndOfTrack { track_id, .. } => Some(PlayerEvent::EndOfTrack {
                 playable_id: spotify_id_to_playable_id(&track_id)?,
@@ -253,12 +255,13 @@ pub async fn new_connection(
         let mut channel = player.get_player_event_channel();
         async move {
             let mut pause_armed = pause_on_startup;
+            let startup_deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
             while let Some(event) = channel.recv().await {
                 // Suppress Spotify's auto-resume of the previous session on
                 // startup. The `librespot` connect transfer finalizes the
                 // play state asynchronously, so a single reactive pause is not
                 // reliable on its own:
-                if USER_STARTED_PLAYBACK.load(Ordering::SeqCst) { pause_armed = false; }
+                if USER_STARTED_PLAYBACK.load(Ordering::SeqCst) || std::time::Instant::now() >= startup_deadline { pause_armed = false; }
                 if pause_armed {
                     match &event {
                         // Best-effort: pause as the track starts loading, before
@@ -309,7 +312,7 @@ pub async fn new_connection(
                                     bands.lock().is_active = true;
                                 }
                             }
-                            PlayerEvent::Paused { .. } => {
+                            PlayerEvent::Paused { .. } | PlayerEvent::Stopped { .. } => {
                                 let mut player = state.player.write();
                                 if let Some(playback) = player.buffered_playback.as_mut() {
                                     playback.is_playing = false;
