@@ -50,3 +50,7 @@ All 181 tests pass (165 core + 16 compatibility), including seven focused releas
 ## Remaining release decision
 
 The owner should perform the recorded 20–30-minute learner trial and report critical navigation/readability defects. Physical ScreenPad disconnection, physical input latency, delayed retention and educational effectiveness require their own observations. No software test can honestly substitute for these. Local recovery is not laptop-loss protection.
+
+## Scoped live deployment
+
+Implementation commit `308474101db2e206444ed8760d559da3ba35411d` was pushed and deployed through the backed-up scoped installer. All 89 deployed build hashes matched clean source. The independent `org.fh1m.Noesis` host at `~/.config/quickshell/noesis` passed three singleton reopens, Hide worker/watch shutdown and Close/restart context preservation. Wrayth PID 2795549 survived; unrelated window addresses, process identities and workspace placement were unchanged. The owner's original hidden state was restored. The retained deployment JSON identifies the exact rollback manifest; restore manifests in reverse deployment order.
