@@ -9,8 +9,10 @@ Singleton {
  id:root;property var previews:[];property bool opened:false;property string mode:"apps";property string query:"";property int selected:0;property bool pinned:false;property var mru:[];property var snapshot:[];property string sameClass:"";property string focusTitle:"";property int focusWorkspace:1;property string focusScreen:"eDP-1";property int focusStamp:0;property string lastFocusAddress:""
  property var showcaseHidden:[]
  readonly property var all:Hyprland.toplevels.values.filter(t=>(!Demo.active||!showcaseHidden.includes(root.addressFor(t)))&&t.wayland?.appId!=="sensei-deck"&&t.workspace?.name!=="special:deck"&&t.workspace?.name!=="deck")
+ readonly property var workspaceIds: Spaces.workspaceIds.concat(Array.from(new Set(all.map(t=>t.workspace?.id).filter(id=>Number.isInteger(id)&&id<0))).sort((a,b)=>b-a))
+ function workspaceTitle(id){if(id>0)return Spaces.workspaceNames[id-1]||String(id);const name=all.find(t=>t.workspace?.id===id)?.workspace?.name||"Special";return Spaces.labelFor(name.replace(/^special:/,""));}
  property var pendingSelection:null
- function finishSelection(){const p=pendingSelection;pendingSelection=null;if(!p)return;if(p.kind==='window')Hyprland.dispatch('hl.dsp.focus({window='+JSON.stringify('address:'+p.address)+'})');else if(p.kind==='workspace')Hyprland.dispatch('hl.dsp.focus({workspace='+JSON.stringify(String(p.id))+'})');else if(p.kind==='app')executeApp(p.entry);}
+ function finishSelection(){const p=pendingSelection;pendingSelection=null;if(!p)return;if(p.kind==='window')Hyprland.dispatch('hl.dsp.focus({window='+JSON.stringify('address:'+p.address)+'})');else if(p.kind==='workspace'){if(p.id>0)Quickshell.execDetached([Quickshell.env('HOME')+'/.local/bin/sensei-displays','workspace',String(p.id),ShellState.overlayScreenName]);else{const t=all.find(w=>w.workspace?.id===p.id);if(t)Hyprland.dispatch('hl.dsp.focus({window='+JSON.stringify('address:'+addressFor(t))+'})');}}else if(p.kind==='app')executeApp(p.entry);}
  property var workspaceCards:[]
  property var dragWindow:null
  property real dragX:0
@@ -50,12 +52,12 @@ Singleton {
  function resultScore(r){return isWindow(r)?Math.max(fuzzy(r.title),fuzzy(r.lastIpcObject?.class)):appScore(r);}
  function selectResult(r){if(!r)return;if(isWindow(r))choose(r);else launch(r);}
 
- function open(kind,delta){if(opened){cycle(delta);return;}ShellState.closeAll();mode=kind;query="";pinned=true;sameClass=ActiveWindow.ipc?.class||"";snapshot=all.slice().sort((a,b)=>{let ai=mru.indexOf(a.address),bi=mru.indexOf(b.address);return (ai<0?999:ai)-(bi<0?999:bi);});selected=kind==='workspaces'?Math.max(0,Spaces.workspaceIds.indexOf(Spaces.activeId)):0;opened=true;Hyprland.refreshToplevels();if(kind==='apps'||kind==='same')cycle(delta);}
- function cycle(delta){let count=query.trim()?searchResults.length:((mode==='workspaces'||mode==='overview')?Spaces.workspaceIds.length:matches.length);if(count)selected=(selected+delta+count)%count;}
+ function open(kind,delta){if(opened){cycle(delta);return;}ShellState.closeAll();ShellState.overlayScreenName=ShellState.focusedScreenName();mode=kind;query="";pinned=true;sameClass=ActiveWindow.ipc?.class||"";snapshot=all.slice().sort((a,b)=>{let ai=mru.indexOf(a.address),bi=mru.indexOf(b.address);return (ai<0?999:ai)-(bi<0?999:bi);});selected=kind==='workspaces'?Math.max(0,root.workspaceIds.indexOf(Spaces.activeId)):0;opened=true;Hyprland.refreshToplevels();if(kind==='apps'||kind==='same')cycle(delta);}
+ function cycle(delta){let count=query.trim()?searchResults.length:((mode==='workspaces'||mode==='overview')?root.workspaceIds.length:matches.length);if(count)selected=(selected+delta+count)%count;}
  function cancel(){pendingSelection=null;cancelDrag();opened=false;query="";}
  function choose(t){if(!t?.address)return;pendingSelection={kind:'window',address:addressFor(t)};opened=false;}
  function workspace(id){pendingSelection={kind:'workspace',id:id};opened=false;}
- function commit(){if(!opened)return;if(query.trim()){selectResult(searchResults[selected]);return;}if(mode==='overview'){workspace(Spaces.workspaceIds[selected]);return;}if(mode==='workspaces')workspace(Spaces.workspaceIds[selected]);else if(mode==='apps'||mode==='same')choose(matches[selected]);}
+ function commit(){if(!opened)return;if(query.trim()){selectResult(searchResults[selected]);return;}if(mode==='overview'){workspace(root.workspaceIds[selected]);return;}if(mode==='workspaces')workspace(root.workspaceIds[selected]);else if(mode==='apps'||mode==='same')choose(matches[selected]);}
  function move(t,id){pinned=true;Hyprland.dispatch('hl.dsp.window.move({window="address:'+addressFor(t)+'",workspace="'+id+'",follow=false})');Qt.callLater(()=>Hyprland.refreshToplevels());}
  function floatWindow(t){pinned=true;Hyprland.dispatch('hl.dsp.window.float({action="toggle",window="address:'+addressFor(t)+'"})');}
  function launch(e){pendingSelection={kind:'app',entry:e};opened=false;}
@@ -67,5 +69,6 @@ Singleton {
  Connections {target:Hyprland;function onActiveToplevelChanged(){root.syncFocus();}function onRawEvent(event){if(event.name==='moveoutofgroup'||(event.name==='togglegroup'&&String(event.data||'').startsWith('0,'))){const parts=String(event.data||'').split(',');Quickshell.execDetached([Quickshell.env('HOME')+'/.local/bin/sensei-tabs','pause',parts[parts.length-1]]);}if(event.name==='workspace'||event.name==='closewindow'){root.newlyOpened='';groupDelay.restart();}if(['openwindow','movewindow','movewindowv2'].includes(event.name)){root.newlyOpened=String(event.data||'').split(',')[0];groupDelay.restart();}if(['openwindow','closewindow','movewindow','workspace','focusedmon'].includes(event.name))Hyprland.refreshToplevels();}}
  Connections {target:ActiveWindow;function onIpcChanged(){root.syncFocus();}}
  Component.onCompleted:Qt.callLater(syncFocus)
+ Timer {interval:900;running:true;onTriggered:{Hyprland.refreshToplevels();Hyprland.refreshMonitors();root.syncFocus();}}
  Timer {interval:900;repeat:true;running:root.opened;onTriggered:Hyprland.refreshToplevels()}
 }

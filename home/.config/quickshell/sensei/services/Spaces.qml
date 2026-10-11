@@ -16,7 +16,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    IpcHandler {target:"workspaces";function state():string {return JSON.stringify({mode:root.pageLabel,glyph:root.modeGlyph,special:root.activeSpecial,active:root.activeId,slots:root.slots.map(s=>({label:s.label,active:s.active}))});}}
+    IpcHandler {target:"workspaces";function state():string {return JSON.stringify({monitors:root.outputState.map(m=>({name:m.name,active:m.activeWorkspace?.id,focused:m.focused})),mode:root.pageLabel,glyph:root.modeGlyph,special:root.activeSpecial,active:root.activeId,slots:root.slots.map(s=>({label:s.label,active:s.active}))});}}
     property var attentionAddresses: []
     function attention(address):void {const a=String(address||"").replace(/^0x/,"");if(a&&!attentionAddresses.includes(a))attentionAddresses=attentionAddresses.concat([a]);}
     function acknowledge(address):void {const a=String(address||"").replace(/^0x/,"");attentionAddresses=attentionAddresses.filter(x=>x!==a);}
@@ -36,14 +36,22 @@ Singleton {
         favorites: "Favorites"
     })
 
-    readonly property var mainMonitor: Hyprland.monitors.values.find(m => m.name === "eDP-1") ?? null
-    readonly property var monitorIpc: mainMonitor?.lastIpcObject ?? null
-
-    readonly property var focusedMonitor: Hyprland.monitors.values.find(m=>m.lastIpcObject?.focused) ?? mainMonitor
-    readonly property int activeId: focusedMonitor?.lastIpcObject?.activeWorkspace?.id ?? monitorIpc?.activeWorkspace?.id ?? mainMonitor?.activeWorkspace?.id ?? 1
-
-    // "special:deck" while one is up, "" otherwise.
-    readonly property string activeSpecial: focusedMonitor?.lastIpcObject?.specialWorkspace?.name ?? ""
+    // The compositor snapshot is authoritative across multi-GPU hotplug and QML reloads.
+    // Some Quickshell builds retain an incomplete monitor IPC cache.
+    property var outputState: []
+    property bool outputRefreshPending: false
+    function refreshOutputs():void {if(outputScan.running){outputRefreshPending=true;return;}outputScan.running=true;}
+    Component.onCompleted: refreshOutputs()
+    Timer {id:outputSettle;interval:35;onTriggered:root.refreshOutputs()}
+    Process {id:outputScan;command:["hyprctl","monitors","-j"]
+        stdout:StdioCollector {onStreamFinished:{try{const data=JSON.parse(text);if(Array.isArray(data))root.outputState=data;}catch(e){console.warn("Workspace monitor snapshot unavailable");}}}
+        onExited:if(root.outputRefreshPending){root.outputRefreshPending=false;Qt.callLater(()=>root.refreshOutputs());}
+    }
+    readonly property var mainMonitor: outputState.find(m=>m.name==="eDP-1") ?? outputState[0] ?? null
+    readonly property var monitorIpc: mainMonitor
+    readonly property var focusedMonitor: outputState.find(m=>m.focused) ?? mainMonitor
+    readonly property int activeId: focusedMonitor?.activeWorkspace?.id ?? 1
+    readonly property string activeSpecial: focusedMonitor?.specialWorkspace?.name ?? ""
     readonly property bool special: activeSpecial.startsWith("special:")
 
     // The bare names of every special workspace Hyprland currently knows about,
@@ -123,10 +131,9 @@ Singleton {
 
     function slotsFor(output:string):var {
         if(!output)return slots;
-        const monitor=Hyprland.monitors.values.find(m=>m.name===output)?.lastIpcObject;
-        const active=monitor?.activeWorkspace?.id;
-        const special=String(monitor?.specialWorkspace?.name||"").startsWith("special:");
-        return slots.map(s=>Object.assign({},s,{active:!special&&Number(s.target)===active}));
+        const monitor=outputState.find(m=>m.name===output);
+        const active=output===mainMonitor?.name&&focusedMonitor?.name==="DP-2" ? focusedMonitor?.activeWorkspace?.id : monitor?.activeWorkspace?.id;
+        return slots.map(s=>Object.assign({},s,{active:Number(s.target)===active}));
     }
     function activate(slot, output = "") {
         if (slot.empty)
@@ -145,8 +152,7 @@ Singleton {
             const n = event.name;
             if(n==="urgent"){root.attention(event.data);Hyprland.refreshToplevels();}
             if(n==="activewindowv2"||n==="closewindow")root.acknowledge(event.data);
-            if (n.endsWith("v2"))
-                return;
+            if (["activespecial", "activespecialv2", "workspace", "workspacev2", "moveworkspace", "moveworkspacev2", "focusedmon", "monitoradded", "monitoraddedv2", "monitorremoved"].includes(n)) outputSettle.restart();
             if (["activespecial", "workspace", "createworkspace", "destroyworkspace", "moveworkspace", "renameworkspace", "focusedmon"].includes(n)) {
                 Hyprland.refreshWorkspaces();
                 Hyprland.refreshMonitors();

@@ -21,8 +21,8 @@ hl.window_rule({
 -- Sequential workspaces, applied after custom-setup's earlier defaults.
 local noesis_workspace_names = { "Terminal", "Web", "Code", "Study", "Sim", "Work", "Misc" }
 for id, name in ipairs(noesis_workspace_names) do
-    hl.workspace_rule({ workspace = tostring(id), default_name = name, persistent = true,
-        monitor = id == 7 and "DP-2" or id == 1 and "eDP-1" or nil, default = id == 1 or id == 7 })
+    hl.workspace_rule({ workspace = tostring(id), default_name = name, persistent = id == 7,
+        monitor = id == 7 and "DP-2" or nil, default = id == 7 })
     hl.unbind("SUPER + " .. id)
     hl.unbind("SUPER + SHIFT + " .. id)
     hl.bind("SUPER + " .. id, hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/sensei-displays workspace " .. id))

@@ -20,6 +20,7 @@ def run(command, timeout=15):
 
 
 def monitors():return json.loads(run(['hyprctl','monitors','-j']))
+def known_workspaces():return json.loads(run(['hyprctl','workspaces','-j']))
 def dispatch(expression):run(['hyprctl','dispatch',expression])
 def external(name):return name.startswith('HDMI-') or name=='SENSEI-HDMI-TEST'
 def selector(name):
@@ -115,6 +116,9 @@ def sync(layout=True,notify=True):
     data={'displays':[],'session':os.environ.get('HYPRLAND_INSTANCE_SIGNATURE',''),'outputs':[m['name'] for m in outputs if external(m['name'])]}
     for name,record in physical.items():
         record=dict(record,output=name,bus=buses.get(name),ready=False,active=name in data['outputs'])
+        monitor=next((m for m in outputs if m['name']==name),None)
+        if monitor:
+            record.update(width=monitor['width'],height=monitor['height'],refresh=monitor.get('refreshRate',60),scale=monitor.get('scale',1),format=monitor.get('currentFormat','Unknown'))
         if record['bus'] is not None:
             try:record.update(brightness(record['bus']),ready=True)
             except (OSError,ValueError,subprocess.SubprocessError):record['error']='DDC brightness unavailable; use the monitor controls'
@@ -152,13 +156,20 @@ def workspace(number,output=None):
     name=output or (current['name'] if current else '')
     target=next((m for m in outputs if m['name']==name),None)
     if not target:raise ValueError('Display is not connected')
+    special=target.get('specialWorkspace',{}).get('name','')
+    if special.startswith('special:'):
+        dispatch('hl.dsp.focus({monitor='+selector(name)+'})')
+        dispatch('hl.dsp.workspace.toggle_special('+json.dumps(special.removeprefix('special:'))+')')
     source=next((m for m in outputs if m.get('activeWorkspace',{}).get('id')==number),None)
     shared=external(name) or name=='eDP-1'
     if number!=7 and shared:
         if source and source['name']!=name:
             dispatch('hl.dsp.workspace.swap_monitors({monitor1='+selector(name)+',monitor2='+selector(source['name'])+'})')
         elif not source:
-            dispatch('hl.dsp.workspace.move({workspace="'+str(number)+'",monitor='+selector(name)+'})')
+            if any(w.get('id')==number for w in known_workspaces()):
+                dispatch('hl.dsp.workspace.move({workspace="'+str(number)+'",monitor='+selector(name)+'})')
+            # Empty, nonpersistent workspaces must be created on the requested output.
+            dispatch('hl.dsp.focus({monitor='+selector(name)+'})')
     dispatch('hl.dsp.focus({workspace="'+str(number)+'"})')
 
 

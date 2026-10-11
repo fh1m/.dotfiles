@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell.Io
 import qs.components
 import qs.config
 import qs.services
@@ -10,6 +11,7 @@ Item {
     id: root
     property string output:""
     property bool compact:false
+    readonly property bool external: output.startsWith("HDMI-") || output === "SENSEI-HDMI-TEST"
     readonly property var monitorSlots:Spaces.slotsFor(output)
 
     // The bar draws the line under these, so it needs their pitch and which one
@@ -17,6 +19,10 @@ Item {
     readonly property int itemWidth: compact?38:Appearance.metrics.workspaceWidth
     readonly property int itemSpacing: 7
     readonly property int activeIndex: monitorSlots.findIndex(s=>s.active)
+    property int carriageIndex: 0
+    onActiveIndexChanged: if (activeIndex >= 0) carriageIndex = activeIndex
+    Component.onCompleted: if (activeIndex >= 0) carriageIndex = activeIndex
+    IpcHandler {target:"workspace-rail-"+root.output;function state():string {return JSON.stringify({output:root.output,active:root.activeIndex,carriage:root.carriageIndex,x:carriage.x,slots:root.monitorSlots});}}
 
     implicitWidth: slots.implicitWidth + 6
     implicitHeight: Appearance.metrics.workspaceHeight + 6
@@ -30,8 +36,9 @@ Item {
     }
     Rectangle {
         id: carriage
-        visible: root.activeIndex >= 0
-        x: 3 + root.activeIndex * (root.itemWidth + root.itemSpacing)
+        opacity: root.activeIndex >= 0 ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 100 } }
+        x: 3 + root.carriageIndex * (root.itemWidth + root.itemSpacing)
         y: 3
         width: root.itemWidth
         height: Appearance.metrics.workspaceHeight
@@ -39,7 +46,7 @@ Item {
         radius: Theme.radiusSmall
         border.width: 1
         border.color: Theme.rule
-        Behavior on x { SmoothedAnimation { velocity: 900; maximumEasingTime: 140 } }
+        Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
     }
     Row {
     id: slots
@@ -88,7 +95,7 @@ Item {
                     visible: text !== ""
                     text: button.modelData.glyph ?? ""
                     font.family: "ZedMono Nerd Font"
-                    font.pixelSize: 14
+                    font.pixelSize: root.external ? 16 : 14
                     color: button.active ? Theme.signalRed : button.occupied ? Theme.paper : Theme.mute
                     renderType: Text.NativeRendering
                 }
@@ -99,10 +106,10 @@ Item {
                     text: button.modelData.label
                     font.capitalization: Font.MixedCase
                     color: button.active ? Theme.paper : button.occupied ? Theme.paper : Theme.mute
-                    pixelSize: 11
+                    pixelSize: root.external ? 13 : 11
                     font.family: Appearance.font.barUi
                     tracked: false
-                    font.letterSpacing: 0.5; font.features: Appearance.tabularFigures
+                    font.letterSpacing: root.external ? 0 : 0.5; font.features: Appearance.tabularFigures
                 }
             }
 

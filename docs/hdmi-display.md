@@ -1,5 +1,7 @@
 # HDMI on the ZenBook
 
+**Resolved on 12 October:** physical HDMI output is confirmed by the owner, with 1920×1080 at 74.973 Hz, Intel as primary renderer and NVIDIA driving HDMI. The sections below retain the investigation history; the final acceptance section records the working state.
+
 The internal `eDP-1` and `DP-2` connectors belong to Intel. The HDMI connector belongs to NVIDIA. On 11 October, Linux detected an **LG FULL HD** monitor on `card1-HDMI-A-1` with 1920×1080 modes, but the running Hyprland process allowed only `/dev/dri/card2`. Consequently Hyprland listed only the two internal displays. The connected monitor's gray screen was not an empty Hyprland workspace: its GPU was excluded from the compositor.
 
 The display-manager entry **Hyprland (Intel repair)** invokes `~/.local/bin/hyprland-repair-session`. That wrapper now resolves stable PCI paths and allows both GPUs, with Intel first:
@@ -85,3 +87,48 @@ HDMI was temporarily disabled in the running session to stop repeated failed fra
 The next physical acceptance check remains: new login → three outputs → HDMI pixels at its supported mode → brightness → repeated unplug/replug and monitor replacement → shared workspaces and popup placement → normal interactive load. The current cable remains detected by the kernel and DDC brightness remains available even while its compositor output is temporarily disabled.
 
 The defect is suitable for human upstream review, but [hyprwm's AI policy](https://github.com/hyprwm/.github/blob/main/policies/AI_USAGE.md) forbids agents from submitting or writing developer-facing PR/issue communications. No upstream submission was made. Human submission also requires the organization's vouch process.
+
+### Second physical login: the constant fix was insufficient
+
+The constant fix removed the initial rejection, but NVIDIA then failed with `glCheckFramebufferStatus failed: 1282`. The monitor was correctly detected at 1080p/74.973 Hz and had wallpaper/bar surfaces; this still did **not** mean physical presentation worked. Testing 60 Hz did not repair the framebuffer error. HDMI was disabled again in the running session to prevent the repeated failed-frame loop.
+
+A small isolated GBM/EGL diagnostic reproduced the actual failure without taking DRM master or restarting the desktop. On the NVIDIA render node, allocating XR24 native buffers and supplying their explicit NVIDIA layout modifiers produced a complete framebuffer (`0x8cd5`, no GL error). Importing the same buffers while omitting their modifiers produced an incomplete attachment (`0x8cd6`, GL error `0x502`). Intel's own implicit/native buffers also produced complete framebuffers. This explains why the global modifier-free workaround cannot be applied identically to both vendors.
+
+The private patch now adds an opt-in `SENSEI_AQ_NVIDIA_MODIFIERS=1` exception to the global `AQ_NO_MODIFIERS` setting. Intel retains the ScreenPad workaround; NVIDIA uses its driver-reported explicit modifier capability and native renderable scanout buffers. Its blit destination is not a shared linear swapchain, so NVIDIA can render into a compatible tiled target while sampling the Intel source. The environment exception is enabled only alongside the tested private library. This is a machine workaround, separate from the generic constant correction.
+
+The revised build passed the four upstream tests and load-symbol checks. The build script installs into a new versioned directory and activates a symlink after validation, preserving libraries already mapped by running processes. Old build directories are retained for rollback. Existing single-hunk builds are upgraded without discarding source changes: each maintained patch file is independently applied or verified already applied.
+
+The diagnostic source is `scripts/diagnostics/gbm-probe.cpp`. Build and run it with the **current** render-node path (resolve the stable PCI symlink first):
+
+```sh
+c++ scripts/diagnostics/gbm-probe.cpp -o /tmp/gbm-probe $(pkg-config --cflags --libs egl glesv2 gbm libdrm)
+/tmp/gbm-probe /dev/dri/by-path/pci-0000:01:00.0-render
+/tmp/gbm-probe /dev/dri/by-path/pci-0000:01:00.0-render omit
+```
+
+It allocates only small temporary buffers, does not change display modes, and does not request DRM master. The test demonstrates buffer renderability, not screen scanout. Physical presentation with the revised vendor-specific workaround still requires the next compositor login.
+
+
+## Third physical login: working output and reading polish
+
+The fresh session loaded the revised, versioned Aquamarine library. HDMI frame capture completed immediately; the former destination-DMABUF and framebuffer/blit errors were absent. The owner confirmed the physical picture. The actual mode is 1920×1080 at 74.973 Hz, 1× scale, XRGB8888, positioned left at −1920,0. The two internal panels remain at their original modes and 2× scale.
+
+The external bar now contains only its workspace rail (with an External marker) and hardware brightness. Its workspace labels are 13px with no added tracking. Small brightness labels use native Qt text rendering. The ScreenPad marker identifies External when that output is focused. Both the ScreenPad's main-display rail and HDMI's rail use the same shared-workspace helper; selecting a visible workspace swaps it between the two displays. Misc retains its ScreenPad role.
+
+An event-triggered monitor snapshot avoids incomplete/stale monitor metadata in the running Quickshell service. It refreshes on workspace, focus and topology changes, coalesces bursts, and retains the previous state on failed reads. There is no idle polling. Each rail keeps its own monitor's active workspace visible even while a scratchpad is open; its 220ms moving selection retains the last valid position through refreshes. A live switch from Web to Code measured intermediate x=176.99 then final x=213, proving that the carriage moves rather than jumps. The original workspace was restored.
+
+The external terminal had been hidden in a legacy Scratch workspace. It was moved intact into regular Terminal, preserving its process and tmux session. The four legacy shortcuts for hiding/moving ordinary windows into Scratch were removed. Workspaces 1–6 form one unpinned shared pool; only Misc retains its persistent ScreenPad assignment. Empty regular workspaces are created after focusing the requested output, avoiding accidental creation on another display. Live checks covered empty-workspace creation on each display, visible-workspace swaps, and a configuration reload with the same terminal process still visible.
+
+Preview geometry uses each output’s actual logical dimensions and origin instead of fixed main-display coordinates. The overview includes all ordinary applications. Existing intentionally named special utilities remain discoverable if occupied; no Scratch workspace is created. Overview selection of a regular workspace uses the same shared-pool helper as the rail.
+
+The application switcher previously rendered only on main-bar screens. It now uses the invoking display's overlay screen and includes external-screen applications and their live previews. Keyboard-opened dropdowns use the focused display rather than unconditionally choosing main/ScreenPad. Live checks confirmed the switcher surface on HDMI and the System popup there (596×788, fully revealed), plus Sound and Calendar through their own keyboard IPC routes. Clicking an internal bar still opens its widget on that bar. Noesis's explicitly main-display workspace is preserved.
+
+Terminal rendering keeps Iosevka at 11.8pt, using its installed Medium face for stronger strokes and glyph offsets x=1/y=2 to center ink within the additional cell spacing. Fontconfig full hinting applies only to Iosevka raster sizes at or below 20px; larger HiDPI sizes retain slight hinting. Grayscale antialiasing is retained, avoiding an assumption about the subpixel order of arbitrary plugged-in displays. Existing Alacritty windows reloaded the font/spacing configuration without closing tmux sessions. Fontconfig readback confirmed hintstyle=3 at 16px and hintstyle=1 at 32px.
+
+The monitor's physical pixel density is approximately 102 pixels/inch from its reported 480×270mm dimensions. Native 1080p cannot show the same fine detail as the internal 4K panel. No supersampling, invented HDR profile, custom timing or unmeasured color correction is applied. For monitor-side text issues, use the monitor's native/no-overscan mode and avoid artificial sharpening: [LG's manual](https://gscs-b2c.lge.com/open/downloadFile?fileId=tLpwl3q8THbE4wNVGT59A) says Super Resolution+ is unsuitable for normal text/desktop icons. The exact physical panel model and calibration remain unverified; no factory settings were reset.
+
+Rendering choices follow [Qt text rendering](https://doc.qt.io/qt-6/qml-qtquick-text.html), [Fontconfig properties](https://fontconfig.pages.freedesktop.org/fontconfig/fontconfig-user.html), and [Alacritty font/cell offsets](https://alacritty.org/releases/0.14.0/config-alacritty.html). The existing [native Xwayland scaling](https://wiki.hypr.land/configuring/extra/xwayland/) setting is preserved.
+
+After a compositor configuration reload, the display service reapplies the best supported native mode; the preferred-mode fallback must not silently leave this monitor at 60 Hz. DDC state reports the actual brightness and mode, and scrolling coalesces increments using the latest requested level rather than repeatedly starting from an old readback. Current DDC reads and the actual popup were verified. Main and ScreenPad brightness repairs were already verified through their widget path with sysfs readback. The renderer build's four upstream tests and the dotfiles regression suite (226 tests) pass. Physical cable replacement/unplug/replug and prolonged video playback are still owner acceptance checks; software topology/monitor-identity regressions do not substitute for those checks.
+
+The scoped polish backup is `~/.local/state/dotfiles-backups/external-polish-20261012-004942/`. Only display, rail, popup/switcher routing, font and renderer-build files were deployed. Generated palettes and unrelated live configuration were preserved. Rollback uses the backed-up files; the renderer has retained versioned builds and Intel-only/system-library startup fallbacks described above.

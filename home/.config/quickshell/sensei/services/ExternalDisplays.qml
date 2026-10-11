@@ -31,7 +31,7 @@ Singleton {
         onExited:if(root.refreshPending){root.refreshPending=false;Qt.callLater(()=>root.refresh());}
     }
     Process {id:control;stdout:SplitParser {onRead:line=>root.accept(line)} onExited:Qt.callLater(()=>root.next())}
-    Connections {target:Hyprland;function onRawEvent(event){if(["monitoradded","monitoraddedv2","monitorremoved"].includes(event.name))settle.restart();}}
+    Connections {target:Hyprland;function onRawEvent(event){if(["monitoradded","monitoraddedv2","monitorremoved","configreloaded"].includes(event.name))settle.restart();}}
     Connections {target:ShellState;function onDropdownChanged(){if(["system","external-display"].includes(ShellState.dropdown))root.refresh();}}
     Timer {id:settle;interval:700;onTriggered:root.refresh()}
     IpcHandler {target:"displays";function refresh():void {root.refresh();}function state():string {return JSON.stringify({data:root.data,error:root.error,externalScreens:ShellState.externalScreens.map(s=>s.name),bottomBars:ShellState.bottomBarScreens.map(s=>s.name)});}function workspace(number:int,output:string):void {Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-displays","workspace",String(number),output]);}function panel(output:string):void {ShellState.dropdownOriginScreen=output;ShellState.dropdownAnchorX=12;ShellState.dropdown="external-display";}}

@@ -26,22 +26,22 @@ Scope {
 
     IpcHandler {
         target: "weather"
-        function open():void { ShellState.dropdownAnchorX=(ShellState.barScreens[0]?.width??1920)/2;ShellState.dropdown="weather"; }
-        function page(index:int):void {ShellState.dropdownAnchorX=ShellState.anchorFor("weather");WeatherDesk.page=Math.max(0,Math.min(3,index));ShellState.dropdown="weather";}
-        function history(date:string):void {ShellState.dropdownAnchorX=ShellState.anchorFor("weather");WeatherDesk.page=3;WeatherDesk.loadHistory(date);ShellState.dropdown="weather";}
+        function open():void { ShellState.dropdownAnchorX=(ShellState.barScreens[0]?.width??1920)/2;ShellState.openDropdown("weather"); }
+        function page(index:int):void {ShellState.dropdownAnchorX=ShellState.anchorFor("weather");WeatherDesk.page=Math.max(0,Math.min(3,index));ShellState.openDropdown("weather");}
+        function history(date:string):void {ShellState.dropdownAnchorX=ShellState.anchorFor("weather");WeatherDesk.page=3;WeatherDesk.loadHistory(date);ShellState.openDropdown("weather");}
         function state():string {return JSON.stringify({city:WeatherDesk.city,summary:WeatherDesk.summary,loading:WeatherDesk.loading,error:WeatherDesk.error,date:WeatherDesk.selectedDate,hours:WeatherDesk.data.weather?.hourly?.time?.length||0,historyHours:WeatherDesk.history.history?.hourly?.time?.length||0});}
     }
     IpcHandler {
         target: "spotify"
-        function search(query: string): void { SpotifyDesk.page=4;SpotifyDesk.query=query;ShellState.dropdown="spotify"; }
+        function search(query: string): void { SpotifyDesk.page=4;SpotifyDesk.query=query;ShellState.openDropdown("spotify"); }
         function art(): void { SpotifyDesk.artExpanded=true; }
-        function browse(kind: string, id: string): void { SpotifyDesk.browse({kind:kind,id:id});ShellState.dropdown="spotify"; }
-        function open(): void { ShellState.dropdown="spotify"; }
-        function page(index: string): string { SpotifyDesk.page=Math.max(0,Math.min(6,Number(index)||0));ShellState.dropdown="spotify";return String(SpotifyDesk.page); }
+        function browse(kind: string, id: string): void { SpotifyDesk.browse({kind:kind,id:id});ShellState.openDropdown("spotify"); }
+        function open(): void { ShellState.openDropdown("spotify"); }
+        function page(index: string): string { SpotifyDesk.page=Math.max(0,Math.min(6,Number(index)||0));ShellState.openDropdown("spotify");return String(SpotifyDesk.page); }
         function state(): string { return JSON.stringify({playing:SpotifyDesk.playing,trackLoading:SpotifyDesk.trackLoading,title:SpotifyDesk.title,artist:SpotifyDesk.artist,art:SpotifyDesk.albumArt,page:SpotifyDesk.page,loading:SpotifyDesk.loading,error:SpotifyDesk.error,contextId:SpotifyDesk.contextItem.id||"",contextRows:SpotifyDesk.contextRows.length,queue:SpotifyDesk.queueRows.length,playlists:SpotifyDesk.playlistRows.length,library:SpotifyDesk.libraryRows.length,rows:SpotifyDesk.visibleRows.length,total:SpotifyDesk.totalRows,query:SpotifyDesk.query,artExpanded:SpotifyDesk.artExpanded,volume:SpotifyDesk.volume,pendingVolume:SpotifyDesk.pendingVolume,lyricsOpen:SpotifyDesk.lyricsOpen,lyricsLoading:SpotifyDesk.lyricsLoading,lyricsSynced:!!SpotifyDesk.lyricsData.synced,lyricLines:(SpotifyDesk.lyricsData.lines||[]).length,lyricIndex:SpotifyDesk.lyricIndex,lyricPosition:SpotifyDesk.lyricPosition,lyricsError:SpotifyDesk.lyricsError,player:SpotifyDesk.player?.dbusName||""}); }
         function action(name: string): void { SpotifyDesk.action(name); }
         function volume(value: int): void { SpotifyDesk.action("volume", [String(value)]); }
-        function lyrics(): void { ShellState.dropdown="spotify";SpotifyDesk.page=0;SpotifyDesk.lyricsOpen=true; }
+        function lyrics(): void { ShellState.openDropdown("spotify");SpotifyDesk.page=0;SpotifyDesk.lyricsOpen=true; }
     }
     IpcHandler {
         target: "spaces"
@@ -49,23 +49,23 @@ Scope {
     }
     IpcHandler {
         target: "system"
-        function network(index:string):void {DesktopExtras.networkPage=Math.max(0,Math.min(2,Number(index)||0));ShellState.systemPage=3;ShellState.dropdownAnchorX=ShellState.anchorFor("system");ShellState.dropdown="system";}
+        function network(index:string):void {DesktopExtras.networkPage=Math.max(0,Math.min(2,Number(index)||0));ShellState.systemPage=3;ShellState.dropdownAnchorX=ShellState.anchorFor("system");ShellState.openDropdown("system");}
         function authentication(active:string):void {ShellState.externalDialogOpen=active==="on";}
-        function packages():void {ShellState.systemPage=4;ShellState.dropdownAnchorX=ShellState.anchorFor("system");ShellState.dropdown="system";}
+        function packages():void {ShellState.systemPage=4;ShellState.dropdownAnchorX=ShellState.anchorFor("system");ShellState.openDropdown("system");}
         function state():string {return JSON.stringify({page:ShellState.systemPage,networkPage:DesktopExtras.networkPage,packages:DesktopExtras.packages.total||0,updates:(DesktopExtras.packages.updates||[]).length,checked:DesktopExtras.packages.checked||0,loading:DesktopExtras.packagesLoading,error:DesktopExtras.packagesError});}
         function page(index: string): string {
             const value = Number(index);
             if (value < 0 || value > 4 || !Number.isInteger(value)) return "page: 0 Quick, 1 Hardware, 2 Robotics, 3 Network, 4 Packages";
             ShellState.systemPage = value;
             ShellState.dropdownAnchorX = ShellState.anchorFor("system");
-            ShellState.dropdown = "system";
+            ShellState.openDropdown("system");
             return String(value);
         }
     }
 
     IpcHandler {
         target:"comic"
-        function latest():void {ShellState.dropdownAnchorX=12;ShellState.dropdown="comic";DesktopExtras.loadComic('latest');}
+        function latest():void {ShellState.dropdownAnchorX=12;ShellState.openDropdown("comic");DesktopExtras.loadComic('latest');}
         function previous():void {if(DesktopExtras.comic.num>1)DesktopExtras.loadComic(DesktopExtras.comic.num-1);}
         function next():void {if(DesktopExtras.comic.num<DesktopExtras.comic.latest)DesktopExtras.loadComic(DesktopExtras.comic.num+1);}
         function state():string {return JSON.stringify({number:DesktopExtras.comic.num,latest:DesktopExtras.comic.latest,loading:DesktopExtras.comicLoading,error:DesktopExtras.comicError});}
@@ -194,12 +194,12 @@ Scope {
     IpcHandler {
         target: "monitor"
         function state():string {return JSON.stringify({page:ShellState.monitorPage,cpu:LiveMonitor.data.cpu,processes:LiveMonitor.data.processes.length,mounts:LiveMonitor.data.mounts.length,network:LiveMonitor.data.network.length,extra:!!LiveMonitor.data.extra,gpu:RobotBench.data.gpu.state,chrome:ChromeControl.data,error:ChromeControl.error});}
-        function page(index: string): void { ShellState.monitorPage = Math.max(0, Math.min(6, parseInt(index) || 0)); ShellState.dropdown = "monitor"; }
+        function page(index: string): void { ShellState.monitorPage = Math.max(0, Math.min(6, parseInt(index) || 0)); ShellState.openDropdown("monitor"); }
     }
     IpcHandler {
         target: "clipboard"
-        function select(id: string): void { ClipboardVault.select(parseInt(id)); ShellState.dropdown = "clipboard"; }
-        function filter(kind: string): void { ClipboardVault.filter = kind; ShellState.dropdown = "clipboard"; }
+        function select(id: string): void { ClipboardVault.select(parseInt(id)); ShellState.openDropdown("clipboard"); }
+        function filter(kind: string): void { ClipboardVault.filter = kind; ShellState.openDropdown("clipboard"); }
         function state(): string { return JSON.stringify({count:ClipboardVault.count,selected:ClipboardVault.selected,kind:ClipboardVault.detail.kind??"",ready:!!ClipboardVault.detail.id,error:ClipboardVault.error}); }
     }
     IpcHandler {
@@ -217,12 +217,12 @@ Scope {
     }
     IpcHandler {
         target: "sound"
-        function page(index: string): void { SoundDesk.page=Math.max(0,Math.min(5,parseInt(index)||0));ShellState.dropdown="sound"; }
+        function page(index: string): void { SoundDesk.page=Math.max(0,Math.min(5,parseInt(index)||0));ShellState.openDropdown("sound"); }
         function state(): string { return JSON.stringify({volume:Audio.volume,muted:Audio.muted,playing:Cava.live,audible:Audio.audible,outputs:SoundDesk.data.sinks.length,inputs:SoundDesk.data.sources.length,apps:SoundDesk.data['sink-inputs'].length,capture:SoundDesk.data['source-outputs'].length,error:SoundDesk.error}); }
     }
     IpcHandler {
         target: "calendar"
-        function page(index: string): void { CalendarDesk.page=Math.max(0,Math.min(4,parseInt(index)||0));ShellState.dropdownAnchorX=ShellState.anchorFor("calendar");ShellState.dropdown="calendar"; }
+        function page(index: string): void { CalendarDesk.page=Math.max(0,Math.min(4,parseInt(index)||0));ShellState.dropdownAnchorX=ShellState.anchorFor("calendar");ShellState.openDropdown("calendar"); }
         function state(): string { return JSON.stringify({events:CalendarDesk.events.length,error:CalendarDesk.error,clocks:CalendarDesk.clocks.length}); }
     }
     readonly property bool codeOpen: CodeDesk.opened
@@ -251,10 +251,10 @@ Scope {
                 return `unknown dropdown ${name}; one of ${root.dropdownNames.join(", ")}`;
             // Under the readout that owns it, so the panel hangs where a
             // click would have put it rather than in the middle of the bar.
-            // Keyboard/IPC openings must not inherit an earlier HDMI hover.
-            ShellState.dropdownOriginScreen = "";
+            // Keyboard/IPC openings belong to the currently focused output.
+            ShellState.dropdownOriginScreen = ShellState.focusedScreenName();
             ShellState.dropdownAnchorX = ShellState.anchorFor(name);
-            ShellState.dropdown = name;
+            ShellState.openDropdown(name);
             return name;
         }
         function close(): void {

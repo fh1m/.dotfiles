@@ -20,13 +20,14 @@ history = 10000
 multiplier = 3
 
 [font]
-normal = { family = "Iosevka Nerd Font Mono", style = "Regular" }
+normal = { family = "Iosevka Nerd Font Mono", style = "Medium" }
 bold = { family = "Iosevka Nerd Font Mono", style = "Bold" }
 italic = { family = "Iosevka Nerd Font Mono", style = "Italic" }
 bold_italic = { family = "Iosevka Nerd Font Mono", style = "Bold Italic" }
 size = 11.8
 offset = { x = 1, y = 4 }
-glyph_offset = { x = 0, y = 0 }
+# Center ink in the extra letter/line spacing at integer pixel positions.
+glyph_offset = { x = 1, y = 2 }
 builtin_box_drawing = true
 
 [colors.primary]

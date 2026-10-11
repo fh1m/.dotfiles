@@ -18,8 +18,8 @@ Item {
     Row {anchors.left:parent.left;anchors.leftMargin:10;anchors.verticalCenter:parent.verticalCenter;spacing:6
         InstrumentIcon {anchors.verticalCenter:parent.verticalCenter;kind:root.external?"external-display":root.output==="main"?"brightness":"display";ink:Theme.signalRed;level:root.level/100}
         Column {visible:!root.condensed;anchors.verticalCenter:parent.verticalCenter;spacing:-1
-            Text {text:root.external?"HDMI":root.output==="main"?"Display":"ScreenPad";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
-            Text {text:root.external&&!root.externalDisplay?.ready?"Monitor controls":Math.round(root.level)+"%";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.widgetMuted}
+            Text {text:root.external?"HDMI":root.output==="main"?"Display":"ScreenPad";font.family:Appearance.font.barUi;renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;font.pixelSize:root.external?13:12;font.weight:Font.DemiBold;color:Theme.text}
+            Text {text:root.external&&!root.externalDisplay?.ready?"Monitor controls":Math.round(root.level)+"%";font.family:Appearance.font.barUi;renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;font.pixelSize:root.external?12:10;color:Theme.widgetMuted}
         }
     }
     MouseArea {

@@ -29,6 +29,27 @@ class ExternalDisplays(unittest.TestCase):
         monitor['availableModes']=['1920x1080@60.00Hz','1280x720@120.00Hz','1920x1080@74.97Hz','malformed']
         self.assertEqual(m.optimal_mode(monitor),('1920x1080@74.97',1920,1080,74.97))
 
+    def test_native_layout_is_idempotent_and_4k_uses_integer_scaling(self):
+        m=module();monitor=screen('HDMI-A-1',6)
+        monitor.update(refreshRate=74.973,availableModes=['1920x1080@74.97Hz'])
+        with patch.object(m,'run') as run:
+            m.configure([monitor]);run.assert_not_called()
+            monitor.update(availableModes=['3840x2160@60.00Hz'])
+            m.configure([monitor]);expression=run.call_args.args[0][-1]
+            self.assertIn('mode="3840x2160@60"',expression)
+            self.assertIn('scale=2',expression)
+            self.assertIn('position="-1920x0"',expression)
+
+    def test_state_exposes_actual_mode_not_an_advertised_mode(self):
+        m=module();monitor=screen('HDMI-A-1',6)
+        monitor.update(refreshRate=74.973,currentFormat='XRGB8888')
+        with patch.object(m,'read_state',return_value={}),patch.object(m,'connected',return_value={'HDMI-A-1':{'id':'fixture'}}),patch.object(m,'monitors',return_value=[monitor]),patch.object(m,'run',return_value=''),patch.object(m,'write_state'):
+            record=m.sync(layout=False,notify=False)['displays'][0]
+            self.assertEqual((record['width'],record['height'],record['scale']),(1920,1080,1))
+            self.assertEqual(record['refresh'],74.973)
+            self.assertEqual(record['format'],'XRGB8888')
+            self.assertFalse(record['ready'])
+
     def test_ddc_ignores_internal_and_invalid_displays(self):
         m=module();text='Display 1\n   I2C bus: /dev/i2c-1\n   DRM connector: card1-HDMI-A-1\nInvalid display\n   I2C bus: /dev/i2c-12\n   DRM connector: card2-DP-2\n'
         self.assertEqual(m.ddc_devices(text),{'HDMI-A-1':1})
@@ -42,12 +63,12 @@ class ExternalDisplays(unittest.TestCase):
 
     def test_workspace_swap_keeps_shared_ids_and_misc_stays(self):
         m=module();outputs=[screen('eDP-1',1),screen('HDMI-A-1',6,True),screen('DP-2',7)]
-        with patch.object(m,'monitors',return_value=outputs),patch.object(m,'dispatch') as dsp:
+        with patch.object(m,'monitors',return_value=outputs),patch.object(m,'known_workspaces',return_value=[]),patch.object(m,'dispatch') as dsp:
             m.workspace(1,'HDMI-A-1')
             self.assertIn('swap_monitors',dsp.call_args_list[0].args[0])
             self.assertIn('workspace="1"',dsp.call_args_list[-1].args[0])
             dsp.reset_mock();m.workspace(3,'HDMI-A-1')
-            self.assertIn('workspace.move',dsp.call_args_list[0].args[0])
+            self.assertIn('monitor="HDMI-A-1"',dsp.call_args_list[0].args[0]);self.assertNotIn('workspace.move',dsp.call_args_list[0].args[0])
             dsp.reset_mock();m.workspace(7,'HDMI-A-1')
             self.assertEqual(dsp.call_count,1);self.assertNotIn('workspace.move',dsp.call_args.args[0])
 
@@ -72,6 +93,25 @@ class ExternalDisplays(unittest.TestCase):
             result=m.sync(layout=False,notify=False)
             self.assertTrue(result['displays'][0]['ready']);self.assertEqual(result['displays'][0]['bus'],2)
             self.assertEqual(run.call_args.args[0],['ddcutil','detect','--brief'])
+
+    def test_existing_inactive_workspace_moves_before_focus(self):
+        m=module();outputs=[screen('eDP-1',6),screen('HDMI-A-1',1,True)]
+        with patch.object(m,'monitors',return_value=outputs),patch.object(m,'known_workspaces',return_value=[{'id':3}]),patch.object(m,'dispatch') as dsp:
+            m.workspace(3,'eDP-1')
+            commands=[call.args[0] for call in dsp.call_args_list]
+            self.assertIn('workspace.move',commands[0])
+            self.assertIn('monitor="eDP-1"',commands[1])
+            self.assertIn('workspace="3"',commands[-1])
+
+    def test_numbered_selection_leaves_a_visible_special_workspace(self):
+        m=module();target=screen('HDMI-A-1',6,True)
+        target['specialWorkspace']={'name':'special:special'}
+        with patch.object(m,'monitors',return_value=[target]),patch.object(m,'dispatch') as dsp:
+            m.workspace(6,'HDMI-A-1')
+            commands=[call.args[0] for call in dsp.call_args_list]
+            self.assertIn('monitor="HDMI-A-1"',commands[0])
+            self.assertIn('toggle_special("special")',commands[1])
+            self.assertIn('workspace="6"',commands[-1])
 
     def test_unknown_output_or_invalid_workspace_does_not_dispatch(self):
         m=module()

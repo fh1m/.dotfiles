@@ -121,10 +121,9 @@ hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("qs -c sensei ipc call spotify action p
 hl.bind("SHIFT + SUPER + bracketright", hl.dsp.exec_cmd("bash -c 'cur=$(cat /sys/class/backlight/asus_screenpad/brightness); max=$(cat /sys/class/backlight/asus_screenpad/max_brightness); pct=$((cur * 100 / max + 10)); [ \"$pct\" -gt 100 ] && pct=100; asusctl backlight --screenpad-brightness \"$pct\"'"))
 hl.bind("SHIFT + SUPER + bracketleft", hl.dsp.exec_cmd("bash -c 'cur=$(cat /sys/class/backlight/asus_screenpad/brightness); max=$(cat /sys/class/backlight/asus_screenpad/max_brightness); pct=$((cur * 100 / max - 10)); [ \"$pct\" -lt 0 ] && pct=0; asusctl backlight --screenpad-brightness \"$pct\"'"))
 
-hl.bind(mod .. " + MINUS", hl.dsp.window.move({ workspace = "special:special" }))
-hl.bind(mod .. " + EQUAL", hl.dsp.workspace.toggle_special("special"))
-hl.bind(mod .. " + F1", hl.dsp.workspace.toggle_special("scratchpad"))
-hl.bind(mod .. " + ALT + SHIFT + F1", hl.dsp.window.move({ workspace = "special:scratchpad" }))
+-- Ordinary applications stay on the shared numbered workspaces.
+-- Remove legacy hide/move-to-scratchpad shortcuts, including earlier bindings.
+for _, key in ipairs({"SUPER + MINUS", "SUPER + EQUAL", "SUPER + F1", "SUPER + ALT + SHIFT + F1"}) do hl.unbind(key) end
 
 hl.window_rule({
     name = "personal-floating-dialogs",

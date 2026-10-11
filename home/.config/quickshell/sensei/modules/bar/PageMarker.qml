@@ -19,6 +19,10 @@ import qs.services
 Item {
     id: root
 
+    property string output: ""
+    readonly property bool external: (output || Spaces.focusedMonitor?.name || "").startsWith("HDMI-")
+    readonly property string modeText: external ? "\uf26c External" : Spaces.modeGlyph + " " + Spaces.pageLabel
+
     // Five normal pages covers workspaces 1 to 25, and one more for the
     // special page. Beyond that the pips stop being countable at a glance
     // anyway, so the marker does not grow.
@@ -29,7 +33,7 @@ Item {
 
     readonly property int shown: Math.max(1, Math.min(Spaces.pipCount, maxPips))
 
-    implicitWidth: labelSlot.implicitWidth + labelGap + shown * (pipSize + pipGap) - pipGap
+    implicitWidth: labelSlot.implicitWidth + (external ? 0 : labelGap + shown * (pipSize + pipGap) - pipGap)
     implicitHeight: 11
 
 
@@ -39,7 +43,7 @@ Item {
         id: widest
 
         font: label.font
-        text: Spaces.modeGlyph + " " + Spaces.pageLabel
+        text: root.modeText
     }
 
     Item {
@@ -55,13 +59,16 @@ Item {
 
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            color: Spaces.special ? Theme.signalRed : Theme.dim
-            text: Spaces.modeGlyph + " " + Spaces.pageLabel
+            pixelSize: root.external ? 12 : Appearance.size.label
+            tracked: !root.external
+            color: !root.external && Spaces.special ? Theme.signalRed : Theme.dim
+            text: root.modeText
         }
     }
 
     Row {
         id: pips
+        visible: !root.external
 
         anchors.left: labelSlot.right
         anchors.leftMargin: root.labelGap
@@ -90,6 +97,6 @@ Item {
         }
     }
 
-    MouseArea {anchors.fill:parent;enabled:Spaces.special;onClicked:{const name=Spaces.activeSpecial.slice(8);Quickshell.execDetached(["hyprctl","dispatch",'hl.dsp.workspace.toggle_special("'+name+'")']);}}
+    MouseArea {anchors.fill:parent;enabled:!root.external&&Spaces.special;onClicked:{const name=Spaces.activeSpecial.slice(8);Quickshell.execDetached(["hyprctl","dispatch",'hl.dsp.workspace.toggle_special("'+name+'")']);}}
 
 }

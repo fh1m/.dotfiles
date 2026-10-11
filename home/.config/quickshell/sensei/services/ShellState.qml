@@ -37,7 +37,7 @@ Singleton {
     function barContext(output:string):void {dropdownOriginScreen=output;}
 
     function focusedScreenName(): string {
-        return Hyprland.focusedMonitor?.name ?? barScreens[0]?.name ?? "";
+        return Hyprland.focusedMonitor?.name ?? Spaces.focusedMonitor?.name ?? barScreens[0]?.name ?? "";
     }
     property string overlayScreenName: "eDP-1"
     readonly property var overlayScreens: {
@@ -107,6 +107,12 @@ Singleton {
 
     function anchorFor(name: string): real {
         return dropdownAnchors[name] ?? 0;
+    }
+
+    function openDropdown(name: string): void {
+        dropdownOriginScreen = focusedScreenName();
+        dropdownAnchorX = anchorFor(name);
+        dropdown = name;
     }
 
     function toggleDropdown(name: string): void {

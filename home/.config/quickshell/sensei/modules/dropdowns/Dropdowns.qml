@@ -192,7 +192,8 @@ Variants {
                 const requested = ShellState.dropdown;
                 const bottom = requested === "monitor" || requested === "clipboard" || requested === "usb" || requested === "phone" || requested === "oasis";
                 const origin=ShellState.screens.find(s=>s.name===ShellState.dropdownOriginScreen);
-                const wantedScreen = (origin ?? (bottom ? (ShellState.bottomBarScreens[0] ?? ShellState.barScreens[0]) : ShellState.barScreens[0]))?.name;
+                const focused=ShellState.screens.find(s=>s.name===ShellState.focusedScreenName());
+                const wantedScreen = (origin ?? focused ?? ShellState.barScreens[0])?.name;
                 const want = popup.modelData?.name === wantedScreen ? requested : "";
 
                 // **The ID editor arms at once.** It is typed into the moment

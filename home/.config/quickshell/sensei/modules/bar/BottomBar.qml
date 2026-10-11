@@ -32,6 +32,7 @@ Variants {
         Rectangle { anchors.fill: parent; color: Theme.barBg }
         Row {
             id: meters
+            visible: !bar.external
             anchors.left: parent.left
             anchors.leftMargin: 16
             anchors.verticalCenter: parent.verticalCenter
@@ -46,17 +47,17 @@ Variants {
             id: navigation
             anchors.centerIn: parent
             spacing: 10
-            PageMarker { visible:!bar.external;anchors.verticalCenter: parent.verticalCenter }
-            Workspaces { id: workspaces;output:bar.external?bar.outputName:"";compact:bar.external&&bar.width<1500;anchors.verticalCenter: parent.verticalCenter }
+            PageMarker { output:bar.external?bar.outputName:"";anchors.verticalCenter: parent.verticalCenter }
+            Workspaces { id: workspaces;output:bar.external?bar.outputName:Spaces.mainMonitor?.name??bar.outputName;compact:bar.external&&bar.width<1500;anchors.verticalCenter: parent.verticalCenter }
         }
         Row {
             id:machineControls
             spacing: 3
-            RailFold { expanded: bar.machineOpen; opensRight: false; onToggled: bar.machineOpen = !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
-            ArchiveButton { condensed: !bar.machineOpen; target: "oasis"; label: "Noesis"; detail:LearningBridge.NoesisBridge.activeVault?"Build · understand":"Choose a vault"; glyph: "\uf02d"; anchors.verticalCenter: parent.verticalCenter }
-            UsbBadge { condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
-            SimLaunchpad { condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
-            DisplayBadge { output: bar.external?bar.outputName:bar.outputName==="DP-2"?"screenpad":"main"; condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
+            RailFold { visible:!bar.external; expanded: bar.machineOpen; opensRight: false; onToggled: bar.machineOpen = !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
+            ArchiveButton { visible:!bar.external; condensed: !bar.machineOpen; target: "oasis"; label: "Noesis"; detail:LearningBridge.NoesisBridge.activeVault?"Build · understand":"Choose a vault"; glyph: "\uf02d"; anchors.verticalCenter: parent.verticalCenter }
+            UsbBadge { visible:!bar.external; condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
+            SimLaunchpad { visible:!bar.external; condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
+            DisplayBadge { output: bar.external?bar.outputName:bar.outputName==="DP-2"?"screenpad":"main"; condensed: !bar.external && !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
             anchors.right: parent.right
             anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter

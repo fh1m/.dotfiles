@@ -17,7 +17,11 @@ Singleton {
         setLevel(output, base + delta);
     }
     function setLevel(output: string, percent: real): void {
-        if(output!=="main"&&output!=="screenpad"){ExternalDisplays.setLevel(output,percent);return;}
+        if(output!=="main"&&output!=="screenpad"){
+            const externalLevel = Math.max(0, Math.min(100, Math.round(percent)));
+            targets[output] = {level: externalLevel, time: Date.now()};
+            ExternalDisplays.setLevel(output,externalLevel);return;
+        }
         const level = Math.max(1, Math.min(100, Math.round(percent)));
         targets[output] = {level: level, time: Date.now()};
         pending[output] = level;
