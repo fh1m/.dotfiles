@@ -1,5 +1,19 @@
 # Noesis native UI review
 
+## UX finalization — first review slice
+
+Actual native captures with labelled disposable agent examples; no private content or learner achievement. Main reading pair uses 1920×1080 logical, Qt DPR 2, 100% interface/reading scale. The same source text is used in both captures. This is the first slice, not completion of the four-milestone UX plan. [Verification and remaining work](ux-finalization.md).
+
+![Before: repeated shell and reading controls](assets/ux-finalization/source-before.png)
+
+![After: source title, task actions, preview and reasoning](assets/ux-finalization/source-after.png)
+
+![Native source created through ordinary controls, resumed at 200% scale](assets/ux-finalization/source-native-200.png)
+
+![Practice retains problem identity at 200% scale](assets/ux-finalization/practice-200-after.png)
+
+![Native Wrayth launch menu](assets/ux-finalization/bar-menu.png)
+
 ## Dijkstra through the shared learning thread
 
 Actual native Noesis using agent-authored disposable records. Before UI: `dcfcb01`;

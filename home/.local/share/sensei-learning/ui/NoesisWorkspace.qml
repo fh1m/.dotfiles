@@ -39,7 +39,7 @@ Rectangle {
  readonly property bool readingWorking:contextTab==="Read"&&!!selected.id&&!courseWorking&&!investigationWorking&&!["paper","project","experiment","capability"].includes(workflow.kind)&&["resource","unit","stage","note"].includes(selected.type)
  function loadFrontier(cursor){frontierSerial=send("frontier",{record_id:selected.id,cursor:cursor||null});}
  property bool sourceOnSecondDisplay:false
- onSourceOnSecondDisplayChanged:if(sourceOnSecondDisplay&&activeAttempt)practicePage.showReasoning()
+ Connections {target:NoesisController;function onOpenSerialChanged(){Qt.callLater(()=>root.applyLaunch());}}
  function reviewPrerequisite(row){readinessDialog.begin(row);}
  property var selected:({})
  property var courseRecord:({})
@@ -195,6 +195,7 @@ Rectangle {
  function contextActions(){
   let items=[];let add=(action,label,reason)=>items.push({action:action,label:label,reason:reason||""});let kind=selected.type;
   if(!selected.id||NoesisController.working)return items;
+  if(root.readingWorking)add("work","Reasoning & attempts","Open the existing working surface for this source");
   if(["task","problem"].includes(kind)&&history.some(event=>["attempt","review"].includes(event.event))&&!referenceHidden&&!activeAttempt)add("evidence","Review latest evidence","Judge a scoped result against a capability criterion");
   if(!referenceHidden)add("connect-existing","Connect existing knowledge","Reuse a concept, note, source or drawing");
   add("drawing","Draw / Diagram","Create a linked editable sketch or Canvas map");add("scratch","Try in code","Create a linked Python scratch experiment; execution is deliberate");
@@ -224,7 +225,7 @@ Rectangle {
   add("history","Learning history","Inspect preserved attempts, notes and evidence");add("connections","Connected context","Inspect source, prerequisites and related work");return items;
  }
  function contextAction(action){
-  if(action==="history")contextTab="History";else if(action==="connections")contextTab="Connections";else if(action==="evidence"){let entry=history.slice().reverse().find(event=>["attempt","review"].includes(event.event));if(entry)evidenceDialog.begin(entry);}
+  if(action==="work")contextTab="Work";else if(action==="history")contextTab="History";else if(action==="connections")contextTab="Connections";else if(action==="evidence"){let entry=history.slice().reverse().find(event=>["attempt","review"].includes(event.event));if(entry)evidenceDialog.begin(entry);}
   else if(action==="perform-check"){let plan=pendingCheck();if(plan){contextTab="Work";saveEvent("attempt-start",{mode:mode.currentText,scope:selected.title||selected.path,review_plan_id:plan.id});}}
   else if(action==="attempt-settings")attemptSettings.open();
   else if(action==="priority")priorityDialog.begin();
@@ -355,7 +356,7 @@ Rectangle {
     NoesisButton {variant:"tertiary";visible:root.navigationIndex>0&&!root.tight;text:"Previous activity";enabled:!!root.selected.id||root.navigationIndex>0;onClicked:root.back();Accessible.name:"Back";hint:"Alt+Left"}
     NoesisButton {variant:"tertiary";text:"Next in history";visible:!root.tight&&root.navigationIndex+1<root.navigation.length;enabled:root.navigationIndex+1<root.navigation.length;onClicked:root.forward();Accessible.name:"Forward";hint:"Alt+Right"}
     Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;visible:!root.compact&&!root.selected.id;text:root.section;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.heading;width:Math.max(100,implicitWidth);elide:Text.ElideRight}
-    NoesisSelect {visible:root.compact&&!!root.selected.id&&!root.focusMode&&!root.courseWorking&&!root.investigationWorking&&root.section!=="Practice";model:["Read","Work","History","Connections"];currentIndex:model.indexOf(root.contextTab);Accessible.name:"Working page section";onActivated:root.contextTab=currentText}
+    NoesisSelect {visible:root.compact&&!!root.selected.id&&!root.focusMode&&!root.courseWorking&&!root.investigationWorking&&!root.readingWorking&&root.section!=="Practice";model:["Read","Work","History","Connections"];currentIndex:model.indexOf(root.contextTab);Accessible.name:"Working page section";onActivated:root.contextTab=currentText}
     NoesisButton {text:"Details";visible:root.compact&&!root.tight&&!!root.selected.id&&!root.focusMode;onClicked:root.inspectorOpen=!root.inspectorOpen}
     NoesisButton {text:"Search";visible:root.compact&&!root.tight&&!root.focusMode;onClicked:searchPopup.open()}
     NoesisField {id:search;visible:!root.compact&&!root.focusMode&&!root.selected.id;Keys.onDownPressed:{list.forceActiveFocus();list.currentIndex=0;}width:Math.min(320,Math.max(180,root.width*.25));placeholderText:"Search · Ctrl+K";onTextChanged:{root.query=text;searchDelay.restart();}Accessible.name:"Search learning records"}
@@ -363,7 +364,7 @@ Rectangle {
     NoesisButton {text:"Help";variant:"tertiary";onClicked:helpDialog.open()}
     NoesisButton {text:"Start learning";primary:!root.selected.id;onClicked:root.startLearning()}
     NoesisButton {text:root.collectionScope?"All learning vaults":"This vault";hint:"Ctrl+Shift+K · read scope; saves stay in the owning vault";visible:["Today","Library"].includes(root.section);highlighted:root.collectionScope;onClicked:{root.collectionScope=!root.collectionScope;root.load(false);}}
-    NoesisButton {visible:!root.compact&&!root.focusMode;text:"Refresh";onClicked:root.send("reconcile");Accessible.name:"Refresh"}
+    NoesisButton {visible:!root.selected.id&&!root.compact&&!root.focusMode;text:"Refresh";onClicked:root.send("reconcile");Accessible.name:"Refresh"}
    }
    SplitView {id:workingSplit;Layout.fillWidth:true;Layout.fillHeight:true;Layout.leftMargin:NoesisStyle.lg;Layout.rightMargin:NoesisStyle.lg;orientation:Qt.Horizontal
     handle:Rectangle {implicitWidth:8;color:SplitHandle.hovered?NoesisStyle.rule:NoesisStyle.surface}
@@ -391,7 +392,7 @@ Rectangle {
      NoesisButton {visible:root.cursor!=="";text:"Load 50 more";onClicked:root.load(true);Layout.bottomMargin:NoesisStyle.xl}
     }
     ColumnLayout {visible:!!root.selected.id&&!root.browseOpen&&!root.query;SplitView.fillWidth:true;SplitView.minimumWidth:Math.min(480,workingSplit.width);spacing:NoesisStyle.md
-     RowLayout {visible:!root.compact&&!root.courseWorking&&!root.investigationWorking&&root.section!=="Practice";Layout.fillWidth:true
+     RowLayout {visible:!root.compact&&!root.courseWorking&&!root.investigationWorking&&!root.readingWorking&&root.section!=="Practice";Layout.fillWidth:true
       ColumnLayout {Layout.fillWidth:true;spacing:NoesisStyle.xs
        Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:String(root.selected.unit_kind||root.selected.source_kind||({task:"problem",prerequisite:"prerequisite",unit:"lesson"})[root.selected.type]||root.selected.type||"context").toUpperCase();color:NoesisStyle.quiet;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
        Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:root.selected.title||root.selected.imported_title||root.selected.path||"";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.heading;wrapMode:Text.Wrap;Layout.fillWidth:true}
@@ -401,12 +402,12 @@ Rectangle {
       NoesisButton {visible:false;text:"Return to collection";onClicked:{root.stashDraft();root.selected=({});}
        Accessible.name:"Close context"}
      }
-     Flow {visible:!root.compact&&!root.courseWorking&&!root.investigationWorking&&root.section!=="Practice";Layout.fillWidth:true;spacing:NoesisStyle.xs
+     Flow {visible:!root.compact&&!root.courseWorking&&!root.investigationWorking&&!root.readingWorking&&root.section!=="Practice";Layout.fillWidth:true;spacing:NoesisStyle.xs
       Repeater {model:["Read","Work","History","Connections"];delegate:NoesisButton {required property string modelData;variant:"tertiary";text:modelData;highlighted:root.contextTab===modelData;onClicked:root.contextTab=modelData}}
       Item {Layout.fillWidth:true}
       NoesisButton {visible:!root.readingWorking;text:"Open note ↗";enabled:!root.referenceHidden;onClicked:NoesisController.note(root.selected.path)}
      }
-     Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
+     Flow {visible:!root.readingWorking;Layout.fillWidth:true;spacing:NoesisStyle.sm
       NoesisButton {text:"Draw / Diagram";enabled:!NoesisController.working;onClicked:explorationDialog.begin("drawing")}
       NoesisButton {text:root.selected.scratch_directory?"Edit scratch code":"Try in code";enabled:!NoesisController.working;onClicked:root.selected.scratch_directory?NoesisController.run(["scratch-open",root.selected.id]):explorationDialog.begin("scratch")}
       NoesisButton {text:"Open terminal to run";visible:!!root.selected.scratch_directory;onClicked:NoesisController.run(["scratch-terminal",root.selected.id])}
@@ -465,7 +466,7 @@ Rectangle {
       onPageClaims:cursor=>root.claimSerial=root.send("claims",{record_id:root.selected.id,cursor:cursor})
       onPageFrontier:cursor=>root.loadFrontier(cursor)
      }
-     NoesisReadingPage {id:readingPage;visible:root.readingWorking;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:0;record:root.selected;preview:root.documentPreview;notes:root.evidence.text;savedPlace:String(root.selectedState.locator?.value??root.selectedState.position??"");locationKind:root.selectedState.locator?.kind||"location";questions:root.relations.filter(row=>row.other_type==="question");protectedReference:root.referenceHidden;busy:root.contextLoading||!NoesisController.hostReady||NoesisController.working||NoesisController.uncertainReceipt||NoesisController.exitRequested
+     NoesisReadingPage {id:readingPage;onDraw:explorationDialog.begin("drawing");onTryCode:root.selected.scratch_directory?NoesisController.run(["scratch-open",root.selected.id]):explorationDialog.begin("scratch");onInspectContext:root.inspectorOpen=!root.inspectorOpen;visible:root.readingWorking;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:0;record:root.selected;preview:root.documentPreview;notes:root.evidence.text;savedPlace:String(root.selectedState.locator?.value??root.selectedState.position??"");locationKind:root.selectedState.locator?.kind||"location";questions:root.relations.filter(row=>row.other_type==="question");protectedReference:root.referenceHidden;busy:root.contextLoading||!NoesisController.hostReady||NoesisController.working||NoesisController.uncertainReceipt||NoesisController.exitRequested
       onOpenSource:root.openSource()
       onOpenNote:NoesisController.note(root.selected.path)
       onNotesEdited:value=>{root.evidence.text=value;draftSave.restart();}
@@ -524,7 +525,7 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
       }
      }
      ScrollView {id:practiceHost;implicitHeight:0;implicitWidth:0;visible:root.contextTab==="Work"&&!root.investigationWorking;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:0;clip:true;contentWidth:availableWidth;contentHeight:practicePage.height;ScrollBar.horizontal.policy:ScrollBar.AlwaysOff;ScrollBar.vertical.policy:ScrollBar.AlwaysOn
-     NoesisPracticePage {id:practicePage;support:root.relations;onOpenSupport:row=>root.openWork({id:row.other_id,path:row.other_path,title:row.other_title,type:row.other_type,vault:row.other_vault||NoesisController.activeVault,vault_id:row.other_vault_id});lastAssessment:root.history.slice().reverse().find(event=>["attempt","review"].includes(event.event))||({});onInvestigateFailure:createDialog.begin("question",root.selected.id,false,"",lastAssessment);width:practiceHost.availableWidth;height:Math.max(practiceHost.availableHeight,minimumWorkingHeight);contextTitle:root.selected.title||root.selected.path||"";attemptId:root.activeAttempt;statement:root.workflow.statement||"";statementPreview:root.workflow.statement_preview||({blocks:[]});originalProblemAvailable:root.selected.source_kind==="problem-statement"&&!!root.selected.source;onOpenOriginalProblem:NoesisController.run(["read-resource",root.selected.path,"--target-id",root.selected.id]);referenceHidden:root.referenceHidden;compact:root.compact;externalStatement:root.sourceOnSecondDisplay;busy:root.contextLoading||NoesisController.working;settingsLabel:root.activeAttempt?"Outcome: "+outcome.currentText+" · assistance: "+assistance.currentText:"Attempt mode: "+mode.currentText
+     NoesisPracticePage {id:practicePage;support:root.relations;onOpenSupport:row=>root.openWork({id:row.other_id,path:row.other_path,title:row.other_title,type:row.other_type,vault:row.other_vault||NoesisController.activeVault,vault_id:row.other_vault_id});lastAssessment:root.history.slice().reverse().find(event=>["attempt","review"].includes(event.event))||({});onInvestigateFailure:createDialog.begin("question",root.selected.id,false,"",lastAssessment);width:practiceHost.availableWidth;height:Math.max(practiceHost.availableHeight,minimumWorkingHeight);contextTitle:root.selected.title||root.selected.path||"";attemptId:root.activeAttempt;statement:root.workflow.statement||"";statementPreview:root.workflow.statement_preview||({blocks:[]});originalProblemAvailable:root.selected.source_kind==="problem-statement"&&!!root.selected.source;onOpenOriginalProblem:NoesisController.run(["read-resource",root.selected.path,"--target-id",root.selected.id]);referenceHidden:root.referenceHidden;compact:root.compact;externalStatement:false;busy:root.contextLoading||NoesisController.working;settingsLabel:root.activeAttempt?"Outcome: "+outcome.currentText+" · assistance: "+assistance.currentText:"Attempt mode: "+mode.currentText
       onDraftChanged:if(root.selected.id)draftSave.restart()
       onStartAttempt:root.contextAction("attempt-start")
       onSaveAttempt:root.contextAction("attempt-save")

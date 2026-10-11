@@ -28,19 +28,29 @@ ColumnLayout {
  signal askQuestion()
  signal openQuestion(var row)
  signal savePlace(string value,string kind)
+ signal draw()
+ signal tryCode()
+ signal inspectContext()
  onRecordChanged:{let identity=(record.vault||"")+":"+(record.id||"");if(identity!==previousIdentity){notesOnly=false;placeOpen=false;previousIdentity=identity;}}
  function restoreAnchors(view){notesOnly=view.reading_notes_only===true;Qt.callLater(()=>{sourceScroll.ScrollBar.vertical.position=Math.max(0,Math.min(1-sourceScroll.ScrollBar.vertical.size,view.reading_anchor||0));notesScroll.ScrollBar.vertical.position=Math.max(0,Math.min(1-notesScroll.ScrollBar.vertical.size,view.reading_notes_anchor||0));});}
  spacing:NoesisStyle.md
+ ColumnLayout {Layout.fillWidth:true;spacing:NoesisStyle.xs
+  Text {Layout.fillWidth:true;text:page.record.title||"Learning source";textFormat:Text.PlainText;wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.title;font.bold:true;renderType:Text.NativeRendering}
+  Text {Layout.fillWidth:true;text:page.savedPlace?"Continue from "+page.savedPlace:"Read or watch, then develop your own explanation.";textFormat:Text.PlainText;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}
+ }
  Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
-  NoesisButton {visible:page.hasSource;text:page.savedPlace?"Resume source ↗":"Open original source ↗";primary:true;enabled:!page.busy&&!page.protectedReference;onClicked:page.openSource()}
-  NoesisButton {text:"Learning options";enabled:!page.busy&&!page.protectedReference;onClicked:page.showActions()}
-  NoesisButton {text:"Edit complete note in Obsidian ↗";enabled:!page.busy&&!page.protectedReference;onClicked:page.openNote()}
+  NoesisButton {visible:page.hasSource;text:page.savedPlace?"Resume source ↗":"Open original source ↗";primary:page.notes.trim()==="";enabled:!page.busy&&!page.protectedReference;onClicked:page.openSource()}
+  NoesisButton {variant:"tertiary";text:"Notes in Obsidian ↗";enabled:!page.busy&&!page.protectedReference;onClicked:page.openNote()}
+  NoesisButton {variant:"tertiary";text:"Draw / Diagram";enabled:!page.busy;onClicked:page.draw()}
+  NoesisButton {variant:"tertiary";text:page.record.scratch_directory?"Edit scratch code":"Try in code";enabled:!page.busy;onClicked:page.tryCode()}
+  NoesisButton {variant:"tertiary";text:"Learning options";enabled:!page.busy;onClicked:page.showActions()}
+  NoesisButton {variant:"tertiary";text:"Context";onClicked:page.inspectContext()}
   NoesisButton {visible:page.compact&&page.hasReading;text:page.notesOnly?"Show reading":"Show notes & questions";highlighted:page.notesOnly;onClicked:page.notesOnly=!page.notesOnly}
  }
  SplitView {id:panes;Layout.fillWidth:true;Layout.fillHeight:true;orientation:Qt.Horizontal;handle:Item {implicitWidth:NoesisStyle.lg}
   ScrollView {id:sourceScroll;visible:page.hasReading&&(!page.compact||!page.notesOnly);SplitView.preferredWidth:panes.width*.57;SplitView.minimumWidth:0;SplitView.fillWidth:page.compact;clip:true;contentWidth:availableWidth;padding:NoesisStyle.xl;background:Rectangle {color:NoesisStyle.canvas;radius:NoesisStyle.radius}
    ColumnLayout {width:sourceScroll.availableWidth;spacing:NoesisStyle.lg
-    Text {Layout.fillWidth:true;text:"Reading";textFormat:Text.PlainText;color:NoesisStyle.accent;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;renderType:Text.NativeRendering}
+    Text {Layout.fillWidth:true;text:"Source preview";textFormat:Text.PlainText;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;renderType:Text.NativeRendering}
     NoesisDocument {Layout.fillWidth:true;Layout.maximumWidth:NoesisStyle.readingWidth;framed:false;blocks:page.protectedReference?[]:page.preview.blocks||[];originalAvailable:!page.protectedReference&&!page.busy;onOpenOriginal:page.openNote()}
     Text {visible:page.protectedReference||!(page.preview.blocks||[]).length;Layout.fillWidth:true;text:page.protectedReference?"Reference protected for this attempt. Reveal it deliberately from the working page.":"Open the original source for authoritative reading. Use the notes beside it to record your explanation and questions.";textFormat:Text.PlainText;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;renderType:Text.NativeRendering}
     Text {visible:!!page.preview.truncated;Layout.fillWidth:true;text:"This is a bounded preview. The complete note remains available in Obsidian.";textFormat:Text.PlainText;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}

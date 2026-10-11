@@ -55,7 +55,7 @@ Rectangle {
  signal showActions()
  signal configureAttempt()
  ColumnLayout {anchors.fill:parent;anchors.margins:NoesisStyle.lg;spacing:NoesisStyle.md
-      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;id:contextHeading;visible:!!root.contextTitle&&!root.compact;Layout.fillWidth:true;textFormat:Text.PlainText;text:root.contextTitle;wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.title;font.bold:true}
+      Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;id:contextHeading;visible:!!root.contextTitle;Layout.fillWidth:true;textFormat:Text.PlainText;text:root.contextTitle;wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.title;font.bold:true}
       Label {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;id:attemptLabel;visible:!root.compact;text:root.attemptId?root.referenceHidden?"Independent attempt in progress · reference protected":"Attempt in progress · reference revealed; exposure remains recorded":"Predict first. Preserve the reasoning before checking it.";color:NoesisStyle.secondary;wrapMode:Text.Wrap;Layout.fillWidth:true;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
       Text {id:lastResult;visible:!root.attemptId&&!!root.lastAssessment.id;Layout.fillWidth:true;text:"Latest recorded result: "+(root.lastAssessment.outcome||"unknown")+" · assistance: "+(root.lastAssessment.assistance||["unknown"]).join(", ")+". A new attempt preserves this history.";textFormat:Text.PlainText;wrapMode:Text.Wrap;color:root.lastAssessment.outcome==="failed"?NoesisStyle.warning:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}
       RowLayout {id:surfaceSwitch;Layout.fillWidth:true;spacing:NoesisStyle.sm;visible:root.compact||root.externalStatement
@@ -74,7 +74,7 @@ Rectangle {
        ColumnLayout {visible:!(root.compact||root.externalStatement)||root.thinking;SplitView.fillWidth:true;SplitView.fillHeight:true;SplitView.minimumHeight:120;SplitView.minimumWidth:Math.min(320,practiceSplit.width);spacing:NoesisStyle.sm
         Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;id:reasonHeading;textFormat:Text.PlainText;text:"Your reasoning";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.sectionHeading;wrapMode:Text.Wrap;Layout.fillWidth:true}
         ScrollView {id:reasoningScroll;Layout.fillWidth:true;Layout.fillHeight:true;clip:true
-         NoesisEditor {id:evidence;objectName:"practice-reasoning";width:reasoningScroll.availableWidth;placeholderText:"Prediction, reasoning, derivation or observed discrepancy…";onTextChanged:root.draftChanged()}
+         NoesisEditor {id:evidence;implicitWidth:240*NoesisStyle.interfaceScale;objectName:"practice-reasoning";width:reasoningScroll.availableWidth;placeholderText:"Prediction, reasoning, derivation or observed discrepancy…";onTextChanged:root.draftChanged()}
         }
         Text {id:editorGuide;renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;text:root.attemptId?"Ctrl+Tab leaves the editor · Ctrl+Enter records the attempt":"Ctrl+Tab leaves the editor · Ctrl+Enter starts an independent attempt";wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
        }

@@ -1,0 +1,9 @@
+{
+  "isolated_bar_native_click": true,
+  "ordinary_open_single_instance": true,
+  "warm_open_from_other_workspace": true,
+  "start_menu": true,
+  "capture_menu": true,
+  "personal_wrayth_restarted": false,
+  "fixture": "/var/tmp/noesis-lifecycle-b5ul8hlo"
+}

@@ -4,6 +4,8 @@ Noesis connects sources, questions, reasoning, practice, code and evidence. Your
 
 ## Begin and return
 
+Click **Noesis** in the Wrayth bar, use **Super+Ctrl+O**, or launch the desktop entry to resume your saved activity. Opening an already visible instance preserves its editor and open sheet. The arrow beside the bar button offers **Start learning** and **Quick capture**; Escape or an outside click dismisses that menu.
+
 Choose an authorized learning vault using the vault selector in the left navigation. Noesis does not automatically adopt discovered directories. If none is available, vault setup remains necessary before saving. Do not choose Downloads as your learning vault.
 
 Choose **Start learning** in the toolbar, or press **Ctrl+N**. Paste a URL or enter a question; choose a local file or select **Choose from Zotero**. Select the format and enter a recognizable title. **Continue** opens the ordinary record form; **Save** opens its working page. The title and outline are yours: Noesis does not extract transcripts or invent metadata. [Start now](noesis:start).
@@ -20,6 +22,10 @@ Choose **Start learning** in the toolbar, or press **Ctrl+N**. Paste a URL or en
 Keep Zotero running for **Choose from Zotero**. Its local API must be enabled in Zotero’s Advanced settings; Noesis uses read-only requests and does not require permission to write to the bibliography. If Zotero is unavailable, use the original URL/file and import later.
 
 Use **Set a reading place**, enter a page, section or timestamp, and **Save reading place**. Saved places are context, not proof that a lesson was understood. Use **Ask a source-linked question** to preserve uncertainty. **Save study note** preserves your explanation in activity history.
+
+The reading page keeps its title, source preview and **Your notes & questions** together. Use **Notes in Obsidian**, **Draw / Diagram** or **Try in code** beside the source action. **Learning options** includes **Reasoning & attempts**, **Learning history**, **Connected context** and **Today priority**. **Context** opens supporting details without leaving your source.
+
+**Hide** preserves drafts and hides both study surfaces. A successful specialist-tool handoff can keep the ScreenPad available under your configured return behavior. Having the source on ScreenPad does not automatically remove the statement from the main Practice page.
 
 ## Rich thinking in Obsidian
 

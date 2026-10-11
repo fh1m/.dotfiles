@@ -1,0 +1,14 @@
+{
+  "fixture": "/var/tmp/noesis-lifecycle-c3ehy7vh",
+  "record_id": "bd30d2b9-284f-4f14-a027-aed0107786b7",
+  "owner_id": "ccdb31a6-b0bb-4065-9d1b-fd12a9295815",
+  "native_source_creation": true,
+  "native_linked_question_and_return": true,
+  "repeated_open_retains_focus_and_modal": true,
+  "hide_stops_worker_and_desk": true,
+  "restart_retains_owner_record_draft": true,
+  "resolved_ui_font": "Zed Sans",
+  "learner_achievement": false,
+  "physical_input_latency_measured": false,
+  "external_tool_round_trip": "not tested by this check"
+}

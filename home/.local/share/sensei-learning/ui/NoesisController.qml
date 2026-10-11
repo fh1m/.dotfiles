@@ -87,7 +87,7 @@ Singleton {
  function choose(path){previewText="";previewPath="";pendingPreview="";run(["use",path]);}
  function note(path){run(["cli","open","path="+path]);}
  function preview(path){previewPath=path;previewText="Loading note…";if(reader.running){pendingPreview=path;return;}readerVault=activeVault;reader.command=["@HOME@/.local/bin/noesis","preview",path,"--vault",root.activeVault];reader.running=true;}
- function open(){toolHandoffOpen=false;if(!hostReady){openWhenReady=true;return;}exitRequested=false;windowOpen=true;openSerial++;refresh();savePreferences();}
+ function open(){toolHandoffOpen=false;if(!hostReady){openWhenReady=true;return;}exitRequested=false;let wasOpen=windowOpen;windowOpen=true;openSerial++;if(!wasOpen){refresh();savePreferences();}}
  function close(){hide();}
  function closeForTool(){hide(true);}
  onWindowOpenChanged:{watch.running=legacyInterface&&windowOpen&&activeVault!=="";}

@@ -5,8 +5,7 @@ that passing model tests establish learning efficacy. The existing PLAN.md remai
 the historical phase ledger. [v1-roadmap.md](v1-roadmap.md) is the current execution
 burn-down; [m1-hosting-evidence.md](m1-hosting-evidence.md) records the original staged independent
 host checks. The subsequent scoped live deployment and learning-engine evidence
-are recorded in [frontier-evidence.md](frontier-evidence.md). The real learner trial and broader native recovery matrix
-remain release gates. [Zotero startup evidence](zotero-startup-evidence.md) records the reproduced and fixed populated restore regression. Configured off-device protection is deferred by the owner to
+are recorded in [frontier-evidence.md](frontier-evidence.md). The bounded fault, storage-conflict, long-history and portability gates are recorded in [release-hardening.md](release-hardening.md). The real learner trial and remaining desktop/UX acceptance remain release gates; [UX finalization](ux-finalization.md) records the first reviewed implementation slice. [Zotero startup evidence](zotero-startup-evidence.md) records the reproduced and fixed populated restore regression. Configured off-device protection is deferred by the owner to
 post-V1; it is not a core release completion gate.
 
 | Milestone | Accepted and reproduced | Status / blocking V1 | Ready for learner use |
