@@ -114,7 +114,7 @@ Variants {
         // the panel off the right edge. Both windows share an origin, so the
         // bar's x maps straight across.
         margins.left: {
-            const avail = popup.screen.width;
+            const avail = popup.screen?.width ?? 1920;
             if (popup.current === "calendar" || popup.current === "weather") return Math.round(Math.max(popup.edge,Math.min((popup.anchorX>0?popup.anchorX:avail/2)-popup.implicitWidth/2,avail-popup.implicitWidth-popup.edge)));
             if (popup.current === "spotify") return Math.round((avail-popup.implicitWidth)/2);
             return Math.round(Math.max(popup.edge, Math.min(popup.anchorX, avail - popup.implicitWidth - popup.edge)));
