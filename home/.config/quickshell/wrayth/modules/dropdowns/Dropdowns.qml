@@ -86,7 +86,7 @@ Variants {
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }
         visible: current !== "" && surfaceReady && !ShellState.externalDialogOpen
 
-        implicitWidth: Math.min(modelData.width - 2 * edge, 2 * surfaceInset + (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis" ? 1040 : current === "code" ? 1100 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
+        implicitWidth: Math.min(modelData.width - 2 * edge, 2 * surfaceInset + (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis" ? 1040 : current === "code" ? 1100 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "power" ? 500 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.

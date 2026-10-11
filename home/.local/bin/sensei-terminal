@@ -31,11 +31,14 @@ while i < len(args):
     out.extend(['-e', *args[i:]])
     explicit_command = True
     break
-# Option-only launches still join the persistent workbench. Explicit task
+# Option-only launches create an independent persistent session. Explicit task
 # commands stay independent so a package action cannot replace daily work.
 if not explicit_command:
     if not any(arg in ('--title', '-T') for arg in args):
         out.extend(['--title', 'Sensei · Terminal'])
     out.extend(['-e', '/home/fh1m/.local/bin/sensei-tmux'])
 
+# A new terminal is outside its launcher's tmux client, even from a pane.
+os.environ.pop('TMUX',None)
+os.environ.pop('TMUX_PANE',None)
 os.execvp('alacritty', ['alacritty', *out])

@@ -121,6 +121,31 @@ class PackageJobs(unittest.TestCase):
             finally:
                 if child.poll() is None:child.terminate();child.wait(timeout=3)
 
+    def test_split_question_default_and_provider_selection(self):
+        import time
+        m=load('sensei-package-job')
+        with tempfile.TemporaryDirectory() as directory:
+            m.STATE=Path(directory)/'state'
+            fake="import sys,time; sys.stdout.write('Proceed'); sys.stdout.flush(); time.sleep(.1); print(' with installation? [Y/n]',flush=True); a=input(); print('default='+repr(a),flush=True); print('Enter a selection (default=1):',flush=True); b=input(); print('provider='+b,flush=True); sys.exit(0 if a=='' and b=='2' else 1)"
+            wrapper="import importlib.machinery; m=importlib.machinery.SourceFileLoader('job',"+repr(str(ROOT/'home/.local/bin/sensei-package-job'))+").load_module(); from pathlib import Path; m.STATE=Path("+repr(str(m.STATE))+"); m.command=lambda *_:"+repr([sys.executable,'-c',fake])+"; m.shutil.which=lambda _:None; m.run('repo','')"
+            child=subprocess.Popen([sys.executable,'-c',wrapper],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            def wait_question(text):
+                deadline=time.monotonic()+4
+                while time.monotonic()<deadline:
+                    state=m.read_state()
+                    if text in state.get('prompt',''):return state
+                    time.sleep(.05)
+                self.fail('Question did not reach persisted widget state')
+            try:
+                first=wait_question('Proceed with');m.send(first['id'],'')
+                second=wait_question('Enter a selection');self.assertEqual(first['id'],second['id']);m.send(second['id'],'2')
+                out,err=child.communicate(timeout=4)
+                self.assertEqual(child.returncode,0,err)
+                state=m.read_state();self.assertEqual(state['status'],'done');self.assertEqual(state['prompt'],'')
+                self.assertIn("default=''",state['log']);self.assertIn('provider=2',state['log'])
+            finally:
+                if child.poll() is None:child.terminate();child.wait(timeout=3)
+
     def test_rejects_package_shell_injection_and_detects_prompts(self):
         m=load('sensei-package-job')
         for name in ['../../tmp/file','bash; rm','$(command)']:
@@ -163,6 +188,65 @@ class OpenCodeDetails(unittest.TestCase):
         with patch.object(m,'request',return_value={'verification_uri_complete':'https://evil.test/'}),patch.object(m.subprocess,'Popen') as browser:
             with self.assertRaises(ValueError):m.connect()
             browser.assert_not_called()
+
+class TerminalWorkflow(unittest.TestCase):
+    def test_concurrent_launches_have_independent_windows_and_persistent_names(self):
+        from concurrent.futures import ThreadPoolExecutor
+        with tempfile.TemporaryDirectory() as directory:
+            env=dict(os.environ,TMUX_TMPDIR=directory,XDG_STATE_HOME=directory+'/state')
+            env.pop('TMUX',None)
+            subprocess.run(['tmux','-f','/dev/null','new-session','-d','-s','fixture'],env=env,check=True)
+            script=str(ROOT/'home/.local/bin/sensei-tmux')
+            def create():return subprocess.check_output([sys.executable,script,'--create'],env=env,text=True).strip()
+            try:
+                with ThreadPoolExecutor(max_workers=3) as pool:names=list(pool.map(lambda _:create(),range(3)))
+                self.assertEqual(set(names),{'dev_001','dev_002','dev_003'})
+                windows=[subprocess.check_output(['tmux','list-windows','-t','='+name,'-F','#{window_id}'],env=env,text=True).strip() for name in names]
+                self.assertEqual(len(set(windows)),3)
+                for name in names:
+                    group=subprocess.check_output(['tmux','display-message','-p','-t','='+name,'#{session_group}'],env=env,text=True).strip()
+                    self.assertEqual(group,'')
+                    subprocess.run(['tmux','kill-session','-t','='+name],env=env,check=True)
+                self.assertEqual(create(),'dev_004')
+            finally:subprocess.run(['tmux','kill-server'],env=env,capture_output=True)
+
+    def test_password_dialog_returns_only_password_and_releases_focus(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home=Path(directory);binary=home/'.local/opt/sensei-quickshell/bin/qs';binary.parent.mkdir(parents=True)
+            binary.write_text('#!/bin/sh\necho "$@" >> "$HOME/bridge.log"\n');binary.chmod(0o755)
+            zenity=home/'zenity';zenity.write_text('#!/bin/sh\nprintf fixture-password\n');zenity.chmod(0o755)
+            result=subprocess.run([str(ROOT/'home/.local/bin/sensei-package-askpass')],env=dict(os.environ,HOME=directory,PATH=directory+':'+os.environ['PATH']),capture_output=True,text=True)
+            self.assertEqual(result.returncode,0)
+            self.assertEqual(result.stdout,'fixture-password')
+            calls=(home/'bridge.log').read_text().splitlines()
+            self.assertEqual(calls,['-c wrayth ipc call system authentication on','-c wrayth ipc call system authentication off'])
+
+    def test_terminal_focus_never_launches_even_when_already_focused(self):
+        m=load('sensei-app')
+        window={'address':'0x123','class':'Alacritty','focusHistoryID':0,'workspace':{'id':1}}
+        with tempfile.TemporaryDirectory() as directory,patch.dict(os.environ,{'XDG_RUNTIME_DIR':directory}),patch.object(sys,'argv',['sensei-app','terminal','focus-or-launch','--dry-run']),patch.object(m.subprocess,'check_output',return_value=json.dumps([window])),patch.object(m.subprocess,'Popen') as launch,patch('builtins.print') as output:
+            m.main()
+            self.assertEqual(json.loads(output.call_args.args[0])['action'],'focus')
+            launch.assert_not_called()
+
+    def test_battery_units_missing_fields_and_readonly_snapshot(self):
+        m=load('sensei-battery')
+        with tempfile.TemporaryDirectory() as directory,patch.object(m,'SUPPLIES',Path(directory)):
+            battery=Path(directory)/'BAT0';battery.mkdir()
+            values={'type':'Battery','energy_full':'30000000','energy_full_design':'60000000','energy_now':'15000000','power_now':'12000000','voltage_now':'16000000','capacity':'50','charge_control_end_threshold':'60'}
+            for key,value in values.items():(battery/key).write_text(value)
+            data=m.snapshot()['batteries'][0]
+            self.assertEqual(data['health'],50)
+            self.assertEqual(data['watts'],12)
+            self.assertEqual(data['voltage'],16)
+            self.assertEqual(data['energy'],15)
+            self.assertIsNone(data['cycles'])
+            self.assertEqual((battery/'charge_control_end_threshold').read_text(),'60')
+
+    def test_package_question_forms_cover_selection_and_defaults(self):
+        m=load('sensei-package-job')
+        for question in ['Continue? [N/y]','Enter a selection (default=all):','Packages to exclude:','Which provider should be used?',':: Import PGP key? [Y/n]']:
+            self.assertEqual(m.phase(question,'Starting'),'Your confirmation is needed')
 
 class NativeTransport(unittest.TestCase):
     @classmethod

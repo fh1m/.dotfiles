@@ -2,179 +2,54 @@ import QtQuick
 import qs.components
 import qs.config
 import qs.services
-import qs.utils
 
 DropdownFrame {
-    id: root
-
-    // Which profile is being applied, so only that tile wears the state.
-    property string applying: ""
-
-    ActionState {
-        id: applyAction
+ id:root
+ implicitWidth:500
+ title:"Battery & power"
+ katakana:Power.onBattery?"Battery":"AC connected"
+ function number(v,unit):string {return v===null||v===undefined?"Unavailable":Number(v).toFixed(1)+" "+unit;}
+ function estimate():string {
+  const d=Power.details;
+  if(Power.onBattery){const t=Power.battery?.timeToEmpty??0;return t>0?Math.ceil(t/60)+" min remaining · estimated":"Runtime estimate unavailable";}
+  if(d.status==="Charging"&&d.watts>0&&d.capacity>0&&d.limit){let minutes=Math.max(0,(d.capacity*d.limit/100-d.energy)/d.watts*60);return Math.ceil(minutes)+" min to "+d.limit+"% · at current rate";}
+  return "AC connected · "+Power.stateLabel().toLowerCase();
+ }
+ Column {width:parent.width;spacing:12
+  Row {spacing:14
+   Text {text:Power.present?Math.round(Power.charge)+"%":"—";color:Theme.paper;font.family:Appearance.font.telemetry;font.pixelSize:34}
+   Column {anchors.verticalCenter:parent.verticalCenter;spacing:4
+    Text {text:Power.stateLabel().toLowerCase();color:Theme.signalRed;font.family:Appearance.font.ui;font.pixelSize:13}
+    Text {text:root.estimate();color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:11}
+   }
+  }
+  SegmentMeter {width:parent.width;segments:20;segmentWidth:(parent.width-38)/20;segmentHeight:7;value:Power.charge/100;litColor:Theme.signalRed}
+  Grid {columns:2;columnSpacing:20;rowSpacing:8;width:parent.width
+   Repeater {model:[['Energy',root.number(Power.details.energy,'Wh')+' / '+root.number(Power.details.capacity,'Wh')],['Power flow',root.number(Power.details.watts,'W')],['Battery health',root.number(Power.details.health,'%')],['Design capacity',root.number(Power.details.design,'Wh')],['Voltage',root.number(Power.details.voltage,'V')],['Charge ceiling',Power.details.limit?Power.details.limit+'%':'Unsupported']]
+    Column {required property var modelData;width:(root.width-48)/2;spacing:3
+     Text {text:parent.modelData[0];color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:10}
+     Text {text:parent.modelData[1];color:Theme.paper;font.family:Appearance.font.telemetry;font.pixelSize:12}
     }
-
-    Connections {
-        target: Power
-
-        function onProfileChanged(): void {
-            if (applyAction.working)
-                applyAction.succeed();
-        }
-    }
-
-    title: "PWR // PROFILE"
-    katakana: "ПИТАНИЕ"
-
-    headerRight: NrLabel {
-        text: `${Power.onBattery ? "BATTERY" : "AC"} // ${Power.stateLabel()}`
-        color: Theme.widgetText
-    }
-
-    Column {
-        width: parent.width
-        // The frame's own padding. See the note in the Wi-Fi dropdown.
-        spacing: root.padding
-
-        // --- Charge --------------------------------------------------------
-        Item {
-            width: parent.width
-            height: 46
-
-            TabularText {
-                id: charge
-
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-
-                text: Power.present ? `${Math.round(Power.charge)}%` : "--"
-                color: Theme.widgetText
-                font.family: Appearance.font.display
-                font.pixelSize: 38
-                font.weight: Appearance.font.weightBold
-            }
-
-            NrLabel {
-                anchors.left: charge.right
-                anchors.leftMargin: 12
-                anchors.verticalCenter: parent.verticalCenter
-                text: `BATTERY // ${Power.stateLabel()}`
-            }
-        }
-
-        // 20-segment battery bar.
-        SegmentMeter {
-            width: parent.width
-            segments: 20
-            segmentWidth: (parent.width - 19 * 2) / 20
-            segmentHeight: 8
-            value: Power.charge / 100
-            litColor: Theme.widgetAccent
-        }
-
-        // --- Profile tiles -------------------------------------------------
-        Row {
-            width: parent.width
-            spacing: 8
-
-            Repeater {
-                model: Power.profiles
-
-                Rectangle {
-                    id: tile
-
-                    required property var modelData
-                    readonly property bool selected: Power.profile === modelData.id
-                    readonly property bool available: modelData.label !== "PERFORMANCE" || Power.hasPerformance
-
-                    width: (parent.width - 16) / 3
-                    height: 52
-                    opacity: available ? 1 : 0.4
-
-                    color: selected ? Theme.alpha(Theme.widgetAccent, 0.12) : "transparent"
-                    border.width: Appearance.metrics.hairline
-                    border.color: selected ? Theme.widgetAccent : Theme.widgetBorder
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Appearance.duration.state
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                    Behavior on border.color {
-                        ColorAnimation {
-                            duration: Appearance.duration.state
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: 4
-
-                        Text {
-                            renderType: Text.NativeRendering
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: tile.modelData.label
-                            color: tile.selected ? Theme.widgetAccent : Theme.widgetText
-                            font.family: Appearance.font.data
-                            font.pixelSize: Appearance.size.label
-                            font.weight: Appearance.font.weightSemi
-                            font.letterSpacing: Appearance.tracking(Appearance.size.label)
-                            font.capitalization: Font.AllUppercase
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: tile.modelData.katakana
-                            color: Theme.widgetAccent
-                            font.family: Appearance.font.accent
-                            font.letterSpacing: 0
-                            font.pixelSize: Appearance.size.katakana
-                            font.weight: Appearance.font.weightMedium
-                            renderType: Text.NativeRendering
-                        }
-                    }
-
-                    // APPLYING until power-profiles-daemon reports the new
-                    // profile back over D-Bus, rather than until the command
-                    // has been sent -- the daemon is what decides.
-                    Feedback {
-                        id: tileFeedback
-
-                        anchors.fill: parent
-                        working: applyAction.working && root.applying === tile.modelData.cli
-                        succeeded: applyAction.succeeded && root.applying === tile.modelData.cli
-                    }
-
-                    WorkSegments {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 8
-                        running: tileFeedback.working
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        enabled: tile.available && !applyAction.working
-                        cursorShape: Qt.PointingHandCursor
-
-                        onPressed: tileFeedback.flash()
-                        onClicked: tileDefer.restart()
-                    }
-
-                    Timer {
-                        id: tileDefer
-
-                        interval: 16
-                        onTriggered: {
-                            root.applying = tile.modelData.cli;
-                            applyAction.begin("APPLYING");
-                            Power.setProfile(tile.modelData.cli);
-                        }
-                    }
-                }
-            }
-        }
-    }
+   }
+  }
+  Text {text:'Power flow · live samples, every 30 s while open';color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:10}
+  Rectangle {width:parent.width;height:66;color:Theme.surfaceOne;radius:3
+   Sparkline {anchors.fill:parent;anchors.margins:8;downValues:Power.rateHistory;upValues:[];points:60;floorValue:10;downColor:Theme.signalRed;strokeWidth:1.5}
+   Text {anchors.centerIn:parent;visible:Power.rateHistory.length<2;text:'Collecting measurements…';color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:11}
+  }
+  Text {text:'Power policy';color:Theme.paper;font.family:Appearance.font.ui;font.pixelSize:12}
+  Row {spacing:7
+   Repeater {model:Power.profiles
+    ControlTile {required property var modelData;implicitWidth:150;label:modelData.cli==='power-saver'?'Saver':modelData.cli==='performance'?'Performance':'Balanced';glyph:modelData.cli==='power-saver'?'\uf06c':modelData.cli==='performance'?'\uf0e7':'\uf24e';selected:Power.profile===modelData.id;onActivated:Power.setProfile(modelData.cli)}
+   }
+  }
+  Text {text:'Charging policy';color:Theme.paper;font.family:Appearance.font.ui;font.pixelSize:12;visible:Power.details.limitSupported??false}
+  Row {spacing:7;visible:Power.details.limitSupported??false
+   Repeater {model:[60,80,100]
+    ControlTile {required property int modelData;implicitWidth:150;label:modelData+'% ceiling';glyph:'\uf240';selected:Power.details.limit===modelData;onActivated:Power.chargeLimit(modelData)}
+   }
+  }
+  ControlTile {implicitWidth:parent.width;label:'Charge fully once';detail:'Return to saved ceiling after one-shot charging';glyph:'\uf0e7';visible:Power.details.limitSupported??false;onActivated:Power.chargeLimit(100,true)}
+  Text {width:parent.width;text:Power.batteryError||Power.error||((Power.details.model||'Battery')+' · '+(Power.details.technology||'')+' · '+(Power.details.cycles===null||Power.details.cycles===undefined?'Cycles unavailable':Power.details.cycles+' cycles reported by firmware'));wrapMode:Text.Wrap;color:Power.batteryError||Power.error?Theme.signalRed:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:10}
+ }
 }

@@ -63,7 +63,7 @@ Item {
             Rectangle {
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: button.active ? 24 : button.occupied ? 10 : 0
+                width: button.active ? root.itemWidth - 12 : button.occupied ? 10 : 0
                 height: button.active ? 2 : 1
                 color: button.active ? Theme.signalRed : Theme.paperMuted
                 Behavior on width { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }

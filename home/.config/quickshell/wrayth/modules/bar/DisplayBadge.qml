@@ -14,7 +14,7 @@ Item {
     Behavior on implicitWidth { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
     BarSurface { anchors.fill: parent; grouped:condensed; hovered: hover.containsMouse; pressed: hover.pressed }
     Row {anchors.left:parent.left;anchors.leftMargin:10;anchors.verticalCenter:parent.verticalCenter;spacing:6
-        InstrumentIcon {anchors.verticalCenter:parent.verticalCenter;kind:"display";ink:Theme.signalRed}
+        InstrumentIcon {anchors.verticalCenter:parent.verticalCenter;kind:root.output==="main"?"brightness":"display";ink:Theme.signalRed;level:root.level/100}
         Column {visible:!root.condensed;anchors.verticalCenter:parent.verticalCenter;spacing:-1
             Text {text:root.output==="main"?"Display":"ScreenPad";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
             Text {text:Math.round(root.level)+"%";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.widgetMuted}

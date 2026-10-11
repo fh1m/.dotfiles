@@ -48,7 +48,10 @@ Column {
   Text {width:parent.width;text:DesktopExtras.packageJobError||((DesktopExtras.packageJob.action||'Update')+' · '+(DesktopExtras.packageJob.phase||'Starting'));textFormat:Text.PlainText;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.signalRed;wrapMode:Text.WordWrap}
   ProgressBar {width:parent.width;height:5;visible:DesktopExtras.packageBusy;indeterminate:true}
   ScrollView {id:transactionLog;width:parent.width;height:160;clip:true;contentWidth:availableWidth
-   TextArea {readOnly:true;text:DesktopExtras.packageJob.log||'Starting background transaction…';textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;font.family:Appearance.font.telemetry;font.pixelSize:10;color:Theme.paper;background:Rectangle{color:Theme.surfaceOne}}
+   TextArea {id:logText;readOnly:true;onTextChanged:Qt.callLater(()=>{if(transactionLog.contentItem)transactionLog.contentItem.contentY=Math.max(0,transactionLog.contentItem.contentHeight-transactionLog.height);});text:DesktopExtras.packageJob.log||'Starting background transaction…';textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;font.family:Appearance.font.telemetry;font.pixelSize:10;color:Theme.paper;background:Rectangle{color:Theme.surfaceOne}}
+  }
+  Rectangle {width:parent.width;height:promptLabel.implicitHeight+18;color:Theme.surfaceTwo;radius:3;visible:DesktopExtras.packageBusy&&!!DesktopExtras.packageJob.prompt
+   Text {id:promptLabel;anchors.left:parent.left;anchors.right:parent.right;anchors.margins:9;y:9;text:DesktopExtras.packageJob.prompt||'';textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper}
   }
   Row {spacing:7;visible:DesktopExtras.packageBusy
    DeskTextField {id:answer;width:240;height:36;placeholderText:'Response to package prompt';color:Theme.paper;font.pixelSize:12;onAccepted:{DesktopExtras.packageAnswer(text);text='';}}
@@ -56,6 +59,7 @@ Column {
    ControlTile {implicitWidth:155;label:'Request stop';glyph:'\uf04d';onActivated:DesktopExtras.packageCancel()}
   }
   Row {spacing:7;visible:DesktopExtras.packageBusy
+   ControlTile {implicitWidth:150;label:'Use default';glyph:'\uf061';onActivated:DesktopExtras.packageAnswer('')}
    ControlTile {implicitWidth:150;label:'Confirm (y)';glyph:'\uf00c';onActivated:DesktopExtras.packageAnswer('y')}
    ControlTile {implicitWidth:150;label:'Decline (n)';glyph:'\uf00d';onActivated:DesktopExtras.packageAnswer('n')}
   }

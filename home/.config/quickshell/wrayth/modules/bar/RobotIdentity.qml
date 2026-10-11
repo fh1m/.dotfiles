@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import Quickshell
 import qs.config
 import qs.services
@@ -13,14 +12,11 @@ Item {
     // Sensor frame + heading + three measured waypoints: autonomy across mediums.
     Image {
         anchors.centerIn: parent
-        width: 32; height: 32
+        width: 28; height: 28
         source: Qt.resolvedUrl("../../assets/fh1m-autonomy.svg")
         opacity: badgeHover.containsMouse || ShellState.dropdown === "code" ? 1 : .86
         Behavior on opacity {NumberAnimation {duration:100}}
     }
-    ToolTip.visible: badgeHover.containsMouse
-    ToolTip.delay: 550
-    ToolTip.text: "fh1m / Autonomy systems · Sense. Model. Act."
     function publish():void {const x=root.mapToItem(null,0,0).x;for(let name of ["code","ident","comic"])ShellState.publishAnchor(name,x);}
     Component.onCompleted:Qt.callLater(publish)
     onXChanged:publish()

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import Quickshell
 import Quickshell.Networking
 import Quickshell.Services.UPower
@@ -17,9 +18,17 @@ DropdownFrame {
         refresh.restart();
     }
     function launch(args): void { ShellState.dropdown = ""; Quickshell.execDetached(args); }
-    Column {
+    ScrollView {
+        id: systemScroll
         width: parent.width
-        spacing: 12
+        height: Math.min(systemContent.implicitHeight, 700)
+        contentWidth: availableWidth
+        clip: true
+        ScrollBar.vertical: DeskScrollBar {}
+    Column {
+        id: systemContent
+        width: systemScroll.availableWidth
+        spacing: 10
         Row {
             spacing: 8
             ControlTile { implicitWidth: 106; label: "Quick"; navigation:true;selected: ShellState.systemPage === 0; onActivated: ShellState.systemPage = 0 }
@@ -151,6 +160,7 @@ DropdownFrame {
                 ControlTile { label: "Shortcuts"; detail:"Key bindings"; glyph: "\uf11c"; onActivated: ShellState.openExclusive("shortcuts") }
             }
         }
+    }
     }
     Timer { id: refresh; interval: 500; onTriggered: RobotBench.refresh() }
 }

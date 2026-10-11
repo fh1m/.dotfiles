@@ -8,7 +8,7 @@ Item {
  id:root;implicitHeight:36;implicitWidth:Math.max(180,Math.min(420,titleMeasure.implicitWidth+94));clip:true
  Text { renderType: Text.QtRendering; renderTypeQuality: 104;id:titleMeasure;visible:false;text:(SpotifyDesk.trackLoading?'LOADING · ':'')+SpotifyDesk.title+' - '+SpotifyDesk.artist;font.family:Appearance.font.barUi;font.pixelSize:13}
  Rectangle { anchors.fill:parent; color:Theme.ink }
- Rectangle { anchors.left:parent.left; anchors.leftMargin:2; anchors.verticalCenter:parent.verticalCenter; width:2; height:24; color:SpotifyDesk.playing?Theme.signalRed:Theme.rule }
+ Rectangle { anchors.left:parent.left; anchors.leftMargin:2; anchors.verticalCenter:parent.verticalCenter; width:2; height:24; color:Theme.rule }
  RoundedArtwork {id:art;cornerRadius:4;anchors.left:parent.left;anchors.leftMargin:24;anchors.verticalCenter:parent.verticalCenter;width:28;height:28;rotation:0;opacity:SpotifyDesk.trackLoading?.48:1
  source:SpotifyDesk.albumArt;sourceSize:Qt.size(120,120);fillMode:Image.PreserveAspectCrop;asynchronous:true;visible:status===Image.Ready}
  Text { renderType: Text.QtRendering; renderTypeQuality: 104;anchors.centerIn:art;visible:!art.visible;text:"\uf001";font.family:Appearance.font.icons;font.pixelSize:16;color:Theme.dim}

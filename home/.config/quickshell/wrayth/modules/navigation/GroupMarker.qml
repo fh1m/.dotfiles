@@ -25,10 +25,10 @@ Variants {
         screen: groupScreen
         color: "transparent"
         visible: groupScreen !== null && members.length > 1 && groupWorkspace === shownWorkspace && !group.hidden && !group.fullscreen && !ShellState.locked
-        implicitWidth: Math.max(1, (group?.size?.[0] ?? 1) - 68)
+        implicitWidth: Math.max(1, (group?.size?.[0] ?? 1) - 24)
         implicitHeight: 26
         anchors { top: true; left: true }
-        margins.left: Math.max(0, (group?.at?.[0] ?? 0) + 34 - (monitor?.lastIpcObject?.x ?? 0))
+        margins.left: Math.max(0, (group?.at?.[0] ?? 0) + 12 - (monitor?.lastIpcObject?.x ?? 0))
         margins.top: Math.max(0, (group?.at?.[1] ?? 0) - (monitor?.lastIpcObject?.y ?? 0) - 31)
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
@@ -44,7 +44,7 @@ Variants {
             onPaint: {
                 const p = getContext("2d")
                 p.reset()
-                const inset = 0, cut = 3, h = height
+                const inset = 0, cut = 5, h = height
                 p.fillStyle = "#000000"
                 p.beginPath()
                 p.moveTo(inset + cut, 0)
@@ -57,6 +57,7 @@ Variants {
                 p.lineTo(inset, cut)
                 p.closePath()
                 p.fill()
+                p.strokeStyle = Theme.rule; p.lineWidth = 1; p.stroke()
             }
         }
         Repeater {
@@ -117,6 +118,7 @@ Variants {
                         renderType: Text.NativeRendering
                     }
                 }
+                Rectangle {anchors.fill:parent;anchors.margins:2;color:Theme.signalRed;opacity:tab.current?.055:0;radius:3;z:-1}
                 Rectangle {
                     visible: tab.current
                     x: 7

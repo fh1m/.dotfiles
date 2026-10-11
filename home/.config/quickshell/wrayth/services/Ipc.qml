@@ -38,8 +38,13 @@ Scope {
         function lyrics(): void { ShellState.dropdown="spotify";SpotifyDesk.page=0;SpotifyDesk.lyricsOpen=true; }
     }
     IpcHandler {
+        target: "spaces"
+        function state():string {return JSON.stringify({monitor:Spaces.focusedMonitor?.name??"",active:Spaces.activeId,selected:Spaces.activeIndex});}
+    }
+    IpcHandler {
         target: "system"
         function network(index:string):void {DesktopExtras.networkPage=Math.max(0,Math.min(2,Number(index)||0));ShellState.systemPage=3;ShellState.dropdownAnchorX=ShellState.anchorFor("system");ShellState.dropdown="system";}
+        function authentication(active:string):void {ShellState.externalDialogOpen=active==="on";}
         function packages():void {ShellState.systemPage=4;ShellState.dropdownAnchorX=ShellState.anchorFor("system");ShellState.dropdown="system";}
         function state():string {return JSON.stringify({page:ShellState.systemPage,networkPage:DesktopExtras.networkPage,packages:DesktopExtras.packages.total||0,updates:(DesktopExtras.packages.updates||[]).length,checked:DesktopExtras.packages.checked||0,loading:DesktopExtras.packagesLoading,error:DesktopExtras.packagesError});}
         function page(index: string): string {

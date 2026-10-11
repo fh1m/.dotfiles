@@ -44,7 +44,7 @@ _sensei_prompt_refresh() {
     [[ -n $branch ]] && branch="  ${dim}git ${accent}${branch//\%/%%}%f"
     _sensei_left=$'\n'
     [[ -n $context ]] && _sensei_left+="  ${dim}${context}%f"$'\n'
-    _sensei_left+="  ${paper}${location}%f${branch}"$'\n'
+    _sensei_left+="  ${dim}${location}%f${branch}"$'\n'
     _sensei_left+="  ${accent}%(#.#.❯)%f  "
     _sensei_right="${dim}exit ${result}%f"
     (( result != 0 )) && _sensei_right="${accent}exit ${result}%f"

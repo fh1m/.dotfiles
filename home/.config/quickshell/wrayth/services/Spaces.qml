@@ -4,8 +4,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 
-// What the ScreenPad's workspace indicator shows. It tracks the main display,
-// so focusing a ScreenPad app or the bottom bar cannot change its selection.
+// The workspace rail follows the focused display, including ScreenPad Misc.
+// Switching a workspace must be reflected even when it belongs to another output.
 // The indicator is always seven regular slots wide: the numbered workspaces
 // holding the active one, or -- while any special workspace is visible -- the
 // special workspaces themselves.
@@ -33,10 +33,11 @@ Singleton {
     readonly property var mainMonitor: Hyprland.monitors.values.find(m => m.name === "eDP-1") ?? null
     readonly property var monitorIpc: mainMonitor?.lastIpcObject ?? null
 
-    readonly property int activeId: monitorIpc?.activeWorkspace?.id ?? mainMonitor?.activeWorkspace?.id ?? 1
+    readonly property var focusedMonitor: Hyprland.monitors.values.find(m=>m.lastIpcObject?.focused) ?? mainMonitor
+    readonly property int activeId: focusedMonitor?.lastIpcObject?.activeWorkspace?.id ?? monitorIpc?.activeWorkspace?.id ?? mainMonitor?.activeWorkspace?.id ?? 1
 
     // "special:deck" while one is up, "" otherwise.
-    readonly property string activeSpecial: monitorIpc?.specialWorkspace?.name ?? ""
+    readonly property string activeSpecial: focusedMonitor?.lastIpcObject?.specialWorkspace?.name ?? ""
     readonly property bool special: activeSpecial.startsWith("special:")
 
     // The bare names of every special workspace Hyprland currently knows about,

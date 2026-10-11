@@ -98,17 +98,17 @@ chars = "\u0060["
 [[keyboard.bindings]]
 key = "ArrowDown"
 mods = "Control|Shift"
-action = "ScrollLineDown"
+chars = "\u0060\u001b[6~"
 
 [[keyboard.bindings]]
 key = "H"
 mods = "Control|Shift"
-action = "SearchBackward"
+action = "ReceiveChar"
 
 [[keyboard.bindings]]
 key = "/"
 mods = "Control|Shift"
-action = "SearchForward"
+action = "ReceiveChar"
 
 [[keyboard.bindings]]
 key = "F5"
@@ -144,19 +144,47 @@ chars = "\u0060n"
 [[keyboard.bindings]]
 key = "L"
 mods = "Control|Shift"
-chars = "\u0060 "
+action = "ReceiveChar"
 
 [[keyboard.bindings]]
 key = "M"
 mods = "Control|Shift"
-chars = "\u0060z"
+action = "ReceiveChar"
 
 [[keyboard.bindings]]
 key = "E"
 mods = "Control|Shift"
-chars = "\u0060w"
+action = "ReceiveChar"
 
 [[keyboard.bindings]]
 key = "Escape"
 mods = "Control|Shift"
-chars = "\u0060:"
+action = "ReceiveChar"
+
+# Tmux owns history inside the daily terminal; avoid the outer empty scrollback.
+[[keyboard.bindings]]
+key = "PageUp"
+mods = "Shift"
+chars = "\u0060\u001b[5~"
+
+[[keyboard.bindings]]
+key = "PageDown"
+mods = "Shift"
+chars = "\u0060\u001b[6~"
+
+# Deliberate window navigation, leaving Shift-arrows to editors and agents.
+[[keyboard.bindings]]
+key = "ArrowLeft"
+mods = "Control|Alt"
+chars = "\u0060p"
+
+[[keyboard.bindings]]
+key = "ArrowRight"
+mods = "Control|Alt"
+chars = "\u0060n"
+
+# Native scrollback exploration and keyboard URL hints.
+[[keyboard.bindings]]
+key = "Space"
+mods = "Control|Shift"
+action = "ToggleViMode"

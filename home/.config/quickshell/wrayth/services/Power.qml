@@ -43,6 +43,15 @@ Singleton {
         }
     ]
 
+    property var details: ({})
+    property var rateHistory: []
+    property string batteryError: ""
+    function refreshBattery():void {if(!batteryProc.running){batteryProc.command=[Quickshell.env("HOME")+"/.local/bin/sensei-battery","state"];batteryProc.running=true;}}
+    function chargeLimit(percent,once=false) {if(!batteryProc.running){batteryProc.command=[Quickshell.env("HOME")+"/.local/bin/sensei-battery",once?"oneshot":"limit",String(percent)];batteryProc.running=true;}}
+    Process {id:batteryProc;stdout:StdioCollector {onStreamFinished:{try {const d=JSON.parse(text);root.batteryError=d.error||"";if(d.batteries){root.details=d.batteries[0]||{};if(root.details.watts!==null&&root.details.watts!==undefined)root.rateHistory=root.rateHistory.concat([root.details.watts]).slice(-60);}}catch(e){root.batteryError="Battery telemetry is unavailable";}}}}
+    Timer {interval:30000;repeat:true;running:ShellState.dropdown==="power";onTriggered:root.refreshBattery()}
+    Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==="power")root.refreshBattery();}}
+
     property string queuedProfile: ""
     function setProfile(cli: string): void {
         if (setProc.running) {queuedProfile=cli; return;}

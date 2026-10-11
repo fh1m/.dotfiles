@@ -1,0 +1,21 @@
+import QtQuick
+import qs.components
+import qs.config
+import qs.services
+Item {
+ id:root
+ implicitWidth:64;implicitHeight:34
+ BarSurface {anchors.fill:parent;grouped:true;hovered:pointer.containsMouse;pressed:pointer.pressed}
+ Row {anchors.centerIn:parent;spacing:4
+  InstrumentIcon {id:mark;kind:Power.onBattery?"battery":"ac";level:Power.charge/100;ink:Power.charge<15&&Power.onBattery?Theme.paper:Theme.signalRed}
+  Text {anchors.verticalCenter:parent.verticalCenter;text:Power.present?Math.round(Power.charge)+"%":"AC";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.paperMuted}
+ }
+ SequentialAnimation {running:!Power.onBattery&&root.visible&&ShellState.ambientMotion;loops:Animation.Infinite;onRunningChanged:if(!running)mark.opacity=1
+  NumberAnimation {target:mark;property:"opacity";from:1;to:.55;duration:1300}
+  NumberAnimation {target:mark;property:"opacity";from:.55;to:1;duration:1300}
+ }
+ function publish():void {ShellState.publishAnchor("power",root.mapToItem(null,0,0).x);}
+ onXChanged:publish()
+ Component.onCompleted:Qt.callLater(publish)
+ MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{root.publish();ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdown("power");}}
+}

@@ -33,7 +33,7 @@ Item {
         InstrumentIcon {
             id:musicRune
             anchors.centerIn: parent
-            kind: "bluetooth"
+            kind: root.connectedDevices.length?"bluetooth-connected":"bluetooth-off"
             ink:root.audioPlaying?Theme.signalRed:root.connectedDevices.length?Theme.signalRed:Theme.alpha(Theme.signalRed,.55)
             SequentialAnimation on scale {
                 running: ShellState.ambientMotion && root.audioPlaying && musicRune.visible

@@ -188,3 +188,14 @@ Details and limitations: [DESKTOP-CODE.md](DESKTOP-CODE.md#october-11-polish).
 Validation: 17 desktop and 16 learning regressions, release player build, C build,
 zsh/Python syntax, scoped deployment and live QML reload. This does not declare
 the separate Noesis master redesign implemented or approved. No vault changes.
+
+### Desktop follow-up — October 11
+
+Completed separately authorized terminal ownership/focus, package question/auth
+bridge, bar and tab polish, stale companion suppression, battery panel and bounded
+System navigation. No learning-vault content or master redesign changes. Done when
+independent sessions preserve ownership, repeated focus does not spawn work,
+questions can be answered in-widget, and live desktop renders cleanly. Verified
+with 23 desktop/16 learning regressions, disposable tmux/PTY/auth fixtures, live
+workspace/focus checks and private visual inspection. Real upgrades and charging
+policy writes were not performed as tests. [Details](DESKTOP-CODE.md#october-11-interaction-follow-up).

@@ -163,3 +163,44 @@ was paused. Phone-controlled acoustic playback has not been independently tested
 the confirmed restart loop and unbounded startup pause mechanisms were repaired,
 and their safety paths were exercised without changing songs on a remote device.
 Private screenshots were inspected locally and were not added to the public repo.
+
+## October 11 interaction follow-up
+
+New terminals now own independent numbered `dev_NNN` sessions. App focus never
+creates another terminal just because it is already focused; Shift explicitly
+creates another. Existing sessions and processes are preserved. See the
+[terminal workflow](../terminal-workflow.md) for bindings and primary references.
+
+The update question bridge recognizes default/yes/no/provider/exclusion prompts,
+including prompts split across output chunks. The widget shows the latest question,
+automatically follows transaction output, and accepts default and text responses.
+Authentication releases popup focus for the graphical password dialog. Actual
+privileged upgrades were not run for validation: a disposable PTY transaction and
+fake password helper exercised output/input and focus release without passwords
+or package changes.
+
+Badge artwork is smaller and centered; hover tooltips are removed. The Spotify
+separator remains neutral. GPU activity breathes under the shell's existing motion
+policy. Brightness shows a proportional filled sun; Bluetooth distinguishes linked
+and unlinked states. Tabs have an inset, thin ruled silhouette, app icons, active
+color/fill and native arrow navigation. The focused monitor owns workspace selection,
+so selecting ScreenPad Misc now updates the rail instead of retaining Terminal.
+Old companion projections expire after fifteen minutes without a publisher update;
+the vault content and main Noesis window are untouched.
+
+Battery sits beside System on the top bar and anchors its panel there. AC uses a
+plug mark and gentle pulse under the existing motion policy; battery mode shows
+proportional fill. The panel includes energy, flow, health, design capacity, voltage,
+charge ceiling, reported cycles, bounded real samples, available profiles, charge
+ceilings and one-shot full charging. Existing 60% policy remains unchanged. System
+has a bounded scroll area, keeping long package output and controls reachable.
+
+Validation: 23 desktop regressions and 16 learning regressions; independent concurrent
+sessions tested on a disposable tmux socket, persistence after closed sessions,
+focus-not-launch behavior, graphical password focus lifecycle, battery unit conversion,
+package prompt forms, live clean QML reload and Alacritty config launch. Both displays,
+battery panel and tab composition were visually inspected privately. Live repeated
+focus actions created no sessions. `dev_001` and `dev_002` have no session group.
+Misc reported DP-2/workspace 7/slot 6 through read-only IPC. Charging writes were not
+used as tests. Scoped rollback copies are in
+`~/.local/state/dotfiles-backups/desktop-followup-20261011`.
