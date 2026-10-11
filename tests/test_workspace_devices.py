@@ -21,7 +21,7 @@ class WorkspaceDevices(unittest.TestCase):
                 self.assertEqual([n for n, pattern in routes if pattern.fullmatch(app)], [workspace])
 
     def test_connected_reports_and_provider_deduplication(self):
-        source = (ROOT/'home/.config/quickshell/wrayth/services/DeviceBatteries.js').read_text().replace('.pragma library', '')
+        source = (ROOT/'home/.config/quickshell/sensei/services/DeviceBatteries.js').read_text().replace('.pragma library', '')
         fixture = r'''
 const assert=require('node:assert/strict');
 const phone={id:'p',name:'Phone',isPaired:true,isReachable:true,battery:{charge:0,isCharging:false}};
@@ -42,7 +42,7 @@ assert.deepEqual(rows([],[],[]),[]);
         subprocess.run(['node','-e',source+fixture],check=True,capture_output=True,text=True)
 
     def test_attention_address_normalization_and_acknowledgement(self):
-        source = (ROOT/'home/.config/quickshell/wrayth/services/Spaces.qml').read_text()
+        source = (ROOT/'home/.config/quickshell/sensei/services/Spaces.qml').read_text()
         functions = '\n'.join(re.findall(r'    function (?:attention|acknowledge)\(address\):void \{[^\n]+',source))
         functions = functions.replace(":void", "")
         self.assertTrue(functions)

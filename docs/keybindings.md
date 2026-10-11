@@ -34,7 +34,7 @@ The terminal's internal tab, pane, copy and session shortcuts are in [Terminal â
 | Drag onto group title | Add another window to that tab group |
 | Super+Shift+V | Persistent clipboard |
 | Super+Shift+M | System Monitor |
-| Super+E | Wrayth deck |
+| Super+E | Sensei deck |
 | Super+L | Manual lock |
 | Super+Ctrl+P | Power menu |
 | Ctrl+Space | Spotify play/pause |

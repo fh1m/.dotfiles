@@ -1,25 +1,25 @@
--- ~/.config/hypr/hyprland.lua -- wrayth's complete Hyprland setup.
+-- ~/.config/hypr/hyprland.lua -- sensei's complete Hyprland setup.
 --
--- Installed by wrayth's install.sh on a machine with no Hyprland config of its
+-- Installed by sensei's install.sh on a machine with no Hyprland config of its
 -- own (or only Hyprland's generated default, or an old-style hyprland.conf).
 -- Whatever was in ~/.config/hypr before was moved to a dated backup folder
 -- beside it; the installer said where. This file is yours to edit: running the
 -- installer again does not overwrite it.
 --
 -- It is a plain, working Hyprland config -- monitors, input, window
--- management keys -- and loads wrayth's own rules at the end (hypr-wrayth.lua,
+-- management keys -- and loads sensei's own rules at the end (hypr-sensei.lua,
 -- beside this file). Everything it refers to is defined here or in that file;
 -- it needs nothing else. Hyprland 0.56+ (the Lua config).
 --
--- Keys that belong to wrayth (Super tap = launcher, Super + E = deck,
+-- Keys that belong to sensei (Super tap = launcher, Super + E = deck,
 -- Super + P = power menu, Super + L = lock, Super + 1..0 = workspaces, and the
--- volume and brightness keys) are set in hypr-wrayth.lua. The ones below are
+-- volume and brightness keys) are set in hypr-sensei.lua. The ones below are
 -- the everyday window keys and never touch those.
 
 -- ===========================================================================
 -- Monitors -- every connected display at its preferred mode, scale 1
 -- ===========================================================================
--- wrayth is laid out for a screen at least 1920 x 1080 *logical* pixels. Scale
+-- sensei is laid out for a screen at least 1920 x 1080 *logical* pixels. Scale
 -- 1 keeps a 1080p screen at exactly that; Hyprland's "auto" can pick 1.25 or
 -- more for a small 1080p laptop panel, which leaves the shell less room than
 -- it needs (seen in testing: at an auto-chosen 2 it had half the space and its
@@ -79,7 +79,7 @@ hl.config({
     },
 
     misc = {
-        -- wrayth draws the wallpaper; Hyprland's own would flash first.
+        -- sensei draws the wallpaper; Hyprland's own would flash first.
         force_default_wallpaper = 0,
         disable_hyprland_logo   = true,
     },
@@ -118,7 +118,7 @@ hl.gesture({
 })
 
 -- ===========================================================================
--- Window keys (wrayth's own keys are in hypr-wrayth.lua)
+-- Window keys (sensei's own keys are in hypr-sensei.lua)
 -- ===========================================================================
 local mod = "SUPER"
 
@@ -135,7 +135,7 @@ hl.bind(mod .. " + up",    hl.dsp.focus({ direction = "up" }))
 hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))
 
 -- Super + Shift + number moves the focused window to that workspace.
--- (Super + number, going to it, is wrayth's: it closes the deck first.)
+-- (Super + number, going to it, is sensei's: it closes the deck first.)
 for i = 1, 10 do
     local key = i % 10 -- 10 maps to key 0
     hl.bind(mod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
@@ -170,7 +170,7 @@ hl.window_rule({
 })
 
 -- ===========================================================================
--- wrayth -- last, so its keys and rules apply over everything above
+-- sensei -- last, so its keys and rules apply over everything above
 -- ===========================================================================
-dofile("/home/fh1m/.config/hypr/hypr-wrayth.lua")
+dofile("/home/fh1m/.config/hypr/hypr-sensei.lua")
 dofile("/home/fh1m/.config/hypr/custom-setup.lua")

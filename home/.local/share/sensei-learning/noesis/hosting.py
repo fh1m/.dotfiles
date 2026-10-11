@@ -44,7 +44,7 @@ def executable(home):
 
 def launch(home,*,embedded=False,owner=None,vault_id=None,record_id=None,capture=False,start=False):
     home=Path(home);qs=executable(home)
-    config=(home/'.config/quickshell'/('wrayth' if embedded else 'noesis')).resolve()
+    config=(home/'.config/quickshell'/('sensei' if embedded else 'noesis')).resolve()
     if not (config/'shell.qml').is_file():raise ValueError('Noesis host is not installed: '+str(config))
     state=home/'.local/state/sensei-learning';state.mkdir(parents=True,exist_ok=True);state.chmod(0o700)
     prefs=json.loads((state/'window.json').read_text()) if (state/'window.json').exists() else {}
@@ -62,7 +62,7 @@ def launch(home,*,embedded=False,owner=None,vault_id=None,record_id=None,capture
     with lock(state/'host-launch'):
         hello=ipc('noesis','hello')
         if not embedded and not (hello and hello.get('host_ready',True)):
-            primary=config;config=(home/'.config/quickshell/wrayth').resolve();rollback=ipc('noesis','hello')
+            primary=config;config=(home/'.config/quickshell/sensei').resolve();rollback=ipc('noesis','hello')
             if rollback and rollback.get('version')==1 and rollback.get('host_ready') and rollback.get('host')=='embedded':hello=rollback;embedded=True
             else:config=primary
         if hello and hello.get('version')!=1:raise ValueError('Running Noesis host uses an incompatible protocol; close it after saving before upgrading')
@@ -72,7 +72,7 @@ def launch(home,*,embedded=False,owner=None,vault_id=None,record_id=None,capture
                 time.sleep(.1);hello=ipc('noesis','hello')
             if hello and hello.get('exit_pending'):raise RuntimeError('Noesis is still finishing a save; inspect the existing window before reopening')
         if not hello:
-            if embedded:raise ValueError('Embedded rollback host is not active; start Wrayth with NOESIS_HOST=embedded')
+            if embedded:raise ValueError('Embedded rollback host is not active; start Sensei with NOESIS_HOST=embedded')
             child_environment=dict(os.environ)
             if os.environ.get('HYPRLAND_INSTANCE_SIGNATURE'):
                 monitors=json.loads(subprocess.check_output(['hyprctl','monitors','-j'],text=True))

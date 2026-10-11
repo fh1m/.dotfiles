@@ -1,7 +1,7 @@
 #!/bin/sh
 # Password goes directly to sudo, never through widget state or transaction logs.
 package_qs="$HOME/.local/opt/sensei-quickshell/bin/qs"
-package_dialog_done() { "$package_qs" -c wrayth ipc call system authentication off >/dev/null 2>&1 || true; }
+package_dialog_done() { "$package_qs" -c sensei ipc call system authentication off >/dev/null 2>&1 || true; }
 trap package_dialog_done EXIT HUP INT TERM
-"$package_qs" -c wrayth ipc call system authentication on >/dev/null 2>&1 || true
+"$package_qs" -c sensei ipc call system authentication on >/dev/null 2>&1 || true
 zenity --password --title='Authenticate system update'

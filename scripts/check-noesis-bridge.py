@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests the Wrayth bridge/companion in an isolated shell, not a live Wrayth restart."""
+"""Tests the Sensei bridge/companion in an isolated shell, not a live Sensei restart."""
 from pathlib import Path
 import json,subprocess,time,uuid,shutil
 from noesis_native_fixture import Fixture,QS
@@ -7,7 +7,7 @@ f=Fixture();bridge=None;log=None
 try:
  f.start();f.wait(lambda s:bool(f.preferences()['context'].get('vault_id')))
  config=f.home/'.config/quickshell/bridge-fixture';(config/'services').mkdir(parents=True);(config/'modules/learning').mkdir(parents=True)
- source=f.home/'.config/quickshell/wrayth'
+ source=f.home/'.config/quickshell/sensei'
  for name in ['services/NoesisBridge.qml','modules/learning/NoesisCompanion.qml']:shutil.copy2(source/name,config/name)
  (config/'services/ShellState.qml').write_text('pragma Singleton\nimport QtQuick\nimport Quickshell\nSingleton {property string dropdown:""}\n')
  (config/'noesis-ui').symlink_to('../../../.local/share/sensei-learning/ui',target_is_directory=True)
@@ -36,7 +36,7 @@ try:
  clean=wait(lambda s:s['live']);assert 'body' not in clean['context'] and 'drafts' not in clean['context']
  value['instance']['start_ticks']='invalid';projection.write_text(json.dumps(value));wait(lambda s:not s['live'])
  print('PASS: bridge restart leaves application alive; application restart leaves bridge alive; stale/unsupported projections clear context',flush=True)
- print('This checks the actual bridge/companion source in a minimal disposable shell; full/live Wrayth restart remains a separate gate.',flush=True)
+ print('This checks the actual bridge/companion source in a minimal disposable shell; full/live Sensei restart remains a separate gate.',flush=True)
 finally:
  if bridge and bridge.poll() is None:bridge.terminate();bridge.wait(timeout=5)
  if log:log.close()

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Full rendered Wrayth integration in disposable processes; leaves live shell alone."""
+"""Full rendered Sensei integration in disposable processes; leaves live shell alone."""
 import json,os,signal,subprocess,time,uuid
 from noesis_native_fixture import Fixture,QS
 f=Fixture();shell=None
 try:
- f.start();token=f.hello()['instance']['token'];config=f.home/'.config/quickshell/wrayth'
- entry=config/'shell.qml';entry.write_text('//@ pragma AppId org.fh1m.Wrayth.Acceptance'+uuid.uuid4().hex+'\n//@ pragma ShellId wrayth-acceptance'+uuid.uuid4().hex+'\n'+entry.read_text())
+ f.start();token=f.hello()['instance']['token'];config=f.home/'.config/quickshell/sensei'
+ entry=config/'shell.qml';entry.write_text('//@ pragma AppId org.fh1m.Sensei.Acceptance'+uuid.uuid4().hex+'\n//@ pragma ShellId sensei-acceptance'+uuid.uuid4().hex+'\n'+entry.read_text())
  log=(f.home/'full-shell.log').open('a')
  def start():return subprocess.Popen([QS,'-p',str(config),'--no-color'],env=f.env,stdout=log,stderr=log,start_new_session=True)
  def bridge():
@@ -26,7 +26,7 @@ try:
  shell=start();wait();f.exit();time.sleep(6)
  assert shell.poll() is None and not bridge()['live']
  f.start();wait();assert shell.poll() is None
- print('PASS: full Wrayth bridge loads; shell restart preserves Noesis; Noesis restart preserves shell')
+ print('PASS: full Sensei bridge loads; shell restart preserves Noesis; Noesis restart preserves shell')
  print('Diagnostics:',f.home/'full-shell.log')
 finally:
  if shell and shell.poll() is None:os.killpg(shell.pid,signal.SIGTERM);shell.wait(timeout=5)

@@ -30,7 +30,7 @@ def install(home, apply=False, hardware='generic'):
         relative = source.relative_to(ROOT / 'home')
         dest = home / relative
         data = render(source.read_bytes(), home, hardware)
-        linked_helper = home / '.config/quickshell/wrayth/external' / source.name
+        linked_helper = home / '.config/quickshell/sensei/external' / source.name
         if relative.parts[:2] == ('.local', 'bin') and dest.is_symlink() and dest.resolve() == linked_helper.resolve() and linked_helper.is_file() and dest.read_bytes() == data:
             continue
         if dest.is_file() and not dest.is_symlink() and dest.read_bytes() == data:
@@ -51,7 +51,7 @@ def install(home, apply=False, hardware='generic'):
         temp.chmod(source.stat().st_mode & 0o777)
         temp.replace(dest)
     # Keep the QML module inside the config's scanner boundary without copying it.
-    for relative in ['.config/quickshell/noesis/ui','.config/quickshell/wrayth/noesis-ui']:
+    for relative in ['.config/quickshell/noesis/ui','.config/quickshell/sensei/noesis-ui']:
         module_link=home/relative
         module_target='../../../.local/share/sensei-learning/ui'
         if not module_link.is_symlink() or os.readlink(module_link)!=module_target:
@@ -62,9 +62,11 @@ def install(home, apply=False, hardware='generic'):
                     raise RuntimeError('Noesis module link conflicts with an existing path')
                 module_link.symlink_to(module_target,target_is_directory=True)
     if apply:
-        # Wrayth's helpers remain linked to their retained upstream sources.
+        if Path('/usr/share/icons/Adwaita/cursors').is_dir():
+            subprocess.run(['python3',str(ROOT/'scripts/build-signal-cursor.py'),'--dest',str(home/'.local/share/icons/Sensei-Signal')],check=True)
+        # Sensei's helpers remain linked to their retained upstream sources.
         bindir = home / '.local/bin'
-        for source in (home / '.config/quickshell/wrayth/external').glob('wrayth-*'):
+        for source in (home / '.config/quickshell/sensei/external').glob('sensei-*'):
             if not source.is_file() or source.suffix:
                 continue
             dest = bindir / source.name
@@ -77,16 +79,16 @@ def install(home, apply=False, hardware='generic'):
                 else: shutil.copy2(dest, old)
                 dest.unlink()
             dest.symlink_to(source)
-        for relative in ['.config/wrayth', '.local/state/wrayth', '.cache/wrayth',
-                         'Pictures/wallpapers/wrayth', 'Pictures/Screenshots',
+        for relative in ['.config/sensei', '.local/state/sensei', '.cache/sensei',
+                         'Pictures/wallpapers/sensei', 'Pictures/Screenshots',
                          'Videos/Screencasts', 'Phone/Transfers', 'Phone/Models']:
             (home / relative).mkdir(parents=True, exist_ok=True)
-        wallpapers = home / '.config/quickshell/wrayth/assets/wallpapers'
+        wallpapers = home / '.config/quickshell/sensei/assets/wallpapers'
         for source in wallpapers.glob('*.png'):
-            dest = home / 'Pictures/wallpapers/wrayth' / source.name
+            dest = home / 'Pictures/wallpapers/sensei' / source.name
             if not dest.exists(): shutil.copy2(source, dest)
         fontdir = home / '.local/share/fonts/chakra-petch'
-        shutil.copytree(home / '.config/quickshell/wrayth/assets/fonts/chakra-petch', fontdir, dirs_exist_ok=True)
+        shutil.copytree(home / '.config/quickshell/sensei/assets/fonts/chakra-petch', fontdir, dirs_exist_ok=True)
         if home == Path.home().resolve():
             subprocess.run(['fc-cache', '-f'], check=False)
             subprocess.run(['systemctl', '--user', 'daemon-reload'], check=False)

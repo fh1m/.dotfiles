@@ -2,7 +2,7 @@
 
 The published source was exported from the running UX581GV on 28 September 2026. The live Quickshell configuration loaded, Hyprland returned no config errors, and the selection handoff focused both a Chrome window on workspace 2 and workspace 2 itself from workspace 1. The delayed focus is essential: the chooser's exclusive input layer must finish closing first. A user click is the same `WindowDesk.choose()` path as the IPC test, though physical mouse timing deserves a normal-session check after future edits.
 
-The installation test runs in a temporary home directory. It checks dry-run safety, backup of an existing tmux file, `@HOME@` rendering, removal of UX581-specific monitor positioning in generic mode, recreation of Wrayth helper links and an idempotent second run. CI repeats these checks plus syntax checks. CI does **not** launch a compositor, build the whole Rust Spotify client or probe GPU/Android hardware.
+The installation test runs in a temporary home directory. It checks dry-run safety, backup of an existing tmux file, `@HOME@` rendering, removal of UX581-specific monitor positioning in generic mode, recreation of Sensei helper links and an idempotent second run. CI repeats these checks plus syntax checks. CI does **not** launch a compositor, build the whole Rust Spotify client or probe GPU/Android hardware.
 
 On the reference machine, the native Spotify transport and configurable Bluetooth preload library compiled. Existing running services and prior hands-on tests covered CUDA in Docker, ARM64 through QEMU, Chrome's Intel video decode and NVIDIA rendering under XWayland, and KDE Connect/Tailscale/Termux across the phone link. These are reference-device findings, not promises for a fresh Arch machine.
 

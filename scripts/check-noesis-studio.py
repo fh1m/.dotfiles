@@ -93,7 +93,7 @@ def desk_capture(name):
  target=evidence/(name+'.png')
  if target.exists():target.unlink()
  # Capture exactly what the ScreenPad displays. Refuse any other overlay so
- # private Wrayth popups or desktop content cannot enter retained evidence.
+ # private Sensei popups or desktop content cannot enter retained evidence.
  deadline=time.monotonic()+10
  while True:
   layers=json.loads(subprocess.check_output(['hyprctl','layers','-j']))['DP-2']['levels']['3']

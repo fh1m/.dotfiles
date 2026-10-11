@@ -36,6 +36,6 @@ Press feedback begins immediately (60–70 ms); hover/selection settles within 1
 
 ## Surface map
 
-`Theme.qml` owns the live tokens. `WidgetSection.qml`, `ControlTile.qml`, `DropdownFrame.qml` and `BarSurface.qml` own the recurring shapes and states. `sensei-palette` writes the terminal, tmux, GTK, Qt and shell-prompt counterparts. `wrayth-profile` re-applies the wallpaper palette after its legacy profile sync, so startup cannot put the old colors back.
+`Theme.qml` owns the live tokens. `WidgetSection.qml`, `ControlTile.qml`, `DropdownFrame.qml` and `BarSurface.qml` own the recurring shapes and states. `sensei-palette` writes the terminal, tmux, GTK, Qt and shell-prompt counterparts. `sensei-profile` re-applies the wallpaper palette after its legacy profile sync, so startup cannot put the old colors back.
 
 Sources and the 40-query research log: [UI research](research/ui-design.md).

@@ -4,7 +4,7 @@ Noesis connects sources, questions, reasoning, practice, code and evidence. Your
 
 ## Begin and return
 
-Click **Noesis** in the Wrayth bar, use **Super+Ctrl+O**, or launch the desktop entry to resume your saved activity. Opening an already visible instance preserves its editor and open sheet. The arrow beside the bar button offers **Start learning** and **Quick capture**; Escape or an outside click dismisses that menu.
+Click **Noesis** in the Sensei bar, use **Super+Ctrl+O**, or launch the desktop entry to resume your saved activity. Opening an already visible instance preserves its editor and open sheet. The arrow beside the bar button offers **Start learning** and **Quick capture**; Escape or an outside click dismisses that menu.
 
 Choose an authorized learning vault using the vault selector in the left navigation. Noesis does not automatically adopt discovered directories. If none is available, vault setup remains necessary before saving. Do not choose Downloads as your learning vault.
 

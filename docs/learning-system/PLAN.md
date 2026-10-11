@@ -86,7 +86,7 @@ behavioral/native/recovery/performance gates. Optional integrations are separate
 ## Product coherence continuation — 2026-10-09
 
 The additional product directive is part of P2–P8, not a replacement roadmap.
-Visual consistency is built alongside the workflows: shared Wrayth tokens,
+Visual consistency is built alongside the workflows: shared Sensei tokens,
 quiet navigation, contextual Read/Work/History/Connections, optional details,
 auto-preserved drafts, precise resource resume and a small intentional Today.
 See visual-language.md for inspected product patterns and implementation rules.

@@ -16,7 +16,7 @@ def clients():
 def eligible(w, workspace):
     return (w.get('workspace', {}).get('id') == workspace and workspace > 0
             and w.get('mapped', True) and not w.get('floating') and not w.get('pinned')
-            and not w.get('fullscreen') and w.get('class') != 'wrayth-deck')
+            and not w.get('fullscreen') and w.get('class') != 'sensei-deck')
 
 def dispatch(expression):
     subprocess.run(['hyprctl', 'dispatch', expression], check=True, capture_output=True, text=True)
@@ -38,6 +38,20 @@ def main():
         windows = clients()
         active = next((w for w in windows if w.get('focusHistoryID') == 0), None)
         command = sys.argv[1] if len(sys.argv) > 1 else 'auto'
+        if command == 'auto':
+            # Restore ordinary tiles as groups shrink. Hidden tabs still count.
+            seen = set()
+            for member in windows:
+                ws = member.get('workspace', {}).get('id', 0)
+                group = member.get('grouped', [])
+                key = tuple(sorted(group))
+                if not group or key in seen or not eligible(member, ws):
+                    continue
+                seen.add(key)
+                if sum(eligible(x, ws) for x in windows) <= 2:
+                    dispatch('hl.dsp.group.toggle({'+target(member['address'])+'})')
+            windows = clients()
+            active = next((w for w in windows if w.get('focusHistoryID') == 0), None)
         address = sys.argv[2] if len(sys.argv) > 2 else ''
         opened = next((w for w in windows if w['address'].removeprefix('0x') == address.removeprefix('0x')), None)
         w = (opened or active) if command in ('auto','pause') else active

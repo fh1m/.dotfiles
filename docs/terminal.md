@@ -2,29 +2,30 @@
 
 [← Workstation](../README.md)
 
-**Daily:** Alacritty 0.17 + tmux 3.7c. **Special deck:** Kitty. The deck needs Kitty's remote-control socket, image protocol and custom tab bar; replacing that one window would break the control surface. The old Kitty configuration is preserved in `backups/kitty/kitty.conf.20261004`.
+**Daily and deck:** upstream Alacritty 0.17 + tmux. Iosevka Nerd Font Mono, 11.8 pt, a small amount of extra cell spacing, warm text and hot-pink states.
 
-| Same feel | Implementation |
-|---|---|
-| ZedMono Nerd Font Mono, 11.5 pt; black/red/blue palette | `~/.config/alacritty/alacritty.toml` |
-| Independent terminal tabs and panes | tmux windows/panes; `BAY-NN` clients share the persistent `Sensei` window set |
-| Closing a terminal preserves work | systemd supervises the tmux server; detached windows remain in `Sensei` |
-| Fast image preview | `chafa image.png`; character-cell image, less fidelity than Kitty graphics |
-| URL detection / navigation | Alacritty URL hints (`Ctrl+Shift+O`), Vi mode (`Ctrl+Shift+Space`) |
-| Clipboard | Alacritty OSC 52 + tmux `set-clipboard external` + tmux-yank / `wl-copy` |
+Each new terminal owns an independent `dev_001`, `dev_002`, … tmux session. Focusing an existing terminal preserves its session. Closing a terminal detaches its client; explicitly closing a pane/window asks for confirmation.
 
-**No native tabs, splits, remote control, graphics protocol or Kitty kitten overlays exist in Alacritty.** tmux covers tabs/splits/session recovery; Chafa covers inline image inspection. The deck stays on Kitty for the remaining features. Alacritty's native Wayland/OpenGL path was measured on this laptop, not assumed faster everywhere. [Alacritty manual](https://alacritty.org/config-alacritty.html) · [tmux FAQ](https://github.com/tmux/tmux/wiki/FAQ) · [Kitty remote control](https://sw.kovidgoyal.net/kitty/remote-control/) · [Chafa](https://hpjansson.org/chafa/).
+Alacritty does not have native tabs. `Super+'` creates a **tmux window**; its bottom status line is the authoritative tab selector. Hyprland's window groups combine separate application windows. A duplicate top strip was tried and removed at the user's request.
 
-Graphics forks exist: [ayosec/alacritty](https://github.com/ayosec/alacritty) adds Sixel and iTerm2 protocols; [microo8/alacritty-sixel](https://github.com/microo8/alacritty-sixel) adds Sixel. Neither supplies the deck's Kitty remote-control API. They have not had the same GPU/load test on this laptop, so the measured upstream Alacritty build remains the daily choice. For full-resolution images, open the file in an image viewer or the preserved Kitty deck; `chafa` is the quick terminal preview.
+## Native-tab fork evaluation · 2026-10-11
+
+[Unbroken's fork](https://github.com/Unbroken/alacritty), tag `v0.17.0-unbroken-alpha5`, commit `93c9562654cc9e4206131334db2e32508c85ce3d`, built and ran in an isolated checkout. The published lockfile failed `cargo build --locked`; the disposable checkout needed lockfile regeneration.
+
+The two-tab Wayland fixture showed a gray bar and blue active underline despite pink/black `tabs.indicator` settings. Source inspection confirmed hard-coded renderer colors and single-tab hiding. More seriously, terminating the inactive fixture's Bash process also terminated the active fixture's Zsh process. `event.rs` handles a child exit by closing the active tab, ignoring the exit event's tab identity. Only test shells were affected. The fork is **not installed as the default**.
+
+The older [bebrws fork](https://github.com/bebrws/alacritty-tabs) last pushed source in August 2024 at audit time; it was not built. These are candidate-specific findings, not a verdict on every Alacritty fork.
+
+Upstream's supported architecture is [external multiplexing](https://github.com/alacritty/alacritty#faq). Features used here include live configuration reload, native Wayland, keyboard URL hints, Vi mode, OSC 52 clipboard, explicit TUI-safe history keys, tmux recovery and fuzzy project navigation. Graphics previews use [Chafa](https://hpjansson.org/chafa/); full images open in a dedicated viewer.
 
 ## Keys
 
 | Key | Action |
 |---|---|
-| `Super+Return`, `Alt+Return`, `Super+Q` | Focus existing Alacritty, or launch one; Super+Return while it is focused opens another BAY |
+| `Super+Return`, `Alt+Return`, `Super+Q` | Focus existing Alacritty, or launch one; only Shift forces a new window |
 | `Super+Shift+Return` | Force a new Alacritty window |
-| `Super+'`, `Ctrl+Shift+Return` | New tmux window (Kitty-style tab) |
-| `Super+[ / ]` | Previous / next tmux window |
+| `Super+'`, `Ctrl+Shift+Return` | New tmux window |
+| `Super+[ / ]` | Previous / next tmux window (also `Ctrl+Alt+Left/Right`) |
 | `Ctrl+Shift+N` | New OS window |
 | `Ctrl+Shift+L` | Next tmux pane layout |
 | `Ctrl+Shift+M` | Zoom current tmux pane |
@@ -39,11 +40,11 @@ Graphics forks exist: [ayosec/alacritty](https://github.com/ayosec/alacritty) ad
 
 The tmux prefix is the backtick (`` ` ``). The six retained plugins each have one job: TPM loads them; copycat searches; yank copies; tmux-fzf picks windows/sessions; resurrect saves layouts; Mighty Scroll handles the mouse wheel. The overlapping mouse and session plugins were removed from the active configuration, but their installed files were left alone. The mouse wheel uses tmux history in Codex/Claude; `Ctrl+Shift+Up` is the predictable fallback. Scrollback is 50,000 lines. `TERM=alacritty` outside, `TERM=tmux-256color` inside, with RGB and OSC 52 advertised. [tmux clipboard guide](https://github.com/tmux/tmux/wiki/Clipboard) · [Mighty Scroll behavior](https://github.com/noscript/tmux-mighty-scroll).
 
-The base session starts at login. The user service runs tmux in the foreground with restart supervision, so a successful one-shot startup cannot hide a vanished server. Each daily window gets its own `BAY-NN` view so switching windows in one terminal does not move another. On close, that view disappears; the window and its processes remain in `Sensei`. Use `` ` + s `` to revisit them. A reboot cannot keep live processes; resurrect saves layouts and supported commands on demand.
+The user service supervises the tmux server. Every new terminal gets independent windows and panes; no existing session is renamed. Use `` ` + s `` to revisit a detached session. A reboot cannot preserve live processes; tmux-resurrect preserves layouts and supported commands.
 
-The statusline is one continuous dark rail: an operator block, linked BAY, active window in muted red, quiet inactive windows, a thin neutral separator, and the current path. Prefix, copy, zoom, and synchronized panes appear only when active. It uses ZedMono Nerd Font Mono's regular/bold faces with Alacritty's native box drawing; no underline or pointy Powerline separators.
+The bottom rail uses dark number/label tiles and pink active values, with space above it. Its two-row setting matters: row zero is breathing room, row one is the status line. Mouse wheel bindings use tmux commands directly in both copy-mode tables, preventing plugin overrides from swallowing wheel-down. Releasing a selection copies through `wl-copy` and exits copy mode. Shift+wheel-up and `Ctrl+Shift+Up` enter history when an agent captures ordinary scrolling.
 
-Task windows opened by widgets use Alacritty **without attaching to the daily tmux session**, so a package or Bluetooth command cannot take over your workbench. `sim-console` explicitly offloads its terminal to NVIDIA when training mode is off; the ordinary terminal stays on Intel. A scratch Alacritty run reported RTX 2060 OpenGL 3.3 successfully. The `.desktop` entry and `xdg-terminals.list` select the same launcher.
+No terminal is restarted to apply fonts or theme changes. The deck now launches Alacritty, and refresh does not inject commands into a shell. An already running legacy terminal was moved aside locally to preserve its shell; it is not launched by the updated configuration.
 
 ## Local A/B, October 2026
 

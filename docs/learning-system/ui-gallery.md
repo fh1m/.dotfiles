@@ -12,7 +12,7 @@ Actual native captures with labelled disposable agent examples; no private conte
 
 ![Practice retains problem identity at 200% scale](assets/ux-finalization/practice-200-after.png)
 
-![Native Wrayth launch menu](assets/ux-finalization/bar-menu.png)
+![Native Sensei launch menu](assets/ux-finalization/bar-menu.png)
 
 ## Dijkstra through the shared learning thread
 

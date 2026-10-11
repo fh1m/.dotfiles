@@ -3,8 +3,8 @@
 ## Deployment truth
 
 The sprint began with the everyday launcher, ScreenPad button and Super+Ctrl+O
-opening the aca05d1 embedded UI in Wrayth. Its process was PID 2146193 and its
-config was `~/.config/quickshell/wrayth/shell.qml`. The standalone host and
+opening the aca05d1 embedded UI in Sensei. Its process was PID 2146193 and its
+config was `~/.config/quickshell/sensei/shell.qml`. The standalone host and
 production desktop registration were absent. Pushing feee017 had not deployed it.
 The scoped deployed files matched the older rendered source; they were not newer
 local modifications. This explains the unchanged everyday appearance.
@@ -27,7 +27,7 @@ context. Outcome recording remains the existing protected, receipt-backed workfl
 Zed Sans is the requested UI/prose family ([original Zed font source](https://github.com/zed-industries/zed-fonts)); ZedMono Nerd Font Mono is the installed
 Zed Mono family for code. Disposable font configuration includes the real installed
 font directory. Bengali and mathematical fallback fonts are installed. Colors
-match Wrayth's warm dark surfaces and pink identity. Routine buttons/fields/editor
+match Sensei's warm dark surfaces and pink identity. Routine buttons/fields/editor
 surfaces no longer have a rectangle outline. Text uses explicit native glyph
 rendering and full hinting; UI rows follow the interface scale independently of
 reading prose. There are no tooltips. Back/Forward/Refresh have visible names,
@@ -38,7 +38,7 @@ with borders. Focused inputs retain a narrow accent marker.
 ## Responsibilities and preservation
 
 The application controller owns host coordination, receipts and machine-local
-preferences/drafts; Wrayth owns its launcher and bounded companion projection.
+preferences/drafts; Sensei owns its launcher and bounded companion projection.
 Workspace remains the data/navigation adapter and still contains substantial
 shared state; it has not been fully decomposed. CourseStudio owns course/lesson
 composition, PracticePage owns thinking layout, shared controls own affordances.
@@ -84,7 +84,7 @@ edits notes. Tests verify outline return, Hide/reopen and Close/restart preserve
 the exact lesson, draft, parent course and expanded module. Checks also prove
 four concurrent launches use one instance, reject wrong owners, preserve private
 projection permissions, exclude embedded/standalone writable hosts, and isolate
-Wrayth/Noesis restarts. Scoped installation is idempotent; rollback refuses later
+Sensei/Noesis restarts. Scoped installation is idempotent; rollback refuses later
 edits and preserves unrelated files. 130 core/compatibility tests pass. Ten lifecycle
 fault cases passed during this slice, including debounce, pending mutation/import,
 failed save and forced termination; handoff delay in that suite is simulated.
@@ -120,7 +120,7 @@ Scoped installation is live. The canonical production config is
 `~/.config/quickshell/noesis/shell.qml`, with AppId and ShellId
 `org.fh1m.Noesis`; its desktop entry uses the same identity. The actual launcher,
 Super+Ctrl+O binding and ScreenPad bridge route to this independent host.
-The embedded writable host is removed from normal Wrayth composition.
+The embedded writable host is removed from normal Sensei composition.
 
 Production proof: one independent instance opened on workspace 4 (`Study`) in
 actual full-screen mode at 1920x1080 logical. Cold launch to visible worker/watch
@@ -129,7 +129,7 @@ These are single observations, not percentile budgets. Observed process RSS was
 174MiB and PSS 122MiB, not incremental system-memory cost. Five-minute idle,
 long-run memory trends and physical input latency remain unmeasured this slice.
 
-Private production screenshots were inspected but are not committed. Wrayth
+Private production screenshots were inspected but are not committed. Sensei
 remained PID 2146193 through hot reloads and independent app shutdown/restart.
 The three existing external windows retained their addresses and workspaces;
 all 50 personal vault Markdown hashes remained unchanged. Ten native lifecycle
@@ -162,7 +162,7 @@ scroll independently. Notes use the same live draft as the main page. Protected
 references and artifacts remain hidden until deliberate exposure on the main
 page. “Use ScreenPad for tools” releases the panel for Obsidian, PDFs, videos or
 other native apps, and “Show Study desk” returns without losing the draft. The old
-compact Wrayth companion is suppressed while Noesis is open to avoid two overlays.
+compact Sensei companion is suppressed while Noesis is open to avoid two overlays.
 Existing external tool windows are not moved into the study layout.
 
 Native fixture review captures: [main Practice](assets/recovery-sprint/practice-study.png),
@@ -211,7 +211,7 @@ startup fullscreen request. Noesis now repairs that state using an explicit,
 address-scoped fullscreen-state command when native acknowledgement differs,
 then verifies it. The live check confirmed 1920×1080 logical fullscreen on Study
 4 and a 1920×550 ScreenPad desk. Existing external client identities and workspace
-contents were retained; the original Wrayth process remained running. The scoped
+contents were retained; the original Sensei process remained running. The scoped
 backup preserves the unrelated custom setup. The selected personal course has
 no outline yet; this rollout does not fabricate one or alter learning content.
 

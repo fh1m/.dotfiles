@@ -12,9 +12,9 @@ The first problem was fundamental: entering Hyprland produced a black screen. A 
 
 The desktop then had to acquire the habits of its owner: named workspaces, manual idle control, natural scroll, music, clipboard, screenshots, model-training awareness, phone access, and controls for the hardware actually present.
 
-## What Wrayth contributed
+## What Sensei contributed
 
-[Wrayth](https://github.com/bowenbride/wrayth) supplied the shell foundation: Quickshell components, deck, notification daemon, lockscreen, launchers, profiles, helpers and a distinctive cut-corner visual vocabulary. Starting there avoided inventing every surface from scratch. The retained design document explains its original direction; this repository documents the adaptation rather than overwriting its authorship.
+[Sensei](https://github.com/bowenbride/wrayth) supplied the shell foundation: Quickshell components, deck, notification daemon, lockscreen, launchers, profiles, helpers and a distinctive cut-corner visual vocabulary. Starting there avoided inventing every surface from scratch. The retained design document explains its original direction; this repository documents the adaptation rather than overwriting its authorship.
 
 ## Decisions that made it personal
 

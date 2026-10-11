@@ -15,7 +15,7 @@ with tempfile.TemporaryDirectory(prefix='noesis-ui-') as temporary:
  for number in range(122):
   (vault/f'concept-{number:03}.md').write_text(f'---\nid: 33333333-3333-4333-8333-{number:012}\nnoesis_schema: 2\ntype: concept\ntitle: Connected concept {number:03}\n---\nA synthetic technical explanation.')
  (home/'.config/sensei-learning').mkdir(exist_ok=True);(home/'.config/sensei-learning/config.json').write_text(json.dumps({'active_vault':str(vault)}))
- config=home/'.config/quickshell/wrayth';(config/'shell.qml').write_text('import QtQuick\nimport Quickshell\nimport "modules/learning" as LearningUi\nimport qs.services\nShellRoot { LearningUi.NoesisWindow {} LearningUi.NoesisCompanion {} Component.onCompleted:Oasis.open() }\n')
+ config=home/'.config/quickshell/sensei';(config/'shell.qml').write_text('import QtQuick\nimport Quickshell\nimport "modules/learning" as LearningUi\nimport qs.services\nShellRoot { LearningUi.NoesisWindow {} LearningUi.NoesisCompanion {} Component.onCompleted:Oasis.open() }\n')
  if os.environ.get('NOESIS_TEST_HOST')=='standalone':
   config=home/'.config/quickshell/noesis'
   p=config/'shell.qml';p.write_text(p.read_text().replace('org.fh1m.Noesis','org.fh1m.Noesis.Acceptance'))

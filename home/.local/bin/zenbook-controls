@@ -69,8 +69,8 @@ def main():
  elif command=='training':
   chrome=json.loads(run('/home/fh1m/.local/bin/sensei-chrome','status'))
   if argument=='on':
-   if not state.get('training',False):state['trainingBefore']={'profile':run('/home/fh1m/.local/bin/sensei-power','name'),'hold':run('qs','-c','wrayth','ipc','call','idle','state')=='HOLD','chromeGpu':chrome.get('mode','nvidia')}
-   run('systemctl','--user','stop','wrayth-battery-idle.service');run('/home/fh1m/.local/bin/sensei-power','set','performance');run('qs','-c','wrayth','ipc','call','idle','hold','on');state['training']=True;save(state)
+   if not state.get('training',False):state['trainingBefore']={'profile':run('/home/fh1m/.local/bin/sensei-power','name'),'hold':run('qs','-c','sensei','ipc','call','idle','state')=='HOLD','chromeGpu':chrome.get('mode','nvidia')}
+   run('systemctl','--user','stop','sensei-battery-idle.service');run('/home/fh1m/.local/bin/sensei-power','set','performance');run('qs','-c','sensei','ipc','call','idle','hold','on');state['training']=True;save(state)
    result=json.loads(run('/home/fh1m/.local/bin/sensei-chrome','mode','intel'))
    if result.get('error'):raise RuntimeError(result['error'])
    if chrome.get('running') and (chrome.get('actual')!='Intel' or chrome.get('mode')=='nvidia'):
@@ -79,7 +79,7 @@ def main():
     if result.get('error'):raise RuntimeError(result['error'])
   else:
    previous=state.pop('trainingBefore',{'profile':'performance','hold':False,'chromeGpu':'nvidia'})
-   run('/home/fh1m/.local/bin/sensei-power','set',previous['profile']);run('qs','-c','wrayth','ipc','call','idle','hold','on' if previous['hold'] else 'off');state['training']=False;save(state)
+   run('/home/fh1m/.local/bin/sensei-power','set',previous['profile']);run('qs','-c','sensei','ipc','call','idle','hold','on' if previous['hold'] else 'off');state['training']=False;save(state)
    choice=previous.get('chromeGpu','nvidia');result=json.loads(run('/home/fh1m/.local/bin/sensei-chrome','mode',choice))
    if result.get('error'):raise RuntimeError(result['error'])
    desired='NVIDIA' if choice=='nvidia' else 'Intel'
@@ -88,7 +88,7 @@ def main():
     result=json.loads(run('/home/fh1m/.local/bin/sensei-chrome','restart',timeout=30))
     if result.get('error'):raise RuntimeError(result['error'])
   notify('Sensei, Training mode','Chrome on Intel + Performance + Keep Awake. Other GPU apps may need relaunching.' if state['training'] else 'Previous GPU, power and idle choices restored.')
- elif command=='system':run('qs','-c','wrayth','ipc','call','dropdown','open','system')
+ elif command=='system':run('qs','-c','sensei','ipc','call','dropdown','open','system')
  else:raise ValueError('Unknown control: '+command)
 if __name__=='__main__':
  try:

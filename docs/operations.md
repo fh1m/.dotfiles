@@ -7,20 +7,20 @@
 ```sh
 hyprctl configerrors
 hyprctl monitors -j
-qs -c wrayth ipc show
-qs -c wrayth ipc call dropdown open system
+qs -c sensei ipc show
+qs -c sensei ipc call dropdown open system
 systemctl --user --failed
 systemctl --failed
 journalctl -b -p warning
 ```
 
-Quickshell logs are under `/run/user/$UID/quickshell/by-pid/<PID>/log.log`. Find the current `qs` process; an old log’s warning does not necessarily describe the active instance. Configuration parse errors, binding loops and process exits matter more than a stale screenshot. `~/.local/state/wrayth/shell.log` records wrapper output.
+Quickshell logs are under `/run/user/$UID/quickshell/by-pid/<PID>/log.log`. Find the current `qs` process; an old log’s warning does not necessarily describe the active instance. Configuration parse errors, binding loops and process exits matter more than a stale screenshot. `~/.local/state/sensei/shell.log` records wrapper output.
 
 On multi-instance diagnostic sessions, choose the correct `hyprctl -i` instance. Do not reuse a stale HYPRLAND_INSTANCE_SIGNATURE when interrogating a restarted session.
 
 ## If the shell dies
 
-Keep the TTY fallback and existing desktop session. The Wrayth wrapper supervises lockscreen recovery; do not replace it with an unauthenticated unlock script. Read the last parse error, restore only the affected source backup, then start `~/.config/quickshell/wrayth/external/wrayth-shell` in the graphical environment. Avoid starting competing notification daemons or multiple shell instances.
+Keep the TTY fallback and existing desktop session. The Sensei wrapper supervises lockscreen recovery; do not replace it with an unauthenticated unlock script. Read the last parse error, restore only the affected source backup, then start `~/.config/quickshell/sensei/external/sensei-shell` in the graphical environment. Avoid starting competing notification daemons or multiple shell instances.
 
 A normal shell restart does not require killing Chrome, Spotify, training jobs or the compositor. A compositor restart is a separate disruptive action.
 

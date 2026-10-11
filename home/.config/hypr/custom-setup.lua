@@ -1,5 +1,5 @@
--- Personal setup layered on top of Wrayth.
--- Wrayth keeps ownership of its launcher, deck, lock, power, workspace-number,
+-- Personal setup layered on top of Sensei.
+-- Sensei keeps ownership of its launcher, deck, lock, power, workspace-number,
 -- volume, and brightness shortcuts.
 
 local mod = "SUPER"
@@ -61,7 +61,7 @@ hl.config({
             text_padding = 18,
             text_color = "rgba(e8e2daff)",
             text_color_inactive = "rgba(77716aff)",
-            col = { active = "rgba(09080700)", inactive = "rgba(09080700)", locked_active = "rgba(09080700)", locked_inactive = "rgba(09080700)" },
+            col = { active = "rgba(000000ff)", inactive = "rgba(000000ff)", locked_active = "rgba(000000ff)", locked_inactive = "rgba(000000ff)" },
         },
     },
 })
@@ -99,14 +99,14 @@ hl.bind(mod .. " + RETURN", hl.dsp.exec_cmd(terminal))
 hl.bind("ALT + RETURN", hl.dsp.exec_cmd("/home/fh1m/.local/bin/sensei-terminal"))
 hl.bind("ALT + W", hl.dsp.exec_cmd("google-chrome-stable"))
 hl.bind("ALT + F", hl.dsp.exec_cmd("nautilus"))
-hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs -c wrayth ipc call picker toggle"))
-hl.bind(mod .. " + A", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher overview"))
+hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs -c sensei ipc call picker toggle"))
+hl.bind(mod .. " + A", hl.dsp.exec_cmd("qs -c sensei ipc call switcher overview"))
 hl.bind(mod .. " + SHIFT + D", hl.dsp.exec_cmd("grimblast --freeze save area - | tesseract stdin stdout | wl-copy"))
 hl.bind(mod .. " + Y", hl.dsp.window.pin())
 hl.unbind("CTRL + SPACE")
-hl.bind("CTRL + SPACE", hl.dsp.exec_cmd("qs -c wrayth ipc call spotify action toggle"))
-hl.bind("ALT + TAB", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle apps 1"))
-hl.bind("ALT + SHIFT + TAB", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle apps -1"))
+hl.bind("CTRL + SPACE", hl.dsp.exec_cmd("qs -c sensei ipc call spotify action toggle"))
+hl.bind("ALT + TAB", hl.dsp.exec_cmd("qs -c sensei ipc call switcher cycle apps 1"))
+hl.bind("ALT + SHIFT + TAB", hl.dsp.exec_cmd("qs -c sensei ipc call switcher cycle apps -1"))
 
 hl.bind(mod .. " + SHIFT + G", function()
     hl.config({ general = { gaps_out = 5, gaps_in = 3 } })
@@ -123,8 +123,8 @@ hl.on("hyprland.start", function()
 end)
 
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd("qs -c wrayth ipc call spotify action next"), { locked = true })
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("qs -c wrayth ipc call spotify action previous"), { locked = true })
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd("qs -c sensei ipc call spotify action next"), { locked = true })
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("qs -c sensei ipc call spotify action previous"), { locked = true })
 hl.bind("SHIFT + SUPER + bracketright", hl.dsp.exec_cmd("bash -c 'cur=$(cat /sys/class/backlight/asus_screenpad/brightness); max=$(cat /sys/class/backlight/asus_screenpad/max_brightness); pct=$((cur * 100 / max + 10)); [ \"$pct\" -gt 100 ] && pct=100; asusctl backlight --screenpad-brightness \"$pct\"'"))
 hl.bind("SHIFT + SUPER + bracketleft", hl.dsp.exec_cmd("bash -c 'cur=$(cat /sys/class/backlight/asus_screenpad/brightness); max=$(cat /sys/class/backlight/asus_screenpad/max_brightness); pct=$((cur * 100 / max - 10)); [ \"$pct\" -lt 0 ] && pct=0; asusctl backlight --screenpad-brightness \"$pct\"'"))
 
@@ -164,10 +164,10 @@ hl.bind("ALT + Print", hl.dsp.exec_cmd(capture .. "screenshot active"))
 hl.bind("CTRL + Print", hl.dsp.exec_cmd(capture .. "screenshot screen"))
 hl.bind("SUPER + Print", hl.dsp.exec_cmd(capture .. "record output"))
 hl.bind("SUPER + SHIFT + Print", hl.dsp.exec_cmd(capture .. "record area"))
-hl.bind("SUPER + F2", hl.dsp.exec_cmd("qs -c wrayth ipc call shortcuts toggle"))
+hl.bind("SUPER + F2", hl.dsp.exec_cmd("qs -c sensei ipc call shortcuts toggle"))
 -- US keyboard: Shift+/ prints ?, so this is Ctrl+Shift+?.
 hl.unbind("CTRL + SHIFT + slash")
-hl.bind("CTRL + SHIFT + slash", hl.dsp.exec_cmd("qs -c wrayth ipc call shortcuts toggle"))
+hl.bind("CTRL + SHIFT + slash", hl.dsp.exec_cmd("qs -c sensei ipc call shortcuts toggle"))
 
 -- Six regular workspaces; remove the copied extra numeric shortcuts.
 for _, key in ipairs({ "7", "8", "9", "0" }) do
@@ -191,47 +191,47 @@ hl.bind("XF86KbdBrightnessUp", hl.dsp.exec_cmd(zenbook .. "keyboard up"), { lock
 hl.bind("XF86KbdBrightnessDown", hl.dsp.exec_cmd(zenbook .. "keyboard down"), { locked = true })
 hl.bind("XF86KbdLightOnOff", hl.dsp.exec_cmd(zenbook .. "keyboard cycle"), { locked = true })
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true })
-hl.bind("XF86ScreenSaver", hl.dsp.exec_cmd("qs -c wrayth ipc call lock lock"))
-hl.bind("XF86Screensaver", hl.dsp.exec_cmd("qs -c wrayth ipc call lock lock"))
-hl.bind("XF86Display", hl.dsp.exec_cmd("qs -c wrayth ipc call system page 1"))
-hl.bind("XF86Launch1", hl.dsp.exec_cmd("qs -c wrayth ipc call system page 0"))
+hl.bind("XF86ScreenSaver", hl.dsp.exec_cmd("qs -c sensei ipc call lock lock"))
+hl.bind("XF86Screensaver", hl.dsp.exec_cmd("qs -c sensei ipc call lock lock"))
+hl.bind("XF86Display", hl.dsp.exec_cmd("qs -c sensei ipc call system page 1"))
+hl.bind("XF86Launch1", hl.dsp.exec_cmd("qs -c sensei ipc call system page 0"))
 hl.bind("XF86RFKill", hl.dsp.exec_cmd(zenbook .. "airplane"))
 hl.bind("XF86WLAN", hl.dsp.exec_cmd(zenbook .. "wifi"))
 hl.bind("XF86Calculator", hl.dsp.exec_cmd("gnome-calculator"))
 hl.bind("XF86WebCam", hl.dsp.exec_cmd(zenbook .. "camera"))
 hl.bind("XF86SelectiveScreenshot", hl.dsp.exec_cmd(capture .. "screenshot area"))
 -- Extra functions on Super+Fn preserve the application's plain F1-F12 keys.
-hl.bind("SUPER + F3", hl.dsp.exec_cmd("qs -c wrayth ipc call system page 0"))
+hl.bind("SUPER + F3", hl.dsp.exec_cmd("qs -c sensei ipc call system page 0"))
 hl.bind("SUPER + F4", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"))
 hl.bind("SUPER + F5", hl.dsp.exec_cmd(zenbook .. "profile"))
 hl.bind("SUPER + F6", hl.dsp.exec_cmd(zenbook .. "touchpad"))
 hl.bind("SUPER + F7", hl.dsp.exec_cmd(zenbook .. "keyboard cycle"))
 hl.bind("SUPER + F8", hl.dsp.exec_cmd(zenbook .. "swap"))
-hl.bind("SUPER + F9", hl.dsp.exec_cmd("qs -c wrayth ipc call idle hold toggle"))
+hl.bind("SUPER + F9", hl.dsp.exec_cmd("qs -c sensei ipc call idle hold toggle"))
 hl.bind("SUPER + F10", hl.dsp.exec_cmd(zenbook .. "camera"))
 hl.bind("SUPER + F11", hl.dsp.exec_cmd(capture .. "record output"))
-hl.bind("SUPER + F12", hl.dsp.exec_cmd("qs -c wrayth ipc call system page 2"))
+hl.bind("SUPER + F12", hl.dsp.exec_cmd("qs -c sensei ipc call system page 2"))
 -- Preserve personal touchpad/scroll/animation choices across config reloads.
 hl.exec_cmd(zenbook .. "restore")
 
 -- Persistent clipboard archive and ScreenPad tools.
 hl.unbind("SUPER + SHIFT + V")
-hl.bind("SUPER + SHIFT + V", hl.dsp.exec_cmd("qs -c wrayth ipc call dropdown open clipboard"))
+hl.bind("SUPER + SHIFT + V", hl.dsp.exec_cmd("qs -c sensei ipc call dropdown open clipboard"))
 hl.unbind("SUPER + SHIFT + M")
-hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd("qs -c wrayth ipc call dropdown open monitor"))
+hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd("qs -c sensei ipc call dropdown open monitor"))
 
 -- Image chooser is a normal floating window, independent of layer popup focus.
 hl.window_rule({ name = "sensei-image-chooser", match = { class = "zenity" }, float = true, center = true })
 
 -- Preview without changing application focus until a selection is committed.
-hl.bind("SUPER + Tab", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle workspaces 1"))
-hl.bind("SUPER + SHIFT + Tab", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle workspaces -1"))
-hl.bind("ALT + grave", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle same 1"))
-hl.bind("ALT + SHIFT + grave", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher cycle same -1"))
+hl.bind("SUPER + Tab", hl.dsp.exec_cmd("qs -c sensei ipc call switcher cycle workspaces 1"))
+hl.bind("SUPER + SHIFT + Tab", hl.dsp.exec_cmd("qs -c sensei ipc call switcher cycle workspaces -1"))
+hl.bind("ALT + grave", hl.dsp.exec_cmd("qs -c sensei ipc call switcher cycle same 1"))
+hl.bind("ALT + SHIFT + grave", hl.dsp.exec_cmd("qs -c sensei ipc call switcher cycle same -1"))
 
 -- Keep the former hot surfaces explicit even if another theme enables blur.
 hl.window_rule({ name = "sensei-terminal-render-headroom", match = { class = "^(kitty|Alacritty)$" }, no_blur = true })
-hl.layer_rule({ name = "sensei-bar-render-headroom", match = { namespace = "^wrayth-bar$" }, blur = false })
+hl.layer_rule({ name = "sensei-bar-render-headroom", match = { namespace = "^sensei-bar$" }, blur = false })
 -- Native image/calendar choosers stay above ordinary apps.
 hl.window_rule({ name = "sensei-native-chooser", match = { class = "^(zenity|org\\.gnome\\.Zenity)$" }, float = true, center = true })
 -- Smooth geometry transitions; whole-application opacity fades are disabled.
@@ -246,7 +246,7 @@ hl.animation({ leaf = "layers", enabled = true, speed = 3.0, bezier = "senseiSet
 for _, leaf in ipairs({"workspaces", "workspacesIn", "workspacesOut"}) do
     hl.animation({ leaf = leaf, enabled = true, speed = 3.4, bezier = "senseiGlide", style = "slide" })
 end
-hl.layer_rule({ name = "sensei-popup-single-motion", match = { namespace = "^wrayth-popup$" }, no_anim = true })
+hl.layer_rule({ name = "sensei-popup-single-motion", match = { namespace = "^sensei-popup$" }, no_anim = true })
 hl.layer_rule({ name = "sensei-navigation-stable", match = { namespace = "^sensei-navigation$" }, blur = false, no_anim = true })
 
 -- Keep application opacity steady when focus changes during workspace motion.
@@ -264,16 +264,16 @@ for _, spec in ipairs({
     hl.bind("SHIFT + " .. spec[1], hl.dsp.exec_cmd(app_helper .. spec[2] .. " new-window"))
 end
 hl.unbind("SUPER + CTRL + P")
-hl.bind("SUPER + CTRL + P", hl.dsp.exec_cmd("qs -c wrayth ipc call power toggle"))
+hl.bind("SUPER + CTRL + P", hl.dsp.exec_cmd("qs -c sensei ipc call power toggle"))
 
 -- Global soundtrack controls, independent of the focused application.
 for _, spec in ipairs({{"LEFT", "previous"}, {"RIGHT", "next"}, {"UP", "volume-up"}, {"DOWN", "volume-down"}}) do
     hl.unbind("CTRL + " .. spec[1])
-    hl.bind("CTRL + " .. spec[1], hl.dsp.exec_cmd("qs -c wrayth ipc call spotify action " .. spec[2]))
+    hl.bind("CTRL + " .. spec[1], hl.dsp.exec_cmd("qs -c sensei ipc call spotify action " .. spec[2]))
 end
 
 -- Popup content owns its motion; keep its compositor surface free of blur.
-hl.layer_rule({ name = "sensei-popup-soft-reveal", match = { namespace = "^wrayth-popup$" }, blur = false, no_anim = true })
+hl.layer_rule({ name = "sensei-popup-soft-reveal", match = { namespace = "^sensei-popup$" }, blur = false, no_anim = true })
 
 -- Give the Intel display renderer better scheduling; allow scanout where eligible.
 hl.config({ render = { new_render_scheduling = true, direct_scanout = 2 } })
@@ -283,3 +283,19 @@ dofile(os.getenv("HOME") .. "/.config/hypr/oasis.lua")
 
 -- App classes map to the same seven workspaces as the bar and Noesis.
 dofile(os.getenv("HOME") .. "/.config/hypr/workspace-apps.lua")
+
+-- Shared cursor theme for Wayland and XWayland clients.
+hl.env("XCURSOR_THEME", "Sensei-Signal")
+hl.env("HYPRCURSOR_THEME", "Sensei-Signal")
+hl.dispatch(hl.dsp.exec_cmd("hyprctl setcursor Sensei-Signal 24"))
+
+-- Workbench tools stay out of the bar.
+hl.bind("SUPER + SHIFT + SPACE", hl.dsp.exec_cmd("qs -c sensei ipc call workbench scratch"))
+hl.bind("SUPER + ALT + P", hl.dsp.exec_cmd("qs -c sensei ipc call workbench capture"))
+hl.bind("SUPER + CTRL + D", hl.dsp.exec_cmd("qs -c sensei ipc call workbench quiet"))
+
+-- One arrow convention for ordinary windows and native tab groups.
+for _, direction in ipairs({"left", "right", "up", "down"}) do
+ hl.unbind("SUPER + "..direction)
+ hl.bind("SUPER + "..direction,hl.dsp.exec_cmd(os.getenv("HOME").."/.local/bin/sensei-focus "..direction))
+end

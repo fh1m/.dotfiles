@@ -14,7 +14,7 @@ def command(args, timeout=15):
  if r.returncode:raise RuntimeError('Command failed: '+args[0]+' '+r.stderr[:160])
  return r.stdout
 
-def ipc(*args):return command([QS,'-c','wrayth','ipc','call',*args])
+def ipc(*args):return command([QS,'-c','sensei','ipc','call',*args])
 def hypr(code):return command(['hyprctl','-i','0','dispatch',code])
 def clients():return json.loads(command(['hyprctl','-i','0','clients','-j']))
 def shot(name,output='eDP-1',delay=.8):

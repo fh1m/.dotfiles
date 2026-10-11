@@ -1,6 +1,6 @@
 # Self-service learning from an empty vault
 
-This slice adds one shared Start learning flow, not source-specific lessons or a second learning database. Open it from Today/the global toolbar, Ctrl+N, search or the Wrayth Noesis bar button. Paste a source, choose a file or Zotero item, or enter a question/topic. Choose its format and supply a title. Continue opens the existing record form; Save enters the existing working page. Manual metadata and unit creation are intentional; automatic transcripts, titles and outlines are unsupported.
+This slice adds one shared Start learning flow, not source-specific lessons or a second learning database. Open it from Today/the global toolbar, Ctrl+N, search or the Sensei Noesis bar button. Paste a source, choose a file or Zotero item, or enter a question/topic. Choose its format and supply a title. Continue opens the existing record form; Save enters the existing working page. Manual metadata and unit creation are intentional; automatic transcripts, titles and outlines are unsupported.
 
 ## Native click paths actually exercised
 
@@ -31,9 +31,9 @@ Vault creation/adoption and advanced recovery are not fully native self-service 
 
 ## Scoped live deployment
 
-Initial source deployment: `c75153858fe5c176449db1272cc8e1c79f9113cc`, pushed to the feature branch. Backup manifest: `/home/fh1m/.local/state/noesis-deployments/20261010-201630-959159/manifest.json`. Twenty files changed; the only Wrayth replacements were ArchiveButton and NoesisBridge. The source was clean at deployment.
+Initial source deployment: `c75153858fe5c176449db1272cc8e1c79f9113cc`, pushed to the feature branch. Backup manifest: `/home/fh1m/.local/state/noesis-deployments/20261010-201630-959159/manifest.json`. Twenty files changed; the only Sensei replacements were ArchiveButton and NoesisBridge. The source was clean at deployment.
 
-Production launch identified one registered `org.fh1m.Noesis` standalone window at `~/.config/quickshell/noesis`, using shared UI at `~/.local/share/sensei-learning/ui`. Hide stopped the worker; reopen retained the instance and selection; Close exited. The original Wrayth PID 2146193 remained alive. The configured Super+Ctrl+O route still opens/resumes the independent host; the reviewed and deployed bar route calls Start learning. The direct launcher Start request was exercised live. A physical bar click and the owner usability trial remain for the owner. Later guide-only changes are deployed through the same scoped installer; the exact current commit is available in installed `build.json` and the final report.
+Production launch identified one registered `org.fh1m.Noesis` standalone window at `~/.config/quickshell/noesis`, using shared UI at `~/.local/share/sensei-learning/ui`. Hide stopped the worker; reopen retained the instance and selection; Close exited. The original Sensei PID 2146193 remained alive. The configured Super+Ctrl+O route still opens/resumes the independent host; the reviewed and deployed bar route calls Start learning. The direct launcher Start request was exercised live. A physical bar click and the owner usability trial remain for the owner. Later guide-only changes are deployed through the same scoped installer; the exact current commit is available in installed `build.json` and the final report.
 
 ## Typography and reachable controls
 

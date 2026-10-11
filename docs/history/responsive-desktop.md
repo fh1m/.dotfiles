@@ -33,4 +33,4 @@ No package upgrades/removals or research-feature installs were performed. Full r
 
 ## Backup / rollback
 
-Backup: ~/.local/state/hyprland-repair-20260926/responsive-weather-070413. It contains the previous .config/quickshell/wrayth, .config/hypr, desktop-shortcuts and robot-bench-data. Restore those config trees and robot-bench-data, then reload Hyprland and restart the Wrayth shell. The new helpers can remain unreferenced; do not delete personal weather/cache/clipboard data. Current session GPU fixes and monitor arrangement remain intact.
+Backup: ~/.local/state/hyprland-repair-20260926/responsive-weather-070413. It contains the previous .config/quickshell/sensei, .config/hypr, desktop-shortcuts and robot-bench-data. Restore those config trees and robot-bench-data, then reload Hyprland and restart the Sensei shell. The new helpers can remain unreferenced; do not delete personal weather/cache/clipboard data. Current session GPU fixes and monitor arrangement remain intact.

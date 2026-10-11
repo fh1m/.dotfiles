@@ -16,7 +16,7 @@ for host in ('embedded','standalone'):
  (home/'.config/sensei-learning/config.json').write_text(json.dumps({'active_vault':str(vault)}))
  env=dict(os.environ,HOME=str(home),XDG_CONFIG_HOME=str(home/'.config'),XDG_CACHE_HOME=str(home/'.cache'),XDG_STATE_HOME=str(home/'.local/state'),NOESIS_WINDOW_MODE='normal')
  if host=='embedded':
-  config=home/'.config/quickshell/wrayth'
+  config=home/'.config/quickshell/sensei'
   (config/'shell.qml').write_text('//@ pragma AppId org.fh1m.Noesis.ParityEmbedded\n//@ pragma ShellId noesis-parity-embedded\nimport QtQuick\nimport Quickshell\nimport "modules/learning" as LearningUi\nimport "noesis-ui" as Shared\nShellRoot { LearningUi.NoesisWindow {} Component.onCompleted:Shared.NoesisController.open() }\n')
  else:
   config=home/'.config/quickshell/noesis'

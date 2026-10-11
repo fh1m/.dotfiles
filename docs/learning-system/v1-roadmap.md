@@ -18,9 +18,9 @@ Configured off-device backup remains **Deferred by owner — Post-V1 infrastruct
 
 ## Architecture decision
 
-Use an independent Quickshell application for V1. Retain the embedded Wrayth host as a selectable rollback. PySide6 remains a post-V1 alternative; no new runtime dependency or WebEngine is introduced.
+Use an independent Quickshell application for V1. Retain the embedded Sensei host as a selectable rollback. PySide6 remains a post-V1 alternative; no new runtime dependency or WebEngine is introduced.
 
-Keep one maintained Noesis UI module under `sensei-learning/ui`, with compatibility wrappers at existing Wrayth locations. The standalone process receives only its learning controller, UI tokens and necessary Qt/Quickshell adapters. It does not import Wrayth's service graph. Establish unchanged functional behavior before changing composition or styling.
+Keep one maintained Noesis UI module under `sensei-learning/ui`, with compatibility wrappers at existing Sensei locations. The standalone process receives only its learning controller, UI tokens and necessary Qt/Quickshell adapters. It does not import Sensei's service graph. Establish unchanged functional behavior before changing composition or styling.
 
 Quickshell documents distinct [AppId and ShellId pragmas](https://quickshell.org/docs/v0.3.0/guide/advanced/): AppId supplies application identity; ShellId identifies the configuration across paths. Neither replaces an explicit launcher/IPC protocol.
 
@@ -30,10 +30,10 @@ Each substep has a separate reviewable change, test evidence and rollback checkp
 
 | Step | Deliverable | Exit gate |
 |---|---|---|
-| M1a: dependency audit | Inventory every imported module, singleton reference, child process, file watch, timer and IPC handler from `aca05d1`; record its proposed owner and transitive dependencies | No unexplained Wrayth dependencies; import closure loads in an isolated rendered installation |
-| M1b: unchanged-UI host | Stable standalone entry; existing layouts, controls, drafts, actions and learning behavior run under independent identity | Same fixtures/actions as embedded baseline; no unresolved QML warnings; host failure leaves Wrayth healthy; parity screenshots |
+| M1a: dependency audit | Inventory every imported module, singleton reference, child process, file watch, timer and IPC handler from `aca05d1`; record its proposed owner and transitive dependencies | No unexplained Sensei dependencies; import closure loads in an isolated rendered installation |
+| M1b: unchanged-UI host | Stable standalone entry; existing layouts, controls, drafts, actions and learning behavior run under independent identity | Same fixtures/actions as embedded baseline; no unresolved QML warnings; host failure leaves Sensei healthy; parity screenshots |
 | M1c: controller boundary | Extract application state and adapters; retain backend protocol and receipts; distinguish visibility, mutations, persistence and exit | Exact owner/target requests, stale-response rejection, draft preservation and shutdown fault cases pass |
-| M1d: desktop integration | Single-instance launcher; Wrayth bridge/ScreenPad; configurable placement; desktop registration; scoped specialist return | Concurrent launch, stale projection, unavailable monitor, both restart directions and both placement modes pass |
+| M1d: desktop integration | Single-instance launcher; Sensei bridge/ScreenPad; configurable placement; desktop registration; scoped specialist return | Concurrent launch, stale projection, unavailable monitor, both restart directions and both placement modes pass |
 | M1e: rollback/install checkpoint | Scoped replacement backups and explicit host selection; two temporary-home installations; documented rollback | Only one learning host active; rollback restores routing/UI without deleting records; repeated installation is idempotent |
 | M1f: UX foundation | Versioned scales/layout preferences, corrected shared tokens, control variants and adaptive shell | Compact and scaled foundation passes inspection; no learning-surface redesign starts before M1b–e pass |
 
@@ -53,12 +53,12 @@ This inventory comes from the baseline source, not the unaccepted extraction. M1
 | Zotero search process and stale-query checks | `NoesisZoteroDialog.qml` | Application reader adapter, scoped to dialog request and owner; import remains explicit mutation |
 | Compositor client lookup, mode dispatch/check/retry, geometry writer | `NoesisWindow.qml` | Window/compositor adapter; all persistence routed through the controller's serialized queue |
 | Config/frontier/preferences `FileView` | `Oasis.qml` | Application config/persistence adapter; learning watches disabled while hidden; cheap machine-local config watch only where necessary |
-| `ShellState.dropdown`, bar actions and `Ipc.qml` dropdown routing | Wrayth shell/service graph | Wrayth bridge translates launch/capture/resume; standalone has no `ShellState` import |
+| `ShellState.dropdown`, bar actions and `Ipc.qml` dropdown routing | Sensei shell/service graph | Sensei bridge translates launch/capture/resume; standalone has no `ShellState` import |
 | `Theme.widget*` | Window chrome and `NoesisStyle`; legacy dropdown | Narrow Noesis token source; freeze baseline values for parity; correct tokens only after hosting gates |
 | `Appearance.font.data`, `Appearance.duration.state` | `NoesisStyle` | Explicit Noesis font/motion settings; no appearance singleton graph copied into standalone |
 | `qs.config`, `qs.services`, `qs.components` imports | Learning components/window/workspace/dialogs and legacy dropdown | Replace with explicit learning-only module imports; resolve every symbol. Keep legacy dropdown/chamfer shell dependencies confined to rollback |
 | `noesis`, `oasis`, `noesis-window`, `noesis-companion` IPC | Controller/window/companion | Versioned app control; temporary old-name forwarding in bridge; diagnostic endpoints expose bounded state and omit drafts |
-| Screens, window modes, `Quickshell.execDetached` handoffs | Window, companion and action adapters | Application/window adapter owns main window; Wrayth owns companion placement; tools retain their own windows/lifecycles |
+| Screens, window modes, `Quickshell.execDetached` handoffs | Window, companion and action adapters | Application/window adapter owns main window; Sensei owns companion placement; tools retain their own windows/lifecycles |
 
 Backend owns Markdown, indexes, managed-vault authorization, identity resolution, locks, imports and receipts. Specialist tools own original PDFs, bibliography/annotations, rich editing and code execution. UI presentation never becomes learning authority.
 
@@ -81,9 +81,9 @@ Proposed control protocol v1:
 
 Request acknowledgement distinguishes received, ready, rejected and uncertain. Request UUIDs are deduplicated within the instance; a lost acknowledgement across restart prompts inspection rather than silent replay. Launcher commands cannot run arbitrary backend mutations. Paths/titles are locators, never substitutes for stable ownership. Owner/path disagreement, unavailable owner, identity collision and unauthorized vaults fail explicitly; there is no fallback to the current vault.
 
-Companion projection v1 contains version, publisher instance/start identity, update timestamp, visibility, owner reference, record ID, bounded title, surface and resume anchor. Store atomically in a permission-restricted directory/file (0700/0600). It contains no body, draft, history or mutation authority. Unsupported versions/malformed state clear the display. Publisher liveness and instance handshake validate projected context; timestamps alone do not establish liveness. On stale state or absent app, offer neutral Open rather than a misleading active session. Wrayth performs no learning indexing and routes all capture/resume requests through the launcher.
+Companion projection v1 contains version, publisher instance/start identity, update timestamp, visibility, owner reference, record ID, bounded title, surface and resume anchor. Store atomically in a permission-restricted directory/file (0700/0600). It contains no body, draft, history or mutation authority. Unsupported versions/malformed state clear the display. Publisher liveness and instance handshake validate projected context; timestamps alone do not establish liveness. On stale state or absent app, offer neutral Open rather than a misleading active session. Sensei performs no learning indexing and routes all capture/resume requests through the launcher.
 
-Tests cover Wrayth restarting while Noesis remains active, Noesis restarting while Wrayth survives, projection recovery, launch contention, readiness failure, PID reuse/stale files, unknown versions and exact owner handoffs. Restart tests use disposable shell instances first; any live shell restart requires separately scoped execution authorization.
+Tests cover Sensei restarting while Noesis remains active, Noesis restarting while Sensei survives, projection recovery, launch contention, readiness failure, PID reuse/stale files, unknown versions and exact owner handoffs. Restart tests use disposable shell instances first; any live shell restart requires separately scoped execution authorization.
 
 ## Placement, Hide, Close and recovery
 

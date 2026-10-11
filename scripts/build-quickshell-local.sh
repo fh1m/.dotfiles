@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Rebuild the archived Noctalia Quickshell fork against this machine's Qt.
-# The packaged binary remains available; wrayth-shell checks the Qt stamp.
+# The packaged binary remains available; sensei-shell checks the Qt stamp.
 set -euo pipefail
 
 revision=606adedbfea92caba306730edd0f6adba4acf310
@@ -42,5 +42,5 @@ if [ -e "$prefix" ]; then
     mv "$prefix" "$prefix.previous.$(date +%Y%m%d-%H%M%S)"
 fi
 mv "$stage" "$prefix"
-printf 'Built %s against Qt %s; restart wrayth-shell to use it.\n' \
+printf 'Built %s against Qt %s; restart sensei-shell to use it.\n' \
     "$revision" "$(cat "$prefix/qt-version")"

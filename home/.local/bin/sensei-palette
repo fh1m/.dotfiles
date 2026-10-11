@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 home = Path.home()
-state = home / ".config/wrayth"
+state = home / ".config/sensei"
 wallpapers = state / "wallpapers.json"
 out = state / "wallpaper-palette.json"
 
@@ -114,28 +114,6 @@ def main():
                                  lambda m: m.group(1) + '="' + ('JetBrainsMono Nerd Font Propo' if m.group(1) == 'general' else 'JetBrainsMono Nerd Font Mono') + ',',
                                  config.read_text())
                 write_if_changed(config, content)
-        kitty = home / '.config/kitty/wrayth-colors.conf'
-        if kitty.exists():
-            content = kitty.read_text()
-            keys = {'background':'#000000','foreground':palette['text'],
-                    'cursor':palette['text'],'cursor_text_color':'#000000',
-                    'selection_background':palette['primary'], 'selection_foreground':'#000000',
-                    'color0':'#000000','color8':palette['muted'],
-                    'color1':palette['error'],'color9':palette['error'],
-                    'color2':palette['secondary'],'color10':palette['secondary'],
-                    'color3':palette['tertiary'],'color11':palette['tertiary'],
-                    'color4':palette['primary'],'color12':palette['primary'],
-                    'color5':palette['vibrant'],'color13':palette['vibrant'],
-                    'color6':palette['secondary'],'color14':palette['secondary'],
-                    'color7':palette['text'],'color15':'#ffffff',
-                    'active_tab_background':palette['primary'],'active_tab_foreground':'#000000',
-                    'inactive_tab_background':'#000000','inactive_tab_foreground':palette['muted'],
-                    'tab_bar_background':'#000000','inactive_border_color':palette['outline']}
-            for key, value in keys.items():
-                content = re.sub(r'(?m)^' + re.escape(key) + r'\s+#[0-9a-fA-F]{6}\s*$',
-                                 key + ' ' + value, content)
-            if write_if_changed(kitty, content):
-                subprocess.run(['pkill','-USR1','-x','kitty'],capture_output=True)
         # Shells and tmux read these tiny generated files; wallpaper changes
         # never rerun a heavy prompt command or refresh the entire terminal.
         prompt = home / ".config/zsh/sensei-palette.zsh"

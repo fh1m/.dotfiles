@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Real ArchiveButton/bridge routes in an isolated bar, without restarting Wrayth."""
+"""Real ArchiveButton/bridge routes in an isolated bar, without restarting Sensei."""
 import json, subprocess, time, uuid
 from types import SimpleNamespace
 from noesis_native_fixture import Fixture, QS, REPO
 
-f=Fixture(); config=f.home/'.config/quickshell/wrayth'
+f=Fixture(); config=f.home/'.config/quickshell/sensei'
 app=f.config/'shell.qml'
 app.write_text(app.read_text().replace('LearningUi.NoesisWindow {}','LearningUi.NoesisWindow {id:applicationWindow}\n IpcHandler {target:"bar-app";function state():string{return JSON.stringify({modal:applicationWindow.workspacePage.modalOpen});}}'))
 (f.home/'qml.log').touch()
@@ -81,7 +81,7 @@ try:
  f.wait(lambda s:s['capture_open']);assert f.hello()['instance']['pid']==app_pid
  warnings=[line for line in (f.home/'bar.log').read_text().splitlines() if ('WARN' in line or 'ERROR' in line) and 'Could not register app ID' not in line]
  assert not warnings,warnings
- result={'isolated_bar_native_click':True,'ordinary_open_single_instance':True,'warm_open_from_other_workspace':True,'start_menu':True,'capture_menu':True,'escape_dismissal':True,'personal_wrayth_restarted':False,'fixture':str(f.home)}
+ result={'isolated_bar_native_click':True,'ordinary_open_single_instance':True,'warm_open_from_other_workspace':True,'start_menu':True,'capture_menu':True,'escape_dismissal':True,'personal_sensei_restarted':False,'fixture':str(f.home)}
  (REPO/'docs/learning-system/assets/ux-finalization/bar-acceptance.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
 finally:
  if app_pid:

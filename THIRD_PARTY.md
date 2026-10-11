@@ -4,7 +4,8 @@ The shell began with **[Wrayth](https://github.com/bowenbride/wrayth)** by **bow
 
 | Project | Role | License / attribution |
 |---|---|---|
-| Wrayth | Starting shell, deck, visual language, helpers, lockscreen | GPL-3.0; `home/.config/quickshell/wrayth/LICENSE` |
+| Wrayth | Starting shell, deck, visual language, helpers, lockscreen | GPL-3.0; `home/.config/quickshell/sensei/LICENSE` |
+| GNOME Adwaita cursors | Source for the local Signal cursor recolor; hotspots preserved | CC-BY-SA-3.0; generated locally, upstream credit retained |
 | Hyprland | Compositor, Lua bindings, window and workspace control | Upstream BSD license; dependency |
 | Quickshell | QML surfaces, D-Bus integrations, capture and IPC | Upstream LGPL/GPL licensing; dependency |
 | spotify-player / aome510 | Patched native Spotify Connect player | MIT; `vendor/spotify-player/LICENSE` |

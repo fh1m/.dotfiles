@@ -219,7 +219,7 @@ class TerminalWorkflow(unittest.TestCase):
             self.assertEqual(result.returncode,0)
             self.assertEqual(result.stdout,'fixture-password')
             calls=(home/'bridge.log').read_text().splitlines()
-            self.assertEqual(calls,['-c wrayth ipc call system authentication on','-c wrayth ipc call system authentication off'])
+            self.assertEqual(calls,['-c sensei ipc call system authentication on','-c sensei ipc call system authentication off'])
 
     def test_terminal_focus_never_launches_even_when_already_focused(self):
         m=load('sensei-app')

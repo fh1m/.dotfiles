@@ -1,6 +1,6 @@
 # UX finalization — first implementation slice
 
-Baseline: clean source and installed build `a7928c9cd11cd560466f9a21423f1226d9e22f85`; all 89 installed manifest hashes matched. Noesis was closed; Wrayth was independently running. This report covers the first reviewable slice of the approved four-milestone plan, not the entire UX release.
+Baseline: clean source and installed build `a7928c9cd11cd560466f9a21423f1226d9e22f85`; all 89 installed manifest hashes matched. Noesis was closed; Sensei was independently running. This report covers the first reviewable slice of the approved four-milestone plan, not the entire UX release.
 
 ## Delivered behavior
 
@@ -35,7 +35,7 @@ Logical sizes, application text scales and Qt DPR are separate. No new physical 
 
 Implementation commit: `1a40870c2014d601e0ab6a2313a2f5fb3bde20b7`. The scoped installer changed only five QML UI files, the canonical guide, the build manifest and ArchiveButton. Backup/rollback manifest: `/home/fh1m/.local/state/noesis-deployments/20261011-142122-289800/manifest.json`.
 
-The installed application was launched using the production launcher and verified as `org.fh1m.Noesis`, standalone, fullscreen on workspace 4. Repeated launch stayed in one process; Hide stopped worker/watch; return restored the instance; Close completed normally. All 119 installed manifest hashes matched. Wrayth remained PID 2795549 and pre-existing external windows remained present. Hashes of 79 authoritative learning files were unchanged. No private screenshots were captured. [Live verification](assets/ux-finalization/deployment-acceptance.json).
+The installed application was launched using the production launcher and verified as `org.fh1m.Noesis`, standalone, fullscreen on workspace 4. Repeated launch stayed in one process; Hide stopped worker/watch; return restored the instance; Close completed normally. All 119 installed manifest hashes matched. Sensei remained PID 2795549 and pre-existing external windows remained present. Hashes of 79 authoritative learning files were unchanged. No private screenshots were captured. [Live verification](assets/ux-finalization/deployment-acceptance.json).
 
 The following documentation-only commit may update build identity without changing QML. Keep its build-only deployment backup and revert manifests in reverse deployment order when rolling back. The scoped installer refuses rollback over later edits.
 

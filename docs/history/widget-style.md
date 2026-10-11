@@ -10,7 +10,7 @@ Level controls now have a 42px rotary dial with a 2px progress ring and a thin f
 
 A later content audit caught and fixed section animations targeting the parent instead of their own page. Actual visible text/data is now checked across all 30 monitor/System/audio/calendar/Spotify pages, rather than treating a clean log as sufficient. Opening captures showed intermediate states before full visibility; closing reached zero and unmapped the popup. A read-only popupmotion-<output> IPC diagnostic exposes actual reveal/state. Monitor1040×491 and clipboard1040×497 still fit ScreenPad. Main panel surfaces include6px shadow gutters; calendar content stays centered beneath its clock even when opened by IPC. Spotify transport now has its own command queue so online library operations cannot block playback controls. Next/previous explicitly preserve playing/paused intent. Forward/back checks retained playback across 50 samples; rapid volume changes were verified and the original volume/song restored. Spotify metadata still depends on the daemon and service response time.
 
-Backups: ~/.local/state/hyprland-repair-20260926/widget-polish-123317 (before motion/control changes), and oled-glass-124344 (before wallpaper palette/glass changes). Each contains wrayth and Hyprland config trees.
+Backups: ~/.local/state/hyprland-repair-20260926/widget-polish-123317 (before motion/control changes), and oled-glass-124344 (before wallpaper palette/glass changes). Each contains sensei and Hyprland config trees.
 
 Animation/performance references: https://doc.qt.io/qt-6/qtquick-statesanimations-animations.html and https://doc.qt.io/qt-6/qtquick-performance.html . Live image captures are targeted checks, not a guarantee of every frame at60fps.
 

@@ -22,7 +22,7 @@ application's colors, commercial dashboard layout or private design process.
 
 `home/.local/share/sensei-learning/ui/NoesisStyle.qml` is the shared source for
 Noesis tokens. It retains the desktop's dark/pink identity with explicit colors
-and fonts, without importing Wrayth's Theme, Appearance or service graph.
+and fonts, without importing Sensei's Theme, Appearance or service graph.
 
 - Type: 13 caption, 14 control, 15 general UI, 17 reading prose, 18 section,
   22 page heading and 28 object title. UI and prose use the installed Zed Sans; code uses ZedMono Nerd Font Mono.
@@ -30,7 +30,7 @@ and fonts, without importing Wrayth's Theme, Appearance or service graph.
   200%. Reflow and scrolling preserve critical actions at larger scales.
 - Space: 4 / 8 / 12 / 16 / 24 / 32 logical pixels. Normal controls are at least
   40 high; collection rows at least 64 and expand for important wrapped text.
-- Surfaces: Wrayth warm neutrals, #090807 outer shell, #141210 working content and #1e1b18 raised controls. Rows use
+- Surfaces: Sensei warm neutrals, #090807 outer shell, #141210 working content and #1e1b18 raised controls. Rows use
   whitespace and selection backgrounds, not a stack of bordered cards.
 - Borders: field bottom rules, focus, popups and an actual pane boundary. An inactive
   button does not need its own frame. Focus is visible for every control.
@@ -86,7 +86,7 @@ The connected UI is not accepted until these journeys work without CLI repair.
 
 Both use synthetic task content. The revised layout gives reasoning its own Work
 region, moves capture to a short dialog, separates timeline/connections, and makes
-the inspector optional. Pink and existing Wrayth type remain consistent. See
+the inspector optional. Pink and existing Sensei type remain consistent. See
 validation.md and scripts/check-noesis-desktop.py for behavioral evidence; these
 images alone do not establish that a journey works.
 

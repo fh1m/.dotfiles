@@ -1,7 +1,7 @@
 {
   "baseline": "aca05d1",
   "files": {
-    "home/.config/quickshell/wrayth/config/NoesisStyle.qml": {
+    "home/.config/quickshell/sensei/config/NoesisStyle.qml": {
       "imports": [
         "QtQuick",
         "Quickshell",
@@ -23,7 +23,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisActionDialog.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisActionDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -36,7 +36,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisButton.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisButton.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -48,7 +48,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisCompanion.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisCompanion.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Layouts",
@@ -72,7 +72,7 @@
       ],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisCourseOutline.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisCourseOutline.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -85,7 +85,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisCreateDialog.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisCreateDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -105,7 +105,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisDialog.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -117,7 +117,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisEditor.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisEditor.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -129,7 +129,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisEmpty.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisEmpty.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Layouts",
@@ -141,7 +141,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisEvidenceDialog.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisEvidenceDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -159,7 +159,7 @@
       "ipc_targets": [],
       "timers": 1
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisExperimentContext.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisExperimentContext.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -172,7 +172,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisField.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisField.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -184,7 +184,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisLearningContext.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisLearningContext.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -197,7 +197,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisMaterialDialog.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisMaterialDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -216,7 +216,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisOutlineDialog.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisOutlineDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -237,7 +237,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisPrerequisiteDialog.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisPrerequisiteDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -255,7 +255,7 @@
       "ipc_targets": [],
       "timers": 1
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisRow.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisRow.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -268,7 +268,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisSelect.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisSelect.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -280,7 +280,7 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisWindow.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisWindow.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -327,7 +327,7 @@
       ],
       "timers": 3
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisWorkspace.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisWorkspace.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -370,7 +370,7 @@
       "ipc_targets": [],
       "timers": 4
     },
-    "home/.config/quickshell/wrayth/modules/learning/NoesisZoteroDialog.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisZoteroDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
@@ -394,7 +394,7 @@
       "ipc_targets": [],
       "timers": 1
     },
-    "home/.config/quickshell/wrayth/services/Oasis.qml": {
+    "home/.config/quickshell/sensei/services/Oasis.qml": {
       "imports": [
         "QtQuick",
         "Quickshell",

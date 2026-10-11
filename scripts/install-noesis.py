@@ -9,14 +9,14 @@ def files(bridge=False):
  prefixes=['.config/quickshell/noesis','.local/share/sensei-learning/ui','.local/share/sensei-learning/noesis','.local/share/sensei-learning/examples']
  exact=['.local/bin/sensei-learn','.local/bin/noesis','.local/share/applications/org.fh1m.Noesis.desktop','.local/share/icons/hicolor/scalable/apps/org.fh1m.Noesis.svg']
  if bridge:
-  prefixes+=['.config/quickshell/wrayth/modules/learning']
-  exact+=['.config/quickshell/wrayth/services/Oasis.qml','.config/quickshell/wrayth/services/NoesisBridge.qml','.config/quickshell/wrayth/shell.qml','.config/quickshell/wrayth/modules/bar/ArchiveButton.qml','.config/quickshell/wrayth/modules/bar/BottomBar.qml','.config/hypr/oasis.lua','.config/quickshell/wrayth/services/Spaces.qml','.config/quickshell/wrayth/services/WindowDesk.qml','.config/quickshell/wrayth/modules/navigation/NavigationOverlay.qml','.config/quickshell/wrayth/modules/navigation/WorkspacePreview.qml']
+  prefixes+=['.config/quickshell/sensei/modules/learning']
+  exact+=['.config/quickshell/sensei/services/Oasis.qml','.config/quickshell/sensei/services/NoesisBridge.qml','.config/quickshell/sensei/shell.qml','.config/quickshell/sensei/modules/bar/ArchiveButton.qml','.config/quickshell/sensei/modules/bar/BottomBar.qml','.config/hypr/oasis.lua','.config/quickshell/sensei/services/Spaces.qml','.config/quickshell/sensei/services/WindowDesk.qml','.config/quickshell/sensei/modules/navigation/NavigationOverlay.qml','.config/quickshell/sensei/modules/navigation/WorkspacePreview.qml']
  return sorted(p for p in (ROOT/'home').rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc' and (str(p.relative_to(ROOT/'home')) in exact or any(str(p.relative_to(ROOT/'home')).startswith(prefix+'/') for prefix in prefixes)))
 def install(home,apply=False,bridge=False):
  home=home.resolve();backup=home/'.local/state/noesis-deployments'/datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f');entries=[]
  targets=[(str(p.relative_to(ROOT/'home')),installer.render(p.read_bytes(),home,'zenbook'),p.stat().st_mode&0o777,None) for p in files(bridge)]
  targets.append(('.config/quickshell/noesis/ui',None,None,'../../../.local/share/sensei-learning/ui'))
- if bridge:targets.append(('.config/quickshell/wrayth/noesis-ui',None,None,'../../../.local/share/sensei-learning/ui'))
+ if bridge:targets.append(('.config/quickshell/sensei/noesis-ui',None,None,'../../../.local/share/sensei-learning/ui'))
  revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
  hashes={relative:hashlib.sha256(data).hexdigest() for relative,data,mode,link in targets if data is not None}
  build={'version':1,'commit':revision,'files':hashes,'source_dirty':bool(subprocess.check_output(['git','status','--porcelain','--','home','scripts/install-noesis.py'],cwd=ROOT,text=True).strip())}
@@ -24,9 +24,9 @@ def install(home,apply=False,bridge=False):
  # Install shared dependencies before the live shell entry can reload them.
  def phase(target):
   path=target[0]
-  if path=='.config/quickshell/wrayth/shell.qml':return 4
+  if path=='.config/quickshell/sensei/shell.qml':return 4
   if target[3]:return 2
-  if path.startswith('.config/quickshell/wrayth/'):return 3
+  if path.startswith('.config/quickshell/sensei/'):return 3
   if path.startswith('.local/share/sensei-learning/noesis/'):return 0
   return 1
  targets.sort(key=phase)

@@ -4,7 +4,7 @@ from pathlib import Path
 import json,re,subprocess
 repo=Path(__file__).resolve().parents[1]
 paths=subprocess.check_output(['git','ls-tree','-r','--name-only','aca05d1'],cwd=repo,text=True).splitlines()
-paths=[p for p in paths if p.endswith('.qml') and ('wrayth/modules/learning/' in p or p.endswith('/services/Oasis.qml') or p.endswith('/config/NoesisStyle.qml'))]
+paths=[p for p in paths if p.endswith('.qml') and ('sensei/modules/learning/' in p or p.endswith('/services/Oasis.qml') or p.endswith('/config/NoesisStyle.qml'))]
 manifest={'baseline':'aca05d1','files':{}}
 for path in paths:
  text=subprocess.check_output(['git','show','aca05d1:'+path],cwd=repo,text=True)

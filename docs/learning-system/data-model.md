@@ -47,7 +47,7 @@ bounded startup window. Debug/legacy switching is development-only.
 An isolated native fixture measured approximately 536 ms launch-to-visible
 worker/watch, a conservative 12-open p95 of 120 ms, and 17.0 ms instrumented Qt
 animation-frame p95. RSS remained around 187 MiB across twelve cycles. This is the
-isolated fixture shell, not a per-Noesis measurement inside the live Wrayth shell.
+isolated fixture shell, not a per-Noesis measurement inside the live Sensei shell.
 Worker and watches stop when the workspace closes. Frame instrumentation runs
 only in the acceptance fixture, not the application.
 

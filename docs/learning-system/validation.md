@@ -148,7 +148,7 @@ still requiring implementation or verification.
 
 ## Product coherence continuation
 
-The shared visual language uses existing Wrayth fonts/surfaces and a single pink
+The shared visual language uses existing Sensei fonts/surfaces and a single pink
 accent. Read/Work/History/Connections reveal controls according to current work;
 Details is optional. Native Markdown preview is selectable; equations, diagrams,
 editing, PDF annotation and code remain specialist handoffs. Learn includes concept
@@ -401,7 +401,7 @@ isolated shell, query worker and watcher, after the test animation stopped; warm
 open p95 109.24 ms across twelve cycles. Shell RSS ranged 191,072–191,432 KiB during
 those cycles, ending at 191,392 KiB. Closing stopped both worker and watcher. QML
 emitted no warnings/errors. These are fixture/process measurements, not physical
-input latency, the live Wrayth shell's incremental memory, or a long-term leak proof.
+input latency, the live Sensei shell's incremental memory, or a long-term leak proof.
 
 Native failures found and repaired before acceptance: ListView selection resetting
 on model replacement; lightweight query omitting the activity head needed by a
@@ -480,7 +480,7 @@ lesson replacement and 123-row append pagination. Original note bytes and old st
 positions were preserved. Startup 558.45 ms; warm opening p95 212.15 ms over twelve
 cycles; animation frame p95 16.968 ms over 1,200 samples. Isolated RSS ranged from
 194,920 to 195,292 KiB. These are fixture-process measurements, not physical input
-latency or the incremental memory of the live Wrayth shell.
+latency or the incremental memory of the live Sensei shell.
 
 `python3 scripts/check-noesis-reader-desktop.py` passed with an isolated portable
 Sioyek 2.0.0 profile and authored six-page PDF. The saved lesson opens visibly at
@@ -731,7 +731,7 @@ owner-deferred; existing local recovery and historical acceptance remain authori
 - The existing convolution native journey passes after its new starter becomes an
   empty skeleton. Existing implementations/history are preserved.
 - Ten native shutdown/uncertainty scenarios pass; scoped installer dry run, twice
-  repeated installation, rollback and later-edit protection pass. Personal Wrayth
+  repeated installation, rollback and later-edit protection pass. Personal Sensei
   is not restarted during fixture validation or scoped Noesis deployment.
 
 Owner usability/learning observation remains required. Populated Zotero restoration,

@@ -7,7 +7,7 @@ spec=importlib.util.spec_from_file_location('installer',repo/'scripts/install.py
 with tempfile.TemporaryDirectory(prefix='noesis-learning-day-') as temporary:
  home=Path(temporary);installer.install(home,True)
  env=dict(os.environ,HOME=str(home),XDG_CONFIG_HOME=str(home/'.config'),XDG_CACHE_HOME=str(home/'.cache'),XDG_STATE_HOME=str(home/'.local/state'),NOESIS_WINDOW_MODE='normal')
- cli=home/'.local/bin/noesis';config=home/'.config/quickshell/wrayth';qs=os.environ.get('NOESIS_QS',str(Path.home()/'.local/opt/sensei-quickshell/bin/qs'))
+ cli=home/'.local/bin/noesis';config=home/'.config/quickshell/sensei';qs=os.environ.get('NOESIS_QS',str(Path.home()/'.local/opt/sensei-quickshell/bin/qs'))
  def command(*args):return json.loads(subprocess.check_output([str(cli),*args],env=env,text=True))
  roots=[]
  for name in ('CS','Mathematics'):

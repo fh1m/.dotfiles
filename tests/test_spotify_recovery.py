@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise the one-shot closed-channel recovery without touching the real player."""
+"""A closed local channel must not restart or interrupt a remote Spotify device."""
 
 import json
 import os
@@ -18,16 +18,21 @@ with tempfile.TemporaryDirectory() as directory:
     stub.write_text('#!/bin/sh\nprintf called > "$SENSEI_SPOTIFY_HOME/restarted"\n')
     stub.chmod(0o755)
 
+    flags = subprocess.check_output(['pkg-config', '--cflags', '--libs', 'json-c', 'openssl'], text=True).split()
+    executable = root / 'transport'
+    subprocess.run(['cc', '-O2', str(Path(__file__).resolve().parents[1]/'src/spotify/transport.c'), '-o', str(executable), *flags], check=True)
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server:
         server.bind(("127.0.0.1", 0))
         (root / ".config/spotify-player/app.toml").write_text(
             f"client_port = {server.getsockname()[1]}\n"
         )
         requests = []
+        server.settimeout(1)
 
         def reply():
             for number in range(2):
-                packet, address = server.recvfrom(65536)
+                try: packet, address = server.recvfrom(65536)
+                except TimeoutError: break
                 requests.append(json.loads(packet))
                 response = (
                     {"Err": list(b"Bad request: Internal error { channel closed }")}
@@ -45,15 +50,15 @@ with tempfile.TemporaryDirectory() as directory:
             PATH=str(root / "bin") + ":" + os.environ["PATH"],
         )
         result = subprocess.run(
-            [str(Path.home() / ".local/bin/sensei-spotify-transport"), "pause"],
+            [str(executable), "pause"],
             env=env,
             capture_output=True,
             text=True,
             timeout=8,
         )
-        thread.join(timeout=1)
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert result.stdout.strip() == '{"ok":true}'
-        assert len(requests) == 2
-        assert (root / "restarted").exists()
-        print("Closed channel: one restart, one successful retry")
+        thread.join(timeout=2)
+        assert result.returncode != 0, result.stderr + result.stdout
+        assert "Playback on another device is untouched" in result.stdout
+        assert len(requests) == 1
+        assert not (root / "restarted").exists()
+        print("Closed channel: no restart, no repeated transport action")

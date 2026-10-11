@@ -1,4 +1,4 @@
-"""Reusable disposable native fixture; never restarts Wrayth or opens personal data."""
+"""Reusable disposable native fixture; never restarts Sensei or opens personal data."""
 from pathlib import Path
 import importlib.util,json,os,signal,subprocess,tempfile,time,uuid
 REPO=Path(__file__).resolve().parents[1]

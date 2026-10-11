@@ -43,7 +43,7 @@ portal. Production desktop registration is still required and unverified.
 
 ## Controller and integration checks
 
-The shared controller is now `NoesisController`; Wrayth retains a narrow `Oasis`
+The shared controller is now `NoesisController`; Sensei retains a narrow `Oasis`
 compatibility adapter. Its bridge reads only the private projection and publisher
 process identity. A session lease excludes simultaneous embedded/standalone
 workers and preference writers. `check-noesis-host-exclusion.py` passes both
@@ -70,7 +70,7 @@ dedicated placement. The launcher uses the installed Hyprland Lua focus API.
 
 `check-noesis-bridge.py` passes both restart directions using the actual bridge and
 companion in a disposable minimal shell. The additional `check-noesis-full-shell.py` now passes both restart directions
-with the complete rendered Wrayth shell in disposable processes. This does not
+with the complete rendered Sensei shell in disposable processes. This does not
 certify a live personal-shell restart. Portal registration and scoped live rollout remain
 unverified; no broad deployment is justified by these checks.
 
@@ -184,10 +184,10 @@ No personal-vault mutations or live installation have occurred.
 ## Superseding live rollout evidence, 2026-10-10
 
 The product recovery slice deployed the standalone host, desktop registration and
-Wrayth bridge with scoped backups. Production AppId/ShellId are
+Sensei bridge with scoped backups. Production AppId/ShellId are
 `org.fh1m.Noesis`; canonical config is `~/.config/quickshell/noesis/shell.qml`.
 The previous embedded launcher was still running before this rollout despite
-the pushed source. Wrayth retained its original PID through bridge reloads.
+the pushed source. Sensei retained its original PID through bridge reloads.
 Native production launch, Hide (worker/watch stopped), same-instance resume,
 Close and app restart passed. Study is workspace 7, presented between Code and
 Sim without changing existing IDs; the app uses actual full-screen mode.

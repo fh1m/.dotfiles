@@ -4,7 +4,7 @@ The single maintained guide is [Learning with Noesis](../../home/.local/share/se
 
 Native self-service walkthrough:
 
-1. Open Noesis from the Wrayth bar. Choose **Start learning** (or Ctrl+N).
+1. Open Noesis from the Sensei bar. Choose **Start learning** (or Ctrl+N).
    ![Start learning](assets/self-service/start-learning.png)
 2. Paste a source, choose its format and supply your own title. **Continue → Save**.
    ![Confirm the source](assets/self-service/confirm-source.png)

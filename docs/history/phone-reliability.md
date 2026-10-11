@@ -26,6 +26,6 @@ Sources:
 https://github.com/termux/termux-boot#usage
 https://docs.syncthing.net/rest/config.html
 
-Fresh-load validation: restarted wrayth-recover-7084.service (shell only; Spotify/apps unaffected). New qs PID 100888. Actual Spotify view again count=50. Fresh Phone Control rendered at 457px. No duplicate phone watcher. Final telemetry samples 135–143ms, around 2.6KB without redundant notifications/device snapshot. SSHFS shared-root path uses /storage/emulated/0 (mounting the Termux symlink itself failed and was corrected). Sync reserves saved using full config PUT, preserving nested values after subsequent permission changes. No personal phone data deleted; harmless test payload files removed.
+Fresh-load validation: restarted sensei-recover-7084.service (shell only; Spotify/apps unaffected). New qs PID 100888. Actual Spotify view again count=50. Fresh Phone Control rendered at 457px. No duplicate phone watcher. Final telemetry samples 135–143ms, around 2.6KB without redundant notifications/device snapshot. SSHFS shared-root path uses /storage/emulated/0 (mounting the Termux symlink itself failed and was corrected). Sync reserves saved using full config PUT, preserving nested values after subsequent permission changes. No personal phone data deleted; harmless test payload files removed.
 
 Offline safety: mount presence checks read /proc/self/mountinfo rather than statting an SSHFS path, so disconnected phone FUSE requests cannot block telemetry. Fresh closed shell CPU: 9 ticks over 5s (~1.8% of one core); fresh log 0 warnings/errors.

@@ -44,7 +44,7 @@ with tempfile.TemporaryDirectory(prefix='noesis-reader-ui-') as temporary:
  cli('event',lesson['path'],'study','--target-id',lesson['id'],'--data',json.dumps({'state':{'locator':{'kind':'page','value':3}}}))
  originals={file.relative_to(root):file.read_bytes() for file in root.rglob('*.md')}
  (home/'.config/sensei-learning').mkdir(exist_ok=True);(home/'.config/sensei-learning/config.json').write_text(json.dumps({'active_vault':str(root)}))
- config=home/'.config/quickshell/wrayth';(config/'shell.qml').write_text('import QtQuick\nimport Quickshell\nimport "modules/learning" as LearningUi\nimport qs.services\nShellRoot {LearningUi.NoesisWindow {} Component.onCompleted:Oasis.open()}\n')
+ config=home/'.config/quickshell/sensei';(config/'shell.qml').write_text('import QtQuick\nimport Quickshell\nimport "modules/learning" as LearningUi\nimport qs.services\nShellRoot {LearningUi.NoesisWindow {} Component.onCompleted:Oasis.open()}\n')
  qs=os.environ.get('NOESIS_QS',str(real_home/'.local/opt/sensei-quickshell/bin/qs'));log=home/'qml.log';reader_pid=None;reader_home=home
  with log.open('w') as stream:
   shell=subprocess.Popen([qs,'-p',str(config),'--no-color'],env=env,stdout=stream,stderr=subprocess.STDOUT)

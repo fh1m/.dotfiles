@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Rollback host exclusion in one disposable home; never restarts live Wrayth."""
+"""Rollback host exclusion in one disposable home; never restarts live Sensei."""
 import json,subprocess,time,uuid
 from noesis_native_fixture import Fixture,QS
 f=Fixture();other=None
 try:
  f.start();first=f.hello()['instance']['token']
- embedded=f.home/'.config/quickshell/wrayth'
+ embedded=f.home/'.config/quickshell/sensei'
  (embedded/'shell.qml').write_text('//@ pragma AppId org.fh1m.Noesis.Rollback'+uuid.uuid4().hex+'\n//@ pragma ShellId rollback'+uuid.uuid4().hex+'\nimport QtQuick\nimport Quickshell\nimport "noesis-ui" as UI\nShellRoot { UI.NoesisWindow {} Component.onCompleted:UI.NoesisController.open() }\n')
  def start_embedded():return subprocess.Popen([QS,'-p',str(embedded),'--no-color'],env=f.env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  def hello():
