@@ -1,0 +1,41 @@
+#!/bin/sh
+# Intel renders the internal panels; NVIDIA must also be allowed for HDMI.
+# The existing display-manager entry calls this wrapper.
+set -eu
+intel_only=${SENSEI_INTEL_ONLY:-0}
+print_devices=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --intel-only) intel_only=1; shift ;;
+        --print-devices) print_devices=1; shift ;;
+        *) break ;;
+    esac
+done
+intel=$(readlink -f "/dev/dri/by-path/pci-${SENSEI_INTEL_PCI:-0000:00:02.0}-card")
+if [ ! -c "$intel" ]; then
+    echo "Intel DRM device is unavailable: $intel" >&2
+    exit 1
+fi
+devices=$intel
+if [ "$intel_only" != 1 ]; then
+    nvidia=$(readlink -f "/dev/dri/by-path/pci-${SENSEI_NVIDIA_PCI:-0000:01:00.0}-card" || true)
+    if [ -c "$nvidia" ] && [ "$nvidia" != "$intel" ]; then
+        devices="$intel:$nvidia"
+    fi
+fi
+if [ "$print_devices" = 1 ]; then
+    printf '%s\n' "$devices"
+    exit 0
+fi
+export AQ_DRM_DEVICES="$devices"
+# Required by this laptop's Intel ScreenPad scanout; set before initialization.
+export AQ_NO_MODIFIERS=1
+export QS_NO_RELOAD_POPUP=1
+export XDG_CURRENT_DESKTOP=Hyprland
+export XDG_SESSION_DESKTOP=Hyprland
+unset GBM_BACKEND __GLX_VENDOR_LIBRARY_NAME EGL_PLATFORM
+logdir="${XDG_STATE_HOME:-$HOME/.local/state}/hyprland-sessions"
+mkdir -p "$logdir"
+log="$logdir/session-$(date +%Y%m%d-%H%M%S).log"
+printf 'Starting Hyprland on %s; log: %s\n' "$devices" "$log"
+exec /usr/bin/start-hyprland "$@" >> "$log" 2>&1
