@@ -58,7 +58,17 @@ class Index:
     def close(self):
         self.db.close()
 
+    def check_owner(self):
+        # Unavailable storage is not deletion. Preserve the rebuildable cache until
+        # the same owner reappears; a different owner requires a new selection.
+        if not self.root.is_dir():raise ValueError('Vault storage is unavailable; cached history is preserved')
+        current = json.loads(manifest_path(self.root).read_text())
+        if current.get('vault_id') != self.manifest.get('vault_id'):
+            raise ValueError('Vault identity changed at this location; reselect its owner before continuing')
+        self.manifest = current
+
     def reconcile(self, paths=None):
+        self.check_owner()
         if paths is None:
             previous = dict(self.db.execute('SELECT path,stamp FROM records'))
             candidates = notes(self.root)

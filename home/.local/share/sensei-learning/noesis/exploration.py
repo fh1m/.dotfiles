@@ -119,10 +119,8 @@ def local_file(root, identity):
 
 def open_code(root, identity):
     record, file = local_file(root, identity)
-    terminal = Path.home() / '.local/bin/sensei-terminal'
-    if not terminal.is_file(): raise ValueError('The configured terminal helper is unavailable; your code is preserved')
-    if not shutil.which('nvim'): raise ValueError('Neovim is unavailable; your code is preserved')
-    return [str(terminal), '--title', 'Noesis · ' + record['display_title'], '--working-directory', str(file.parent), '-e', 'nvim', '--', str(file)]
+    from .development import editor_command
+    return editor_command(file.parent,record['display_title'],file.name)
 
 
 def terminal_command(root, identity):

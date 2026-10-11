@@ -316,3 +316,7 @@ agent validation, not owner achievement. No personal vault screenshots are publi
 executed checks, native UI observations and the still-required owner learner trial.
 
 Fullscreen return from an external editor on another workspace: [native capture](assets/core-learning/desktop-fullscreen-return.png). Figure origin return: [native capture](assets/core-learning/figure-origin-return.png).
+
+## Release hardening native review
+
+[Native recovery, long history, Zed and fullscreen captures](release-hardening.md#native-evidence) use disposable agent-labelled records.

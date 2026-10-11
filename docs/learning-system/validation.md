@@ -748,3 +748,7 @@ limits. The older populated-Zotero startup failure entries are historical: the g
 [zotero startup evidence](zotero-startup-evidence.md) supersede them. Supported native
 annotation selection is now checked separately from bibliography-only import.
 Off-device configuration remains deferred; the owner's learner trial remains open.
+
+### 2026-10-11 — bounded release hardening
+
+[Release hardening](release-hardening.md) supersedes the generic open fault/storage/history/portability placeholders with executed cases and explicit support boundaries. 181 tests pass (165 core, 16 compatibility); native shutdown, coordination, host exclusion, recovered vault copies, 1,001-event history and five-minute idle checks are retained. Zed native editing and Zotero 10.0.5/10.0.6 annotation/restore checks pass; 9.0.6 uses safe export fallback. Physical unplug/input observations and owner usability/learning outcomes remain distinct unperformed gates.

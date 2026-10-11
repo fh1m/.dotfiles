@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Guarded Zotero 10.0.6 LocalAPI initialization compatibility fix.
+"""Guarded Zotero 10.0.5/10.0.6 LocalAPI initialization compatibility fix.
 
 Dry run by default. Changes application code only, never reader profiles/data.
 """
-import argparse,datetime,hashlib,json,os,tempfile
+import argparse,datetime,hashlib,json,os,tempfile,re
 from pathlib import Path
 from zipfile import ZipFile
 ENTRY='chrome/content/zotero/xpcom/server/server_localAPI.js'
@@ -21,7 +21,8 @@ def running(application):
 def apply(application,write=False):
  application=application.resolve();archive=application/'app/omni.ja'
  if running(application):raise ValueError('Zotero is running from this application; leave it untouched until it is closed')
- if 'Version=10.0.6' not in (application/'app/application.ini').read_text():raise ValueError('Only the inspected Zotero 10.0.6 build is supported')
+ version=re.search(r'^Version=([^\n]+)',(application/'app/application.ini').read_text(),re.M).group(1).strip()
+ if version not in ('10.0.5','10.0.6'):raise ValueError('Only the inspected Zotero 10.0.5 and 10.0.6 builds are supported')
  original=archive.read_bytes()
  with ZipFile(archive) as source:
   data=source.read(ENTRY)
@@ -44,7 +45,7 @@ def apply(application,write=False):
    with replacement.open('rb') as content:os.fsync(content.fileno())
    patched=digest(replacement.read_bytes());os.replace(replacement,archive)
   finally:replacement.unlink(missing_ok=True)
- manifest={'version':1,'application':str(application),'archive':str(archive),'backup':str(saved),'original_sha256':digest(original),'patched_sha256':patched,'entry':ENTRY,'change':'Await Zotero initialization before LocalAPI library item loading'}
+ manifest={'version':1,'zotero_version':version,'application':str(application),'archive':str(archive),'backup':str(saved),'original_sha256':digest(original),'patched_sha256':patched,'entry':ENTRY,'change':'Await Zotero initialization before LocalAPI library item loading'}
  target=backup/'manifest.json';target.write_text(json.dumps(manifest,indent=2)+'\n');target.chmod(0o600)
  return dict(manifest,status='patched',manifest=str(target))
 def rollback(path):

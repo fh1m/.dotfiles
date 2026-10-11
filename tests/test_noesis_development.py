@@ -80,6 +80,15 @@ class Development(unittest.TestCase):
             with self.assertRaises(ValueError):command({'repository':str(self.repo),'code_entrypoint':'../outside.py'})
             with self.assertRaisesRegex(ValueError,'unavailable'):command({'repository':str(self.repo),'code_entrypoint':'missing.py'})
 
+    def test_zed_selection_opens_exact_file_without_shell_or_window_relocation(self):
+        folder=self.home/'.config/sensei-learning';folder.mkdir(parents=True);(folder/'config.json').write_text('{"code_editor":"zed"}')
+        before=self.git('status','--porcelain')
+        with patch('noesis.development.shutil.which',return_value='/usr/bin/zed'):
+            self.assertEqual(command({'repository':str(self.repo),'code_entrypoint':'model.py'}),['zed','--',str(self.repo/'model.py')])
+        self.assertEqual(self.git('status','--porcelain'),before)
+        with patch('noesis.development.shutil.which',return_value=None):
+            with self.assertRaisesRegex(ValueError,'Zed is unavailable'):command({'repository':str(self.repo)})
+
     def test_creation_receipt_survives_repository_disconnect(self):
         operation=str(uuid.uuid4());fields={'repository':str(self.repo)}
         project=create(self.root,'project','Durable implementation',fields=fields,operation_id=operation)

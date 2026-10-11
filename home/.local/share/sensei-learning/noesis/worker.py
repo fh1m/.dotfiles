@@ -14,6 +14,7 @@ def serve(resolve):
         if key not in indexes:
             indexes[key]=Index(root)
             reconcile=True
+        indexes[key].check_owner()
         if reconcile:
             health=indexes[key].reconcile()
             if health.get('errors'):raise ValueError('Vault index has invalid records; inspect Doctor')

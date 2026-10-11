@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.request import Request,build_opener,ProxyHandler
 class SourceLibrary:
- def __init__(self,home,port=23119,native_probe=False):
+ def __init__(self,home,port=23119,native_probe=False,application=None):
   self.base="http://127.0.0.1:"+str(port)+"/api/"
   with socket.socket() as check:
    if check.connect_ex(('127.0.0.1',port))==0:raise RuntimeError('Existing Zotero API is active; isolated source acceptance cannot own this port. No existing reader was stopped.')
@@ -19,7 +19,8 @@ class SourceLibrary:
   if native_probe:
    import shutil,zipfile,uuid
    self.probe_token=uuid.uuid4().hex
-   app=home/'zotero-native-app';shutil.copytree(Path.home()/'.local/opt/zotero-10.0.6/app',app)
+   application=Path(application) if application else Path.home()/'.local/opt/zotero-10.0.6'
+   app=home/'zotero-native-app';shutil.copytree(application/'app',app)
    original=app/'omni.ja';replacement=app/'probe.omni.ja'
    extension="\nZotero.Server.Endpoints['/api/noesis-native'] = class extends LocalAPIEndpoint { supportedMethods=['GET']; async run(request) { if(request.searchParams.get('token') !== "+json.dumps(self.probe_token)+") return [403,'text/plain','Denied']; const uri=request.searchParams.get('uri'); if(uri) {if(!/^zotero:\\/\\/open-pdf\\/library\\/items\\/[A-Z0-9]{8}\\?/.test(uri))return [400,'text/plain','Invalid URI']; const {ZoteroProtocolHandler}=ChromeUtils.importESModule('chrome://zotero/content/ZoteroProtocolHandler.mjs'); const handler=new ZoteroProtocolHandler(); await handler.getExtension(uri).doAction(Services.io.newURI(uri)); const wanted=Number(new URL(uri).searchParams.get('page'))-1; for(let i=0;i<100;i++){const reader=Zotero.Reader._readers.at(-1);if(reader?._internalReader?._state?.primaryViewStats?.pageIndex===wanted)break;await Zotero.Promise.delay(100);}} return [200,'application/json',JSON.stringify({readers:Zotero.Reader._readers.map(r=>({itemID:r.itemID,state:r._internalReader?._state,viewState:r._internalReader?._primaryView?._state}))})]; }};\n"
    with zipfile.ZipFile(original) as src,zipfile.ZipFile(replacement,'w') as dst:
@@ -28,7 +29,7 @@ class SourceLibrary:
      if info.filename=='chrome/content/zotero/xpcom/server/server_localAPI.js':raw+=extension.encode()
      dst.writestr(info,raw)
    replacement.replace(original)
-   command=[str(Path.home()/'.local/opt/zotero-10.0.6/zotero-bin'),'-app',str(app/'application.ini'),'--new-instance','--profile',str(self.profile)]
+   command=[str(application/'zotero-bin'),'-app',str(app/'application.ini'),'--new-instance','--profile',str(self.profile)]
   self.log=(home/'zotero-source.log').open('w');self.process=subprocess.Popen(command,stdout=self.log,stderr=self.log,start_new_session=True)
   self.opener=build_opener(ProxyHandler({}))
   try:

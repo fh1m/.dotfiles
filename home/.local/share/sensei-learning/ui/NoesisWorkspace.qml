@@ -64,8 +64,11 @@ Rectangle {
  property var history:[]
  property var historyDisplay:[]
  property string historyNewerCursor:""
+ property string transientReadError:""
  property string historyCursor:""
  property bool historyAppend:false
+ function historyLabel(event){let labels={"attempt-start":"Attempt started",attempt:"Attempt outcome",review:"Independent check","review-plan":"Scheduled check",assistance:"Assistance exposure",study:"Reading position",resolution:"Question resolution",correction:"Correction",comparison:"Experiment comparison","capability-decision":"Understanding claim","session-state":"Session context",disposition:"Learning priority","artifact-check":"Artifact availability","outline-order":"Course ordering","material-change":"Source edition change"};return labels[event]||String(event||"Activity").replace(/-/g," ");}
+ function historyAssistance(values){let labels={unknown:"Assistance undeclared",none:"Declared independent",hint:"Hint used",reference:"Reference exposed",collaborator:"Collaborator assisted",agent:"Agent assisted"};return (values||["unknown"]).map(value=>labels[value]||value).join(", ");}
  function loadHistory(older,overrideCursor){let cursor=overrideCursor===undefined?(older?historyCursor:null):overrideCursor;historyAppend=!!cursor;historySerial=send("timeline",{record_id:selected.id,cursor:cursor});}
  property string activeAttempt:""
  property string revealedAttempt:""
@@ -89,7 +92,7 @@ Rectangle {
  function loadAnnotations(cursor,projection){annotationSerial=send("annotations",{record_id:selected.id,cursor:cursor,projection:projection||workflow.projection||selected.zotero_projection});}
  property var learningContext:({})
  property var activityHead:null
- readonly property bool modalOpen:windowLayerOpen||practicePage.contextOpen||[priorityDialog,navigationActions,pendingExit,navigationDrawer,inspectorDrawer,searchPopup,helpDialog,learningStart,zoteroDialog,settingsDialog,attemptSettings,captureDialog,createDialog,prerequisiteDialog,readinessDialog,reviewDialog,comparisonDialog,evidenceDialog,materialDialog,outlineDialog,actionDialog,startDialog,explorationDialog].some(dialog=>dialog.opened||dialog.visible)
+ readonly property bool modalOpen:windowLayerOpen||practicePage.contextOpen||[vaultRecoveryDialog,priorityDialog,navigationActions,pendingExit,navigationDrawer,inspectorDrawer,searchPopup,helpDialog,learningStart,zoteroDialog,settingsDialog,attemptSettings,captureDialog,createDialog,prerequisiteDialog,readinessDialog,reviewDialog,comparisonDialog,evidenceDialog,materialDialog,outlineDialog,actionDialog,startDialog,explorationDialog].some(dialog=>dialog.opened||dialog.visible)
  readonly property var explorationOriginRef:selected.origin_ref||(selected.type==="artifact"?selected.parent_ref:null)
  readonly property var explorationOrigin:explorationOriginRef?relations.find(row=>(row.source_ref?.record_id===explorationOriginRef.record_id&&row.source_ref?.vault_id===explorationOriginRef.vault_id||row.target_ref?.record_id===explorationOriginRef.record_id&&row.target_ref?.vault_id===explorationOriginRef.vault_id)&&row.other_id===explorationOriginRef.record_id):null
  function returnFromExploration(){if(!explorationOrigin)return;for(let i=navigationIndex-1;i>=0;i--){if(navigation[i].id===explorationOriginRef.record_id&&navigation[i].vault===NoesisController.activeVault){navigationIndex=i;select(navigation[i],true);route.persist();return;}}openWork({id:explorationOrigin.other_id,path:explorationOrigin.other_path,title:explorationOrigin.other_title,type:explorationOrigin.other_type,vault:explorationOrigin.other_vault||NoesisController.activeVault});}
@@ -268,7 +271,8 @@ Rectangle {
   stdout:SplitParser {onRead:line=>{
    try{
     let response=JSON.parse(line);root.supportingResponse(response);if(response.vault&&response.vault!==NoesisController.activeVault)return;
-    if(response.error){if(![root.latest,root.detailSerial,root.historySerial,root.annotationSerial,root.revisionSerial,root.relationSerial,root.reconcileSerial,root.capabilitySerial,root.capabilityDetailSerial,root.capabilityClaimsSerial,root.prerequisiteSerial,root.moduleSerial,root.outlineSerial].includes(response.request_id))return;root.loading=false;root.contextLoading=false;root.outlineLoading=false;NoesisController.error=response.error;return;}
+    if(response.error){if(![root.latest,root.detailSerial,root.historySerial,root.annotationSerial,root.revisionSerial,root.relationSerial,root.reconcileSerial,root.capabilitySerial,root.capabilityDetailSerial,root.capabilityClaimsSerial,root.prerequisiteSerial,root.moduleSerial,root.outlineSerial].includes(response.request_id))return;root.loading=false;root.contextLoading=false;root.outlineLoading=false;root.transientReadError=response.error;NoesisController.error=response.error;return;}
+    if(root.transientReadError&&NoesisController.error===root.transientReadError)NoesisController.error="";root.transientReadError="";
     let result=response.result;
     if(result.errors){if(result.errors.length)NoesisController.error=result.errors.map(issue=>issue.message||"A learning collection could not be read.").join(" · ");root.load(false);root.refreshContext();return;}
     if(response.request_id===root.latest){root.loading=false;root.home=result;if(result.scope_errors?.length)NoesisController.error="Some learning vaults are unavailable. Available results are shown; refresh after recovery.";root.rows=response.request_id===root.appendSerial?Array.from(new Map(root.rows.concat(result.records||[]).map(row=>[row.vault+":"+(row.id||row.path),row])).values()):(result.records||[]);root.cursor=result.cursor===null||result.cursor===undefined?"":String(result.cursor);if(root.collectionRestore.section===root.section){let frame=root.collectionRestore;root.collectionRestore=({});Qt.callLater(()=>{list.currentIndex=Math.min(root.rows.length-1,frame.index||0);list.contentY=Math.max(0,Math.min(list.contentHeight-list.height,frame.anchor||0));});}}
@@ -533,7 +537,7 @@ Observed "+(code.observed_at||"");}color:NoesisStyle.secondary;font.family:Noesi
      ListView {id:historyView;visible:root.contextTab==="History";Layout.fillWidth:true;Layout.fillHeight:true;clip:true;model:root.historyDisplay;spacing:NoesisStyle.sm
       header:Flow {width:historyView.width;spacing:NoesisStyle.sm;NoesisButton {visible:root.historyCursor!=="";text:"Older history";onClicked:root.loadHistory(true)}NoesisButton {visible:root.historyNewerCursor!=="";text:"Newer history";onClicked:root.loadHistory(true,root.historyNewerCursor)}NoesisButton {text:"Latest history";onClicked:root.loadHistory(false)}}
       delegate:ColumnLayout {required property var modelData;width:ListView.view.width;spacing:NoesisStyle.sm
-       NoesisRow {Layout.fillWidth:true;title:modelData.event+" · "+(modelData.criterion||modelData.outcome||modelData.integrity||"")+(modelData.decision?" · "+modelData.decision:"");subtitle:(modelData.assistance||["unknown"]).join(", ")+" · "+modelData.timestamp;enabled:!root.referenceHidden;onClicked:NoesisController.note(modelData.path)}
+       NoesisRow {Layout.fillWidth:true;title:root.historyLabel(modelData.event)+" · "+(modelData.criterion||modelData.outcome||modelData.integrity||"")+(modelData.decision?" · "+modelData.decision:"");subtitle:root.historyAssistance(modelData.assistance)+" · "+Qt.formatDateTime(new Date(modelData.timestamp),"d MMM yyyy, hh:mm");enabled:!root.referenceHidden;onClicked:NoesisController.note(modelData.path)}
        NoesisButton {text:"Use as evidence";visible:["attempt","review"].includes(modelData.event);enabled:!root.referenceHidden;onClicked:evidenceDialog.begin(modelData)}
       }
       NoesisEmpty {anchors.centerIn:parent;width:parent.width;visible:root.history.length===0;title:"History begins with real work";description:"Positions, predictions, attempts and comparisons will appear here. Nothing is inferred from a saved note."}
@@ -662,6 +666,9 @@ Action: "+(NoesisController.pendingOperation.kind||NoesisController.operationKin
    ColumnLayout {width:Math.max(0,settingsScroll.availableWidth-16);spacing:NoesisStyle.lg
     Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Window presentation";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
     NoesisSelect {model:["Full screen","Maximized","Tiled","Window"];currentIndex:["fullscreen","workspace","tiled","normal"].indexOf(NoesisController.presentationMode);Layout.fillWidth:true;Accessible.name:"Window presentation";onActivated:{NoesisController.presentationMode=["fullscreen","workspace","tiled","normal"][currentIndex];NoesisController.savePreferences();}}
+    NoesisButton {text:"Resolve a restored or conflicting vault copy";Layout.fillWidth:true;onClicked:{settingsDialog.close();NoesisController.operationResult=({});NoesisController.operationError="";vaultRecoveryDialog.open();}}
+    Text {text:"Code editor";renderType:Text.NativeRendering;textFormat:Text.PlainText;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;color:NoesisStyle.ink}
+    NoesisSelect {objectName:"settings-code-editor";model:["Neovim · terminal","Zed · native editor"];currentIndex:NoesisController.state.code_editor==="zed"?1:0;Layout.fillWidth:true;Accessible.name:"Code editor";enabled:!NoesisController.working;onActivated:NoesisController.run(["editor-setting",currentIndex===1?"zed":"nvim"])}
     Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Interface size";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
     NoesisSelect {model:["100%","125%","150%","200%"];currentIndex:[1,1.25,1.5,2].indexOf(NoesisStyle.interfaceScale);Layout.fillWidth:true;Accessible.name:"Interface size";onActivated:{NoesisStyle.interfaceScale=[1,1.25,1.5,2][currentIndex];NoesisController.savePreferences();}}
     Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;textFormat:Text.PlainText;text:"Reading size";color:NoesisStyle.ink;font.pixelSize:NoesisStyle.label;font.family:NoesisStyle.uiFont}
@@ -678,6 +685,27 @@ Action: "+(NoesisController.pendingOperation.kind||NoesisController.operationKin
 
    }
   }
+ }
+ NoesisDialog {id:vaultRecoveryDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(600,root.width-32);height:Math.min(650*NoesisStyle.interfaceScale,root.height-32);title:"Resolve vault ownership"
+  footer:Flow {spacing:NoesisStyle.sm
+   NoesisButton {text:"Cancel";enabled:!NoesisController.working;onClicked:vaultRecoveryDialog.close()}
+   NoesisButton {text:recoveryMode.currentIndex===0?"Use restored location":"Create independent copy";variant:"primary";enabled:!NoesisController.working&&recoverySource.text.trim()&&recoveryOther.text.trim();onClicked:NoesisController.run(recoveryMode.currentIndex===0?["vault-register",recoverySource.text.trim(),"--replace-location",recoveryOther.text.trim()]:["vault-fork",recoverySource.text.trim(),"--dest",recoveryOther.text.trim()])}
+  }
+  contentItem:ScrollView {id:recoveryScroll;clip:true;contentWidth:availableWidth
+   ColumnLayout {width:recoveryScroll.availableWidth;spacing:NoesisStyle.md
+    Text {text:"Keep the same history at a restored location, or make a separate copy with new identities. Existing vault files stay untouched.";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body;renderType:Text.NativeRendering}
+    NoesisSelect {id:recoveryMode;objectName:"recovery-mode";model:["Replace a registered location","Fork an independent copy"];Layout.fillWidth:true}
+    Text {text:"Restored or source vault folder";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}
+    RowLayout {Layout.fillWidth:true;NoesisField {id:recoverySource;objectName:"recovery-source";Layout.fillWidth:true;placeholderText:"Existing managed vault folder"}NoesisButton {text:"Choose folder";onClicked:recoveryFolder.open()}}
+    Text {text:recoveryMode.currentIndex===0?"Previously registered location to retire":"New destination folder · must not exist";color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}
+    NoesisField {id:recoveryOther;objectName:"recovery-other";Layout.fillWidth:true;placeholderText:recoveryMode.currentIndex===0?"Exact old registered folder":"New folder path"}
+    Text {text:recoveryMode.currentIndex===0?"The two folders must have the same vault identity. Registration is backed up; no content is overwritten.":"The source is copied and validated before publication. Internal references receive the new owner; external references retain their actual owner.";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}
+    Text {visible:!!NoesisController.operationError;text:NoesisController.operationError;Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.error;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}
+    Text {visible:!!NoesisController.operationResult.path;text:"Resolved location: "+(NoesisController.operationResult.path||"");Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label;renderType:Text.NativeRendering}
+    NoesisButton {visible:!!NoesisController.operationResult.path;enabled:!NoesisController.working;text:"Select resolved vault";onClicked:{NoesisController.choose(NoesisController.operationResult.path);vaultRecoveryDialog.close();}}
+   }
+  }
+  FolderDialog {id:recoveryFolder;title:"Choose restored or source vault";onAccepted:recoverySource.text=decodeURIComponent(String(selectedFolder).replace(/^file:\/\//,""))}
  }
  NoesisDialog {id:comparisonDialog;parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(640,root.width-48);height:Math.min(780*NoesisStyle.interfaceScale,(parent?.height||root.height)-32);modal:true;title:"Compare prediction with observation"
   property bool submitting:false

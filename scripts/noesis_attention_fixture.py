@@ -57,8 +57,13 @@ def run(vault,paper_id,annotation_ref,folder):
     subprocess.run(['git','init','-q',str(code)],check=True)
     subprocess.run(['git','-C',str(code),'add','verify_attention.py'],check=True)
     subprocess.run(['git','-C',str(code),'-c','user.name=Noesis fixture','-c','user.email=fixture@example.invalid','commit','-qm','Authored attention equation verification'],check=True)
+    from noesis.sources import annotation_reference
+    index=Index(vault)
+    try:
+        index.reconcile(); annotation_ref=annotation_reference(index,paper_id,annotation_ref['native_id'],annotation_ref['projection'])
+    finally:index.close()
     question=create(vault,'question','Why scale the dot product?','Which assumptions make its variance grow with the key dimension?',parent_id=paper_id,fields={'provenance':'agent-authored disposable acceptance fixture','annotation_ref':annotation_ref})
-    reconstruction=create(vault,'task','Reconstruct attention equation','## Problem statement\n\nDerive softmax(Q K^T / sqrt(d_k)) V and predict a two-key case.\n\n## Reconstruction\n\nFor independent, zero-mean, unit-variance components, the dot product variance is d_k. Scaling makes the variance one. These assumptions are not guaranteed for arbitrary learned keys.',parent_id=question['id'],relation='assigns',fields={'annotation_ref':annotation_ref,'provenance':'agent-authored; not independently performed by the learner'})
+    reconstruction=create(vault,'task','Reconstruct attention equation','## Problem statement\n\nDerive softmax(Q K^T / sqrt(d_k)) V and predict a two-key case.\n\n## Reconstruction\n\nFor independent, zero-mean, unit-variance components, the dot product variance is d_k. Scaling makes the variance one. These assumptions are not guaranteed for arbitrary learned keys.',parent_id=question['id'],relation='assigns',fields={'provenance':'agent-authored; not independently performed by the learner'})
     record_activity(vault,reconstruction['path'],'attempt','Agent-authored reconstruction checked against the source and an analytic two-key example.',outcome='succeeded',assistance=['agent','reference'],assessment='fixture source/formula check',scope='Eq. 1 only')
     project=create(vault,'project','Attention forward verification',parent_id=paper_id,fields={'repository':str(code)})
     experiment=create(vault,'experiment','Scaled attention numerical check',parent_id=project['id'],fields={'hypothesis':'The scaled matrix implementation agrees with a scalar reference to 1e-12; omitting scaling changes the two-key output','configuration':{'random_seed':1706,'random_cases':100,'tolerance':1e-12,'units':'dimensionless synthetic values'},'source_scope':'Eq. 1 forward computation only','annotation_ref':annotation_ref})

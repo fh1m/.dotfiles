@@ -1,0 +1,9 @@
+{
+  "native_replace": true,
+  "native_fork": true,
+  "originals_byte_identical": true,
+  "registry_backup": true,
+  "new_owner_identity": true,
+  "restart_resolved_owner": true,
+  "provenance": "agent-owned disposable copies"
+}

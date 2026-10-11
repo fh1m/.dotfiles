@@ -375,7 +375,7 @@ def snapshot(root):
         health=index.reconcile();page=index.query()
         notes=[dict(row,name=row['title'],status='',links=[]) for row in page['records']]
         meta=system(root)
-        result={'vault':root.name,'path':str(root),'notes':notes,'files':[], 'vaults':inventory(),
+        result={'vault':root.name,'vault_id':meta.get('vault_id'),'code_editor':config().get('code_editor','nvim'),'path':str(root),'notes':notes,'files':[], 'vaults':inventory(),
                 'types':meta.get('types',{}),'home':meta.get('home',''),'frontier_path':meta.get('frontier',''),
                 'templates':meta.get('templates','Templates'),'generation':page['generation'],'cursor':page['cursor'],
                 'health':health,'frontier':'','gates':[],'reviews':[],'questions':[],'projects':[],'labs':[],'sources':[]}
@@ -563,8 +563,8 @@ def library_action(root,args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','convolution-observe','convolution-prepare','convolution-check','host-request','host-lease','drawing-create','scratch-create','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','artifact-reconnect','exploration-recover','scratch-outputs']:
-        p = commands.add_parser(cmd); p.add_argument('--vault')
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','convolution-observe','convolution-prepare','convolution-check','host-request','host-lease','drawing-create','scratch-create','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','artifact-reconnect','exploration-recover','scratch-outputs','editor-setting']:
+        p = commands.add_parser(cmd); p.add_argument('--vault'); p.add_argument('--expect-vault-id')
         if cmd in ('convolution-observe','convolution-prepare','convolution-check'):
             p.add_argument('record_id');p.add_argument('--configuration',required=True);p.add_argument('--prediction',required=True);p.add_argument('--operation-id',required=True)
         if cmd in ('open-project','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','scratch-outputs'):p.add_argument('record_id')
@@ -619,9 +619,13 @@ def main():
         if cmd == 'host-request':p.add_argument('--stdin-line',action='store_true')
         if cmd == 'window-state':p.add_argument('--interface-scale',type=float);p.add_argument('--reading-scale',type=float);p.add_argument('--layouts-json');p.add_argument('--pending-json');p.add_argument('--instance-json');p.add_argument('--visible',choices=['on','off']);p.add_argument('--placement',choices=['current','dedicated']);p.add_argument('--study-workspace');p.add_argument('--return-behavior',choices=['hide','stay'])
         if cmd == 'window-state':p.add_argument('--presentation',choices=['fullscreen','workspace','tiled','normal']);p.add_argument('--collection',choices=['on','off']);p.add_argument('--drafts-json');p.add_argument('--drafts-stdin',action='store_true');p.add_argument('--path-scope');p.add_argument('--path-scope-vault');p.add_argument('--width',type=int);p.add_argument('--height',type=int);p.add_argument('--workspace',choices=['Today','Learn','Research','Practice','Lab','Library']);p.add_argument('--list-ratio',type=float);p.add_argument('--context-json');p.add_argument('--monitor');p.add_argument('--quiet',choices=['on','off'])
+        if cmd == 'editor-setting':p.add_argument('editor',choices=['nvim','zed'])
         if cmd == 'cli': p.add_argument('obsidian_command'); p.add_argument('options', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     try:
+        if getattr(args,'expect_vault_id',None):
+            from noesis.scopes import identity
+            if identity(vault(args.vault)) != args.expect_vault_id:raise ValueError('Vault identity changed or storage is unavailable; no action was started. Reselect the correct owner.')
         if args.command == 'init': initialize(args); return 0
         if args.command=='window':
             from noesis.hosting import launch
@@ -703,6 +707,10 @@ def main():
                 print(json.dumps(replace_location(args.path,args.replace_location)))
             else:print(json.dumps(register(Path(args.path).expanduser().resolve())))
             return 0
+        if args.command=='editor-setting':
+            import shutil
+            if not shutil.which(args.editor):raise ValueError('Selected editor is unavailable; install it first or choose Neovim')
+            value=config();value['code_editor']=args.editor;store(CONFIG,value);print(json.dumps({'code_editor':args.editor,'message':'Code editor saved: '+args.editor}));return 0
         if args.command == 'use':
             root = vault(args.path); system(root); c = config(); c['active_vault'] = str(root); store(CONFIG,c); print(root); return 0
         if args.command == 'vaults': print(json.dumps(inventory(),ensure_ascii=False)); return 0

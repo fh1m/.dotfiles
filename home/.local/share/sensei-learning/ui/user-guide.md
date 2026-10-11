@@ -133,3 +133,13 @@ an integer. Historical, changed or deleted annotations use an explicitly labelle
 recorded-page fallback in the current attachment; its page content may have changed. Authoritative annotations remain in Zotero.
 
 To promote a useful scratch file, version its existing directory through Git, then return to its originating question and use **Learning options → Connect implementation** with that directory and code path. This reuses the code instead of copying it.
+
+## Vault copies and code editor
+
+In Settings, **Resolve a restored or conflicting vault copy** lets you replace a registered location with a same-identity restored folder, or fork an independent copy into a new folder. Review both exact folders, submit, then **Select resolved vault**. Original vault files remain intact; registration is backed up. Missing storage preserves drafts and cached history: reconnect the same owner and Refresh. If identity changed, select the correct owner; do not retry writes against an unexpected replacement.
+
+**Settings → Code editor** selects Neovim or Zed. Zed is installed locally on this desktop. On its first project prompt, **Stay in Restricted Mode** allows editing without authorizing project tasks or language services. Noesis opens the exact owned file. Run code deliberately through the existing execution workflow.
+
+History & next steps → Learning history offers Older, Newer and Latest pages, preserving earlier evidence.
+
+Zotero 10.0.5 and 10.0.6 Linux builds have isolated populated-restore and reader checks; preserve the guarded startup patch and rollback. Zotero 9.0.6 lacks safe local instance identity: export CSL JSON for bibliographic import and open its PDF manually. Its live annotation import is unsupported. Other builds are not certified.

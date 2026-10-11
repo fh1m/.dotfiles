@@ -28,13 +28,24 @@ def command(props):
     location=props.get('repository') or (props.get('code_snapshot') or {}).get('repository')
     if not location:raise ValueError('Connect an implementation repository first')
     state=snapshot(location)
-    terminal=Path.home()/'.local/bin/sensei-terminal'
-    if not terminal.is_file():raise ValueError('The configured terminal helper is unavailable')
-    if not shutil.which('nvim'):raise ValueError('Neovim is unavailable; the repository reference is preserved')
     entry=props.get('code_entrypoint')
     if entry:
         from .persistence import contained
         file=contained(Path(state['repository']),entry)
         if not file.is_file():raise ValueError('Code entry point is unavailable; the repository reference is preserved')
-    return [str(terminal),'--title','Noesis · '+str(props.get('title','Implementation')),
-            '--working-directory',state['repository'],'-e','nvim',*(['--',entry] if entry else ['.'])]
+    return editor_command(Path(state['repository']),str(props.get('title','Implementation')),entry)
+
+
+def editor_command(directory,title,entry=None):
+    import json
+    config=Path.home()/'.config/sensei-learning/config.json'
+    settings=json.loads(config.read_text()) if config.is_file() else {}
+    editor=os.environ.get('NOESIS_EDITOR') or settings.get('code_editor','nvim')
+    if editor not in ('nvim','zed'):raise ValueError('Choose Neovim or Zed in Noesis Settings')
+    if not shutil.which(editor):raise ValueError(('Neovim' if editor=='nvim' else 'Zed')+' is unavailable; the code reference is preserved')
+    if editor=='zed':
+        target=(Path(directory)/entry).resolve() if entry else Path(directory).resolve()
+        return ['zed','--',str(target)]
+    terminal=Path.home()/'.local/bin/sensei-terminal'
+    if not terminal.is_file():raise ValueError('The configured terminal helper is unavailable')
+    return [str(terminal),'--title','Noesis · '+title,'--working-directory',str(directory),'-e','nvim',*(['--',entry] if entry else ['.'])]

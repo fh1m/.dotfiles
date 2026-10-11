@@ -1,0 +1,264 @@
+{
+  "version": "9.0.6",
+  "live_api_import": "unsupported: instance identity header absent; refused safely",
+  "csl_export_import": true,
+  "annotation_physical_page": 3,
+  "selected_native_key_verified": true,
+  "populated_encrypted_restore": true,
+  "reader_state": [
+    {
+      "itemID": 2,
+      "state": {
+        "splitType": null,
+        "splitSize": "50%",
+        "primary": true,
+        "freeze": false,
+        "errorMessage": "",
+        "annotations": [
+          {
+            "libraryID": 1,
+            "type": "highlight",
+            "isExternal": "",
+            "readOnly": "",
+            "text": "Agent compatibility source fixture",
+            "comment": "Preserve unknown mechanism",
+            "pageLabel": "iii",
+            "color": "#ffd400",
+            "sortIndex": "00002|000000|00000",
+            "position": {
+              "pageIndex": 2,
+              "rects": [
+                [
+                  60,
+                  650,
+                  300,
+                  680
+                ]
+              ]
+            },
+            "dateModified": "2026-10-11T02:23:25Z",
+            "id": "9IYWQK64",
+            "tags": []
+          }
+        ],
+        "selectedAnnotationIDs": [
+          "9IYWQK64"
+        ],
+        "filter": {
+          "query": "",
+          "colors": [],
+          "tags": [],
+          "authors": [],
+          "hiddenIDs": []
+        },
+        "readOnly": false,
+        "authorName": "",
+        "title": "Agent compatibility fixture \u00b7 Attention Is All You Need",
+        "loggedIn": "",
+        "fontSize": "1.00",
+        "fontFamily": "Georgia, serif",
+        "hyphenate": true,
+        "showAnnotations": true,
+        "customThemes": [],
+        "lightTheme": null,
+        "darkTheme": {
+          "id": "dark",
+          "label": "Dark",
+          "background": "#2E3440",
+          "foreground": "#D8DEE9"
+        },
+        "autoDisableNoteTool": true,
+        "autoDisableTextTool": true,
+        "autoDisableImageTool": true,
+        "textSelectionAnnotationMode": "highlight",
+        "tool": {
+          "type": "pointer"
+        },
+        "thumbnails": [
+          {
+            "pageIndex": 0,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 1,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 2,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 3,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 4,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 5,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 6,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 7,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 8,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 9,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 10,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 11,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 12,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 13,
+            "width": 120,
+            "height": 155
+          },
+          {
+            "pageIndex": 14,
+            "width": 120,
+            "height": 155
+          }
+        ],
+        "outline": null,
+        "outlineQuery": "",
+        "pageLabels": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15"
+        ],
+        "sidebarOpen": false,
+        "sidebarWidth": 240,
+        "sidebarView": "annotations",
+        "contextPaneOpen": false,
+        "bottomPlaceholderHeight": null,
+        "toolbarPlaceholderWidth": 0,
+        "showContextPaneToggle": true,
+        "enableAddToNote": false,
+        "labelPopup": null,
+        "passwordPopup": null,
+        "printPopup": null,
+        "appearancePopup": null,
+        "themePopup": null,
+        "contextMenu": null,
+        "readAloudState": {
+          "popupOpen": false,
+          "active": false,
+          "paused": false,
+          "segments": null,
+          "backwardStopIndex": null,
+          "forwardStopIndex": null,
+          "activeSegment": null,
+          "speed": 1,
+          "voice": null,
+          "annotationPopup": null,
+          "segmentAnnotations": {},
+          "savedPosition": null
+        },
+        "readAloudVoices": {},
+        "readAloudFirstRunPopup": false,
+        "primaryViewState": {
+          "pageIndex": 1,
+          "scale": "page-width",
+          "top": 35,
+          "left": -7,
+          "scrollMode": 0,
+          "spreadMode": 0
+        },
+        "primaryViewStats": {
+          "pageIndex": 2,
+          "pageLabel": "3",
+          "pagesCount": 15,
+          "outlinePath": null,
+          "canCopy": 1,
+          "canZoomOut": true,
+          "canZoomIn": true,
+          "canZoomReset": false,
+          "canNavigateBack": true,
+          "canNavigateForward": false,
+          "canNavigateToFirstPage": true,
+          "canNavigateToLastPage": true,
+          "canNavigateToPreviousPage": true,
+          "canNavigateToNextPage": true,
+          "zoomAutoEnabled": false,
+          "zoomPageWidthEnabled": true,
+          "zoomPageHeightEnabled": false,
+          "scrollMode": 0,
+          "spreadMode": 0
+        },
+        "primaryViewOverlayPopup": null,
+        "primaryViewFindState": {
+          "popupOpen": false,
+          "active": false,
+          "query": "",
+          "highlightAll": true,
+          "caseSensitive": false,
+          "entireWord": false,
+          "index": null,
+          "result": null
+        },
+        "secondaryViewState": null,
+        "secondaryViewStats": {},
+        "secondaryViewAnnotationPopup": null,
+        "secondaryViewSelectionPopup": null,
+        "secondaryViewOverlayPopup": null,
+        "secondaryViewFindState": {
+          "popupOpen": false,
+          "active": false,
+          "query": "",
+          "highlightAll": true,
+          "caseSensitive": false,
+          "entireWord": false,
+          "index": null,
+          "result": null
+        }
+      }
+    }
+  ],
+  "fixture": "/var/tmp/noesis-zotero9-y02d0272",
+  "application_sha256": "76ed23ea365bf7ba35d6ec16d510f0493d461c277fcd21677ded7be3ad935987",
+  "provenance": "agent isolated compatibility fixture; test-only source bootstrap"
+}
