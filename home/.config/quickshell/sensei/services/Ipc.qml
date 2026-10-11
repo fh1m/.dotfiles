@@ -11,6 +11,12 @@ Scope {
     id: root
 
     IpcHandler {
+        target: "display-brightness"
+        function set(output: string, level: real): void { DisplayControls.setLevel(output, level); }
+        function state(): string { return JSON.stringify({main:RobotBench.data.mainBrightness,screenpad:RobotBench.data.brightness,error:DisplayControls.error}); }
+    }
+
+    IpcHandler {
         target: "shortcuts"
         function toggle(): void { ShellState.openExclusive(ShellState.shortcutsOpen ? "" : "shortcuts"); }
         function open(): void { ShellState.openExclusive("shortcuts"); }

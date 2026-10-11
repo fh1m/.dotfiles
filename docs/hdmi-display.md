@@ -57,3 +57,31 @@ A disposable headless output verified the third bar, wallpaper inheritance, nega
 The running compositor still excludes NVIDIA, so the headless test is **not** a physical HDMI presentation test. After logging out and back in through **Hyprland (Intel repair)**, confirm `HDMI-A-1` at `x=-1920`, 1920×1080 and approximately 75 Hz, with a 44-pixel bottom bar. Test cable unplug/replug, notifications, brightness, window movement and playback under normal load. If 75 Hz is unavailable in the driver's reported modes, the selector uses the best mode actually offered.
 
 Mode and placement behavior follow [Hyprland monitor positioning](https://wiki.hypr.land/configuring/core/monitors/positioning/). Hardware brightness follows [ddcutil getvcp](https://www.ddcutil.com/command_getvcp/) and [setvcp](https://www.ddcutil.com/command_setvcp/).
+
+## First physical login: rendering and session repairs (12 October)
+
+The new login detected all three physical outputs, but HDMI remained blank. The compositor repeatedly logged `EGL (verifyDestinationDMABUF): FAIL, format is external-only`, followed by `destination dmabuf unsupported`. This is a different failure from excluding NVIDIA in the previous session.
+
+Aquamarine 0.15.1 compares `fmt.modifier` with `DRM_FORMAT_INVALID` (a **format**, value zero) rather than `DRM_FORMAT_MOD_INVALID` (the **implicit modifier** sentinel). With this laptop's required `AQ_NO_MODIFIERS=1`, the implicit destination is therefore rejected. The same comparison is still present upstream. The local patch changes that constant; it does not bypass the entire format check. See the [upstream diagnosis and original attribution](https://github.com/hyprwm/aquamarine/issues/220) in issue #220 (the discussion includes the constant diagnosis).
+
+A private Aquamarine 0.15.1 build lives in `~/.local/opt/sensei-aquamarine`. It passed all four upstream CTest tests. Hyprland's version command loaded it, and `ldd -r` found no unresolved symbols. Those checks establish build/load compatibility, **not physical presentation**. The current compositor cannot swap its already-loaded rendering library; a fresh login is required to validate HDMI with this correction.
+
+The session wrapper selects the private library only while recorded `aquamarine` and `hyprutils` package versions still match. On an upgrade it falls back to the system library; rebuild/reassess the patch rather than loading a stale ABI. `SENSEI_SYSTEM_AQUAMARINE=1` explicitly selects the packaged library. `--intel-only` remains available for internal-panel recovery. No system library was overwritten.
+
+To reproduce the private build:
+
+```sh
+scripts/build-aquamarine-fix.sh
+```
+
+The script pins upstream tag v0.15.1 and commit `f31c47a1b9d300847d8fc3108ad959448103dfc1`, applies the maintained patch idempotently, builds with two workers, runs CTest, installs into the private prefix, and records package versions. It needs the existing C++/CMake/Ninja and Aquamarine build dependencies. It refuses a different installed Aquamarine version.
+
+A second failure was independent of GPU rendering: the old `sensei-shell` supervisor survived logout and restarted Quickshell with the **old** Hyprland instance signature but the reused Wayland socket. That shell could draw bars while its Hyprland IPC was disconnected. Brightness also failed because the old supervisor belonged to an inactive logind session. Starting the shell from the current compositor fixed both. The supervisor now exits when its own compositor disappears, and startup briefly waits for the previous supervisor's lock to be released. A regression fixture verifies it does not relaunch into a subsequent session.
+
+Both main and ScreenPad brightness were tested through the widget's `DisplayControls` path at 99%, confirmed in sysfs and widget state, and restored to their original 100%. No sudoers change or new privileged brightness rule was necessary. Brightness failures are retained in service state instead of being silently discarded.
+
+HDMI was temporarily disabled in the running session to stop repeated failed frame transfers. Its persistent startup rule remains enabled. With the broken output disabled and the shell connected correctly, a three-second idle sample measured Hyprland at 0.0% CPU, Quickshell at 0.7%, and no compositor log growth. This is a short idle measurement, not a general performance benchmark.
+
+The next physical acceptance check remains: new login → three outputs → HDMI pixels at its supported mode → brightness → repeated unplug/replug and monitor replacement → shared workspaces and popup placement → normal interactive load. The current cable remains detected by the kernel and DDC brightness remains available even while its compositor output is temporarily disabled.
+
+The defect is suitable for human upstream review, but [hyprwm's AI policy](https://github.com/hyprwm/.github/blob/main/policies/AI_USAGE.md) forbids agents from submitting or writing developer-facing PR/issue communications. No upstream submission was made. Human submission also requires the organization's vouch process.

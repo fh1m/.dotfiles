@@ -47,7 +47,7 @@ tag="$(printf '%s' "${QS_ARGS[*]}" | cksum | cut -d' ' -f1)"
 
 # One supervisor per shell per login: a second one exits at once.
 exec 9> "$runtime/sensei-shell-$tag.lock"
-flock -n 9 || exit 0
+flock -w 3 9 || exit 0
 
 locked() {
     [ "$(hyprctl locked 2> /dev/null)" = "true" ]
@@ -63,6 +63,12 @@ starts=()
 logdir="${XDG_STATE_HOME:-$HOME/.local/state}/sensei"
 mkdir -p "$logdir"
 while :; do
+    # Do not respawn into a new login using a dead compositor's environment.
+    # Persistent tmux/user-manager processes can outlive a desktop session.
+    if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && ! hyprctl version >/dev/null 2>&1; then
+        printf 'Compositor session ended; stopping this shell supervisor.\n' >> "$logdir/shell.log"
+        exit 0
+    fi
     SENSEI_SUPERVISED=1 QS_NO_RELOAD_POPUP=1 "$qs_bin" "${QS_ARGS[@]}" -n >> "$logdir/shell.log" 2>&1 9>&-
     rc=$?
 

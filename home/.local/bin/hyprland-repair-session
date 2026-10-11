@@ -34,6 +34,17 @@ export QS_NO_RELOAD_POPUP=1
 export XDG_CURRENT_DESKTOP=Hyprland
 export XDG_SESSION_DESKTOP=Hyprland
 unset GBM_BACKEND __GLX_VENDOR_LIBRARY_NAME EGL_PLATFORM
+# Keep the modifier-free ScreenPad path, but correct Aquamarine 0.15.1's
+# implicit-DMABUF comparison. Never load a local build across package upgrades.
+local_aq="$HOME/.local/opt/sensei-aquamarine"
+if [ "${SENSEI_SYSTEM_AQUAMARINE:-0}" != 1 ] && [ -r "$local_aq/abi-packages" ] && [ -r "$local_aq/lib/libaquamarine.so.14" ]; then
+    current_abi=$(pacman -Q aquamarine hyprutils 2>/dev/null || true)
+    if [ "$current_abi" = "$(cat "$local_aq/abi-packages")" ]; then
+        export LD_LIBRARY_PATH="$local_aq/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    else
+        echo "Local Aquamarine package versions changed; using the system library." >&2
+    fi
+fi
 logdir="${XDG_STATE_HOME:-$HOME/.local/state}/hyprland-sessions"
 mkdir -p "$logdir"
 log="$logdir/session-$(date +%Y%m%d-%H%M%S).log"

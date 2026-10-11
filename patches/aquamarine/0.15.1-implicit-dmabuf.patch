@@ -1,0 +1,13 @@
+diff --git a/src/backend/drm/Renderer.cpp b/src/backend/drm/Renderer.cpp
+index d221775..d41b6a2 100644
+--- a/src/backend/drm/Renderer.cpp
++++ b/src/backend/drm/Renderer.cpp
+@@ -1120,7 +1120,7 @@ bool CDRMRenderer::verifyDestinationDMABUF(const SDMABUFAttrs& attrs) {
+         if (fmt.modifier != attrs.modifier)
+             continue;
+ 
+-        if (fmt.modifier != DRM_FORMAT_INVALID && fmt.external) {
++        if (fmt.modifier != DRM_FORMAT_MOD_INVALID && fmt.external) {
+             backend->log(AQ_LOG_ERROR, "EGL (verifyDestinationDMABUF): FAIL, format is external-only");
+             return false;
+         }

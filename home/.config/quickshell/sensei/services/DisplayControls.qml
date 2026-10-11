@@ -6,6 +6,7 @@ import qs.services
 
 Singleton {
     id: root
+    property string error: ""
     property var pending: ({})
     property var targets: ({})
     function adjustLevel(output: string, delta: real): void {
@@ -35,6 +36,7 @@ Singleton {
     }
     Process {
         id: control
-        onExited: { RobotBench.refresh(); root.next(); }
+        stderr: StdioCollector { onStreamFinished: root.error = text.trim() }
+        onExited: (code, status) => { if (code === 0) root.error = ""; RobotBench.refresh(); root.next(); }
     }
 }
