@@ -35,6 +35,6 @@ DropdownFrame {
  ControlTile {label:"Keyboard shortcuts";glyph:"\uf11c";onActivated:ShellState.openExclusive("shortcuts")}
  }
  ControlTile {label:"Display wallpapers";glyph:"\uf03e";onActivated:ShellState.openExclusive("picker")}
- NrLabel {text:"FIELD TAG  /  LEFT GITHUB  ·  MIDDLE DECK  ·  RIGHT XKCD";pixelSize:10;color:Theme.widgetMuted}
+ NrLabel {text:"FIELD TAG  /  LEFT CODE  ·  MIDDLE DECK  ·  RIGHT XKCD";pixelSize:10;color:Theme.widgetMuted}
  }
 }

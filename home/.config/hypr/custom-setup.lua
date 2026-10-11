@@ -43,7 +43,7 @@ hl.config({
             enabled = true,
             blur = false,
             gradients = true,
-            render_titles = false,
+            render_titles = true,
             font_family = "JetBrainsMono Nerd Font Propo",
             font_size = 12,
             font_weight_active = 700,
@@ -69,14 +69,16 @@ hl.config({
 -- These group border keys need their full dotted names in Hyprland's Lua API.
 hl.config({ ["group.col.border_active"] = "rgba(f23d70ff)", ["group.col.border_inactive"] = "rgba(39342fff)", ["group.col.border_locked_active"] = "rgba(f23d70ff)", ["group.col.border_locked_inactive"] = "rgba(39342fff)" })
 
+hl.bind("SUPER + ALT + SHIFT + G", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/sensei-tabs resume"))
+
 -- Native Hyprland tabs: drag a window onto a group, or use the keys below.
 -- Group titles and the two-pixel active marker provide a visible focus cue.
-hl.bind("SUPER + ALT + G", hl.dsp.group.toggle())
+hl.bind("SUPER + ALT + G", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/sensei-tabs toggle"))
 hl.bind("SUPER + ALT + H", hl.dsp.window.move({ into_group = "l" }))
 hl.bind("SUPER + ALT + L", hl.dsp.window.move({ into_group = "r" }))
 hl.bind("SUPER + ALT + J", hl.dsp.group.next())
 hl.bind("SUPER + ALT + K", hl.dsp.group.prev())
-hl.bind("SUPER + ALT + U", hl.dsp.window.move({ out_of_group = true }))
+hl.bind("SUPER + ALT + U", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/sensei-tabs detach"))
 
 hl.bind(mod .. " + SHIFT + up", hl.dsp.window.move({ monitor = "eDP-1" }))
 hl.bind(mod .. " + SHIFT + down", hl.dsp.window.move({ monitor = "DP-2" }))
@@ -119,8 +121,8 @@ hl.on("hyprland.start", function()
 end)
 
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true })
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd("qs -c wrayth ipc call spotify action next"), { locked = true })
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("qs -c wrayth ipc call spotify action previous"), { locked = true })
 hl.bind("SHIFT + SUPER + bracketright", hl.dsp.exec_cmd("bash -c 'cur=$(cat /sys/class/backlight/asus_screenpad/brightness); max=$(cat /sys/class/backlight/asus_screenpad/max_brightness); pct=$((cur * 100 / max + 10)); [ \"$pct\" -gt 100 ] && pct=100; asusctl backlight --screenpad-brightness \"$pct\"'"))
 hl.bind("SHIFT + SUPER + bracketleft", hl.dsp.exec_cmd("bash -c 'cur=$(cat /sys/class/backlight/asus_screenpad/brightness); max=$(cat /sys/class/backlight/asus_screenpad/max_brightness); pct=$((cur * 100 / max - 10)); [ \"$pct\" -lt 0 ] && pct=0; asusctl backlight --screenpad-brightness \"$pct\"'"))
 

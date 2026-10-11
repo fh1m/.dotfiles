@@ -164,3 +164,14 @@ or required global cross-vault gates are superseded. Global blocking educational
 is not in scope. The populated Zotero restore gate remains unresolved, and off-device
 configuration remains explicitly owner-deferred. Owner learning evidence and usability
 feedback cannot be replaced by synthetic fixtures.
+
+### Live desktop / code-desk slice — 2026-10-11
+
+Implemented the separately authorized desktop fixes without changing private
+vault content: event-driven native tabs, single-command Spotify skips, softer
+popup reveals, and a Code / Agents identity panel. See [desktop behavior and
+validation](DESKTOP-CODE.md). Eight adapter/transport regressions and the sixteen
+existing learning CLI checks pass. GitHub and both installed provider pages were
+visually inspected; quota child-process shutdown was checked live. Billing expiry
+and OpenCode provider balances are unavailable from these supported interfaces,
+and are not inferred. The broader Noesis redesign milestones above are unchanged.

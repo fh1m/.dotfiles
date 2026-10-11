@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
+import Quickshell.Io
 import qs.services
 Singleton {
  id:root;property var previews:[];property bool opened:false;property string mode:"apps";property string query:"";property int selected:0;property bool pinned:false;property var mru:[];property var snapshot:[];property string sameClass:"";property string focusTitle:"";property int focusWorkspace:1;property string focusScreen:"eDP-1";property int focusStamp:0;property string lastFocusAddress:""
@@ -60,7 +61,10 @@ Singleton {
  function launch(e){pendingSelection={kind:'app',entry:e};opened=false;}
  function executeApp(e){Launcher.record(e.id);Deck.leave();if(e.runInTerminal)Quickshell.execDetached({command:["/home/fh1m/.local/bin/sensei-terminal","-e"].concat(Array.from(e.command)),workingDirectory:e.workingDirectory||Quickshell.env('HOME')});else e.execute();}
  function syncFocus(){let t=root.all.find(w=>w.lastIpcObject?.focusHistoryID===0);if(!t)return;const address=t.address;if(!address||address===root.lastFocusAddress)return;root.lastFocusAddress=address;mru=[address].concat(mru.filter(a=>a!==address)).slice(0,100);focusTitle=t.title||t.wayland?.appId||"Window";focusWorkspace=t.workspace?.id??1;focusScreen=t.monitor?.name??"eDP-1";focusStamp++;}
- Connections {target:Hyprland;function onActiveToplevelChanged(){root.syncFocus();}function onRawEvent(event){if(['openwindow','closewindow','movewindow','workspace','focusedmon'].includes(event.name))Hyprland.refreshToplevels();}}
+ property string newlyOpened:""
+ Timer {id:groupDelay;interval:300;onTriggered:{if(autoGroup.running){restart();return;}if(!autoGroup.running){autoGroup.command=[Quickshell.env('HOME')+'/.local/bin/sensei-tabs','auto',root.newlyOpened];autoGroup.running=true;}}}
+ Process {id:autoGroup;onExited:Hyprland.refreshToplevels()}
+ Connections {target:Hyprland;function onActiveToplevelChanged(){root.syncFocus();}function onRawEvent(event){if(event.name==='moveoutofgroup'||(event.name==='togglegroup'&&String(event.data||'').startsWith('0,'))){const parts=String(event.data||'').split(',');Quickshell.execDetached([Quickshell.env('HOME')+'/.local/bin/sensei-tabs','pause',parts[parts.length-1]]);}if(event.name==='workspace'){root.newlyOpened='';groupDelay.restart();}if(event.name==='openwindow'){root.newlyOpened=String(event.data||'').split(',')[0];groupDelay.restart();}if(['openwindow','closewindow','movewindow','workspace','focusedmon'].includes(event.name))Hyprland.refreshToplevels();}}
  Connections {target:ActiveWindow;function onIpcChanged(){root.syncFocus();}}
  Component.onCompleted:Qt.callLater(syncFocus)
  Timer {interval:900;repeat:true;running:root.opened;onTriggered:Hyprland.refreshToplevels()}

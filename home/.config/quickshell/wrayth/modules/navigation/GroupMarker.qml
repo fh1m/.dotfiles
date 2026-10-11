@@ -8,23 +8,28 @@ import qs.services
 // A small read-only marker at the edge of Hyprland's native groupbar.
 // The native tabs keep click and drag behavior; this surface accepts no input.
 Variants {
-    model: ShellState.screens
+    model: Hyprland.toplevels.values.filter(t => {
+        const w = t.lastIpcObject;
+        return w && w.visible && !w.hidden && (w.grouped?.length ?? 0) > 1;
+    })
     PanelWindow {
         id: marker
-        required property ShellScreen modelData
-        readonly property var monitor: Hyprland.monitors.values.find(m => m.name === modelData.name) ?? null
-        readonly property var members: ActiveWindow.ipc?.grouped ?? []
-        readonly property int position: Math.max(1, members.indexOf(ActiveWindow.ipc?.address) + 1)
-        readonly property int groupWorkspace: ActiveWindow.ipc?.workspace?.id ?? -1
+        required property var modelData
+        readonly property var group: modelData.lastIpcObject
+        readonly property var groupScreen: ShellState.screens.find(s => s.name === modelData.monitor?.name) ?? null
+        readonly property var monitor: Hyprland.monitors.values.find(m => m.name === groupScreen?.name) ?? null
+        readonly property var members: group?.grouped ?? []
+        readonly property int position: Math.max(1, members.indexOf(group?.address) + 1)
+        readonly property int groupWorkspace: group?.workspace?.id ?? -1
         readonly property int shownWorkspace: monitor?.activeWorkspace?.id ?? -2
-        screen: modelData
+        screen: groupScreen
         color: "transparent"
-        visible: ActiveWindow.present && members.length > 1 && groupWorkspace === shownWorkspace && WindowDesk.focusScreen === modelData.name && !ShellState.locked
-        implicitWidth: Math.max(1, ActiveWindow.width)
+        visible: groupScreen !== null && members.length > 1 && groupWorkspace === shownWorkspace && !group.hidden && !group.fullscreen && !ShellState.locked
+        implicitWidth: Math.max(1, (group?.size?.[0] ?? 1) - 16)
         implicitHeight: 29
         anchors { top: true; left: true }
-        margins.left: Math.max(0, ActiveWindow.x - (monitor?.lastIpcObject?.x ?? 0))
-        margins.top: Math.max(0, ActiveWindow.y - (monitor?.lastIpcObject?.y ?? 0) - 30)
+        margins.left: Math.max(0, (group?.at?.[0] ?? 0) + 8 - (monitor?.lastIpcObject?.x ?? 0))
+        margins.top: Math.max(0, (group?.at?.[1] ?? 0) - (monitor?.lastIpcObject?.y ?? 0) - 30)
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "sensei-tabs"
@@ -39,8 +44,8 @@ Variants {
             onPaint: {
                 const p = getContext("2d")
                 p.reset()
-                const inset = 8, cut = 8, h = height - 1
-                p.fillStyle = Theme.ink
+                const inset = 0, cut = 5, h = height
+                p.fillStyle = "#000000"
                 p.beginPath()
                 p.moveTo(inset + cut, 0)
                 p.lineTo(width - inset - cut, 0)
@@ -76,8 +81,9 @@ Variants {
                 }
                 Row {
                     id: titleGroup
-                    anchors.centerIn: parent
-                    spacing: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: 16
+                    spacing: 8
                     Item {
                         width: 16; height: 16
                         anchors.verticalCenter: parent.verticalCenter
@@ -102,9 +108,9 @@ Variants {
                         anchors.verticalCenter: parent.verticalCenter
                         text: tab.tabTitle
                         textFormat: Text.PlainText
-                        width: Math.min(implicitWidth, Math.max(1, tab.tabWidth - 160))
+                        width: Math.min(implicitWidth, Math.max(1, tab.tabWidth - (tab.index === marker.members.length - 1 ? 136 : 44)))
                         elide: Text.ElideRight
-                        color: tab.current ? Theme.paper : Theme.paperMuted
+                        color: tab.current ? Theme.signalRed : Theme.paperMuted
                         font.family: "JetBrainsMono Nerd Font Propo"
                         font.pixelSize: 12
                         font.weight: tab.current ? Font.Bold : Font.DemiBold
@@ -123,11 +129,11 @@ Variants {
         }
         Rectangle {
             anchors.right: parent.right
-            anchors.rightMargin: 22
+            anchors.rightMargin: 10
             y: 5
-            width: 110
+            width: 92
             height: 19
-            color: Theme.ink
+            color: "#000000"
             radius: Theme.radiusSmall
             border.width: 1
             border.color: Theme.rule

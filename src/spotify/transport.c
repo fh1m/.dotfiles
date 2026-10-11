@@ -165,6 +165,10 @@ static J *rpc(J *request) {
     if (child > 0 && waitpid(child, &result, 0) == child &&
         WIFEXITED(result) && WEXITSTATUS(result) == 0) {
       usleep(500000);
+      // A control may have reached the player before its response failed.
+      // Replaying Next/Previous (or another mutation) is never safe.
+      if (get(request, "Playback"))
+        fail("The player restarted. Check playback before sending another control.");
       return rpc(request);
     }
     fail("Sensei, the Spotify player lost its session and could not restart.");
@@ -284,6 +288,7 @@ static J *status(J *d) {
   boolean(o, "playing", playing);
   boolean(o, "loading", loading);
   copy(o, "eventUri", get(event, "uri"));
+  copy(o, "eventTime", get(event, "time"));
   add(o, "track", track);
   integer(o, "progress", progress);
   copy(o, "volume", get(device, "volume_percent"));
@@ -593,19 +598,9 @@ int main(int argc, char **argv) {
     simple = "Repeat";
   J *d = NULL;
   if (simple) {
-    if (!strcmp(name, "next") || !strcmp(name, "previous")) {
-      int playing;
-      if (argc > 2 &&
-          (!strcmp(argv[2], "playing") || !strcmp(argv[2], "paused")))
-        playing = !strcmp(argv[2], "playing");
-      else {
-        d = playback();
-        playing = yes(get(d, "is_playing"));
-      }
-      control(json_object_new_string(simple));
-      control(json_object_new_string(playing ? "Play" : "Pause"));
-    } else
-      control(json_object_new_string(simple));
+    // Native Next/Previous preserve playback state. Do not query a stale Web
+    // snapshot or enqueue a second Play/Pause during the loading transition.
+    control(json_object_new_string(simple));
   } else if (!strcmp(name, "volume")) {
     if (argc < 3)
       fail("Missing volume");

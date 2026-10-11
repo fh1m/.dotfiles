@@ -33,13 +33,13 @@ Rectangle {
  Behavior on scale {NumberAnimation {duration:Theme.motionAck;easing.type:Easing.OutCubic}}
  Behavior on opacity {NumberAnimation {duration:140}}
  Rectangle {visible:root.selected&&root.navigation;anchors.left:parent.left;anchors.leftMargin:4;anchors.verticalCenter:parent.verticalCenter;width:2;height:15;radius:1;color:root.accentColor}
- Row {x:root.inset;width:root.width-2*root.inset;anchors.verticalCenter:parent.verticalCenter;spacing:root.label===""?0:root.width<100?4:7
+ Row {x:root.label===""?(root.width-iconCell.width)/2:root.inset;width:root.width-2*root.inset;anchors.verticalCenter:parent.verticalCenter;spacing:root.label===""?0:root.width<100?4:7
  Item { id: iconCell; visible:root.glyph!=="";width:root.iconWidth;height:26;anchors.verticalCenter:parent.verticalCenter
  Text {anchors.centerIn:parent;text:root.glyph;font.family:Appearance.font.icons;font.pixelSize:root.width<100?16:root.height>=38?20:18;color:root.selected||pointer.containsMouse?root.accentColor:Theme.widgetMuted;Behavior on color {ColorAnimation {duration:Theme.motionAck}}}
  }
   Column {visible:root.label!==""&&root.label!=="‹"&&root.label!=="›"&&root.label!=="←"&&root.label!=="→";anchors.verticalCenter:parent.verticalCenter;width:Math.max(0,parent.width-(iconCell.visible?iconCell.width+parent.spacing:0));spacing:2
- NrLabel {width:parent.width;elide:Text.ElideRight;centred:false;tracked:false;pixelSize:root.width<100?10:root.width>=130&&root.height>=36?12:11;font.family:Appearance.font.ui;font.capitalization:Font.MixedCase;font.weight:root.selected?Font.DemiBold:Font.Medium;font.letterSpacing:0;text:root.label;color:root.navigation&&root.selected?root.accentColor:Theme.widgetText}
- Text {id:tileDetail;visible:root.detail!=="";width:parent.width;text:root.detail;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:9;color:Theme.widgetMuted}
+ NrLabel {textFormat:Text.PlainText;width:parent.width;elide:Text.ElideRight;centred:false;tracked:false;pixelSize:root.width<100?10:root.width>=130&&root.height>=36?12:11;font.family:Appearance.font.ui;font.capitalization:Font.MixedCase;font.weight:root.selected?Font.DemiBold:Font.Medium;font.letterSpacing:0;text:root.label;color:root.navigation&&root.selected?root.accentColor:Theme.widgetText}
+ Text {id:tileDetail;textFormat:Text.PlainText;visible:root.detail!=="";width:parent.width;text:root.detail;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:9;color:Theme.widgetMuted}
  }
  }
 

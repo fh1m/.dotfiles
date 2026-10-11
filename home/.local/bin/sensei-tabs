@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""Event-driven third-window grouping. Native Hyprland owns tabs and dragging."""
+import fcntl
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+STATE = Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state'))/'sensei-tabs'
+
+def clients():
+    return json.loads(subprocess.check_output(['hyprctl', 'clients', '-j'], text=True))
+
+def eligible(w, workspace):
+    return (w.get('workspace', {}).get('id') == workspace and workspace > 0
+            and w.get('mapped', True) and not w.get('floating') and not w.get('pinned')
+            and not w.get('fullscreen') and w.get('class') not in ('wrayth-deck', 'noesis'))
+
+def dispatch(expression):
+    subprocess.run(['hyprctl', 'dispatch', expression], check=True, capture_output=True, text=True)
+
+def target(address):
+    if not re.fullmatch(r'0x[0-9a-fA-F]+', address):
+        raise ValueError('Invalid window address')
+    return 'window="address:'+address+'"'
+
+def direction(w, anchor):
+    dx = anchor['at'][0]+anchor['size'][0]/2-w['at'][0]-w['size'][0]/2
+    dy = anchor['at'][1]+anchor['size'][1]/2-w['at'][1]-w['size'][1]/2
+    return ('r' if dx > 0 else 'l') if abs(dx) >= abs(dy) else ('d' if dy > 0 else 'u')
+
+def main():
+    STATE.mkdir(parents=True, exist_ok=True)
+    with (STATE/'lock').open('w') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        windows = clients()
+        active = next((w for w in windows if w.get('focusHistoryID') == 0), None)
+        command = sys.argv[1] if len(sys.argv) > 1 else 'auto'
+        address = sys.argv[2] if len(sys.argv) > 2 else ''
+        opened = next((w for w in windows if w['address'].removeprefix('0x') == address.removeprefix('0x')), None)
+        w = (opened or active) if command in ('auto','pause') else active
+        if not w:
+            return
+        workspace = w['workspace']['id']
+        paused = STATE/('paused-'+str(workspace))
+        if command == 'pause':
+            paused.touch()
+            return
+        if command in ('toggle', 'detach'):
+            paused.touch()
+            dispatch('hl.dsp.group.toggle({'+target(w['address'])+'})' if command == 'toggle'
+                     else 'hl.dsp.window.move({'+target(w['address'])+',out_of_group=true})')
+            return
+        if command == 'resume':
+            paused.unlink(missing_ok=True)
+        if paused.exists() or not eligible(w, workspace):
+            return
+        members = [x for x in windows if eligible(x, workspace)]
+        if len(members) < 3:
+            return
+        anchor = max(members, key=lambda x: (len(x.get('grouped', [])), -x.get('focusHistoryID', 0)))
+        if not anchor.get('grouped'):
+            dispatch('hl.dsp.group.toggle({'+target(anchor['address'])+'})')
+        # Re-read geometry after each native layout mutation. No focus stealing.
+        for _ in range(len(members)*2):
+            current = [x for x in clients() if eligible(x, workspace)]
+            group = next((x for x in current if anchor['address'] in x.get('grouped', []) and not x.get('hidden')), None)
+            if not group:
+                break
+            outsider = next((x for x in current if x['address'] not in group.get('grouped', [])), None)
+            if not outsider:
+                break
+            dispatch('hl.dsp.window.move({'+target(outsider['address'])+',into_group="'+direction(outsider, group)+'"})')
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (ValueError, OSError, subprocess.SubprocessError) as error:
+        print(str(error), file=sys.stderr)
+        sys.exit(1)

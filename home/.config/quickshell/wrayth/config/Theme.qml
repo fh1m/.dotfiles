@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import qs.config
@@ -72,7 +73,9 @@ Singleton {
     readonly property int strokeHair: 1
     readonly property int motionAck: 100
     readonly property int motionTravel: 180
-    readonly property int motionReveal: 210
+    readonly property int motionReveal: 160
+    readonly property int motionDismiss: 110
+    readonly property bool reducedMotion: Quickshell.env("SENSEI_REDUCED_MOTION") === "1"
     // --- Compatibility tokens ----------------------------------------------
     // Backgrounds
     readonly property color ground: ink

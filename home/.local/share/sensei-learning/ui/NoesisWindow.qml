@@ -28,7 +28,9 @@ FloatingWindow {
  Connections {target:NoesisController;function onPresentationModeChanged(){win.presentationRetries=0;win.nativeStateRetries=0;win.presentationReady=false;win.applyPresentation();}function onOpenSerialChanged(){win.minimized=false;focusDelay.interval=win.windowAddress?0:300;focusDelay.restart();}function onFinished(ok){if(ok&&NoesisController.operationVault===NoesisController.activeVault&&NoesisController.specialistHandoff&&NoesisController.presentationMode!=="tiled"&&NoesisController.returnBehavior==="hide"){if(!NoesisController.legacyInterface)content.item.stashDraft();NoesisController.closeForTool();}}}
  NoesisStudyDesk {id:secondaryDesk;workspace:content.item}
  onClosed:NoesisController.requestExit()
- onVisibleChanged:if(visible){presentationRetries=0;presentationReady=false;focusDelay.restart();}
+ property real contentReveal:0
+ Timer {id:softReveal;interval:16;onTriggered:win.contentReveal=1}
+ onVisibleChanged:{contentReveal=0;if(visible){softReveal.restart();presentationRetries=0;presentationReady=false;focusDelay.restart();}}
  onWidthChanged:if(visible&&presentationReady&&modeSteps.length===0&&NoesisController.presentationMode==="normal"){saveGeometry.restart();}
  onHeightChanged:if(visible&&presentationReady&&modeSteps.length===0&&NoesisController.presentationMode==="normal"){saveGeometry.restart();}
  property string windowAddress:""
@@ -70,7 +72,8 @@ FloatingWindow {
  Timer {id:saveGeometry;interval:600;onTriggered:if(win.presentationReady&&NoesisController.presentationMode==="normal"){NoesisController.windowWidth=win.width;NoesisController.windowHeight=win.height;NoesisController.savePreferences();}}
 
  Shortcut {sequence:"Ctrl+Alt+M";onActivated:{let modes=["normal","fullscreen","workspace","tiled"];NoesisController.presentationMode=modes[(modes.indexOf(NoesisController.presentationMode)+1)%modes.length];NoesisController.savePreferences();win.applyPresentation();}}
- ColumnLayout {id:applicationContent;objectName:"noesisApplicationContent";readonly property real qtDpr:Screen.devicePixelRatio
+ ColumnLayout {opacity:win.contentReveal;Behavior on opacity {NumberAnimation {duration:Quickshell.env("SENSEI_REDUCED_MOTION")==="1"?0:160;easing.type:Easing.OutCubic}}
+ id:applicationContent;objectName:"noesisApplicationContent";readonly property real qtDpr:Screen.devicePixelRatio
   anchors.fill:parent;spacing:0
   Rectangle {visible:!content.item?.focusMode;Layout.fillWidth:true;Layout.preferredHeight:Math.max(48,NoesisStyle.control+8);color:NoesisStyle.surface
    RowLayout {anchors.fill:parent;anchors.leftMargin:16;anchors.rightMargin:12;spacing:12

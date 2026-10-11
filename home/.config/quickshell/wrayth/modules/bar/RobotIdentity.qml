@@ -5,43 +5,21 @@ import qs.services
 
 Item {
     id: root
-    implicitWidth: 168
     implicitHeight: Appearance.metrics.barHeight
 
-    // An operator tag, not a logo. The second line reports live lab activity.
-    Column {
-        x: 13
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: 1
-        Text {
-            text: "FIELD / R-01"
-            font.family: Appearance.font.display
-            font.pixelSize: 13
-            font.weight: Font.Bold
-            color: Theme.signalRed
-            renderType: Text.NativeRendering
-        }
-        Text {
-            text: (RobotBench.data.gpu.computeCount ?? 0) > 0
-                ? "CUDA " + RobotBench.data.gpu.computeCount + " · NO MAGIC"
-                : "NO MAGIC · JUST CODE"
-            font.family: Appearance.font.telemetry
-            font.pixelSize: 10
-            color: Theme.paperMuted
-            renderType: Text.NativeRendering
-        }
-    }
-    Text {
-        anchors.right: parent.right
-        anchors.rightMargin: 11
-        anchors.verticalCenter: parent.verticalCenter
-        text: "↗"
-        font.family: Appearance.font.display
-        font.pixelSize: 14
-        color: Theme.signalRed
-        renderType: Text.NativeRendering
+    Accessible.name: "fh1m · Code and agents"
+    implicitWidth: 60
+    // A small field robot: asymmetric eye, antenna and an open circuit frame.
+    Image {
+        anchors.centerIn: parent
+        width: 38; height: 30
+        source: Qt.resolvedUrl("../../assets/fh1m-field-mark.svg")
+        opacity: badgeHover.containsMouse || ShellState.dropdown === "code" ? 1 : .86
+        Behavior on opacity {NumberAnimation {duration:100}}
     }
     MouseArea {
+        id: badgeHover
+        hoverEnabled: true
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
@@ -53,7 +31,8 @@ Item {
                 ShellState.publishAnchor("ident", 12);
                 ShellState.toggleDropdown("ident");
             } else {
-                Quickshell.execDetached(["xdg-open", "https://github.com/fh1m"]);
+                ShellState.publishAnchor("code", root.mapToItem(null, 0, 0).x);
+                ShellState.toggleDropdown("code");
             }
         }
     }

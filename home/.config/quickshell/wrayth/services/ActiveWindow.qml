@@ -82,7 +82,7 @@ Singleton {
                 root.refreshBorder();
                 return;
             }
-            if (["activewindow", "openwindow", "closewindow", "movewindow", "resizeactive", "workspace", "moveworkspace", "focusedmon", "fullscreen", "changefloatingmode", "activespecial"].includes(n))
+            if (["activewindow", "openwindow", "closewindow", "movewindow", "resizeactive", "workspace", "moveworkspace", "focusedmon", "fullscreen", "changefloatingmode", "activespecial", "togglegroup", "moveintogroup", "moveoutofgroup", "changegroupactive", "windowtitle"].includes(n))
                 Hyprland.refreshToplevels();
         }
     }

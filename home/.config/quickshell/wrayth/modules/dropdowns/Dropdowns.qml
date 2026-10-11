@@ -49,6 +49,7 @@ Variants {
             if (bottomPanel) return 490;
             switch (current) {
             case "spotify": return 834;
+            case "code": return 760;
             case "docker": return 800;
             case "calendar": case "weather": return 862;
             case "system": return 696;
@@ -77,7 +78,7 @@ Variants {
         property bool grabArmed: false
         // How far above its resting place the panel starts, i.e. how much of it
         // is still behind the bar at the start of the slide.
-        readonly property real slide: 12
+        readonly property real slide: Theme.reducedMotion ? 0 : 6
 
         IpcHandler {target:"popupmotion-"+popup.modelData.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,ready:popup.surfaceReady,width:popup.width,height:popup.height,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
         screen: modelData
@@ -85,7 +86,7 @@ Variants {
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }
         visible: current !== "" && surfaceReady && !ShellState.externalDialogOpen
 
-        implicitWidth: Math.min(modelData.width - 2 * edge, 2 * surfaceInset + (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis" ? 1040 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
+        implicitWidth: Math.min(modelData.width - 2 * edge, 2 * surfaceInset + (current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis" ? 1040 : current === "code" ? 1100 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.
@@ -129,7 +130,7 @@ Variants {
             target: popup
             property: "reveal"
             to: 1
-            duration: 155
+            duration: Theme.reducedMotion ? 0 : Theme.motionReveal
             easing.type: Easing.OutCubic
             onFinished: popup.cachedHeight = popup.panelHeight
         }
@@ -152,7 +153,7 @@ Variants {
 
         SequentialAnimation {
             id: closeAnim
-            NumberAnimation { target: popup; property: "reveal"; to: 0; duration: 125; easing.type: Easing.InCubic }
+            NumberAnimation { target: popup; property: "reveal"; to: 0; duration: Theme.reducedMotion ? 0 : Theme.motionDismiss; easing.type: Easing.InCubic }
             // Keep the last panel instantiated: rebuilding a large QML tree on
             // every click was costing hundreds of milliseconds.
             ScriptAction { script: popup.surfaceReady=false }
@@ -168,7 +169,7 @@ Variants {
                 target: popup
                 property: "reveal"
                 to: 0
-                duration: 85
+                duration: Theme.reducedMotion ? 0 : 85
                 easing.type: Easing.InCubic
             }
             // The surface moves and resizes to the incoming panel here, with
@@ -200,7 +201,7 @@ Variants {
                 // lost it again 4 ms later, and a key typed then never arrived)
                 // until the pointer moved into the panel. The other panels are
                 // reached by moving into them first, and keep the wait.
-                popup.grabArmed = want !== "" && (!ShellState.barHovered || want === "ident" || want === "comic" || want === "clipboard" || want === "monitor");
+                popup.grabArmed = want !== "" && (!ShellState.barHovered || want === "code" || want === "ident" || want === "comic" || want === "clipboard" || want === "monitor");
 
                 outsideClose.stop();
                 popup.stableFrames=0; popup.measuredHeight=0;
@@ -218,7 +219,7 @@ Variants {
                     popup.anchorX = ShellState.dropdownAnchorX;
                     popup.reveal = 0;
                     popup.surfaceReady = true;
-                    Qt.callLater(() => { if (ShellState.dropdown === popup.current) openAnim.start(); });
+                    presentTimer.restart();
                 } else if (popup.current === "" || popup.current === want || !popup.surfaceReady) {
                     // Nothing showing, or the same panel caught mid-close.
                     popup.anchorX = ShellState.dropdownAnchorX;
@@ -304,7 +305,7 @@ Variants {
                 anchors.fill: parent
                 visible: opacity > 0
                 opacity: content.status === Loader.Ready ? 0 : 1
-                Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: Theme.reducedMotion ? 0 : Theme.motionAck; easing.type: Easing.OutCubic } }
                 scanlines: false
                 chamfer: Theme.radiusPanel
                 fillColor: Theme.widgetGlass
@@ -323,13 +324,14 @@ Variants {
                 // clicking a readout never blocks the bar's first response.
                 asynchronous: true
                 opacity: status === Loader.Ready ? 1 : 0
-                Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: Theme.reducedMotion ? 0 : Theme.motionAck; easing.type: Easing.OutCubic } }
 
                 width: parent.width
                 active: popup.current !== ""
 
                 sourceComponent: {
                     switch (popup.current) {
+                    case "code": return codePanel;
                     case "docker": return dockerPanel;
                     case "usb": return usbPanel;
                     case "phone": return phonePanel;
@@ -385,6 +387,7 @@ Variants {
                 }
             }
 
+            Component { id: codePanel; CodeDropdown { width: holder.width } }
             Component { id: dockerPanel; DockerDropdown { width: holder.width } }
             Component { id: usbPanel; UsbDropdown { width: holder.width } }
             Component { id: phonePanel; PhoneDropdown { width: holder.width } }

@@ -1,0 +1,281 @@
+#!/usr/bin/env python3
+"""Read-only GitHub/Codex adapters. Private cache; no credentials or inference."""
+import argparse
+import json
+import os
+import selectors
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+HOME = Path.home()
+CACHE = Path(os.environ.get('XDG_CACHE_HOME', HOME/'.cache'))/'sensei-code'
+QUERY = '''query {
+ viewer { login name url avatarUrl followers {totalCount} following {totalCount}
+ starredRepositories {totalCount} repositoryCount: repositories {totalCount}
+ contributionsCollection { contributionCalendar { totalContributions weeks {
+ contributionDays {date contributionCount contributionLevel} } } }
+ pinnedItems(first:6,types:REPOSITORY) {nodes {... on Repository {
+ nameWithOwner description url stargazerCount isPrivate }}}
+ repositories(first:30,orderBy:{field:PUSHED_AT,direction:DESC},ownerAffiliations:[OWNER,COLLABORATOR,ORGANIZATION_MEMBER]) {
+ nodes {nameWithOwner description url stargazerCount isPrivate pushedAt
+ defaultBranchRef {name target {... on Commit {history(first:3) {nodes {oid messageHeadline committedDate url}}}}}}
+ pageInfo {hasNextPage endCursor}}
+ }
+}'''
+
+def emit(data):
+    print(json.dumps(data, separators=(',', ':')), flush=True)
+
+def run_owned(args, timeout):
+    child = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        stdout, stderr = child.communicate(timeout=timeout)
+        return subprocess.CompletedProcess(args, child.returncode, stdout, stderr)
+    finally:
+        if child.poll() is None:
+            child.terminate()
+            try: child.wait(timeout=2)
+            except subprocess.TimeoutExpired: child.kill(); child.wait()
+
+
+def gh(*args):
+    p = run_owned(['gh', *args], timeout=10)
+    if p.returncode:
+        # stderr may contain URLs/private data; expose a bounded message only.
+        raise RuntimeError('GitHub request failed. Check gh authentication or network access.')
+    data = json.loads(p.stdout)
+    if isinstance(data, dict) and data.get('errors'):
+        raise RuntimeError('GitHub returned partial data; check account permissions.')
+    return data
+
+def save(path, data):
+    CACHE.mkdir(parents=True, exist_ok=True, mode=0o700)
+    CACHE.chmod(0o700)
+    temp = path.with_suffix('.tmp-'+str(os.getpid()))
+    temp.write_text(json.dumps(data))
+    temp.chmod(0o600)
+    temp.replace(path)
+
+def cached(path):
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return {}
+
+def local_projects():
+    config = cached(HOME/'.local/state/sensei-dev/projects.json')
+    candidates = config.get('projects', config) if isinstance(config, dict) else config
+    saved = cached(HOME/'.local/state/sensei-projects.json')
+    if not isinstance(candidates, list): candidates = list(candidates.values()) if isinstance(candidates, dict) else []
+    candidates += [{'path':p} for p in saved.get('saved', [])+saved.get('recent', [])]
+    candidates += [{'path':str(HOME/'.dotfiles')}]
+    # Bounded discovery in the existing project roots; never crawl whole HOME.
+    roots = [HOME/x for x in ('Projects','Work/Projects','Ros_workspaces','tmp','Documents/Report')]
+    dockers = HOME/'Envs/dockers'
+    if dockers.is_dir(): roots += [p for p in dockers.iterdir() if p.is_dir()]
+    for root in roots:
+        if root.is_dir():
+            for child in root.iterdir():
+                if child.is_dir() and (child/'.git').exists(): candidates.append({'path':str(child)})
+    seen = set()
+    out = []
+    for key, value in (candidates.items() if isinstance(candidates, dict) else enumerate(candidates or [])):
+        item = value if isinstance(value, dict) else {'path': value}
+        path = Path(str(item.get('path') or item.get('root') or key)).expanduser()
+        if str(path) in seen or not path.is_dir():
+            continue
+        seen.add(str(path))
+        p = run_owned(['git', '-C', str(path), 'remote', 'get-url', 'origin'], timeout=2)
+        remote = p.stdout.strip().removesuffix('.git')
+        if 'github.com' in remote:
+            repo = remote.split('github.com', 1)[1].lstrip(':/')
+            out.append({'repo': repo, 'path': str(path)})
+    return out
+
+def code(force=False):
+    account = subprocess.check_output(['gh','config','get','user','--host','github.com'], text=True, timeout=3).strip()
+    if not account or not account.replace('-', '').isalnum(): raise ValueError('No active GitHub account')
+    path = CACHE/(account+'-overview.json')
+    old = cached(path)
+    if old:
+        emit(dict(old, stale=time.time()-old.get('fetchedAt', 0) > 300))
+        if not force and time.time()-old.get('fetchedAt', 0) < 300:
+            return
+    d = gh('api', 'graphql', '-f', 'query='+QUERY)['data']['viewer']
+    login = d['login']
+    def issues(query):
+        return gh('api', 'search/issues', '-f', 'q='+query, '-f', 'per_page=20', '--method', 'GET')
+    prs = issues('is:pr is:open author:'+login)
+    reviews = issues('is:pr is:open review-requested:'+login)
+    bugs = issues('is:issue is:open involves:'+login)
+    repos = d['repositories']['nodes']
+    commits = []
+    for repo in repos[:10]:
+        for commit in ((repo.get('defaultBranchRef') or {}).get('target') or {}).get('history', {}).get('nodes', []):
+            commits.append(dict(commit, repo=repo['nameWithOwner']))
+    commits.sort(key=lambda c: c['committedDate'], reverse=True)
+    out = dict(d, fetchedAt=time.time(), stale=False, commits=commits[:15],
+               prs=prs, reviews=reviews, issues=bugs, localProjects=local_projects())
+    save(path, out)
+    emit(out)
+
+def details(repo):
+    import re
+    if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo):
+        raise ValueError('Invalid repository')
+    emit({'repo': repo,
+          'pulls': gh('api', 'repos/'+repo+'/pulls?state=open&per_page=20'),
+          'issues': gh('api', 'repos/'+repo+'/issues?state=open&per_page=20'),
+          'runs': gh('api', 'repos/'+repo+'/actions/runs?per_page=10'),
+          'commits': [dict(oid=c['sha'],messageHeadline=c['commit']['message'].splitlines()[0],committedDate=c['commit']['committer']['date'],url=c['html_url'],repo=repo) for c in gh('api','repos/'+repo+'/commits?per_page=20')]})
+
+def activity(page):
+    page = int(page)
+    if not 1 <= page <= 100: raise ValueError('Invalid activity page')
+    login = subprocess.check_output(['gh','config','get','user','--host','github.com'],text=True,timeout=3).strip()
+    def search(query):
+        return gh('api','search/issues','--method','GET','-f','q='+query,'-f','per_page=20','-f','page='+str(page))
+    emit({'page':page,'prs':search('is:pr is:open author:'+login),
+          'reviews':search('is:pr is:open review-requested:'+login),
+          'issues':search('is:issue is:open involves:'+login)})
+
+
+def repositories(cursor):
+    query = """query($cursor:String) {viewer {repositories(first:30,after:$cursor,orderBy:{field:PUSHED_AT,direction:DESC},ownerAffiliations:[OWNER,COLLABORATOR,ORGANIZATION_MEMBER]) {nodes {nameWithOwner description url stargazerCount isPrivate pushedAt} pageInfo {hasNextPage endCursor}}}}"""
+    emit(gh('api','graphql','-f','query='+query,'-f','cursor='+cursor)['data']['viewer']['repositories'])
+
+
+def account_state(data):
+    account = data.get('account') or {}
+    limits = data.get('rateLimits') or {}
+    plan = str(account.get('planType') or limits.get('planType') or '').lower()
+    if not account.get('type'):
+        return {'kind':'signin', 'label':'Sign in to see your account'}
+    if data.get('error'):
+        return {'kind':'unavailable', 'label':'Usage could not be refreshed'}
+    exhausted = any((limits.get(k) or {}).get('usedPercent', 0) >= 100 for k in ('primary','secondary'))
+    if exhausted:
+        return {'kind':'exhausted', 'label':'Usage exhausted · wait for reset or add credits'}
+    if plan == 'free':
+        return {'kind':'free', 'label':'Free plan · upgrade to renew paid-plan access'}
+    return {'kind':'active', 'label':'Account active' if plan else 'Account connected · plan unavailable'}
+
+
+def opencode_snapshot():
+    executable = shutil.which('opencode')
+    if not executable:
+        emit({'provider':'opencode','state':'Not installed','fetchedAt':time.time()}); return
+    # Installed v1 has no JSON stats flag. Parse only aggregate rows, never transcripts.
+    result = run_owned([executable,'stats','--pure','--days','7'], timeout=20)
+    if result.returncode:
+        emit({'provider':'opencode','state':'Local statistics unavailable','fetchedAt':time.time()}); return
+    import re
+    wanted = {'Sessions','Messages','Days','Total Cost','Avg Cost/Day','Avg Tokens/Session','Input','Output','Cache Read','Cache Write'}
+    stats = {}
+    for line in result.stdout.splitlines():
+        line = re.sub(r'\x1b\[[0-9;]*m', '', line).strip().strip('│').strip()
+        match = re.match(r'(.+?)\s{2,}(\S+)\s*$', line)
+        if match and match[1] in wanted: stats[match[1]] = match[2]
+    emit({'provider':'opencode','state':'Local usage · last 7 days','stats':stats,
+          'quotaNote':'Provider subscription balances are not exposed by this CLI. Local usage is not remaining quota.', 'fetchedAt':time.time()})
+
+
+def codex_snapshot(watch=False):
+    # Auth remains managed by Codex itself. Never read/copy auth.json.
+    executable = shutil.which('codex') or str(HOME/'.local/bin/codex')
+    p = subprocess.Popen([executable, 'app-server', '--listen', 'stdio://'], stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=0)
+    selector = selectors.DefaultSelector()
+    selector.register(p.stdout, selectors.EVENT_READ)
+    data = {'provider': 'codex', 'fetchedAt': time.time()}
+    def send(i, method, params=None):
+        p.stdin.write((json.dumps({'id': i, 'method': method, 'params': params or {}})+'\n').encode())
+        p.stdin.flush()
+    buffer = bytearray()
+    def receive(deadline):
+        while time.monotonic() < deadline:
+            if b'\n' in buffer:
+                line, _, rest = buffer.partition(b'\n')
+                buffer[:] = rest
+                return json.loads(line)
+            if selector.select(.5):
+                chunk = os.read(p.stdout.fileno(), 65536)
+                if not chunk:
+                    raise RuntimeError('Codex connection closed')
+                buffer.extend(chunk)
+        raise TimeoutError('Codex account request timed out')
+    try:
+        send(1, 'initialize', {'clientInfo': {'name': 'fh1m_desktop', 'version': '1.0'}})
+        while receive(time.monotonic()+15).get('id') != 1:
+            pass
+        p.stdin.write(b'{"method":"initialized"}\n'); p.stdin.flush()
+        send(2, 'account/read', {'refreshToken': False})
+        send(3, 'account/rateLimits/read')
+        pending = {2, 3}
+        deadline = time.monotonic()+20
+        while pending:
+            d = receive(deadline)
+            if d.get('id') == 2:
+                account = d.get('result', {}).get('account') or {}
+                data['account'] = {k: account.get(k) for k in ('type', 'planType')}
+                if d.get('error'): data['accountError'] = 'Account information unavailable'
+                pending.discard(2)
+            if d.get('id') == 3:
+                result = d.get('result') or {}
+                # Keep only displayed quota fields; no account identifiers/tokens.
+                data['rateLimits'] = result.get('rateLimits')
+                data['limits'] = result.get('rateLimitsByLimitId') or {}
+                data['resetCredits'] = (result.get('rateLimitResetCredits') or {}).get('availableCount')
+                if d.get('error'): data['error'] = 'Usage reporting unavailable for this authentication mode'
+                pending.discard(3)
+        data['fetchedAt'] = time.time()
+        data['state'] = account_state(data)
+        emit(data)
+        if not watch: return
+        # Notifications give immediate changes; refresh only while the tab is open.
+        next_refresh = time.monotonic()+60
+        while True:
+            if time.monotonic() >= next_refresh:
+                send(3, 'account/rateLimits/read')
+                next_refresh = time.monotonic()+60
+            try: d = receive(time.monotonic()+1)
+            except TimeoutError: continue
+            result = d.get('params') if d.get('method') == 'account/rateLimits/updated' else d.get('result') if d.get('id') == 3 else None
+            if result and 'rateLimits' in result:
+                data.update(rateLimits=result['rateLimits'], limits=result.get('rateLimitsByLimitId') or {}, fetchedAt=time.time())
+                data.pop('error', None)
+                data['state'] = account_state(data)
+                emit(data)
+    finally:
+        selector.close()
+        p.terminate()
+        try: p.wait(timeout=3)
+        except subprocess.TimeoutExpired: p.kill(); p.wait()
+
+def main():
+    import signal
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=['overview', 'details', 'repositories', 'activity', 'codex', 'codex-watch', 'opencode'])
+    parser.add_argument('repo', nargs='?')
+    parser.add_argument('--refresh', action='store_true')
+    args = parser.parse_args()
+    if args.action == 'overview': code(args.refresh)
+    elif args.action == 'details': details(args.repo or '')
+    elif args.action == 'repositories': repositories(args.repo or '')
+    elif args.action == 'activity': activity(args.repo or '1')
+    elif args.action == 'opencode': opencode_snapshot()
+    else:
+        # SIGTERM from Quickshell closes both the adapter and its child server.
+        import signal
+        signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+        codex_snapshot(args.action == 'codex-watch')
+
+if __name__ == '__main__':
+    try: main()
+    except (OSError, ValueError, RuntimeError, TimeoutError, subprocess.SubprocessError) as error:
+        emit({'error': str(error), 'fetchedAt': time.time()})
+        sys.exit(1)
