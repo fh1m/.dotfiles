@@ -280,3 +280,6 @@ hl.config({ render = { new_render_scheduling = true, direct_scanout = 2 } })
 
 -- Native learning frontier (installed with the reusable Oasis system).
 dofile(os.getenv("HOME") .. "/.config/hypr/oasis.lua")
+
+-- App classes map to the same seven workspaces as the bar and Noesis.
+dofile(os.getenv("HOME") .. "/.config/hypr/workspace-apps.lua")

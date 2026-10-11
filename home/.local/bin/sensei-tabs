@@ -16,7 +16,7 @@ def clients():
 def eligible(w, workspace):
     return (w.get('workspace', {}).get('id') == workspace and workspace > 0
             and w.get('mapped', True) and not w.get('floating') and not w.get('pinned')
-            and not w.get('fullscreen') and w.get('class') not in ('wrayth-deck', 'noesis'))
+            and not w.get('fullscreen') and w.get('class') != 'wrayth-deck')
 
 def dispatch(expression):
     subprocess.run(['hyprctl', 'dispatch', expression], check=True, capture_output=True, text=True)
@@ -54,6 +54,9 @@ def main():
                      else 'hl.dsp.window.move({'+target(w['address'])+',out_of_group=true})')
             return
         if command == 'resume':
+            paused.unlink(missing_ok=True)
+        # A deliberate detach remains until another eligible window arrives.
+        if command == 'auto' and opened and eligible(opened, workspace):
             paused.unlink(missing_ok=True)
         if paused.exists() or not eligible(w, workspace):
             return

@@ -239,3 +239,37 @@ and elided before its menu handle. Folded selection centers under the icon.
 ScreenPad brightness uses a crisp dual-panel mark with a proportional lower-display
 fill. Live QML reload and the complete Code composition were visually checked;
 backups are in `~/.local/state/dotfiles-backups/operator-stats-20261011`.
+
+### Workspace placement and connected batteries
+
+Initial app placement is maintained in `home/.config/hypr/workspace-apps.lua`:
+Terminal (terminal emulators), Web (browsers), Code (editors/IDEs), Study
+(Noesis, Obsidian, Notion, Zotero, PDF readers), Sim (simulation/CAD/electronics),
+Work (files, communication, office/design), Misc (media and unmatched apps).
+Rules apply on opening; manual moves remain intact. Authentication dialogs and
+the special terminal deck are excluded. Existing windows are not rearranged.
+
+Two ordinary tiled windows can remain independent. Opening or moving a third
+into the workspace groups its eligible windows into native tabs. Floating,
+pinned, fullscreen and special-deck windows are excluded. Manual detachment
+pauses automatic grouping until another eligible window arrives or grouping is
+explicitly resumed. All workspace labels have full underlines, with quieter
+inactive colors. Urgent-window events add a pink workspace dot; focusing or
+closing the requesting window acknowledges it. The GPU activity dot is removed;
+its existing activity breathing remains.
+
+Battery & power combines KDE Connect phone charge, connected BlueZ devices and
+UPower peripheral reports. Reports are deduplicated, unavailable charge stays
+absent, and disconnected Bluetooth/phone devices disappear. Details opens the
+existing phone/device/hardware controls; remote charging controls are not
+invented. The peripheral list scrolls within a bounded panel. No new daemon or
+package is required. UPower's presence flag only applies to battery packs:
+[UPowerDevice contract](https://quickshell.org/docs/v0.3.2/types/Quickshell.Services.UPower/UPowerDevice/).
+
+Validated on this laptop: Code placement with disposable windows, two independent
+tiles followed by a three-member automatic group; live phone/headset/keyboard
+reports and panel layout; clean Hyprland/QML reload. Regression fixtures cover
+routing, unknown/zero battery readings, provider duplication, disconnection and
+attention acknowledgement. Urgency was tested as state logic, not by inducing a
+real application's attention request. Scoped recovery copies live under
+`~/.local/state/dotfiles-backups/workspaces-devices-20261011`.

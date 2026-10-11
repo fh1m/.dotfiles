@@ -15,6 +15,9 @@ import Quickshell.Hyprland
 Singleton {
     id: root
 
+    property var attentionAddresses: []
+    function attention(address):void {const a=String(address||"").replace(/^0x/,"");if(a&&!attentionAddresses.includes(a))attentionAddresses=attentionAddresses.concat([a]);}
+    function acknowledge(address):void {const a=String(address||"").replace(/^0x/,"");attentionAddresses=attentionAddresses.filter(x=>x!==a);}
     readonly property int perPage: 7
     readonly property var workspaceIds: [1, 2, 3, 4, 5, 6, 7]
     readonly property var workspaceNames: ["Terminal", "Web", "Code", "Study", "Sim", "Work", "Misc"]
@@ -87,7 +90,8 @@ Singleton {
                 empty: id > workspaceNames.length,
                 active: id === activeId,
                 occupied: Hyprland.toplevels.values.some(t=>t.workspace?.id===id),
-                count: Hyprland.toplevels.values.filter(t=>t.workspace?.id===id).length
+                count: Hyprland.toplevels.values.filter(t=>t.workspace?.id===id).length,
+                attention: Hyprland.toplevels.values.some(t=>t.workspace?.id===id && attentionAddresses.includes(String(t.address||"").replace(/^0x/,"")))
             });
         }
         return out;
@@ -144,6 +148,8 @@ Singleton {
 
         function onRawEvent(event: HyprlandEvent): void {
             const n = event.name;
+            if(n==="urgent"){root.attention(event.data);Hyprland.refreshToplevels();}
+            if(n==="activewindowv2"||n==="closewindow")root.acknowledge(event.data);
             if (n.endsWith("v2"))
                 return;
             if (["activespecial", "workspace", "createworkspace", "destroyworkspace", "moveworkspace", "renameworkspace", "focusedmon"].includes(n)) {

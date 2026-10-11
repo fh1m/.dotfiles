@@ -22,6 +22,7 @@ Item {
   NumberAnimation {target:mark;property:"opacity";from:1;to:.55;duration:1300}
   NumberAnimation {target:mark;property:"opacity";from:.55;to:1;duration:1300}
  }
+ Rectangle {anchors.right:parent.right;anchors.top:parent.top;anchors.rightMargin:5;anchors.topMargin:4;width:4;height:4;radius:2;color:Theme.signalRed;visible:Power.peripheralBatteries.some(d=>d.percent<15)}
  function publish():void {ShellState.publishAnchor("power",root.mapToItem(null,0,0).x);}
  onXChanged:publish()
  Component.onCompleted:Qt.callLater(publish)

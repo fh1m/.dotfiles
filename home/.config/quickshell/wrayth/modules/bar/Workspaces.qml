@@ -63,11 +63,13 @@ Item {
             Rectangle {
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: button.active ? root.itemWidth - 12 : button.occupied ? 10 : 0
+                width: root.itemWidth - 12
                 height: button.active ? 2 : 1
-                color: button.active ? Theme.signalRed : Theme.paperMuted
+                color: button.active ? Theme.signalRed : button.occupied ? Theme.paperMuted : Theme.rule
                 Behavior on width { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
             }
+
+            Rectangle {anchors.top:parent.top;anchors.right:parent.right;anchors.topMargin:3;anchors.rightMargin:4;width:4;height:4;radius:2;visible:button.modelData.attention??false;color:Theme.signalRed}
 
             // **`NrLabel`, so the number is centred on its ink.** It was a
             // bare `Text` centred as an item, which is off in both directions
