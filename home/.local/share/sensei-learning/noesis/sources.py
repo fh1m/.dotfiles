@@ -33,7 +33,7 @@ def annotations(index, identity, cursor=None, projection_path=None):
         raise ValueError('Paper is missing its Zotero library or item identity')
     item = payload.get('item', {})
     if not isinstance(item, dict):raise ValueError('Invalid paper snapshot')
-    if (metadata.get('zotero_server_id') != props.get('zotero_server_id') or
+    if (not props.get('zotero_server_id') or not props.get('zotero_key') or metadata.get('zotero_key') != props.get('zotero_key') or metadata.get('zotero_server_id') != props.get('zotero_server_id') or
         payload.get('server_id') != props.get('zotero_server_id') or
         metadata.get('zotero_key') != props.get('zotero_key') or
         item.get('key') != props.get('zotero_key')):
@@ -119,3 +119,64 @@ def bibliography(index, record):
     parts=issued.get('date-parts') if isinstance(issued,dict) else None
     result['issued']={'date-parts':parts} if isinstance(parts,list) and all(isinstance(part,list) and all(type(value) is int for value in part) for part in parts) else None
     return result
+
+
+def annotation_command(index, identity, annotation_key, projection_path=None, api=None):
+    """Resolve an owned imported annotation against the currently connected reader.
+
+    Old/deleted annotation text stays authoritative as preserved source history;
+    navigation falls back to its physical page rather than pretending selection.
+    """
+    import re
+    from urllib.parse import urlencode
+    from .zotero import LocalAPI
+    record = index.record(identity, include_body=False, include_attempt=False)
+    props = record['props']
+    if not re.fullmatch('[A-Z0-9]{8}', annotation_key): raise ValueError('Invalid annotation identity')
+    path = projection_path or props.get('zotero_projection')
+    metadata, payload = projection(index, record, path, 'imported-zotero')
+    if (not props.get('zotero_server_id') or not props.get('zotero_key') or metadata.get('zotero_key') != props.get('zotero_key') or metadata.get('zotero_server_id') != props.get('zotero_server_id') or
+        payload.get('server_id') != props.get('zotero_server_id') or
+        payload.get('item', {}).get('key') != props.get('zotero_key')):
+        raise ValueError('Annotation belongs to a different paper or Zotero instance')
+    children = payload.get('children', [])
+    matches = [row for row in children if row.get('key') == annotation_key and row.get('data', {}).get('itemType') == 'annotation']
+    if len(matches) != 1: raise ValueError('Annotation is not in this owned source revision')
+    annotation = matches[0]; attachment = annotation['data'].get('parentItem')
+    if not re.fullmatch('[A-Z0-9]{8}', str(attachment)): raise ValueError('Invalid attachment identity')
+    if not any(row.get('key') == attachment and row.get('data', {}).get('itemType') == 'attachment' and row['data'].get('parentItem') == props.get('zotero_key') for row in children):
+        raise ValueError('Annotation attachment is outside this paper')
+    api = api or LocalAPI(server_id=props.get('zotero_server_id'))
+    live_item, live_children = api.item(props['zotero_key'])
+    if live_item.get('key') != props['zotero_key']:raise ValueError('Live paper identity changed')
+    if not any(row.get('key') == attachment and row.get('data', {}).get('parentItem') == props['zotero_key'] for row in live_children):
+        raise ValueError('Source attachment is unavailable in Zotero; preserved annotation remains readable')
+    try: position = json.loads(annotation['data'].get('annotationPosition') or '{}')
+    except (TypeError, ValueError): position = {}
+    params = {}
+    page = position.get('pageIndex')
+    if type(page) is int and page >= 0: params['page'] = page + 1
+    exact = path == props.get('zotero_projection') and any(row.get('key') == annotation_key and row.get('version') == annotation.get('version') and row.get('data', {}).get('parentItem') == attachment for row in live_children)
+    if exact: params['annotation'] = annotation_key
+    uri = 'zotero://open-pdf/library/items/' + attachment + ('?' + urlencode(params) if params else '')
+    return {'command': ['xdg-open', uri], 'mode': 'annotation' if exact else 'preserved-page' if params else 'attachment',
+            'message': 'Annotation navigation requested; Zotero owns selection.' if exact else 'Historical or changed annotation: opening the current PDF at its recorded page; page content may differ and old annotation selection is unavailable.'}
+
+
+def annotation_reference(index, identity, key, path):
+    """A durable source pointer, not a second copy of annotation text."""
+    record=index.record(identity,include_body=False,include_attempt=False)
+    props=record['props'];metadata,payload=projection(index,record,path,'imported-zotero')
+    if (metadata.get('zotero_server_id')!=props.get('zotero_server_id') or
+        metadata.get('zotero_key')!=props.get('zotero_key') or
+        payload.get('server_id')!=props.get('zotero_server_id') or
+        payload.get('item',{}).get('key')!=props.get('zotero_key')):
+        raise ValueError('Annotation belongs to another source library')
+    rows=[row for row in payload.get('children',[]) if row.get('key')==key and row.get('data',{}).get('itemType')=='annotation']
+    if len(rows)!=1:raise ValueError('Annotation is absent from this owned source revision')
+    row=rows[0];attachment=row['data'].get('parentItem')
+    if not any(child.get('key')==attachment and child.get('data',{}).get('itemType')=='attachment' and child['data'].get('parentItem')==props.get('zotero_key') for child in payload.get('children',[])):
+        raise ValueError('Annotation attachment is outside this paper')
+    return {'vault_id':index.manifest['vault_id'],'record_id':identity,'server_id':props['zotero_server_id'],
+            'item_key':props['zotero_key'],'attachment_key':attachment,'annotation_key':key,
+            'source_version':row.get('version'),'projection':path,'projection_sha256':metadata['source_sha256']}

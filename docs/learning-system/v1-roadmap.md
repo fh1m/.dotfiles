@@ -4,7 +4,7 @@ Status: approved for implementation by the owner on 2026-10-09. Revised 2026-10-
 
 ## Current implementation evidence
 
-This document retains the approved architectural sequence. Current behavior and gates are reconciled in [release acceptance](release-acceptance.md), [self-service guide](user-guide.md) and [Zotero startup evidence](zotero-startup-evidence.md). The historical restored-startup failure described below is now reproduced and fixed for the installed Zotero 10.0.6 build; broader recovery and annotation-navigation gates remain.
+This document retains the approved architectural sequence. Current behavior and gates are reconciled in [release acceptance](release-acceptance.md), [self-service guide](user-guide.md) and [Zotero startup evidence](zotero-startup-evidence.md). The historical restored-startup failure described below is now reproduced and fixed for the installed Zotero 10.0.6 build; broader recovery gates remain. Supported annotation selection/page navigation is verified in core-learning-evidence.md; unsupported reader capabilities and the owner trial remain explicit limits.
 
 ## Release boundary and evidence
 

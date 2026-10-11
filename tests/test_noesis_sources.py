@@ -93,3 +93,28 @@ class SourcePages(unittest.TestCase):
         self.assertTrue(old['historical_snapshot']);self.assertEqual(old['source_version'],0)
         with self.assertRaises(ValueError):annotations(self.index,self.identity,old['cursor'],'version-1.md')
         with self.assertRaises(ValueError):annotations(self.index,self.identity,projection_path='bibliography.md')
+
+    def test_annotation_navigation_validates_live_parent_and_revision(self):
+        from noesis.sources import annotation_command
+        from unittest.mock import Mock
+        self.payload['children'][1]['data']['annotationPosition']=json.dumps({'pageIndex':2})
+        self.write_snapshot();self.index.reconcile()
+        api=Mock();api.item.return_value=(self.payload['item'],self.payload['children'])
+        exact=annotation_command(self.index,self.identity,'ANNOT000',api=api)
+        self.assertEqual(exact['mode'],'annotation');self.assertIn('page=3',exact['command'][1]);self.assertIn('annotation=ANNOT000',exact['command'][1])
+        api.item.return_value=(self.payload['item'],[self.payload['children'][0]])
+        fallback=annotation_command(self.index,self.identity,'ANNOT000',api=api)
+        self.assertEqual(fallback['mode'],'preserved-page');self.assertNotIn('annotation=',fallback['command'][1])
+        api.item.return_value=(self.payload['item'],[])
+        with self.assertRaisesRegex(ValueError,'unavailable'):annotation_command(self.index,self.identity,'ANNOT000',api=api)
+        with self.assertRaises(ValueError):annotation_command(self.index,self.identity,'WRONG001',api=api)
+
+    def test_annotation_question_keeps_pointer_not_copied_annotation(self):
+        from noesis.models import create
+        from noesis.persistence import migration
+        migration(self.root,True)
+        question=create(self.root,'question','Why this annotation?',body='My interpretation remains mine.',fields={'annotation_ref':{'record_id':self.identity,'annotation_key':'ANNOT000','projection':'snapshot.md'}},parent_id=self.identity)
+        reference=question['annotation_ref']
+        self.assertEqual(reference['record_id'],self.identity);self.assertEqual(reference['annotation_key'],'ANNOT000');self.assertEqual(reference['source_version'],2)
+        self.assertNotIn('text',reference);self.assertEqual(reference['projection_sha256'],checksum(json.dumps(self.payload,sort_keys=True)))
+        with self.assertRaises(ValueError):create(self.root,'question','Wrong parent',fields={'annotation_ref':{'record_id':str(uuid.uuid4()),'annotation_key':'ANNOT000','projection':'snapshot.md'}},parent_id=self.identity)

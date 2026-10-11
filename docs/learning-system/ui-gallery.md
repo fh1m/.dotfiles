@@ -290,3 +290,29 @@ Bundled Zed Sans Regular/Bold/Italic, shared scale tokens, Zed Mono for code. Qt
 ![Bangla and mathematical notation in native input](assets/self-service/unicode-typography.png)
 
 ![Unavailable PDF reports an error without losing its record](assets/self-service/unavailable-source-error.png)
+
+
+## Core learning — 2026-10-11
+
+Actual native application captures from an empty disposable vault. All content is
+agent validation, not owner achievement. No personal vault screenshots are published.
+
+| Working action | Native screenshot |
+|---|---|
+| Earlier source/self-service baseline | [Source workspace](assets/self-service/documentation-workspace.png) |
+| Current question and reachable drawing/code actions | [Question working page](assets/core-learning/question-actions.png) |
+| Create an editable owned drawing | [Drawing dialog](assets/core-learning/create-map.png) |
+| Reconnect a moved drawing without another identity | [Recovered drawing](assets/core-learning/reconnected-map.png) |
+| Preserve a failed algorithm approach | [Failed attempt](assets/core-learning/failed-algorithm-attempt.png) |
+| Actual execution, prediction and retained output | [Algorithm check](assets/core-learning/algorithm-corrected-result.png) |
+| Exact annotation and source-linked question | [Annotated paper](assets/core-learning/annotated-paper.png) |
+| Paper → derivation → implementation → actual equation output | [Research check](assets/core-learning/research-equation-result.png) |
+| Fullscreen learning workbench | [Main display](assets/core-learning/fullscreen-experiment.png) |
+| Supporting figure and shared reasoning | [ScreenPad](assets/core-learning/screenpad-figures.png) |
+| Read small scientific labels without shrinking | [Main figure](assets/core-learning/figure-full-width.png) · [ScreenPad figure](assets/core-learning/screenpad-full-width.png) |
+| Increased text scale with reachable footer | [200% drawing dialog](assets/core-learning/drawing-dialog-200.png) |
+
+[Acceptance and actual code/output identities](core-learning-evidence.md) distinguish
+executed checks, native UI observations and the still-required owner learner trial.
+
+Fullscreen return from an external editor on another workspace: [native capture](assets/core-learning/desktop-fullscreen-return.png). Figure origin return: [native capture](assets/core-learning/figure-origin-return.png).

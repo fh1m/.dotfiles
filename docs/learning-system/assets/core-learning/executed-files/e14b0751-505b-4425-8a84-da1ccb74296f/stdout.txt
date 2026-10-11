@@ -1,0 +1,3 @@
+conditional integration False late RMSE 0.7067005938646196 normalized illustrative units
+conditional integration True late RMSE 0.12102297044880174 normalized illustrative units
+hypothetical plant only: xdot=-x+u; actuator limit +/-2; no hardware inference

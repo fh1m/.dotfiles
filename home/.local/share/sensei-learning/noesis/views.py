@@ -5,7 +5,7 @@ from .presentation import display_title
 from .index import local_relationship
 
 
-def overview(index, identity):
+def _overview(index, identity):
     root=index.record(identity)
     kind=root['props'].get('type')
     if kind=='paper' or kind=='resource' and root['props'].get('source_kind')=='paper':
@@ -77,3 +77,15 @@ def today(index, context_id=None, path_id=None, quiet=False):
     return {'continue':resume,'records':actions,'paths':paths,'record_count':record_count,
             'availability':'ready','empty_reason':'no-records' if not record_count else 'no-active-work' if not resume and not actions else 'nothing-due' if not actions else None,'generation':index.generation,
             'message':'Resume when you are ready. Suggestions are optional, and age is not a competence estimate.'}
+
+
+def overview(index, identity):
+    result = _overview(index, identity)
+    if result and 'artifacts' in result:return result
+    from .experiments import context
+    record=index.record(identity,include_body=False,include_attempt=False)
+    support=context(index,record)
+    if not support['artifacts']:return result
+    result=result or {'kind':record['props'].get('type')}
+    result.update(artifacts=support['artifacts'],artifacts_truncated=support['artifacts_truncated'],artifact_errors=support['artifact_errors'])
+    return result

@@ -1,0 +1,42 @@
+{
+  "status": "completed",
+  "record_id": "dadcd844-32c2-44aa-957a-cc80ab4fa56e",
+  "command": [
+    "/usr/sbin/python3",
+    "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/8dd13432-9faf-44d0-aba4-5a97de6830db/scratch.py"
+  ],
+  "cwd": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/8dd13432-9faf-44d0-aba4-5a97de6830db",
+  "code_sha256": "067494a1112acb961ba9702583a5e638e9ddc467edd7d5f9b2c8571cb2639cbd",
+  "prediction": "Conditional integration may reduce recovery delay in this illustrative model; it does not establish vehicle performance.",
+  "python": "3.14.7 (main, Aug 14 2026, 06:38:32) [GCC 16.2.1 20260810]",
+  "started_at": "2026-10-11T01:34:56.567862+00:00",
+  "learner_achievement": false,
+  "environment": {
+    "NOESIS_RUN_DIRECTORY": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/8dd13432-9faf-44d0-aba4-5a97de6830db/runs/e14b0751-505b-4425-8a84-da1ccb74296f"
+  },
+  "package_versions": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sympy": "1.14.0",
+    "matplotlib": "3.11.2"
+  },
+  "code_snapshot": {
+    "authority": "owned scratch file; no Git revision",
+    "sha256": "067494a1112acb961ba9702583a5e638e9ddc467edd7d5f9b2c8571cb2639cbd"
+  },
+  "exit_code": 0,
+  "finished_at": "2026-10-11T01:34:57.512411+00:00",
+  "code_changed": false,
+  "outputs": [
+    {
+      "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/8dd13432-9faf-44d0-aba4-5a97de6830db/runs/e14b0751-505b-4425-8a84-da1ccb74296f/stdout.txt",
+      "sha256": "a8f915460a5a7cb649160cc6aaec1aaaba085c008e3e61217eb774c618f64507",
+      "size": 257
+    },
+    {
+      "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/8dd13432-9faf-44d0-aba4-5a97de6830db/runs/e14b0751-505b-4425-8a84-da1ccb74296f/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    }
+  ]
+}

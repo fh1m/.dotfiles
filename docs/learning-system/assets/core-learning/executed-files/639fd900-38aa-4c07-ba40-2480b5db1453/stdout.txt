@@ -1,0 +1,2 @@
+attention equation output [[0.856033835302118, 1.4279615744391418], [0.7966637219606423, 1.6044483707191437]]
+explicit row calculation agrees; no trained-model or learner-understanding claim

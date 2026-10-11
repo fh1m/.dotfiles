@@ -1,0 +1,333 @@
+{
+  "closed_editor_launch": true,
+  "exact_code_file": true,
+  "existing_editor_other_workspace_preserved": true,
+  "fullscreen_return": true,
+  "held_screenpad": true,
+  "hidden_worker_stopped": true,
+  "restart_origin_retained": true,
+  "unrelated_windows_preserved": true,
+  "native_state": {
+    "qt_device_pixel_ratio": 2,
+    "compositor_scale": 1,
+    "interface_scale": 1,
+    "reading_scale": 1,
+    "course_id": "",
+    "practice_thinking": false,
+    "statement_height": 48,
+    "reasoning_viewport_height": 44,
+    "practice_viewport_height": 0,
+    "practice_scroll_fraction": 0,
+    "visible": true,
+    "minimized": false,
+    "width": 939,
+    "height": 497,
+    "screen": "eDP-1",
+    "section": "Lab",
+    "vault": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault",
+    "collection": false,
+    "draft_length": 0,
+    "presentation": "normal",
+    "window_address": "",
+    "mode_pending": true,
+    "selected": "Records/experiment/Agent validation \u00b7 sampled signal check [e0de0a68].md",
+    "rows": 16,
+    "reference_hidden": false,
+    "worker": true,
+    "watch": true,
+    "preview_length": 210,
+    "context_tab": "Read",
+    "read_scroll_fraction": 0,
+    "read_viewport_height": 243,
+    "read_content_height": 982,
+    "outline_rows": 0,
+    "expanded_module_rows": 0,
+    "outline_import_open": false,
+    "check_open": false,
+    "check_stage": "retry",
+    "check_purpose_length": 0,
+    "check_focused": false,
+    "outline_editing": false,
+    "outline_index": -1,
+    "outline_focused": false,
+    "loaded_figures": 1,
+    "experiment": {
+      "kind": "experiment",
+      "hypothesis": "Agent validation prediction: integer samples cannot distinguish these two frequencies.",
+      "code": null,
+      "unfinished_executions": [],
+      "unfinished_scan_truncated": false,
+      "configuration": [],
+      "latest_comparison": {
+        "prediction": "Agent validation prediction: integer samples cannot distinguish these two frequencies.",
+        "observed": {
+          "exit_code": 0,
+          "status": "completed"
+        },
+        "execution": {
+          "status": "completed",
+          "record_id": "e0de0a68-aba5-4798-a62a-42a01da62f6d",
+          "command": [
+            "/usr/sbin/python3",
+            "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/scratch.py"
+          ],
+          "cwd": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51",
+          "code_sha256": "3b68ee287433dcd68d895783b8e8372001f9f315b2087674f88a7595ec571a92",
+          "prediction": "Agent validation prediction: integer samples cannot distinguish these two frequencies.",
+          "python": "3.14.7 (main, Aug 14 2026, 06:38:32) [GCC 16.2.1 20260810]",
+          "started_at": "2026-10-11T01:33:24.273338+00:00",
+          "learner_achievement": false,
+          "environment": {
+            "NOESIS_RUN_DIRECTORY": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7"
+          },
+          "package_versions": {
+            "numpy": "2.5.3",
+            "scipy": "1.18.1",
+            "sympy": "1.14.0",
+            "matplotlib": "3.11.2"
+          },
+          "code_snapshot": {
+            "authority": "owned scratch file; no Git revision",
+            "sha256": "3b68ee287433dcd68d895783b8e8372001f9f315b2087674f88a7595ec571a92"
+          },
+          "exit_code": 0,
+          "finished_at": "2026-10-11T01:33:27.140372+00:00",
+          "code_changed": false,
+          "outputs": [
+            {
+              "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7/stdout.txt",
+              "sha256": "c71e54f4c173a707e4dee4b6e7c07a782dedd98c9880a324d7dc41db4c02a0b3",
+              "size": 46
+            },
+            {
+              "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7/stderr.txt",
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            }
+          ]
+        },
+        "artifact_id": "1e28f1cc-2eed-4fe2-8986-8e3959210ebb",
+        "evidence_kind": "software-run",
+        "learner_achievement": false,
+        "id": "8a97e801-26ff-4301-a33b-66d48ac5c5f1",
+        "noesis_schema": 2,
+        "type": "activity",
+        "event": "comparison",
+        "target": {
+          "vault_id": "9f33f13d-1d5e-4e69-b4cb-49dda01dac15",
+          "record_id": "e0de0a68-aba5-4798-a62a-42a01da62f6d"
+        },
+        "timestamp": "2026-10-11T01:33:27.221676+00:00",
+        "operation_id": "0ee944e1-bec5-43f4-b76d-50920e019eb7",
+        "provenance": "learner-reported",
+        "request_hash": "9fba5f0d6fa0eca64a7959e407ab4a4c8cc4a5c76466d37929a48f3abcf35a10"
+      },
+      "output_preview": "max sampled difference 1.1102230246251565e-15\n",
+      "error_preview": "",
+      "output_truncated": false,
+      "comparison_count": 1,
+      "artifacts": [
+        {
+          "id": "1e28f1cc-2eed-4fe2-8986-8e3959210ebb",
+          "path": "Records/artifact/Executed output 0ee944e1 [1e28f1cc].md",
+          "title": "Executed output 0ee944e1",
+          "type": "artifact",
+          "vault": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault",
+          "vault_id": "9f33f13d-1d5e-4e69-b4cb-49dda01dac15",
+          "location": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7/execution.json",
+          "availability": "available",
+          "figure_url": null,
+          "size": 1825
+        },
+        {
+          "id": "a9ddd17a-8a01-4c0f-a2dd-9369a356ff4b",
+          "path": "Records/artifact/Run artifact aliasing.png [a9ddd17a].md",
+          "title": "Run artifact aliasing.png",
+          "type": "artifact",
+          "vault": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault",
+          "vault_id": "9f33f13d-1d5e-4e69-b4cb-49dda01dac15",
+          "location": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7/aliasing.png",
+          "availability": "available",
+          "figure_url": "file:///var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7/aliasing.png",
+          "size": 27362
+        }
+      ],
+      "artifacts_truncated": false,
+      "artifact_errors": [],
+      "summary": "Execution, reported observation and supported hypothesis are separate"
+    },
+    "context_actions": [
+      "connect-existing",
+      "drawing",
+      "scratch",
+      "scratch-open",
+      "scratch-terminal",
+      "scratch-outputs",
+      "question",
+      "run",
+      "artifact",
+      "comparison",
+      "priority",
+      "history",
+      "connections"
+    ],
+    "learning_context": {},
+    "overview_counts": null,
+    "priority_open": false,
+    "pinned": false,
+    "manual_priority": "normal",
+    "today": {
+      "generation": 1,
+      "records": [
+        {
+          "path": "Records/artifact/Agent validation \u00b7 dependency invariant map [02b92b18].md",
+          "id": "02b92b18-ec4a-4703-ba84-25638cfa1411",
+          "type": "artifact",
+          "title": "Agent validation \u00b7 dependency invariant map",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/artifact/Agent validation \u00b7 feedback block diagram [1189d60c].md",
+          "id": "1189d60c-18c6-4f1a-8f4c-99aedacaf2e7",
+          "type": "artifact",
+          "title": "Agent validation \u00b7 feedback block diagram",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/artifact/Agent validation \u00b7 freehand mechanism [49bc8c4d].md",
+          "id": "49bc8c4d-0aff-4769-b814-661058cf05c4",
+          "type": "artifact",
+          "title": "Agent validation \u00b7 freehand mechanism",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/artifact/Agent validation \u00b7 sampling map [6d9342cf].md",
+          "id": "6d9342cf-189d-4388-88e7-dec817dca857",
+          "type": "artifact",
+          "title": "Agent validation \u00b7 renamed sampling map",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/artifact/Executed output 0ee944e1 [1e28f1cc].md",
+          "id": "1e28f1cc-2eed-4fe2-8986-8e3959210ebb",
+          "type": "artifact",
+          "title": "Executed output 0ee944e1",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/artifact/Executed output 639fd900 [d3a89be4].md",
+          "id": "d3a89be4-9390-44d4-a875-44262024de1f",
+          "type": "artifact",
+          "title": "Executed output 639fd900",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/artifact/Executed output 92422520 [7ef603a0].md",
+          "id": "7ef603a0-0742-4126-86a2-b4cfef397c54",
+          "type": "artifact",
+          "title": "Executed output 92422520",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/artifact/Executed output e14b0751 [947a728b].md",
+          "id": "947a728b-292f-4482-9f18-665cb41ed154",
+          "type": "artifact",
+          "title": "Executed output e14b0751",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/artifact/Executed output efe2c34c [08c3d4a0].md",
+          "id": "08c3d4a0-d40e-4325-89c6-e83934bcc62e",
+          "type": "artifact",
+          "title": "Executed output efe2c34c",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/artifact/Run artifact aliasing.png [a9ddd17a].md",
+          "id": "a9ddd17a-8a01-4c0f-a2dd-9369a356ff4b",
+          "type": "artifact",
+          "title": "Run artifact aliasing.png",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/artifact/Run artifact windup.csv [677a3138].md",
+          "id": "677a3138-69e0-46c6-9a94-3720e61989eb",
+          "type": "artifact",
+          "title": "Run artifact windup.csv",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/artifact/Run artifact windup.png [24e88ccb].md",
+          "id": "24e88ccb-1d97-4214-9ac2-9c8b6e7b8161",
+          "type": "artifact",
+          "title": "Run artifact windup.png",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/experiment/Agent validation \u00b7 attention equation check [6f88f8bc].md",
+          "id": "6f88f8bc-9b44-469f-ab26-072aaf7a6ff9",
+          "type": "experiment",
+          "title": "Agent validation \u00b7 attention equation check",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/experiment/Agent validation \u00b7 bounded windup simulation [dadcd844].md",
+          "id": "dadcd844-32c2-44aa-957a-cc80ab4fa56e",
+          "type": "experiment",
+          "title": "Agent validation \u00b7 bounded windup simulation",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/experiment/Agent validation \u00b7 sampled signal check [e0de0a68].md",
+          "id": "e0de0a68-aba5-4798-a62a-42a01da62f6d",
+          "type": "experiment",
+          "title": "Agent validation \u00b7 sampled signal check",
+          "status": null,
+          "source_kind": null
+        },
+        {
+          "path": "Records/experiment/Agent validation \u00b7 topological ordering check [581cae59].md",
+          "id": "581cae59-97d3-4242-b74e-dae1b19e606c",
+          "type": "experiment",
+          "title": "Agent validation \u00b7 topological ordering check",
+          "status": null,
+          "source_kind": null
+        }
+      ],
+      "cursor": null
+    },
+    "source_revision": null,
+    "historical_snapshot": false,
+    "source_revisions": [],
+    "annotation_count": 0,
+    "annotation_ids": [],
+    "annotation_cursor": "",
+    "annotation_newer_cursor": "",
+    "cursor": "",
+    "attempt": "",
+    "capture_length": 0,
+    "reported_outcome": "unknown",
+    "declared_assistance": "unknown",
+    "error": "",
+    "message": "",
+    "working": false,
+    "capture_open": false,
+    "capture_focused": false,
+    "search_focused": false,
+    "inspector": false
+  }
+}

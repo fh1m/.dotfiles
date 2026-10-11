@@ -62,7 +62,7 @@ learning. The small native lesson plus plain Python/Git already supports convolu
 installing a notebook stack is unnecessary for this acceptance slice.
 
 This ordering is a recommendation after convolution, not implementation of those
-three domains. Original P0–P8 gates remain in force; populated Zotero restoration,
+three domains. Original P0–P8 gates remain in force; broader recovery fault acceptance (the populated Zotero 10.0.6 restore now passes),
 full cross-domain journeys and the owner's sustained learner trial remain open.
 Off-device repository configuration remains deferred by owner, post-V1.
 
@@ -79,3 +79,14 @@ Convolution's new starters are empty skeletons too.
 This closes the automated Dijkstra software journey, not the owner's independent
 understanding or every original release gate. YOLO and ADRC remain later slices;
 this implementation does not begin either.
+
+
+## General visual/executable artifacts
+
+The core-learning slice adds ordinary drawing artifacts and Python scratch experiments
+as references to any existing activity. `origin_ref` retains exact record/vault identity;
+`annotation_ref` is a validated source pointer, not a copy of learner interpretation.
+Execution manifests witness actual local commands and immutable output/code snapshots;
+activities and artifact records remain the existing authority for learning history.
+No source-specific thread type or parallel knowledge database was introduced.
+See [native cross-domain evidence](core-learning-evidence.md).

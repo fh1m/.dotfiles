@@ -23,7 +23,7 @@ Use **Set a reading place**, enter a page, section or timestamp, and **Save read
 
 ## Rich thinking in Obsidian
 
-**Edit complete note in Obsidian** opens the owned Markdown note. Investigation pages offer **Open derivation in Obsidian**. Use Obsidian for equations, diagrams, backlinks, Canvas and rich derivations. Noesis does not replace these editors or automatically construct a Canvas. Plugin-specific features require their existing supported setup; Noesis does not install plugins into your personal vault.
+**Edit complete note in Obsidian** opens the owned Markdown note. Investigation pages offer **Open derivation in Obsidian**. Use Obsidian for equations, diagrams, backlinks, Canvas and rich derivations. Noesis creates an origin-linked Canvas or validated Excalidraw drawing through Draw / Diagram, then uses Obsidian for editing. Plugin-specific features require their existing supported setup; Noesis does not install plugins into your personal vault.
 
 ## Questions, concepts and prerequisites
 
@@ -43,7 +43,7 @@ A failed attempt can produce a linked question. **History & next steps** offers 
 
 From an implementation, **Begin a run** (or **Learning options → Add experiment run**) records your prediction and configuration. **Record comparison** (also available as **Compare prediction and observation** in contextual actions) records reported measurements, units, conditions, uncertainty and interpretation. **Connect artifact** (also **Connect data, figure or code** in contextual actions) references an existing artifact. Checksum inspection proves which bytes were inspected, not the hypothesis. Figures must be supported local image formats; unsupported artifacts retain an explicit handoff.
 
-Generic experiments run in your existing terminal, notebook or simulation tooling. Attach actual outputs and record the code revision and conditions. Convolution has an explicitly invoked bounded demonstration; other subjects do not inherit a generic execution engine. New reconstruction starters are skeletons. Supplied examples and agent-produced outputs are labelled and are not your achievements.
+Generic experiments run in your existing terminal, notebook or simulation tooling. Attach actual outputs and record the code revision and conditions. Convolution has an explicitly invoked bounded demonstration; any subject can use the explicit local Python scratch capture described below, without a notebook platform. New reconstruction starters are skeletons. Supplied examples and agent-produced outputs are labelled and are not your achievements.
 
 ## ScreenPad
 
@@ -65,8 +65,71 @@ Unavailable source: retain the owned record and reading place; reconnect storage
 
 Failed save: keep the draft, correct the inline error and retry only after receipt status is known. Missing repository or artifact: restore its original path or deliberately reconnect it; do not invent outputs. Identity conflicts require explicit resolution; filenames are not stable identities.
 
-Local backup and restore remain available through the existing recovery workflow. Advanced recovery and vault adoption are not entirely self-service UI workflows. Populated native Zotero restoration now passes the isolated encrypted restore test with a guarded local Zotero 10.0.6 startup compatibility patch. Annotation-specific navigation and the broader recovery matrix remain acceptance gates; a vendor update must be revalidated. Off-device backup configuration is deferred by owner. A graceful Close cannot guarantee recovery from power loss; local durable writes and draft recovery protect what was actually saved.
+Local backup and restore remain available through the existing recovery workflow. Advanced recovery and vault adoption are not entirely self-service UI workflows. Populated native Zotero restoration now passes the isolated encrypted restore test with a guarded local Zotero 10.0.6 startup compatibility patch. Supported annotation-specific navigation is now validated in an isolated native 10.0.6 reader; the broader recovery matrix remains open, and a vendor update must be revalidated. Off-device backup configuration is deferred by owner. A graceful Close cannot guarantee recovery from power loss; local durable writes and draft recovery protect what was actually saved.
 
 ## Verification boundary
 
-This guide lists current controls and limitations. The new empty-vault Start learning → source → restart path has native screenshots. Native empty-vault acceptance exercises manual source creation, playlist units, questions and prerequisite return, protected Practice, Obsidian/editor handoffs, executed code and Lab artifacts, Zotero bibliography import and restart. The fixtures and authored code are agent validation examples, not your learning achievements. PDF annotation selection is checked separately and is not certified by the bibliography-only self-service fixture. Human learning effectiveness and your personal usability trial remain unproven.
+This guide lists current controls and limitations. The new empty-vault Start learning → source → restart path has native screenshots. Native empty-vault acceptance exercises manual source creation, playlist units, questions and prerequisite return, protected Practice, Obsidian/editor handoffs, executed code and Lab artifacts, Zotero bibliography import and restart. The fixtures and authored code are agent validation examples, not your learning achievements. PDF annotation selection is checked separately by the core-learning native fixture; the bibliography-only fixture does not establish it. Human learning effectiveness and your personal usability trial remain unproven.
+
+
+## Draw or diagram from the current activity
+
+Open an activity, then choose **Draw / Diagram** in its working-page toolbar.
+Enter a title and choose **Canvas map** for boxes, connections and spatial notes,
+or **Freehand** when the owning vault has an active Excalidraw plugin. Choose
+**Create linked drawing**. Noesis creates an owned artifact and opens its editable
+file in that exact Obsidian vault. The Canvas starts with an origin link, not an
+embedded problem solution. Drawings are supporting artifacts, never competence.
+
+Return to Noesis and use **Return to originating activity** or Back to recover the original activity. The origin action also works when reopening an artifact later. Reopen a drawing
+with **Open linked file**. Under Learning options, **Rename / locate linked file**
+retains its identity while renaming through Obsidian or reconnecting a moved file
+inside the same vault. Use **Connect existing knowledge** to reuse a drawing
+rather than create a second copy. Missing files are reported; another vault's
+file cannot silently become this artifact.
+
+Noesis does not render editable Canvas or Excalidraw itself. Export a PNG beside
+the drawing in Obsidian to view it in Figures or ScreenPad. **Read figure at full width** gives small labels more space; scroll the image or switch back to a fitted view. Exports are explicitly
+labelled current or potentially stale. An unsupported or absent export remains a
+handoff, not a fabricated preview. Noesis never installs plugins into your vault.
+
+## Try an idea in code and capture the actual run
+
+From any working page choose **Try in code**. Supply a title and an optional
+prediction. Start with an empty commented Python scratch file, or choose your own
+existing Python file; Git is optional. **Create scratch experiment** links a Lab
+experiment to the initiating activity and opens the file in the existing editor.
+
+Edit your code, return to Noesis, and choose **Open terminal to run**. Read the
+command and press Enter deliberately; Ctrl+C cancels. Downloaded code is never
+executed merely by opening it. The host Python environment used by Noesis is captured; use your existing external tooling and link outputs for other execution environments. Save figures,
+CSV or JSON into the directory supplied by `NOESIS_RUN_DIRECTORY` to link them
+automatically as actual output artifacts.
+
+Return to Noesis to inspect stdout/stderr, exit status, prediction and artifacts.
+**Inspect run files** opens saved code, execution metadata and complete outputs.
+Each invocation has its own identity; failed runs remain recorded. Capture includes
+the command, Python/package versions, code SHA, and Git revision when available.
+A successful exit is not a hypothesis verdict or proof of understanding. Record
+an interpretation or comparison separately, and label external assistance honestly.
+Runs exceeding the 120-second capture limit retain their timeout status; this is
+a small local check, not a long-running experiment service. Unconfirmed captures
+are flagged for inspection rather than blindly rerun after a crash.
+
+During fullscreen tool work the ScreenPad can hold the last source/context/figure.
+Its banner explains that updates resume with Noesis. **Resume Noesis** restores the
+working page; held notes are read-only while the main application is hidden.
+Manual Hide stops both surfaces and indexing.
+
+## Ask about a precise Zotero annotation
+
+On an imported paper, choose **Ask about this annotation** beside the relevant
+annotation. Write your own question and save it. The question retains the paper,
+attachment, annotation, imported source version and owning-vault identities;
+your explanation is not replaced by later annotation imports. Use **Open this
+annotation** to select the matching native annotation on supported Zotero 10.0.6.
+Physical PDF page identity is used rather than assuming a printed page label is
+an integer. Historical, changed or deleted annotations use an explicitly labelled
+recorded-page fallback in the current attachment; its page content may have changed. Authoritative annotations remain in Zotero.
+
+To promote a useful scratch file, version its existing directory through Git, then return to its originating question and use **Learning options → Connect implementation** with that directory and code path. This reuses the code instead of copying it.
