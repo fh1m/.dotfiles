@@ -1,0 +1,19 @@
+{
+  "source_commit": "9f62e31c7b660bd2e46dbc0d2aabf869110dab24",
+  "deployed_commit": "9f62e31c7b660bd2e46dbc0d2aabf869110dab24",
+  "source_dirty": false,
+  "verified_files": 89,
+  "host": "standalone",
+  "qml_path": "/home/fh1m/.config/quickshell/noesis",
+  "app_id": "org.fh1m.Noesis",
+  "shell_id": "org.fh1m.Noesis",
+  "singleton_three_reopens": true,
+  "hide_stops_worker_watch": true,
+  "close_and_restart_preserves_selection_draft": true,
+  "fullscreen_main_screen": true,
+  "wrayth_pid": 2795549,
+  "wrayth_survived": true,
+  "unrelated_windows_preserved": true,
+  "owner_initial_visibility_restored": true,
+  "rollback_manifest": "/home/fh1m/.local/state/noesis-deployments/20261011-075409-159201/manifest.json"
+}
