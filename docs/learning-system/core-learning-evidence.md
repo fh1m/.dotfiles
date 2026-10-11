@@ -109,3 +109,21 @@ Missing editor availability fails before launch and preserves the code file.
 Visual inspection moved plots ahead of non-image output files in Lab. Figures
 can expand for reading; their explicit return action recovers the originating
 activity without creating a duplicate learning record.
+
+## Scoped live rollout
+
+The owner was running the independent host at `3393b92` before this slice, not
+the embedded Wrayth UI. Implementation `9f62e31` passed a scoped live rollout:
+installed file hashes and clean-source build identity matched, three reopen
+requests reused one PID, Hide stopped worker/watch activity, and close/restart
+preserved selection and draft length. Wrayth PID 2795549 survived; unrelated
+window addresses and workspace assignments were unchanged. The owner’s original
+hidden visibility was restored. No private learning content was published.
+[Recorded rollout proof](assets/core-learning/live-deployment.json) includes the
+scoped backup manifest. The final documentation revision is redeployed through
+the same installer to keep the application build identity current.
+
+Rollback uses the recorded installer manifests in reverse chronological order,
+with hash checks before replacement. No whole-dotfiles install or Wrayth restart
+was performed. Shared QML file changes may trigger Quickshell’s normal file reload;
+PID survival is verified, rather than claiming that no implicit reload occurred.
