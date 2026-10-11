@@ -58,13 +58,13 @@ Variants {
             anchors.rightMargin: 12
             anchors.verticalCenter: parent.verticalCenter
             spacing: 3
+            RailFold { opensRight:false; expanded: bar.readoutsOpen; onToggled: bar.readoutsOpen = !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             BtReadout { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             DisplayBadge { output: "main"; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             SoundButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             NotificationsButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             BatteryButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             SystemButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
-            RailFold { opensRight:false; expanded: bar.readoutsOpen; onToggled: bar.readoutsOpen = !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
         }
     }
 }

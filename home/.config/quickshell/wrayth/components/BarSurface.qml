@@ -10,6 +10,7 @@ Rectangle {
     property bool pressed: false
     property bool showSelectionRule: true
     property real selectionRuleWidth: 24
+    property real selectionRuleCenterX: width / 2
     property bool grouped: false
     radius: 0
     color: pressed ? Theme.surfaceTwo : hovered || selected ? Theme.surfaceOne : Theme.ink
@@ -23,7 +24,7 @@ Rectangle {
     }
     Rectangle {
         anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
+        x: root.selectionRuleCenterX - width / 2
         width: root.selected && root.showSelectionRule ? root.selectionRuleWidth : 0
         height: 2
         color: Theme.signalRed

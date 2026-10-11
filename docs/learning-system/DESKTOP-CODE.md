@@ -225,3 +225,17 @@ Checked folded and expanded bars on both displays, the combined Code panel, its
 live CPU/RAM values, tab count and outline. Live QML reload succeeds. Rail IPC
 `bar-controls-<output>` exposes expand/state for reproducible layout checks.
 Follow-up rollback copies: `~/.local/state/dotfiles-backups/desktop-followup-20261011-alignment`.
+
+### Stats-first refinement
+
+The Operator banner is now a read-only glance strip: CPU/load, available memory,
+NVIDIA activity, temperature/fan state, AC/battery/profile and uptime/process count.
+Network rates, USB boards, simulators and saved clips form a secondary line.
+Buttons remain in the separate middle-click operator deck. Labels, values and
+context use distinct sizes and spacing; missing telemetry remains unavailable.
+The top expansion handle is back on the left edge of its controls. Expanded
+Noesis selection follows the actual label width, with secondary text constrained
+and elided before its menu handle. Folded selection centers under the icon.
+ScreenPad brightness uses a crisp dual-panel mark with a proportional lower-display
+fill. Live QML reload and the complete Code composition were visually checked;
+backups are in `~/.local/state/dotfiles-backups/operator-stats-20261011`.

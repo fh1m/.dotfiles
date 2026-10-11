@@ -16,15 +16,16 @@ BarSurface {
  property string detail:target==="monitor"?"Telemetry":""
  implicitWidth:(condensed?44:target==="monitor"?112:124)+(target==="oasis"?24:0);implicitHeight:34
  Behavior on implicitWidth { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
- selectionRuleWidth:target==="oasis"?width-8:24
+ selectionRuleWidth:target==="oasis"&&!condensed?labelText.implicitWidth:24
+ selectionRuleCenterX:target==="oasis"?(condensed?22:42+labelText.implicitWidth/2):width/2
  grouped:condensed
  selected:target==="oasis"?LearningBridge.NoesisBridge.windowOpen:ShellState.dropdown===target;hovered:pointer.containsMouse;pressed:pointer.pressed
  Row {anchors.left:parent.left;anchors.leftMargin:10;anchors.verticalCenter:parent.verticalCenter;spacing:8
      InstrumentIcon {visible:root.target==="monitor";kind:"monitor";anchors.verticalCenter:parent.verticalCenter}
      BarIcon {visible:root.target!=="monitor";glyph:root.glyph;anchors.verticalCenter:parent.verticalCenter;inkSize:18;ink:root.target==="phone"&&!PhoneBridge.ready?Theme.alpha(Theme.signalRed,.55):Theme.signalRed}
-     Column {visible:!root.condensed;anchors.verticalCenter:parent.verticalCenter;spacing:-1
-         Text {text:root.label;font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
-         Text {text:root.detail;visible:root.detail!=="";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.widgetMuted}
+     Column {visible:!root.condensed;width:Math.max(1,root.width-42-(root.target==="oasis"?28:6));anchors.verticalCenter:parent.verticalCenter;spacing:1
+         Text {id:labelText;width:parent.width;elide:Text.ElideRight;text:root.label;font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
+         Text {width:parent.width;elide:Text.ElideRight;text:root.detail;visible:root.detail!=="";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.widgetMuted}
      }
  }
  MouseArea {id:pointer;anchors.fill:parent;anchors.rightMargin:root.target==="oasis"?24:0;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{if(root.target==="oasis"){LearningBridge.NoesisBridge.open();return;}if(root.page>=0)ShellState.monitorPage=root.page;ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdown(root.target);}}

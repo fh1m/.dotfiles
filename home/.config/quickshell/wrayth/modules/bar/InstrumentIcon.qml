@@ -33,9 +33,11 @@ Item {
                 c.strokeRect(1,2,18,12);c.beginPath();c.moveTo(5,10);c.lineTo(7,7);c.lineTo(10,10);c.lineTo(13,5);c.lineTo(16,8);c.stroke();
                 c.beginPath();c.moveTo(10,14);c.lineTo(10,18);c.moveTo(6,18);c.lineTo(14,18);c.stroke();
             } else if (root.kind === "display") {
-                c.strokeRect(2, 3, 16, 11);
-                c.beginPath(); c.moveTo(10, 14); c.lineTo(10, 18);
-                c.moveTo(6, 18); c.lineTo(14, 18); c.stroke();
+                // The Duo's two panels: a main display above the lit ScreenPad.
+                c.strokeRect(2,2,16,9);
+                c.strokeRect(1,14,18,5);
+                c.beginPath();c.moveTo(10,11);c.lineTo(10,14);c.stroke();
+                c.globalAlpha=.85;c.fillRect(3,16,14*Math.max(0,Math.min(1,root.level)),1.5);c.globalAlpha=1;
             } else if (root.kind.startsWith("bluetooth")) {
                 c.beginPath(); c.moveTo(10, 1); c.lineTo(10, 19);
                 c.moveTo(10, 1); c.lineTo(15, 5); c.lineTo(5, 15);
