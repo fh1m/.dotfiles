@@ -1,3 +1,16 @@
+diff --git a/src/backend/drm/DRM.cpp b/src/backend/drm/DRM.cpp
+index 431247b..99f001c 100644
+--- a/src/backend/drm/DRM.cpp
++++ b/src/backend/drm/DRM.cpp
+@@ -740,7 +740,7 @@ bool Aquamarine::CDRMBackend::checkFeatures() {
+     drmProps.supportsAsyncCommit = drmGetCap(gpu->fd, DRM_CAP_ASYNC_PAGE_FLIP, &cap) == 0 && cap == 1;
+     drmProps.supportsTimelines   = drmGetCap(gpu->fd, DRM_CAP_SYNCOBJ_TIMELINE, &cap) == 0 && cap == 1;
+ 
+-    if (envEnabled("AQ_NO_MODIFIERS")) {
++    if (envEnabled("AQ_NO_MODIFIERS") && !(envEnabled("SENSEI_AQ_NVIDIA_MODIFIERS") && driver == AQ_BACKEND_GPU_DRIVER_NVIDIA)) {
+         backend->log(AQ_LOG_WARNING, "drm: AQ_NO_MODIFIERS enabled, disabling modifiers for DRM buffers.");
+         drmProps.supportsAddFb2Modifiers = false;
+     } else
 diff --git a/src/backend/drm/Renderer.cpp b/src/backend/drm/Renderer.cpp
 index d221775..d41b6a2 100644
 --- a/src/backend/drm/Renderer.cpp

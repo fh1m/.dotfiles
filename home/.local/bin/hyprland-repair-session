@@ -41,6 +41,8 @@ if [ "${SENSEI_SYSTEM_AQUAMARINE:-0}" != 1 ] && [ -r "$local_aq/abi-packages" ] 
     current_abi=$(pacman -Q aquamarine hyprutils 2>/dev/null || true)
     if [ "$current_abi" = "$(cat "$local_aq/abi-packages")" ]; then
         export LD_LIBRARY_PATH="$local_aq/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+        # Intel needs implicit scanout; NVIDIA needs explicit renderable buffers.
+        export SENSEI_AQ_NVIDIA_MODIFIERS=1
     else
         echo "Local Aquamarine package versions changed; using the system library." >&2
     fi
