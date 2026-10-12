@@ -1,0 +1,18 @@
+# Documentation and explicitly reviewed configs only.
+*.iso
+*.partial
+*.copying
+*.aria2
+*.log
+*.sqlite*
+*.vhd*
+*.img
+*.bin
+*.key
+*.pem
+auth.json
+config.local.*
+backups/
+private/
+local/
+install-media/
