@@ -1,6 +1,6 @@
-# Verified checkpoint — 2026-10-13, Asia/Dhaka
+# Verified checkpoint Ã¢â‚¬â€ 2026-10-13, Asia/Dhaka
 
-Latest inspection: original Ubuntu desktop after the first Windows attempt. Windows was applied to the WRONG SATA disk (Dahua); correct Revenger installation and independent boot remain pending. Read the incident below before proceeding.
+Latest inspection: new Windows desktop on Revenger, 2026-10-13. Live checks confirm C: and the system EFI are on Revenger B2BNDC42100667, with only Revenger visible to Windows. The earlier Dahua incident below is historical. Restart/cold-boot tests, remaining Windows setup and later CachyOS installation are pending.
 
 ## Hardware
 
@@ -45,7 +45,7 @@ Ventoy USB serial `900039A575382714`, approximately 64 GB advertised. Existing U
 
 `media-verified.json` records the 02:13 checkpoint: both downloads AND both USB copies matched official SHA-256 values. No actual USB boot test performed yet. The desktop source files remain in `/home/fh1m/pc-rebuild/install-media`. ISOs are excluded from Git.
 
-## Next stages — not yet performed
+## Next stages Ã¢â‚¬â€ not yet performed
 
 1. Firmware/media boot check; Windows install on isolated Revenger, own EFI.
 2. Windows independent boot and disk/encryption/power-state checks; Codex/Git setup.
@@ -61,7 +61,7 @@ Ventoy USB serial `900039A575382714`, approximately 64 GB advertised. Existing U
 
 Append observed results here after installation. An unchecked item is pending, not passed.
 
-## First Windows attempt — inspected 2026-10-13 around 03:01–03:15 +06
+## First Windows attempt Ã¢â‚¬â€ inspected 2026-10-13 around 03:01Ã¢â‚¬â€œ03:15 +06
 
 - Original Ubuntu desktop is running again. Dahua NBYC26A00A16934 now has a 16 MiB reserved partition and NTFS UUID B4BCF488BCF44700 containing the new Windows files. It has NO EFI partition. Revenger B2BNDC42100667 remains empty. Disk numbers/capacity were ambiguous in Setup.
 - Windows Setup log ends with requesting a reboot, not a final fatal install failure. Firmware BootOrder still starts with ubuntu (0004), then Windows Boot Manager (0000). This explains returning to GRUB instead of entering the next Windows phase.
@@ -71,3 +71,14 @@ Append observed results here after installation. An unchecked item is pending, n
 - Ensure first restart boots the NEW Revenger Windows Boot Manager, not Ventoy and not the old NVMe entry. If necessary use firmware boot menu; confirm actual entry before changing defaults. Correct installation, continuation, own EFI and Windows desktop are still untested. Dahua cleanup for CachyOS follows successful Revenger boot.
 
 User will use a regular ChatGPT chat during the retry. WINDOWS-RETRY.md now includes a self-contained interactive handoff, the confirmed absence of a Dahua EFI/manager, first-restart boot-priority checks, and guarded BCDBoot recovery guidance. No repair commands, boot-order changes or new install were executed by Codex at this checkpoint.
+
+## Correct Windows installation â€” desktop inspected 2026-10-13 around 05:25 +06
+
+- User reports installing Windows on Revenger after physically disconnecting the other drives and changing firmware settings. Those individual firmware changes were not documented; current live observations are below.
+- Live machine: Ryzen 5 3600X, ASUS TUF B450M-PLUS GAMING, BIOS 2202. Windows 11 Pro, build 26300.9457 (DisplayVersion 26H2). Only Revenger SSD 256GB, serial B2BNDC42100667, is visible to Get-Disk. C: maps to this disk; IsBoot and IsSystem are true. GPT partitions: 200 MiB system EFI, 16 MiB reserved, Windows, 900 MiB recovery. BCDEdit shows the EFI Windows manager and winload.efi; Windows RE is enabled on Revenger recovery partition. Independent restart and cold boot have not yet been observed by this agent.
+- TPM present/ready/enabled/activated; Secure Boot currently enabled. Review Secure Boot before the planned CachyOS installation; the preparation guide recorded it disabled, so do not assume firmware still matches the earlier state.
+- NVIDIA GTX 1660 SUPER driver 610.88 works with nvidia-smi and an active 1920x1080 60 Hz display. This is not a CUDA framework or gaming acceptance test. Ethernet is up at 1 Gbps, improving on the historical 100 Mbps link.
+- Windows Professional activation reports LicenseStatus 5 (Notification), not a verified activated licence. One present USB device reports Device Descriptor Request Failed; troubleshooting remains pending.
+- Disabled hibernation with powercfg /hibernate off; powercfg /a confirms Hibernate, Hybrid Sleep and Fast Startup unavailable. BitLocker unexpectedly showed automatic encryption in progress (95.7%, protection off); encryption is deferred by user preference. After rechecking the Revenger C: serial, preserved recovery information locally in a user-bound DPAPI-encrypted file outside Git and ran manage-bde -off C:. DecryptionInProgress was confirmed at 95%; completion remains pending.
+- Installed and verified Git 2.55.0.windows.5 and GitHub CLI 2.102.0. GitHub login as fh1m and push permission verified; HTTPS Git authentication configured. A sparse clone of branch pc is at C:\Users\fahim\dotfiles-pc. Git identity is repository-local with GitHub's account-linked noreply address. No tokens, recovery information or raw audit logs are committed.
+- Toshiba and WD_BLACK are disconnected/not visible; their contents cannot be reverified from this Windows checkpoint and no operations were performed on them. Preserve both. Dahua's incorrect attempt is not cleaned here. Remaining: confirm decryption, activation, USB issue, chipset/Windows updates, restart/cold boot and display/network checks; then complete the staged CachyOS installation and later reconnect verification. NVMe conversion remains deferred.
