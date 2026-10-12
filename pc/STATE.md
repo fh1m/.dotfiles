@@ -1,6 +1,6 @@
 # Verified checkpoint — 2026-10-13, Asia/Dhaka
 
-This is a preparation checkpoint, not proof that either new OS has been installed. A later agent must inspect the live machine and update this file.
+Latest inspection: original Ubuntu desktop after the first Windows attempt. Windows was applied to the WRONG SATA disk (Dahua); correct Revenger installation and independent boot remain pending. Read the incident below before proceeding.
 
 ## Hardware
 
@@ -16,7 +16,7 @@ This is a preparation checkpoint, not proof that either new OS has been installe
 
 | Serial | Model | Physical bytes | Preparation state / role |
 |---|---|---:|---|
-| NBYC26A00A16934 | Dahua C800 SATA 256GB | 256060514304 | Empty GPT, no partitions; CachyOS target |
+| NBYC26A00A16934 | Dahua C800 SATA 256GB | 256060514304 | First Windows attempt created 16 MiB reserved + NTFS on Dahua; still intended CachyOS target |
 | B2BNDC42100667 | Revenger SATA 256GB | 256060514304 | Empty GPT, no partitions; Windows target |
 | 497KBZVMS | Toshiba DT01ACA100 HDD | 1000204886016 | Existing ext4 data/backups preserved |
 | 252941800719 | WD_BLACK SN7100 NVMe | 1000204886016 | Original Ubuntu and old Windows preserved; divide last |
@@ -60,3 +60,12 @@ Ventoy USB serial `900039A575382714`, approximately 64 GB advertised. Existing U
 | 2026-10-13 | Original Ubuntu desktop | SATA/HDD/NVMe preparation, personal copies, media | Checkpoint above; new OS installs and boot tests pending |
 
 Append observed results here after installation. An unchecked item is pending, not passed.
+
+## First Windows attempt — inspected 2026-10-13 around 03:01–03:15 +06
+
+- Original Ubuntu desktop is running again. Dahua NBYC26A00A16934 now has a 16 MiB reserved partition and NTFS UUID B4BCF488BCF44700 containing the new Windows files. It has NO EFI partition. Revenger B2BNDC42100667 remains empty. Disk numbers/capacity were ambiguous in Setup.
+- Windows Setup log ends with requesting a reboot, not a final fatal install failure. Firmware BootOrder still starts with ubuntu (0004), then Windows Boot Manager (0000). This explains returning to GRUB instead of entering the next Windows phase.
+- Existing NVMe EFI Microsoft boot files and BCD were updated by Setup. Ubuntu EFI files still exist, Ubuntu root/home remain mounted normally, and HDD filesystem/partition remains present. The wrong Windows installation is dependent on the NVMe EFI. Do not treat it as the finished intended install.
+- EFI archive, firmware boot listing and private Setup logs saved on Toshiba under PC-rebuild-boot-diagnosis-20261013. No firmware boot-order changes or partition deletions were made during diagnosis. Dahua NTFS inspected read-only.
+- User chose guided Windows-PE disk isolation instead of physical disconnection. Next: collect fresh DiskPart model-to-number mapping, offline Dahua/Toshiba/NVMe while keeping Revenger and Ventoy online, refresh installer, install on empty Revenger. Never reuse old disk numbers. See WINDOWS-RETRY.md.
+- Ensure first restart boots the NEW Revenger Windows Boot Manager, not Ventoy and not the old NVMe entry. If necessary use firmware boot menu; confirm actual entry before changing defaults. Correct installation, continuation, own EFI and Windows desktop are still untested. Dahua cleanup for CachyOS follows successful Revenger boot.
