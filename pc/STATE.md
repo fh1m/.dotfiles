@@ -1,0 +1,62 @@
+# Verified checkpoint — 2026-10-13, Asia/Dhaka
+
+This is a preparation checkpoint, not proof that either new OS has been installed. A later agent must inspect the live machine and update this file.
+
+## Hardware
+
+- Ryzen 5 3600X, 6 cores/12 threads; Zen 2, x86-64-v3 supported, v4 unsupported.
+- ASUS TUF B450M-PLUS GAMING; BIOS 2202 dated 2020-07-14. No BIOS flash performed.
+- 16 GiB RAM, 2x8 GiB Corsair DDR4-3200 modules; firmware previously reported 2133 MT/s. DOCP not changed/tested.
+- ZOTAC GTX 1660 SUPER, Turing, 6 GiB VRAM. NVIDIA 580.159.03 worked in original Ubuntu; new OS drivers untested.
+- WD_BLACK SN7100 runs at motherboard PCIe 3.0 x4; device supports PCIe 4.0 x4. GPU supports PCIe 3.0 x16.
+- Realtek gigabit-capable Ethernet currently negotiated 100 Mbps. LG 1080p display offers approximately 75 Hz; current Ubuntu used 60 Hz.
+- Original Ubuntu 22.04.5, kernel 6.8.0-111. SVM was disabled, TPM not exposed, Secure Boot disabled. Firmware prerequisites must be checked before installation, not inferred from the PC being UEFI-capable.
+
+## Disk identities
+
+| Serial | Model | Physical bytes | Preparation state / role |
+|---|---|---:|---|
+| NBYC26A00A16934 | Dahua C800 SATA 256GB | 256060514304 | Empty GPT, no partitions; CachyOS target |
+| B2BNDC42100667 | Revenger SATA 256GB | 256060514304 | Empty GPT, no partitions; Windows target |
+| 497KBZVMS | Toshiba DT01ACA100 HDD | 1000204886016 | Existing ext4 data/backups preserved |
+| 252941800719 | WD_BLACK SN7100 NVMe | 1000204886016 | Original Ubuntu and old Windows preserved; divide last |
+
+Both SATA partition tables were cleared and both new empty GPTs passed `sgdisk --verify`. This was not a secure erase. Their old file trees are now accessed from the HDD backups. Revenger had stale GPT metadata with MBR; it was removed and its new GPT validated. Old partition tables and first-MiB images were saved on HDD; these are recovery metadata, not full disk images.
+
+Before/after NVMe and HDD partition-table JSON comparisons matched. Original Ubuntu root, home, EFI and swap remained on NVMe, with unchanged filesystem UUIDs. Its boot entry remained available; no boot-order modification was performed. Aria2 and its small dependencies were installed in Ubuntu at the user's request; no OS reinstall or system tuning was applied there.
+
+## Backups on Toshiba
+
+Filesystem UUID: `3b5d6396-a091-4aac-bb67-fc0e90da988b`. Current Ubuntu mount was `/mnt/rebuild-audit/toshiba`; other OSes must discover/mount the UUID.
+
+| Folder on HDD | Contents | Evidence / limits |
+|---|---|---|
+| PC-rebuild-SATA-backup-20261012-233516 | Dahua files; Revenger /home, root personal files, /media | Four size/timestamp/metadata checks passed; 32 sampled files matched SHA-256. Full content comparison waived by user. Cache/trash and old Linux system omitted. |
+| PC-rebuild-Ubuntu-personal-20261013-004137 | Current Ubuntu /home and root personal files | Copy completed 00:53. Live Codex/Chrome files changed during comparison; final sync needed before deleting Ubuntu. Cache/trash/media downloads omitted. |
+| PC-rebuild-Windows-personal-20261013-005314 | Windows Users incl. saves/settings, ProgramData, Cygwin home, inetpub | Completed 00:59. Games downloads/installations and mods omitted per user. One file had an NTFS timestamp earlier than ext4 supports; full SHA-256 matched, original time recorded. Other quick checks passed. |
+
+Windows Recovery-metadata additionally preserves selected original registry/DPAPI files for possible profile recovery; no credentials were extracted. This is private root-only backup material and is not in Git. Saved browser profiles do not guarantee that encrypted credentials transplant to a new Windows installation.
+
+About 127 GiB HDD free remained after these copies. Recheck space before further copies. Pre-existing HDD files were not fully validated; this HDD cannot back up all disks at full capacity. Important data only on that HDD needs a second physical copy after restoration. All internal copies share whole-PC disaster risks.
+
+## Installation media
+
+Ventoy USB serial `900039A575382714`, approximately 64 GB advertised. Existing USB files preserved; no Ventoy reinstall/format performed. Both ISOs and guides were copied into its `PC-rebuild/` folder. USB was synced and safely unmounted after completion.
+
+`media-verified.json` records the 02:13 checkpoint: both downloads AND both USB copies matched official SHA-256 values. No actual USB boot test performed yet. The desktop source files remain in `/home/fh1m/pc-rebuild/install-media`. ISOs are excluded from Git.
+
+## Next stages — not yet performed
+
+1. Firmware/media boot check; Windows install on isolated Revenger, own EFI.
+2. Windows independent boot and disk/encryption/power-state checks; Codex/Git setup.
+3. CachyOS on isolated Dahua, Limine, own 4 GiB EFI /boot, Btrfs; independent boot; Codex/Git setup.
+4. Reconnect all disks; verify visible Windows/CachyOS boot choices and original Ubuntu fallback; GPU/ROS and recovery checks.
+5. Preserve final changed Ubuntu files, restore critical data onto another disk, then consider offline NVMe replacement. Never use the installation checklist to wipe NVMe.
+
+## Stage log
+
+| Date | Machine | Stage | Result |
+|---|---|---|---|
+| 2026-10-13 | Original Ubuntu desktop | SATA/HDD/NVMe preparation, personal copies, media | Checkpoint above; new OS installs and boot tests pending |
+
+Append observed results here after installation. An unchecked item is pending, not passed.

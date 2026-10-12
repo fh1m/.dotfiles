@@ -1,0 +1,18 @@
+{
+  "completed": "2026-10-13T02:13:26.133438",
+  "usb_serial": "900039A575382714",
+  "images": [
+    {
+      "name": "cachyos-desktop-linux-260809.iso",
+      "size": 3188850688,
+      "sha256": "959f6577f45e25ee9fd8c220fd221b08e4ea79412c7315c0f922dd6d86d5e33c"
+    },
+    {
+      "name": "Windows11_Client_x64_en-gb_26300_9457.iso",
+      "size": 9061271552,
+      "sha256": "7e3f373bd3c2321b5d5125dfcf718dfbf1a0abc50a267118669951890df98a5d"
+    }
+  ],
+  "verification": "Both official ISO hashes and USB copy hashes matched",
+  "boot_test": "Not performed; requires reboot"
+}
