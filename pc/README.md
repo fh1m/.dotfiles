@@ -6,6 +6,8 @@ Follow this document in order from your laptop while installing the desktop. Bra
 
 Read [STATE.md](STATE.md) for the actual preparation evidence. Installation ISOs and USB copies are verified; installed OSes and boot behavior are not yet tested.
 
+**First-install incident:** Windows was applied to Dahua instead of Revenger. For the current retry, follow [WINDOWS-RETRY.md](WINDOWS-RETRY.md) and the updated [STATE.md](STATE.md) before the general checklist below.
+
 ## 1. Before shutting down Ubuntu
 
 - Keep this page open on the laptop. Give its Codex agent [NEXT-AGENT.md](NEXT-AGENT.md), identifying it as the **laptop guide**, not the desktop. It must not run this desktop disk plan against the laptop.
