@@ -1,0 +1,12 @@
+[Unit]
+Description=Den Deskflow input server
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/deskflow-core server --settings /home/fh1m/.local/state/den/deskflow/Deskflow.conf
+Restart=no
+
+[Install]
+WantedBy=graphical-session.target

@@ -217,3 +217,11 @@ hl.layer_rule({ name = "sensei-popup-soft-reveal", match = { namespace = "^wrayt
 
 -- Verified LG Full HD desktop mode; generic monitors retain preferred mode.
 hl.monitor({output="DP-3",mode="1920x1080@74.97",position="0x0",scale=1})
+
+-- Den input: genuine Deskflow portal shortcuts; independent local stop.
+hl.bind("CTRL + ALT + F11", hl.dsp.global("org.deskflow.deskflow:deskflow-hotkey-00000006-0000efc8"), { allow_input_capture = true })
+hl.bind("CTRL + ALT + F12", hl.dsp.global("org.deskflow.deskflow:deskflow-hotkey-00000006-0000efc9"), { allow_input_capture = true })
+hl.bind("CTRL + ALT + PAUSE", function()
+    hl.dispatch(hl.dsp.release_input_capture())
+    hl.dispatch(hl.dsp.exec_cmd("/home/fh1m/.local/bin/sensei-den-input stop"))
+end, { allow_input_capture = true })
