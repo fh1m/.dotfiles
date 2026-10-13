@@ -6,7 +6,7 @@ Follow this document in order from your laptop while installing the desktop. Bra
 
 Read [STATE.md](STATE.md) for the actual preparation evidence. Installation ISOs and USB copies are verified; installed OSes and boot behavior are not yet tested.
 
-**First-install incident:** Windows was applied to Dahua instead of Revenger. For the current retry, follow [WINDOWS-RETRY.md](WINDOWS-RETRY.md) and the updated [STATE.md](STATE.md) before the general checklist below.
+**Current Windows checkpoint:** Windows now runs on Revenger with its own EFI. Follow [WINDOWS-NEXT.md](WINDOWS-NEXT.md) for the restart/reconnect checks and safe entry into CachyOS installation; consult [STATE.md](STATE.md) for actual results. The earlier wrong-Dahua installation and recovery procedure remain documented in [WINDOWS-RETRY.md](WINDOWS-RETRY.md).
 
 ## 1. Before shutting down Ubuntu
 
