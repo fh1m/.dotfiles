@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+"""Describe the real desktop power backend; don't invent performance support."""
+import json, subprocess, sys
+from pathlib import Path
+from _sensei_machine import command
+try:
+    listing = command(['powerprofilesctl', 'list'])
+    supported = [name for name in ('power-saver', 'balanced', 'performance') if name + ':' in listing]
+    usable = bool(listing) and 'placeholder' not in listing
+    action = sys.argv[1] if len(sys.argv) > 1 else 'get'
+    if action == 'set':
+        name = sys.argv[2]
+        if not usable or name not in supported:
+            raise ValueError('The current CPU backend has no effective power-profile control; stock governor retained.')
+        subprocess.run(['powerprofilesctl', 'set', name], check=True)
+    name = command(['powerprofilesctl', 'get'], 'balanced')
+    data = {'name': name, 'backend': 'power-profiles-daemon' if usable else 'stock CPU governor',
+            'supported': supported if usable else [], 'hasPerformance': usable and 'performance' in supported,
+            'note': '' if usable else 'Firmware defaults · acpi-cpufreq/schedutil'}
+    path = Path.home()/'.config/hypr/power-state.json'
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp = path.with_suffix('.tmp');temp.write_text(json.dumps(data));temp.replace(path)
+    print(name if action == 'name' else json.dumps(data))
+except (ValueError, IndexError, subprocess.SubprocessError) as error:
+    print(json.dumps({'error': str(error)}));sys.exit(1)
