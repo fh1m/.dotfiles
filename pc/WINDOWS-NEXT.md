@@ -1,6 +1,6 @@
-﻿# Windows completion and CachyOS entry checkpoint
+# Windows completion and CachyOS entry checkpoint
 
-Use this together with STATE.md and VERIFY.md. Windows is installed on Revenger B2BNDC42100667 with its own system EFI. Read the latest stage log for checks that actually passed; this page describes the next procedure, not results.
+Use this together with STATE.md, VERIFY.md and the current CACHYOS-INSTALL.md checkpoints. Windows is installed on Revenger B2BNDC42100667 with its own system EFI. Read the latest stage log for checks that actually passed; this page describes the next procedure, not results.
 
 ## First restart: prove the isolated Windows boot
 
@@ -17,7 +17,7 @@ For the actual CachyOS installation, prefer Dahua as the only available INTERNAL
 
 ## Firmware and live-media photo checkpoint
 
-- Keep UEFI boot; disable CSM. Current Windows inspection found Secure Boot enabled. CachyOS's official installer guide requires Secure Boot disabled. Record the current settings, disable Secure Boot for the Linux installation after Revenger decryption is verified, and keep firmware TPM enabled. Do not clear TPM, erase keys, change SATA/AHCI mode, overclock or flash BIOS as an installation fix.
+- Keep UEFI boot; disable CSM. Latest pre-Linux admin inspection found Secure Boot disabled; user chose to keep it disabled. CachyOS's official installer guide requires Secure Boot disabled. Record the current settings and keep Secure Boot disabled for installation. Fresh checks report TPM absent; inspect the actual fTPM setting before restoring it, and do not clear/reset TPM. Do not clear TPM, erase keys, change SATA/AHCI mode, overclock or flash BIOS as an installation fix.
 - Boot the UEFI Ventoy entry, then PC-rebuild/cachyos-desktop-linux-260809.iso. Use the offered NVIDIA live option for the GTX 1660 SUPER.
 - Before changing partitions, collect photos/output of `test -d /sys/firmware/efi && echo 'UEFI boot'` and `lsblk -o NAME,SIZE,MODEL,SERIAL,FSTYPE,UUID,MOUNTPOINTS` from the actual desktop live session.
 - Verify Dahua C800 serial NBYC26A00A16934. It currently contains the WRONG Windows attempt from the historical incident; do not assume it is still empty. Only after reviewing the fresh identity and isolation may that Dahua installation be replaced for the already-authorized CachyOS stage. Do not use disk size alone to identify either 256GB SSD.
