@@ -1,0 +1,13 @@
+[Unit]
+Description=Den authenticated shared input client
+
+[Service]
+Type=simple
+Environment=XDG_SESSION_TYPE=wayland
+ExecStart=/usr/bin/deskflow-core client --settings %h/.local/state/den/input/deskflow/Deskflow.conf
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=yes
+
+# Intentionally manual until real input/recovery acceptance passes.

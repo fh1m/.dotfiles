@@ -1,0 +1,6 @@
+[Service]
+# Unprivileged filesystem sandboxing creates a namespace which cannot inspect
+# sibling app /proc/PID/exe. Keep caller verification and non-filesystem hardening.
+ProtectHome=no
+ProtectSystem=no
+PrivateTmp=no
