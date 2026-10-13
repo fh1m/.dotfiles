@@ -10,12 +10,12 @@ hl.monitor({
     output = "eDP-1",
     mode = "preferred",
     position = "0x0",
-    scale = 2.4,
+    scale = 2,
 })
 hl.monitor({
     output = "DP-2",
     mode = "3840x1100@60.02",
-    position = "0x900",
+    position = "0x1080",
     scale = 2,
 })
 

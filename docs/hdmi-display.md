@@ -6,12 +6,12 @@ The replacement HDMI cable resolved the USB-C monitor's missing signal. All four
 
 | Display | Output | Mode | Scale | Position | Bar |
 |---|---|---|---|---|---|
-| Laptop main | eDP-1 | 3840×2160, 60 Hz | 2.4× | 0, 0 | Top |
-| ScreenPad | DP-2 | 3840×1100, 60.02 Hz | 2× | 0, 900 | Bottom |
+| Laptop main | eDP-1 | 3840×2160, 60 Hz | 2× | 0, 0 | Top |
+| ScreenPad | DP-2 | 3840×1100, 60.02 Hz | 2× | 0, 1080 | Bottom |
 | Lower external | HDMI-A-1 | 1920×1080, 100 Hz | 1× | −1920, 0 | Bottom |
 | Upper external | DP-1 | 1920×1080, 100 Hz | 1× | −1920, −1080 | Top |
 
-The upper bar-edge shadow follows its top bar rather than leaving a stray horizontal line at the bottom. Both external bars inherit the main wallpaper and show only workspace navigation and their own display control. Upper popups open below its top bar; lower popups open above its bottom bar. External labels are Upper/Lower throughout the display controls. Small display-control text uses native, hinted rendering; external panels retain native pixels and integer scaling. The main scale is increased for comfortable laptop viewing; Iosevka terminal font is reduced slightly to 11.4 pt to balance the larger main-display scale; existing line and letter spacing are preserved.
+The upper bar-edge shadow follows its top bar rather than leaving a stray horizontal line at the bottom. Both external bars inherit the main wallpaper and show only workspace navigation and their own display control. Upper popups open below its top bar; lower popups open above its bottom bar. External labels are Upper/Lower throughout the display controls. Small display-control text uses native, hinted rendering; external panels retain native pixels and integer scaling. Main-display scaling is 2× as requested. Iosevka terminal font is 11.4 pt; existing line and letter spacing are preserved.
 
 Terminal/Web/Code/Study/Sim/Work are shared logical desktops with separate physical windows on each screen. Main uses 1–6, Lower 101–106, Upper 201–206. Selecting Code updates all three to 3/103/203, including their animated indicators. Misc remains ScreenPad workspace 7. Window lists, attention counts and overview geometry include all three desktop halves. The connector-slot registry reserves stable ranges for additional outputs; it is private cache state, not a published hardware inventory. Custom workspace names survive reconciliation.
 
