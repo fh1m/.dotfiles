@@ -19,3 +19,8 @@ Help me verify what I installed using VERIFY.md: correct root/C: target, indepen
 Then progress through the staged CachyOS workstation plan. Do not blindly apply ASUS laptop ScreenPad/hybrid-GPU settings, force x86-64-v4/znver4 onto my Zen 2 CPU, or disable security mitigations for guessed performance. Benchmark and check actual driver/runtime compatibility.
 
 Git is our shared handoff, not a live messaging connection. Fetch before changes; coordinate one writer at a time; update STATE.md with date, machine, observed evidence, failures and remaining work, then commit/push pc. Do not force-push or commit secrets, personal files, backups, browser/Codex profiles, raw logs, signed download links or ISOs. Existing authorization covers necessary reversible work and this rebuild; do not repeatedly ask generic permission. Do not infer readiness for destructive work from missing evidence.
+
+
+## Pending user Windows round trip (2026-10-14)
+
+User will reboot after the custom Linux / Windows / Misc menu checkpoint. Read BOOT-EXPERIENCE.md and latest STATE.md first. Root-private /var/lib/homie-boot-audit contains baseline and boot-time observations; compare the new boot with actual live compositor/NVIDIA/firmware and disk identities. Confirm the user actually booted Revenger Windows, checked C: identity and returned; do not assume it from reboot alone. Test-HomieWindows.ps1 provides a native read-only report. Physical theme/direction, one-time Windows action, native Windows portrait/Fast Startup/UTC and recovery kernel tests still need witnessed acceptance. BootNext was cleared at handoff. Paired input work remains paused; do not restart old injection fixtures against changed monitor geometry.

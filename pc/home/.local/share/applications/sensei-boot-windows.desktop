@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Restart into Windows
+Comment=Verify Revenger and boot Windows once; keep Linux as default
+Exec=/home/fh1m/.local/bin/sensei-boot-windows
+Icon=computer
+Terminal=false
+Categories=System;
+Actions=Cancel;
+
+[Desktop Action Cancel]
+Name=Cancel Windows next boot
+Exec=pkexec /usr/local/libexec/homie-boot-windows cancel

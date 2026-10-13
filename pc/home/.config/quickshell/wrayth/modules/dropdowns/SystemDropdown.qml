@@ -64,6 +64,8 @@ DropdownFrame {
                     ActionRow { implicitWidth: 268; label: "Processes"; detail: "Open btop"; glyph: "\uf201"; onActivated: root.launch(["/home/fh1m/.local/bin/sensei-terminal", "--title", "System-Monitor", "btop"]) }
                     ActionRow { implicitWidth: 268; label: "Lock"; detail: "Secure this session"; glyph: "\uf023"; onActivated: { ShellState.dropdown = ""; ShellState.locked = true; } }
                     ActionRow { implicitWidth: 268; label: "Power menu"; detail: "Suspend or shut down"; glyph: "\uf011"; onActivated: { ShellState.dropdown = ""; ShellState.openExclusive("power"); } }
+                    ActionRow { implicitWidth: 268; label: "Windows"; detail: "Restart once · Revenger"; glyph: "\uf17a"; onActivated: root.launch(["/home/fh1m/.local/bin/sensei-boot-windows"]) }
+                    ActionRow { implicitWidth: 268; label: "Choose OS"; detail: "Linux / Windows / Misc"; glyph: "\uf108"; onActivated: root.launch(["/home/fh1m/.local/bin/sensei-boot-menu"]) }
                 }
             }
             Text { width: parent.width; visible: (Power.error + ServicesControl.error).length > 0; text: Power.error || ServicesControl.error; color: Theme.widgetAccent; wrapMode: Text.WordWrap; font.family: Appearance.font.ui; font.pixelSize: 12 }

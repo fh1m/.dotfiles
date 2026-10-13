@@ -1,0 +1,11 @@
+#!/usr/bin/python3
+import subprocess
+
+if subprocess.run(["zenity", "--question", "--title=Homie · Choose OS",
+                   "--text=Save your work before restarting.\n\nShow the Linux / Windows / Misc menu for the next boot.",
+                   "--ok-label=Restart to menu", "--cancel-label=Stay here"]).returncode:
+    raise SystemExit(0)
+result = subprocess.run(["systemctl", "reboot", "--boot-loader-menu=60"], capture_output=True, text=True)
+if result.returncode:
+    subprocess.run(["zenity", "--error", "--title=Homie · Choose OS", "--text=" + (result.stderr or "Restart was not scheduled.")])
+    raise SystemExit(1)
