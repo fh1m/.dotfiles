@@ -83,7 +83,7 @@ DropdownFrame {
         }
         Column {id:systemPageEnter2Container;
             width: parent.width; spacing: 12; visible: ShellState.systemPage === 2
-            
+
             Row {spacing:8
                 ControlTile {label:"Containers";glyph:"\uf308";detail:"Docker / Distrobox";implicitWidth:278;implicitHeight:48;onActivated:ShellState.dropdown="docker"}
                 ControlTile {label:"Projects";glyph:"\uf07b";detail:"Search / resume";implicitWidth:278;implicitHeight:48;onActivated:root.launch(["/home/fh1m/.local/bin/sensei-terminal","--title","Project navigator","-e","/home/fh1m/.local/bin/sensei-project-picker"])}

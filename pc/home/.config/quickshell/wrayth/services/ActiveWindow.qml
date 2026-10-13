@@ -27,18 +27,20 @@ Singleton {
 
     // A window has to have real geometry before anything is placed against it.
     // An empty workspace falls back to the screen corner.
-    readonly property bool present: {
-        if (!ipc || !ipc.at || !ipc.size)
-            return false;
-        if (ipc.hidden)
-            return false;
-        return Boolean((ipc?.size?.[0] ?? 0) > 0 && (ipc?.size?.[1] ?? 0) > 0);
+    function geometry(index, dimension) {
+        const obj = ipc;
+        const values = obj ? obj[dimension] : null;
+        return values && values.length > index ? (Number(values[index]) || 0) : 0;
     }
-
-    readonly property int x: present ? (ipc?.at?.[0] ?? 0) : 0
-    readonly property int y: present ? (ipc?.at?.[1] ?? 0) : 0
-    readonly property int width: present ? (ipc?.size?.[0] ?? 0) : 0
-    readonly property int height: present ? (ipc?.size?.[1] ?? 0) : 0
+    readonly property bool present: {
+        const obj = ipc;
+        if (!obj || obj.hidden) return false;
+        return geometry(0, "size") > 0 && geometry(1, "size") > 0;
+    }
+    readonly property int x: geometry(0, "at")
+    readonly property int y: geometry(1, "at")
+    readonly property int width: geometry(0, "size")
+    readonly property int height: geometry(1, "size")
 
     // Read live rather than assumed: `general:border_size` is configurable and
     // is drawn *outside* the geometry `at`/`size` describe. Anything placed
