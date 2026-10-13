@@ -1,5 +1,5 @@
 # Sensei · fast daily terminal. Kitty remains available for the Wrayth deck.
-# Match the live Kitty palette, ZedMono metrics and opaque compositor profile.
+# Canonical Iosevka metrics; desktop glass remains enabled.
 [general]
 live_config_reload = true
 
@@ -9,7 +9,7 @@ TERM = "alacritty"
 [window]
 decorations = "None"
 opacity = 0.88
-padding = { x = 20, y = 12 }
+padding = { x = 14, y = 8 }
 dynamic_padding = true
 resize_increments = true
 title = "Sensei · Terminal"
@@ -20,13 +20,13 @@ history = 10000
 multiplier = 3
 
 [font]
-normal = { family = "JetBrainsMono Nerd Font Mono", style = "Regular" }
-bold = { family = "JetBrainsMono Nerd Font Mono", style = "Bold" }
-italic = { family = "JetBrainsMono Nerd Font Mono", style = "Italic" }
-bold_italic = { family = "JetBrainsMono Nerd Font Mono", style = "Bold Italic" }
-size = 12.0
-offset = { x = 0, y = 1 }
-glyph_offset = { x = 0, y = 0 }
+normal = { family = "Iosevka Nerd Font Mono", style = "Medium" }
+bold = { family = "Iosevka Nerd Font Mono", style = "Bold" }
+italic = { family = "Iosevka Nerd Font Mono", style = "Italic" }
+bold_italic = { family = "Iosevka Nerd Font Mono", style = "Bold Italic" }
+size = 11.8
+offset = { x = 1, y = 4 }
+glyph_offset = { x = 1, y = 2 }
 builtin_box_drawing = true
 
 [colors.primary]

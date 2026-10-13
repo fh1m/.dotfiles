@@ -4,6 +4,8 @@ After=graphical-session.target
 PartOf=graphical-session.target
 
 [Service]
+Environment=XDG_SESSION_TYPE=wayland
+Environment=XDG_CURRENT_DESKTOP=Hyprland
 Type=simple
 ExecStart=/usr/bin/deskflow-core server --settings /home/fh1m/.local/state/den/deskflow/Deskflow.conf
 Restart=no
