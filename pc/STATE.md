@@ -1,6 +1,6 @@
-# Verified checkpoint Ã¢â‚¬â€ 2026-10-13, Asia/Dhaka
+# Verified checkpoint - 2026-10-13, Asia/Dhaka
 
-Latest inspection: new Windows desktop on Revenger, 2026-10-13. Live checks confirm C: and the system EFI are on Revenger B2BNDC42100667, with only Revenger visible to Windows. The earlier Dahua incident below is historical. Restart/cold-boot tests, remaining Windows setup and later CachyOS installation are pending.
+Latest inspection: reconnected Windows desktop, 2026-10-13. All four internal drives are visible. C: and the active system EFI remain on Revenger B2BNDC42100667 after reboot. Toshiba and the existing WD_BLACK layout remain protected; Linux-side UUID, backup-content and NVMe hardware-serial verification are still pending. Ventoy is not currently detected.
 
 ## Hardware
 
@@ -17,7 +17,7 @@ Latest inspection: new Windows desktop on Revenger, 2026-10-13. Live checks conf
 | Serial | Model | Physical bytes | Preparation state / role |
 |---|---|---:|---|
 | NBYC26A00A16934 | Dahua C800 SATA 256GB | 256060514304 | First Windows attempt created 16 MiB reserved + NTFS on Dahua; still intended CachyOS target |
-| B2BNDC42100667 | Revenger SATA 256GB | 256060514304 | Empty GPT, no partitions; Windows target |
+| B2BNDC42100667 | Revenger SATA 256GB | 256060514304 | Windows 11 Pro installed, own EFI; reconnect boot verified |
 | 497KBZVMS | Toshiba DT01ACA100 HDD | 1000204886016 | Existing ext4 data/backups preserved |
 | 252941800719 | WD_BLACK SN7100 NVMe | 1000204886016 | Original Ubuntu and old Windows preserved; divide last |
 
@@ -45,7 +45,7 @@ Ventoy USB serial `900039A575382714`, approximately 64 GB advertised. Existing U
 
 `media-verified.json` records the 02:13 checkpoint: both downloads AND both USB copies matched official SHA-256 values. No actual USB boot test performed yet. The desktop source files remain in `/home/fh1m/pc-rebuild/install-media`. ISOs are excluded from Git.
 
-## Next stages Ã¢â‚¬â€ not yet performed
+## Historical preparation plan - follow the latest stage logs
 
 1. Firmware/media boot check; Windows install on isolated Revenger, own EFI.
 2. Windows independent boot and disk/encryption/power-state checks; Codex/Git setup.
@@ -61,7 +61,7 @@ Ventoy USB serial `900039A575382714`, approximately 64 GB advertised. Existing U
 
 Append observed results here after installation. An unchecked item is pending, not passed.
 
-## First Windows attempt Ã¢â‚¬â€ inspected 2026-10-13 around 03:01Ã¢â‚¬â€œ03:15 +06
+## First Windows attempt - inspected 2026-10-13 around 03:01-03:15 +06
 
 - Original Ubuntu desktop is running again. Dahua NBYC26A00A16934 now has a 16 MiB reserved partition and NTFS UUID B4BCF488BCF44700 containing the new Windows files. It has NO EFI partition. Revenger B2BNDC42100667 remains empty. Disk numbers/capacity were ambiguous in Setup.
 - Windows Setup log ends with requesting a reboot, not a final fatal install failure. Firmware BootOrder still starts with ubuntu (0004), then Windows Boot Manager (0000). This explains returning to GRUB instead of entering the next Windows phase.
@@ -111,3 +111,14 @@ Next user checkpoint: finish all running operations, restart Windows to complete
 Follow WINDOWS-NEXT.md before CachyOS. Reconfirm Dahua NBYC26A00A16934 from the actual Linux live session; it still contains the historical incorrect Windows attempt, so do not assume empty GPT. Review isolation and the final installer summary before replacing only Dahua. Planned Limine layout remains its own >=4096 MiB FAT32 /boot plus Btrfs root, Hyprland, stable repos and hardware-selected NVIDIA/v3 packages. Toshiba backups and Ubuntu on WD_BLACK remain protected. No NVMe conversion or operations on disconnected disks were performed.
 
 Private installer packages, diagnostic logs, recovery information and exported driver package remain outside Git under the user's pc-rebuild-audit directory. Boot-media hash/copy verification and Toshiba backup reinspection await reconnect/live Linux access.
+
+## Reconnected-drive checkpoint - Windows desktop inspected 2026-10-13
+
+- User reports reconnecting all internal drives. Windows boot time is 2026-10-13 06:18:19 +06:00. Live C: and system EFI still map to Revenger B2BNDC42100667 with all four internal drives online. This verifies the running post-reconnect Windows installation and system EFI identity, not an Ubuntu fallback boot or a separately witnessed isolated cold-boot test.
+- CURRENT Windows mapping (inspection only; rediscover after any reboot or OS change): disk 0 Dahua NBYC26A00A16934, D: wrong-attempt NTFS, 16 MiB reserved plus NTFS and no EFI; disk 1 Revenger B2BNDC42100667, C:, 200 MiB active EFI / 16 MiB reserved / Windows / 900 MiB recovery; disk 2 Toshiba 497KBZVMS, one Linux-type GPT partition with no Windows drive letter; disk 3 WD_BLACK SN7100 1TB, old NTFS Windows E:, plus existing EFI/reserved/two Linux-type partitions/swap (six GPT partitions in total).
+- Windows exposes WD_BLACK identifier E823_8FA6_BF53_0001_001B_448B_42A5_D1AA. and UniqueId eui.E8238FA6BF530001001B448B42A5D1AA rather than the Linux-recorded hardware serial 252941800719. Treat this as a cross-OS identifier discrepancy requiring Linux NVMe serial/UUID recheck; do not silently claim an exact serial match. The model, capacity and existing six-partition layout were observed. No operations were performed on this protected disk.
+- Toshiba's hardware serial matches the preservation records. Its Linux partition is present, but Windows cannot verify the ext4 UUID or read the backup folders natively. UUID 3b5d6396-a091-4aac-bb67-fc0e90da988b, backup folder presence, records, free space and sample restores must be inspected from original Ubuntu or the Linux live environment. Do not initialize/format it or install writable ext4 access tools as a shortcut.
+- The three personal preservation folders and the historical PC-rebuild-boot-diagnosis-20261013 archive stay on Toshiba. Original Ubuntu on WD_BLACK stays intact until both SATA OSes boot independently, the final changing Ubuntu files have been copied and checked, and important HDD-only files have a verified second physical copy. The eventual NVMe split (400 decimal GB NTFS, remaining roughly 600 decimal GB Btrfs) remains a later separate stage.
+- Ventoy USB was not detected by Get-Disk, Get-PhysicalDisk or Win32_DiskDrive at this inspection. Do not identify the existing USB Code 43 device as Ventoy without further evidence.
+- Post-reboot NVIDIA 617.42, Realtek LAN 1168.27.50.919 and audio 6.0.9700.1 device properties remain healthy/problem code 0; Ethernet is up at 1 Gbps. Hibernation and Fast Startup remain unavailable. The previously known unidentified USB descriptor error remains. The full pre-reboot health tests are recorded above; no destructive disk checks, drive-letter changes, mount operations or backup writes were made in this checkpoint.
+- Next: connect and identify Ventoy; verify media availability. For Linux backup inspection keep all protected disks unmodified and mount Toshiba read-only using the discovered matching UUID. For actual CachyOS installation isolate Dahua as the only available internal target, with Ventoy online, and recheck the exact model/serial from that live session. Windows offline-disk flags are not isolation across a Linux boot. Review the final partition summary before replacing only Dahua's wrong attempt. See WINDOWS-NEXT.md.
