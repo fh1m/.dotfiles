@@ -51,7 +51,7 @@ Singleton {
     readonly property var monitorIpc: mainMonitor
     readonly property var focusedMonitor: outputState.find(m=>m.focused) ?? mainMonitor
     function windowWorkspace(t){return t.lastIpcObject?.workspace?.id??t.workspace?.id;}
-    function logicalId(id):int {return id>=101&&id<=106?id-100:id;}
+    function logicalId(id):int {return id>100&&id<3300&&id%100>=1&&id%100<=6?id%100:id;}
     readonly property int activeId: logicalId(focusedMonitor?.activeWorkspace?.id ?? 1)
     readonly property string activeSpecial: focusedMonitor?.specialWorkspace?.name ?? ""
     readonly property bool special: activeSpecial.startsWith("special:")

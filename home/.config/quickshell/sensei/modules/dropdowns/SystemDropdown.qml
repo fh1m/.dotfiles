@@ -60,8 +60,8 @@ DropdownFrame {
                     ControlSlider { title: "ScreenPad"; glyph: "\uf26c"; level: RobotBench.data.brightness ?? 0; onEdited: percent => DisplayControls.setLevel("screenpad", percent) }
                     Repeater {model:ExternalDisplays.displays
                         Column {required property var modelData;width:parent.width
-                            ControlSlider {visible:modelData.ready;height:visible?implicitHeight:0;title:modelData.label+" · HDMI";glyph:"\uf26c";level:modelData.level??0;onEdited:percent=>ExternalDisplays.setLevel(modelData.output,percent)}
-                            Text {visible:!modelData.ready;width:parent.width;wrapMode:Text.Wrap;text:modelData.label+" · monitor brightness controls unavailable";color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:12}
+                            ControlSlider {visible:modelData.ready;height:visible?implicitHeight:0;title:(modelData.barEdge==="top"?"Upper":"Lower")+" · "+modelData.label;glyph:"\uf26c";level:modelData.level??0;onEdited:percent=>ExternalDisplays.setLevel(modelData.output,percent)}
+                            Text {visible:!modelData.ready;width:parent.width;wrapMode:Text.Wrap;text:(modelData.barEdge==="top"?"Upper":"Lower")+" · monitor brightness controls unavailable";color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:12}
                         }
                     }
                 }

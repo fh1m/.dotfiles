@@ -24,7 +24,7 @@ normal = { family = "Iosevka Nerd Font Mono", style = "Medium" }
 bold = { family = "Iosevka Nerd Font Mono", style = "Bold" }
 italic = { family = "Iosevka Nerd Font Mono", style = "Italic" }
 bold_italic = { family = "Iosevka Nerd Font Mono", style = "Bold Italic" }
-size = 11.8
+size = 11.4
 offset = { x = 1, y = 4 }
 # Center ink in the extra letter/line spacing at integer pixel positions.
 glyph_offset = { x = 1, y = 2 }

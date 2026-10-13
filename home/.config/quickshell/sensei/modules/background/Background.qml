@@ -28,7 +28,7 @@ Variants {
         Wallpaper {
             // The saved per-display choices arrive asynchronously. Never show
             // a bundled theme wallpaper in the gap before that file is read.
-            source: Wallpapers.loaded ? Wallpapers.displaySource((modelData?.name ?? "eDP-1")) : Wallpapers.startupSource((modelData?.name ?? "eDP-1").startsWith("HDMI-")||(modelData?.name ?? "eDP-1")==="SENSEI-HDMI-TEST"?"eDP-1":(modelData?.name ?? "eDP-1"))
+            source: Wallpapers.loaded ? Wallpapers.displaySource((modelData?.name ?? "eDP-1")) : Wallpapers.startupSource(ShellState.isExternalOutput(modelData?.name ?? "eDP-1")?"eDP-1":(modelData?.name ?? "eDP-1"))
             imageFillMode: Wallpapers.displayMode((modelData?.name ?? "eDP-1"))
             anchors.fill: parent
 

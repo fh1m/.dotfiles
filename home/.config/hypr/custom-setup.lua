@@ -10,17 +10,19 @@ hl.monitor({
     output = "eDP-1",
     mode = "preferred",
     position = "0x0",
-    scale = 2,
+    scale = 2.4,
 })
 hl.monitor({
     output = "DP-2",
     mode = "3840x1100@60.02",
-    position = "0x1080",
+    position = "0x900",
     scale = 2,
 })
 
 -- Any display attached to the NVIDIA HDMI port extends left at native mode.
-hl.monitor({output="HDMI-A-1",mode="preferred",position="auto-left",scale=1})
+hl.monitor({output="HDMI-A-1",mode="preferred",position="-1920x0",scale=1})
+-- USB-C external screen above the HDMI screen; helper refines advertised modes.
+hl.monitor({output="DP-1",mode="preferred",position="-1920x-1080",scale=1})
 
 -- Keep the motion, but do not spend Intel render time on blur or shadows.
 hl.config({

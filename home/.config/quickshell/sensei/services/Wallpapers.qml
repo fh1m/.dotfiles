@@ -37,8 +37,8 @@ Singleton {
     function syncStartup(output: string, path: string): void {
         Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-startup-wallpaper`,path||"",output]);
     }
-    function displaySource(output: string): url { const name=(output.startsWith("HDMI-")||output==="SENSEI-HDMI-TEST")?"eDP-1":output; const path=displays[name]?.file; return path ? Paths.url(path) : displayed; }
-    function displayMode(output: string): int { const name=(output.startsWith("HDMI-")||output==="SENSEI-HDMI-TEST")?"eDP-1":output;return displays[name]?.mode ?? Image.PreserveAspectCrop; }
+    function displaySource(output: string): url { const name=ShellState.isExternalOutput(output)?"eDP-1":output; const path=displays[name]?.file; return path ? Paths.url(path) : displayed; }
+    function displayMode(output: string): int { const name=ShellState.isExternalOutput(output)?"eDP-1":output;return displays[name]?.mode ?? Image.PreserveAspectCrop; }
     function updatePalette(): void { Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-palette`,String(displaySource("eDP-1")).replace(/^file:\/\//,"")]); }
     onLoadedChanged: if (loaded) updatePalette()
     onDisplayedChanged: if (loaded && !displays["eDP-1"]?.file) updatePalette()

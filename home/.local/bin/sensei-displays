@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Event-driven HDMI layout, DDC brightness and a shared workspace pool."""
+"""Event-driven external-display layout, DDC brightness and a shared workspace pool."""
 import argparse
 import fcntl
 import hashlib
@@ -24,7 +24,40 @@ def monitors():return json.loads(run(['hyprctl','monitors','-j']))
 def known_workspaces():return json.loads(run(['hyprctl','workspaces','-j']))
 def clients():return json.loads(run(['hyprctl','clients','-j']))
 def dispatch(expression):run(['hyprctl','dispatch',expression])
-def external(name):return name.startswith('HDMI-') or name=='SENSEI-HDMI-TEST'
+def external(name):
+    return name != 'DP-2' and (name.startswith(('HDMI-','DP-','DVI-')) or name in ('SENSEI-HDMI-TEST','SENSEI-UPPER-TEST'))
+
+
+def workspace_slots(outputs=None):
+    # Stable connector slots survive unplug/replug and never share workspace IDs.
+    result={'HDMI-A-1':1,'DP-1':2}
+    path=STATE/'workspace-slots.json'
+    if path.exists():
+        saved=json.loads(path.read_text())
+        if not isinstance(saved,dict) or any(not external(k) or not isinstance(v,int) or not 1<=v<=32 for k,v in saved.items()) or len(set(saved.values()))!=len(saved):
+            raise ValueError('Invalid display workspace registry; existing windows preserved')
+        result=saved
+    changed=False
+    for monitor in outputs or []:
+        name=monitor['name']
+        if not external(name) or name in result:continue
+        preferred=1 if name=='SENSEI-HDMI-TEST' else 2 if name=='SENSEI-UPPER-TEST' else None
+        active={m['name'] for m in outputs}
+        used={v for k,v in result.items() if k in active} if preferred else set(result.values())
+        slot=preferred if preferred and preferred not in used else next((n for n in range(1,33) if n not in set(result.values())),None)
+        if slot is None:raise ValueError('No free display workspace slot')
+        # Headless acceptance outputs are temporary aliases, never persisted.
+        result[name]=slot
+        if not name.startswith('SENSEI-'):changed=True
+    if changed:
+        STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+        saved={k:v for k,v in result.items() if not k.startswith('SENSEI-')}
+        temp=path.with_suffix('.tmp');temp.write_text(json.dumps(saved));temp.chmod(0o600);temp.replace(path)
+    return result
+
+
+def bar_edge(output):return 'top' if output in ('DP-1','SENSEI-UPPER-TEST') or workspace_slots().get(output,1)>1 else 'bottom'
+
 def selector(name):
     if not re.fullmatch(r'[A-Za-z0-9_-]+',name):raise ValueError('Invalid output name')
     return json.dumps(name)
@@ -32,10 +65,12 @@ def selector(name):
 
 def connected():
     result={}
-    for node in DRM.glob('card*-HDMI-*'):
+    for node in DRM.glob('card*-*'):
         try:
             if (node/'status').read_text().strip()!='connected':continue
-            name=re.sub(r'^card\d+-','',node.name);edid=(node/'edid').read_bytes()
+            name=re.sub(r'^card\d+-','',node.name)
+            if not external(name):continue
+            edid=(node/'edid').read_bytes()
             result[name]={'id':hashlib.sha256(edid).hexdigest(),'label':name}
             for start in (54,72,90,108):
                 block=edid[start:start+18]
@@ -51,9 +86,9 @@ def ddc_devices(text):
             if record.get('valid') and 'output' in record and 'bus' in record:devices[record['output']]=record['bus']
             record={'valid':line.startswith('Display ')}
         bus=re.search(r'I2C bus:\s+/dev/i2c-(\d+)',line)
-        output=re.search(r'DRM connector:\s+card\d+-(HDMI-[A-Za-z0-9_-]+)',line)
+        output=re.search(r'DRM connector:\s+card\d+-((?:HDMI|DP|DVI)-[A-Za-z0-9_-]+)',line)
         if bus:record['bus']=int(bus[1])
-        if output:record['output']=output[1]
+        if output and external(output[1]):record['output']=output[1]
     return devices
 
 
@@ -88,14 +123,20 @@ def optimal_mode(monitor):
 
 
 def configure(outputs):
-    for monitor in outputs:
-        if not external(monitor['name']):continue
+    selected=sorted((m for m in outputs if external(m['name'])),key=lambda m:(m['name']!='HDMI-A-1',m['name']))
+    lower=None
+    for monitor in selected:
         mode,width,height,rate=optimal_mode(monitor)
         scale=2 if width>=3200 and height>=1800 else 1
-        logical_width=round((height if monitor.get('transform',0)%2 else width)/scale)
+        rotated=monitor.get('transform',0)%2
+        logical_width=round((height if rotated else width)/scale)
+        logical_height=round((width if rotated else height)/scale)
+        if lower is None:x,y=-logical_width,0
+        else:x,y=lower[0]+round((lower[2]-logical_width)/2),lower[1]-logical_height
+        lower=(x,y,logical_width,logical_height)
         mode_changed=(width!=monitor['width'] or height!=monitor['height'] or abs(rate-monitor.get('refreshRate',rate))>.1)
-        if mode_changed or monitor.get('scale',1)!=scale or monitor.get('x')!=-logical_width or monitor.get('y')!=0:
-            run(['hyprctl','eval','hl.monitor({output='+selector(monitor['name'])+',mode='+json.dumps(mode)+',position="'+str(-logical_width)+'x0",scale='+str(scale)+'})'])
+        if mode_changed or monitor.get('scale',1)!=scale or monitor.get('x')!=x or monitor.get('y')!=y:
+            run(['hyprctl','eval','hl.monitor({output='+selector(monitor['name'])+',mode='+json.dumps(mode)+',position="'+str(x)+'x'+str(y)+'",scale='+str(scale)+'})'])
 
 
 def sync(layout=True,notify=True):
@@ -113,9 +154,9 @@ def sync(layout=True,notify=True):
     if physical and changed:
         try:buses=ddc_devices(run(['ddcutil','detect','--brief'],timeout=20))
         except (OSError,subprocess.SubprocessError):buses={}
-    data={'displays':[],'session':os.environ.get('HYPRLAND_INSTANCE_SIGNATURE',''),'outputs':[m['name'] for m in outputs if external(m['name'])]}
+    data={'workspaceSlots':workspace_slots(),'displays':[],'session':os.environ.get('HYPRLAND_INSTANCE_SIGNATURE',''),'outputs':[m['name'] for m in outputs if external(m['name'])]}
     for name,record in physical.items():
-        record=dict(record,output=name,bus=buses.get(name),ready=False,active=name in data['outputs'])
+        record=dict(record,output=name,bus=buses.get(name),ready=False,active=name in data['outputs'],barEdge=bar_edge(name))
         monitor=next((m for m in outputs if m['name']==name),None)
         if monitor:
             record.update(width=monitor['width'],height=monitor['height'],refresh=monitor.get('refreshRate',60),scale=monitor.get('scale',1),format=monitor.get('currentFormat','Unknown'))
@@ -129,7 +170,7 @@ def sync(layout=True,notify=True):
         after=set(data['outputs'])
         for name in sorted(after-before):
             label=physical.get(name,{}).get('label',name)
-            subprocess.run(['notify-send','-a','Sensei','-i','video-display','Display connected',label+' · left of main display · shared workspaces'],check=False)
+            subprocess.run(['notify-send','-a','Sensei','-i','video-display','Display connected',label+(' · above HDMI display' if bar_edge(name)=='top' and 'HDMI-A-1' in after else ' · left of main display')+' · shared workspaces'],check=False)
         for name in sorted(before-after):
             subprocess.run(['notify-send','-a','Sensei','-i','video-display','Display disconnected',name+' · workspaces returned to the remaining displays'],check=False)
     write_state(data);return data
@@ -149,14 +190,13 @@ def set_brightness(output,percent):
     write_state(data);return data
 
 
-# Hyprland gives each physical workspace one monitor. Pair regular workspaces
-# 1..6 with 101..106 to present one logical desktop spanning both displays.
+# Each output owns a physical half; all halves form the same logical desktop.
 def logical(number):
-    return number-100 if number in range(101,107) else number
+    return number%100 if 100<number<3300 and number%100 in range(1,7) else number
 
 
-def physical(number,output):
-    return number+100 if external(output) and number in range(1,7) else number
+def physical(number,output,slots=None):
+    return number+100*(slots or workspace_slots()).get(output,1) if external(output) and number in range(1,7) else number
 
 
 def main_display(outputs):
@@ -178,9 +218,10 @@ def workspace(number,output=None):
     joined=[m for m in outputs if external(m['name']) or (main and m['name']==main['name'])]
     if not joined:joined=[target]
     existing={w['id']:w for w in known_workspaces()}
+    slots=workspace_slots(joined)
     actions=[]
     for monitor in joined:
-        output_name=monitor['name'];wid=physical(number,output_name)
+        output_name=monitor['name'];wid=physical(number,output_name,slots)
         if monitor.get('activeWorkspace',{}).get('id')==wid and not monitor.get('specialWorkspace',{}).get('name'):continue
         if wid in existing and existing[wid].get('monitor')!=output_name:
             actions.append('hl.dsp.workspace.move({workspace="'+str(wid)+'",monitor='+selector(output_name)+'})')
@@ -198,32 +239,37 @@ def workspace(number,output=None):
 def reconcile():
     outputs=monitors();main=main_display(outputs)
     if not main:return
-    # Distinct physical names avoid ambiguous workspace caches in desktop clients.
-    # Custom user names are preserved; only our former duplicate defaults migrate.
-    for ws in known_workspaces():
-        wid=ws['id']
-        if wid in range(101,107) and ws.get('name')==WORKSPACE_NAMES[wid-101]:
-            dispatch('hl.dsp.workspace.rename({workspace="'+str(wid)+'",name='+json.dumps(WORKSPACE_NAMES[wid-101]+' · External')+'})')
+    slots=workspace_slots(outputs)
+    attached={slots[m['name']] for m in outputs if external(m['name'])}
+    records=known_workspaces()
+    for ws in records:
+        wid=ws['id'];subject=logical(wid)
+        if subject!=wid and ws.get('name') in (WORKSPACE_NAMES[subject-1],WORKSPACE_NAMES[subject-1]+' · External'):
+            suffix='Lower' if wid//100==1 else 'Upper' if wid//100==2 else 'External '+str(wid//100)
+            dispatch('hl.dsp.workspace.rename({workspace="'+str(wid)+'",name='+json.dumps(WORKSPACE_NAMES[subject-1]+' · '+suffix,ensure_ascii=False)+'})')
     by_id={m['id']:m for m in outputs}
-    attached=any(external(m['name']) for m in outputs)
-    # Adopt existing windows without restarting them. On unplug, recover the
-    # external half into the matching main workspace instead of leaving an
-    # invisible second set of numbered workspaces behind.
+    previous=set(read_state().get('outputs',[]))
+    frontier=logical(main.get('activeWorkspace',{}).get('id',1))
+    if frontier not in range(1,7):frontier=1
     for window in clients():
-        wid=window.get('workspace',{}).get('id',0)
-        monitor=by_id.get(window.get('monitor'))
-        destination=None
-        if attached and monitor and external(monitor['name']) and wid in range(1,7):destination=wid+100
-        elif not attached and wid in range(101,107):destination=wid-100
+        wid=window.get('workspace',{}).get('id',0);subject=logical(wid)
+        monitor=by_id.get(window.get('monitor'));destination=None
+        if monitor and external(monitor['name']) and subject in range(1,7):
+            expected=physical(subject,monitor['name'],slots)
+            if wid!=expected:destination=expected
+        elif subject!=wid and (wid//100 not in attached or (monitor and monitor['name']==main['name'])):
+            destination=subject
+        elif monitor and external(monitor['name']) and monitor['name'] not in previous and wid>7 and subject==wid and window.get('workspace',{}).get('name')==str(wid):
+            destination=physical(frontier,monitor['name'],slots)
         if destination is not None:
             dispatch('hl.dsp.window.move({window='+json.dumps('address:'+window['address'])+',workspace="'+str(destination)+'",follow=false})')
     outputs=monitors();main=main_display(outputs)
     focused=next((m for m in outputs if m.get('focused')),main)
     origin=focused if external(focused['name']) or focused['name']==main['name'] else main
     number=logical(origin.get('activeWorkspace',{}).get('id',1))
-    if number not in range(1,7):number=1
+    if number not in range(1,7):number=frontier
     joined=[m for m in outputs if external(m['name']) or m['name']==main['name']]
-    if any(m['activeWorkspace']['id']!=physical(number,m['name']) for m in joined):
+    if any(m['activeWorkspace']['id']!=physical(number,m['name'],slots) for m in joined):
         workspace(number,origin['name'])
         if focused['name']!=origin['name']:dispatch('hl.dsp.focus({monitor='+selector(focused['name'])+'})')
 

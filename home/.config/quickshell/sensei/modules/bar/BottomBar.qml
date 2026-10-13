@@ -15,8 +15,12 @@ Variants {
     PanelWindow {
         id: bar
         property string outputName: ""
-        Component.onCompleted: {outputName=modelData.name;if(outputName==="DP-2")ShellState.bottomBarWindow = bar;ShellState.registerBar(outputName+":bottom",bar);}
-        Component.onDestruction: {if (ShellState.bottomBarWindow === bar) ShellState.bottomBarWindow = null;ShellState.registerBar(outputName+":bottom",null);}
+        readonly property bool topEdge: external && ShellState.externalBarEdge(outputName)==="top"
+        property string registration: ""
+        function registerEdge():void {if(registration)ShellState.registerBar(registration,null);registration=outputName+(topEdge?":top":":bottom");ShellState.registerBar(registration,bar);}
+        onTopEdgeChanged: if(outputName)registerEdge()
+        Component.onCompleted: {outputName=modelData.name;if(outputName==="DP-2")ShellState.bottomBarWindow = bar;registerEdge();}
+        Component.onDestruction: {if (ShellState.bottomBarWindow === bar) ShellState.bottomBarWindow = null;ShellState.registerBar(registration,null);}
         required property ShellScreen modelData
         IpcHandler {target:"bar-controls-"+bar.outputName;function expand(side:string,value:string):void {if(side==="left")bar.archiveOpen=value==="on";else if(side==="right")bar.machineOpen=value==="on";}function state():string {return JSON.stringify({left:bar.archiveOpen,right:bar.machineOpen});}}
         readonly property bool external: ShellState.externalScreens.some(s=>s.name===outputName)
@@ -28,7 +32,7 @@ Variants {
         implicitHeight: Appearance.metrics.barHeight
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "sensei-bar"
-        anchors { bottom: true; left: true; right: true }
+        anchors { top: bar.topEdge; bottom: !bar.topEdge; left: true; right: true }
         Rectangle { anchors.fill: parent; color: Theme.barBg }
         Row {
             id: meters

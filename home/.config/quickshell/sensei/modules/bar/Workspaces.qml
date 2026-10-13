@@ -11,7 +11,7 @@ Item {
     id: root
     property string output:""
     property bool compact:false
-    readonly property bool external: output.startsWith("HDMI-") || output === "SENSEI-HDMI-TEST"
+    readonly property bool external: ShellState.isExternalOutput(output)
     readonly property var monitorSlots:Spaces.slotsFor(output)
 
     // The bar draws the line under these, so it needs their pitch and which one

@@ -105,10 +105,10 @@ class ExternalDisplays(unittest.TestCase):
 
     def test_duplicate_default_names_migrate_but_custom_names_survive(self):
         m=module();outputs=[screen('eDP-1',1),screen('HDMI-A-1',101,True)]
-        records=[{'id':101,'name':'Terminal'},{'id':103,'name':'My research'}]
+        records=[{'id':101,'name':'Terminal · External'},{'id':103,'name':'My research'}]
         with patch.object(m,'monitors',return_value=outputs),patch.object(m,'clients',return_value=[]),patch.object(m,'known_workspaces',return_value=records),patch.object(m,'dispatch') as dsp:
             m.reconcile();dsp.assert_called_once()
-            self.assertIn('workspace="101"',dsp.call_args.args[0]);self.assertIn('External',dsp.call_args.args[0])
+            self.assertIn('workspace="101"',dsp.call_args.args[0]);self.assertIn('Terminal · Lower',dsp.call_args.args[0]);self.assertNotIn('\\u00b7',dsp.call_args.args[0])
 
     def test_workspace_move_keeps_window_on_its_current_display(self):
         m=module();outputs=[screen('eDP-1',1),screen('HDMI-A-1',101,True)]
@@ -159,6 +159,59 @@ class ExternalDisplays(unittest.TestCase):
             with self.assertRaises(ValueError):m.workspace(1,'HDMI-A-1')
             with self.assertRaises(ValueError):m.workspace(8)
             dsp.assert_not_called()
+
+    def test_three_outputs_switch_distinct_halves_in_one_transaction(self):
+        m=module();outputs=[screen('eDP-1',1),screen('HDMI-A-1',101),screen('DP-1',201,True)]
+        with patch.object(m,'monitors',return_value=outputs),patch.object(m,'known_workspaces',return_value=[]),patch.object(m,'dispatch') as change:
+            m.workspace(3,'DP-1');command=change.call_args.args[0]
+            for wid in (3,103,203):self.assertIn('workspace="'+str(wid)+'"',command)
+            self.assertTrue(command.endswith('return hl.dsp.focus({monitor="DP-1"}) end)()'))
+            change.assert_called_once()
+
+    def test_upper_monitor_stack_selects_supported_100hz_and_never_overlaps(self):
+        m=module();lower=screen('HDMI-A-1',101);upper=screen('DP-1',201)
+        lower.update(refreshRate=100,availableModes=['1920x1080@100.00Hz'])
+        upper.update(x=1920,refreshRate=60,availableModes=['1920x1080@60.00Hz','1920x1080@100.00Hz'])
+        with patch.object(m,'run') as run:
+            m.configure([upper,lower]);run.assert_called_once()
+            expression=run.call_args.args[0][-1]
+            self.assertIn('output="DP-1"',expression);self.assertIn('position="-1920x-1080"',expression);self.assertIn('mode="1920x1080@100"',expression)
+            upper.update(x=-1920,y=-1080,refreshRate=100)
+            run.reset_mock();m.configure([upper,lower]);run.assert_not_called()
+
+    def test_unplug_only_upper_recovers_its_windows_and_keeps_hdmi_windows(self):
+        m=module();outputs=[screen('eDP-1',1),screen('HDMI-A-1',101),screen('DP-2',7)]
+        windows=[{'address':'upper','workspace':{'id':203},'monitor':0},{'address':'lower','workspace':{'id':103},'monitor':2}]
+        with patch.object(m,'monitors',return_value=outputs),patch.object(m,'known_workspaces',return_value=[]),patch.object(m,'clients',return_value=windows),patch.object(m,'dispatch') as change:
+            m.reconcile();change.assert_called_once_with('hl.dsp.window.move({window="address:upper",workspace="3",follow=false})')
+
+    def test_transfer_between_external_outputs_preserves_logical_subject(self):
+        m=module();outputs=[screen('eDP-1',3),screen('HDMI-A-1',103),screen('DP-1',203)]
+        windows=[{'address':'moved','workspace':{'id':103},'monitor':3}]
+        with patch.object(m,'monitors',return_value=outputs),patch.object(m,'known_workspaces',return_value=[]),patch.object(m,'clients',return_value=windows),patch.object(m,'dispatch') as change:
+            m.reconcile();change.assert_called_once_with('hl.dsp.window.move({window="address:moved",workspace="203",follow=false})')
+
+    def test_new_default_workspace_adoption_keeps_current_frontier(self):
+        m=module();outputs=[screen('eDP-1',3),screen('HDMI-A-1',103),screen('DP-1',8,True)]
+        windows=[{'address':'new','workspace':{'id':8,'name':'8'},'monitor':3}]
+        with patch.object(m,'read_state',return_value={'outputs':['HDMI-A-1']}),patch.object(m,'monitors',return_value=outputs),patch.object(m,'known_workspaces',return_value=[]),patch.object(m,'clients',return_value=windows),patch.object(m,'dispatch') as move,patch.object(m,'workspace') as select:
+            m.reconcile();self.assertIn('workspace="203"',move.call_args.args[0]);select.assert_called_once_with(3,'DP-1')
+
+    def test_registry_keeps_new_connector_slot_across_disconnect(self):
+        m=module()
+        with tempfile.TemporaryDirectory() as tmp,patch.object(m,'STATE',Path(tmp)):
+            slots=m.workspace_slots([screen('HDMI-A-2',301)])
+            self.assertEqual(slots['HDMI-A-2'],3)
+            self.assertEqual(m.workspace_slots([])['HDMI-A-2'],3)
+            self.assertEqual(m.physical(2,'HDMI-A-2'),302)
+            self.assertEqual(m.logical(302),2)
+            self.assertEqual(m.physical(2,'DP-1'),202)
+
+    def test_dp_brightness_is_discovered_without_treating_screenpad_as_external(self):
+        m=module();raw='Display 1\n I2C bus: /dev/i2c-1\n DRM connector: card2-HDMI-A-1\nDisplay 2\n I2C bus: /dev/i2c-7\n DRM connector: card1-DP-1\nDisplay 3\n I2C bus: /dev/i2c-8\n DRM connector: card1-DP-2\n'
+        self.assertEqual(m.ddc_devices(raw),{'HDMI-A-1':1,'DP-1':7})
+        self.assertFalse(m.external('DP-2'));self.assertTrue(m.external('DP-1'))
+        self.assertEqual(m.bar_edge('DP-1'),'top')
 
 
 if __name__=='__main__':unittest.main()

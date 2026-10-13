@@ -1,4 +1,28 @@
-# HDMI on the ZenBook
+# Displays on the ZenBook
+
+## Current four-display setup — 14 October
+
+The replacement HDMI cable resolved the USB-C monitor's missing signal. All four physical panels are enabled. Current layout (coordinates are logical pixels):
+
+| Display | Output | Mode | Scale | Position | Bar |
+|---|---|---|---|---|---|
+| Laptop main | eDP-1 | 3840×2160, 60 Hz | 2.4× | 0, 0 | Top |
+| ScreenPad | DP-2 | 3840×1100, 60.02 Hz | 2× | 0, 900 | Bottom |
+| Lower external | HDMI-A-1 | 1920×1080, 100 Hz | 1× | −1920, 0 | Bottom |
+| Upper external | DP-1 | 1920×1080, 100 Hz | 1× | −1920, −1080 | Top |
+
+The upper bar-edge shadow follows its top bar rather than leaving a stray horizontal line at the bottom. Both external bars inherit the main wallpaper and show only workspace navigation and their own display control. Upper popups open below its top bar; lower popups open above its bottom bar. External labels are Upper/Lower throughout the display controls. Small display-control text uses native, hinted rendering; external panels retain native pixels and integer scaling. The main scale is increased for comfortable laptop viewing; Iosevka terminal font is reduced slightly to 11.4 pt to balance the larger main-display scale; existing line and letter spacing are preserved.
+
+Terminal/Web/Code/Study/Sim/Work are shared logical desktops with separate physical windows on each screen. Main uses 1–6, Lower 101–106, Upper 201–206. Selecting Code updates all three to 3/103/203, including their animated indicators. Misc remains ScreenPad workspace 7. Window lists, attention counts and overview geometry include all three desktop halves. The connector-slot registry reserves stable ranges for additional outputs; it is private cache state, not a published hardware inventory. Custom workspace names survive reconciliation.
+
+Discovery is event-driven and debounced. Reload/startup rules avoid `auto-left` relocating the lower screen beyond the upper screen. The helper then selects the highest advertised resolution and refresh without custom timings. Losing one external recovers its windows to their matching main workspace without disturbing the other external. This behavior is covered by disposable regression tests; a physical unplug/replug was not performed during final acceptance.
+
+**Brightness limitation:** Lower exposes working DDC on this connection. Upper's USB-C adapter path returns `EREMOTEIO` for VCP 0x10, so its bar says **Monitor keys** and its panel explains the limitation. No software dimming is substituted for hardware brightness. Use that monitor's physical controls unless a different adapter exposes DDC.
+
+Validation: all 250 Python tests passed, including 27 focused display tests. Live checks verified synchronized workspace selection from the upper output, all three rail indicators, moving a disposable Alacritty window through Upper → Lower → Main, correctly placed System/display popups, wallpaper inheritance, 100 Hz modes, main scaling and no Hyprland configuration errors. Private screenshots were inspected and excluded from Git. Existing user windows and focus were restored. Backups reside under `~/.local/state/dotfiles-backups/usb-c-display-*`.
+
+The older sections below are the HDMI investigation history, not the current monitor arrangement.
+
 
 **Resolved on 12 October:** physical HDMI output is confirmed by the owner, with 1920×1080 at 74.973 Hz, Intel as primary renderer and NVIDIA driving HDMI. The sections below retain the investigation history; the final acceptance section records the working state.
 

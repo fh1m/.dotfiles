@@ -29,7 +29,9 @@ Singleton {
         return main ? [main] : screens.slice(0, 1);
     }
 
-    readonly property var externalScreens: screens.filter(s => s.name.startsWith("HDMI-") || s.name === "SENSEI-HDMI-TEST")
+    function isExternalOutput(name:string):bool {return name!=="DP-2"&&(name.startsWith("HDMI-")||name.startsWith("DP-")||name.startsWith("DVI-")||name==="SENSEI-HDMI-TEST"||name==="SENSEI-UPPER-TEST");}
+    function externalBarEdge(name:string):string {return ExternalDisplays.display(name)?.barEdge??((name==="DP-1"||name==="SENSEI-UPPER-TEST")?"top":"bottom");}
+    readonly property var externalScreens: screens.filter(s => isExternalOutput(s.name))
     readonly property var bottomBarScreens: screens.filter(s => s.name === "DP-2" || externalScreens.some(e=>e.name===s.name))
     property string dropdownOriginScreen: ""
     property var barWindows: ({})

@@ -25,7 +25,7 @@ Variants {
         // Keep-off-the-edge margin, and the gap below the bar.
         readonly property real edge: 12
         readonly property real gap: 8
-        readonly property bool bottomPanel: ShellState.externalScreens.some(s=>s.name===modelData?.name) || current === "external-display" || current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis"
+        readonly property bool bottomPanel: ShellState.isExternalOutput(modelData?.name??"") ? ShellState.externalBarEdge(modelData?.name??"")==="bottom" : current === "external-display" || current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis"
         readonly property real surfaceInset: bottomPanel ? 0 : 6
 
         // Which panel the loader holds, and where the surface sits. Both lag
@@ -108,7 +108,7 @@ Variants {
             left: true
         }
 
-        margins.top: (current === "calendar" || current === "weather") ? Appearance.metrics.barHeight + gap - surfaceInset : (popup.bottomPanel) ? 0 : gap
+        margins.top: (current === "calendar" || current === "weather" || (ShellState.isExternalOutput(modelData?.name??"") && !bottomPanel)) ? Appearance.metrics.barHeight + gap - surfaceInset : (popup.bottomPanel) ? 0 : gap
         margins.bottom: (popup.bottomPanel) ? gap : 0
         // Under the readout that opened it, pulled back in if that would hang
         // the panel off the right edge. Both windows share an origin, so the

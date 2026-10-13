@@ -20,8 +20,8 @@ Item {
     id: root
 
     property string output: ""
-    readonly property bool external: (output || Spaces.focusedMonitor?.name || "").startsWith("HDMI-")
-    readonly property string modeText: external ? "\uf26c External" : Spaces.modeGlyph + " " + Spaces.pageLabel
+    readonly property bool external: ShellState.isExternalOutput(output || Spaces.focusedMonitor?.name || "")
+    readonly property string modeText: external ? (ShellState.externalBarEdge(output||Spaces.focusedMonitor?.name||"")==="top"?"Upper":"Lower") : Spaces.modeGlyph + " " + Spaces.pageLabel
 
     // Five normal pages covers workspaces 1 to 25, and one more for the
     // special page. Beyond that the pips stop being countable at a glance
@@ -51,13 +51,16 @@ Item {
 
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: widest.advanceWidth
+        implicitWidth: widest.advanceWidth + (root.external ? 28 : 0)
         implicitHeight: label.implicitHeight
+
+        InstrumentIcon { visible:root.external;anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter;kind:"monitor";ink:Theme.dim }
 
         NrLabel {
             id: label
 
             anchors.left: parent.left
+            anchors.leftMargin: root.external ? 28 : 0
             anchors.verticalCenter: parent.verticalCenter
             pixelSize: root.external ? 12 : Appearance.size.label
             tracked: !root.external
