@@ -33,7 +33,7 @@ Private stock configuration is preserved at ~/.local/state/pc-rebuild/stock-2026
 
 The dedicated ML environment is ~/.local/share/sensei-ml/venv, Python 3.12.15. PyTorch 2.11.0+cu128 exposes sm_75, identifies the GTX 1660 SUPER and passes a GPU matmul against a CPU reference. CUDA toolchain/container success does not establish all future extensions or models work. Keep project dependencies isolated and pin tested versions.
 
-ROS runs natively in Linux containers, with Jazzy and Humble isolated from the host shell. Jazzy local rclpy/std_msgs publish/subscribe passed in the official desktop image. Multi-machine DDS, RViz/Gazebo graphics, devices and representative project builds have their own acceptance gates. Do not infer their success from an image pull.
+ROS runs natively in Linux containers, with Jazzy and Humble isolated from the host shell. Jazzy and Humble local rclpy/std_msgs publish/subscribe passed in their official desktop images. A bounded Jazzy RViz GUI test reports OpenGL 4.6 and the host NVIDIA process list identifies rviz2 using the GPU. Multi-machine DDS, Gazebo, devices and representative project builds have their own acceptance gates. Do not infer their success from an image pull.
 
 Spotify needs the user's local client/account configuration; Syncthing/Tailscale/KDE Connect need actual peer pairing. Never commit these credentials or device identities. Steam/Gamescope/GameMode/MangoHud installation is preparation, not a gaming benchmark.
 
