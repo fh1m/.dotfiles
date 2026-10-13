@@ -72,7 +72,7 @@ Append observed results here after installation. An unchecked item is pending, n
 
 User will use a regular ChatGPT chat during the retry. WINDOWS-RETRY.md now includes a self-contained interactive handoff, the confirmed absence of a Dahua EFI/manager, first-restart boot-priority checks, and guarded BCDBoot recovery guidance. No repair commands, boot-order changes or new install were executed by Codex at this checkpoint.
 
-## Correct Windows installation â€” desktop inspected 2026-10-13 around 05:25 +06
+## Correct Windows installation — desktop inspected 2026-10-13 around 05:25 +06
 
 - User reports installing Windows on Revenger after physically disconnecting the other drives and changing firmware settings. Those individual firmware changes were not documented; current live observations are below.
 - Live machine: Ryzen 5 3600X, ASUS TUF B450M-PLUS GAMING, BIOS 2202. Windows 11 Pro, build 26300.9457 (DisplayVersion 26H2). Only Revenger SSD 256GB, serial B2BNDC42100667, is visible to Get-Disk. C: maps to this disk; IsBoot and IsSystem are true. GPT partitions: 200 MiB system EFI, 16 MiB reserved, Windows, 900 MiB recovery. BCDEdit shows the EFI Windows manager and winload.efi; Windows RE is enabled on Revenger recovery partition. Independent restart and cold boot have not yet been observed by this agent.
@@ -82,3 +82,32 @@ User will use a regular ChatGPT chat during the retry. WINDOWS-RETRY.md now incl
 - Disabled hibernation with powercfg /hibernate off; powercfg /a confirms Hibernate, Hybrid Sleep and Fast Startup unavailable. BitLocker unexpectedly showed automatic encryption in progress (95.7%, protection off); encryption is deferred by user preference. After rechecking the Revenger C: serial, preserved recovery information locally in a user-bound DPAPI-encrypted file outside Git and ran manage-bde -off C:. DecryptionInProgress was confirmed at 95%; completion remains pending.
 - Installed and verified Git 2.55.0.windows.5 and GitHub CLI 2.102.0. GitHub login as fh1m and push permission verified; HTTPS Git authentication configured. A sparse clone of branch pc is at C:\Users\fahim\dotfiles-pc. Git identity is repository-local with GitHub's account-linked noreply address. No tokens, recovery information or raw audit logs are committed.
 - Toshiba and WD_BLACK are disconnected/not visible; their contents cannot be reverified from this Windows checkpoint and no operations were performed on them. Preserve both. Dahua's incorrect attempt is not cleaned here. Remaining: confirm decryption, activation, USB issue, chipset/Windows updates, restart/cold boot and display/network checks; then complete the staged CachyOS installation and later reconnect verification. NVMe conversion remains deferred.
+
+## Windows setup and Linux preparation — desktop inspected 2026-10-13
+
+The following checks were performed on the live Revenger Windows desktop while the other internal drives were disconnected. They do not verify the protected drives' current contents or the post-reconnect boot order.
+
+| Check | Observed result |
+|---|---|
+| Installation / EFI | Revenger B2BNDC42100667 is the only visible internal disk; C: and system EFI are on it, GPT/UEFI. Windows RE enabled. |
+| BitLocker / power | Fully decrypted: conversion status 0, encryption 0%, return value 0. Hibernation and Fast Startup disabled. |
+| TPM / firmware | TPM ready; Secure Boot enabled. Disable Secure Boot for CachyOS's official install procedure after the Windows reconnect check; retain firmware TPM and UEFI. BIOS remains 2202. |
+| Windows Update | Installed KB5007651, KB890830, KB4052623, KB2267602 and applicable Realtek LAN update, each success/HResult 0. A follow-up software update search returned no remaining offered software updates. No automatic restart was requested. |
+| AMD chipset | Official AMD-signed B450 package 8.08.12.551 installed. MSI log reports installation success; wrapper exit 2 and component logs indicate restart needed. GPIO 3.0.5.0 / 2.2.0.137, SMBus 5.12.0.44, PSP 5.46.0.0 observed. |
+| Realtek Ethernet | Replaced the old Windows Update driver with ASUS's motherboard package 1168.27.50.919. Download SHA-256 matched ASUS; signed catalog and PCI hardware ID checked. Device property reports the new version and problem code 0. Link remains 1 Gbps. Previous package exported locally for recovery. |
+| Realtek onboard audio | ASUS package 6.0.9700.1 matched ALC887 / ASUS subsystem hardware ID; installer signature valid and exit 0. Device driver version verified, problem code 0; digital audio endpoint and audio service OK. Audible speaker/headphone playback still needs a user check. |
+| NVIDIA | Installed official NVIDIA-signed Game Ready 617.42 supporting GTX 1660 SUPER; installer exit 0, nvidia-smi reports 617.42. Hardware OpenGL 4.6 NVIDIA context passed framebuffer clear/readback (64,127,191,255). CUDA framework/game acceptance tests are not implied. |
+| Windows integrity | DISM /ScanHealth: no component store corruption. SFC /scannow: no integrity violations. CHKDSK C: /scan: no problems, zero KB bad sectors. All three exit 0. |
+| Defender / firewall | Real-time antivirus enabled, signatures updated, all firewall profiles enabled. Defender quick scan completed; threat detection count 0. Targeted critical/error event search since this boot returned no WHEA, disk, NTFS, display/NVIDIA or storahci events. |
+| Storage / graphics | Revenger reports Healthy/OK, about 195 GiB free; SSD TRIM enabled. DirectX diagnostics initially reported no display/sound/input problems. Display remained 1920x1080 60 Hz; WMI source-mode query exposed only 60 Hz at that resolution, so no unsupported mode was forced. |
+| Tools / time | Native Codex CLI 0.162.1, Git 2.55.0.windows.5, gh 2.102.0, GitHub authentication/push access verified; Dhaka timezone. |
+
+Unresolved: one present USB device still reports Code 43, Device Descriptor Request Failed, at Port_#0011.Hub_#0001. Targeted device restart did not fix it. Requires physical-device/port identification and recheck after reboot; no hub/controller was disabled. Windows Pro reports LicenseStatus 5 (Notification), so activation needs a valid Pro entitlement/key and Settings verification. Neither issue is silently marked passed.
+
+Personalization: dark mode enabled. User deferred final pink-building wallpaper to their laptop copy; no further wallpaper work is required in this stage. Keep laptop-specific Linux dotfiles separate from Windows.
+
+Next user checkpoint: finish all running operations, restart Windows to complete drivers, fully power down before reconnecting the original drives and Ventoy, then deliberately boot Revenger Windows again for this agent to inspect fresh serial/model mappings and EFI/boot state. Independent isolated restart/cold boot and reconnect boot checks must be recorded when observed. Current system-EFI identity is proven by live Windows inspection; a planned private local EFI/BCD backup was not executed because its UAC prompt was canceled, and an additional physical boot backup remains pending.
+
+Follow WINDOWS-NEXT.md before CachyOS. Reconfirm Dahua NBYC26A00A16934 from the actual Linux live session; it still contains the historical incorrect Windows attempt, so do not assume empty GPT. Review isolation and the final installer summary before replacing only Dahua. Planned Limine layout remains its own >=4096 MiB FAT32 /boot plus Btrfs root, Hyprland, stable repos and hardware-selected NVIDIA/v3 packages. Toshiba backups and Ubuntu on WD_BLACK remain protected. No NVMe conversion or operations on disconnected disks were performed.
+
+Private installer packages, diagnostic logs, recovery information and exported driver package remain outside Git under the user's pc-rebuild-audit directory. Boot-media hash/copy verification and Toshiba backup reinspection await reconnect/live Linux access.

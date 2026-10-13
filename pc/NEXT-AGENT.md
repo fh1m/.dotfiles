@@ -2,6 +2,8 @@
 
 Continue my home desktop rebuild from branch pc of https://github.com/fh1m/.dotfiles. Read pc/AGENTS.md, pc/README.md, pc/STATE.md, pc/VERIFY.md, pc/CODEX.md, pc/RECOVERY.md and pc/CACHYOS-SETUP.md first. Keep all existing laptop dotfiles intact.
 
+Read pc/WINDOWS-NEXT.md and the latest STATE.md stage log before continuing. Windows has since been installed on Revenger with its own EFI; finish the restart/reconnected-drive verification before proceeding into the Linux live session. Use fresh hardware identities. The original Dahua Windows attempt remains on the intended CachyOS disk until its verified installation stage.
+
 First determine whether you are running on my laptop, original Ubuntu desktop, new Windows desktop or new CachyOS desktop. If you are on the laptop, guide my desktop installation and review my reported outputs; do not apply the desktop disk plan to your local laptop. Ask which installation checkpoint I reached if the live environment and STATE.md do not establish it.
 
 I chose Windows 11 Pro on Revenger SATA 256GB serial B2BNDC42100667, CachyOS on Dahua SATA 256GB serial NBYC26A00A16934, Toshiba HDD serial 497KBZVMS for ext4 data/backups, and WD_BLACK SN7100 NVMe serial 252941800719 for a LATER split of 400 decimal GB NTFS and approximately 600 decimal GB Linux Btrfs. Do not touch Toshiba or the current NVMe installation during the two SATA OS installs. Verify disk identities and boot-file locations; device letters/disk numbers can change.
