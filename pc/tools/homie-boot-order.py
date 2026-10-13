@@ -19,6 +19,11 @@ def plan(firmware):
     def exact(guid, loader):
         matches = [number for number, line in entries.items()
                    if f'gpt,{guid},' in line and loader in line]
+        if guid == LINUX_ESP:
+            full = [number for number in matches if re.search(r'boot[0-9a-f]{4}\*\s+homie linux\s', entries[number])
+                    and 'pciroot(' in entries[number]]
+            if len(full) == 1:
+                return full[0]
         if len(matches) != 1:
             raise ValueError('Missing or ambiguous verified firmware loader; no order changed')
         return matches[0]
@@ -31,6 +36,7 @@ def plan(firmware):
     # Prior explicit user instruction excludes old NVMe Windows/Ubuntu from
     # normal boot order; keep their variables and EFI files for manual recovery.
     tail = [number for number in old if number not in (linux, windows)
+            and 'bbs(hd,' not in entries.get(number, '')
             and not (f'gpt,{OLD_ESP},' in entries.get(number, '')
                      and any(loader in entries[number] for loader in
                              ['\\efi\\microsoft\\boot\\bootmgfw.efi', '\\efi\\ubuntu\\shimx64.efi']))]
@@ -49,6 +55,7 @@ if __name__ == '__main__':
     firmware = subprocess.check_output(['/usr/bin/efibootmgr', '-v'], text=True)
     old, desired = plan(firmware)
     if old != desired and args.action == 'repair':
+        print('Observed order drift: ' + ','.join(old) + ' -> ' + ','.join(desired), flush=True)
         subprocess.run(['/usr/bin/efibootmgr', '-o', ','.join(desired)], check=True, stdout=subprocess.DEVNULL)
         actual = subprocess.check_output(['/usr/bin/efibootmgr', '-v'], text=True)
         if plan(actual)[0] != desired:

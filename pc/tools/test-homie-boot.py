@@ -108,6 +108,15 @@ Boot0009* Other recovery target
         with self.assertRaises(ValueError):
             order.plan(firmware.replace(order.WINDOWS_ESP, 'foreign'))
 
+    def test_full_device_path_preferred_and_legacy_removed_only_from_order(self):
+        firmware = f'''BootOrder: 0005,0000,0001,0003
+Boot0005* Hard Drive BBS(HD,,0)
+Boot0000* Limine HD(1,GPT,{order.LINUX_ESP},0,0)/\\EFI\\LIMINE\\LIMINE_X64.EFI
+Boot0001* Windows Boot Manager HD(1,GPT,{order.WINDOWS_ESP},0,0)/\\EFI\\MICROSOFT\\BOOT\\BOOTMGFW.EFI
+Boot0003* Homie Linux PciRoot(0)/Pci(0)/Sata(0)/HD(1,GPT,{order.LINUX_ESP},0,0)/\\EFI\\LIMINE\\LIMINE_X64.EFI
+'''
+        self.assertEqual(order.plan(firmware)[1], ['0003', '0001', '0000'])
+
 
 if __name__ == '__main__':
     unittest.main()

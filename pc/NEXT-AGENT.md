@@ -27,3 +27,6 @@ User will reboot after the custom Linux / Windows / Misc menu checkpoint. Read B
 
 
 Latest acceptance override: user reported unattended OEM-logo/black-screen reboot loop; do not call the previous round-trip gate passed. Corrected observed Windows/firmware reordering and old NVMe entry recreation; homie-boot-order.service now enforces verified Linux-first policy during Linux startup. User must next test unattended startup without BIOS. Read latest BOOT-EXPERIENCE.md/STATE.md and compare private audit before promising a fix. Pink wallpaper/menu refresh is installed; protected EFI files/partitions remain preserved.
+
+
+Latest override: automatic boot still failed again after order correction. New Homie Linux full-device-path firmware alias is prepared first, original Limine retained. Requires ASUS TUF B450M-PLUS GAMING BIOS-side Fast Boot/CSM/Boot Option #1 check and actual unattended acceptance. Read latest STATE/BOOT-EXPERIENCE; do not call earlier firmware-order repair a solved loop.

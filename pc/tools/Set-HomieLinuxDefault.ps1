@@ -20,6 +20,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Run from elevated PowerShell; firmware invento
 $blocks = @($firmware -split '(?:\r?\n){2,}' | Where-Object {
     $_ -match [regex]::Escape('\EFI\LIMINE\LIMINE_X64.EFI')
 })
+$fullPath = @($blocks | Where-Object { $_ -match [regex]::Escape('Homie Linux') })
+if ($fullPath.Count -eq 1) { $blocks = $fullPath }
 if ($blocks.Count -ne 1) { throw 'Expected exactly one Limine firmware object. No changes.' }
 $identifiers = [regex]::Matches($blocks[0], '\{[0-9a-fA-F-]{36}\}')
 if ($identifiers.Count -ne 1) { throw 'Limine firmware identifier is ambiguous. No changes.' }
