@@ -93,6 +93,8 @@ Run the Linux checks in [VERIFY.md](VERIFY.md). `/` must be Dahua Btrfs and `/bo
 
 ## 6. Resume with Codex; stop before NVMe conversion
 
+For the NEW installed CachyOS agent, follow [CACHYOS-RESUME.md](CACHYOS-RESUME.md) and paste the one-line [CACHYOS-PROMPT.txt](CACHYOS-PROMPT.txt). It covers the remaining workstation, restoration and boot checks, with NVMe conversion allowed only after the documented preservation and independent-boot conditions pass.
+
 Give the new agent [NEXT-AGENT.md](NEXT-AGENT.md). It must audit your installed Windows/CachyOS and complete [VERIFY.md](VERIFY.md), then apply the staged [CachyOS setup plan](CACHYOS-SETUP.md) using measured results. The existing laptop dotfiles remain intact until a desktop-specific profile is reviewed.
 
 **Do not divide the WD_BLACK as part of this checklist.** It still hosts Ubuntu and the old Windows. Later, after both new OSes boot independently, preserve the final changed Ubuntu files, restore/check critical data on another physical disk, and perform the NVMe conversion from an offline/live environment. Desired sizes are **400 decimal GB ≈ 372.53 GiB NTFS**, with remaining usable capacity **approximately 600 decimal GB ≈ 559 GiB Btrfs**. Two partitions on one NVMe are not two independent backups.

@@ -1,5 +1,7 @@
 # Paste this into the next Codex session
 
+If this session is on the NEW installed CachyOS desktop, use CACHYOS-RESUME.md and CACHYOS-PROMPT.txt for the current continuation. Verify its actual root/EFI first; do not rerun old Windows retry or Dahua wipe instructions from historical stage logs. The last Windows preparation does not establish that Linux installation passed.
+
 Continue my home desktop rebuild from branch pc of https://github.com/fh1m/.dotfiles. Read pc/AGENTS.md, pc/README.md, pc/STATE.md, pc/VERIFY.md, pc/CODEX.md, pc/RECOVERY.md and pc/CACHYOS-SETUP.md first. Keep all existing laptop dotfiles intact.
 
 Read pc/WINDOWS-NEXT.md and the latest STATE.md stage log before continuing. Windows has since been installed on Revenger with its own EFI; finish the restart/reconnected-drive verification before proceeding into the Linux live session. Use fresh hardware identities. The original Dahua Windows attempt remains on the intended CachyOS disk until its verified installation stage.
