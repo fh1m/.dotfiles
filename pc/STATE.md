@@ -1,6 +1,6 @@
 # Verified checkpoint - 2026-10-13, Asia/Dhaka
 
-Latest inspection: reconnected Windows desktop, 2026-10-13. All four internal drives are visible. C: and the active system EFI remain on Revenger B2BNDC42100667 after reboot. Toshiba and the existing WD_BLACK layout remain protected; Linux-side UUID, backup-content and NVMe hardware-serial verification are still pending. Ventoy is not currently detected.
+Latest inspection: new installed CachyOS desktop, 2026-10-13. Only Dahua NBYC26A00A16934 is connected. Root and independent 4096 MiB EFI are verified; NVIDIA rendering and a synthetic hardware encode/decode test passed. Workstation deployment is in progress. Isolated restart/cold boot, LTS recovery and protected-drive reinspection remain pending.
 
 ## Hardware
 
@@ -16,7 +16,7 @@ Latest inspection: reconnected Windows desktop, 2026-10-13. All four internal dr
 
 | Serial | Model | Physical bytes | Preparation state / role |
 |---|---|---:|---|
-| NBYC26A00A16934 | Dahua C800 SATA 256GB | 256060514304 | First Windows attempt created 16 MiB reserved + NTFS on Dahua; still intended CachyOS target |
+| NBYC26A00A16934 | Dahua C800 SATA 256GB | 256060514304 | CachyOS installed: own 4096 MiB FAT32 EFI and Btrfs root |
 | B2BNDC42100667 | Revenger SATA 256GB | 256060514304 | Windows 11 Pro installed, own EFI; reconnect boot verified |
 | 497KBZVMS | Toshiba DT01ACA100 HDD | 1000204886016 | Existing ext4 data/backups preserved |
 | 252941800719 | WD_BLACK SN7100 NVMe | 1000204886016 | Original Ubuntu and old Windows preserved; divide last |
@@ -138,3 +138,12 @@ Private installer packages, diagnostic logs, recovery information and exported d
 - User will lose the Windows Codex session during Linux installation. Expanded CACHYOS-INSTALL.md with an offline/no-agent checklist and linked CACHYOS-RESUME.md for the NEW installed Linux session. CACHYOS-PROMPT.txt contains the single-line prompt; native Codex installation/sign-in was checked against current official OpenAI CLI documentation. No Linux installation or post-install test was performed by this Windows session.
 - The Linux handoff requires verifying Dahua root and its independent EFI before reconnecting protected drives, then finishing the Windows/CachyOS-only boot menu, backup inspection/restoration, desktop-specific Hyprland adaptation, NVIDIA/graphics/CUDA/ROS acceptance, LTS/snapshot recovery and maintenance. It carries forward the removed old firmware entries, preserved Ubuntu/NVMe files, disabled Secure Boot and outstanding Windows checks.
 - Final NVMe conversion remains conditional on checked final Ubuntu/personal preservation, representative restores, a second physical copy of irreplaceable Toshiba-only files and both SATA systems booting without NVMe. No stale disk number, device letter or public personal inventory is supplied as permission to repartition.
+
+## Installed CachyOS and deployment baseline — 2026-10-13
+
+- Inspected the actual desktop, now with native host access. Only Dahua C800 NBYC26A00A16934 is visible; root Btrfs UUID c65659cf-f507-4376-8cfa-29f3ecc47504 and FAT32 /boot UUID 3772-BB9D are on it. EFI is 4294967296 bytes. BootCurrent Limine references the matching EFI PARTUUID; both its loader and fallback EFI files exist. Separate isolated restart/cold boot without USB still needs observation.
+- Ryzen 3600X, stable v3 repositories; 16 GiB RAM, active ZRAM. NVIDIA 615.78.08 kernel/userspace align, stock and LTS matching modules installed. nvidia-smi and NVIDIA OpenGL 4.6 pass; compositor/browser processes use the GTX 1660 SUPER. A synthetic 180-frame 1080p60 H.264 NVENC stream was decoded into CUDA frames successfully. This does not prove browser video decoding, gaming or CUDA framework workloads.
+- LG DP-3 is 1920x1080 at 60 Hz, scale 1, with 74.97 Hz advertised. Ethernet 1 Gbps. No failed system/user units. PipeWire devices are present; audible output still needs a hands-on check. Snapper root snapshots and Limine history are present, cleanup and TRIM timers active. /home is excluded from root snapshot recovery and needs separate configuration backups.
+- Earlier app-sandbox GPU/sudo/GitHub failures were access limitations. With full host access gh is logged in as fh1m and remote pc is readable. No credential repair was needed.
+- User chose Chrome, measured daily-driver tuning, and eventual pc-to-main merge after desktop/laptop regression checks. Implement on pc; preserve laptop source behavior through an explicit desktop profile. Stock Noctalia remains available until the new session passes validation.
+- Revenger/Toshiba/WD_BLACK are disconnected and untouched. Their current backups and boot choices cannot be checked until power-off/reconnect. NVMe conversion remains conditional on preservation and independent-boot gates.
