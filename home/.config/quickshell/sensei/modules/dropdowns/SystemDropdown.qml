@@ -75,8 +75,8 @@ DropdownFrame {
             }
             WidgetSection {width:parent.width;title:"Den";subtitle:Den.online?"Homie · authenticated":"Homie unavailable";glyph:"\uf233"
                 Row {spacing:8
-                    ControlTile {implicitWidth:268;label:"Home storage";detail:Den.data.storage;glyph:"\uf07b";enabled:Den.online&&Den.data.storage!=="not configured";onActivated:Den.openStorage()}
-                    ControlTile {implicitWidth:268;label:Den.inputRunning?"Stop shared input":"Start shared input";detail:Den.inputRunning?"Input client running":"Keyboard · mouse";glyph:"\uf11c";selected:Den.inputRunning;enabled:Den.online||Den.inputRunning;onActivated:Den.inputToggle()}
+                    ControlTile {implicitWidth:268;label:"Home storage";detail:Den.working?"Connecting…":Den.data.storage;glyph:"\uf07b";enabled:!Den.working&&Den.online&&Den.data.storage!=="not configured";onActivated:Den.openStorage()}
+                    ControlTile {implicitWidth:268;label:Den.inputRunning?"Stop shared input":"Start shared input";detail:Den.inputRunning?"Input client running":"Keyboard · mouse";glyph:"\uf11c";selected:Den.inputRunning;enabled:!Den.working&&(Den.online||Den.inputRunning);onActivated:Den.inputToggle()}
                 }
                 Text {width:parent.width;visible:Den.error!=="";text:Den.error;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.signalRed}
             }
