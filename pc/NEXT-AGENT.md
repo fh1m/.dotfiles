@@ -4,7 +4,7 @@ If this session is on the NEW installed CachyOS desktop, use CACHYOS-RESUME.md a
 
 Continue my home desktop rebuild from branch pc of https://github.com/fh1m/.dotfiles. Read pc/AGENTS.md, pc/README.md, pc/STATE.md, pc/VERIFY.md, pc/CODEX.md, pc/RECOVERY.md and pc/CACHYOS-SETUP.md first. Keep all existing laptop dotfiles intact.
 
-Read pc/WINDOWS-NEXT.md and the latest STATE.md stage log before continuing. Windows has since been installed on Revenger with its own EFI; finish the restart/reconnected-drive verification before proceeding into the Linux live session. Use fresh hardware identities. The original Dahua Windows attempt remains on the intended CachyOS disk until its verified installation stage.
+Current native Linux checkpoint: Dahua runs CachyOS with its own 4 GiB EFI and Btrfs root; the desktop pc profile is deployed. Read pc/DESKTOP-DEPLOYMENT.md and the latest STATE.md stages. The previous wrong Windows attempt on Dahua was replaced during the isolated installation; do not repeat installation or historical wipe steps. Revenger, Toshiba and WD_BLACK are currently disconnected. Finish isolated Linux boot/recovery and reconnect identity/preservation checks next.
 
 Latest user decisions: keep Secure Boot disabled for installation. Remove old Ubuntu and NVMe Windows firmware entries; keep their files and NVMe partitions intact. The normal OS menu should contain only new Revenger Windows and future Dahua CachyOS. Read CACHYOS-INSTALL.md for the staged live backup inspection, Dahua-only isolation and installation checks. Do not recreate an Ubuntu normal boot entry automatically; its preserved EFI files are an emergency recovery resource.
 

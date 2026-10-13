@@ -1,6 +1,6 @@
 # Resume the rebuild from installed CachyOS
 
-This handoff is for the NEW installed Dahua system, not a promise that installation succeeded. The last published Windows preparation checked Revenger and the media; new Linux installation results must be measured locally. The short prompt is in CACHYOS-PROMPT.txt.
+This handoff is for the installed Dahua system. The 2026-10-13 native Linux checks and deployed desktop profile are recorded in STATE.md and DESKTOP-DEPLOYMENT.md. Isolated restart/cold boot, LTS recovery and reconnected-drive preservation checks remain pending. The short prompt is in CACHYOS-PROMPT.txt.
 
 ## Start the native Linux agent
 
