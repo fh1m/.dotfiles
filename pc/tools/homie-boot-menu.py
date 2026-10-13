@@ -13,19 +13,22 @@ THEME = """# Homie / Signal Ledger. Generated; edit pc/tools/homie-boot-menu.py.
 timeout: 7
 default_entry: Linux
 remember_last_entry: no
+mouse: no
 interface_resolution: 1920x1080
 interface_rotation: 0
-interface_branding: HOMIE / DIGITAL DEN
+interface_branding: HOMIE / SIGNAL LEDGER
 interface_branding_colour: f23d70
 interface_help_colour: a9a29a
 interface_help_colour_bright: f23d70
-term_background: 00090807
-term_foreground: e8e2da
+wallpaper: boot():/homie-wallpaper.png
+wallpaper_style: stretched
+term_background: 88090807
+term_foreground: f23d70
 term_background_bright: 1e1b18
 term_foreground_bright: e8e2da
 term_palette: 090807;f23d70;96b49a;d6a65e;76bcc0;b9a0bd;76bcc0;e8e2da
 term_palette_bright: 39342f;f23d70;a9c6ad;e3ba7d;95d0d3;ceb6d2;95d0d3;fff8ef
-term_font_scale: 2x2
+term_font_scale: 3x3
 term_margin: 48
 """
 
@@ -88,6 +91,10 @@ def main():
         raise ValueError("/boot is not verified Dahua EFI")
     source = Path("/boot/limine.conf").read_text()
     data = render(source)
+    # Artwork is private and optional. Keep a usable flat theme if unavailable.
+    wallpaper = Path('/boot/homie-wallpaper.png')
+    if not wallpaper.is_file():
+        data = data.replace('wallpaper: boot():/homie-wallpaper.png\n', '')
     # Verify all referenced kernel files and their generated BLAKE2 hashes,
     # including recovery entries, before replacing either presentation copy.
     import hashlib

@@ -17,6 +17,7 @@ def load(name):
 
 menu = load('homie-boot-menu')
 windows = load('homie-boot-windows')
+order = load('homie-boot-order')
 
 
 class BootTests(unittest.TestCase):
@@ -93,6 +94,19 @@ path: guid(old):/bad.efi
                 self.assertEqual(call.call_args_list[3].args[0][-1], 'cancel')
                 error = call.call_args_list[4].args[0][-1]
                 self.assertIn('may still be armed' if cancel_result else 'was cleared', error)
+
+    def test_order_drift_repair_tracks_ids_and_preserves_unknown_and_bootnext(self):
+        firmware = f'''BootNext: 0001
+BootOrder: 0007,0001,0000,0002,0009
+Boot0007* Windows Boot Manager HD(1,GPT,{order.OLD_ESP},0,0)/\\EFI\\MICROSOFT\\BOOT\\BOOTMGFW.EFI
+Boot0001* Windows Boot Manager HD(1,GPT,{order.WINDOWS_ESP},0,0)/\\EFI\\MICROSOFT\\BOOT\\BOOTMGFW.EFI
+Boot0000* Limine HD(1,GPT,{order.LINUX_ESP},0,0)/\\EFI\\LIMINE\\LIMINE_X64.EFI
+Boot0002* Recovery HD(1,GPT,{order.LINUX_ESP},0,0)/\\EFI\\BOOT\\BOOTX64.EFI
+Boot0009* Other recovery target
+'''
+        self.assertEqual(order.plan(firmware)[1], ['0000', '0001', '0002', '0009'])
+        with self.assertRaises(ValueError):
+            order.plan(firmware.replace(order.WINDOWS_ESP, 'foreign'))
 
 
 if __name__ == '__main__':
