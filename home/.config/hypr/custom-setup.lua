@@ -3,7 +3,7 @@
 -- volume, and brightness shortcuts.
 
 local mod = "SUPER"
-local terminal = "/home/fh1m/.local/bin/sensei-terminal"
+local terminal = "@HOME@/.local/bin/sensei-terminal"
 
 -- Preserve the original monitor arrangement and session environment.
 hl.monitor({
@@ -86,13 +86,13 @@ hl.env("XCURSOR_SIZE", "24")
 hl.env("QT_CURSOR_SIZE", "24")
 hl.env("MOZ_DISABLE_RDD_SANDBOX", "1")
 hl.env("MOZ_ENABLE_WAYLAND", "1")
-hl.env("TERMINAL", "/home/fh1m/.local/bin/sensei-terminal")
+hl.env("TERMINAL", "@HOME@/.local/bin/sensei-terminal")
 hl.env("PATH", os.getenv("HOME") .. "/.local/bin:" .. (os.getenv("PATH") or "/usr/local/bin:/usr/bin"))
 hl.env("QT_QPA_PLATFORM", "wayland")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
 
 hl.bind(mod .. " + RETURN", hl.dsp.exec_cmd(terminal))
-hl.bind("ALT + RETURN", hl.dsp.exec_cmd("/home/fh1m/.local/bin/sensei-terminal"))
+hl.bind("ALT + RETURN", hl.dsp.exec_cmd("@HOME@/.local/bin/sensei-terminal"))
 hl.bind("ALT + W", hl.dsp.exec_cmd("google-chrome-stable"))
 hl.bind("ALT + F", hl.dsp.exec_cmd("nautilus"))
 hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs -c wrayth ipc call picker toggle"))

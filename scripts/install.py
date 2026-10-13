@@ -24,10 +24,16 @@ def install(home, apply=False, hardware='generic'):
     stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
     backup = home / '.local/state/dotfiles-backups' / stamp
     changes = []
+    # wrayth helpers are linked from the checkout below, not copied. A tracked
+    # copy in home/.local/bin would be replaced by that link on every run and
+    # show up as a change each time, so it is skipped here.
+    linked = {p.name for p in (ROOT / 'home/.config/quickshell/wrayth/external').glob('wrayth-*') if p.is_file() and not p.suffix}
     for source in sorted((ROOT / 'home').rglob('*')):
         if not source.is_file() or source.name.endswith('.example'):
             continue
         relative = source.relative_to(ROOT / 'home')
+        if relative.parts[:2] == ('.local', 'bin') and source.name in linked:
+            continue
         dest = home / relative
         data = render(source.read_bytes(), home, hardware)
         if dest.is_file() and not dest.is_symlink() and dest.read_bytes() == data:

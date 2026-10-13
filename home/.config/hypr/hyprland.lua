@@ -34,7 +34,7 @@ hl.monitor({
 -- ===========================================================================
 -- Programs
 -- ===========================================================================
-local terminal = "/home/fh1m/.local/bin/sensei-terminal"
+local terminal = "@HOME@/.local/bin/sensei-terminal"
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
@@ -172,5 +172,5 @@ hl.window_rule({
 -- ===========================================================================
 -- wrayth -- last, so its keys and rules apply over everything above
 -- ===========================================================================
-dofile("/home/fh1m/.config/hypr/hypr-wrayth.lua")
-dofile("/home/fh1m/.config/hypr/custom-setup.lua")
+dofile("@HOME@/.config/hypr/hypr-wrayth.lua")
+dofile("@HOME@/.config/hypr/custom-setup.lua")
