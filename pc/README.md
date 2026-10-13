@@ -53,6 +53,8 @@ Install Codex/Git using [CODEX.md](CODEX.md), or continue receiving guidance fro
 
 ## 4. Install CachyOS on Dahua
 
+Follow [CACHYOS-INSTALL.md](CACHYOS-INSTALL.md) first for the current media, firmware, backup-inspection and physical-isolation checkpoints. User chose Secure Boot disabled and only the new Windows/CachyOS normal boot entries; keep original Ubuntu files and the NVMe layout intact for emergency recovery.
+
 1. Shut down fully and isolate **Dahua only** as the internal installation target; preserve the completed Revenger, Toshiba and NVMe. Leave Ventoy connected. Restore a recorded supported UEFI configuration if you changed it; boot USB in UEFI mode.
 2. Select the CachyOS Desktop ISO in `PC-rebuild/`. Use its NVIDIA live boot option if offered for this Turing GTX 1660 SUPER. If the live session cannot display normally, diagnose its offered fallback rather than guessing kernel flags.
 3. In the live terminal, check:
@@ -86,7 +88,7 @@ Run the Linux checks in [VERIFY.md](VERIFY.md). `/` must be Dahua Btrfs and `/bo
 1. Power off before reconnecting all original disks. Firmware may select a different default after installation; use its boot menu to choose CachyOS on Dahua. Do not interpret a missing menu as lost files or reinstall anything.
 2. In CachyOS, verify all four identities and boot entries with [VERIFY.md](VERIFY.md). The completed Windows must have its own EFI on Revenger; original Ubuntu remains on NVMe.
 3. Run `sudo limine-scan` to discover Windows if needed. If Windows does not appear, ask Codex to inspect the actual Revenger EFI UUID and current Limine configuration; do not copy examples with guessed UUIDs. Set a visible menu timeout and default CachyOS. The Windows menu entry should chainload Revenger's own EFI loader. [CachyOS dual boot](https://wiki.cachyos.org/installation/installation_on_root/)
-4. Test menu boot to **new Windows**, menu boot to **CachyOS**, and firmware direct boot of each SSD. Confirm the Windows entry opens the new Revenger install, not the old NVMe Windows. Test original Ubuntu from firmware as a fallback, using the NVMe entry if duplicate labels appear.
+4. Test menu boot to **new Windows**, menu boot to **CachyOS**, and firmware direct boot of each SSD. Confirm the Windows entry opens the new Revenger install, not the old NVMe Windows. Keep original Ubuntu files for emergency recovery; its old firmware entry was removed at the user's request. Do not recreate a normal Ubuntu menu entry automatically.
 5. Keep known-working boot entries/configuration, EFI backups, a fallback kernel and bounded Btrfs snapshots. Windows/firmware updates can still change boot order; [RECOVERY.md](RECOVERY.md) explains the route back. No claim of update-proof boot is made.
 
 ## 6. Resume with Codex; stop before NVMe conversion

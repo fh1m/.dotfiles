@@ -2,7 +2,7 @@
 
 ## A boot menu disappears
 
-Start with the firmware boot menu and select the independently installed CachyOS/Dahua or Windows/Revenger entry. A changed default boot order does not mean a partition is gone. Reconnect disks only with power off. Original Ubuntu remains a fallback on NVMe until its explicitly staged final conversion.
+Start with the firmware boot menu and select the independently installed CachyOS/Dahua or Windows/Revenger entry. A changed default boot order does not mean a partition is gone. Reconnect disks only with power off. Original Ubuntu files remain a recovery resource on NVMe until its explicitly staged final conversion. At the user's explicit request, its old firmware entry was removed; do not expect an Ubuntu menu entry. If recovery needs it, verify the preserved NVMe EFI and use its Ubuntu loader through a supported firmware boot-from-file interface or a reviewed Linux-live recovery procedure. Do not recreate that normal boot entry automatically.
 
 From working CachyOS, inspect `lsblk`, mount locations, `sudo efibootmgr -v` and actual EFI loader files before changing entries. If Windows is missing in Limine, use the current CachyOS `limine-scan` tool and verify which Windows it found; this PC still has an old Windows loader on NVMe. Do not remove the old Ubuntu entry prematurely.
 
