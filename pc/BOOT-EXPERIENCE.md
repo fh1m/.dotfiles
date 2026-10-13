@@ -1,6 +1,6 @@
 # Homie boot selector and OS switching
 
-The normal menu contains **Linux**, **Windows** and collapsed **Misc**. Linux boots the managed stock CachyOS kernel on Dahua; Windows chainloads only the verified Revenger EFI partition. Misc contains Linux LTS and preserved snapshot entries. Linux remains the default with a seven-second selection window. The Signal Ledger theme uses warm ink, pale paper, pink branding, readable built-in bitmap type and the monitor's current 270-degree portrait direction. Firmware setup remains available through Limine's displayed `S` shortcut.
+The normal menu contains **Linux**, **Windows** and collapsed **Misc**. Linux boots the managed stock CachyOS kernel on Dahua; Windows chainloads only the verified Revenger EFI partition. Misc contains Linux LTS and preserved snapshot entries. Linux remains the default with a seven-second selection window. The Signal Ledger theme uses warm ink, pale paper, pink branding, readable built-in bitmap type and the monitor's current horizontal direction (rotation 0). Firmware setup remains available through Limine's displayed `S` shortcut.
 
 ## How it stays current
 

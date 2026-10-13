@@ -14,7 +14,7 @@ timeout: 7
 default_entry: Linux
 remember_last_entry: no
 interface_resolution: 1920x1080
-interface_rotation: 270
+interface_rotation: 0
 interface_branding: HOMIE / DIGITAL DEN
 interface_branding_colour: f23d70
 interface_help_colour: a9a29a
