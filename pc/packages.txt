@@ -79,3 +79,7 @@ xfce4-panel
 xfwm4
 thunar
 xorg-server
+deskflow
+lan-mouse
+samba
+wayland-utils

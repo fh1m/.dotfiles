@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 import qs.components
 import qs.config
@@ -12,6 +13,7 @@ Variants {
     PanelWindow {
         id: bar
         required property ShellScreen modelData
+        IpcHandler {target:"bar-controls-"+bar.modelData.name;function expand(value:string):void {bar.readoutsOpen=value==="on";}function state():string {return JSON.stringify({expanded:bar.readoutsOpen});}}
         screen: modelData
         color: "transparent"
         implicitHeight: Appearance.metrics.barHeight
@@ -25,11 +27,6 @@ Variants {
         Timer { interval: 1000; running: true; onTriggered: bar.inhibitReady = true }
         IdleInhibitor { window: bar; enabled: Idle.hold && bar.inhibitReady }
         Rectangle { anchors.fill: parent; color: Theme.barBg }
-        Rectangle {
-            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-            height: 1
-            color: Qt.alpha(Theme.signalRed, 0.18)
-        }
         MouseArea {
             anchors.fill: parent
             property int stamp: 0
@@ -39,6 +36,7 @@ Variants {
         RobotIdentity {
             id: identity
             anchors.left: parent.left
+            anchors.leftMargin: 6
             anchors.top: parent.top
             width: implicitWidth
             height: bar.height
@@ -49,9 +47,9 @@ Variants {
         }
         SpotifyButton {
             anchors.left: identity.right
-            anchors.leftMargin: 13
+            anchors.leftMargin: 8
             height: bar.height
-            width: Math.min(implicitWidth,clock.x-identity.width-24)
+            width: Math.max(0, Math.min(implicitWidth,clock.x-identity.x-identity.width-32))
             anchors.verticalCenter: parent.verticalCenter
         }
         Row {
@@ -60,7 +58,7 @@ Variants {
             anchors.rightMargin: 12
             anchors.verticalCenter: parent.verticalCenter
             spacing: 3
-            RailFold { expanded: bar.readoutsOpen; onToggled: bar.readoutsOpen = !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
+            RailFold { opensRight:false; expanded: bar.readoutsOpen; onToggled: bar.readoutsOpen = !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             BtReadout { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             DisplayBadge { output: "main"; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             SoundButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }

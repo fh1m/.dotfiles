@@ -50,21 +50,21 @@ Singleton {
  }
 
     readonly property QtObject font: QtObject {
-        // Inter for interface text, JetBrains Mono for precise telemetry.
+        // Personal ZedMono Nerd typography for titles and clock.
         readonly property string display: "JetBrainsMono Nerd Font Mono"
-        readonly property string heading: "Inter"
-        readonly property string ui: "Inter"
-        // Keep data metrics aligned without forcing monospace on every label.
-        readonly property string barUi: "Inter"
-        readonly property string data: "JetBrainsMono Nerd Font Mono"
-        readonly property string telemetry: "JetBrainsMono Nerd Font Mono"
+        readonly property string heading: "JetBrainsMono Nerd Font Propo"
+        readonly property string ui: "JetBrainsMono Nerd Font Propo"
+        // ZedMono: labels, readouts and body text.
+        readonly property string barUi: "JetBrainsMono Nerd Font Propo"
+        readonly property string data: "Iosevka Nerd Font Mono"
+        readonly property string telemetry: "Iosevka Nerd Font Mono"
         // Russian accent labels use the same personal font.
-        readonly property string accent: "Inter"
+        readonly property string accent: "JetBrainsMono Nerd Font Propo"
         // Icons that are somebody else's standard rather than ours -- the
         // Bluetooth rune, so far. It is the data family's own Nerd Font
         // patch, so an icon from it sits on the same metrics as the labels
         // beside it and is hinted at the sizes the bar uses.
-        readonly property string icons: "JetBrainsMono Nerd Font Mono"
+        readonly property string icons: "ZedMono Nerd Font"
 
         readonly property int weightMedium: 500
         readonly property int weightBold: 700
