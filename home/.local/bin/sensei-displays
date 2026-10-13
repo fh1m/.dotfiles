@@ -13,6 +13,7 @@ import sys
 
 STATE = Path(os.environ.get('XDG_CACHE_HOME', Path.home()/'.cache'))/'sensei-displays'
 DRM = Path('/sys/class/drm')
+WORKSPACE_NAMES = ('Terminal','Web','Code','Study','Sim','Work')
 
 
 def run(command, timeout=15):
@@ -21,6 +22,7 @@ def run(command, timeout=15):
 
 def monitors():return json.loads(run(['hyprctl','monitors','-j']))
 def known_workspaces():return json.loads(run(['hyprctl','workspaces','-j']))
+def clients():return json.loads(run(['hyprctl','clients','-j']))
 def dispatch(expression):run(['hyprctl','dispatch',expression])
 def external(name):return name.startswith('HDMI-') or name=='SENSEI-HDMI-TEST'
 def selector(name):
@@ -94,19 +96,17 @@ def configure(outputs):
         mode_changed=(width!=monitor['width'] or height!=monitor['height'] or abs(rate-monitor.get('refreshRate',rate))>.1)
         if mode_changed or monitor.get('scale',1)!=scale or monitor.get('x')!=-logical_width or monitor.get('y')!=0:
             run(['hyprctl','eval','hl.monitor({output='+selector(monitor['name'])+',mode='+json.dumps(mode)+',position="'+str(-logical_width)+'x0",scale='+str(scale)+'})'])
-        if monitor.get('activeWorkspace',{}).get('id') not in range(1,7):
-            used={m.get('activeWorkspace',{}).get('id') for m in outputs}
-            chosen=next((i for i in (6,5,3,4,2,1) if i not in used),None)
-            if chosen:
-                focused=next((m['name'] for m in outputs if m.get('focused')),None)
-                dispatch('hl.dsp.workspace.move({workspace="'+str(chosen)+'",monitor='+selector(monitor['name'])+'})')
-                dispatch('hl.dsp.focus({workspace="'+str(chosen)+'"})')
-                if focused and focused!=monitor['name']:dispatch('hl.dsp.focus({monitor='+selector(focused)+'})')
 
 
 def sync(layout=True,notify=True):
     previous=read_state();physical=connected();outputs=monitors()
-    if layout:configure(outputs)
+    if layout:
+        configure(outputs)
+        STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+        with (STATE/'workspace.lock').open('w') as lock:
+            fcntl.flock(lock,fcntl.LOCK_EX)
+            reconcile()
+        outputs=monitors()
     old={d['output']:d for d in previous.get('displays',[])}
     changed=any(name not in old or old[name].get('id')!=record['id'] or old[name].get('bus') is None for name,record in physical.items())
     buses={name:d.get('bus') for name,d in old.items() if d.get('bus') is not None}
@@ -149,6 +149,20 @@ def set_brightness(output,percent):
     write_state(data);return data
 
 
+# Hyprland gives each physical workspace one monitor. Pair regular workspaces
+# 1..6 with 101..106 to present one logical desktop spanning both displays.
+def logical(number):
+    return number-100 if number in range(101,107) else number
+
+
+def physical(number,output):
+    return number+100 if external(output) and number in range(1,7) else number
+
+
+def main_display(outputs):
+    return next((m for m in outputs if m['name']=='eDP-1'),next((m for m in outputs if m['name']!='DP-2' and not external(m['name'])),None))
+
+
 def workspace(number,output=None):
     if number not in range(1,8):raise ValueError('Workspace must be 1–7')
     outputs=monitors()
@@ -156,21 +170,72 @@ def workspace(number,output=None):
     name=output or (current['name'] if current else '')
     target=next((m for m in outputs if m['name']==name),None)
     if not target:raise ValueError('Display is not connected')
-    special=target.get('specialWorkspace',{}).get('name','')
-    if special.startswith('special:'):
-        dispatch('hl.dsp.focus({monitor='+selector(name)+'})')
-        dispatch('hl.dsp.workspace.toggle_special('+json.dumps(special.removeprefix('special:'))+')')
-    source=next((m for m in outputs if m.get('activeWorkspace',{}).get('id')==number),None)
-    shared=external(name) or name=='eDP-1'
-    if number!=7 and shared:
-        if source and source['name']!=name:
-            dispatch('hl.dsp.workspace.swap_monitors({monitor1='+selector(name)+',monitor2='+selector(source['name'])+'})')
-        elif not source:
-            if any(w.get('id')==number for w in known_workspaces()):
-                dispatch('hl.dsp.workspace.move({workspace="'+str(number)+'",monitor='+selector(name)+'})')
-            # Empty, nonpersistent workspaces must be created on the requested output.
-            dispatch('hl.dsp.focus({monitor='+selector(name)+'})')
-    dispatch('hl.dsp.focus({workspace="'+str(number)+'"})')
+    main=main_display(outputs)
+    if number==7 or name=='DP-2':
+        if number==7:
+            dispatch('hl.dsp.focus({workspace="7"})');return
+        name=main['name'] if main else name
+    joined=[m for m in outputs if external(m['name']) or (main and m['name']==main['name'])]
+    if not joined:joined=[target]
+    existing={w['id']:w for w in known_workspaces()}
+    actions=[]
+    for monitor in joined:
+        output_name=monitor['name'];wid=physical(number,output_name)
+        if monitor.get('activeWorkspace',{}).get('id')==wid and not monitor.get('specialWorkspace',{}).get('name'):continue
+        if wid in existing and existing[wid].get('monitor')!=output_name:
+            actions.append('hl.dsp.workspace.move({workspace="'+str(wid)+'",monitor='+selector(output_name)+'})')
+        actions.append('hl.dsp.focus({monitor='+selector(output_name)+'})')
+        special=monitor.get('specialWorkspace',{}).get('name','')
+        if special.startswith('special:'):
+            actions.append('hl.dsp.workspace.toggle_special('+json.dumps(special.removeprefix('special:'))+')')
+        actions.append('hl.dsp.focus({workspace="'+str(wid)+'"})')
+    actions.append('hl.dsp.focus({monitor='+selector(name)+'})')
+    # One compositor transaction prevents a reconciliation process observing
+    # half a pair and avoids a visible intermediate workspace swap.
+    dispatch('(function() '+''.join('hl.dispatch('+a+');' for a in actions[:-1])+' return '+actions[-1]+' end)()')
+
+
+def reconcile():
+    outputs=monitors();main=main_display(outputs)
+    if not main:return
+    # Distinct physical names avoid ambiguous workspace caches in desktop clients.
+    # Custom user names are preserved; only our former duplicate defaults migrate.
+    for ws in known_workspaces():
+        wid=ws['id']
+        if wid in range(101,107) and ws.get('name')==WORKSPACE_NAMES[wid-101]:
+            dispatch('hl.dsp.workspace.rename({workspace="'+str(wid)+'",name='+json.dumps(WORKSPACE_NAMES[wid-101]+' · External')+'})')
+    by_id={m['id']:m for m in outputs}
+    attached=any(external(m['name']) for m in outputs)
+    # Adopt existing windows without restarting them. On unplug, recover the
+    # external half into the matching main workspace instead of leaving an
+    # invisible second set of numbered workspaces behind.
+    for window in clients():
+        wid=window.get('workspace',{}).get('id',0)
+        monitor=by_id.get(window.get('monitor'))
+        destination=None
+        if attached and monitor and external(monitor['name']) and wid in range(1,7):destination=wid+100
+        elif not attached and wid in range(101,107):destination=wid-100
+        if destination is not None:
+            dispatch('hl.dsp.window.move({window='+json.dumps('address:'+window['address'])+',workspace="'+str(destination)+'",follow=false})')
+    outputs=monitors();main=main_display(outputs)
+    focused=next((m for m in outputs if m.get('focused')),main)
+    origin=focused if external(focused['name']) or focused['name']==main['name'] else main
+    number=logical(origin.get('activeWorkspace',{}).get('id',1))
+    if number not in range(1,7):number=1
+    joined=[m for m in outputs if external(m['name']) or m['name']==main['name']]
+    if any(m['activeWorkspace']['id']!=physical(number,m['name']) for m in joined):
+        workspace(number,origin['name'])
+        if focused['name']!=origin['name']:dispatch('hl.dsp.focus({monitor='+selector(focused['name'])+'})')
+
+
+def move_window(number,address=None):
+    if number not in range(1,8):raise ValueError('Workspace must be 1–7')
+    window=next((w for w in clients() if w['address']==address),None) if address else json.loads(run(['hyprctl','activewindow','-j']))
+    if not window or not window.get('address'):raise ValueError('No window to move')
+    output=next((m['name'] for m in monitors() if m['id']==window.get('monitor')),'eDP-1')
+    wid=physical(number,output)
+    dispatch('hl.dsp.window.move({window='+json.dumps('address:'+window['address'])+',workspace="'+str(wid)+'",follow=false})')
+
 
 
 def main():
@@ -178,10 +243,18 @@ def main():
     status=sub.add_parser('sync');status.add_argument('--no-layout',action='store_true');status.add_argument('--no-notify',action='store_true')
     control=sub.add_parser('brightness');control.add_argument('output');control.add_argument('percent',type=float)
     focus=sub.add_parser('workspace');focus.add_argument('number',type=int);focus.add_argument('output',nargs='?')
+    sub.add_parser('reconcile')
+    move=sub.add_parser('move');move.add_argument('number',type=int);move.add_argument('address',nargs='?')
     args=parser.parse_args()
     # Navigation never waits for a slow monitor's I2C transaction.
-    if args.command=='workspace':
-        workspace(args.number,args.output);return
+    if args.command in ('workspace','reconcile','move'):
+        STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+        with (STATE/'workspace.lock').open('w') as lock:
+            fcntl.flock(lock,fcntl.LOCK_EX)
+            if args.command=='workspace':workspace(args.number,args.output)
+            elif args.command=='move':move_window(args.number,args.address)
+            else:reconcile()
+        return
     STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
     with (STATE/'lock').open('w') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX)

@@ -31,7 +31,7 @@ The kernel also logged an HDMI maximum-pixel-clock warning. That is a separate o
 
 An HDMI display extends to the **left** of the laptop. The helper chooses the highest reported resolution, then its fastest supported refresh rate; 4K-class displays use 2× scaling, lower resolutions use 1×. It uses compositor-reported modes, without custom timings or overclocking. This LG advertises 1920×1080 at approximately **75 Hz** (and 60 Hz). Physical 75 Hz scanout still needs checking after the required login.
 
-The external screen gets a third, bottom-mounted Sensei bar. It shares the main wallpaper, including later wallpaper changes, and the Terminal/Web/Code/Study/Sim/Work workspace pool. There are no duplicate workspace IDs: choosing a workspace visible on the other main/external screen swaps their visible workspaces. Misc remains on the ScreenPad. Popup panels open upward on the bar that opened them; keyboard IPC openings do not inherit a previous HDMI hover.
+The external screen gets a third, bottom-mounted Sensei bar. It shares the main wallpaper, including later wallpaper changes, and the Terminal/Web/Code/Study/Sim/Work workspace pool. The six logical workspaces span main and external together: selecting a workspace switches both displays, with separate windows on each half and the same selection on both bars. Misc remains on the ScreenPad. Popup panels open upward on the bar that opened them; keyboard IPC openings do not inherit a previous HDMI hover.
 
 - **Super+1…7:** select a workspace, respecting the focused display.
 - **Super+Ctrl+Left/Right:** focus the adjacent monitor.
@@ -132,3 +132,22 @@ Rendering choices follow [Qt text rendering](https://doc.qt.io/qt-6/qml-qtquick-
 After a compositor configuration reload, the display service reapplies the best supported native mode; the preferred-mode fallback must not silently leave this monitor at 60 Hz. DDC state reports the actual brightness and mode, and scrolling coalesces increments using the latest requested level rather than repeatedly starting from an old readback. Current DDC reads and the actual popup were verified. Main and ScreenPad brightness repairs were already verified through their widget path with sysfs readback. The renderer build's four upstream tests and the dotfiles regression suite (226 tests) pass. Physical cable replacement/unplug/replug and prolonged video playback are still owner acceptance checks; software topology/monitor-identity regressions do not substitute for those checks.
 
 The scoped polish backup is `~/.local/state/dotfiles-backups/external-polish-20261012-004942/`. Only display, rail, popup/switcher routing, font and renderer-build files were deployed. Generated palettes and unrelated live configuration were preserved. Rollback uses the backed-up files; the renderer has retained versioned builds and Intel-only/system-library startup fallbacks described above.
+
+
+## Shared desktops — final behavior, 13 October
+
+The earlier independent-workspace swapping behavior misunderstood the requested workflow and is superseded. Terminal, Web, Code, Study, Sim and Work now span the main display and HDMI together. Both bars highlight the same logical workspace and count/flag windows across both displays. Misc retains its ScreenPad role. No Scratch workspace is created.
+
+Hyprland owns one physical monitor per workspace. The helper pairs main IDs 1–6 with external IDs 101–106, presenting only the six logical identities in navigation. External physical names have an `· External` suffix to avoid ambiguous client caches; user-facing rail labels remain identical. [Native workspace dispatchers](https://wiki.hypr.land/Configuring/Basics/Dispatchers/) provide the underlying focus, move and rename operations. This is coordinated extended workspaces, not screen mirroring.
+
+- Either rail or **Super+1…6** switches both halves in one compositor transaction and restores focus to the invoking display.
+- **Super+Ctrl+Left/Right** focuses the adjacent display; **Super+Ctrl+Shift+Left/Right** transfers the window within the active logical desktop.
+- **Super+Shift+1…6**, overview moves and drag/drop preserve the window’s current display while changing its logical workspace.
+- Focusing a window on another workspace aligns the other display after an event-driven debounce. No idle reconciliation polling runs.
+- Disconnect recovery merges external-half windows into their matching main workspaces, preserving processes. This path has regression coverage; physical cable removal was not performed during this final check.
+
+The overview combines both halves into one card using the extended display geometry. Counts and attention use current per-window IPC metadata, with cached workspace objects only as fallback. Navigation and recovery use a separate short workspace lock, never the potentially slow DDC brightness lock.
+
+Live acceptance covered paired Web/Code/Terminal/Work selection from either display, matching rail highlights, terminal transfer in both directions, retaining its process, and reload persistence. A subsequent user login also retained the linked Terminal layout. The full regression suite passes **234 tests**, including logical/physical identity, duplicate-name migration, stale-client metadata, simulated display recovery and display-preserving window moves. Screenshots and machine-local telemetry were kept outside Git.
+
+Rollback: the preceding implementation is commit `30aa66d`; the scoped pre-change backup is `~/.local/state/dotfiles-backups/joined-workspaces-20261012-013242/`. Restore the helper, rules and QML together rather than mixing workspace identity models.

@@ -50,7 +50,9 @@ Singleton {
     readonly property var mainMonitor: outputState.find(m=>m.name==="eDP-1") ?? outputState[0] ?? null
     readonly property var monitorIpc: mainMonitor
     readonly property var focusedMonitor: outputState.find(m=>m.focused) ?? mainMonitor
-    readonly property int activeId: focusedMonitor?.activeWorkspace?.id ?? 1
+    function windowWorkspace(t){return t.lastIpcObject?.workspace?.id??t.workspace?.id;}
+    function logicalId(id):int {return id>=101&&id<=106?id-100:id;}
+    readonly property int activeId: logicalId(focusedMonitor?.activeWorkspace?.id ?? 1)
     readonly property string activeSpecial: focusedMonitor?.specialWorkspace?.name ?? ""
     readonly property bool special: activeSpecial.startsWith("special:")
 
@@ -84,9 +86,9 @@ Singleton {
                 special: false,
                 empty: id > workspaceNames.length,
                 active: !special && id === activeId,
-                occupied: Hyprland.toplevels.values.some(t=>t.workspace?.id===id),
-                count: Hyprland.toplevels.values.filter(t=>t.workspace?.id===id).length,
-                attention: Hyprland.toplevels.values.some(t=>t.workspace?.id===id && attentionAddresses.includes(String(t.address||"").replace(/^0x/,"")))
+                occupied: Hyprland.toplevels.values.some(t=>logicalId(windowWorkspace(t))===id),
+                count: Hyprland.toplevels.values.filter(t=>logicalId(windowWorkspace(t))===id).length,
+                attention: Hyprland.toplevels.values.some(t=>logicalId(windowWorkspace(t))===id && attentionAddresses.includes(String(t.address||"").replace(/^0x/,"")))
             });
         }
         return out;
@@ -101,8 +103,8 @@ Singleton {
     readonly property var usedPages: {
         const pages = {};
         for (const ws of Hyprland.workspaces.values)
-            if (ws.id >= 1)
-                pages[Math.floor((ws.id - 1) / perPage)] = true;
+            if (logicalId(ws.id) >= 1 && logicalId(ws.id) <= 7)
+                pages[Math.floor((logicalId(ws.id) - 1) / perPage)] = true;
         pages[Math.floor(Math.max(0, activeId - 1) / perPage)] = true;
         return Object.keys(pages).map(Number).sort((a, b) => a - b);
     }
@@ -132,7 +134,7 @@ Singleton {
     function slotsFor(output:string):var {
         if(!output)return slots;
         const monitor=outputState.find(m=>m.name===output);
-        const active=output===mainMonitor?.name&&focusedMonitor?.name==="DP-2" ? focusedMonitor?.activeWorkspace?.id : monitor?.activeWorkspace?.id;
+        const active=logicalId(monitor?.activeWorkspace?.id ?? 1);
         return slots.map(s=>Object.assign({},s,{active:Number(s.target)===active}));
     }
     function activate(slot, output = "") {
@@ -145,14 +147,21 @@ Singleton {
             Hyprland.dispatch(`(function() local sp=hl.get_active_special_workspace(); if sp then hl.dispatch(hl.dsp.workspace.toggle_special(sp.name:gsub("^special:", ""))) end; return hl.dsp.focus({ workspace = "${slot.target}" }) end)()`);
     }
 
+    property bool pairRefreshPending:false
+    Timer {id:pairSettle;interval:140;onTriggered:{if(pairSync.running)root.pairRefreshPending=true;else pairSync.running=true;}}
+    Process {id:pairSync;command:[Quickshell.env("HOME")+"/.local/bin/sensei-displays","reconcile"]
+        onExited:if(root.pairRefreshPending){root.pairRefreshPending=false;pairSettle.restart();}
+    }
+
     Connections {
         target: Hyprland
 
         function onRawEvent(event: HyprlandEvent): void {
             const n = event.name;
+            if(["workspace","workspacev2","movewindow","movewindowv2","monitoradded","monitoraddedv2","monitorremoved","configreloaded"].includes(n))pairSettle.restart();
             if(n==="urgent"){root.attention(event.data);Hyprland.refreshToplevels();}
             if(n==="activewindowv2"||n==="closewindow")root.acknowledge(event.data);
-            if (["activespecial", "activespecialv2", "workspace", "workspacev2", "moveworkspace", "moveworkspacev2", "focusedmon", "monitoradded", "monitoraddedv2", "monitorremoved"].includes(n)) outputSettle.restart();
+            if (["activespecial", "activespecialv2", "workspace", "workspacev2", "moveworkspace", "moveworkspacev2", "focusedmon", "monitoradded", "monitoraddedv2", "monitorremoved","movewindow","movewindowv2"].includes(n)) outputSettle.restart();
             if (["activespecial", "workspace", "createworkspace", "destroyworkspace", "moveworkspace", "renameworkspace", "focusedmon"].includes(n)) {
                 Hyprland.refreshWorkspaces();
                 Hyprland.refreshMonitors();

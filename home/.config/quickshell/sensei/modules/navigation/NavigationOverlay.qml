@@ -49,7 +49,7 @@ Variants {
  Text {width:parent.width;maximumLineCount:2;wrapMode:Text.Wrap;text:card.modelData.title;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.text;elide:Text.ElideRight}
  Text {text:"Workspace "+(card.modelData.workspace?.name??"—")+" · "+(card.modelData.monitor?.name??"");font.family:Appearance.font.data;font.pixelSize:10;color:Theme.dim}
  Row {spacing:5;ControlTile {implicitWidth:105;implicitHeight:28;label:"Focus";onActivated:WindowDesk.choose(card.modelData)}ControlTile {implicitWidth:105;implicitHeight:28;label:"Float / tile";onActivated:WindowDesk.floatWindow(card.modelData)}ControlTile {implicitWidth:105;implicitHeight:28;label:"Close app";onActivated:{WindowDesk.pinned=true;card.modelData.wayland?.close();}}}
- DeskComboBox {width:parent.width;height:29;model:Spaces.workspaceIds.map(id=>Spaces.workspaceNames[id-1]);currentIndex:Math.max(0,Spaces.workspaceIds.indexOf(card.modelData.workspace?.id??1));onActivated:WindowDesk.move(card.modelData,Spaces.workspaceIds[currentIndex]);font.family:Appearance.font.data;font.pixelSize:11}
+ DeskComboBox {width:parent.width;height:29;model:Spaces.workspaceIds.map(id=>Spaces.workspaceNames[id-1]);currentIndex:Math.max(0,Spaces.workspaceIds.indexOf(Spaces.logicalId(card.modelData.workspace?.id??1)));onActivated:WindowDesk.move(card.modelData,Spaces.workspaceIds[currentIndex]);font.family:Appearance.font.data;font.pixelSize:11}
  }
 
  }

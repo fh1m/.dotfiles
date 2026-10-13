@@ -22,9 +22,15 @@ hl.window_rule({
 local noesis_workspace_names = { "Terminal", "Web", "Code", "Study", "Sim", "Work", "Misc" }
 for id, name in ipairs(noesis_workspace_names) do
     hl.workspace_rule({ workspace = tostring(id), default_name = name, persistent = id == 7,
-        monitor = id == 7 and "DP-2" or nil, default = id == 7 })
+        monitor = id == 7 and "DP-2" or "eDP-1", default = id == 7 })
     hl.unbind("SUPER + " .. id)
     hl.unbind("SUPER + SHIFT + " .. id)
     hl.bind("SUPER + " .. id, hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/sensei-displays workspace " .. id))
-    hl.bind("SUPER + SHIFT + " .. id, hl.dsp.window.move({ workspace = tostring(id) }))
+    hl.bind("SUPER + SHIFT + " .. id, hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/sensei-displays move " .. id))
+end
+
+-- Physical halves of the same logical workspaces; never expose these IDs in UI.
+for id = 1, 6 do
+    hl.workspace_rule({ workspace = tostring(100 + id), default_name = noesis_workspace_names[id] .. " · External",
+        monitor = "HDMI-A-1", persistent = false })
 end

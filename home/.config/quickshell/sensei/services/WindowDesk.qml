@@ -10,7 +10,7 @@ Singleton {
  property var showcaseHidden:[]
  readonly property var all:Hyprland.toplevels.values.filter(t=>(!Demo.active||!showcaseHidden.includes(root.addressFor(t)))&&t.wayland?.appId!=="sensei-deck"&&t.workspace?.name!=="special:deck"&&t.workspace?.name!=="deck")
  readonly property var workspaceIds: Spaces.workspaceIds.concat(Array.from(new Set(all.map(t=>t.workspace?.id).filter(id=>Number.isInteger(id)&&id<0))).sort((a,b)=>b-a))
- function workspaceTitle(id){if(id>0)return Spaces.workspaceNames[id-1]||String(id);const name=all.find(t=>t.workspace?.id===id)?.workspace?.name||"Special";return Spaces.labelFor(name.replace(/^special:/,""));}
+ function workspaceTitle(id){if(id>0)return Spaces.workspaceNames[Spaces.logicalId(id)-1]||String(id);const name=all.find(t=>t.workspace?.id===id)?.workspace?.name||"Special";return Spaces.labelFor(name.replace(/^special:/,""));}
  property var pendingSelection:null
  function finishSelection(){const p=pendingSelection;pendingSelection=null;if(!p)return;if(p.kind==='window')Hyprland.dispatch('hl.dsp.focus({window='+JSON.stringify('address:'+p.address)+'})');else if(p.kind==='workspace'){if(p.id>0)Quickshell.execDetached([Quickshell.env('HOME')+'/.local/bin/sensei-displays','workspace',String(p.id),ShellState.overlayScreenName]);else{const t=all.find(w=>w.workspace?.id===p.id);if(t)Hyprland.dispatch('hl.dsp.focus({window='+JSON.stringify('address:'+addressFor(t))+'})');}}else if(p.kind==='app')executeApp(p.entry);}
  property var workspaceCards:[]
@@ -58,7 +58,7 @@ Singleton {
  function choose(t){if(!t?.address)return;pendingSelection={kind:'window',address:addressFor(t)};opened=false;}
  function workspace(id){pendingSelection={kind:'workspace',id:id};opened=false;}
  function commit(){if(!opened)return;if(query.trim()){selectResult(searchResults[selected]);return;}if(mode==='overview'){workspace(root.workspaceIds[selected]);return;}if(mode==='workspaces')workspace(root.workspaceIds[selected]);else if(mode==='apps'||mode==='same')choose(matches[selected]);}
- function move(t,id){pinned=true;Hyprland.dispatch('hl.dsp.window.move({window="address:'+addressFor(t)+'",workspace="'+id+'",follow=false})');Qt.callLater(()=>Hyprland.refreshToplevels());}
+ function move(t,id){pinned=true;Quickshell.execDetached([Quickshell.env('HOME')+'/.local/bin/sensei-displays','move',String(id),addressFor(t)]);Qt.callLater(()=>Hyprland.refreshToplevels());}
  function floatWindow(t){pinned=true;Hyprland.dispatch('hl.dsp.window.float({action="toggle",window="address:'+addressFor(t)+'"})');}
  function launch(e){pendingSelection={kind:'app',entry:e};opened=false;}
  function executeApp(e){Launcher.record(e.id);Deck.leave();if(e.runInTerminal)Quickshell.execDetached({command:["/home/fh1m/.local/bin/sensei-terminal","-e"].concat(Array.from(e.command)),workingDirectory:e.workingDirectory||Quickshell.env('HOME')});else e.execute();}

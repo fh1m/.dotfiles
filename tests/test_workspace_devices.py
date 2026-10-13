@@ -41,6 +41,21 @@ assert.deepEqual(rows([],[],[]),[]);
 '''
         subprocess.run(['node','-e',source+fixture],check=True,capture_output=True,text=True)
 
+    def test_shared_workspace_identity_uses_current_ipc_not_stale_object(self):
+        source=(ROOT/'home/.config/quickshell/sensei/services/Spaces.qml').read_text()
+        functions='\n'.join(re.findall(r'    function (?:logicalId|windowWorkspace)\([^\n]+',source)).replace(':int','')
+        self.assertTrue(functions)
+        subprocess.run(['node','-e',functions+"""
+const assert=require('node:assert/strict');
+const main={workspace:{id:1},lastIpcObject:{workspace:{id:6}}};
+const ext={workspace:{id:1},lastIpcObject:{workspace:{id:106}}};
+assert.equal(logicalId(windowWorkspace(main)),6);
+assert.equal(logicalId(windowWorkspace(ext)),6);
+assert.equal([main,ext].filter(w=>logicalId(windowWorkspace(w))===6).length,2);
+assert.equal(logicalId(windowWorkspace({workspace:{id:7}})),7);
+assert.equal(logicalId(-98),-98);
+"""],check=True,capture_output=True,text=True)
+
     def test_attention_address_normalization_and_acknowledgement(self):
         source = (ROOT/'home/.config/quickshell/sensei/services/Spaces.qml').read_text()
         functions = '\n'.join(re.findall(r'    function (?:attention|acknowledge)\(address\):void \{[^\n]+',source))
