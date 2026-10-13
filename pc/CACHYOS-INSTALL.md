@@ -82,3 +82,13 @@ References: [official CachyOS installation](https://wiki.cachyos.org/installatio
 Fresh admin checks returned Secure Boot disabled and TPM not exposed; user chose to keep Secure Boot disabled for the installation. No signing, firmware-key enrollment or TPM clearing is needed for this route. Ventoy 1.1.05 is already present with a Microsoft UEFI-signed shim and its public enrollment certificate; Windows Authenticode reports an untrusted UEFI certificate root, which does not by itself determine firmware trust. Do not call Secure Boot enabled/verified merely because a BIOS menu mentions Windows UEFI Mode. The USB and CachyOS live boot still require an actual boot test.
 
 If the user later wants Secure Boot: follow CachyOS's installed-system sbctl/Limine guide only after independent boots and key/EFI recovery copies are verified. On ASUS, heed the current guide's --microsoft-only key-enrollment exception and installed Limine config/hash-signing rules; do not blindly clear keys or sign the original ISO here. Keep private signing keys outside Git and verify both Windows and Linux after any change. This is deferred, not already performed.
+
+## Using this guide while Windows Codex is unavailable
+
+Before rebooting, keep this GitHub page open on a phone/laptop or open the copied guides from Ventoy's PC-rebuild/pc-guides-current folder in the live session. Live Linux may mount the USB under a different path; discover that path rather than assuming a Windows letter. This Windows agent cannot operate while the desktop is running the installer.
+
+If no agent is available, use the explicit identity/layout checks above as the checklist and save photographs locally. Do not proceed past an ambiguous model/serial, missing backup record, uncertain firmware mode or installer summary affecting another drive. If a checkpoint needs interpretation, use the phone/laptop guide or return to working Windows; restarting from the USB is not a reason to erase another disk. No automated destructive disk script is required.
+
+For Toshiba's read-only inspection, first confirm its actual model/serial, ext4 UUID and that it is not already mounted using lsblk/findmnt. Only then follow RECOVERY.md's ro,noload mount. Verify the named backup folders and records. Missing backup evidence means stop before replacing Dahua; do not initialize Toshiba or run repair based only on an unfamiliar mount view.
+
+After installation, keep only Dahua connected until its own boot works; remove Ventoy from the boot path. Open CACHYOS-RESUME.md for native Codex setup and the staged remaining rebuild. CACHYOS-PROMPT.txt contains the one-line prompt. The returning Linux agent must validate the installed layout before reconnecting drives or applying dotfiles.
