@@ -42,7 +42,7 @@ def main():
         image = Path(sys.argv[1] if len(sys.argv) > 1 else config["displays"]["eDP-1"]["file"]).expanduser()
         if not image.is_file():
             raise ValueError(f"main wallpaper unavailable: {image}")
-        fingerprint = [str(image), image.stat().st_mtime_ns, image.stat().st_size, 8]
+        fingerprint = [str(image), image.stat().st_mtime_ns, image.stat().st_size, 8, "signal-ledger-1"]
         cached = json.loads(out.read_text()) if out.exists() else {}
         if cached.get("fingerprint") == fingerprint:
             palette = cached
