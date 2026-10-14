@@ -40,7 +40,7 @@ python3 scripts/install.py --hardware zenbook --apply
 
 The default is a dry run. Apply writes user files under your home directory and backs up replaced files to `~/.local/state/dotfiles-backups/<timestamp>/`. Existing symlinks are preserved in the backup before replacement. Re-running an unchanged install is idempotent. It never wipes your entire `.config` or `.local` directory.
 
-`@HOME@` placeholders are rendered to your home path. Upstream Wrayth helpers are linked to the retained shell sources; Chakra Petch and generated wallpapers; JetBrains Mono Nerd Font comes from the package list are installed. `--hardware generic` removes the UX581 output rules and puts the bottom bar on the primary screen if there is no secondary screen. Use `hyprctl monitors -j` and edit `custom-setup.lua` for your actual modes, positions and scales before relying on the session.
+`@HOME@` placeholders are rendered to your home path. Upstream Wrayth helpers are linked to the retained shell sources, and generated wallpapers are installed. The Nerd Fonts come from the package list. `--hardware generic` removes the UX581 output rules and puts the bottom bar on the primary screen if there is no secondary screen. Use `hyprctl monitors -j` and edit `custom-setup.lua` for your actual modes, positions and scales before relying on the session.
 
 **Do not run Wrayth’s upstream installer after applying this snapshot unless intentionally resetting it.** Its original installer and README are retained as reference. The root-level installer here is the entry point for this adaptation.
 

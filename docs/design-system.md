@@ -1,5 +1,7 @@
 # Sensei interface
 
+> **Superseded.** This page describes the earlier wallpaper-driven accent (Matugen sampling, rose `#ff4297`). The current rule is the fixed Signal Ledger palette: the accent is a token in `Theme.qml`, and wallpapers no longer run Matugen. See [Signal Ledger](design/signal-ledger.md). The type and motion notes below still hold.
+
 The wallpaper provides the color. The shell provides the instrument panel.
 
 JetBrains Mono keeps labels, glyphs and terminal metrics coherent. Icons lead each action; smaller labels say what it does.

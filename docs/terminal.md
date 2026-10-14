@@ -30,7 +30,7 @@ Graphics forks exist: [ayosec/alacritty](https://github.com/ayosec/alacritty) ad
 | `Ctrl+Shift+M` | Zoom current tmux pane |
 | `Ctrl+Shift+E` | Window picker |
 | `Ctrl+Shift+Up` | tmux copy mode; scroll history even in a TUI |
-| `` ` + | `` / `` ` + - `` | Horizontal / vertical split |
+| `` ` + \| `` / `` ` + - `` | Horizontal / vertical split |
 | `` ` + s `` | Session picker |
 | `` ` + g `` | Fuzzy project picker; open a new tmux window in the chosen project |
 | `` ` + S `` | Synchronize typing across panes in the current window; status shows SYNC |
