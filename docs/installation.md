@@ -40,9 +40,9 @@ python3 scripts/install.py --hardware zenbook --apply
 
 The default is a dry run. Apply writes user files under your home directory and backs up replaced files to `~/.local/state/dotfiles-backups/<timestamp>/`. Existing symlinks are preserved in the backup before replacement. Re-running an unchanged install is idempotent. It never wipes your entire `.config` or `.local` directory.
 
-`@HOME@` placeholders are rendered to your home path. Upstream Wrayth helpers are linked to the retained shell sources, and generated wallpapers are installed. The Nerd Fonts come from the package list. `--hardware generic` removes the UX581 output rules and puts the bottom bar on the primary screen if there is no secondary screen. Use `hyprctl monitors -j` and edit `custom-setup.lua` for your actual modes, positions and scales before relying on the session.
+`@HOME@` placeholders are rendered to your home path. The sensei helpers are linked from the checkout, the live config files that point into the shell tree are linked, and the seed wallpapers are installed. The Nerd Fonts come from the package list. `--hardware generic` removes the UX581 output rules and puts the bottom bar on the primary screen if there is no secondary screen. Use `hyprctl monitors -j` and edit `custom-setup.lua` for your actual modes, positions and scales before relying on the session.
 
-**Do not run Wrayth’s upstream installer after applying this snapshot unless intentionally resetting it.** Its original installer and README are retained as reference. The root-level installer here is the entry point for this adaptation.
+The shell began as [Wrayth](https://github.com/bowenbride/wrayth). Its original README is kept at `docs/upstream/wrayth-readme.md` and its licence at `docs/upstream/wrayth-LICENSE`. Its installer is not used here; `scripts/install.py` is the only installer.
 
 The installer does not alter `/etc`, enable startup services, compile Spotify, authenticate accounts, or change your shell login files. Add `~/.local/bin` to your login/session PATH if absent. Keep current browser and keyring data; neither is copied by this repository.
 
@@ -53,7 +53,7 @@ bash scripts/build-native.sh
 bash scripts/build-spotify.sh
 ```
 
-If Quickshell starts crashing after a Qt update, rebuild the pinned Noctalia fork against the *installed* Qt. Install `cmake ninja cli11 vulkan-headers qt6-shadertools spirv-tools jemalloc` and the normal Quickshell development dependencies, then run `bash scripts/build-quickshell-local.sh`. The build is limited to two low-priority jobs and installs under `~/.local/opt/sensei-quickshell`; it does not replace the package. `wrayth-shell` selects it only while its Qt version stamp matches. Read [the render investigation](performance.md) before treating every graphical stall as a Quickshell crash.
+If Quickshell starts crashing after a Qt update, rebuild the pinned Noctalia fork against the *installed* Qt. Install `cmake ninja cli11 vulkan-headers qt6-shadertools spirv-tools jemalloc` and the normal Quickshell development dependencies, then run `bash scripts/build-quickshell-local.sh`. The build is limited to two low-priority jobs and installs under `~/.local/opt/sensei-quickshell`; it does not replace the package. `sensei-shell` selects it only while its Qt version stamp matches. Read [the render investigation](performance.md) before treating every graphical stall as a Quickshell crash.
 
 The C bridge needs a C compiler, json-c, OpenSSL and BlueZ development headers. Both native sources compile on the reference machine. The Bluetooth shared object is **inactive** until you explicitly add its drop-in and headset address.
 
@@ -61,11 +61,11 @@ Spotify is a patched source build, not a binary copied from the original machine
 
 ## 5. Set up session integration
 
-The Lua session starts the Wrayth wrapper and Hypridle. GNOME Keyring, the KDE polkit agent, environment export and clipboard service are integrated in the personal setup. Review `/etc/pam.d` and your display manager’s session files for your distribution; do not copy PAM files blindly.
+The Lua session starts the sensei shell wrapper (`sensei-shell`) and Hypridle. GNOME Keyring, the KDE polkit agent, environment export and clipboard service are integrated in the personal setup. Review `/etc/pam.d` and your display manager’s session files for your distribution; do not copy PAM files blindly.
 
 Use `gnome-keyring`/libsecret for Chrome’s existing credentials. A password-protected login keyring can normally unlock through PAM on password login. Automatic login cannot supply a password it never received. The original workstation deliberately removed its keyring password; that leaves secrets unencrypted on disk and is **not** an installer default. Do not migrate that security choice accidentally.
 
-Quickshell also provides a lockscreen. Review upstream Wrayth’s PAM setup and the included lock assistant. A compositor lock failure is more important than decorative success: test lock/unlock while you have a recovery path.
+Quickshell also provides a lockscreen. Review the lock assistant (`sensei-lock-assist`) and its PAM setup. A compositor lock failure is more important than decorative success: test lock/unlock while you have a recovery path.
 
 ```sh
 systemctl --user daemon-reload
@@ -86,7 +86,7 @@ For NVIDIA containers, install/configure the NVIDIA runtime and regenerate CDI. 
 
 ## 7. Restore preferences, not credentials from Git
 
-Choose wallpapers through the picker and set each display independently. On the UX581GV, choose **Tile** for DP-2 to reproduce the ScreenPad gallery composition; use any image you own or have permission to display. The original wallpapers are linked in `THIRD_PARTY.md`; Git stores the generated Wrayth wallpapers and your configuration, not unlicensed copies of the original art. New installation defaults to the generated Circuit wallpaper.
+Choose wallpapers through the picker and set each display independently. On the UX581GV, choose **Tile** for DP-2 to reproduce the ScreenPad gallery composition; use any image you own or have permission to display. The original wallpapers are linked in `THIRD_PARTY.md`; Git stores the generated seed wallpapers and your configuration, not unlicensed copies of the original art. New installation defaults to the generated Circuit wallpaper.
 
 Re-pair Bluetooth devices. Sign into Spotify. Join Tailscale on both devices, pair KDE Connect and install Termux on the phone. Configure Syncthing devices and folders anew. Do not copy someone else’s host keys, pairing certificates, token files or device IDs from a public repository.
 
@@ -95,8 +95,8 @@ Re-pair Bluetooth devices. Sign into Spotify. Join Tailscale on both devices, pa
 ```sh
 python3 scripts/doctor.py
 hyprctl -i 0 configerrors
-qs -c wrayth ipc call dropdown open system
-qs -c wrayth ipc call switcher overview
+qs -c sensei ipc call dropdown open system
+qs -c sensei ipc call switcher overview
 systemctl --user --failed
 systemctl --failed
 ```
