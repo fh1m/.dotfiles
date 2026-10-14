@@ -141,6 +141,11 @@ Singleton {
         if (slot.empty)
             return;
         if(output&&!slot.special){Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-displays","workspace",slot.target,output]);return;}
+        // The name goes into a Lua string, so only plain characters may reach it;
+        // a quote in a workspace name would break out of that string. PageMarker
+        // applies the same rule.
+        if (slot.special && !/^[A-Za-z0-9._-]+$/.test(slot.target))
+            return;
         if (slot.special)
             Hyprland.dispatch(`hl.dsp.workspace.toggle_special("${slot.target}")`);
         else
