@@ -91,6 +91,15 @@ return {
     config = function() require('sensei.lsp').setup() end },
   { 'mason-org/mason.nvim', cmd = { 'Mason', 'MasonInstall', 'MasonLog', 'MasonUninstall' },
     opts = { PATH = 'append', ui = { border = 'single' } } },
+  -- The language servers, debug adapters and formatters the config expects.
+  -- Run :MasonToolsInstall on a fresh machine; nothing installs at startup.
+  { 'WhoIsSethDaniel/mason-tool-installer.nvim', cmd = { 'MasonToolsInstall', 'MasonToolsUpdate' },
+    dependencies = { 'mason-org/mason.nvim' },
+    opts = { run_on_start = false, ensure_installed = {
+      'basedpyright', 'ruff', 'clangd', 'codelldb', 'debugpy', 'lua-language-server', 'stylua',
+      'typescript-language-server', 'html-lsp', 'css-lsp', 'json-lsp', 'yaml-language-server',
+      'bash-language-server', 'shellcheck', 'shfmt', 'cmake-language-server', 'dockerfile-language-server',
+      'lemminx', 'clang-format', 'prettier' } } },
   { 'danymat/neogen', cmd = 'Neogen', opts = { snippet_engine = 'luasnip' },
     keys = { map('<leader>cD', '<cmd>Neogen<cr>', 'Generate a structural docstring') } },
   { 'stevearc/conform.nvim', event = 'BufWritePre', cmd = 'ConformInfo',
@@ -127,7 +136,9 @@ return {
     keys = { map('<leader>rr', '<cmd>OverseerRun<cr>', 'Run task'), map('<leader>ro', '<cmd>OverseerToggle<cr>', 'Task output') },
     config = function() require('sensei.tasks').setup() end },
   { 'mfussenegger/nvim-dap',
-    dependencies = { 'rcarriga/nvim-dap-ui', 'nvim-neotest/nvim-nio', 'mfussenegger/nvim-dap-python' },
+    dependencies = { 'rcarriga/nvim-dap-ui', 'nvim-neotest/nvim-nio', 'mfussenegger/nvim-dap-python',
+      -- Variable values drawn beside the lines they belong to, while stopped.
+      { 'theHamsta/nvim-dap-virtual-text', opts = { commented = true } } },
     keys = { map('<leader>db', function() require('dap').toggle_breakpoint() end, 'Breakpoint'),
       map('<leader>dc', function() require('dap').continue() end, 'Start / continue'),
       map('<leader>dn', function() require('dap').step_over() end, 'Step over'),
@@ -136,7 +147,8 @@ return {
       map('<leader>dt', function() require('dap').terminate() end, 'Terminate debugger'),
       map('<leader>du', function() require('dapui').toggle() end, 'Debugger panels') },
     config = function() require('sensei.debug').setup() end },
-  { 'nvim-neotest/neotest', cmd = 'Neotest', dependencies = { 'nvim-neotest/nvim-nio', 'nvim-lua/plenary.nvim', 'nvim-neotest/neotest-python' },
+  { 'nvim-neotest/neotest', cmd = 'Neotest', dependencies = { 'nvim-neotest/nvim-nio', 'nvim-lua/plenary.nvim', 'nvim-neotest/neotest-python',
+      'alfaix/neotest-gtest', 'rouge8/neotest-rust' },
     keys = { map('<leader>tn', function() require('neotest').run.run() end, 'Nearest test'),
       map('<leader>tf', function() require('neotest').run.run(vim.fn.expand('%')) end, 'Test file'),
       map('<leader>ts', function() require('neotest').summary.toggle() end, 'Test summary'),
@@ -147,7 +159,9 @@ return {
       require('neotest').setup({ discovery = { enabled = false }, running = { concurrent = false },
         adapters = { require('neotest-python')({ runner = 'pytest',
           python = function() return require('sensei.environment').python() end,
-          dap = { justMyCode = false } }) } })
+          dap = { justMyCode = false } }),
+          require('neotest-gtest').setup({ debug_adapter = 'codelldb' }),
+          require('neotest-rust')({ dap_adapter = 'codelldb' }) } })
     end },
   { 'MeanderingProgrammer/render-markdown.nvim', ft = 'markdown', opts = { enabled = true, heading = { sign = false } } },
   { 'obsidian-nvim/obsidian.nvim', version = 'v3.16.8', ft = 'markdown', cmd = 'Obsidian',
