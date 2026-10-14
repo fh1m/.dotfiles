@@ -59,6 +59,10 @@ QtObject {
     // on the element -- there is no room for it -- so it goes out as a normal
     // notification instead, which is also what leaves a record of it.
     function fail(why: string, detail: string): void {
+        // Only a working action can fail. A late error after reset() or after
+        // the success flash must not show FAILED on an idle element or notify.
+        if (phase !== "working")
+            return;
         limit.stop();
         reason = why;
         phase = "failure";
