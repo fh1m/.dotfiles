@@ -387,11 +387,11 @@ if [ "$STAGE2" = 0 ]; then
         mkdir -p "$(dirname "$QS_TARGET")"
         if [ -e "$QS_TARGET" ] || [ -L "$QS_TARGET" ]; then
             if [ -n "$(manifest_get INSTALLED)" ] || [ -L "$QS_TARGET" ]; then
-                # A copy this installer put there: replaced by the new one, the
-                # old one kept once in the cache in case anything was edited.
+                # A copy this installer put there: replaced by the new one. The
+                # old one is moved to a dated folder in the cache, never deleted,
+                # in case anything in it was edited.
                 mkdir -p -m 700 "$CACHE_DIR"
-                rm -rf "$CACHE_DIR/previous-install"
-                mv "$QS_TARGET" "$CACHE_DIR/previous-install"
+                mv "$QS_TARGET" "$CACHE_DIR/previous-install-$STAMP"
             else
                 back_up "$QS_TARGET"
             fi
