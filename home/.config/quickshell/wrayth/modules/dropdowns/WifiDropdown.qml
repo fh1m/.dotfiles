@@ -8,6 +8,8 @@ DropdownFrame {
     id: root
 
     property string pending: ""
+    // The saved network whose FORGET is waiting for a second press, or "".
+    property string confirmForget: ""
 
     // The settings view slides in over the list. Escape and BACK reverse it,
     // and the frame's height eases to whichever view is showing.
@@ -48,6 +50,7 @@ DropdownFrame {
     // rescan can turn a known network into one that needs a passphrase).
     onPendingChanged: {
         input.text = "";
+        root.confirmForget = "";
         Wifi.clearError();
         Qt.callLater(root.focusPassphrase);
     }
@@ -141,8 +144,10 @@ DropdownFrame {
         target: ShellState
 
         function onDropdownChanged(): void {
-            if (ShellState.dropdown !== "wifi")
+            if (ShellState.dropdown !== "wifi") {
                 root.showSettings = false;
+                root.confirmForget = "";
+            }
         }
     }
 
@@ -509,18 +514,42 @@ DropdownFrame {
                                     onClicked: root.act(netRow.modelData)
                                 }
 
+                                // Forgetting deletes the saved passphrase, so it asks first,
+                                // the same as the Bluetooth device's FORGET.
                                 ActionButton {
                                     text: "FORGET"
-                                    visible: netRow.modelData.known
+                                    visible: netRow.modelData.known && root.confirmForget !== netRow.modelData.ssid
+                                    usable: !netAction.working
+                                    onClicked: root.confirmForget = netRow.modelData.ssid
+                                }
+
+                                NrLabel {
+                                    visible: root.confirmForget === netRow.modelData.ssid
+                                    color: Theme.alert
+                                    text: "FORGET THIS NETWORK?"
+                                }
+
+                                ActionButton {
+                                    text: "FORGET"
+                                    visible: root.confirmForget === netRow.modelData.ssid
+                                    accented: true
+                                    textColor: Theme.alert
                                     usable: !netAction.working
                                     // The row is cleared first: forgetting rebuilds the
                                     // network list, which destroys this delegate, and a
                                     // `root` read after that throws (it did, every time).
                                     onClicked: {
                                         const ssid = netRow.modelData.ssid;
+                                        root.confirmForget = "";
                                         root.pending = "";
                                         Wifi.forget(ssid);
                                     }
+                                }
+
+                                ActionButton {
+                                    text: "KEEP"
+                                    visible: root.confirmForget === netRow.modelData.ssid
+                                    onClicked: root.confirmForget = ""
                                 }
                             }
                         }
