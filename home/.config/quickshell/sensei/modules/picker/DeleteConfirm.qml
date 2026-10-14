@@ -30,6 +30,7 @@ ChamferPanel {
         spacing: 12
 
         Text {
+            textFormat: Text.PlainText
             width: parent.width
 
             text: `DELETE ${root.name.toUpperCase()}?`
@@ -43,6 +44,7 @@ ChamferPanel {
         }
 
         Text {
+            textFormat: Text.PlainText
             width: parent.width
 
             // The second sentence is the one that matters: the wallpaper is a

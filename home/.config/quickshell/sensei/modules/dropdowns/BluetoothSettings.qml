@@ -51,6 +51,7 @@ Item {
             spacing: 3
 
             Text {
+                textFormat: Text.PlainText
                 width: parent.width
                 renderType: Text.NativeRendering
                 text: root.hasAdapter ? root.adapter.name : "NO ADAPTER"

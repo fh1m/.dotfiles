@@ -120,6 +120,7 @@ Item {
                 spacing: 3
 
                 Text {
+                    textFormat: Text.PlainText
                     text: "sensei ~/deck $"
                     color: Theme.signal
                     font.family: Appearance.font.data
@@ -128,6 +129,7 @@ Item {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     text: "ICE NOMINAL // 25 SERVICES"
                     color: Theme.text
                     font.family: Appearance.font.data
@@ -227,6 +229,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 width: parent.width
                 text: root.treatment.about
                 color: Theme.text

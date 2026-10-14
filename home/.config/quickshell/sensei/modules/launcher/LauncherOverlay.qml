@@ -81,6 +81,7 @@ Variants {
                 height: 38
 
                 Text {
+                    textFormat: Text.PlainText
                     id: title
                     anchors.left: parent.left
                     anchors.leftMargin: 18
@@ -94,6 +95,7 @@ Variants {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.left: title.right
                     anchors.leftMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
@@ -133,6 +135,7 @@ Variants {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     renderType: Text.NativeRendering
                     id: prompt
 

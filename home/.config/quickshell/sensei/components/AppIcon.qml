@@ -14,6 +14,7 @@ Item {
   visible:status===Image.Ready
  }
  Text {
+  textFormat: Text.PlainText
   anchors.centerIn:parent;visible:art.status!==Image.Ready
   text:"\uf2d0";font.family:Appearance.font.icons;font.pixelSize:root.size*.65;color:Theme.dim
  }

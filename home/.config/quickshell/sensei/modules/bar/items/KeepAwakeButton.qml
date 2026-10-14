@@ -54,6 +54,7 @@ Rectangle {
             implicitHeight: value.implicitHeight
 
             Text {
+                textFormat: Text.PlainText
                 renderType: Text.NativeRendering
                 id: value
 

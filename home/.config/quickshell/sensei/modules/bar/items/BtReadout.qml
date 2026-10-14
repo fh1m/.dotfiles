@@ -46,8 +46,8 @@ Item {
     // Left-aligned so a short name sits next to the label, but capped at 120px
     // so a long one truncates instead of pushing the ticker around.
     Column { visible: !root.condensed; y: (readout.height - height) / 2; spacing: -1
-        Text {text:"Bluetooth";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
-        Text {text:!root.adapter||!root.adapter.enabled?"Off":root.connectedDevices.length?`${root.connectedDevices.length} linked`:"Ready";font.family:Appearance.font.barUi;font.pixelSize:10;color:root.connectedDevices.length?Theme.widgetAccent:Theme.dim}
+        Text { textFormat: Text.PlainText;text:"Bluetooth";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
+        Text { textFormat: Text.PlainText;text:!root.adapter||!root.adapter.enabled?"Off":root.connectedDevices.length?`${root.connectedDevices.length} linked`:"Ready";font.family:Appearance.font.barUi;font.pixelSize:10;color:root.connectedDevices.length?Theme.widgetAccent:Theme.dim}
     }
 
     }

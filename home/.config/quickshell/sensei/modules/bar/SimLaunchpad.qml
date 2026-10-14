@@ -28,8 +28,8 @@ BarSurface {
             }
         }
         Column {visible:!root.condensed;anchors.verticalCenter:parent.verticalCenter;spacing:-1
-            Text {text:"NVIDIA";font.family:Appearance.font.barUi;font.pixelSize:11;font.weight:Font.DemiBold;color:Theme.text}
-            Text {text:root.compute>0?"CUDA "+root.compute:root.graphics>0?"GPU "+root.graphics:root.gpu.state==="sleep"?"Asleep":root.gpu.processesKnown?"Ready":"--";font.family:Appearance.font.data;font.pixelSize:10;color:root.activity}
+            Text { textFormat: Text.PlainText;text:"NVIDIA";font.family:Appearance.font.barUi;font.pixelSize:11;font.weight:Font.DemiBold;color:Theme.text}
+            Text { textFormat: Text.PlainText;text:root.compute>0?"CUDA "+root.compute:root.graphics>0?"GPU "+root.graphics:root.gpu.state==="sleep"?"Asleep":root.gpu.processesKnown?"Ready":"--";font.family:Appearance.font.data;font.pixelSize:10;color:root.activity}
         }
     }
     MouseArea {

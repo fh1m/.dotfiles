@@ -113,6 +113,7 @@ Item {
         model: root.text.length
 
         Text {
+            textFormat: Text.PlainText
             required property int index
 
             x: root.positions[index]

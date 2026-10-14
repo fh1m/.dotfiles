@@ -516,6 +516,7 @@ Item {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.verticalCenter: parent.verticalCenter
                     text: "ОБОИ"
                     color: Theme.signal
@@ -595,6 +596,7 @@ Item {
                             spacing: 6
 
                             Text {
+                                textFormat: Text.PlainText
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: "+"
                                 color: Theme.accent
@@ -895,6 +897,7 @@ Item {
             spacing: 12
 
             Text {
+                textFormat: Text.PlainText
                 width: parent.width
                 text: "DELETE FROM DISK?"
                 color: Theme.alert
@@ -906,6 +909,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 width: parent.width
                 text: `${root.confirmingDelete} is removed from your wallpapers folder. Every pool holding it loses it.`
                 color: Theme.dim

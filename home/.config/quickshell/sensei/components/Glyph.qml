@@ -42,6 +42,7 @@ Item {
     }
 
     Text {
+        textFormat: Text.PlainText
         x: root.width / 2 - (metrics.tightBoundingRect.x + metrics.tightBoundingRect.width / 2)
         y: root.height / 2 - (line.ascent + metrics.tightBoundingRect.y + metrics.tightBoundingRect.height / 2)
 

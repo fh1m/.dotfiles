@@ -66,6 +66,7 @@ Item {
     }
 
     Text {
+        textFormat: Text.PlainText
         id: hex
 
         anchors.right: parent.right

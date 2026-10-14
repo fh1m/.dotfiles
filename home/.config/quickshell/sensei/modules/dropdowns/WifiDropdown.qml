@@ -392,6 +392,7 @@ DropdownFrame {
                             // control that was pressed. It reads the verb while a
                             // link runs, with no sweep of its own.
                             Text {
+                                textFormat: Text.PlainText
                                 id: netState
 
                                 renderType: Text.NativeRendering

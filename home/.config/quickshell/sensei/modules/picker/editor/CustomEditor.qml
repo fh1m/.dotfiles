@@ -182,6 +182,7 @@ Item {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.verticalCenter: parent.verticalCenter
                     text: "НАСТРОЙКА"
                     color: Theme.signal
@@ -334,6 +335,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 width: parent.width
                 text: "deep, track, mute, cell and the translucent panel fills are derived from these nine."
                 color: Theme.dim

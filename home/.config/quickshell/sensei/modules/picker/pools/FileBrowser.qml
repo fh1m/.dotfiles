@@ -79,6 +79,7 @@ Item {
                 spacing: 10
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.verticalCenter: parent.verticalCenter
                     text: `ADD FILES${Appearance.separator}LIBRARY`
                     color: Theme.bright
@@ -89,6 +90,7 @@ Item {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.verticalCenter: parent.verticalCenter
                     text: "СНИМОК"
                     color: Theme.signal
@@ -195,6 +197,7 @@ Item {
                         // an icon; the shell has no icon set and a glyph at
                         // this size would be a smudge.
                         Text {
+                            textFormat: Text.PlainText
                             anchors.left: parent.left
                             anchors.leftMargin: 10
                             anchors.verticalCenter: parent.verticalCenter

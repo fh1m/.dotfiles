@@ -79,11 +79,13 @@ Variants {
 
             Rectangle { x: 18; y: 22; width: 4; height: 30; color: Theme.widgetAccent }
             Text {
+                textFormat: Text.PlainText
                 x: 34; y: 17; text: "KEYMAP  //  FIELD GUIDE"
                 color: Theme.widgetText; font.family: Appearance.font.data
                 font.pixelSize: 19; font.weight: Font.Bold; renderType: Text.NativeRendering
             }
             Text {
+                textFormat: Text.PlainText
                 anchors.right: parent.right; anchors.rightMargin: 22; y: 24
                 text: overlay.results.length + " / " + Catalog.shortcuts.length + " BINDINGS"
                 color: Theme.widgetAccent; font.family: Appearance.font.data
@@ -94,7 +96,7 @@ Variants {
                 id: searchBox
                 x: 20; y: 67; width: parent.width - 40; height: 44
                 chamfer: 8; fillColor: Theme.widgetRaised; borderColor: Theme.widgetBorder
-                Text { x: 14; anchors.verticalCenter: parent.verticalCenter; text: ""; color: Theme.widgetAccent; font.family: Appearance.font.data; font.pixelSize: 16 }
+                Text { textFormat: Text.PlainText; x: 14; anchors.verticalCenter: parent.verticalCenter; text: ""; color: Theme.widgetAccent; font.family: Appearance.font.data; font.pixelSize: 16 }
                 TextInput {
                     id: searchInput
                     x: 42; y: 8; width: parent.width - 56; height: 30
@@ -110,6 +112,7 @@ Variants {
                     }
                 }
                 Text {
+                    textFormat: Text.PlainText
                     x: 42; anchors.verticalCenter: parent.verticalCenter
                     visible: searchInput.text.length === 0; text: "Search key, action, category, or purpose…"
                     color: Theme.widgetFaint; font.family: Appearance.font.data; font.pixelSize: 13
@@ -129,18 +132,21 @@ Variants {
                     borderColor: index === overlay.selected ? Theme.widgetAccent : Theme.widgetBorder
                     Rectangle { x: 10; y: 13; width: 3; height: 35; color: index === overlay.selected ? Theme.widgetAccent : "#344050" }
                     Text {
+                        textFormat: Text.PlainText
                         x: 22; y: 8; width: parent.width - 255; elide: Text.ElideRight
                         text: modelData.title; color: index === overlay.selected ? "#ffb2c3" : Theme.widgetText
                         font.family: Appearance.font.data; font.pixelSize: 13; font.weight: Font.DemiBold
                         renderType: Text.NativeRendering
                     }
                     Text {
+                        textFormat: Text.PlainText
                         x: 22; y: 33; width: parent.width - 255; elide: Text.ElideRight
                         text: modelData.group.toUpperCase() + "  /  " + modelData.detail
                         color: Theme.widgetMuted; font.family: Appearance.font.data; font.pixelSize: 11
                         renderType: Text.NativeRendering
                     }
                     Text {
+                        textFormat: Text.PlainText
                         anchors.right: parent.right; anchors.rightMargin: 15; anchors.verticalCenter: parent.verticalCenter
                         width: 220; horizontalAlignment: Text.AlignRight; elide: Text.ElideLeft
                         text: modelData.key; color: index === overlay.selected ? "#ffb2c3" : "#8bb9f6"
@@ -155,6 +161,7 @@ Variants {
                     }
                 }
                 Text {
+                    textFormat: Text.PlainText
                     anchors.centerIn: parent; visible: list.count === 0
                     text: "NO MATCH  //  TRY THE ACTION OR CATEGORY"
                     color: Theme.widgetMuted; font.family: Appearance.font.data; font.pixelSize: 12
@@ -162,6 +169,7 @@ Variants {
             }
 
             Text {
+                textFormat: Text.PlainText
                 x: 22; y: parent.height - 30
                 text: "↑↓ BROWSE    ·    ENTER COPY KEY    ·    ESC CLOSE    //    SENSEI, EVERY CONTROL HAS A HOME"
                 color: Theme.widgetMuted; font.family: Appearance.font.data; font.pixelSize: 11

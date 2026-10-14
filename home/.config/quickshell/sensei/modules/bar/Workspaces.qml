@@ -91,6 +91,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: 5
                 Text {
+                    textFormat: Text.PlainText
                     anchors.verticalCenter: parent.verticalCenter
                     visible: text !== ""
                     text: button.modelData.glyph ?? ""

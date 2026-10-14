@@ -19,5 +19,5 @@ Rectangle {
  readonly property bool timerRunning:frameTimer.running
  Component.onCompleted:{Qt.callLater(attach);WindowDesk.previews=WindowDesk.previews.concat([root]);}
  Component.onDestruction:WindowDesk.previews=WindowDesk.previews.filter(p=>p!==root)
- Text {anchors.centerIn:parent;visible:!capture.hasContent;text:root.window?.lastIpcObject?.class||"Preparing preview…";font.family:Appearance.font.data;font.pixelSize:14;color:Theme.dim}
+ Text { textFormat: Text.PlainText;anchors.centerIn:parent;visible:!capture.hasContent;text:root.window?.lastIpcObject?.class||"Preparing preview…";font.family:Appearance.font.data;font.pixelSize:14;color:Theme.dim}
 }

@@ -18,7 +18,7 @@ PanelWindow {
  exclusiveZone:0
  color:Shared.NoesisStyle.surface
  ColumnLayout {anchors.fill:parent;anchors.margins:Shared.NoesisStyle.md;spacing:Shared.NoesisStyle.sm
-  Text {text:LearningBridge.NoesisBridge.currentContext.title||LearningBridge.NoesisBridge.currentContext.path||"Current context";color:Shared.NoesisStyle.accent;font.family:Shared.NoesisStyle.uiFont;font.pixelSize:Shared.NoesisStyle.label;Layout.fillWidth:true;elide:Text.ElideRight}
+  Text { textFormat: Text.PlainText;text:LearningBridge.NoesisBridge.currentContext.title||LearningBridge.NoesisBridge.currentContext.path||"Current context";color:Shared.NoesisStyle.accent;font.family:Shared.NoesisStyle.uiFont;font.pixelSize:Shared.NoesisStyle.label;Layout.fillWidth:true;elide:Text.ElideRight}
   RowLayout {
    Shared.NoesisButton {text:"Resume";onClicked:LearningBridge.NoesisBridge.resume()}
    Shared.NoesisButton {text:"Capture";onClicked:LearningBridge.NoesisBridge.capture()}

@@ -71,6 +71,7 @@ ChamferPanel {
         border.color: root.selected || root.armed ? Theme.accent : Theme.hair
 
         Text {
+            textFormat: Text.PlainText
             anchors.centerIn: parent
             text: root.tile.key
             color: root.selected || root.armed ? Theme.ground : Theme.dim
@@ -86,6 +87,7 @@ ChamferPanel {
         spacing: 6
 
         Text {
+            textFormat: Text.PlainText
             renderType: Text.NativeRendering
             anchors.horizontalCenter: parent.horizontalCenter
 
@@ -107,6 +109,7 @@ ChamferPanel {
         // it -- "LOG OUT, ENTER" -- in the accent, so the confirmation names
         // itself. Both fit the tile, so it never changes size.
         Text {
+            textFormat: Text.PlainText
             anchors.horizontalCenter: parent.horizontalCenter
 
             text: root.armed ? `${root.tile.label}, ENTER` : root.tile.katakana

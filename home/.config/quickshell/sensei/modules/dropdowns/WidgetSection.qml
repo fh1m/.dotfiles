@@ -21,6 +21,7 @@ Item {
         borderWidth: 1
     }
     Text {
+        textFormat: Text.PlainText
         x: 13; y: 10
         text: root.glyph
         visible: text !== ""
@@ -29,6 +30,7 @@ Item {
         color: root.accent
     }
     Text {
+        textFormat: Text.PlainText
         x: root.glyph === "" ? 14 : 39; y: 10
         text: root.title
         font.family: Appearance.font.heading
@@ -37,6 +39,7 @@ Item {
         color: Theme.widgetText
     }
     Text {
+        textFormat: Text.PlainText
         anchors.right: parent.right; anchors.rightMargin: 13; y: 14
         visible: root.subtitle !== ""
         text: root.subtitle

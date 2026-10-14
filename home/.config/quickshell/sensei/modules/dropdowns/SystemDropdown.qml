@@ -61,7 +61,7 @@ DropdownFrame {
                     Repeater {model:ExternalDisplays.displays
                         Column {required property var modelData;width:parent.width
                             ControlSlider {visible:modelData.ready;height:visible?implicitHeight:0;title:(modelData.barEdge==="top"?"Upper":"Lower")+" · "+modelData.label;glyph:"\uf26c";level:modelData.level??0;onEdited:percent=>ExternalDisplays.setLevel(modelData.output,percent)}
-                            Text {visible:!modelData.ready;width:parent.width;wrapMode:Text.Wrap;text:(modelData.barEdge==="top"?"Upper":"Lower")+" · monitor brightness controls unavailable";color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:12}
+                            Text { textFormat: Text.PlainText;visible:!modelData.ready;width:parent.width;wrapMode:Text.Wrap;text:(modelData.barEdge==="top"?"Upper":"Lower")+" · monitor brightness controls unavailable";color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:12}
                         }
                     }
                 }
@@ -78,7 +78,7 @@ DropdownFrame {
                     ControlTile {implicitWidth:268;label:"Home storage";detail:Den.working?"Connecting…":Den.data.storage;glyph:"\uf07b";enabled:!Den.working&&Den.online&&Den.data.storage!=="not configured";onActivated:Den.openStorage()}
                     ControlTile {implicitWidth:268;label:Den.inputRunning?"Stop shared input":"Start shared input";detail:Den.inputRunning?"Input client running":"Keyboard · mouse";glyph:"\uf11c";selected:Den.inputRunning;enabled:!Den.working&&(Den.online||Den.inputRunning);onActivated:Den.inputToggle()}
                 }
-                Text {width:parent.width;visible:Den.error!=="";text:Den.error;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.signalRed}
+                Text { textFormat: Text.PlainText;width:parent.width;visible:Den.error!=="";text:Den.error;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.signalRed}
             }
             WidgetSection { width: parent.width; title: "Tools"; glyph: "\uf0b1"
                 Grid { columns: 2; spacing: 8
@@ -91,7 +91,7 @@ DropdownFrame {
                 }
             }
             ActionRow { implicitWidth: parent.width; label: ServicesControl.remoteActive ? "Stop remote access" : "Start remote access"; glyph: "\uf108"; detail: "NoMachine · on demand"; onActivated: ServicesControl.toggleRemote() }
-            Text { width: parent.width; visible: (Power.error + ServicesControl.error).length > 0; text: Power.error || ServicesControl.error; color: Theme.widgetAccent; wrapMode: Text.WordWrap; font.family: Appearance.font.ui; font.pixelSize: 12 }
+            Text { textFormat: Text.PlainText; width: parent.width; visible: (Power.error + ServicesControl.error).length > 0; text: Power.error || ServicesControl.error; color: Theme.widgetAccent; wrapMode: Text.WordWrap; font.family: Appearance.font.ui; font.pixelSize: 12 }
         }
         Column {id:systemPageEnter1Container;
             width: parent.width; spacing: 12; visible: ShellState.systemPage === 1
@@ -112,14 +112,14 @@ DropdownFrame {
                     ControlTile { required property int modelData; label: `${modelData}%`; glyph: "\uf240"; selected: RobotBench.data.chargeLimit === modelData; onActivated: root.action("charge", String(modelData)) }
                 }
             }
-            Text { width: parent.width; text: "60% desk use · 80% everyday · 100% travel"; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
+            Text { textFormat: Text.PlainText; width: parent.width; text: "60% desk use · 80% everyday · 100% travel"; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
             Row {
                 spacing: 8
                 ControlTile { label: "Auto fans"; glyph: "\udb80\ude10"; enabled: RobotBench.data.fanControlAvailable ?? false; selected: RobotBench.data.fanMode === 2; onActivated: root.action("fan", "auto") }
                 ControlTile { label: "CPU boost"; glyph: "\udb80\ude10"; enabled: RobotBench.data.fanControlAvailable ?? false; selected: RobotBench.data.fanMode === 0; onActivated: root.action("fan", "boost") }
                 ControlTile { label: "CPU mode"; glyph: "\uf135"; onActivated: root.action("profile") }
             }
-            Text { width: parent.width; text: `CPU ${RobotBench.data.cpuTemperature ?? "--"}°C  ·  CPU/GPU fans ${(RobotBench.data.fans ?? []).join(" / ")} RPM`; font.family: Appearance.font.ui; font.pixelSize: 13; color: (RobotBench.data.cpuTemperature ?? 0) >= 85 ? Theme.widgetAccent : Theme.widgetAccent }
+            Text { textFormat: Text.PlainText; width: parent.width; text: `CPU ${RobotBench.data.cpuTemperature ?? "--"}°C  ·  CPU/GPU fans ${(RobotBench.data.fans ?? []).join(" / ")} RPM`; font.family: Appearance.font.ui; font.pixelSize: 13; color: (RobotBench.data.cpuTemperature ?? 0) >= 85 ? Theme.widgetAccent : Theme.widgetAccent }
             Grid {
                 columns: 3; spacing: 8
                 ControlTile { label: "Touchpad"; glyph: "\uf245"; selected: RobotBench.data.touchpadEnabled ?? true; onActivated: root.action("touchpad") }
@@ -130,7 +130,7 @@ DropdownFrame {
                 ControlTile { label: RobotBench.data.cameraEnabled ? "Camera on" : "Camera off"; glyph: "\uf030"; enabled: RobotBench.data.cameraControlAvailable ?? false; selected: RobotBench.data.cameraEnabled ?? false; onActivated: root.action("camera") }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.widgetBorder }
-            Text { width: parent.width; wrapMode: Text.WordWrap; text: `UX581GV · Intel UHD + RTX 2060\nStorage free: ${RobotBench.data.diskFreeGiB ?? "--"} GiB · ${RobotBench.data.diskUsedPercent ?? "--"}% used\nBuilt-in RGB / IR camera: ${RobotBench.data.cameraEnabled ? "ON" : "OFF"} · ScreenPad stays connected when switched off`; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetMuted; lineHeight: 1.5 }
+            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: `UX581GV · Intel UHD + RTX 2060\nStorage free: ${RobotBench.data.diskFreeGiB ?? "--"} GiB · ${RobotBench.data.diskUsedPercent ?? "--"}% used\nBuilt-in RGB / IR camera: ${RobotBench.data.cameraEnabled ? "ON" : "OFF"} · ScreenPad stays connected when switched off`; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetMuted; lineHeight: 1.5 }
         }
         Column {id:systemPageEnter2Container;
             width: parent.width; spacing: 12; visible: ShellState.systemPage === 2
@@ -145,9 +145,9 @@ DropdownFrame {
                 ControlTile { label: "NVIDIA terminal"; glyph: "\uf120"; onActivated: root.launch(["@HOME@/.local/bin/sim-console"]) }
                 ControlTile { label: "GPU monitor"; glyph: "\uf201"; onActivated: root.launch(["@HOME@/.local/bin/sensei-terminal", "--title", "GPU-Monitor", "nvtop"]) }
             }
-            Text { width: parent.width; wrapMode: Text.WordWrap; text: "Training mode moves Chrome to Intel (saved tabs reopen), enables Performance + Keep Awake, and restores your previous choices when turned off. Other running GPU apps need relaunching."; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
+            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: "Training mode moves Chrome to Intel (saved tabs reopen), enables Performance + Keep Awake, and restores your previous choices when turned off. Other running GPU apps need relaunching."; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
             NrLabel { pixelSize: 13; color: (RobotBench.data.gpu.computeCount ?? 0) > 0 ? Theme.widgetAccent : Theme.widgetAccent; text: RobotBench.data.gpu.state === "sleep" ? "RTX 2060 · SLEEP · 0%" : (RobotBench.data.gpu.state === "active" ? `RTX ${Math.round(RobotBench.data.gpu.usage)}% · ${Math.round(RobotBench.data.gpu.temperature)}°C` : "RTX · DATA UNAVAILABLE") }
-            Text { width: parent.width; text: RobotBench.data.gpu.state === "active" ? `VRAM ${Math.round(RobotBench.data.gpu.memoryUsedMiB ?? 0)} / ${Math.round(RobotBench.data.gpu.memoryTotalMiB ?? 0)} MiB` : "No GPU workload while sleeping"; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetText }
+            Text { textFormat: Text.PlainText; width: parent.width; text: RobotBench.data.gpu.state === "active" ? `VRAM ${Math.round(RobotBench.data.gpu.memoryUsedMiB ?? 0)} / ${Math.round(RobotBench.data.gpu.memoryTotalMiB ?? 0)} MiB` : "No GPU workload while sleeping"; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetText }
             SegmentMeter { width: parent.width; segments: 40; segmentWidth: 11; segmentHeight: 8; value: (RobotBench.data.gpu.memory ?? 0) / 100; litColor: Theme.widgetAccent; hotThreshold: 0.85 }
             Column {
                 width: parent.width; spacing: 6
@@ -155,10 +155,10 @@ DropdownFrame {
                     model: (RobotBench.data.gpu.processes ?? []).slice(0, 6)
                     Text { required property var modelData; width: parent.width; elide: Text.ElideRight; textFormat: Text.PlainText; text: `${modelData.type.includes("C") ? "COMPUTE" : "GRAPHICS"}  ${modelData.name}  · PID ${modelData.pid} · ${modelData.memoryMiB ?? "--"} MiB`; font.family: Appearance.font.ui; font.pixelSize: 13; color: modelData.type.includes("C") ? Theme.widgetAccent : Theme.widgetAccent }
                 }
-                Text { visible: (RobotBench.data.gpu.processes ?? []).length === 0; text: RobotBench.data.gpu.processesKnown ? "No dedicated GPU processes" : "GPU process list unavailable"; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
+                Text { textFormat: Text.PlainText; visible: (RobotBench.data.gpu.processes ?? []).length === 0; text: RobotBench.data.gpu.processesKnown ? "No dedicated GPU processes" : "GPU process list unavailable"; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.widgetBorder }
-            Text { width: parent.width; wrapMode: Text.WordWrap; text: `USB serial devices: ${RobotBench.data.boardCount} · Simulators: ${RobotBench.data.simCount}\nCPU ${RobotBench.data.cpuTemperature ?? "--"}°C · Fans ${(RobotBench.data.fans ?? []).join("/")} RPM · Free disk ${RobotBench.data.diskFreeGiB ?? "--"} GiB`; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetText; lineHeight: 1.5 }
+            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: `USB serial devices: ${RobotBench.data.boardCount} · Simulators: ${RobotBench.data.simCount}\nCPU ${RobotBench.data.cpuTemperature ?? "--"}°C · Fans ${(RobotBench.data.fans ?? []).join("/")} RPM · Free disk ${RobotBench.data.diskFreeGiB ?? "--"} GiB`; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetText; lineHeight: 1.5 }
             Repeater {
                 model: (RobotBench.data.boards ?? []).slice(0, 3)
                 Text { required property string modelData; width: parent.width; elide: Text.ElideMiddle; textFormat: Text.PlainText; text: "\uf287 " + modelData; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetAccent }

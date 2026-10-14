@@ -184,6 +184,7 @@ Item {
         spacing: 6
 
         Text {
+            textFormat: Text.PlainText
             visible: root.glyph !== ""
             anchors.verticalCenter: parent.verticalCenter
             text: root.glyph

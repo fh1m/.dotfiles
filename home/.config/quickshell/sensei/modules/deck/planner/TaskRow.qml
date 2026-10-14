@@ -201,6 +201,7 @@ Item {
 
         // status slot sized to the widest word so the tag column stays put.
         Text {
+            textFormat: Text.PlainText
             id: statusSlot
 
             visible: false
@@ -210,6 +211,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             id: status
 
             anchors.right: minus.left

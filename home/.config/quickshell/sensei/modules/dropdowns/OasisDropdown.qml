@@ -51,20 +51,20 @@ ChamferPanel {
  ColumnLayout {
   anchors.fill:parent;anchors.margins:16;spacing:10
   RowLayout {Layout.fillWidth:true;spacing:12
-   Text {text:"Workspace";color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:22;font.bold:true}
-   Text {text:Oasis.state.vault?("Vault · "+Oasis.state.vault):"Learn anything · connect the evidence";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:12;Layout.fillWidth:true;elide:Text.ElideRight}
+   Text { textFormat: Text.PlainText;text:"Workspace";color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:22;font.bold:true}
+   Text { textFormat: Text.PlainText;text:Oasis.state.vault?("Vault · "+Oasis.state.vault):"Learn anything · connect the evidence";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:12;Layout.fillWidth:true;elide:Text.ElideRight}
    ActionButton {text:"Today";glyph:"\uf073";usable:!Oasis.working;onClicked:Oasis.run(["today"])}
    ActionButton {text:"Views";glyph:"\uf0ce";usable:!Oasis.working;onClicked:Oasis.note((Oasis.state.home==="Home.md"?"Views/":"93 Bases/")+"Library.base")}
    ActionButton {text:"Graph";glyph:"\uf0e8";usable:!Oasis.working;onClicked:Oasis.run(["cli","command","id=graph:open"])}
    ActionButton {text:"Refresh";usable:!Oasis.working;onClicked:Oasis.refresh()}
   }
-  Text {text:Oasis.error||(Oasis.working?"Working… your window stays responsive.":Oasis.message)||"Sensei, connect an idea to a prediction, a build, and a test.";color:Oasis.error?Theme.widgetAccent:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:12;Layout.fillWidth:true;elide:Text.ElideRight}
+  Text { textFormat: Text.PlainText;text:Oasis.error||(Oasis.working?"Working… your window stays responsive.":Oasis.message)||"Sensei, connect an idea to a prediction, a build, and a test.";color:Oasis.error?Theme.widgetAccent:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:12;Layout.fillWidth:true;elide:Text.ElideRight}
   ActionButton {visible:Oasis.working;text:"Cancel action";glyph:"\uf00d";onClicked:Oasis.cancel()}
   Rectangle {height:1;Layout.fillWidth:true;color:Theme.widgetBorder}
   RowLayout {Layout.fillHeight:true;Layout.fillWidth:true;spacing:14
    ListView {Layout.preferredWidth:164;Layout.fillHeight:true;clip:true;spacing:3;model:panel.sections
     delegate:Rectangle {required property string modelData;width:164;height:35;radius:3;color:panel.section===modelData?Theme.widgetRaised:"transparent"
-     Text {anchors.left:parent.left;anchors.leftMargin:12;anchors.verticalCenter:parent.verticalCenter;text:modelData;color:panel.section===modelData?Theme.widgetAccent:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:14;font.bold:panel.section===modelData}
+     Text { textFormat: Text.PlainText;anchors.left:parent.left;anchors.leftMargin:12;anchors.verticalCenter:parent.verticalCenter;text:modelData;color:panel.section===modelData?Theme.widgetAccent:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:14;font.bold:panel.section===modelData}
      Rectangle {visible:panel.section===modelData;width:2;height:15;anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter;color:Theme.widgetAccent}
      MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:panel.section=modelData}
     }
@@ -72,13 +72,13 @@ ChamferPanel {
    Rectangle {width:1;Layout.fillHeight:true;color:Theme.widgetBorder}
    ColumnLayout {Layout.fillWidth:true;Layout.fillHeight:true;spacing:8
     RowLayout {Layout.fillWidth:true
-     Text {text:panel.section==="Today"?"Next meaningful move":panel.section;color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:16;font.bold:true;Layout.fillWidth:true}
-     Text {text:panel.rows.length+" entries";visible:panel.section!=="Create"&&panel.section!=="Import";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:11}
+     Text { textFormat: Text.PlainText;text:panel.section==="Today"?"Next meaningful move":panel.section;color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:16;font.bold:true;Layout.fillWidth:true}
+     Text { textFormat: Text.PlainText;text:panel.rows.length+" entries";visible:panel.section!=="Create"&&panel.section!=="Import";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:11}
      ActionButton {visible:panel.section==="Files"&&panel.folder!=="";text:"Up";glyph:"\uf062";onClicked:panel.folder=panel.folder.split("/").slice(0,-1).join("/")}
     }
     DeskComboBox {id:role;visible:panel.section==="Library";Layout.fillWidth:true;model:["All","concept","paper","course","problem","resource","lab","project","question","error","branch","snippet","review","daily","note"];onActivated:panel.roleFilter=currentText}
     DeskTextField {id:search;visible:panel.section!=="Create"&&panel.section!=="Import";Layout.fillWidth:true;placeholderText:panel.section==="Files"?(panel.folder||"Vault files")+" · filter":"Find by name, topic, tag or path…"}
-    Text {visible:panel.section==="Today";text:(Oasis.state.question||"Choose what you want to be able to do.")+"\n\n"+(Oasis.state.next_experiment||"Make a prediction; choose the smallest useful test.");wrapMode:Text.Wrap;color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:14;Layout.fillWidth:true}
+    Text { textFormat: Text.PlainText;visible:panel.section==="Today";text:(Oasis.state.question||"Choose what you want to be able to do.")+"\n\n"+(Oasis.state.next_experiment||"Make a prediction; choose the smallest useful test.");wrapMode:Text.Wrap;color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:14;Layout.fillWidth:true}
     RowLayout {visible:panel.section==="Today";spacing:6
      ActionButton {text:"Frontier";onClicked:Oasis.run(["frontier"])}ActionButton {text:"Home";onClicked:Oasis.run(["open"])}ActionButton {text:"Backup";glyph:"\uf0c7";usable:!Oasis.working;onClicked:Oasis.run(["backup"])}
     }
@@ -88,25 +88,25 @@ ChamferPanel {
      DeskTextField {id:destination;Layout.fillWidth:true;placeholderText:"Folder (optional; write where you want)"}
      RowLayout {ActionButton {text:"Create note";glyph:"\uf067";usable:!Oasis.working&&title.text.trim()!=="";onClicked:{let a=["new",panel.kind,title.text,"--open"];if(destination.text.trim())a=a.concat(["--folder",destination.text]);Oasis.run(a);}}
       ActionButton {text:"Canvas";glyph:"\uf0e8";usable:!Oasis.working&&title.text.trim()!=="";onClicked:Oasis.run(["canvas",title.text])}}
-     Text {text:"Free notes, equations, diagrams, sketches and code.\nOpen in Obsidian for full editing and rendering.";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:12;wrapMode:Text.Wrap;Layout.fillWidth:true}
+     Text { textFormat: Text.PlainText;text:"Free notes, equations, diagrams, sketches and code.\nOpen in Obsidian for full editing and rendering.";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:12;wrapMode:Text.Wrap;Layout.fillWidth:true}
      DeskComboBox {id:resourceKind;Layout.fillWidth:true;model:["paper","book","article","docs","lecture","playlist","course","dataset","other"]}
      DeskTextField {id:resourceUrl;Layout.fillWidth:true;placeholderText:"Resource URL (optional)"}
      DeskTextField {id:resourceFile;Layout.fillWidth:true;placeholderText:"Local PDF / material path (optional; no duplicate copy)"}
      ActionButton {text:"Choose Material file";glyph:"\uf07b";onClicked:panel.pick(resourceFile)}
      ActionButton {text:"Register resource";glyph:"\uf02e";usable:!Oasis.working&&title.text.trim()!=="";onClicked:{let a=["resource",title.text,"--kind",resourceKind.currentText,"--url",resourceUrl.text];if(resourceFile.text.trim())a=a.concat(["--file",resourceFile.text]);Oasis.run(a);}}
-     Text {text:"Create note uses its template. Register resource links real reading material. Neither claims you learned it.";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:12;wrapMode:Text.Wrap;Layout.fillWidth:true}
+     Text { textFormat: Text.PlainText;text:"Create note uses its template. Register resource links real reading material. Neither claims you learned it.";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:12;wrapMode:Text.Wrap;Layout.fillWidth:true}
      Item {Layout.fillHeight:true}
     }
     ColumnLayout {visible:panel.section==="Import";Layout.fillHeight:true;Layout.fillWidth:true;spacing:12
-     Text {text:"Bring sources in; keep your reasoning yours.";color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:16;wrapMode:Text.Wrap;Layout.fillWidth:true}
+     Text { textFormat: Text.PlainText;text:"Bring sources in; keep your reasoning yours.";color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:16;wrapMode:Text.Wrap;Layout.fillWidth:true}
      DeskTextField {id:exportFile;Layout.fillWidth:true;placeholderText:"CSL JSON export file from Zotero"}
      ActionButton {text:"Choose CSL JSON file";glyph:"\uf07b";onClicked:panel.pick(exportFile)}
      ActionButton {text:"Import references";glyph:"\uf093";usable:!Oasis.working&&exportFile.text.trim()!=="";onClicked:Oasis.run(["import-csl",exportFile.text])}
      DeskTextField {id:annotationFile;Layout.fillWidth:true;placeholderText:"Markdown annotation export file"}
      ActionButton {text:"Choose Annotations file";glyph:"\uf07b";onClicked:panel.pick(annotationFile)}
-     Text {text:panel.selected.path?"Selected resource: "+panel.selected.name:"Select a resource in Library or Papers, then return here.";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:13;wrapMode:Text.Wrap;Layout.fillWidth:true}
+     Text { textFormat: Text.PlainText;text:panel.selected.path?"Selected resource: "+panel.selected.name:"Select a resource in Library or Papers, then return here.";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:13;wrapMode:Text.Wrap;Layout.fillWidth:true}
      ActionButton {text:"Import annotations";glyph:"\uf093";usable:!Oasis.working&&annotationFile.text.trim()!==""&&!!panel.selected.id;onClicked:Oasis.run(["import-notes",annotationFile.text,"--resource",panel.selected.path])}
-     Text {text:"Imports retain citation/page links and generated excerpts. Repeated imports preserve your synthesis. Zotero exports are not backups of its database.";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:13;wrapMode:Text.Wrap;Layout.fillWidth:true}
+     Text { textFormat: Text.PlainText;text:"Imports retain citation/page links and generated excerpts. Repeated imports preserve your synthesis. Zotero exports are not backups of its database.";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:13;wrapMode:Text.Wrap;Layout.fillWidth:true}
      ActionButton {text:"Open Zotero";glyph:"\uf02d";onClicked:Quickshell.execDetached(["@HOME@/.local/bin/zotero"])}
      Item {Layout.fillHeight:true}
     }
@@ -119,18 +119,18 @@ ChamferPanel {
     ListView {id:entries;visible:panel.section!=="Create"&&panel.section!=="Import";Layout.fillWidth:true;Layout.fillHeight:true;clip:true;spacing:4;model:panel.rows
      delegate:Rectangle {required property var modelData;width:entries.width;height:58;radius:3;color:panel.selected.path===modelData.path?Theme.widgetRaised:hover.containsMouse?Theme.widgetSurface:"transparent"
       Column {anchors.fill:parent;anchors.margins:7;spacing:3
-       Text {width:parent.width;text:(modelData.isFolder?"▸ ":"")+modelData.name;color:panel.selected.path===modelData.path?Theme.widgetAccent:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:14;elide:Text.ElideRight}
-       Text {width:parent.width;text:panel.section==="Vaults"?(modelData.active?"Selected · ":"")+"Independent vault":(modelData.type||modelData.ext||"")+" · "+(modelData.status||modelData.folder||modelData.path);color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:12;elide:Text.ElideRight}
+       Text { textFormat: Text.PlainText;width:parent.width;text:(modelData.isFolder?"▸ ":"")+modelData.name;color:panel.selected.path===modelData.path?Theme.widgetAccent:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:14;elide:Text.ElideRight}
+       Text { textFormat: Text.PlainText;width:parent.width;text:panel.section==="Vaults"?(modelData.active?"Selected · ":"")+"Independent vault":(modelData.type||modelData.ext||"")+" · "+(modelData.status||modelData.folder||modelData.path);color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:12;elide:Text.ElideRight}
       }
       MouseArea {id:hover;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{if(panel.section==="Vaults"){Oasis.choose(modelData.path);}else if(modelData.isFolder){panel.folder=modelData.path;}else{panel.selected=modelData;panel.referenceHidden=panel.section==="Recall";if(modelData.path.endsWith(".md"))Oasis.preview(modelData.path);}}onDoubleClicked:if(panel.section!=="Vaults"&&!modelData.isFolder)Oasis.note(modelData.path)}
      }
-     Text {visible:!panel.rows.length;anchors.centerIn:parent;text:panel.section==="Connections"?"Select a note, then explore its links.":"No matching entries. Keep only useful state.";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:11}
+     Text { textFormat: Text.PlainText;visible:!panel.rows.length;anchors.centerIn:parent;text:panel.section==="Connections"?"Select a note, then explore its links.":"No matching entries. Keep only useful state.";color:Theme.widgetMuted;font.family:Appearance.font.data;font.pixelSize:11}
     }
     DeskTextField {id:capture;Layout.fillWidth:true;placeholderText:panel.section==="Vaults"?"New subject · any field":"Quick observation / question → Inbox";onAccepted:if(text.trim()&&!Oasis.working){panel.captureSubmission=text;Oasis.run(panel.section==="Vaults"?["init",text]:["capture",text]);}}
    }
    Rectangle {width:1;Layout.fillHeight:true;color:Theme.widgetBorder}
    ColumnLayout {Layout.preferredWidth:Math.min(460,panel.width*.36);Layout.fillHeight:true;spacing:8
-    Text {text:panel.selected.name||"Tools for understanding";color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:14;font.bold:true;Layout.fillWidth:true;elide:Text.ElideRight}
+    Text { textFormat: Text.PlainText;text:panel.selected.name||"Tools for understanding";color:Theme.widgetText;font.family:Appearance.font.data;font.pixelSize:14;font.bold:true;Layout.fillWidth:true;elide:Text.ElideRight}
     RowLayout {ActionButton {text:"Open";usable:!!panel.selected.path&&panel.section!=="Vaults"&&!Oasis.working;onClicked:Oasis.note(panel.selected.path)}ActionButton {text:"Links";glyph:"\uf0e8";usable:!!panel.selected.path&&panel.section!=="Vaults";onClicked:panel.section="Connections"}}
     ActionButton {visible:!!panel.selected.path;text:panel.referenceHidden?"Reveal reference":"Hide reference";glyph:"\uf06e";onClicked:panel.referenceHidden=!panel.referenceHidden}
     ScrollView {Layout.fillWidth:true;Layout.fillHeight:true;clip:true

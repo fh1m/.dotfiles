@@ -30,6 +30,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             anchors.verticalCenter: parent.verticalCenter
             visible: root.katakana !== ""
             text: root.katakana

@@ -62,6 +62,7 @@ Item {
     }
 
     Text {
+        textFormat: Text.PlainText
         id: katakana
 
         anchors.right: parent.right

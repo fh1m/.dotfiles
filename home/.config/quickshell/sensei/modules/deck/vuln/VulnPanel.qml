@@ -53,6 +53,7 @@ ChamferPanel {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 text: "УЯЗВИМОСТИ"
                 color: Theme.signal
@@ -99,6 +100,7 @@ ChamferPanel {
             height: count.implicitHeight
 
         Text {
+            textFormat: Text.PlainText
             renderType: Text.NativeRendering
             id: count
 

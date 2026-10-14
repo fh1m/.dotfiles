@@ -59,6 +59,7 @@ ChamferPanel {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 text: "СИГНАЛ"
                 color: Theme.signal
@@ -110,6 +111,7 @@ ChamferPanel {
             // STANDBY from OFFLINE, and MUTED is the one that most needs
             // saying out loud.
             Text {
+                textFormat: Text.PlainText
                 renderType: Text.NativeRendering
                 id: live
 

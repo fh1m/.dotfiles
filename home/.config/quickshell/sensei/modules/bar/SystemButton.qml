@@ -16,8 +16,8 @@ BarSurface {
     Row {anchors.left:parent.left;anchors.leftMargin:10;anchors.verticalCenter:parent.verticalCenter;spacing:7
         InstrumentIcon {anchors.verticalCenter:parent.verticalCenter;kind:"system";ink:Theme.signalRed}
         Column {visible:!root.condensed;anchors.verticalCenter:parent.verticalCenter;spacing:-1
-            Text {text:"System";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
-            Text {text:"Controls";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.widgetMuted}
+            Text { textFormat: Text.PlainText;text:"System";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
+            Text { textFormat: Text.PlainText;text:"Controls";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.widgetMuted}
         }
     }
     function publish(): void { ShellState.publishAnchor("system", root.mapToItem(null, 0, 0).x); }

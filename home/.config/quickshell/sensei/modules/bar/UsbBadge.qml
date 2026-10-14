@@ -20,6 +20,7 @@ BarSurface {
         anchors.verticalCenter: parent.verticalCenter; spacing: 6
         BarIcon { glyph: "\uf287"; anchors.verticalCenter: parent.verticalCenter; inkSize: 18; ink: UsbLab.presence.count > 0 ? Theme.signalRed : Theme.dim }
         Text {
+            textFormat: Text.PlainText
             id: label
             visible: !root.condensed
             anchors.verticalCenter: parent.verticalCenter

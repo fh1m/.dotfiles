@@ -256,6 +256,7 @@ Item {
                 height: title.implicitHeight
 
                 Text {
+                    textFormat: Text.PlainText
                     id: title
 
                     text: root.name.toUpperCase()
@@ -276,6 +277,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 width: parent.width
 
                 text: Profiles.descriptions[root.name] ?? ""

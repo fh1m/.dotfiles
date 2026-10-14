@@ -10,6 +10,7 @@ DropdownFrame {
     katakana: "СООБЩЕНИЯ"
     implicitWidth: 510
     headerRight: Text {
+        textFormat: Text.PlainText
         text: Notifications.history.length + " recent"
         font.family: Appearance.font.ui
         font.pixelSize: 10
@@ -24,6 +25,7 @@ DropdownFrame {
             ControlTile { implicitWidth: 216; label: "Clear history"; glyph: "\uf1f8"; enabled: Notifications.history.length > 0; onActivated: Notifications.clearHistory() }
         }
         Text {
+            textFormat: Text.PlainText
             visible: Notifications.history.length === 0
             text: "All caught up, Sensei."
             font.family: Appearance.font.ui
@@ -68,8 +70,8 @@ DropdownFrame {
                                     visible: status === Image.Ready
                                     asynchronous: true
                                 }
-                                Text { text: modelData.app; width: parent.width - 95; elide: Text.ElideRight; font.family: Appearance.font.ui; font.pixelSize: 11; color: Theme.widgetAccent }
-                                Text { text: modelData.time; font.family: Appearance.font.data; font.pixelSize: 9; color: Theme.widgetMuted }
+                                Text { textFormat: Text.PlainText; text: modelData.app; width: parent.width - 95; elide: Text.ElideRight; font.family: Appearance.font.ui; font.pixelSize: 11; color: Theme.widgetAccent }
+                                Text { textFormat: Text.PlainText; text: modelData.time; font.family: Appearance.font.data; font.pixelSize: 9; color: Theme.widgetMuted }
                             }
                             Text { width: parent.width; text: modelData.summary; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.family: Appearance.font.ui; font.pixelSize: 12; font.weight: Font.DemiBold; color: Theme.widgetText }
                             Text { visible: text !== ""; width: parent.width; text: modelData.body; textFormat: Text.RichText; wrapMode: Text.Wrap; maximumLineCount: 4; elide: Text.ElideRight; font.family: Appearance.font.ui; font.pixelSize: 11; color: Theme.widgetMuted }

@@ -106,6 +106,7 @@ ChamferPanel {
         }
 
         Text {
+            textFormat: Text.PlainText
             id: kana
             visible: false
 

@@ -24,6 +24,7 @@ Item {
     }
 
     Text {
+        textFormat: Text.PlainText
         renderType: Text.NativeRendering
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter

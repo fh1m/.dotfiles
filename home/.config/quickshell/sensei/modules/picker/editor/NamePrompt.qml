@@ -52,6 +52,7 @@ ChamferPanel {
             spacing: 10
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 text: `NAME${Appearance.separator}PROFILE`
                 color: Theme.bright
@@ -62,6 +63,7 @@ ChamferPanel {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 text: "ИМЯ"
                 color: Theme.signal
@@ -97,6 +99,7 @@ ChamferPanel {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.trimmed ? root.filename : "net-<name>.png"
                 color: root.trimmed ? Theme.signal : Theme.mute

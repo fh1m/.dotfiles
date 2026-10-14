@@ -87,6 +87,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             id: name
 
             anchors.left: marker.right
@@ -218,6 +219,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             width: parent.width
             text: root.entry.cves.join("   ")
             color: Theme.dim

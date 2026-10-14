@@ -40,6 +40,7 @@ Row {
         text: root.unplugged ? Fmt.percent(root.charge) : "AC"
 
         Text {
+            textFormat: Text.PlainText
             renderType: Text.NativeRendering
             id: acLabel
 

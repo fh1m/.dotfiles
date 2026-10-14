@@ -102,6 +102,7 @@ ChamferPanel {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 text: "ДОСТУП"
                 color: Theme.signal
@@ -155,6 +156,7 @@ ChamferPanel {
 
     // --- Message -----------------------------------------------------------
     Text {
+        textFormat: Text.PlainText
         id: message
 
         renderType: Text.NativeRendering

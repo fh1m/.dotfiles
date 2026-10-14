@@ -47,6 +47,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 renderType: Text.NativeRendering
                 anchors.verticalCenter: parent.verticalCenter
                 text: "    ICE ACTIVE"
@@ -59,6 +60,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             text: "СЕАНС ЗАКРЫТ // ЗАЩИТА АКТИВНА"
             color: Theme.signal
             font.family: Appearance.font.accent
@@ -180,6 +182,7 @@ Item {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     id: colonText
 
                     renderType: Text.NativeRendering

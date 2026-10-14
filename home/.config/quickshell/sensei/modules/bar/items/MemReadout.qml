@@ -14,8 +14,8 @@ Item {
         Column {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 2
-            Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: SysInfo.memUsedGib.toFixed(1) + "G USED"; font.family: Appearance.font.data; font.pixelSize: 13; font.weight: 600; color: Theme.signal }
-            Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: (SysInfo.memTotalGib - SysInfo.memUsedGib).toFixed(1) + "G FREE"; font.family: Appearance.font.data; font.pixelSize: 12; color: Theme.dim }
+            Text { textFormat: Text.PlainText; renderType: Text.QtRendering; renderTypeQuality: 104; text: SysInfo.memUsedGib.toFixed(1) + "G USED"; font.family: Appearance.font.data; font.pixelSize: 13; font.weight: 600; color: Theme.signal }
+            Text { textFormat: Text.PlainText; renderType: Text.QtRendering; renderTypeQuality: 104; text: (SysInfo.memTotalGib - SysInfo.memUsedGib).toFixed(1) + "G FREE"; font.family: Appearance.font.data; font.pixelSize: 12; color: Theme.dim }
         }
     }
 }

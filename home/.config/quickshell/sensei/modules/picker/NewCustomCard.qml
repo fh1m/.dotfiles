@@ -104,6 +104,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.centerIn: parent
 
                 text: "+"
@@ -136,6 +137,7 @@ Item {
             spacing: 5
 
             Text {
+                textFormat: Text.PlainText
                 text: "NEW CUSTOM"
                 color: root.selected ? Theme.accent : Theme.text
                 font.family: Appearance.font.display
@@ -145,6 +147,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 width: parent.width
 
                 text: "Nine colours of your own. The rest of the palette follows."

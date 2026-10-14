@@ -73,6 +73,7 @@ Item {
         }
         // Profiles and apps without a usable icon keep their letter fallback.
         Text {
+            textFormat: Text.PlainText
             visible: appArt.status !== Image.Ready
             anchors.centerIn: parent
 
@@ -86,6 +87,7 @@ Item {
     }
 
     Text {
+        textFormat: Text.PlainText
         anchors.left: badge.right
         anchors.leftMargin: 12
         anchors.right: tag.left

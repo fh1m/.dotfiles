@@ -395,6 +395,7 @@ Variants {
                         }
 
                         Text {
+                            textFormat: Text.PlainText
                             anchors.verticalCenter: parent.verticalCenter
                             text: "ЦВЕТ"
                             color: Theme.signal
@@ -654,6 +655,7 @@ Variants {
                         }
 
                         Text {
+                            textFormat: Text.PlainText
                             anchors.verticalCenter: parent.verticalCenter
                             text: "ЭФФЕКТЫ"
                             color: Theme.signal

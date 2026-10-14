@@ -46,6 +46,7 @@ Item {
             spacing: 3
 
             Text {
+                textFormat: Text.PlainText
                 width: parent.width
                 renderType: Text.NativeRendering
                 text: Wifi.connected ? Demo.ssid(Wifi.activeSsid) : "NOT CONNECTED"

@@ -76,7 +76,7 @@ DropdownFrame {
  MonitorGraph {width:parent.width;height:70;values:LiveMonitor.gpuHistory;ink:Theme.widgetAccent}
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:root.gpu.state==="sleep"?"Dedicated GPU is asleep. Monitoring does not wake it.":"Active GPU processes · compute / graphics contexts";pixelSize:12;color:Theme.widgetMuted}
  Repeater {model:root.gpu.processes??[];NrLabel { font.capitalization: Font.MixedCase; tracked: false;required property var modelData;text:(modelData.pid??"")+"   "+(modelData.name??"process")+"   "+(modelData.type??"")+"   "+(modelData.memoryMiB??modelData.usedMemoryMiB??"—")+" MiB";pixelSize:13}}
- Text { text:root.d.extra?.gpuDetails??"Loading hardware telemetry…";width:parent.width;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetText;wrapMode:Text.Wrap}
+ Text { textFormat: Text.PlainText; text:root.d.extra?.gpuDetails??"Loading hardware telemetry…";width:parent.width;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetText;wrapMode:Text.Wrap}
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Intel drives both displays. Desktop rendering activity: "+(RobotBench.data.intelUsage??"—")+"%\nThis Intel counter covers Hyprland, not every Intel GPU process.";pixelSize:12;color:Theme.widgetMuted}
  Row {spacing:8;ControlTile {label:"NVIDIA terminal";glyph:"\uf120";onActivated:Quickshell.execDetached(["@HOME@/.local/bin/sim-console"])}ControlTile {label:"nvtop";onActivated:Quickshell.execDetached(["@HOME@/.local/bin/sensei-terminal","nvtop"])}ControlTile {label:"Robotics controls";onActivated:{ShellState.systemPage=2;ShellState.dropdown="system";}}}
  }ScrollBar.vertical:DeskScrollBar {}}
@@ -100,7 +100,7 @@ DropdownFrame {
  Row {visible:root.page===4;spacing:12
  Repeater {model:2
  Rectangle {required property int index;readonly property var modelData:index===0?{label:"Download",values:LiveMonitor.rxHistory,ink:Theme.widgetAccent}:{label:"Upload",values:LiveMonitor.txHistory,ink:Theme.widgetMuted};property real peak:Math.pow(2,Math.ceil(Math.log2(Math.max(1024,...modelData.values))));width:(extraContent.width-12)/2;height:94;color:Theme.alpha(Theme.widgetSurface,.6);border.color:Theme.widgetBorder
- Text {x:10;y:8;text:modelData.label+" · graph ceiling "+root.size(peak)+"/s";font.family:Appearance.font.data;font.pixelSize:12;color:modelData.ink}
+ Text { textFormat: Text.PlainText;x:10;y:8;text:modelData.label+" · graph ceiling "+root.size(peak)+"/s";font.family:Appearance.font.data;font.pixelSize:12;color:modelData.ink}
  MonitorGraph {x:10;y:32;width:parent.width-20;height:52;ink:modelData.ink;values:modelData.values.map(v=>v/peak*100)}
  }}
  }

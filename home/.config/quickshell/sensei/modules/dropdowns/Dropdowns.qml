@@ -315,8 +315,8 @@ Variants {
                 Column {
                     anchors.centerIn: parent
                     spacing: 9
-                    Text { text: "SENSEI // " + popup.current.toUpperCase(); color: Theme.widgetText; font.family: Appearance.font.data; font.pixelSize: 17; font.bold: true }
-                    Text { text: content.status === Loader.Error ? "Panel failed to load" : "Preparing controls…"; color: Theme.widgetMuted; font.family: Appearance.font.data; font.pixelSize: 12 }
+                    Text { textFormat: Text.PlainText; text: "SENSEI // " + popup.current.toUpperCase(); color: Theme.widgetText; font.family: Appearance.font.data; font.pixelSize: 17; font.bold: true }
+                    Text { textFormat: Text.PlainText; text: content.status === Loader.Error ? "Panel failed to load" : "Preparing controls…"; color: Theme.widgetMuted; font.family: Appearance.font.data; font.pixelSize: 12 }
                 }
             }
 

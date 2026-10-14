@@ -35,6 +35,7 @@ ChamferPanel {
             spacing: 8
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.volume ? "VOL" : "BRI"
                 color: Theme.bright
@@ -50,6 +51,7 @@ ChamferPanel {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.volume ? "ЗВУК" : "ЯРКОСТЬ"
                 color: Theme.signal
@@ -62,6 +64,7 @@ ChamferPanel {
         }
 
         Text {
+            textFormat: Text.PlainText
             renderType: Text.NativeRendering
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter

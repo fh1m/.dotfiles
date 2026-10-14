@@ -31,6 +31,7 @@ ChamferPanel {
         spacing: 4
 
         Text {
+            textFormat: Text.PlainText
             text: "SYS.DIAG"
             color: root.previewPalette.bright
             font.family: Appearance.font.display
@@ -87,6 +88,7 @@ ChamferPanel {
             spacing: 4
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 text: "MEM"
                 color: root.previewPalette.dim
@@ -128,6 +130,7 @@ ChamferPanel {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     text: SystemStatus.breach ? "ICE BREACH" : "ICE NOMINAL"
                     color: root.previewPalette.text
                     font.family: Appearance.font.data
@@ -140,6 +143,7 @@ ChamferPanel {
                 spacing: 5
 
                 Text {
+                    textFormat: Text.PlainText
                     text: "VULN"
                     color: root.previewPalette.dim
                     font.family: Appearance.font.data
@@ -148,6 +152,7 @@ ChamferPanel {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     text: `${Vuln.count}`
                     color: Vuln.count > 0 ? root.previewPalette.accent : root.previewPalette.signal
                     font.family: Appearance.font.data

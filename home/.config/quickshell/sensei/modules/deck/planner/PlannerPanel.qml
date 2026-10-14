@@ -129,6 +129,7 @@ ChamferPanel {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.verticalCenter: parent.verticalCenter
                     text: "ЗАДАЧИ"
                     color: Theme.signal

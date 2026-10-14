@@ -109,6 +109,7 @@ Variants {
                         }
 
                         Text {
+                            textFormat: Text.PlainText
                             anchors.verticalCenter: parent.verticalCenter
                             text: "ПИТАНИЕ"
                             color: Theme.signal
@@ -175,6 +176,7 @@ Variants {
                     spacing: 10
 
                     Text {
+                        textFormat: Text.PlainText
                         renderType: Text.NativeRendering
                         anchors.horizontalCenter: parent.horizontalCenter
 

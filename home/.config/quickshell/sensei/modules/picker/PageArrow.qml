@@ -40,6 +40,7 @@ Item {
     }
 
     Text {
+        textFormat: Text.PlainText
         anchors.centerIn: parent
 
         text: root.leading ? "<" : ">"

@@ -21,6 +21,7 @@ Column {
 
     // --- The headline reading, in its tone -----------------------------------
     Text {
+        textFormat: Text.PlainText
         id: headline
 
         width: parent.width
@@ -87,6 +88,7 @@ Column {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     visible: figure.pair

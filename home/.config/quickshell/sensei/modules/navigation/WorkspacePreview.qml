@@ -14,7 +14,7 @@ ChamferPanel {
  Component.onDestruction:WindowDesk.workspaceCards=WindowDesk.workspaceCards.filter(c=>c!==root)
  MouseArea {anchors.fill:parent;onClicked:WindowDesk.workspace(root.workspace)}
  Image {anchors.fill:parent;anchors.margins:10;source:Wallpapers.displaySource(root.workspace===7?"DP-2":"eDP-1");sourceSize:Qt.size(768,432);fillMode:Image.PreserveAspectCrop;opacity:.35;asynchronous:true}
- Text {x:10;y:9;text:WindowDesk.workspaceTitle(root.workspace)+" · "+root.windows.length+" windows";font.family:Appearance.font.data;font.pixelSize:13;color:root.selected?Theme.signal:Theme.text}
+ Text { textFormat: Text.PlainText;x:10;y:9;text:WindowDesk.workspaceTitle(root.workspace)+" · "+root.windows.length+" windows";font.family:Appearance.font.data;font.pixelSize:13;color:root.selected?Theme.signal:Theme.text}
  Item {id:area;x:8;y:34;width:parent.width-16;height:parent.height-44;clip:true
  Repeater {model:root.windows
  WindowPreview {id:tile;required property var modelData;readonly property var display:root.monitorFor(modelData);readonly property real displayWidth:display.width/(display.scale||1);readonly property real displayHeight:display.height/(display.scale||1);opacity:WindowDesk.dragWindow===modelData ? .35 : 1;window:modelData;livePreview:root.livePreview;retainFrame:root.retainFrame;x:Math.max(0,Math.min(area.width-40,((modelData.lastIpcObject?.at?.[0]??0)-root.originX)/root.spanWidth*area.width));y:Math.max(0,Math.min(area.height-30,((modelData.lastIpcObject?.at?.[1]??44)-root.originY)/root.spanHeight*area.height));width:Math.max(40,Math.min(area.width,(modelData.lastIpcObject?.size?.[0]??tile.displayWidth)/root.spanWidth*area.width));height:Math.max(30,Math.min(area.height,(modelData.lastIpcObject?.size?.[1]??tile.displayHeight)/root.spanHeight*area.height));border.width:1;border.color:Theme.hair
@@ -31,5 +31,5 @@ ChamferPanel {
  }
  }
 
- Text {anchors.centerIn:area;visible:root.windows.length===0;text:"Sensei, space for your next idea.";font.family:Appearance.font.data;font.pixelSize:11;color:Theme.dim}
+ Text { textFormat: Text.PlainText;anchors.centerIn:area;visible:root.windows.length===0;text:"Sensei, space for your next idea.";font.family:Appearance.font.data;font.pixelSize:11;color:Theme.dim}
 }

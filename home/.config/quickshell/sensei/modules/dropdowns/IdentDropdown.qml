@@ -189,6 +189,7 @@ ChamferPanel {
                     borderColor: slot.active ? Theme.widgetAccent : Theme.widgetBorder
 
                     Text {
+                        textFormat: Text.PlainText
                         anchors.centerIn: parent
                         text: slot.glyph
                         color: slot.active ? Theme.widgetAccent : (slot.filled ? Theme.widgetText : Theme.widgetFaint)

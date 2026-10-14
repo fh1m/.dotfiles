@@ -9,7 +9,7 @@ Column {
  property var selected:({})
  readonly property var rows:(updatesOnly?(DesktopExtras.packages.updates||[]):(DesktopExtras.packages.installed||[])).filter(p=>p.name.toLowerCase().includes(filter.text.toLowerCase()))
  Component.onCompleted:{DesktopExtras.loadPackages();DesktopExtras.loadPackageJob();}
- Text {width:parent.width;text:'󰏖 '+(DesktopExtras.packages.total||0)+' installed · '+(DesktopExtras.packages.official||0)+' pacman · '+(DesktopExtras.packages.foreign||0)+' AUR/local';font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetText;wrapMode:Text.Wrap}
+ Text { textFormat: Text.PlainText;width:parent.width;text:'󰏖 '+(DesktopExtras.packages.total||0)+' installed · '+(DesktopExtras.packages.official||0)+' pacman · '+(DesktopExtras.packages.foreign||0)+' AUR/local';font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetText;wrapMode:Text.Wrap}
  Row {spacing:7
   ControlTile {implicitWidth:132;label:DesktopExtras.packagesLoading?'Checking…':'Check';enabled:!DesktopExtras.packagesLoading;onActivated:DesktopExtras.loadPackages(true)}
   ControlTile {implicitWidth:132;label:'Update all';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('all')}
@@ -22,17 +22,17 @@ Column {
   ControlTile {implicitWidth:170;label:'Transaction log';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('log')}
  }
  DeskTextField {placeholderTextColor:Theme.widgetMuted;selectionColor:Theme.widgetAccent;selectedTextColor:Theme.widgetText;id:filter;width:parent.width;height:36;placeholderText:'Filter packages or enter a package to install';color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:12;}
- Text {width:parent.width;text:DesktopExtras.packagesError||(DesktopExtras.packages.checked?'Last check: '+Qt.formatDateTime(new Date(DesktopExtras.packages.checked*1000),'ddd, d MMM yyyy · hh:mm AP'):'Sensei, check updates to fetch current repository and AUR versions.');font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted;wrapMode:Text.Wrap}
+ Text { textFormat: Text.PlainText;width:parent.width;text:DesktopExtras.packagesError||(DesktopExtras.packages.checked?'Last check: '+Qt.formatDateTime(new Date(DesktopExtras.packages.checked*1000),'ddd, d MMM yyyy · hh:mm AP'):'Sensei, check updates to fetch current repository and AUR versions.');font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted;wrapMode:Text.Wrap}
  ListView {width:parent.width;height:DesktopExtras.packageJob.status==='idle'?300:150;clip:true;spacing:5;model:root.rows;ScrollBar.vertical:DeskScrollBar {}
   delegate:ChamferPanel {id:item;required property var modelData;width:ListView.view.width;height:48;fillColor:root.selected.name===modelData.name?Theme.alpha(Theme.widgetAccent,.14):Theme.widgetSurface;borderColor:root.selected.name===modelData.name?Theme.widgetAccent:Theme.widgetBorder;chamfer:6;scanlines:false
    Column {anchors.fill:parent;anchors.margins:7;spacing:3
-    Text {width:parent.width;text:item.modelData.name+' · '+item.modelData.source;color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:13;elide:Text.ElideRight}
-    Text {width:parent.width;text:item.modelData.version+(item.modelData.new?' → '+item.modelData.new:'');color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:11;elide:Text.ElideRight}
+    Text { textFormat: Text.PlainText;width:parent.width;text:item.modelData.name+' · '+item.modelData.source;color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:13;elide:Text.ElideRight}
+    Text { textFormat: Text.PlainText;width:parent.width;text:item.modelData.version+(item.modelData.new?' → '+item.modelData.new:'');color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:11;elide:Text.ElideRight}
    }
    MouseArea {anchors.fill:parent;onClicked:root.selected=item.modelData}
   }
  }
- Text {width:parent.width;text:root.selected.name?'Selected: '+root.selected.name:'Select a package for details, update or removal';font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetAccent;elide:Text.ElideRight}
+ Text { textFormat: Text.PlainText;width:parent.width;text:root.selected.name?'Selected: '+root.selected.name:'Select a package for details, update or removal';font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetAccent;elide:Text.ElideRight}
  Row {spacing:7
   ControlTile {implicitWidth:132;label:'Update';enabled:!!root.selected.name&&!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('selected',root.selected.name)}
   ControlTile {implicitWidth:132;label:'Details';enabled:!!root.selected.name&&!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('info',root.selected.name)}
@@ -64,5 +64,5 @@ Column {
    ControlTile {implicitWidth:150;label:'Decline (n)';glyph:'\uf00d';onActivated:DesktopExtras.packageAnswer('n')}
   }
  }
- Text {width:parent.width;text:'Review transaction output and answer prompts here. Authentication uses a password dialog. Updates continue if this panel closes; a notification reports completion.';wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}
+ Text { textFormat: Text.PlainText;width:parent.width;text:'Review transaction output and answer prompts here. Authentication uses a password dialog. Updates continue if this panel closes; a notification reports completion.';wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}
 }

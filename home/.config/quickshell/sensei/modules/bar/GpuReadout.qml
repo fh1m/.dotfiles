@@ -14,8 +14,8 @@ Item {
         Column {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 2
-            Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: "INTEL " + (RobotBench.data.intelUsage === null || RobotBench.data.intelUsage === undefined ? "--" : Math.round(RobotBench.data.intelUsage) + "%"); font.family: Appearance.font.data; font.pixelSize: 13; font.weight: 600; color: Theme.signal }
-            Text { renderType: Text.QtRendering; renderTypeQuality: 104; text: RobotBench.data.gpu.state === "sleep" ? "RTX 0% · SLEEP" : (RobotBench.data.gpu.state === "active" ? "RTX " + Math.round(RobotBench.data.gpu.usage) + "% · " + Math.round(RobotBench.data.gpu.temperature) + "°C" : "RTX N/A"); font.family: Appearance.font.data; font.pixelSize: 12; color: Theme.dim }
+            Text { textFormat: Text.PlainText; renderType: Text.QtRendering; renderTypeQuality: 104; text: "INTEL " + (RobotBench.data.intelUsage === null || RobotBench.data.intelUsage === undefined ? "--" : Math.round(RobotBench.data.intelUsage) + "%"); font.family: Appearance.font.data; font.pixelSize: 13; font.weight: 600; color: Theme.signal }
+            Text { textFormat: Text.PlainText; renderType: Text.QtRendering; renderTypeQuality: 104; text: RobotBench.data.gpu.state === "sleep" ? "RTX 0% · SLEEP" : (RobotBench.data.gpu.state === "active" ? "RTX " + Math.round(RobotBench.data.gpu.usage) + "% · " + Math.round(RobotBench.data.gpu.temperature) + "°C" : "RTX N/A"); font.family: Appearance.font.data; font.pixelSize: 12; color: Theme.dim }
         }
     }
 }

@@ -7,14 +7,14 @@ import qs.services
 Row {
     id: root
     spacing: 10
-    Text { renderType: Text.QtRendering; renderTypeQuality: 104;
+    Text { textFormat: Text.PlainText; renderType: Text.QtRendering; renderTypeQuality: 104;
         anchors.verticalCenter: parent.verticalCenter
         text: "\udb81\udea9"
         font.family: Appearance.font.icons
         font.pixelSize: 18
         color: Theme.signal
     }
-    Text { renderType: Text.QtRendering; renderTypeQuality: 104;
+    Text { textFormat: Text.PlainText; renderType: Text.QtRendering; renderTypeQuality: 104;
         anchors.verticalCenter: parent.verticalCenter
         text: "СТЕНД"
         font.family: Appearance.font.accent

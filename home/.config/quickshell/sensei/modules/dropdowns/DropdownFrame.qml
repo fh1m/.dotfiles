@@ -43,7 +43,7 @@ ChamferPanel {
             spacing: 8
 
             ChamferPanel {visible:root.hasTitleGlyph;chamfer:Theme.radiusSmall;scanlines:false;width:27;height:27;fillColor:Theme.ink;borderColor:Theme.rule;borderWidth:1
-                Text {anchors.centerIn:parent;text:root.hasTitleGlyph?root.title.charAt(0):"";font.family:Appearance.font.icons;font.pixelSize:18;color:root.headerAccent}
+                Text { textFormat: Text.PlainText;anchors.centerIn:parent;text:root.hasTitleGlyph?root.title.charAt(0):"";font.family:Appearance.font.icons;font.pixelSize:18;color:root.headerAccent}
             }
 
             NrLabel {
@@ -60,6 +60,7 @@ ChamferPanel {
         }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.right: parent.right
                 anchors.rightMargin: right.width + 12
                 y: 8
@@ -72,7 +73,7 @@ ChamferPanel {
                 renderType: Text.NativeRendering
             }
 
-        Text { x: 8; y: 31; visible: root.greeting !== ""; text: root.greeting; color: Theme.widgetMuted; font.family: Appearance.font.ui; font.pixelSize: 12; renderType: Text.QtRendering }
+        Text { textFormat: Text.PlainText; x: 8; y: 31; visible: root.greeting !== ""; text: root.greeting; color: Theme.widgetMuted; font.family: Appearance.font.ui; font.pixelSize: 12; renderType: Text.QtRendering }
 
         Item {
             id: right

@@ -136,6 +136,7 @@ SlantBlock {
     readonly property real countInkEnd: Math.round(root.countX + root.countWidth - root.countInkRight)
 
     Text {
+        textFormat: Text.PlainText
         id: codeLabel
 
         x: root.originX
@@ -153,6 +154,7 @@ SlantBlock {
 
     // Pulled tight so the two strokes read as one `//` mark.
     Text {
+        textFormat: Text.PlainText
         id: slashLabel
 
         x: root.slashX
@@ -175,6 +177,7 @@ SlantBlock {
     }
 
     Text {
+        textFormat: Text.PlainText
         id: countLabel
 
         x: root.countX

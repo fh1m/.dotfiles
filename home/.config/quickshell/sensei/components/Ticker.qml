@@ -44,6 +44,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 id: first
 
                 x: root.scrollOnlyOverflow && root.contentWidth <= root.width ? (root.width-root.contentWidth)/2 : -(ShellState.ambientMotion ? strip.offset : 0)
@@ -57,6 +58,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 id: second
 
                 x: first.x + root.contentWidth + root.loopGap
@@ -71,6 +73,7 @@ Item {
             // Only earns its keep if the line is ever shorter than the viewport,
             // where two copies would leave a gap at the end of a loop.
             Text {
+                textFormat: Text.PlainText
                 x: second.x + root.contentWidth + root.loopGap
                 visible: !root.scrollOnlyOverflow && root.contentWidth < root.width
                 color: first.color

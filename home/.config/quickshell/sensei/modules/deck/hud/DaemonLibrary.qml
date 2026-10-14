@@ -96,6 +96,7 @@ Variants {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.verticalCenter: parent.verticalCenter
                     text: "СЛУЖБЫ"
                     color: Theme.signal

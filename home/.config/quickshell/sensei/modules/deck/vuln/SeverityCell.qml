@@ -32,6 +32,7 @@ Rectangle {
         // figure changes. The pair is centred in the cell; the figure is
         // centred in its own slot.
         Text {
+            textFormat: Text.PlainText
             id: value
 
             anchors.verticalCenter: parent.verticalCenter

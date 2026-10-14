@@ -78,6 +78,7 @@ ChamferPanel {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.left: title.right
                 anchors.leftMargin: 10
                 anchors.baseline: title.bottom
@@ -383,6 +384,7 @@ ChamferPanel {
         // The name, lifted from its row to the label's place, growing slightly
         // as it travels.
         Text {
+            textFormat: Text.PlainText
             id: travellingName
 
             anchors.left: parent.left

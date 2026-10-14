@@ -15,12 +15,12 @@ Column {
   ControlTile {implicitWidth:170;label:'Connections / SSH';navigation:true;selected:DesktopExtras.networkPage===1;onActivated:DesktopExtras.networkPage=1}
   ControlTile {implicitWidth:170;label:'Diagnostics';navigation:true;selected:DesktopExtras.networkPage===2;onActivated:{DesktopExtras.networkPage=2;DesktopExtras.loadNetwork();}}
  }
- Text {width:parent.width;text:(Wifi.activeSsid|| (Wifi.wired?'Ethernet':'Disconnected'))+' ['+SysInfo.netInterfaces+']'+'  ·  ↑ '+Fmt.rateLong(SysInfo.netTxRate)+'  ↓ '+Fmt.rateLong(SysInfo.netRxRate);font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetAccent;elide:Text.ElideRight}
+ Text { textFormat: Text.PlainText;width:parent.width;text:(Wifi.activeSsid|| (Wifi.wired?'Ethernet':'Disconnected'))+' ['+SysInfo.netInterfaces+']'+'  ·  ↑ '+Fmt.rateLong(SysInfo.netTxRate)+'  ↓ '+Fmt.rateLong(SysInfo.netRxRate);font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetAccent;elide:Text.ElideRight}
  ScrollView {width:parent.width;height:Math.min(550,wifiPanel.implicitHeight);clip:true;visible:DesktopExtras.networkPage===0
   WifiDropdown {id:wifiPanel;width:root.width;implicitWidth:root.width}
  }
  Column {width:parent.width;spacing:10;visible:DesktopExtras.networkPage===1
-  Text {width:parent.width;text:'SSH server: '+(DesktopExtras.network.ssh||'unknown');color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:13}
+  Text { textFormat: Text.PlainText;width:parent.width;text:'SSH server: '+(DesktopExtras.network.ssh||'unknown');color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:13}
   DeskTextField {placeholderTextColor:Theme.widgetMuted;selectionColor:Theme.widgetAccent;selectedTextColor:Theme.widgetText;id:host;width:parent.width;height:38;placeholderText:'user@robot.local or ~/.ssh/config alias';color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:12;}
   Grid {columns:3;spacing:7
    ControlTile {implicitWidth:175;label:'SSH connect';enabled:!!host.text;onActivated:root.action('ssh',host.text.trim())}

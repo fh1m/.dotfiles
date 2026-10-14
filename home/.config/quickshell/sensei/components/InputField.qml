@@ -99,6 +99,7 @@ Item {
     }
 
     Text {
+        textFormat: Text.PlainText
         anchors.left: parent.left
         anchors.leftMargin: root.hPadding
         anchors.verticalCenter: parent.verticalCenter

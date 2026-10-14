@@ -13,6 +13,7 @@ BarSurface {
     hovered: pointer.containsMouse
     pressed: pointer.pressed
     Text {
+        textFormat: Text.PlainText
         anchors.centerIn: parent
         text: root.expanded ? (root.opensRight ? "‹" : "›") : (root.opensRight ? "›" : "‹")
         color: root.expanded ? Theme.signalRed : Theme.paperMuted

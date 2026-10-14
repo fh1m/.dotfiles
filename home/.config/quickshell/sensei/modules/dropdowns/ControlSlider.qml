@@ -32,11 +32,11 @@ Item {
    onPaint:{const c=getContext('2d');c.reset();const start=-230*Math.PI/180;c.lineWidth=2;c.lineCap='round';c.strokeStyle=Theme.widgetBorder;c.beginPath();c.arc(width/2,height/2,width/2-4,start,start+280*Math.PI/180);c.stroke();c.strokeStyle=root.accentColor;c.beginPath();c.arc(width/2,height/2,width/2-4,start,start+280*Math.PI/180*fraction);c.stroke();}
   }
   handle:Rectangle {width:4;height:4;radius:2;color:Theme.widgetText;x:knob.width/2+17*Math.cos((knob.angle-90)*Math.PI/180)-2;y:knob.height/2+17*Math.sin((knob.angle-90)*Math.PI/180)-2}
-  Text {anchors.centerIn:parent;text:root.glyph||'◉';font.family:root.glyph?Appearance.font.icons:Appearance.font.data;font.pixelSize:13;color:knob.pressed||knob.activeFocus?root.accentColor:Theme.widgetMuted}
+  Text { textFormat: Text.PlainText;anchors.centerIn:parent;text:root.glyph||'◉';font.family:root.glyph?Appearance.font.icons:Appearance.font.data;font.pixelSize:13;color:knob.pressed||knob.activeFocus?root.accentColor:Theme.widgetMuted}
   Rectangle {anchors.fill:parent;radius:21;color:'transparent';border.color:knob.activeFocus?Theme.alpha(root.accentColor,.6):'transparent'}
  }
- Text {x:54;y:5;width:parent.width-118;elide:Text.ElideRight;text:root.title;font.family:Appearance.font.ui;font.pixelSize:13;font.weight:Font.DemiBold;color:Theme.widgetText}
- Text {anchors.right:parent.right;y:5;text:Math.round(root.displayed)+'%';font.family:Appearance.font.ui;font.pixelSize:14;font.weight:Font.DemiBold;color:root.accentColor}
+ Text { textFormat: Text.PlainText;x:54;y:5;width:parent.width-118;elide:Text.ElideRight;text:root.title;font.family:Appearance.font.ui;font.pixelSize:13;font.weight:Font.DemiBold;color:Theme.widgetText}
+ Text { textFormat: Text.PlainText;anchors.right:parent.right;y:5;text:Math.round(root.displayed)+'%';font.family:Appearance.font.ui;font.pixelSize:14;font.weight:Font.DemiBold;color:root.accentColor}
  Slider {
   id:trim;x:54;y:25;width:Math.max(30,parent.width-54);height:18
   from:0;to:root.maximum;stepSize:1

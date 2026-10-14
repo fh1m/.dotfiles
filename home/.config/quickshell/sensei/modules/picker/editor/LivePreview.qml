@@ -60,6 +60,7 @@ Item {
             spacing: 6
 
             Text {
+                textFormat: Text.PlainText
                 text: "sensei"
                 color: root.previewPalette.accent
                 font.family: Appearance.font.data
@@ -69,6 +70,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 text: "~/deck"
                 color: root.previewPalette.signal
                 font.family: Appearance.font.data
@@ -77,6 +79,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 text: "$"
                 color: root.previewPalette.dim
                 font.family: Appearance.font.data
@@ -86,6 +89,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             text: "ICE NOMINAL // 25 SERVICES // UPLINK 12MS"
             color: root.previewPalette.text
             font.family: Appearance.font.data
@@ -102,6 +106,7 @@ Item {
             color: root.previewPalette.bright
 
             Text {
+                textFormat: Text.PlainText
                 id: selected
 
                 anchors.centerIn: parent
@@ -118,6 +123,7 @@ Item {
             spacing: 8
 
             Text {
+                textFormat: Text.PlainText
                 text: "ОНЛАЙН"
                 color: root.previewPalette.signal
                 font.family: Appearance.font.accent
@@ -128,6 +134,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 text: "2 PACKAGES PENDING"
                 color: root.previewPalette.alert
                 font.family: Appearance.font.data
@@ -138,6 +145,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             text: "these are the labels that sit under everything"
             color: root.previewPalette.dim
             font.family: Appearance.font.data

@@ -95,6 +95,7 @@ Variants {
                             visible: status === Image.Ready
                         }
                         Text {
+                            textFormat: Text.PlainText
                             anchors.centerIn: parent
                             visible: appArt.status !== Image.Ready
                             text: "·"
@@ -139,6 +140,7 @@ Variants {
             border.color: Theme.rule
             Rectangle { x: 1; y: 3; width: 2; height: parent.height - 6; color: Theme.signalRed }
             Text {
+                textFormat: Text.PlainText
                 anchors.centerIn: parent
                 text: `Tabs  ${marker.position} / ${marker.members.length}`
                 color: Theme.paper

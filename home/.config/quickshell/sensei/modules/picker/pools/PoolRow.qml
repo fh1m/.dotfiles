@@ -79,6 +79,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.name.toUpperCase()
                 color: Theme.bright

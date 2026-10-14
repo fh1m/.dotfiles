@@ -32,6 +32,7 @@ Row {
     }
 
     Text {
+        textFormat: Text.PlainText
         id: valueText
 
         renderType: Text.NativeRendering

@@ -14,7 +14,7 @@ BarSurface {
   Repeater {model:root.items
    Item {id:trayIcon;required property var modelData;width:26;height:26
     Image {id:trayArt;visible:status===Image.Ready;anchors.centerIn:parent;width:18;height:18;source:trayIcon.modelData.icon;sourceSize:Qt.size(36,36);fillMode:Image.PreserveAspectFit;asynchronous:true}
-    Text {anchors.centerIn:parent;visible:trayArt.status!==Image.Ready;text:"\uf009";font.family:Appearance.font.icons;font.pixelSize:16;color:Theme.text}
+    Text { textFormat: Text.PlainText;anchors.centerIn:parent;visible:trayArt.status!==Image.Ready;text:"\uf009";font.family:Appearance.font.icons;font.pixelSize:16;color:Theme.text}
     MouseArea {anchors.fill:parent;acceptedButtons:Qt.LeftButton|Qt.RightButton|Qt.MiddleButton;cursorShape:Qt.PointingHandCursor
      onClicked:mouse=>{if(mouse.button===Qt.RightButton||trayIcon.modelData.onlyMenu){const p=trayIcon.mapToItem(null,0,0);trayIcon.modelData.display(ShellState.bottomBarWindow,Math.round(p.x),Math.round(p.y));}else if(mouse.button===Qt.MiddleButton)trayIcon.modelData.secondaryActivate();else trayIcon.modelData.activate();}
      onWheel:event=>{trayIcon.modelData.scroll(event.angleDelta.y,false);event.accepted=true;}

@@ -51,6 +51,7 @@ Item {
             color: root.previewPalette.accent
 
             Text {
+                textFormat: Text.PlainText
                 id: code
 
                 anchors.centerIn: parent
@@ -69,6 +70,7 @@ Item {
             color: root.previewPalette.accent
 
             Text {
+                textFormat: Text.PlainText
                 id: suffix
 
                 anchors.centerIn: parent
@@ -149,6 +151,7 @@ Item {
                 border.color: lit ? root.previewPalette.accent : "transparent"
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.centerIn: parent
                     text: `0${parent.index + 1}`
                     color: parent.lit ? root.previewPalette.accent : root.previewPalette.dim
@@ -198,6 +201,7 @@ Item {
     // clear is where that diagonal is **at the clock's own top row**, which is
     // 12 px in. Measured against the mask rather than assumed from the depth.
     Text {
+        textFormat: Text.PlainText
         id: clock
 
         anchors.right: parent.right
