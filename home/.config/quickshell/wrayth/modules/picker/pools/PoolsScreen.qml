@@ -761,7 +761,7 @@ Item {
                 // legend used to describe two marks -- a star and a cross --
                 // that said nothing about themselves; now it names the words
                 // that are on the screen.
-                text: "DRAG A WALLPAPER ONTO A ROW    TICK TO INCLUDE IT IN THE ROTATION    CARD MARKS THE IMAGE SHOWN ON THE PROFILE    MINUS TAKES IT OUT OF THIS PROFILE    DELETE REMOVES THE FILE FROM DISK"
+                text: "DRAG A WALLPAPER ONTO A ROW    TICK TO INCLUDE IT IN THE ROTATION    CARD MARKS THE IMAGE SHOWN ON THE PROFILE    MINUS TAKES IT OUT OF THIS PROFILE    DELETE MOVES THE FILE TO RECOVERY"
             }
 
             Row {
@@ -907,7 +907,7 @@ Item {
 
             Text {
                 width: parent.width
-                text: `${root.confirmingDelete} is removed from your wallpapers folder. Every pool holding it loses it.`
+                text: `${root.confirmingDelete} is moved to ~/.local/state/wrayth/removed-wallpapers, so it can be recovered by hand. Every pool holding it loses it.`
                 color: Theme.dim
                 font.family: Appearance.font.data
                 font.pixelSize: 10
