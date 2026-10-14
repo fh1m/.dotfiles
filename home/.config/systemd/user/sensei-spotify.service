@@ -16,4 +16,4 @@ UMask=0077
 Nice=0
 
 [Install]
-WantedBy=graphical-session.target
+WantedBy=default.target
