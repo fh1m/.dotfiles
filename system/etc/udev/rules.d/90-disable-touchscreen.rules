@@ -1,0 +1,3 @@
+# Zenbook Duo - disable both touchscreens + styluses, keep touchpad/keyboard
+ACTION=="add|change", KERNEL=="event*", ATTRS{name}=="ELAN9009:00 04F3:29A1*", ENV{LIBINPUT_IGNORE_DEVICE}="1"
+ACTION=="add|change", KERNEL=="event*", ATTRS{name}=="ELAN9008:00 04F3:29B6*", ENV{LIBINPUT_IGNORE_DEVICE}="1"
