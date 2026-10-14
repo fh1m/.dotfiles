@@ -3,9 +3,9 @@ import QtQuick.Shapes
 import qs.components
 import qs.config
 
-// The profile wallpaper, blurred and darkened, under a radial vignette and a
-// tiled grain. Its own layer, because anything that fades a blurred Wallpaper
-// through a parent's opacity loses the blur entirely -- see DESIGN.md.
+// The profile wallpaper, dimmed and darkened, under a radial vignette and a
+// tiled grain. Its own layer, because a parent's opacity fade acts on the whole
+// subtree at once -- see DESIGN.md. Dimmed rather than blurred: see Wallpaper.
 Item {
     id: root
 

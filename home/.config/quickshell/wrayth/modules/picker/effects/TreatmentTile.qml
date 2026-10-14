@@ -9,7 +9,7 @@ import qs.modules.picker.mini
 // One scanline treatment, rendered rather than described.
 //
 // **A swatch cannot answer "what does a rolling band look like".** Every tile
-// draws the same sample -- a `SYS.DIAG` panel over a blurred wallpaper with
+// draws the same sample -- a `SYS.DIAG` panel over a dimmed wallpaper with
 // two lines of terminal text under it -- with its own treatment actually
 // applied on top, so choosing between six of them is looking rather than
 // reading. The sample is the shell's own furniture for the same reason: what

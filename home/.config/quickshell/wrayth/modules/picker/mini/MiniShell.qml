@@ -31,14 +31,12 @@ Item {
     // `Wallpaper`, so a card's image crossfades like every other wallpaper in
     // the shell rather than cutting.
     //
-    // **Blurred and dimmed, because the card is answering a question about the
-    // interface.** A sharp photograph behind 7 px type is texture the type has
-    // to be read through: the mini bar's ID block and the SYS.DIAG panel's
-    // lines were sitting on whatever the wallpaper happened to be doing under
-    // them. 4 px of blur takes the detail out without taking the image away --
-    // it still reads as an image, which is the other half of what the card is
-    // choosing between -- and 60% brightness puts it behind the ink rather
-    // than beside it.
+    // **Dimmed to 60%, not blurred.** The card is answering a question about
+    // the interface, and a sharp photograph behind 7 px type is texture the
+    // type has to be read through. The blur this used to add is gone: `Wallpaper`
+    // dims instead, so no offscreen blur pass runs on the picker's cards. Whether
+    // the dim alone keeps the mini bar and SYS.DIAG type readable on a busy
+    // photograph has not been measured.
     Wallpaper {
         anchors.fill: parent
         source: root.image
