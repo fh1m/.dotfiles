@@ -9,6 +9,9 @@ from pathlib import Path
 os.umask(0o077)
 HOME=Path.home();STORE=HOME/'.cache/sensei-spotify';STORE.mkdir(mode=0o700,parents=True,exist_ok=True)
 CONFIG=tomllib.loads((HOME/'.config/spotify-player/app.toml').read_text());PORT=int(CONFIG.get('client_port',8089));CLIENT=CONFIG['client_id']
+# The Connect device this shell drives, named once in spotify-player's config. The
+# shell's own device checks and the account readout read this same name.
+LOCAL_DEVICE=CONFIG.get('device',{}).get('name','Sensei · ZenBook Duo')
 TOKEN=HOME/'.cache/spotify-player'/f'{CLIENT}_token.json'
 class MusicError(Exception):pass
 # The bearer token goes only to api.spotify.com; a redirect would carry it elsewhere.
@@ -200,11 +203,11 @@ def status():
  # Native events bypass delayed Web API track/progress metadata while switching.
  try:
   event=json.loads((STORE/'native-event.json').read_text());age=time.time()-event['time']
-  if device.get('name')=='Sensei · ZenBook Duo' and 0<=age<8 and event.get('track'):
+  if device.get('name')==LOCAL_DEVICE and 0<=age<8 and event.get('track'):
    if track.get('uri')!=event['uri'] or event.get('seek'):d['progress_ms']=event['progress']+int(age*1000 if event['playing'] else 0)
    track=event['track'];d['is_playing']=event['playing']
  except (OSError,ValueError,KeyError):pass
- return {'ready':True,'playing':d.get('is_playing',False),'track':track,'progress':d.get('progress_ms',0) or 0,'volume':device.get('volume_percent',0),'device':device.get('name','Sensei · ZenBook Duo'),'deviceId':device.get('id',''),'shuffle':d.get('shuffle_state',False),'repeat':d.get('repeat_state','off'),'context':d.get('context') or {}}
+ return {'ready':True,'playing':d.get('is_playing',False),'track':track,'progress':d.get('progress_ms',0) or 0,'volume':device.get('volume_percent',0),'device':device.get('name',LOCAL_DEVICE),'deviceId':device.get('id',''),'shuffle':d.get('shuffle_state',False),'repeat':d.get('repeat_state','off'),'context':d.get('context') or {}}
 def synced_lyrics(track):
  title=str(track.get('title','')).strip();artist=str(track.get('artist','')).split(',')[0].strip()
  if not title or not artist:return {'lines':[],'plain':'','synced':False,'notice':'Start a song to follow its lyrics.'}
@@ -235,11 +238,11 @@ def action(name,args):
  controls=('toggle','play','pause','next','previous','shuffle','repeat','volume','seek','seek-to','play-track','play-context','play-context-track','play-list','liked-play')
  if name in controls:
   d=status()
-  if d.get('device')=='Sensei · ZenBook Duo' and name in ('play-track','play-list','play-context','play-context-track'):
+  if d.get('device')==LOCAL_DEVICE and name in ('play-track','play-list','play-context','play-context-track'):
    return json.loads(subprocess.check_output([str(HOME/'.local/bin/sensei-spotify-transport'),name]+args,text=True))
   if not d.get('deviceId'):d=recover_local_device()
   device=d.get('deviceId','');suffix=('&device_id='+urllib.parse.quote(device)) if device else ''
-  if d.get('device')=='Sensei · ZenBook Duo' and name in ('toggle','play','pause','next','previous','shuffle','repeat','volume','seek','seek-to'):
+  if d.get('device')==LOCAL_DEVICE and name in ('toggle','play','pause','next','previous','shuffle','repeat','volume','seek','seek-to'):
    commands={'toggle':'PlayPause','play':'Play','pause':'Pause','next':'Next','previous':'Previous','shuffle':'Shuffle','repeat':'Repeat'}
    command=commands.get(name)
    if name=='volume':command={'Volume':{'percent':max(0,min(100,int(args[0]))),'is_offset':False}}
@@ -266,7 +269,7 @@ def action(name,args):
    result=api(endpoint('seek','position_ms='+str(position)),'PUT')
    # Seeked is omitted by the daemon's event adapter. A same-state control
    # schedules its normal cache refresh without changing playback intent.
-   if d.get('device')=='Sensei · ZenBook Duo':rpc({'Playback':'Play' if d['playing'] else 'Pause'})
+   if d.get('device')==LOCAL_DEVICE:rpc({'Playback':'Play' if d['playing'] else 'Pause'})
    return result
   if name=='play-track':return api(endpoint('play'),'PUT',{'uris':['spotify:track:'+args[0]]})
   if name=='play-list':
@@ -292,7 +295,7 @@ def action(name,args):
  if name=='enqueue':return api('me/player/queue?'+urllib.parse.urlencode({'uri':args[0]}),'POST')
  if name=='playlist-add':return api('playlists/'+args[0]+'/items','POST',{'uris':[args[1]]})
  if name=='playlist-create':
-  return api('me/playlists','POST',{'name':args[0],'public':False,'description':'Sensei’s music on the ZenBook Duo'})
+  return api('me/playlists','POST',{'name':args[0],'public':False,'description':'Sensei’s music on the '+LOCAL_DEVICE.split(' · ',1)[-1]})
  raise MusicError('Unknown Spotify action')
 def main(a):
  if not a:raise MusicError('Choose a music operation')
@@ -338,7 +341,7 @@ def main(a):
    with urllib.request.urlopen(url,timeout=8) as r:raw=r.read(5*1024*1024)
    temp=path.with_name(path.name+f'.{os.getpid()}.tmp');temp.write_bytes(raw);temp.replace(path)
   return {'path':path.as_uri()}
- if cmd=='account':return {'cachedLogin':TOKEN.exists(),'service':subprocess.run(['systemctl','--user','is-active','sensei-spotify.service'],capture_output=True,text=True).stdout.strip(),'version':'0.25.1','device':'Sensei · ZenBook Duo'}
+ if cmd=='account':return {'deviceName':LOCAL_DEVICE,'cachedLogin':TOKEN.exists(),'service':subprocess.run(['systemctl','--user','is-active','sensei-spotify.service'],capture_output=True,text=True).stdout.strip(),'version':'0.25.1','device':LOCAL_DEVICE}
  action(cmd,a[1:]);return {'ok':True}
 if __name__=='__main__':
  try:print(json.dumps(main(sys.argv[1:]),ensure_ascii=False))
