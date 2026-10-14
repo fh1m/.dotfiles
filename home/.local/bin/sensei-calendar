@@ -84,7 +84,7 @@ try:
  elif cmd=='save':
   d=json.loads(a[1]);start=D.datetime.fromisoformat(d['date']+'T'+d.get('time','09:00')).timestamp();values=(d['title'].strip(),start,int(d.get('duration',30)),int(d.get('lead',10)),d.get('repeat','none'),d.get('location',''),d.get('notes',''),d.get('category','Personal'),int(d.get('all_day',False)))
   if not values[0]:raise SystemExit('Sensei, give your event a title.')
-  if values[4]=='custom' and (not d.get('id') or not c.execute('select rrule from events where id=?',(int(d['id']),)).fetchone()[0]):raise SystemExit('Sensei, custom recurrence is retained only when editing an imported event.')
+  if values[4]=='custom' and (not d.get('id') or not (c.execute('select rrule from events where id=?',(int(d['id']),)).fetchone() or (None,))[0]):raise SystemExit('Sensei, custom recurrence is retained only when editing an imported event.')
   if values[2]<1 or values[3]<0:raise SystemExit('Sensei, check event duration and reminder time.')
   if d.get('id'):c.execute('update events set title=?,start=?,duration=?,lead=?,repeat=?,location=?,notes=?,category=?,all_day=? where id=?',values+(int(d['id']),))
   else:c.execute('insert into events(title,start,duration,lead,repeat,location,notes,category,all_day,uid) values(?,?,?,?,?,?,?,?,?,?)',values+(str(uuid.uuid4())+'@sensei.local',))

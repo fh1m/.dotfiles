@@ -49,7 +49,9 @@ _sensei_prompt_refresh() {
     _sensei_right="${dim}exit ${result}%f"
     (( result != 0 )) && _sensei_right="${accent}exit ${result}%f"
     local duration
-    if (( elapsed >= 60 )); then duration="$(( int(elapsed/60) ))m $(( int(elapsed)%60 ))s"
+    if (( elapsed >= 60 )); then
+        local whole; printf -v whole '%d' "$elapsed"
+        duration="$(( whole / 60 ))m $(( whole % 60 ))s"
     elif (( elapsed < 1 )); then printf -v duration '%.0fms' "$(( elapsed * 1000 ))"
     else printf -v duration '%.1fs' "$elapsed"; fi
     _sensei_right+="  ${dim}${duration}%f"

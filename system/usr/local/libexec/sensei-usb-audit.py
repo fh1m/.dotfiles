@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -I
 """Socket-activated root reader. No input, commands, resets, or filesystem writes.
 Only reports processes with open handles to USB nodes or USB-mounted volumes.
 The installed root-owned copy is used, never this editable source at runtime.

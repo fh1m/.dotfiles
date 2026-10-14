@@ -12,9 +12,10 @@
 -- it needs nothing else. Hyprland 0.56+ (the Lua config).
 --
 -- Keys that belong to wrayth (Super tap = launcher, Super + E = deck,
--- Super + P = power menu, Super + L = lock, Super + 1..0 = workspaces, and the
--- volume and brightness keys) are set in hypr-wrayth.lua. The ones below are
--- the everyday window keys and never touch those.
+-- Super + L = lock, Super + 1..0 = workspaces, and the volume and brightness
+-- keys) are set in hypr-wrayth.lua. The ones below are the everyday window keys
+-- and never touch those. Super + P is the power menu in hypr-wrayth.lua but the
+-- calculator in custom-setup.lua; the power menu is Super + Ctrl + P there.
 
 -- ===========================================================================
 -- Monitors -- every connected display at its preferred mode, scale 1

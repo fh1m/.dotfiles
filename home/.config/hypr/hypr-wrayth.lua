@@ -110,10 +110,11 @@ hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 4, bezier = "w
 -- These are global (they affect every window). rounding_power = 1 turns
 -- Hyprland's rounded corners into straight cuts, and rounding = 34 makes the
 -- cut's leg 16 px -- the same chamfer the shell's own panels cut -- so a window
--- corner and a panel corner beside it are the same shape. blur.special frosts
--- the whole background behind the deck (so the deck draws no backdrop of its
--- own), and dim_special darkens it. Adjust to taste, but the deck terminal
--- expects rounding_power = 1 and rounding = 34.
+-- corner and a panel corner beside it are the same shape. blur is off, so the
+-- deck has no frosted backdrop: dim_special alone darkens the background behind
+-- it. Blur stays off here because the Intel renderer pays for it on every frame.
+-- Adjust to taste, but the deck terminal expects rounding_power = 1 and
+-- rounding = 34.
 hl.config({
     decoration = {
         dim_special    = 0.38,
@@ -123,7 +124,7 @@ hl.config({
         },
         rounding       = 34,
         rounding_power = 1,
-        -- A soft black shadow casts depth without tinting any profile.
+        -- Shadows are off for the same render cost; the colour is kept for when they return.
         shadow = {
             enabled = false,
             color = "rgba(0000004D)",
@@ -191,7 +192,8 @@ hl.bind("SUPER + SHIFT + E", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/w
 -- Super (tap) opens the launcher.
 hl.bind("SUPER + SUPER_L", hl.dsp.exec_cmd("qs -c wrayth ipc call launcher toggle"), { release = true })
 
--- Super + P opens the power menu; Super + L locks the screen.
+-- Super + P opens the power menu here; custom-setup.lua rebinds Super + P to the
+-- calculator and keeps the power menu on Super + Ctrl + P. Super + L locks the screen.
 hl.bind("SUPER + P", hl.dsp.exec_cmd("qs -c wrayth ipc call power toggle"))
 hl.bind("SUPER + L", hl.dsp.exec_cmd("qs -c wrayth ipc call lock lock"))
 

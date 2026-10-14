@@ -12,6 +12,13 @@ c.execute('create table if not exists events (id integer primary key, item integ
 c.execute('create virtual table if not exists search using fts5(content)')
 def revision():
     t=ROOT/'revision.tmp'; t.write_text(str(time.time_ns())); t.replace(ROOT/'revision')
+# Password managers (KeePassXC, Bitwarden and others) mark a copy with this MIME
+# type. Such copies are never kept: a password must not sit in history or backups.
+PASSWORD_HINT='x-kde-passwordManagerHint'
+def password_hinted():
+    try: types=subprocess.run(['wl-paste','--list-types'],capture_output=True,text=True,timeout=2).stdout.split()
+    except (OSError,subprocess.TimeoutExpired): return False
+    return PASSWORD_HINT in types
 def files_from(data):
     paths=[]
     for line in data.decode('utf-8',errors='replace').replace('\0','\n').splitlines():
@@ -73,7 +80,9 @@ if cmd=='pause':
     if marker.exists():marker.unlink()
     else:marker.touch()
     revision()
-elif cmd=='store': store(a[1],sys.stdin.buffer.read())
+elif cmd=='store':
+    data=sys.stdin.buffer.read()
+    if not password_hinted(): store(a[1],data)
 elif cmd=='watch':
     lock=open(ROOT/'watch.lock','w');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     children=[]

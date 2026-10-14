@@ -1,6 +1,8 @@
 [Unit]
 Description=Disable unused ZenBook ScreenPad touchscreen at the I2C controller
 After=systemd-modules-load.service
+# Only when this ZenBook really has the ScreenPad touch controller.
+ConditionPathExists=/sys/bus/i2c/devices/i2c-ELAN9009:00
 
 [Service]
 Type=oneshot
