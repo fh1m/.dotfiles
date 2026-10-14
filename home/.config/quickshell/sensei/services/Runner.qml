@@ -48,7 +48,7 @@ handle=${defaultHandle}
             return;
         code = code2;
         suffix = suffix2;
-        writer.command = ["sh", "-c", `set -e; d=$(dirname "$1"); mkdir -p "$d"; t=$(mktemp "$1.XXXXXX"); printf '%s\n' "$2" > "$t"; chmod 644 "$t"; mv -f "$t" "$1"`, "sh", Paths.runnerFile, _serialise(code2, suffix2)];
+        writer.command = ["sh", "-c", `set -e; d=$(dirname "$1"); mkdir -p "$d"; t=$(mktemp "$1.XXXXXX"); printf '%s\n' "$2" > "$t"; chmod 600 "$t"; mv -f "$t" "$1"`, "sh", Paths.runnerFile, _serialise(code2, suffix2)];
         writer.running = true;
     }
 
