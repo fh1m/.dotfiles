@@ -462,7 +462,9 @@ Singleton {
 
     function deleteFile(relative: string): void {
         const path = absolute(relative);
-        if (!path)
+        // Only ever a file inside the library folder: an absolute path or a
+        // `..` segment would otherwise reach anywhere `rm` can go.
+        if (!path || !folder || !path.startsWith(folder.replace(/\/+$/, "") + "/") || path.split("/").includes(".."))
             return;
         run(`rm -f ${quote(path)}`);
         refresh.restart();
