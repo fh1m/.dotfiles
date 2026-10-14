@@ -167,6 +167,8 @@ Item {
 
                         folder: root.dir ? Paths.url(root.dir) : ""
                         nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp"]
+                        // Cameras and screenshot tools write upper-case extensions (IMG_0001.JPG).
+                        caseSensitive: false
                         showDirs: true
                         showDirsFirst: true
                         showDotAndDotDot: false
