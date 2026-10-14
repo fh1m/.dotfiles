@@ -113,8 +113,10 @@ def main():
     except (OSError, subprocess.SubprocessError):
         pass
 
-    here = os.path.dirname(os.path.abspath(__file__))
-    fallback = os.path.join(os.path.dirname(here), "emblem-fallback.txt")
+    # The helper is linked into ~/.local/bin, so resolve the link to find the
+    # checkout's copy of emblem-fallback.txt beside it.
+    here = os.path.dirname(os.path.realpath(__file__))
+    fallback = os.path.join(here, "emblem-fallback.txt")
     if not os.path.isfile(fallback):
         fallback = os.path.expanduser("~/.config/wrayth/emblem-fallback.txt")
 
