@@ -187,4 +187,21 @@ return {
         lualine_x = { 'diagnostics', 'filetype' }, lualine_y = { 'progress' }, lualine_z = { 'location' } },
       extensions = { 'fugitive', 'oil', 'quickfix' } })
   end },
+  { 'folke/flash.nvim', event = 'VeryLazy', opts = { modes = { char = { enabled = false } } },
+    keys = {
+      map('s', function() require('flash').jump() end, 'Flash jump'),
+      map('S', function() require('flash').treesitter() end, 'Flash treesitter'),
+      { 'r', function() require('flash').remote() end, mode = 'o', desc = 'Remote flash' },
+      { 'R', function() require('flash').treesitter_search() end, mode = { 'o', 'x' }, desc = 'Treesitter search' } } },
+  { 'folke/todo-comments.nvim', event = { 'BufReadPost', 'BufNewFile' }, dependencies = { 'nvim-lua/plenary.nvim' },
+    opts = { signs = false },
+    keys = {
+      map(']t', function() require('todo-comments').jump_next() end, 'Next TODO'),
+      map('[t', function() require('todo-comments').jump_prev() end, 'Previous TODO'),
+      map('<leader>xt', '<cmd>Trouble todo toggle<cr>', 'TODO list') } },
+  { 'folke/persistence.nvim', event = 'BufReadPre', opts = {},
+    keys = {
+      map('<leader>qs', function() require('persistence').load() end, 'Restore session'),
+      map('<leader>ql', function() require('persistence').load({ last = true }) end, 'Last session'),
+      map('<leader>qd', function() require('persistence').stop() end, 'Do not save session') } },
 }
