@@ -151,7 +151,7 @@ Item {
                         anchors.right: battery.left
                         anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
-                        color: pairedRow.modelData.connected ? Theme.widgetText : Theme.widgetText
+                        color: Theme.widgetText
                         elide: Text.ElideRight
                         text: Demo.device(pairedRow.modelData.name, pairedRow.index)
                     }

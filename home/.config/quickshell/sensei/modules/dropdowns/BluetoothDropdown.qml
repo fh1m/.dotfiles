@@ -258,7 +258,6 @@ DropdownFrame {
                 // transform, so nothing around it re-lays out.
                 property real detailRise: Appearance.enterRise
 
-                onDetailRiseChanged: {}
 
                 Behavior on detailRise {
                     NumberAnimation {
@@ -350,7 +349,7 @@ DropdownFrame {
                         // still goes through `modelData.address`.
                         text: Demo.device(row.modelData.name, row.index)
                         textFormat: Text.PlainText
-                        color: row.linked ? Theme.widgetText : Theme.widgetText
+                        color: Theme.widgetText
                         font.family: Appearance.font.data
                         font.pixelSize: Appearance.size.body
                         elide: Text.ElideRight

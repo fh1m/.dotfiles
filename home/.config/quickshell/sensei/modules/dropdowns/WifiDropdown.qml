@@ -338,7 +338,7 @@ DropdownFrame {
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 strength: netRow.modelData.signal
-                                litColor: netRow.isConnected ? Theme.widgetAccent : Theme.widgetAccent
+                                litColor: Theme.widgetAccent
                             }
 
                             Item {
@@ -378,7 +378,7 @@ DropdownFrame {
 
                                 text: netRow.modelData.label
                                 textFormat: Text.PlainText
-                                color: netRow.isConnected ? Theme.widgetText : Theme.widgetText
+                                color: Theme.widgetText
                                 font.family: Appearance.font.data
                                 font.pixelSize: Appearance.size.body
                                 elide: Text.ElideRight
