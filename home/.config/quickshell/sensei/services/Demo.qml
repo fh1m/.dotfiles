@@ -46,7 +46,8 @@ Singleton {
     // the exact "stuck on" state the watchdog exists to prevent, for one of
     // the three things it covers. Anything demo mode changes is changed here.
     function begin(seconds: int): void {
-        root.expirySeconds = seconds > 0 ? seconds : 300;
+        // Capped: the watchdog interval is an int of milliseconds, and a huge value overflowed it.
+        root.expirySeconds = Math.min(seconds > 0 ? seconds : 300, 3600);
         root.active = true;
         Glitch.suppressed = true;
         // The sequence opens with the lines off, whatever the user runs.
