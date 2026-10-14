@@ -1,0 +1,29 @@
+filters:
+  and:
+    - 'file.ext == "md"'
+    - '!file.inFolder("92 Templates")'
+views:
+  - type: table
+    name: Concepts
+    filters:
+      and:
+        - 'type == "concept" || type == "derivation"'
+    order:
+      - file.name
+      - note.type
+      - note.domain
+      - note.status
+      - note.confidence
+    limit: 12
+  - type: table
+    name: Questions
+    filters:
+      and:
+        - 'type == "question" && status != "resolved"'
+    order:
+      - file.name
+      - note.type
+      - note.domain
+      - note.status
+      - note.confidence
+    limit: 12

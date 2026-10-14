@@ -4,7 +4,7 @@ import qs.config
 import qs.services
 ChamferPanel {
  id:root;property int workspace:1;property bool selected:false;property bool livePreview:true;property bool retainFrame:false;property var windows:WindowDesk.all.filter(t=>Spaces.logicalId(Spaces.windowWorkspace(t))===root.workspace);fillColor:Theme.widgetSurface;borderColor:WindowDesk.dragTarget===workspace?Theme.signal:selected?Theme.signal:Theme.hair;borderWidth:WindowDesk.dragTarget===workspace||selected?2:1;chamfer:10;clip:true
- readonly property var displays:Spaces.outputState.filter(m=>root.workspace===7?m.name==="DP-2":m.name==="eDP-1"||ShellState.isExternalOutput(m.name))
+ readonly property var displays:Spaces.outputState.filter(m=>m.name===MachineProfile.primaryOutput||ShellState.isExternalOutput(m.name))
  readonly property real originX:displays.length?Math.min(...displays.map(m=>m.x)):0
  readonly property real originY:displays.length?Math.min(...displays.map(m=>m.y)):0
  readonly property real spanWidth:displays.length?Math.max(...displays.map(m=>m.x+m.width/(m.scale||1)))-originX:1920

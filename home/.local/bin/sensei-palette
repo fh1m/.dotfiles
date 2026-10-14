@@ -113,7 +113,7 @@ def replace_section(text, section, changes):
 def main():
     try:
         config = json.loads(wallpapers.read_text())
-        image = Path(sys.argv[1] if len(sys.argv) > 1 else config["displays"]["eDP-1"]["file"]).expanduser()
+        image = Path(sys.argv[1] if len(sys.argv) > 1 else config["displays"][json.loads((state/"machine.json").read_text()).get("primaryOutput","DP-3")]["file"]).expanduser()
         if not image.is_file():
             raise ValueError(f"main wallpaper unavailable: {image}")
         fingerprint = [str(image), image.stat().st_mtime_ns, image.stat().st_size, 8, "wallpaper-derived-1"]
@@ -129,7 +129,7 @@ def main():
             palette = {"wallpaper": str(image), "fingerprint": fingerprint, **colours}
         write_if_changed(out, json.dumps(palette, indent=2) + "\n")
 
-        terminal = home / ".config/alacritty/alacritty.toml"
+        terminal = home / ".config/alacritty/sensei-colors.toml"
         if terminal.exists():
             content = terminal.read_text()
             content = replace_section(content, "colors.primary", {

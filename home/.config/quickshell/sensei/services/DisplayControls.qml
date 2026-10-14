@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import qs.config
 
 Singleton {
     id: root
@@ -10,13 +11,15 @@ Singleton {
     property var pending: ({})
     property var targets: ({})
     function adjustLevel(output: string, delta: real): void {
+        if(output==="main")output=MachineProfile.primaryOutput;
         const previous = targets[output];
-        const actual = output === "main" ? RobotBench.data.mainBrightness : output === "screenpad"?RobotBench.data.brightness:ExternalDisplays.display(output)?.level;
+        const actual = output === "screenpad"?RobotBench.data.brightness:ExternalDisplays.display(output)?.level;
         if(!Number.isFinite(actual))return;
         const base = previous && Date.now() - previous.time < 2500 ? previous.level : actual;
         setLevel(output, base + delta);
     }
     function setLevel(output: string, percent: real): void {
+        if(output==="main")output=MachineProfile.primaryOutput;
         if(output!=="main"&&output!=="screenpad"){
             const externalLevel = Math.max(0, Math.min(100, Math.round(percent)));
             targets[output] = {level: externalLevel, time: Date.now()};

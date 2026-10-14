@@ -32,7 +32,7 @@ DropdownFrame {
  Row {spacing:12
  Repeater {model:3
 
- ChamferPanel {required property int index;readonly property var modelData: index===0?{name:"CPU",value:root.d.cpu.toFixed(1)+" %",history:LiveMonitor.cpuHistory,ink:Theme.widgetAccent}:index===1?{name:"RAM",value:root.size(root.d.memory.used)+" / "+root.size(root.d.memory.total),history:LiveMonitor.ramHistory,ink:Theme.widgetText}:{name:"Nvidia RTX 2060",value:root.gpu.state==="sleep"?"0% · sleeping":(root.gpu.usage??"—")+" %",history:LiveMonitor.gpuHistory,ink:Theme.widgetAccent};width:(overview.width-24)/3;height:124;fillColor:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.08);chamfer:8;scanlines:false
+ ChamferPanel {required property int index;readonly property var modelData: index===0?{name:"CPU",value:root.d.cpu.toFixed(1)+" %",history:LiveMonitor.cpuHistory,ink:Theme.widgetAccent}:index===1?{name:"RAM",value:root.size(root.d.memory.used)+" / "+root.size(root.d.memory.total),history:LiveMonitor.ramHistory,ink:Theme.widgetText}:{name:MachineProfile.gpuName,value:root.gpu.state==="sleep"?"0% · sleeping":(root.gpu.usage??"—")+" %",history:LiveMonitor.gpuHistory,ink:Theme.widgetAccent};width:(overview.width-24)/3;height:124;fillColor:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.08);chamfer:8;scanlines:false
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;font.family:Appearance.font.heading;x:12;y:10;text:modelData.name;pixelSize:14;color:Theme.widgetMuted}
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;x:12;y:31;text:modelData.value;pixelSize:15;color:modelData.ink}
  MonitorGraph {x:12;y:60;width:parent.width-24;height:52;values:modelData.history;ink:modelData.ink}
@@ -66,11 +66,11 @@ DropdownFrame {
  Flickable {id:sectionEnter3Container;anchors.fill:parent;visible:root.page===2; clip:true;contentHeight:gpuContent.height;Column {id:gpuContent;width:parent.width;spacing:12
  NrLabel {text:"Chrome graphics · "+ChromeControl.data.actual;pixelSize:15;font.capitalization:Font.MixedCase;tracked:false}
  Row {spacing:8
- Repeater {model:["auto","intel","nvidia"];ControlTile {required property string modelData;implicitWidth:140;implicitHeight:32;label:modelData==="auto"?"Auto · Intel":modelData==="intel"?"Intel":"Nvidia";selected:ChromeControl.data.mode===modelData;enabled:!ChromeControl.busy&&(modelData!=="nvidia"||ChromeControl.data.nvidiaAvailable);onActivated:ChromeControl.run(["mode",modelData])}}
+ Repeater {model:["auto","nvidia"];ControlTile {required property string modelData;implicitWidth:140;implicitHeight:32;label:modelData==="auto"?"Auto · Nvidia":modelData==="intel"?"Intel":"Nvidia";selected:ChromeControl.data.mode===modelData;enabled:!ChromeControl.busy&&(modelData!=="nvidia"||ChromeControl.data.nvidiaAvailable);onActivated:ChromeControl.run(["mode",modelData])}}
  ControlTile {implicitWidth:180;implicitHeight:32;label:ChromeControl.busy?"Please wait…":"Restart Chrome";enabled:!ChromeControl.busy;onActivated:ChromeControl.run(["restart"])}
  }
  NrLabel {text:ChromeControl.error||((ChromeControl.data.note??"")+" Choice applies on next launch; restart restores saved tabs.");width:parent.width;wrapMode:Text.Wrap;pixelSize:11;font.capitalization:Font.MixedCase;tracked:false;color:Theme.widgetMuted}
- NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"Nvidia RTX 2060 · "+String(root.gpu.state);pixelSize:16;color:Theme.widgetAccent}
+ NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:MachineProfile.gpuName+" · "+String(root.gpu.state);pixelSize:16;color:Theme.widgetAccent}
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"CUDA contexts "+(root.gpu.computeCount??0)+"    Graphics "+(root.gpu.graphicsCount??0)+"    Utilization "+(root.gpu.usage??0)+"%    Temperature "+(root.gpu.temperature??"—")+" °C";pixelSize:13}
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;text:"VRAM used "+(root.gpu.memoryUsed??root.gpu.memoryUsedMiB??"—")+" MiB / "+(root.gpu.memoryTotal??root.gpu.memoryTotalMiB??"—")+" MiB";pixelSize:13}
  MonitorGraph {width:parent.width;height:70;values:LiveMonitor.gpuHistory;ink:Theme.widgetAccent}

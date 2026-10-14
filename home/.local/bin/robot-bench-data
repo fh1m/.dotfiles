@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-"""Read-only hardware and simulator telemetry for fh1m's UX581GV robotics bench."""
+"""Read-only hardware and simulator telemetry for fh1m's single-GPU desktop robotics bench."""
+from _sensei_machine import gpu_pci, desktop_state
 import ctypes
 import shutil
 import json
@@ -66,7 +67,7 @@ def collect():
         mic_volume=round(float(mic_text.split()[1])*100)
     except (OSError,ValueError,IndexError,subprocess.SubprocessError):mic_muted=True;mic_volume=0
     gpu={'state':'unavailable','usage':None,'temperature':None,'memory':None}
-    status=read('/sys/bus/pci/devices/0000:01:00.0/power/runtime_status')
+    status=read('/sys/bus/pci/devices/'+gpu_pci()+'/power/runtime_status')
     if status in ['suspended','suspending']:
         gpu.update(state='sleep',usage=0,processes=[],computeCount=0,graphicsCount=0,processesKnown=True)
     elif status=='active':
@@ -85,7 +86,7 @@ def collect():
         recording_state=json.loads((Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'desktop-recording.json').read_text())
         recording=not recording_state.get('completed',False) and any(recording_state.get('file','NO-FILE') in command for command in recorders)
     except (OSError,ValueError):recording=False
-    return {'recording':recording,'boards':boards,'boardCount':len(boards),'simulators':sorted(set(names)),'simCount':len(set(names) - {'rviz2','mavros_node'}),'brightness':brightness,'mainBrightness':mainbrightness,'micMuted':mic_muted,'micVolume':mic_volume,'intelUsage':intel_activity(),'gpu':gpu,**hardware()}
+    return {'recording':recording,'boards':boards,'boardCount':len(boards),'simulators':sorted(set(names)),'simCount':len(set(names) - {'rviz2','mavros_node'}),'brightness':None,'mainBrightness':None,'micMuted':mic_muted,'micVolume':mic_volume,'intelUsage':None,'gpu':gpu,**hardware()}
 
 def gpu_processes(lib=None,handle=None):
     """NVML v2 process lists: C contexts and graphics contexts, no process killing."""
@@ -156,11 +157,11 @@ def hardware():
     temps=[];fans=[];fan_mode=None
     for base in Path('/sys/class/hwmon').iterdir():
         name=read(base/'name')
-        if name=='coretemp':
+        if name in ('coretemp', 'k10temp'):
             for sensor in base.glob('temp*_input'):
                 try:temps.append(float(read(sensor))/1000)
                 except ValueError:pass
-        if name=='asus':
+        if name in ('asus', 'nct6795', 'nct6796', 'it87'):
             for sensor in sorted(base.glob('fan*_input')):
                 try:fans.append(int(read(sensor)))
                 except ValueError:pass
@@ -168,19 +169,19 @@ def hardware():
             fan_mode=int(value) if value.isdigit() else None
     led=Path('/sys/class/leds/asus::kbd_backlight')
     disk=shutil.disk_usage(Path.home())
-    try:settings=json.loads((Path.home()/'.config/hypr/zenbook-controls.json').read_text())
+    try:settings=desktop_state()
     except (OSError,ValueError):settings={}
     return {'cpuTemperature':round(max(temps)) if temps else None,'fans':fans,'fanMode':fan_mode,
-        'keyboardBrightness':int(read(led/'brightness','0')),'keyboardMaximum':int(read(led/'max_brightness','3')),
-        'chargeLimit':int(read('/sys/class/power_supply/BAT0/charge_control_end_threshold','100')),
+        'keyboardBrightness':None,'keyboardMaximum':None,
+        'chargeLimit':None,
         'diskFreeGiB':round(disk.free/2**30,1),'diskUsedPercent':round(disk.used/disk.total*100),
         'touchpadEnabled':settings.get('touchpad',True),'naturalScroll':settings.get('natural',True),
         'animationsEnabled':settings.get('animations',True),'cudaToolkit':Path('/opt/cuda/bin/nvcc').exists(),
         'rosInstalled':shutil.which('ros2') is not None,'cameraCount':len(set((p/'device').resolve().parent for p in Path('/sys/class/video4linux').glob('video*'))),'cameraEnabled':camera_enabled(),
-        'cameraControlAvailable':Path('/usr/local/libexec/fh1m-zenbook-camera').exists(),
+        'cameraControlAvailable':False,
         'airplaneMode':(Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'zenbook-airplane.json').exists(),
-        'trainingMode':settings.get('training',False),'screenpadOn':screenpad_on(),
-        'fanControlAvailable':Path('/usr/local/libexec/fh1m-zenbook-fan').exists()}
+        'trainingMode':settings.get('training',False),'screenpadOn':None,
+        'fanControlAvailable':False}
 
 if __name__=='__main__':
     if '--watch' not in sys.argv:print(json.dumps(collect(),ensure_ascii=False))
@@ -188,7 +189,7 @@ if __name__=='__main__':
         try:
             while True:
                 data=collect();print('\033[2J\033[H',end='')
-                print('FH1M // DEVICE TELEMETRY — UX581GV\nUSB / SIM / GPU status\n')
+                print('FH1M // DESKTOP DEVICE TELEMETRY\nUSB / SIM / GPU status\n')
                 print('USB serial boards:', '\n  '.join(data['boards']) or 'No board connected')
                 print('Robotics processes:', ', '.join(data['simulators']) or 'No simulator / visualization process detected')
                 print('ScreenPad brightness:',str(data['brightness'])+'%')

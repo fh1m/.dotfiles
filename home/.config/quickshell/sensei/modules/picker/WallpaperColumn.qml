@@ -8,7 +8,7 @@ ChamferPanel {
  Column {anchors.fill:parent;anchors.margins:14;spacing:11
  Text { textFormat: Text.PlainText;text:"Sensei, make both displays yours.";font.family:Appearance.font.data;font.pixelSize:13;color:Theme.signal}
  Row {width:parent.width;spacing:10;NrLabel {text:"Follow theme";font.capitalization:Font.MixedCase;tracked:false;pixelSize:11;anchors.verticalCenter:parent.verticalCenter}ToggleButton {on:Wallpapers.dynamic;onToggled:Wallpapers.setDynamic(!Wallpapers.dynamic)}}
- Repeater {model:[{output:"eDP-1",name:"Main"},{output:"DP-2",name:"ScreenPad"}]
+ Repeater {model:ShellState.screens.map(screen=>({output:screen.name,name:screen.name===MachineProfile.primaryOutput?"Main display":screen.name}))
  Rectangle {id:displayRow;required property var modelData;width:parent.width;height:119;color:Theme.alpha(Theme.barBg,.65);border.color:Theme.hair
  Image {x:8;y:9;width:100;height:100;source:Wallpapers.displaySource(displayRow.modelData.output);sourceSize:Qt.size(256,256);fillMode:Wallpapers.displayMode(displayRow.modelData.output);asynchronous:true}
  Column {x:119;y:10;width:parent.width-129;spacing:8

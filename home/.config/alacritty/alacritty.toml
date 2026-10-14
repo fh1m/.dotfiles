@@ -1,6 +1,7 @@
 # Sensei · fast daily terminal. The deck uses Alacritty too.
 # Match the live Alacritty palette, Iosevka metrics and opaque compositor profile.
 [general]
+import = ["@HOME@/.config/alacritty/sensei-colors.toml"]
 live_config_reload = true
 
 [env]
@@ -8,7 +9,7 @@ TERM = "alacritty"
 
 [window]
 decorations = "None"
-opacity = 1.0
+opacity = 0.94
 padding = { x = 14, y = 8 }
 dynamic_padding = true
 resize_increments = true
@@ -29,39 +30,6 @@ offset = { x = 1, y = 4 }
 # Center ink in the extra letter/line spacing at integer pixel positions.
 glyph_offset = { x = 1, y = 2 }
 builtin_box_drawing = true
-
-[colors.primary]
-background = "#090807"
-foreground = "#e8e2da"
-dim_foreground = "#a9a29a"
-
-[colors.cursor]
-text = "#000000"
-cursor = "#ffffff"
-
-[colors.selection]
-text = "#000000"
-background = "#f23d70"
-
-[colors.normal]
-black = "#0f0f0f"
-red = "#f23d70"
-green = "#0090ff"
-yellow = "#f7ed30"
-blue = "#f23d70"
-magenta = "#f23d70"
-cyan = "#76bcc0"
-white = "#ffffff"
-
-[colors.bright]
-black = "#002766"
-red = "#ff1767"
-green = "#abe05a"
-yellow = "#ffda00"
-blue = "#D8054A"
-magenta = "#ff1767"
-cyan = "#D8054A"
-white = "#ffffff"
 
 [cursor]
 style = { shape = "Underline", blinking = "Never" }

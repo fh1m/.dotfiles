@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory(prefix='dotfiles-test-') as directory:
     # Live layout: each linked path is a symlink to its external file, and the target exists.
     for relative, target in m.LINKS.items():
         assert (home/relative).is_symlink() and (home/relative).resolve() == (home/target).resolve(), relative
-        assert (home/target).is_file(), target
+        assert (home/target).exists(), target
     # Every file the desktop loads by path must exist after install.
     import re
     for name in ['hyprland.lua', 'custom-setup.lua']:

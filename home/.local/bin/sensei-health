@@ -3,6 +3,7 @@
 import argparse
 import datetime as dt
 import json
+import re
 import os
 from pathlib import Path
 import subprocess
@@ -28,7 +29,8 @@ def pressure(kind, path=None):
 def disk_counters():
     """NVMe bytes and busy time; PSI alone cannot identify storage waits."""
     result = {}
-    for disk in Path('/sys/block').glob('nvme*n*'):
+    for disk in Path('/sys/block').glob('*'):
+        if not re.fullmatch(r'nvme[0-9]+n[0-9]+|sd[a-z]+', disk.name):continue
         try:
             fields = [int(x) for x in (disk / 'stat').read_text().split()]
             result[disk.name] = {

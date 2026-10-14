@@ -6,28 +6,14 @@ local mod = "SUPER"
 local terminal = "@HOME@/.local/bin/sensei-terminal"
 
 -- Preserve the original monitor arrangement and session environment.
-hl.monitor({
-    output = "eDP-1",
-    mode = "preferred",
-    position = "0x0",
-    scale = 2,
-})
-hl.monitor({
-    output = "DP-2",
-    mode = "3840x1100@60.02",
-    position = "0x1080",
-    scale = 2,
-})
 
 -- Any display attached to the NVIDIA HDMI port extends left at native mode.
-hl.monitor({output="HDMI-A-1",mode="preferred",position="-1920x0",scale=1})
 -- USB-C external screen above the HDMI screen; helper refines advertised modes.
-hl.monitor({output="DP-1",mode="preferred",position="-1920x-1080",scale=1})
 
 -- Keep the motion; shadows stay off for Intel render time. Blur is set in hypr-sensei.lua (special workspaces only).
 hl.config({
     animations = { enabled = true },
-    decoration = { shadow = { enabled = false } }, general = { border_size = 2 }, input = { touchpad = { natural_scroll = true }, follow_mouse = 0 },
+    decoration = { shadow = { enabled = true, range = 18, render_power = 3, color = "rgba(00000066)" } }, general = { border_size = 2 }, input = { touchpad = { natural_scroll = true }, follow_mouse = 0 },
     group = {
         auto_group = false,
         drag_into_group = 1,
@@ -77,8 +63,6 @@ hl.bind("SUPER + ALT + LEFT", hl.dsp.group.prev())
 hl.bind("SUPER + ALT + RIGHT", hl.dsp.group.next())
 hl.bind("SUPER + ALT + U", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/sensei-tabs detach"))
 
-hl.bind(mod .. " + SHIFT + up", hl.dsp.window.move({ monitor = "eDP-1" }))
-hl.bind(mod .. " + SHIFT + down", hl.dsp.window.move({ monitor = "DP-2" }))
 
 hl.env("HYPRCURSOR_SIZE", "24")
 hl.env("XCURSOR_SIZE", "24")
@@ -224,7 +208,7 @@ hl.bind("ALT + grave", hl.dsp.exec_cmd("qs -c sensei ipc call switcher cycle sam
 hl.bind("ALT + SHIFT + grave", hl.dsp.exec_cmd("qs -c sensei ipc call switcher cycle same -1"))
 
 -- Keep the former hot surfaces explicit even if another theme enables blur.
-hl.window_rule({ name = "sensei-terminal-render-headroom", match = { class = "^(kitty|Alacritty)$" }, no_blur = true })
+hl.window_rule({ name = "sensei-terminal-render-headroom", match = { class = "^(kitty|Alacritty)$" }, no_blur = false })
 hl.layer_rule({ name = "sensei-bar-render-headroom", match = { namespace = "^sensei-bar$" }, blur = false })
 -- Native image/calendar choosers stay above ordinary apps.
 hl.window_rule({ name = "sensei-native-chooser", match = { class = "^(zenity|org\\.gnome\\.Zenity)$" }, float = true, center = true })
@@ -299,3 +283,6 @@ for _, side in ipairs({{"LEFT","l"},{"RIGHT","r"}}) do
     hl.bind("SUPER + CTRL + "..side[1],hl.dsp.focus({monitor=side[2]}))
     hl.bind("SUPER + CTRL + SHIFT + "..side[1],hl.dsp.window.move({monitor=side[2]}))
 end
+
+-- Homie: preserve validated native NVIDIA display mode.
+hl.monitor({output="DP-3",mode="1920x1080@74.97",position="0x0",scale=1})

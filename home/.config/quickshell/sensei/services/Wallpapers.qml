@@ -40,13 +40,13 @@ Singleton {
     // The main display's own file when one is chosen, else the profile's image. Every
     // default `Wallpaper` takes this, so a surface with no explicit source (the power
     // menu, the EFFECTS tiles) shows the same image as the picker and the lock.
-    readonly property url displayed: displays["eDP-1"]?.file ? Paths.url(displays["eDP-1"].file) : profileImage
-    function displaySource(output: string): url { const name=ShellState.isExternalOutput(output)?"eDP-1":output; const path=displays[name]?.file; return path ? Paths.url(path) : profileImage; }
-    function displayMode(output: string): int { const name=ShellState.isExternalOutput(output)?"eDP-1":output;return displays[name]?.mode ?? Image.PreserveAspectCrop; }
-    function updatePalette(): void { Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-palette`,String(displaySource("eDP-1")).replace(/^file:\/\//,"")]); }
+    readonly property url displayed: displays[MachineProfile.primaryOutput]?.file ? Paths.url(displays[MachineProfile.primaryOutput].file) : profileImage
+    function displaySource(output: string): url { const name=ShellState.isExternalOutput(output)?MachineProfile.primaryOutput:output; const path=displays[name]?.file; return path ? Paths.url(path) : profileImage; }
+    function displayMode(output: string): int { const name=ShellState.isExternalOutput(output)?MachineProfile.primaryOutput:output;return displays[name]?.mode ?? Image.PreserveAspectCrop; }
+    function updatePalette(): void { Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-palette`,String(displaySource(MachineProfile.primaryOutput)).replace(/^file:\/\//,"")]); }
     onLoadedChanged: if (loaded) updatePalette()
-    onDisplayedChanged: if (loaded && !displays["eDP-1"]?.file) updatePalette()
-    function setDisplay(output: string, path: string, mode: int): void { const next=Object.assign({},displays); next[output]={file:path,mode:mode};displays=next;syncStartup(output,path);write();if(output==="eDP-1")Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-palette`,path||String(displayed).replace(/^file:\/\//,"")]); }
+    onDisplayedChanged: if (loaded && !displays[MachineProfile.primaryOutput]?.file) updatePalette()
+    function setDisplay(output: string, path: string, mode: int): void { const next=Object.assign({},displays); next[output]={file:path,mode:mode};displays=next;syncStartup(output,path);write();if(output===MachineProfile.primaryOutput)Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-palette`,path||String(displayed).replace(/^file:\/\//,"")]); }
 
     // name -> { mode, every, fade, items: [{ file, on, star }] }
     property var pools: ({})
