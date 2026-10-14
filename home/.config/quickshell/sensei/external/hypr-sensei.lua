@@ -110,17 +110,22 @@ hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 4, bezier = "s
 -- These are global (they affect every window). rounding_power = 1 turns
 -- Hyprland's rounded corners into straight cuts, and rounding = 34 makes the
 -- cut's leg 16 px -- the same chamfer the shell's own panels cut -- so a window
--- corner and a panel corner beside it are the same shape. blur is off, so the
--- deck has no frosted backdrop: dim_special alone darkens the background behind
--- it. Blur stays off here because the Intel renderer pays for it on every frame.
+-- corner and a panel corner beside it are the same shape. Blur is on for special
+-- workspaces only: every special -- the deck, scratch, communication -- gets the
+-- same frosted, dimmed backdrop, so no window beneath shows through a gutter and
+-- no special looks like a different surface. Measured on the Intel iGPU: an idle
+-- normal workspace is unchanged with blur on (10% render), and the deck costs
+-- about 10 points more with it on (61% -> 72% render while open).
 -- Adjust to taste, but the deck terminal expects rounding_power = 1 and
 -- rounding = 34.
 hl.config({
     decoration = {
         dim_special    = 0.38,
         blur           = {
-            enabled        = false,
-            special        = false,
+            enabled        = true,
+            special        = true,
+            size           = 8,
+            passes         = 1,
         },
         rounding       = 34,
         rounding_power = 1,

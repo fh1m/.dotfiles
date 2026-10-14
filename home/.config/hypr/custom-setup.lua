@@ -24,10 +24,10 @@ hl.monitor({output="HDMI-A-1",mode="preferred",position="-1920x0",scale=1})
 -- USB-C external screen above the HDMI screen; helper refines advertised modes.
 hl.monitor({output="DP-1",mode="preferred",position="-1920x-1080",scale=1})
 
--- Keep the motion, but do not spend Intel render time on blur or shadows.
+-- Keep the motion; shadows stay off for Intel render time. Blur is set in hypr-sensei.lua (special workspaces only).
 hl.config({
     animations = { enabled = true },
-    decoration = { blur = { enabled = false }, shadow = { enabled = false } }, general = { border_size = 2 }, input = { touchpad = { natural_scroll = true }, follow_mouse = 0 },
+    decoration = { shadow = { enabled = false } }, general = { border_size = 2 }, input = { touchpad = { natural_scroll = true }, follow_mouse = 0 },
     group = {
         auto_group = false,
         drag_into_group = 1,

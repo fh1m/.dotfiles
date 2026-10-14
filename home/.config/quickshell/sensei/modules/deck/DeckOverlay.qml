@@ -9,18 +9,13 @@ import qs.modules.deck.signal
 import qs.modules.deck.vuln
 import qs.services
 
-// The deck: one surface, one blur.
+// The deck: one surface on the `special:deck` workspace.
 //
-// A single backdrop covers the whole working area and is frosted by Hyprland as
-// one region, with the four widgets drawn translucent on top of it. They have no
-// blur of their own, so there are no per-panel frosted rectangles and no
-// chamfer edges cut out of the frosting.
-//
-// The one gap is the deck terminal's slot. The terminal is a Hyprland *window*,
-// and every Top layer surface draws over every window, so the backdrop leaves
-// that rectangle transparent for it to show through. `ignore_alpha` on the
-// namespace keeps the gap unfrosted; the terminal supplies its own translucency
-// and Hyprland blurs behind it like any other window.
+// The deck draws no backdrop of its own. Hyprland frosts and dims everything
+// behind a special workspace (`decoration:blur:special` and `dim_special`, set in
+// hypr-sensei.lua), so the deck shares one background with every other special
+// workspace. The panels sit over that background; the deck terminal is a Hyprland
+// window on the same workspace, and the gaps around it show the same background.
 //
 // Nothing here fades in QML. The `animation = fade` layer rule fades the whole
 // surface, blur included, so it cannot slide in from an edge or leave frosting
@@ -129,53 +124,57 @@ Variants {
             }
         }
 
-        // --- Backdrop -------------------------------------------------------
-        // There isn't one. Hyprland blurs and dims the whole background behind
-        // a special workspace itself -- `decoration:blur:special` and
-        // `decoration:dim_special`, set in hypr-sensei.lua -- so the deck needs
-        // no backdrop of its own.
-        //
-        // It used to draw four rectangles around the terminal's slot, which
-        // meant the unpainted gap had to match the terminal exactly. Once the
-        // terminal gained a border and 16 px chamfers, a rectangular gap left
-        // unblurred slivers down its right edge and at every corner. A gap that
-        // does not exist cannot be the wrong shape.
+        // --- Stage ----------------------------------------------------------
+        // Everything the deck draws sits in the work area: the monitor less the
+        // space the bar reserves. Positions inside are measured from that area,
+        // the same origin the terminal is placed from (`originX`/`originY`), so
+        // a bar on the top edge of a monitor moves the panels and the terminal
+        // together. Measured from the window origin, the panels sat under a top
+        // bar while the terminal sat below it.
+        Item {
+            id: stage
 
-        // --- Widgets --------------------------------------------------------
-        Hud {
-            id: hud
+            x: deck.reserved ? deck.reserved[0] : 0
+            y: deck.reserved ? deck.reserved[1] : 0
+            width: deck.areaW
+            height: deck.areaH
 
-            x: deck.columnX
-            y: deck.margin
-            width: deck.columnW
-            height: deck.termH
-        }
+            // --- Widgets ----------------------------------------------------------
+            Hud {
+                id: hud
 
-        SignalPanel {
-            id: signal
+                x: deck.columnX
+                y: deck.margin
+                width: deck.columnW
+                height: deck.termH
+            }
 
-            x: deck.columnX
-            y: deck.bottomY
-            width: hud.width
-            height: deck.bottomH
-        }
+            SignalPanel {
+                id: signal
 
-        PlannerPanel {
-            id: planner
+                x: deck.columnX
+                y: deck.bottomY
+                width: hud.width
+                height: deck.bottomH
+            }
 
-            x: deck.margin
-            y: deck.bottomY
-            width: deck.plannerW
-            height: deck.bottomH
-        }
+            PlannerPanel {
+                id: planner
 
-        VulnPanel {
-            id: vuln
+                x: deck.margin
+                y: deck.bottomY
+                width: deck.plannerW
+                height: deck.bottomH
+            }
 
-            x: planner.x + planner.width + deck.gap
-            y: deck.bottomY
-            width: deck.termW - planner.width - deck.gap
-            height: deck.bottomH
+            VulnPanel {
+                id: vuln
+
+                x: planner.x + planner.width + deck.gap
+                y: deck.bottomY
+                width: deck.termW - planner.width - deck.gap
+                height: deck.bottomH
+            }
         }
 
         // --- Terminal placement ---------------------------------------------
