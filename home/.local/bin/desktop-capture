@@ -54,24 +54,67 @@ def copy_image(path):
     if 'image/png' not in offered:
         raise RuntimeError('Screenshot saved, but the clipboard did not take the image')
 
-def screenshot(args):
-    output = filename(HOME_DIR / 'Pictures/Screenshots', 'Screenshot', 'png')
+MIN_SIDE = 16
+DISCARDED = HOME_DIR / '.local/state/sensei/discarded-captures'
+
+def frame_problem(path):
+    # A capture is bad when it is a sliver (a cancelled or accidental selection) or
+    # when it is blank: nearly every pixel white or nearly every pixel black.
+    from PIL import Image
+    with Image.open(path) as image:
+        width, height = image.size
+        if min(width, height) < MIN_SIDE:
+            return 'sliver'
+        grey = image.convert('L')
+    grey.thumbnail((400, 400))
+    histogram = grey.histogram()
+    total = sum(histogram)
+    if sum(histogram[246:]) / total > 0.97:
+        return 'white'
+    if sum(histogram[:8]) / total > 0.97:
+        return 'black'
+    return None
+
+def discard(path, reason):
+    # Moved aside, not deleted, so a bad capture can still be looked at.
+    DISCARDED.mkdir(parents=True, exist_ok=True)
+    path.rename(DISCARDED / f'{reason}_{path.name}')
+
+def take(args, output):
+    # One capture into `output`. Returns False when nothing was taken (cancelled).
     if args.geometry:
         run(['grim', '-g', args.geometry, str(output)])
-    else:
-        # Save only; the copy below is explicit so both paths report the same thing.
-        # No --freeze: a frozen compositor frame made area selection look like a
-        # desktop stall, and kept the shell from animating while the picker was open.
-        logpath = HOME_DIR / ".local/state/sensei/capture.log"
-        logpath.parent.mkdir(parents=True, exist_ok=True)
-        with logpath.open("a") as errors:
-            result = subprocess.run(['grimblast', 'save', args.mode, str(output)], stdout=subprocess.DEVNULL, stderr=errors)
-        if result.returncode != 0:
-            if args.mode == 'area' and not output.exists():
-                return  # Escape is a normal cancellation.
-            raise RuntimeError('Screenshot failed; check grimblast output')
-    if not output.exists() or output.stat().st_size == 0:
-        return
+        return True
+    # Save only; the copy is a separate, checked step. No --freeze: a frozen compositor
+    # frame made area selection look like a desktop stall, and kept the shell from
+    # animating while the picker was open.
+    logpath = HOME_DIR / '.local/state/sensei/capture.log'
+    logpath.parent.mkdir(parents=True, exist_ok=True)
+    with logpath.open('a') as errors:
+        result = subprocess.run(['grimblast', 'save', args.mode, str(output)], stdout=subprocess.DEVNULL, stderr=errors)
+    if result.returncode != 0 and not (args.mode == 'area' and not output.exists()):
+        raise RuntimeError('Screenshot failed; check grimblast output')
+    return output.exists() and output.stat().st_size > 0
+
+def screenshot(args):
+    output = filename(HOME_DIR / 'Pictures/Screenshots', 'Screenshot', 'png')
+    # A blank frame can come from a capture that raced a redraw. Non-interactive modes
+    # retry; an area selection is the user's to redo, so it is reported instead.
+    attempts = 1 if args.mode == 'area' or args.geometry else 3
+    for attempt in range(attempts):
+        if not take(args, output):
+            if output.exists():
+                discard(output, 'empty')
+            return  # Escape on an area selection is a normal cancellation.
+        problem = frame_problem(output)
+        if problem is None:
+            break
+        discard(output, f'{problem}-{attempt}')
+        if attempt + 1 == attempts:
+            notify('Screenshot not copied', f'The capture came out {problem}. Try again.', urgent=True)
+            return
+        time.sleep(0.25)
+        output = filename(HOME_DIR / 'Pictures/Screenshots', 'Screenshot', 'png')
     copy_image(output)
     notify('Screenshot saved and copied', output)
     print(output)
