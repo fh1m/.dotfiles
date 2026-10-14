@@ -77,13 +77,16 @@ Singleton {
         // Prints "armed <unit>" for the first active firewall, "down" when all
         // four answered and none is active, or "unknown" when the query itself
         // could not run (no systemctl, D-Bus refused). `systemctl is-active`
-        // needs no root. If the whole process yields nothing, the parser below
-        // defaults to unknown -- a broken check is never read as DOWN.
+        // needs no root. ufw.service is a oneshot that stays "active" after it
+        // runs, so ufw only counts when ufw.conf says ENABLED=yes -- otherwise
+        // the readout said ARMED for a firewall that filters nothing. If the
+        // whole process yields nothing, the parser below defaults to unknown.
         command: ["sh", "-c",
             "command -v systemctl >/dev/null 2>&1 || { echo unknown; exit 0; }; " +
             "answered=0; " +
             "for u in nftables iptables ufw firewalld; do " +
             "s=$(systemctl is-active \"$u\" 2>/dev/null); " +
+            "[ \"$u\" = ufw ] && ! grep -qx ENABLED=yes /etc/ufw/ufw.conf 2>/dev/null && s=inactive; " +
             "[ \"$s\" = active ] && { echo \"armed $u\"; exit 0; }; " +
             "[ -n \"$s\" ] && answered=1; " +
             "done; " +
