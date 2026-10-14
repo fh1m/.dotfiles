@@ -14,7 +14,13 @@ Singleton {
     id: root
 
     readonly property string workspace: "deck"
-    readonly property string terminalClass: Hyprland.toplevels.values.find(t=>t.workspace?.name==="special:deck" && (t.lastIpcObject?.class||"").endsWith("-deck"))?.lastIpcObject?.class ?? "sensei-deck"
+    // The class is any app's own WM_CLASS, and it is written into a Lua
+    // expression below, so only a plain name is accepted. Anything else falls
+    // back to the deck terminal's own class.
+    readonly property string terminalClass: {
+        const found = Hyprland.toplevels.values.find(t=>t.workspace?.name==="special:deck" && (t.lastIpcObject?.class||"").endsWith("-deck"))?.lastIpcObject?.class ?? "";
+        return /^[A-Za-z0-9._-]+$/.test(found) ? found : "sensei-deck";
+    }
 
     readonly property HyprlandMonitor monitor: Hyprland.monitors.values.find(m => (m.lastIpcObject?.specialWorkspace?.name ?? "") === `special:${workspace}`) ?? null
     readonly property bool visible: (monitor?.lastIpcObject?.specialWorkspace?.name ?? "") === `special:${workspace}`
