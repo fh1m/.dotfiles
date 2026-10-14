@@ -389,7 +389,9 @@ Singleton {
             onStreamFinished: {
                 // One row per access point, so several per network. Keep the
                 // strongest reading of each name and drop hidden ones.
-                const best = {};
+                // No prototype: an SSID named __proto__ or constructor must be a key, not
+                // a lookup into Object.prototype, or that network silently drops out.
+                const best = Object.create(null);
                 let activeSec = "";
                 for (const line of text.split("\n")) {
                     if (!line)
