@@ -83,9 +83,18 @@ Singleton {
         return find(name) !== null;
     }
 
+    // The one rule for a custom name, shared by every way in: the file, the
+    // editor and the IPC. Letters, digits, spaces and hyphens, and never a
+    // preset's name, which would otherwise replace that preset's palette.
+    function validName(name: string): bool {
+        return typeof name === "string" && /^[A-Za-z0-9 -]{1,40}$/.test(name) && !Profiles.presetNames.some(preset => preset.toLowerCase() === name.toLowerCase());
+    }
+
     // Add a new profile or replace an existing one, keeping its place in the
     // creation order so the picker's cards do not shuffle when one is edited.
-    function store(name: string, colors: var): void {
+    function store(name: string, colors: var): bool {
+        if (!validName(name))
+            return false;
         const next = list.slice();
         const at = next.findIndex(entry => entry.name.toLowerCase() === name.toLowerCase());
         if (at >= 0)
@@ -101,6 +110,7 @@ Singleton {
             });
         list = next;
         write();
+        return true;
     }
 
     // A delete is a move, not a loss: the entry goes under `removed` in the
@@ -163,9 +173,8 @@ Singleton {
             // so the user can fix it by hand. This is the single point
             // that keeps a crafted colour like `")); os.execute(...)` or a name
             // like `x=y;id` or `../../evil` out of every downstream sink.
-            const nameOk = n => typeof n === "string" && /^[A-Za-z0-9 -]{1,40}$/.test(n);
             const hexOk = c => typeof c === "string" && /^#[0-9A-Fa-f]{6}$/.test(c);
-            const valid = entry => entry && nameOk(entry.name) && entry.colors && root.roles.every(r => hexOk(entry.colors[r.key]));
+            const valid = entry => entry && root.validName(entry.name) && entry.colors && root.roles.every(r => hexOk(entry.colors[r.key]));
             list = profiles.filter(valid);
             rejectedEntries = profiles.filter(entry => !valid(entry));
             removed = Array.isArray(parsed.removed) ? parsed.removed : [];

@@ -83,7 +83,10 @@ Item {
     }
 
     function store(name: string): void {
-        Customs.store(name, root.colors);
+        // A refused name (a preset's, or one outside the rules) stores nothing,
+        // so nothing downstream may run for it either.
+        if (!Customs.store(name, root.colors))
+            return;
         // The wallpaper is generated from the palette that was just stored --
         // for a new profile and for an edited one alike, since editing the
         // accent is exactly the case where the old wallpaper stops matching.
