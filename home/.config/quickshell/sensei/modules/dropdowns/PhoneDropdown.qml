@@ -185,7 +185,7 @@ DropdownFrame {
      Text { textFormat: Text.PlainText;width:parent.width;text:"Tailscale · "+(root.state.vpn?.state||"Loading")+" · laptop "+(root.state.vpn?.ips||[]).join(" / ");wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:14;font.bold:true;color:Theme.widgetText}
      Flow {width:parent.width;spacing:8
       ControlTile {label:root.state.vpn?.state==="Running"?"Mesh connected":"Sign in / connect";glyph:"\uf0ac";implicitWidth:220;enabled:root.state.vpn?.state!=="Running";onActivated:root.act("vpn-login")}
-      ControlTile {label:"Open sign-in page";implicitWidth:205;enabled:!!root.state.vpn?.authUrl;onActivated:Quickshell.execDetached(["xdg-open",root.state.vpn.authUrl])}
+      ControlTile {label:"Open sign-in page";implicitWidth:205;enabled:(root.state.vpn?.authUrl??"").startsWith("https://");onActivated:Quickshell.execDetached(["xdg-open",root.state.vpn.authUrl])}
       ControlTile {label:"Disconnect mesh";implicitWidth:190;enabled:root.state.vpn?.state==="Running";onActivated:root.act("vpn-disconnect")}
       ControlTile {label:"Test private tunnel";implicitWidth:190;enabled:root.androidPeers.length>0;onActivated:root.act("vpn-test")}
       ControlTile {label:"Tailscale devices";implicitWidth:190;onActivated:Quickshell.execDetached(["xdg-open","https://login.tailscale.com/admin/machines"])}
