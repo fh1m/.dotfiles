@@ -76,7 +76,8 @@ fn handle_mouse_event(
             let step = config::get_config().app_config.volume_scroll_step;
             if let Some(ref playback) = state.player.read().buffered_playback {
                 if let Some(volume) = playback.volume {
-                    let new_volume = std::cmp::min(volume as u8 + step, 100);
+                    // saturating: `volume + step` in u8 wraps in release builds (e.g. 100 + 200).
+                    let new_volume = (volume as u8).saturating_add(step).min(100);
                     client_pub.send(ClientRequest::Player(PlayerRequest::Volume(new_volume)))?;
                 }
             }
@@ -872,9 +873,11 @@ fn handle_global_command(
         }
         Command::JumpToCurrentTrackInContext => {
             let track_id = match state.player.read().currently_playing() {
-                Some(rspotify::model::PlayableItem::Track(track)) => {
-                    PlayableId::Track(track.id.clone().expect("all non-local tracks have ids"))
-                }
+                Some(rspotify::model::PlayableItem::Track(track)) => match track.id.clone() {
+                    Some(id) => PlayableId::Track(id),
+                    // local files have no Spotify id, so there is nothing to jump to
+                    None => return Ok(false),
+                },
                 Some(rspotify::model::PlayableItem::Episode(episode)) => {
                     PlayableId::Episode(episode.id.clone())
                 }
