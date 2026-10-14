@@ -97,9 +97,21 @@ Singleton {
         write();
     }
 
+    // Removing keeps a dated copy of the file as it was before the removal, in
+    // the shell's state directory, so a confirmed delete can still be undone by
+    // hand. The write waits for the copy, or the copy would capture the new file.
     function remove(name: string): void {
         list = list.filter(entry => entry.name.toLowerCase() !== name.toLowerCase());
-        write();
+        if (backup.running)
+            return;
+        backup.command = ["sh", "-c", 'mkdir -p "$1" && cp -f "$2" "$1/custom-profiles-$(date +%Y%m%d-%H%M%S)-$3.json" 2>/dev/null; exit 0', "sh", `${Paths.stateDir}/profile-backups`, Paths.customProfilesFile, name.replace(/[^A-Za-z0-9-]/g, "_")];
+        backup.running = true;
+    }
+
+    Process {
+        id: backup
+
+        onExited: root.write()
     }
 
     // See `Wallpapers.loaded`: a reload rebuilds this with an empty list and
