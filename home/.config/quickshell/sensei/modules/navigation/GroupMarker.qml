@@ -110,7 +110,7 @@ Variants {
                         width: Math.min(implicitWidth, Math.max(1, tab.tabWidth - (tab.index === marker.members.length - 1 ? 136 : 44)))
                         elide: Text.ElideRight
                         color: tab.current ? Theme.signalRed : Theme.paperMuted
-                        font.family: "JetBrainsMono Nerd Font Propo"
+                        font.family: Appearance.font.barUi
                         font.pixelSize: 12
                         font.weight: tab.current ? Font.Bold : Font.DemiBold
                         renderType: Text.NativeRendering
