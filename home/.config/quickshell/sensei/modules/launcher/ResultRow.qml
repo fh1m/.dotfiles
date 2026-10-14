@@ -77,7 +77,8 @@ Item {
             visible: appArt.status !== Image.Ready
             anchors.centerIn: parent
 
-            text: root.result.name.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase()
+            // A profile's name starts with the word PROFILE, so its letters come from the profile itself.
+            text: (root.result.profile ?? root.result.name).replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase()
             color: root.selected ? Theme.paper : Theme.dim
             font.family: Appearance.font.data
             font.pixelSize: 10

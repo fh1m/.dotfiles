@@ -98,7 +98,9 @@ supervised() {
 }
 # The shell's own processes: `qs <args> -n` under the supervisor, possibly
 # `-d` if started by hand. Never an `ipc` call, never this script.
-pattern="^qs ${QS_ARGS[*]}( -n)?( -d)?\$"
+# **argv[0] is the full path under sensei-shell's local build** (it execs
+# `$qs_bin` by path), so the match takes `qs` or any path ending in `/qs`.
+pattern="(^|/)qs ${QS_ARGS[*]}( -n)?( -d)?\$"
 count_shells() {
     # `pgrep -c` prints 0 and exits 1 when nothing matches; print its count only.
     local n
@@ -150,10 +152,25 @@ if ! supervised; then
     setsid -f "$here/sensei-shell" > /dev/null 2>&1 < /dev/null 8>&-
 fi
 
+# The check below must talk to the binary sensei-shell starts, not whichever
+# `qs` this login's PATH finds: the local build is preferred when its Qt stamp
+# matches (same rule as sensei-shell), otherwise the packaged one.
+qs_bin=qs
+local_qs="$HOME/.local/opt/sensei-quickshell/bin/qs"
+qt_stamp="$HOME/.local/opt/sensei-quickshell/qt-version"
+if [ -n "${SENSEI_QS_BIN:-}" ]; then
+    qs_bin="$SENSEI_QS_BIN"
+elif [ -x "$local_qs" ] && [ -r "$qt_stamp" ]; then
+    current_qt="$(/usr/lib/qt6/bin/qtpaths --query QT_VERSION 2> /dev/null || true)"
+    if [ -n "$current_qt" ] && [ "$(cat "$qt_stamp")" = "$current_qt" ]; then
+        qs_bin="$local_qs"
+    fi
+fi
+
 for _ in $(seq 1 30); do
     sleep 0.5
     if [ "$(count_shells)" = 1 ] &&
-        [ "$(qs "${QS_ARGS[@]}" ipc call lock isLocked 2> /dev/null | tail -n 1)" = "true" ]; then
+        [ "$("$qs_bin" "${QS_ARGS[@]}" ipc call lock isLocked 2> /dev/null | tail -n 1)" = "true" ]; then
         say "sensei has taken the lock back (one lockscreen, freshly started)."
         say "Switch back with $back and type your password."
         exit 0

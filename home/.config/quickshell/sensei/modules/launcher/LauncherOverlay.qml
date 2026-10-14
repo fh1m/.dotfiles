@@ -121,7 +121,7 @@ Variants {
                     anchors.right: parent.right
                     anchors.rightMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
-                    text: `${Launcher.count} matches`
+                    text: `${Launcher.matches} matches`
                 }
             }
 

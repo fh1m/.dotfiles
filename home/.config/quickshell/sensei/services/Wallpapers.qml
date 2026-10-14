@@ -228,9 +228,9 @@ Singleton {
         write();
     }
 
-    // A deleted library file leaves every saved pool at once. DELETE is final
-    // on disk the moment it is pressed, so the pools must not keep pointing at
-    // it while the draft on the pools screen is still unsaved.
+    // A deleted library file leaves every saved pool at once. DELETE moves the
+    // file out of the library the moment it is pressed, so the saved pools must
+    // not keep pointing at it while the draft on the pools screen is unsaved.
     function dropFile(file: string): void {
         const next = Object.assign({}, root.pools);
         let changed = false;

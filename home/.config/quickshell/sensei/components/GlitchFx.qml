@@ -195,8 +195,8 @@ Item {
     }
 
     // --- SCRAMBLE -----------------------------------------------------------
-    // **ASCII only.** Block glyphs are not in Chakra Petch and arrive from
-    // whatever Qt substitutes, with that font's metrics -- a scramble that
+    // **ASCII only.** Block glyphs are not reliably in the shell's text faces and
+    // arrive from whatever Qt substitutes, with that font's metrics -- a scramble that
     // changes the width of the string is a layout change, which is the one
     // thing an effect may not be.
     readonly property string junk: "#%&@$*!?/\\<>[]{}=+~^|01XZ"
@@ -224,6 +224,11 @@ Item {
     // once. The step is the duration divided by the longest string, so the
     // word has arrived by the time the glitch ends whatever its length.
     function beginScramble(duration: int): void {
+        // **A second play() mid-scramble.** The text on screen is junk by now,
+        // so capturing it would make the junk the thing written back at the
+        // end. Put the real string back first, then capture it.
+        if (root.captured.length > 0)
+            root.endScramble();
         root.captured = root.scrambleItems.map(item => root.sourceOf(item));
         root.settled = 0;
         const longest = root.captured.reduce((most, text) => Math.max(most, text.length), 1);
