@@ -1,0 +1,915 @@
+#!/usr/bin/env python3
+"""Local first-principles vault factory and navigation. No daemon or publishing."""
+import argparse
+from datetime import date, datetime
+import hashlib
+import uuid
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from urllib.parse import urlencode
+import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'share/sensei-learning'))
+from noesis.persistence import parse as parse_markdown, publish, migration, lock as vault_lock
+from noesis.activities import record_activity, validate_progress, operation_status
+from noesis.index import Index
+from noesis.worker import serve
+from noesis.imports import import_csl as core_import_csl
+from noesis.models import create as create_record, relationship, promote, KINDS
+from noesis.policies import next_actions, agent_context
+from noesis.zotero import LocalAPI, import_item
+from noesis.artifacts import inspect as inspect_artifact
+from noesis.captures import capture as capture_text
+from noesis import recovery
+
+HOME = Path.home()
+SOURCE = Path(__file__).resolve()
+TEMPLATE = HOME / '.local/share/sensei-learning/template'
+if not TEMPLATE.exists():
+    candidate = SOURCE.parents[3] / '.local/share/sensei-learning/template'
+    if candidate.exists(): TEMPLATE = candidate
+# Executing directly from the repository uses the same maintained template.
+if not TEMPLATE.exists(): TEMPLATE = SOURCE.parent.parent / 'share/sensei-learning/template'
+CONFIG = HOME / '.config/sensei-learning/config.json'
+DEFAULT_ROOT = HOME / 'Study/Obsidian/Learning'
+VOLATILE = re.compile(r'(^|/)(workspace[^/]*\.json|workspaces\.json|\.cache|cache|plugins|credentials[^/]*|[^/]*token[^/]*\.json)(/|$)|\.(sqlite\w*|db|log)$')
+
+def store(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temp = tempfile.mkstemp(dir=path.parent, prefix='.learning-')
+    try:
+        with os.fdopen(fd, 'w') as f:
+            json.dump(data, f, indent=2);f.write('\n');f.flush();os.fsync(f.fileno())
+        os.replace(temp, path)
+        directory=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY)
+        try:os.fsync(directory)
+        finally:os.close(directory)
+    finally:
+        if os.path.exists(temp): os.unlink(temp)
+
+def config(): return json.loads(CONFIG.read_text()) if CONFIG.exists() else {}
+
+def vault(selected=None):
+    c = config(); chosen = selected or c.get('active_vault')
+    if not chosen: raise ValueError('No active vault. Run noesis use PATH.')
+    p = Path(chosen).expanduser()
+    if not p.is_dir():
+        registry = HOME / '.config/obsidian/obsidian.json'
+        app = json.loads(registry.read_text()) if registry.exists() else {}
+        matches = [Path(x['path']) for x in app.get('vaults', {}).values() if Path(x['path']).name == chosen]
+        if len(matches) != 1: raise ValueError('Use an unambiguous vault path: ' + chosen)
+        p = matches[0]
+    return p.resolve()
+
+def system(root):
+    manifest = root / 'System/System.json'
+    if not manifest.exists():manifest = root / '94 Meta/System.json'
+    if manifest.exists(): return json.loads(manifest.read_text())
+    # Existing vaults remain usable without migrating their folders.
+    home = next((p for p in ['Oasis.md','Start here.md','Home.md','Untitled.md'] if (root/p).is_file()), None)
+    if home is None: home = next((str(p.relative_to(root)) for p in root.glob('*.md')), 'Oasis.md')
+    return {'managed':False,'home':home,'frontier':home,'templates':'Templates','daily':'Daily','types':{}}
+
+def inventory():
+    from noesis.scopes import locations
+    paths=locations()
+    active_path=config().get('active_vault')
+    if active_path and Path(active_path).is_dir():paths.add(Path(active_path).resolve())
+    active=config().get('active_vault','')
+    return [{'name':p.name,'path':str(p),'managed':((p/'94 Meta/System.json').is_file() or (p/'System/System.json').is_file()),'active':str(p)==active}
+            for p in sorted(paths,key=lambda x:x.name.lower())
+            if p!=HOME/'Downloads' and 'Archives' not in p.parts and ((p/'.obsidian').is_dir() or (p/'System/System.json').is_file() or (p/'94 Meta/System.json').is_file())]
+
+
+def substitute(text, subject='', goal='', title=''):
+    return (text.replace('{{subject_yaml}}', json.dumps(subject, ensure_ascii=False))
+        .replace('{{subject}}', subject).replace('{{goal}}', goal)
+        .replace('{{title}}', title).replace('{{date:YYYY-MM-DD}}', date.today().isoformat()))
+
+def note_text(text):
+    return parse_markdown(text)
+
+def resolve(root, target, current=None, files=None):
+    target = target.split('|', 1)[0].split('#', 1)[0].strip()
+    if not target: return None
+    files = files or list(root.rglob('*.md'))
+    if Path(target).is_absolute() or '..' in Path(target).parts: return None
+    for base in [root, current.parent if current else root]:
+        for suffix in ['', '.md']:
+            p = base / (target + suffix)
+            if p.is_file(): return p.resolve()
+    candidates = [p.resolve() for p in files if p.stem == Path(target).stem]
+    return candidates[0] if len(candidates) == 1 else None
+
+def doctor(root, offline=False):
+    errors, warnings = [], []
+    try: meta = system(root)
+    except (OSError, ValueError) as e: return {'ok': False, 'errors': ['Missing/invalid system manifest: ' + str(e)], 'warnings': []}
+    if meta.get('managed') is False: return {'ok':True,'vault':str(root),'errors':[],'warnings':['Existing vault: no Oasis structure imposed. Use init for a structured new subject.']}
+    for folder in meta['directories']:
+        if not (root / folder).is_dir(): errors.append('Missing directory: ' + folder)
+    for key in ['home', 'frontier']:
+        if not (root / meta[key]).is_file(): errors.append('Missing ' + key + ': ' + meta[key])
+    md = [p for p in root.rglob('*.md') if '.git' not in p.parts and '.obsidian' not in p.parts]
+    files = [p for p in root.rglob('*') if p.is_file() and '.git' not in p.parts and '.obsidian' not in p.parts]
+    graph = {}; properties = {}
+    for p in md:
+        rel = str(p.relative_to(root)); template = rel.startswith(meta['templates'] + '/') or rel.startswith('92 Templates/')
+        try: props, body = note_text(p.read_text()); properties[p] = props
+        except (ValueError, yaml.YAMLError) as e: errors.append(rel + ': ' + str(e)); continue
+        if template: continue
+        c = props.get('confidence')
+        if c is not None and (type(c) is not int or not 0 <= c <= 5): errors.append(rel + ': confidence must be integer 0–5')
+        # Exclude code examples from link auditing; they are documentation, not navigation.
+        body = re.sub(r'```.*?```', '', body, flags=re.S)
+        body = re.sub(r'`[^`\n]+`', '', body)
+        for link in re.findall(r'\[\[([^\]]+)\]\]', body):
+            if not resolve(root, link, p, files):
+                message = rel + ': unresolved [[' + link + ']]'
+                critical = rel in [meta['home'],meta['frontier']] or rel.startswith('00 Home/') or rel.startswith('02 Courses/')
+                (errors if critical else warnings).append(message)
+        targets = []
+        for key in ['depends_on', 'gates', 'parallel', 'deep_descent']:
+            value = props.get(key, []) or []
+            if not isinstance(value, list): errors.append(rel + ': ' + key + ' must be a link list'); continue
+            for target in value:
+                dep = resolve(root, str(target).strip('[]'), p, md)
+                if not dep: errors.append(rel + ': missing dependency ' + str(target))
+                elif key in ['depends_on', 'gates']: targets.append(dep)
+        graph[p.resolve()] = targets
+    visiting, visited = set(), set()
+    def visit(p):
+        if p in visiting: errors.append('Prerequisite cycle at ' + str(p.relative_to(root))); return
+        if p in visited: return
+        visiting.add(p)
+        for dep in graph.get(p, []): visit(dep)
+        visiting.remove(p); visited.add(p)
+    for p in graph: visit(p)
+    for critical in [Path(meta['home']).stem, Path(meta['frontier']).stem]:
+        matches = [p for p in md if p.stem == critical and not str(p.relative_to(root)).startswith(meta['templates'] + '/')]
+        if len(matches) > 1: errors.append('Ambiguous critical filename: ' + critical)
+    for p in files:
+        if p.suffix == '.base':
+            try:
+                base = yaml.safe_load(p.read_text())
+                if not isinstance(base, dict) or not base.get('views'): errors.append(str(p.relative_to(root)) + ': missing views')
+            except yaml.YAMLError as e: errors.append(str(p.relative_to(root)) + ': ' + str(e))
+        if p.suffix == '.canvas':
+            try:
+                canvas = json.loads(p.read_text()); nodes = {n['id'] for n in canvas['nodes']}
+                for n in canvas['nodes']:
+                    if n.get('type') == 'file' and not (root / n['file']).is_file(): errors.append('Canvas missing file: ' + n['file'])
+                for e in canvas.get('edges', []):
+                    if e['fromNode'] not in nodes or e['toNode'] not in nodes: errors.append('Canvas edge has missing node')
+            except (ValueError, KeyError) as e: errors.append(str(p.relative_to(root)) + ': ' + str(e))
+    for name in ['templates.json', 'daily-notes.json']:
+        try:
+            settings = json.loads((root / '.obsidian' / name).read_text())
+            folder = root / settings['folder']
+            if not folder.is_dir(): errors.append(name + ': configured folder missing')
+            if name == 'templates.json' and not list(folder.glob('*.md')): errors.append('Template directory empty')
+            if settings.get('template') and not resolve(root, settings['template'], files=md): errors.append('Daily template missing')
+        except (ValueError, KeyError, OSError) as e: errors.append(name + ': ' + str(e))
+    if (root / '.git').exists():
+        r = subprocess.run(['git', '-C', str(root), 'ls-files', '-z'], capture_output=True, text=True, check=True)
+        errors += ['Tracked volatile state: ' + p for p in r.stdout.split('\0') if p and VOLATILE.search(p)]
+        r = subprocess.run(['git', '-C', str(root), 'status', '--porcelain'], capture_output=True, text=True, check=True)
+        if r.stdout: warnings.append('Git has uncommitted work (preserved, not an error).')
+    from noesis.scopes import conflicts
+    duplicates=conflicts(root)
+    if duplicates:errors.append('Duplicate vault identity: '+', '.join(duplicates))
+    tools = {name: shutil.which(name) is not None for name in ['obsidian', 'git', 'python3', 'fzf']}
+    if not offline and not tools['obsidian']: errors.append('Obsidian is not installed')
+    return {'ok': not errors, 'vault': str(root), 'notes': len(md), 'errors': sorted(set(errors)), 'warnings': sorted(set(warnings)), 'tools': tools}
+
+def ensure_app(selector=None):
+    # CLI requests started against a closed Electron app can become the primary
+    # process and be killed by a command timeout. Start the real GUI separately.
+    from noesis.obsidian import app_running
+    if not app_running():
+        args=['obsidian']
+        if selector:args.append('obsidian://open?'+urlencode({'vault':selector}))
+        subprocess.Popen(args,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+        time.sleep(1)
+
+def register(root):
+    from noesis.scopes import register as register_scope
+    return register_scope(root)
+
+
+def network_layout(root):
+    """Change a new staging vault only; never move an existing user's notes."""
+    mapping={'00 Home':'','01 Foundations':'Notes','02 Courses':'Notes','03 Labs':'Notes','04 Concepts':'Notes',
+      '05 Questions':'Notes','06 Errors and Bugs':'Notes','07 Sources':'Notes','08 Visuals':'Maps',
+      '09 Reviews':'Notes','10 Projects':'Notes','11 Real World':'Notes','12 Future Branches':'Notes',
+      '90 Inbox':'Inbox','91 Daily':'Daily','92 Templates':'Templates','93 Bases':'Views','94 Meta':'System','assets':'Attachments'}
+    replacements={key+'/':(value+'/' if value else '') for key,value in mapping.items()}
+    files=[p for p in root.rglob('*') if p.is_file()]
+    for path in files:
+        rel=path.relative_to(root);parts=rel.parts
+        dest=root/Path(mapping.get(parts[0],parts[0]),*parts[1:])
+        text=path.read_text()
+        for old,new in replacements.items():text=text.replace(old,new)
+        if path.suffix=='.base':
+            for old,new in mapping.items():text=text.replace(json.dumps(old),json.dumps(new))
+        if path.suffix=='.json' and parts[0]=='.obsidian':
+            obj=json.loads(text)
+            if isinstance(obj,dict):
+                for key in ['folder','attachmentFolderPath']:
+                    if obj.get(key) in mapping:obj[key]=mapping[obj[key]]
+            text=json.dumps(obj,indent=2)+'\n'
+        if dest!=path:path.unlink()
+        dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(text)
+    meta=json.loads((root/'System/System.json').read_text())
+    meta['layout']='network';meta['directories']=['Notes','Inbox/Agent Drops','Daily','Maps','Templates','Views','System','Attachments']
+    meta['home']='Home.md';meta['frontier']='Current Frontier.md';meta['templates']='Templates';meta['daily']='Daily'
+    meta['types']={key:'Notes' for key in meta['types']};meta['types']['daily']='Daily'
+    (root/'System/System.json').write_text(json.dumps(meta,indent=2)+'\n')
+    for folder in sorted(root.rglob('*'),key=lambda p:len(p.parts),reverse=True):
+        if folder.is_dir() and not any(folder.iterdir()) :folder.rmdir()
+    for folder in meta['directories']:(root/folder).mkdir(parents=True,exist_ok=True)
+
+def initialize(args):
+    title = args.subject.strip()
+    if not title or title in ['.', '..'] or '/' in title or '\\' in title or any(ord(c) < 32 for c in title): raise ValueError('Use a subject title, not a path.')
+    root = Path(args.dest).expanduser().absolute() if args.dest else Path(config().get('vault_root', DEFAULT_ROOT)) / title
+    if root.exists() or root.is_symlink(): raise ValueError('Destination already exists; nothing overwritten: ' + str(root))
+    if not TEMPLATE.is_dir(): raise ValueError('Template not installed: ' + str(TEMPLATE))
+    if args.dry_run: print(json.dumps({'destination': str(root), 'subject': title, 'git': not args.no_git, 'template': str(TEMPLATE)}, indent=2)); return
+    root.parent.mkdir(parents=True, exist_ok=True)
+    stage = Path(tempfile.mkdtemp(prefix='.learning-new-', dir=root.parent))
+    try:
+        shutil.copytree(TEMPLATE, stage, dirs_exist_ok=True)
+        meta = system(stage)
+        for f in meta['directories']: (stage / f).mkdir(parents=True, exist_ok=True)
+        for p in stage.rglob('*'):
+            if p.is_file() and p.suffix in ['.md', '.canvas', '.base', '.json', '.css']:
+                text = p.read_text().replace('{{subject_yaml}}', json.dumps(title, ensure_ascii=False)).replace('{{subject}}', title).replace('{{goal}}', args.goal or 'Choose one meaningful capability to build and demonstrate.')
+                p.write_text(text)
+        if getattr(args,'layout','classic') == 'network': network_layout(stage)
+        result = doctor(stage, offline=True)
+        if not result['ok']: raise ValueError('Template validation failed: ' + json.dumps(result['errors']))
+        migration(stage,True)
+        if not args.no_git:
+            subprocess.run(['git', 'init', '-q', '-b', 'main', str(stage)], check=True)
+        os.rename(stage, root)
+    finally:
+        if stage.exists(): shutil.rmtree(stage)
+    register(root.resolve()); c = config(); c['active_vault'] = str(root.resolve()); store(CONFIG, c)
+    print(root)
+
+def adopt(root):
+    if (root/'94 Meta/System.json').exists() or (root/'System/System.json').exists(): raise ValueError('Already structured; nothing overwritten')
+    backup=HOME/'.local/state/sensei-learning/backups'/('adopt-'+datetime.now().strftime('%Y%m%d-%H%M%S-%f'))/root.name
+    backup.parent.mkdir(parents=True,exist_ok=True);backup.parent.chmod(0o700)
+    shutil.copytree(root,backup)
+    meta=system(TEMPLATE)
+    for directory in meta['directories']:(root/directory).mkdir(parents=True,exist_ok=True)
+    for source in TEMPLATE.rglob('*'):
+        if not source.is_file():continue
+        rel=source.relative_to(TEMPLATE);dest=root/rel
+        if dest.exists():continue
+        dest.parent.mkdir(parents=True,exist_ok=True)
+        text=source.read_text().replace('{{subject_yaml}}',json.dumps(root.name)).replace('{{subject}}',root.name).replace('{{goal}}','Choose the capability you want to demonstrate; existing notes stay where they are.')
+        dest.write_text(text)
+    # Preserve existing Templates and Daily Notes preferences; add the new prompt
+    # templates to their configured folder instead of changing it underneath users.
+    settings=json.loads((root/'.obsidian/templates.json').read_text());folder=settings.get('folder','92 Templates')
+    if folder!='92 Templates':
+        (root/folder).mkdir(parents=True,exist_ok=True)
+        for source in (TEMPLATE/'92 Templates').glob('*.md'):
+            target=root/folder/source.name
+            if not target.exists():shutil.copy2(source,target)
+        meta['templates']=folder
+    for base in (root/'93 Bases').glob('*.base'):
+        text=base.read_text()
+        if folder!='92 Templates': text=text.replace('!file.inFolder("92 Templates")','!file.inFolder("92 Templates") && !file.inFolder('+json.dumps(folder)+')')
+        base.write_text(text)
+    (root/'94 Meta/System.json').write_text(json.dumps(meta,indent=2)+'\n')
+    # Existing leading Markdown rules can look like malformed YAML. Never alter
+    # user prose automatically; doctor exposes that problem for repair.
+    print(json.dumps({'vault':str(root),'backup':str(backup),'preserved_existing_files':True}))
+
+def cli(root, command, *args):
+    # Exact path verification prevents operating in another vault with the same name.
+    registry = HOME / '.config/obsidian/obsidian.json'
+    entries = json.loads(registry.read_text()).get('vaults', {}) if registry.exists() else {}
+    identities = [key for key,value in entries.items() if Path(value['path']).resolve() == root.resolve()]
+    selector = identities[0] if len(identities) == 1 else root.name
+    ensure_app(selector)
+    # A newly opened vault may not have its CLI listener ready yet. Retry only
+    # the read-only identity handshake; never replay a mutating command.
+    check=None;output=''
+    deadline=time.monotonic()+8
+    for attempt in range(12):
+        remaining=deadline-time.monotonic()
+        if remaining<=0:raise ValueError('Obsidian CLI startup timed out; the vault and learner content are unchanged')
+        try:
+            check = subprocess.run(['obsidian', 'vault=' + selector, 'vault', 'info=path'], capture_output=True, text=True, timeout=min(2,remaining))
+        except subprocess.TimeoutExpired:
+            if time.monotonic()>=deadline:raise ValueError('Obsidian CLI startup timed out; open Obsidian and retry the handoff')
+            continue
+        output = check.stdout.strip()
+        initializing = not output or 'Command "vault" not found' in output
+        if not initializing: break
+        if attempt < 11: time.sleep(0.2)
+    if check is None:raise ValueError('Obsidian CLI did not respond; open Obsidian and retry the handoff')
+    if check.returncode or not output or 'not enabled' in output or 'Error' in output:
+        guidance=' Open this folder as a vault in Obsidian: '+str(root) if not identities else ' Enable its supported CLI and retry the handoff.'
+        raise ValueError('Obsidian CLI unavailable: ' + output + check.stderr.strip()+guidance)
+    if Path(output).resolve() != root.resolve(): raise ValueError('CLI selected a different vault; use a unique vault name.')
+    result = subprocess.run(['obsidian', 'vault=' + selector, command, *args], capture_output=True, text=True, timeout=20)
+    if result.returncode or result.stdout.startswith('Error:') or result.stderr.strip():
+        raise ValueError(result.stdout.strip() or result.stderr.strip() or 'Obsidian command failed')
+    return result.stdout.strip()
+
+def navigate(root, relative):
+    if not (root / relative).is_file(): raise ValueError('Note missing: ' + str(relative))
+    print(cli(root, 'open', 'path=' + str(relative))); return 0
+
+def checked_path(root,relative):
+    part=Path(relative)
+    if part.is_absolute() or '..' in part.parts or any(p.startswith('.') for p in part.parts):raise ValueError('Use a visible vault-relative path')
+    target=(root/part).resolve()
+    if not target.is_relative_to(root.resolve()):raise ValueError('Path escapes vault')
+    return target
+
+def legacy_snapshot(root):
+    # Obsidian's in-memory index supplies state: no recursive shell polling.
+    code = """(async()=>{
+      const meta=METADATA;
+      const frontier=app.vault.getAbstractFileByPath(meta.frontier);
+      const content=frontier?await app.vault.cachedRead(frontier):'';
+      const files=app.vault.getMarkdownFiles().filter(f=>!f.path.startsWith(meta.templates+'/')&&!f.path.startsWith('92 Templates/')&&!f.path.includes('/Imports/'));
+      const props=f=>app.metadataCache.getFileCache(f)?.frontmatter||{};
+      const notes=files.map(f=>({...props(f),path:f.path,name:f.basename,folder:f.parent?.path||'',modified:f.stat.mtime,
+       links:([...(app.metadataCache.getFileCache(f)?.links||[]),...(app.metadataCache.getFileCache(f)?.frontmatterLinks||[])]).map(l=>({label:l.displayText||l.link,path:app.metadataCache.getFirstLinkpathDest(l.link,f.path)?.path||'',target:l.link}))}));
+      const allfiles=app.vault.getFiles().filter(f=>!f.path.startsWith('.obsidian/')).map(f=>({path:f.path,name:f.name,folder:f.parent?.path||'',ext:f.extension,size:f.stat.size,modified:f.stat.mtime}));
+      const due=notes.filter(n=>n.review&&String(n.review).slice(0,10)<=new Date().toLocaleDateString('en-CA'));
+      const fp=frontier?props(frontier):{};
+      return JSON.stringify({vault:app.vault.getName(),path:app.vault.adapter.getBasePath(),frontier:content,
+        commands:Object.keys(app.commands.commands).filter(x=>/^(graph:|canvas:|bookmarks:|daily-notes|outline|properties|obsidian-excalidraw-plugin:)/.test(x)),notes:notes,files:allfiles,types:meta.types||{},home:meta.home,frontier_path:meta.frontier,templates:meta.templates,
+        question:fp.question||'',next_experiment:fp.next_experiment||'',active_project:fp.active_project||'',
+        gates:notes.filter(n=>n.type==='prerequisite'&&n.prerequisite_class==='gate'&&n.status!=='passed'),
+        reviews:due,questions:notes.filter(n=>n.type==='question'&&n.status!=='resolved'),
+        projects:notes.filter(n=>n.type==='project'&&n.status!=='complete'),
+        labs:notes.filter(n=>['lab','ml-experiment','robotics-experiment','code-investigation','paper-reconstruction'].includes(n.type)&&['planned','active','working','seed'].includes(n.status)),
+        sources:notes.filter(n=>['source','resource','paper','course'].includes(n.type)&&!['archived','rejected'].includes(n.status))});
+    })()"""
+    code=code.replace('METADATA',json.dumps(system(root)))
+    value = cli(root, 'eval', 'code=' + code)
+    if value.startswith('=> '): value = value[3:]
+    if value.startswith('"'): value = json.loads(value)
+    result=json.loads(value);result['vaults']=inventory();return result
+
+def snapshot(root):
+    index=Index(root)
+    try:
+        health=index.reconcile();page=index.query()
+        notes=[dict(row,name=row['title'],status='',links=[]) for row in page['records']]
+        meta=system(root)
+        result={'vault':root.name,'vault_id':meta.get('vault_id'),'code_editor':config().get('code_editor','nvim'),'path':str(root),'notes':notes,'files':[], 'vaults':inventory(),
+                'types':meta.get('types',{}),'home':meta.get('home',''),'frontier_path':meta.get('frontier',''),
+                'templates':meta.get('templates','Templates'),'generation':page['generation'],'cursor':page['cursor'],
+                'health':health,'frontier':'','gates':[],'reviews':[],'questions':[],'projects':[],'labs':[],'sources':[]}
+        for key,kinds in [('questions',['question']),('projects',['project']),('labs',['experiment','lab']),('sources',['resource','paper','course'])]:
+            result[key]=[dict(row,name=row['title']) for row in index.query(kind=kinds)['records']]
+        plugin=root/'.obsidian/plugins/obsidian-excalidraw-plugin/manifest.json'
+        enabled=root/'.obsidian/community-plugins.json'
+        try:result['freehand_available']=plugin.is_file() and json.loads(plugin.read_text()).get('id')=='obsidian-excalidraw-plugin' and 'obsidian-excalidraw-plugin' in json.loads(enabled.read_text())
+        except (OSError,ValueError,TypeError):result['freehand_available']=False
+        return result
+    finally:index.close()
+
+def new_note(root, kind, title):
+    meta = system(root); folder = meta['types'][kind]
+    if not title.strip() or any(c in title for c in ['/', '\\', '\n', '\r']) or title in ['.', '..']: raise ValueError('Use a note title, not a path')
+    choices = []
+    for p in (root / meta['templates']).glob('*.md'):
+        props, _ = note_text(p.read_text())
+        if props.get('type') == kind: choices.append(p)
+    if len(choices) != 1: raise ValueError('Need exactly one template for type: ' + kind)
+    target = root / folder / (title + '.md'); target.parent.mkdir(parents=True, exist_ok=True)
+    text = substitute(choices[0].read_text(), title=title)
+    props,body=note_text(text);props.update(id=str(uuid.uuid4()),noesis_schema=2)
+    write_new(target,'---\n'+yaml.safe_dump(props,sort_keys=False,allow_unicode=True)+'---\n'+body)
+    return target
+
+PRACTICE_MODES = {
+ 'pattern': ('Pattern study', 'Predict an approach from the problem cues, then inspect a solution. Extract why the cue fits, a nearby counterexample and the discovery question. This is exposure, not an independent solve.'),
+ 'interface': ('Interface exploration', 'State inputs, outputs, operations, assumptions and costs. Run a tiny working case and a failure case. Which internals can wait, and which failure knowledge is a gate?'),
+ 'derive': ('Independent reconstruction', 'Close the source. Try to derive, explain, sketch or solve the load-bearing step. Preserve the first model and dead ends; seek a small hint only when further effort stops being productive.'),
+ 'build': ('Build / reproduce', 'Start with the smallest baseline. Name data or apparatus, versions, code commit, units or shapes, test oracle and metric. Predict one change, compare results, preserve discrepancies and inspect silent failures.'),
+ 'transfer': ('Transfer test', 'Close the original solution. Change one constraint, assumption, representation or setting. Predict what still works, implement or solve the changed case, and justify the boundary.')
+}
+
+def practice_session(root, relative, mode, goal):
+    if mode not in PRACTICE_MODES: raise ValueError('Unknown practice mode')
+    if not goal.strip(): raise ValueError('State a concrete practice goal')
+    source = checked_path(root, relative)
+    if not source.is_file() or source.suffix != '.md': raise ValueError('Select an existing Markdown note')
+    props, _ = note_text(source.read_text())
+    identity = str(uuid.uuid4()); label, guidance = PRACTICE_MODES[mode]
+    folder = system(root)['types'].get('practice-session', system(root)['types'].get('review', 'Notes'))
+    title = label + ' - ' + source.stem[:70] + ' - ' + datetime.now().strftime('%Y%m%d-%H%M%S')
+    target = checked_path(root, folder + '/' + title + ' [' + identity[:8] + '].md')
+    metadata = {'id':identity, 'type':'practice-session', 'status':'active', 'mode':mode,
+                'created':date.today().isoformat(), 'source_note':relative, 'goal':goal.strip()}
+    if props.get('id'): metadata['source_note_id'] = props['id']
+    body = '# ' + label + '\n\n' + guidance + '\n\n'
+    body += '## Goal and starting model\n' + goal.strip() + '\n\n'
+    body += '## Before feedback\nMy prediction, proposed approach or smallest test; alternatives and why I chose one.\n\n'
+    body += '## Attempt trail\nPreserve actual work, rejected ideas and the evidence that rejected them.\n\n'
+    body += '## Feedback and assistance\nWhat did I reveal? Which hint, reference, agent or person helped?\n\n'
+    body += '## Reusable insight and boundary\nProblem cue → useful idea → reason → where it fails.\n\n'
+    body += '## Evidence and next independent test\nCommands, code, measurements or explanation; one changed case to try later. No automatic confidence update.\n\n'
+    body += '## Original material — reveal after attempting when appropriate\n[[' + relative + ']]\n'
+    write_new(target, '---\n' + yaml.safe_dump(metadata, sort_keys=False, allow_unicode=True) + '---\n\n' + body)
+    return target
+
+def identify(root,relative):
+    """Only assign identity once; path and title are free to change."""
+    code='(async()=>{const f=app.vault.getAbstractFileByPath('+json.dumps(relative)+');await app.fileManager.processFrontMatter(f,p=>{if(!p.id)p.id='+json.dumps(str(uuid.uuid4()))+';p.noesis_schema=2});return f.path})()'
+    return cli(root,'eval','code='+code)
+
+def parse_eval(value):
+    if value.startswith('=> '):value=value[3:]
+    return json.loads(value)
+
+def resource_key(item):
+    doi=str(item.get('DOI','')).strip().lower().removeprefix('https://doi.org/')
+    identity='doi:'+doi if doi else 'id:'+str(item.get('id') or item.get('URL') or item.get('title','')).strip()
+    if identity=='id:':raise ValueError('Resource needs an identifier or title')
+    return hashlib.sha256(identity.encode()).hexdigest()[:24]
+
+def write_new(path,content):
+    publish(path, content)
+
+def import_csl(root,source,dry=False):
+    return core_import_csl(root,source,system(root),resource_key,dry)
+
+def import_notes(root,source,relative):
+    with vault_lock(root):return _import_notes(root,source,relative)
+
+def _import_notes(root,source,relative):
+    if source.suffix.lower()!='.md':raise ValueError('Use Zotero Markdown note export, not its database')
+    source=source.resolve();note=checked_path(root,relative)
+    if not note.is_file() or note.suffix!='.md':raise ValueError('Select a resource Markdown note')
+    props,_=note_text(note.read_text());identity=props.get('id')
+    if not isinstance(identity,str) or not re.fullmatch(r'[a-zA-Z0-9-]{1,80}',identity):raise ValueError('Resource needs a stable id; create it with noesis resource or import-csl')
+    meta=system(root);folder='Attachments' if meta.get('layout')=='network' else 'assets'
+    target=checked_path(root,folder+'/Imports/'+identity+'/annotations.md')
+    if target.exists():
+        old,_=note_text(target.read_text())
+        if old.get('source_id')!=identity or old.get('type')!='imported-excerpt':raise ValueError('Refusing to replace an unowned excerpt')
+    source_text=source.read_text()
+    for locator in re.findall(r'!\[[^\]]*\]\(([^)]+)\)',source_text):
+        if '://' in locator or locator.startswith('data:'):continue
+        candidate=(source.parent/locator).resolve()
+        if not candidate.is_relative_to(source.parent.resolve()) or not candidate.is_file():raise ValueError('Export image missing or outside export folder: '+locator)
+    journal=target.parent/'import-journal.json'
+    store(journal,{'resource_id':identity,'source':str(source),'state':'preparing','ownership':'exported image sidecars and annotation projection'})
+    # Copy exported image sidecars and rewrite only relative Markdown image links.
+    def image(match):
+        locator=match.group(2)
+        if '://' in locator or locator.startswith('data:'):return match.group(0)
+        candidate=(source.parent/locator).resolve()
+        if not candidate.is_relative_to(source.parent.resolve()) or not candidate.is_file():raise ValueError('Export image missing or outside export folder: '+locator)
+        if candidate.stat().st_size>25*1024*1024:return '!['+match.group(1)+']('+candidate.as_uri()+')'
+        dest=target.parent/'images'/candidate.name;dest.parent.mkdir(parents=True,exist_ok=True)
+        if dest.exists() and dest.read_bytes()!=candidate.read_bytes():
+            dest=dest.with_name(dest.stem+'-'+hashlib.sha256(candidate.read_bytes()).hexdigest()[:8]+dest.suffix)
+        if not dest.exists():shutil.copy2(candidate,dest)
+        return '!['+match.group(1)+'](images/'+dest.name+')'
+    source_text=re.sub(r'!\[([^\]]*)\]\(([^)]+)\)',image,source_text)
+    target.parent.mkdir(parents=True,exist_ok=True)
+    digest=hashlib.sha256(source_text.encode()).hexdigest()
+    old_props=note_text(target.read_text())[0] if target.exists() else {}
+    metadata={'id':old_props.get('id') or str(uuid.uuid4()),'noesis_schema':2,'type':'imported-excerpt','source_id':identity,'export_sha256':digest}
+    content='---\n'+yaml.safe_dump(metadata,sort_keys=False)+'---\n\n> Imported source material; not evidence of understanding.\n\n'+source_text
+    if target.exists():
+        old,_=note_text(target.read_text())
+        if old.get('source_id')!=identity or old.get('type')!='imported-excerpt':raise ValueError('Refusing to replace an unowned excerpt')
+        if old.get('export_sha256')==digest:
+            store(journal,{'resource_id':identity,'state':'committed','export_sha256':digest})
+            return {'excerpt':str(target.relative_to(root)),'unchanged':True}
+        history=target.parent/'history';history.mkdir(exist_ok=True)
+        historical,historical_body=note_text(target.read_text());historical.update(id=str(uuid.uuid4()),type='imported-excerpt-version',projection_id=metadata['id'])
+        write_new(history/(datetime.now().strftime('%Y%m%d-%H%M%S-%f')+'.md'),'---\n'+yaml.safe_dump(historical,sort_keys=False)+'---\n'+historical_body)
+    # Atomic replace the generated file only; the learner note is untouched.
+    fd,tmp=tempfile.mkstemp(dir=target.parent)
+    try:
+        with os.fdopen(fd,'w') as f:f.write(content)
+        os.replace(tmp,target)
+    finally:
+        if os.path.exists(tmp):os.unlink(tmp)
+    store(journal,{'resource_id':identity,'source':str(source),'state':'committed','export_sha256':digest})
+    return {'excerpt':str(target.relative_to(root)),'embed':'![['+str(target.relative_to(root))+']]','learner_note_unchanged':True}
+
+def library_action(root,args):
+    meta=system(root)
+    if args.command=='import-csl':print(json.dumps(import_csl(root,Path(args.source).expanduser(),args.dry_run),ensure_ascii=False));return 0
+    if args.command=='import-notes':
+        result=import_notes(root,Path(args.source).expanduser(),args.resource)
+        print(json.dumps(result,ensure_ascii=False));return 0
+    if args.command=='resource':
+        if not args.title.strip() or any(c in args.title for c in ['/','\\','\n','\r']):raise ValueError('Use a resource title, not a path')
+        kind='course' if args.kind=='course' else 'paper' if args.kind=='paper' else 'resource'
+        path=checked_path(root,meta['types'].get(kind,'Notes')+'/'+args.title+'.md')
+        file=Path(args.file).expanduser().resolve() if args.file else None
+        if file and not file.is_file():raise ValueError('Resource file missing')
+        props={'id':str(uuid.uuid4()),'noesis_schema':2,'type':kind,'status':'queued','source_kind':args.kind,'source':args.url,'created':date.today().isoformat(),'position':''}
+        if file:props['local_file']=str(file)
+        write_new(path,'---\n'+yaml.safe_dump(props,sort_keys=False,allow_unicode=True)+'---\n\n# '+args.title+'\n\n## Why this resource?\n'+args.why+'\n\n## My model / notes\n\n## Attempts / evidence\n\n## Connections / next action\n')
+        print(path);return 0
+    path=checked_path(root,args.path)
+    if not path.is_file() or path.suffix!='.md':raise ValueError('Choose a Markdown learning record')
+    relative=str(path.relative_to(root))
+    if args.command=='read-resource':
+        from noesis.readers import command as reader_command, resource_props,launch as reader_launch
+        from noesis.index import Index
+        props,_=note_text(path.read_text())
+        if args.target_id and props.get('id')!=args.target_id:raise ValueError('Resource identity changed; refresh before opening')
+        index=Index(root)
+        try:
+            health=index.reconcile()
+            if health['errors']:raise ValueError(str(health['errors']))
+            record=index.record(props['id'],include_body=False,include_attempt=False)
+            command=reader_command(root,resource_props(index,props['id']),record.get('state',{}),args.reader)
+        finally:index.close()
+        reader_launch(command)
+        print(json.dumps({"message":"Source opened in its native application"}));return 0
+    if args.command=='progress':
+        state={'position':args.position}
+        if args.current is not None:state['progress_current']=args.current
+        if args.total is not None:state['progress_total']=args.total
+        if args.state:state['status']=args.state
+        print(json.dumps(record_activity(root,relative,'study',args.evidence,args.operation_id,state=state,expected_id=args.target_id),default=str));return 0
+
+    else:
+        outcome={'solved':'succeeded','failed':'failed','partial':'partial'}.get(args.result,'unknown')
+        assistance=getattr(args,'assistance',None) or (['reference'] if args.hint.strip() not in ('','none') else ['unknown'])
+        print(json.dumps(record_activity(root,relative,'attempt',args.evidence,args.operation_id,expected_id=args.target_id,outcome=outcome,assistance=assistance,assistance_detail=args.hint,mode=getattr(args,'mode','derive'),session=getattr(args,'session',None)),default=str));return 0
+
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
+    p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','convolution-observe','convolution-prepare','convolution-check','host-request','host-lease','drawing-create','scratch-create','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','artifact-reconnect','exploration-recover','scratch-outputs','editor-setting']:
+        p = commands.add_parser(cmd); p.add_argument('--vault'); p.add_argument('--expect-vault-id')
+        if cmd in ('convolution-observe','convolution-prepare','convolution-check'):
+            p.add_argument('record_id');p.add_argument('--configuration',required=True);p.add_argument('--prediction',required=True);p.add_argument('--operation-id',required=True)
+        if cmd in ('open-project','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','scratch-outputs'):p.add_argument('record_id')
+        if cmd in ('drawing-create','scratch-create'):
+            p.add_argument('record_id');p.add_argument('--title',required=True);p.add_argument('--prediction',default='');p.add_argument('--code-file');p.add_argument('--mode',choices=['canvas','freehand'],default='canvas');p.add_argument('--operation-id',required=True)
+        if cmd in ('scratch-run','exploration-recover'):p.add_argument('--operation-id',required=True)
+        if cmd == 'artifact-reconnect':p.add_argument('record_id');p.add_argument('--location',required=True);p.add_argument('--title',required=True);p.add_argument('--operation-id',required=True)
+        if cmd == 'annotation-open':p.add_argument('--annotation-key',required=True);p.add_argument('--projection')
+        if cmd == 'artifact-check':p.add_argument('record_id');p.add_argument('--operation-id')
+        if cmd == 'zotero-import':p.add_argument('key');p.add_argument('--server-id')
+        if cmd == 'zotero-search':p.add_argument('query',nargs='?',default='');p.add_argument('--cursor',type=int,default=0);p.add_argument('--server-id')
+        if cmd == 'operation-status':p.add_argument('operation_id')
+        if cmd == 'promote':p.add_argument('path');p.add_argument('kind',choices=KINDS);p.add_argument('--target-id')
+        if cmd == 'backup':p.add_argument('--restic',action='store_true');p.add_argument('--reader-snapshot',action='append',default=[])
+        if cmd == 'recover':p.add_argument('snapshot');p.add_argument('--dest',type=Path,required=True)
+        if cmd == 'record':p.add_argument('--operation-id');p.add_argument('kind',choices=KINDS);p.add_argument('title');p.add_argument('--body',default='');p.add_argument('--data',default='{}');p.add_argument('--parent-id');p.add_argument('--relation',default='contains');p.add_argument('--order',type=int)
+        if cmd == 'link':
+            p.add_argument('--operation-id')
+            p.add_argument('source');p.add_argument('target');p.add_argument('relation');p.add_argument('--target-vault');p.add_argument('--role');p.add_argument('--reason',default='');p.add_argument('--exit-task');p.add_argument('--context');p.add_argument('--order',type=int)
+        if cmd == 'event':
+            p.add_argument('path');p.add_argument('event',choices=['study','resolution','attempt-start','attempt','review','review-plan','assistance','comparison','correction','capability-decision','session-state','disposition','material-change']);p.add_argument('--evidence',default='');p.add_argument('--data',default='{}')
+        if cmd == 'next':p.add_argument('--quiet',action='store_true');p.add_argument('--path-id')
+        if cmd == 'context':p.add_argument('record_id');p.add_argument('--role',default='tutor')
+        if cmd == 'migrate':p.add_argument('--apply',action='store_true')
+        if cmd == 'query':p.add_argument('query',nargs='?',default='');p.add_argument('--kind');p.add_argument('--cursor',type=int,default=0)
+        if cmd == 'timeline':p.add_argument('record_id')
+        if cmd == 'serve':p.add_argument('--stdio',action='store_true',required=True)
+        if cmd == 'status':p.add_argument('--legacy',action='store_true')
+        if cmd == 'doctor': p.add_argument('--offline', action='store_true')
+        if cmd in ('use','vault-register'): p.add_argument('path')
+        if cmd=='vault-register':p.add_argument('--replace-location')
+        if cmd=='vault-fork':p.add_argument('source');p.add_argument('--dest',required=True)
+        if cmd=='outline-move':p.add_argument('parent_id');p.add_argument('child_id');p.add_argument('direction',choices=['up','down']);p.add_argument('--operation-id')
+        if cmd=='course-import':p.add_argument('source');p.add_argument('--apply',action='store_true');p.add_argument('--operation-id');p.add_argument('--expected-digest');p.add_argument('--course-id')
+        if cmd == 'capture':p.add_argument('--context-id');p.add_argument('--operation-id');p.add_argument('text', nargs='?');p.add_argument('--stdin-line',action='store_true'); p.add_argument('--agent', action='store_true');p.add_argument('--kind',choices=['capture','snippet','question'],default='capture')
+        if cmd == 'new': p.add_argument('--folder'); p.add_argument('kind'); p.add_argument('title'); p.add_argument('--open', action='store_true')
+        if cmd == 'search': p.add_argument('query', nargs='?', default='')
+        if cmd == 'practice': p.add_argument('path');p.add_argument('--mode',choices=list(PRACTICE_MODES),required=True);p.add_argument('--goal',required=True);p.add_argument('--open',action='store_true')
+        if cmd == 'preview': p.add_argument('path')
+        if cmd == 'update': p.add_argument('path'); p.add_argument('field',choices=['status','question','next_experiment','active_project']); p.add_argument('value')
+        if cmd == 'review': p.add_argument('path'); p.add_argument('--confidence',type=int,required=True); p.add_argument('--days',type=int,default=7); p.add_argument('--evidence',required=True)
+        if cmd == 'canvas': p.add_argument('title')
+        if cmd == 'attach': p.add_argument('source'); p.add_argument('--note');p.add_argument('--copy',action='store_true')
+        if cmd == 'resource': p.add_argument('title');p.add_argument('--kind',choices=['paper','book','article','docs','lecture','playlist','course','dataset','other'],default='paper');p.add_argument('--url',default='');p.add_argument('--file');p.add_argument('--why',default='')
+        if cmd in ['progress','attempt','event']:p.add_argument('--target-id');p.add_argument('--operation-id')
+        if cmd == 'progress': p.add_argument('path');p.add_argument('--position',required=True);p.add_argument('--current',type=int);p.add_argument('--total',type=int);p.add_argument('--state',choices=['queued','active','read','extracted','parked','rejected']);p.add_argument('--evidence',default='')
+        if cmd == 'attempt': p.add_argument('path');p.add_argument('--result',choices=['blocked','hinted','solved','reproduced','failed','transferred'],required=True);p.add_argument('--evidence',required=True);p.add_argument('--hint',default='none');p.add_argument('--session');p.add_argument('--mode',choices=list(PRACTICE_MODES),default='derive');p.add_argument('--assistance',action='append',choices=['none','unknown','hint','reference','collaborator','agent'])
+        if cmd == 'import-csl':p.add_argument('source');p.add_argument('--dry-run',action='store_true')
+        if cmd == 'import-notes':p.add_argument('source');p.add_argument('--resource',required=True)
+        if cmd == 'read-resource':p.add_argument('--target-id');p.add_argument('path');p.add_argument('--reader',choices=['sioyek','zotero','default'],default='sioyek')
+        if cmd == 'window':p.add_argument('--embedded',action='store_true');p.add_argument('--owner');p.add_argument('--vault-id');p.add_argument('--record-id');p.add_argument('--capture',action='store_true');p.add_argument('--start',action='store_true')
+        if cmd == 'host-request':p.add_argument('--stdin-line',action='store_true')
+        if cmd == 'window-state':p.add_argument('--interface-scale',type=float);p.add_argument('--reading-scale',type=float);p.add_argument('--layouts-json');p.add_argument('--pending-json');p.add_argument('--instance-json');p.add_argument('--visible',choices=['on','off']);p.add_argument('--placement',choices=['current','dedicated']);p.add_argument('--study-workspace');p.add_argument('--return-behavior',choices=['hide','stay'])
+        if cmd == 'window-state':p.add_argument('--presentation',choices=['fullscreen','workspace','tiled','normal']);p.add_argument('--collection',choices=['on','off']);p.add_argument('--drafts-json');p.add_argument('--drafts-stdin',action='store_true');p.add_argument('--path-scope');p.add_argument('--path-scope-vault');p.add_argument('--width',type=int);p.add_argument('--height',type=int);p.add_argument('--workspace',choices=['Today','Learn','Research','Practice','Lab','Library']);p.add_argument('--list-ratio',type=float);p.add_argument('--context-json');p.add_argument('--monitor');p.add_argument('--quiet',choices=['on','off'])
+        if cmd == 'editor-setting':p.add_argument('editor',choices=['nvim','zed'])
+        if cmd == 'cli': p.add_argument('obsidian_command'); p.add_argument('options', nargs=argparse.REMAINDER)
+    args = parser.parse_args()
+    try:
+        if getattr(args,'expect_vault_id',None):
+            from noesis.scopes import identity
+            if identity(vault(args.vault)) != args.expect_vault_id:raise ValueError('Vault identity changed or storage is unavailable; no action was started. Reselect the correct owner.')
+        if args.command == 'init': initialize(args); return 0
+        if args.command=='window':
+            from noesis.hosting import launch
+            print(json.dumps(launch(HOME,embedded=args.embedded,owner=args.owner,vault_id=args.vault_id,record_id=args.record_id,capture=args.capture,start=args.start)));return 0
+        if args.command=='host-lease':
+            import fcntl
+            directory=HOME/'.local/state/sensei-learning';directory.mkdir(parents=True,exist_ok=True);directory.chmod(0o700)
+            with (directory/'host.lease').open('a+') as lease:
+                try:fcntl.flock(lease,fcntl.LOCK_EX|fcntl.LOCK_NB)
+                except BlockingIOError:
+                    print('unavailable',flush=True);return 1
+                print('acquired',flush=True);sys.stdin.read()
+            return 0
+        if args.command=='host-request':
+            from noesis.hosting import resolve_request
+            print(json.dumps(resolve_request(json.loads(sys.stdin.readline()))));return 0
+        if args.command=='window-state':
+            file=HOME/'.local/state/sensei-learning/window.json'
+            with vault_lock(file.parent):
+                state=json.loads(file.read_text()) if file.exists() else {}
+                file.parent.chmod(0o700)
+                if file.exists() and state.get('version',1)<2 and not file.with_name('window.v1.rollback.json').exists():
+                    store(file.with_name('window.v1.rollback.json'),state)
+                state['version']=2
+                for option in ['interface_scale','reading_scale']:
+                    value=getattr(args,option)
+                    if value is not None:
+                        if not 1<=value<=2:raise ValueError('Text scale must be between 100% and 200%')
+                        state[option]=value
+                for option,key in [('pending_json','pending_operation'),('instance_json','instance'),('layouts_json','layouts')]:
+                    value=getattr(args,option)
+                    if value is not None:
+                        payload=json.loads(value)
+                        if not isinstance(payload,dict):raise ValueError('Host state must be an object')
+                        state[key]=payload
+                for option in ['placement','study_workspace','return_behavior']:
+                    value=getattr(args,option)
+                    if value is not None:state[option]=value
+                if args.visible is not None:state['visible']=args.visible=='on'
+                if args.width is not None and args.height is not None:state.update(width=min(1800,max(360,args.width)),height=min(1000,max(300,args.height)))
+                if args.drafts_json is not None or args.drafts_stdin:
+                    drafts=json.loads(sys.stdin.readline() if args.drafts_stdin else args.drafts_json)
+                    if not isinstance(drafts,dict) or any(not isinstance(v,str) for v in drafts.values()):raise ValueError('Drafts must map targets to text')
+                    state['drafts']=drafts
+                if args.path_scope is not None:state['path_scope']=args.path_scope;state['path_scope_vault']=args.path_scope_vault or ''
+                if args.workspace:state['workspace']=args.workspace
+                if args.presentation:state['presentation']=args.presentation
+                if args.collection:state['collection']=args.collection=='on'
+                if args.monitor:state['monitor']=args.monitor
+                if args.quiet:state['quiet']=args.quiet=='on'
+                if args.list_ratio is not None:state['list_ratio']=min(.6,max(.2,args.list_ratio))
+                if args.context_json is not None:
+                    context=json.loads(args.context_json)
+                    if not isinstance(context,dict):raise ValueError('Context must be an object')
+                    state['context']={k:context.get(k) for k in ['id','path','title','type','vault','vault_id','session_state','surface','context_tab','read_anchor','course']}
+                if any(value is not None for value in [args.width,args.height,args.drafts_json,True if args.drafts_stdin else None,args.path_scope,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet,args.presentation,args.collection,args.pending_json,args.instance_json,args.visible,args.placement,args.study_workspace,args.return_behavior]):
+                    store(file,state)
+                    from noesis.hosting import process_start
+                    instance=state.get('instance',{})
+                    context=state.get('context',{})
+                    projected={k:context.get(k) for k in ['id','path','title','type','vault','vault_id','surface','session_state','context_tab','read_anchor']}
+                    projected['title']=str(projected.get('title') or '')[:240]
+                    projected['path']=str(projected.get('path') or '')[:4096]
+                    store(file.with_name('companion.json'),{'version':1,'instance':dict(instance,start_ticks=process_start(instance.get('pid',0))),'updated_at':time.time(),'visible':state.get('visible',False),'context':projected})
+            print(file.read_text() if file.exists() else '{"width":1440,"height":880}');return 0
+        if args.command=='course-import':
+            from noesis.outlines import plan,apply as apply_outline
+            if args.apply:
+                if not args.operation_id:raise ValueError('An explicit operation ID is required for retryable outline import')
+                print(json.dumps(apply_outline(vault(args.vault),args.source,args.operation_id,args.expected_digest,args.course_id)))
+            else:print(json.dumps(plan(args.source)))
+            return 0
+        if args.command=='vault-fork':
+            from noesis.identity_recovery import fork
+            print(json.dumps(fork(args.source,args.dest)));return 0
+        if args.command=='vault-register':
+            if args.replace_location:
+                from noesis.identity_recovery import replace_location
+                print(json.dumps(replace_location(args.path,args.replace_location)))
+            else:print(json.dumps(register(Path(args.path).expanduser().resolve())))
+            return 0
+        if args.command=='editor-setting':
+            import shutil
+            if not shutil.which(args.editor):raise ValueError('Selected editor is unavailable; install it first or choose Neovim')
+            value=config();value['code_editor']=args.editor;store(CONFIG,value);print(json.dumps({'code_editor':args.editor,'message':'Code editor saved: '+args.editor}));return 0
+        if args.command == 'use':
+            root = vault(args.path); system(root); c = config(); c['active_vault'] = str(root); store(CONFIG,c); print(root); return 0
+        if args.command == 'vaults': print(json.dumps(inventory(),ensure_ascii=False)); return 0
+        if args.command=='serve':serve(vault);return 0
+        if args.command=='zotero-search':print(json.dumps(LocalAPI(server_id=args.server_id).search(args.query,args.cursor)));return 0
+        if args.command=='zotero-probe':print(json.dumps(LocalAPI().probe()));return 0
+        if args.command=='recover':print(json.dumps(recovery.restore(args.snapshot,args.dest)));return 0
+        root = vault(args.vault); meta = system(root)
+        if args.command in ('resource','progress','attempt','import-csl','import-notes','record','link','event','capture','new','update','review','canvas','attach','practice','adopt','enable-drawing','promote'):
+            from noesis.scopes import assert_unique
+            assert_unique(root)
+        if args.command in ('convolution-observe','convolution-prepare','convolution-check'):
+            from noesis import convolution
+            action={'convolution-observe':convolution.observe,'convolution-prepare':convolution.prepare,'convolution-check':convolution.check}[args.command]
+            print(json.dumps(action(root,args.record_id,json.loads(args.configuration),args.prediction,args.operation_id)));return 0
+        if args.command=='open-project':
+            from noesis.development import command as development_command
+            index=Index(root)
+            try:
+                health=index.reconcile()
+                if health['errors']:raise ValueError(str(health['errors']))
+                record=index.record(args.record_id,include_body=False,include_attempt=False)
+                command=development_command(record['props'])
+            finally:index.close()
+            subprocess.Popen(command,env=dict(os.environ,NOESIS_VAULT=str(root),NOESIS_RECORD_ID=args.record_id),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+            print(json.dumps({'message':'Implementation opened in Neovim'}));return 0
+        if args.command=='scratch-outputs':
+            from noesis.exploration import target
+            props=target(root,args.record_id)['props']
+            if not props.get('scratch_directory'):raise ValueError('Choose a quick experiment')
+            directory=checked_path(root,props['scratch_directory'])
+            subprocess.Popen(['xdg-open',str(directory)],start_new_session=True);print(json.dumps({'opened':True}));return 0
+        if args.command=='exploration-recover':
+            from noesis.exploration import recover
+            print(json.dumps(recover(root,args.operation_id)));return 0
+        if args.command=='artifact-reconnect':
+            from noesis.exploration import reconnect
+            print(json.dumps(reconnect(root,args.record_id,args.location,args.title,args.operation_id,cli),default=str));return 0
+        if args.command in ('drawing-create','scratch-create','scratch-run','scratch-open','scratch-terminal','artifact-open'):
+            from noesis import exploration
+            if args.command in ('drawing-create','scratch-create'):
+                result=exploration.prepare(root,args.record_id,args.title,'scratch' if args.command=='scratch-create' else args.mode,args.operation_id,cli,args.prediction,args.code_file)
+                print(json.dumps(result));return 0
+            if args.command=='scratch-run':print(json.dumps(exploration.run(root,args.record_id,args.operation_id),default=str));return 0
+            if args.command=='artifact-open':
+                record,file=exploration.local_file(root,args.record_id)
+                if file.is_relative_to(root) and (file.suffix=='.canvas' or file.name.endswith('.excalidraw.md')):cli(root,'open','path='+str(file.relative_to(root)))
+                else:subprocess.Popen(['xdg-open',str(file)],start_new_session=True)
+            else:subprocess.Popen(exploration.open_code(root,args.record_id) if args.command=='scratch-open' else exploration.terminal_command(root,args.record_id),start_new_session=True)
+            print(json.dumps({'opened':True}));return 0
+        if args.command=='annotation-open':
+            from noesis.sources import annotation_command
+            index=Index(root)
+            try:
+                index.reconcile();command=annotation_command(index,args.record_id,args.annotation_key,args.projection)
+            finally:index.close()
+            subprocess.Popen(command['command'],start_new_session=True);print(json.dumps({'opened':True,'navigation':command['mode'],'message':command['message']}));return 0
+        if args.command=='artifact-check':print(json.dumps(inspect_artifact(root,args.record_id,args.operation_id),default=str));return 0
+        if args.command=='zotero-import':print(json.dumps(import_item(root,args.key,LocalAPI(server_id=args.server_id)),default=str));return 0
+        if args.command=='operation-status':print(json.dumps(operation_status(root,args.operation_id),default=str));return 0
+        if args.command=='promote':print(json.dumps(promote(root,args.path,args.kind,args.target_id),default=str));return 0
+        if args.command=='record':
+            fields=json.loads(args.data)
+            if not isinstance(fields,dict):raise ValueError('Record data must be an object')
+            print(json.dumps(create_record(root,args.kind,args.title,args.body,fields,args.parent_id,args.relation,args.order,args.operation_id),default=str));return 0
+        if args.command=='outline-move':
+            from noesis.courses import move
+            print(json.dumps(move(root,args.parent_id,args.child_id,args.direction,args.operation_id)));return 0
+        if args.command=='link':
+            if args.target_vault:
+                if any(value is not None for value in (args.role,args.exit_task,args.context,args.order)):raise ValueError('Cross-vault educational gate/order contexts require a global policy; use a nonblocking connection')
+                from noesis.references import link as cross_link
+                result=cross_link(root,args.source,args.target,args.relation,args.target_vault,args.reason,args.operation_id)
+            else:result=relationship(root,args.source,args.target,args.relation,args.role,args.reason,args.exit_task,args.context,args.order,args.operation_id)
+            print(json.dumps(result,default=str));return 0
+        if args.command=='event':
+            fields=json.loads(args.data)
+            if not isinstance(fields,dict):raise ValueError('Event data must be an object')
+            print(json.dumps(record_activity(root,args.path,args.event,args.evidence,args.operation_id,expected_id=args.target_id,**fields),default=str));return 0
+        if args.command in ['next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project']:
+            index=Index(root)
+            try:
+                index.reconcile()
+                result=next_actions(index,args.quiet,args.path_id) if args.command=='next' else agent_context(index,args.record_id,args.role)
+                print(json.dumps(result,default=str))
+            finally:index.close()
+            return 0
+        if args.command=='migrate':print(json.dumps(migration(root,args.apply)));return 0
+        if args.command in ['query','timeline']:
+            index=Index(root)
+            try:
+                health=index.reconcile()
+                result=index.query(args.query,args.kind,args.cursor) if args.command=='query' else {'activities':index.timeline(args.record_id)}
+                print(json.dumps(dict(result,health=health),default=str))
+            finally:index.close()
+            return 0
+        if args.command in ['resource','progress','attempt','import-csl','import-notes','read-resource']:
+            return library_action(root,args)
+        if args.command == 'practice':
+            target=practice_session(root,args.path,args.mode,args.goal)
+            if args.open: cli(root,'open','path='+str(target.relative_to(root)))
+            print(target);return 0
+        if args.command == 'backup' and args.restic:print(json.dumps(recovery.backup(root,reader_snapshots=args.reader_snapshot)));return 0
+        if args.command == 'backup' and args.reader_snapshot:raise ValueError('Reader snapshots require --restic for encrypted recovery')
+        if args.command == 'backup': return subprocess.run([str(HOME/'.local/bin/sensei-learning-backup'),'--vault',str(root)]).returncode
+        if args.command == 'adopt': adopt(root); return 0
+        if args.command=='enable-drawing':
+            plugin='obsidian-excalidraw-plugin'
+            choices=[Path(v['path'])/'.obsidian/plugins'/plugin for v in inventory() if (Path(v['path'])/'.obsidian/plugins'/plugin/'manifest.json').is_file()]
+            if not choices:raise ValueError('Install Excalidraw from Obsidian community plugins once, then reuse it here.')
+            source=choices[0];manifest=json.loads((source/'manifest.json').read_text())
+            if manifest.get('id')!=plugin:raise ValueError('Plugin identity mismatch')
+            destination=root/'.obsidian/plugins'/plugin;destination.mkdir(parents=True,exist_ok=True)
+            for name in ['main.js','manifest.json','styles.css']:
+                if (source/name).is_file() and not (destination/name).exists():shutil.copy2(source/name,destination/name)
+            cli(root,'plugins:restrict','off')
+            print(cli(root,'eval','code=(async()=>{await app.plugins.loadManifests();if(!app.plugins.plugins["'+plugin+'"])await app.plugins.enablePluginAndSave("'+plugin+'");return app.plugins.plugins["'+plugin+'"]?"Freehand drawing enabled":"Plugin enabled; let startup finish, then press Draw"})()'));return 0
+        if args.command == 'files': print(json.dumps(snapshot(root)['files'],ensure_ascii=False));return 0
+        if args.command in ['preview','update','review']:
+            path=checked_path(root,args.path)
+            if not path.is_file():raise ValueError('File does not exist')
+            relative=str(path.relative_to(root))
+            if args.command=='preview': print(path.read_text());return 0
+            if args.command=='update': print(cli(root,'property:set','path='+relative,'name='+args.field,'value='+args.value,'type=text'));return 0
+            if not 0<=args.confidence<=5 or not 1<=args.days<=3650 or not args.evidence.strip():raise ValueError('Review needs confidence 0–5, days 1–3650 and actual evidence')
+            from datetime import timedelta
+            review=(date.today()+timedelta(days=args.days)).isoformat()
+            print(json.dumps(record_activity(root,relative,'review',args.evidence,confidence_self_report=args.confidence,due=review,assistance=['unknown'],assessment='learner-reported'),default=str));return 0
+        if args.command=='canvas':
+            if any(c in args.title for c in ['/', '\\','\n']) or not args.title.strip():raise ValueError('Use a canvas title')
+            folder='Maps' if meta.get('layout')=='network' else '08 Visuals'
+            path=folder+'/'+args.title+'.canvas';checked_path(root,path)
+            print(cli(root,'eval','code=(async()=>{await app.vault.create('+json.dumps(path)+','+json.dumps('{"nodes":[],"edges":[]}')+');return "Created"})()'))
+            return navigate(root,path)
+        if args.command=='attach':
+            source=Path(args.source).expanduser().resolve()
+            if not source.is_file():raise ValueError('Choose a local file')
+            if args.note and not checked_path(root,args.note).is_file():raise ValueError('Note missing; attachment not copied')
+            if (source.stat().st_size>25*1024*1024 or source.suffix.lower() in {'.mcap','.bag','.mp4','.mkv'}) and not args.copy:
+                artifact=create_record(root,'artifact',source.stem,'External artifact. The original file stays at its source location.',{'location':str(source),'size':source.stat().st_size,'ownership':'external','storage_class':'large-artifact','backup_policy':'not included in routine text backups'})
+                if args.note:
+                    identity=note_text(checked_path(root,args.note).read_text())[0].get('id')
+                    if identity:relationship(root,identity,artifact['id'],'references')
+                print(json.dumps(dict(artifact,referenced=True,explicit_copy_available=True)));return 0
+            folder='Attachments' if meta.get('layout')=='network' else 'assets';dest=checked_path(root,folder+'/'+source.name)
+            dest.parent.mkdir(parents=True,exist_ok=True)
+            fd,temporary=tempfile.mkstemp(dir=dest.parent,prefix='.noesis-attachment-')
+            try:
+                with source.open('rb') as src,os.fdopen(fd,'wb') as target:
+                    shutil.copyfileobj(src,target);target.flush();os.fsync(target.fileno())
+                os.link(temporary,dest)
+            finally:
+                if os.path.exists(temporary):os.unlink(temporary)
+            if args.note:
+                note=checked_path(root,args.note)
+                if not note.is_file():raise ValueError('Note missing; attachment copied safely but not linked')
+                code='(async()=>{const f=app.vault.getAbstractFileByPath('+json.dumps(str(note.relative_to(root)))+');await app.vault.append(f,'+json.dumps('\n[['+str(dest.relative_to(root))+']]\n')+');return f.path})()'
+                print(cli(root,'eval','code='+code))
+            print(dest);return 0
+        if args.command == 'status': print(json.dumps(legacy_snapshot(root) if args.legacy else snapshot(root), ensure_ascii=False)); return 0
+        if args.command == 'cli': print(cli(root,args.obsidian_command,*args.options)); return 0
+        if args.command == 'due': print(cli(root,'base:query','path='+('Views/Review.base' if meta.get('layout')=='network' else '93 Bases/Review.base'),'view=Due','format=md')); return 0
+        if args.command == 'gates': print(cli(root,'base:query','path='+('Views/Prerequisites.base' if meta.get('layout')=='network' else '93 Bases/Prerequisites.base'),'view=Active gates','format=md')); return 0
+        if args.command == 'tasks': print(cli(root,'tasks','todo','verbose')); return 0
+        if args.command == 'doctor':
+            result = doctor(root, args.offline)
+            index=Index(root)
+            try:
+                health=index.reconcile();result['errors'].extend(str(e) for e in health['errors']);result['ok']=not result['errors']
+            finally:index.close()
+            if not args.offline:
+                try: result['native_cli_path'] = cli(root,'vault','info=path')
+                except ValueError as error: result['errors'].append(str(error)); result['ok']=False
+            print(json.dumps(result, indent=2)); return 0 if result['ok'] else 1
+        if args.command in ['open','frontier']: return navigate(root, meta['home' if args.command == 'open' else 'frontier'])
+        if args.command == 'today':
+            path = root / meta['daily'] / (date.today().isoformat()+'.md')
+            print(cli(root,'daily')); return 0
+        if args.command == 'capture':
+            text = json.loads(sys.stdin.readline()) if args.stdin_line else args.text if args.text is not None else sys.stdin.read()
+            if not isinstance(text,str):raise ValueError("Capture input must be text")
+            print(capture_text(root,text,args.kind,args.agent,args.operation_id,args.context_id));return 0
+        if args.command == 'new':
+            kind = args.kind; title = args.title
+            if kind not in meta['types']: raise ValueError('Unknown note type')
+            if any(c in title for c in ['/', '\\', '\n', '\r']) or title in ['', '.', '..']: raise ValueError('Use a note title, not a path')
+            path = checked_path(root,(args.folder or meta['types'][kind])+'/'+title+'.md')
+            path.parent.mkdir(parents=True,exist_ok=True)
+            if path.exists(): raise ValueError('Note exists; not overwritten')
+            choices = [p for p in (root/meta['templates']).glob('*.md') if note_text(p.read_text())[0].get('type') == kind]
+            if len(choices)!=1: raise ValueError('Need exactly one template for type: '+kind)
+            print(cli(root,'create','path='+str(path.relative_to(root)), 'template='+choices[0].stem))
+            identify(root,str(path.relative_to(root)))
+            print(path)
+            return navigate(root,path.relative_to(root)) if args.open else 0
+        if args.command == 'search':
+            notes = sorted(str(p.relative_to(root)) for p in root.rglob('*.md') if '.git' not in p.parts and '.obsidian' not in p.parts)
+            r = subprocess.run(['fzf','--query',args.query,'--prompt','Learn › '], input='\n'.join(notes),text=True,stdout=subprocess.PIPE)
+            return navigate(root,r.stdout.strip()) if r.returncode == 0 else 0
+    except (ValueError,OSError,KeyError,yaml.YAMLError,subprocess.CalledProcessError,subprocess.TimeoutExpired) as e:
+        print('sensei-learn: '+str(e),file=sys.stderr);return 1
+if __name__ == '__main__': sys.exit(main())

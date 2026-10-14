@@ -1,0 +1,20 @@
+#!/usr/bin/python3
+"""One-shot audit; reads counters without waking the dedicated GPU."""
+import json,time,os,subprocess
+from pathlib import Path
+home=Path.home();base=home/'.local/state/lean-desktop-20260927';base.mkdir(parents=True,exist_ok=True)
+def read(p):
+ try:return Path(p).read_text().strip()
+ except OSError:return None
+def cmd(a):
+ try:return subprocess.check_output(a,text=True,stderr=subprocess.DEVNULL,timeout=10).strip()
+ except (OSError,subprocess.SubprocessError):return None
+mem={k:int(v.split()[0]) for line in read('/proc/meminfo').splitlines() for k,v in [line.split(':',1)]}
+groups={}
+for p in Path('/proc').glob('[0-9]*'):
+ try:
+  name=(p/'comm').read_text().strip();rows=(p/'smaps_rollup').read_text().splitlines();pss=next(int(x.split()[1]) for x in rows if x.startswith('Pss:'));g=groups.setdefault(name,{'count':0,'pssKiB':0});g['count']+=1;g['pssKiB']+=pss
+ except (OSError,StopIteration):pass
+snap={'time':time.time(),'kernel':os.uname().release,'bootId':read('/proc/sys/kernel/random/boot_id'),'memoryKiB':{k:mem[k] for k in ['MemTotal','MemAvailable','Cached','Shmem','Unevictable','Mlocked','SUnreclaim','SwapTotal','SwapFree']},'processGroups':groups,'pressure':{k:read('/proc/pressure/'+k) for k in ['cpu','memory','io']},'nvidiaRuntime':read('/sys/bus/pci/devices/0000:01:00.0/power/runtime_status'),'chrome':cmd([str(home/'.local/bin/sensei-chrome'),'status']),'power':cmd([str(home/'.local/bin/sensei-power'),'name']),'failedUserServices':cmd(['systemctl','--user','--failed','--no-pager']),'bootTime':cmd(['systemd-analyze','time']),'calendar':cmd([str(home/'.local/bin/sensei-calendar-scheduler'),'--inspect']),'monitors':cmd(['hyprctl','-i','0','monitors','-j'])}
+with (base/'observations.ndjson').open('a') as f:f.write(json.dumps(snap)+'\n')
+print(json.dumps({'availableGiB':round(mem['MemAvailable']/1048576,2),'gpu':snap['nvidiaRuntime'],'kernel':snap['kernel']}))

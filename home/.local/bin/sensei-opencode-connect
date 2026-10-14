@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""OpenCode's device authorization flow for the private desktop usage panel."""
+import json,os,sys,time,subprocess,urllib.request,urllib.error,urllib.parse
+from pathlib import Path
+os.umask(0o077)
+BASE='https://opencode.ai/console'
+STATE=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'sensei-code'
+TOKEN=STATE/'opencode-console.json'
+def emit(value):print(json.dumps(value),flush=True)
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self,*args,**kwargs):return None
+
+def request(path,body=None,token=None,org=None):
+    headers={'Accept':'application/json','User-Agent':'opencode/1.18.32'}
+    if token:headers['Authorization']='Bearer '+token
+    if org:headers['x-org-id']=org
+    if body is not None:headers['Content-Type']='application/json'
+    req=urllib.request.Request(BASE+path,headers=headers,data=json.dumps(body).encode() if body is not None else None)
+    try:
+        with urllib.request.build_opener(NoRedirect).open(req,timeout=12) as response:return json.loads(response.read(65536))
+    except urllib.error.HTTPError as error:
+        try:payload=json.loads(error.read(65536))
+        except ValueError:payload={}
+        code=error.code;error.close()
+        if path=='/auth/device/token' and payload.get('error') in ['authorization_pending','slow_down']:return payload
+        raise RuntimeError('OpenCode Console returned HTTP '+str(code)) from None
+
+def save(value):
+    STATE.mkdir(mode=0o700,parents=True,exist_ok=True);STATE.chmod(0o700)
+    temp=TOKEN.with_suffix('.tmp-'+str(os.getpid()))
+    with os.fdopen(os.open(temp,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600),'w') as file:json.dump(value,file)
+    temp.replace(TOKEN)
+
+def connect():
+    device=request('/auth/device/code',{'client_id':'opencode-cli'})
+    uri=device['verification_uri_complete'];parsed=urllib.parse.urlsplit(uri)
+    if parsed.scheme!='https' or parsed.hostname!='opencode.ai' or parsed.port not in (None,443) or parsed.username or parsed.password:raise ValueError('Unexpected authorization origin')
+    code=device['user_code'];emit({'state':'authorize','code':code,'url':uri,'message':'Approve in your browser. Keep this panel open until connected.'})
+    subprocess.Popen(['xdg-open',uri],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    interval=max(2,int(device.get('interval',5)));deadline=time.monotonic()+min(600,int(device['expires_in']))
+    while time.monotonic()<deadline:
+        time.sleep(interval)
+        data=request('/auth/device/token',{'grant_type':'urn:ietf:params:oauth:grant-type:device_code','device_code':device['device_code'],'client_id':'opencode-cli'})
+        if data.get('error')=='slow_down':interval+=5;continue
+        if data.get('error')=='authorization_pending':continue
+        if not isinstance(data.get('access_token'),str):raise ValueError('Authorization was declined or expired')
+        orgs=request('/api/orgs',token=data['access_token'])
+        if not isinstance(orgs,list) or not orgs:raise ValueError('No Console workspace found')
+        org=next((o for o in orgs if o.get('name','').lower()=='personal'),sorted(orgs,key=lambda o:o['name'])[0])
+        save({'access':data['access_token'],'refresh':data['refresh_token'],'expires':time.time()+data['expires_in'],'org':org['id'],'name':org['name']})
+        emit({'state':'connected','message':'Connected · '+org['name']});return
+    raise ValueError('Authorization expired; connect again')
+
+def usage():
+    if not TOKEN.exists():emit({'state':'signin'});return
+    value=json.loads(TOKEN.read_text())
+    if value['expires']<time.time()+60:
+        data=request('/auth/device/token',{'grant_type':'refresh_token','refresh_token':value['refresh'],'client_id':'opencode-cli'})
+        value.update(access=data['access_token'],refresh=data['refresh_token'],expires=time.time()+data['expires_in']);save(value)
+    result=request('/api/go/status',token=value['access'],org=value['org'])
+    access=result.get('access')
+    if not isinstance(access,dict):emit({'state':'no-subscription','label':'Console reports no active Go subscription','account':value['name']});return
+    windows={}
+    for name,key in [('rolling','fiveHour'),('weekly','week'),('monthly','month')]:
+        meter=access.get('meters',{}).get(key,{})
+        limit=float(meter['limitMicroCents']);used=float(meter['usedMicroCents'])
+        if limit<0 or used<0:raise ValueError('Invalid meter')
+        percent=min(100,used/limit*100) if limit else (100 if used else 0)
+        windows[name]={'status':'rate-limited' if percent>=100 else 'ok','percent':percent,'resetsAt':meter.get('resetsAt') or access.get('endsAt')}
+    emit({'state':'connected','account':value['name'],'usage':windows,'subscriptionEndsAt':access.get('endsAt')})
+
+if __name__=='__main__':
+    try:
+        if len(sys.argv)>1 and sys.argv[1]=='disconnect':
+            TOKEN.unlink(missing_ok=True);emit({'state':'disconnected','message':'Panel connection removed; your OpenCode providers are unchanged'})
+        elif len(sys.argv)>1 and sys.argv[1]=='usage':usage()
+        else:connect()
+    except (OSError,ValueError,KeyError,TypeError,RuntimeError) as error:
+        # Never expose response bodies, credentials or request objects.
+        emit({'state':'error','message':str(error) if isinstance(error,(ValueError,RuntimeError)) else 'Console connection could not be completed'});sys.exit(1)
