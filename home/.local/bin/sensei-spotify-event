@@ -7,9 +7,14 @@ def read(p):
  except Exception:return {}
 def put(p,d):
  t=p.with_name(p.name+'.'+str(os.getpid())+'.tmp');t.write_text(json.dumps(d));t.chmod(0o600);t.replace(p)
+def valid_uri(uri):
+ # Spotify URIs are spotify:<kind>:<base62 id>; the id becomes a cache filename.
+ parts=uri.split(':')
+ return len(parts)==3 and parts[0]=='spotify' and parts[1].isalpha() and parts[2].isascii() and parts[2].isalnum()
 if len(sys.argv)<3:sys.exit(0)
 if sys.argv[1]=='resolve':
  uri=sys.argv[2]
+ if not valid_uri(uri):sys.exit(0)
  resolve_lock=(store/('resolve-'+uri.rsplit(':',1)[-1]+'.lock')).open('a')
  try:fcntl.flock(resolve_lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
  except BlockingIOError:sys.exit(0)
@@ -23,7 +28,7 @@ if sys.argv[1]=='resolve':
  except Exception:pass
  sys.exit(0)
 event,uri=sys.argv[1:3]
-if event not in ('Changed','Playing','Paused'):sys.exit(0)
+if event not in ('Changed','Playing','Paused') or not valid_uri(uri):sys.exit(0)
 with (store/'native-event.lock').open('a') as lock:
  fcntl.flock(lock,fcntl.LOCK_EX);old=read(store/'native-event.json');track=read(store/('native-track-'+uri.rsplit(':',1)[-1]+'.json'))
  if not track and old.get('uri')==uri:track=old.get('track',{})

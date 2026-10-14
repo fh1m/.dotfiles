@@ -21,4 +21,9 @@ if not a or a[0]=='list':
 else:
  commands={'output':['set-default-sink'],'input':['set-default-source'],'mute':['set-sink-mute'],'micmute':['set-source-mute'],'volume':['set-sink-volume'],'micvolume':['set-source-volume'],'appvolume':['set-sink-input-volume'],'appmute':['set-sink-input-mute'],'capturevolume':['set-source-output-volume'],'capturemute':['set-source-output-mute'],'route':['move-sink-input'],'capture-route':['move-source-output'],'port':['set-sink-port'],'inputport':['set-source-port'],'profile':['set-card-profile']}
  if a[0] not in commands:raise SystemExit('Unknown audio action')
- subprocess.run(['pactl']+commands[a[0]]+[v for v in a[1:] if v!=''],check=True)
+ import re
+ # pactl would read a leading dash as an option; only signed numbers such as -5% or -3dB may start with one.
+ args=[v for v in a[1:] if v!='']
+ for v in args:
+  if v.startswith('-') and not re.fullmatch(r'-\d+(\.\d+)?(%|dB)?',v):raise SystemExit('Refusing an argument that looks like an option: '+v)
+ subprocess.run(['pactl']+commands[a[0]]+args,check=True)
