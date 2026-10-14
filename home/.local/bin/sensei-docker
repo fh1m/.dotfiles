@@ -141,8 +141,13 @@ def action(name,a):
   if not path.is_dir():raise ValueError('Choose a build directory.')
   return job(['docker','buildx','build','--platform',a[2],'--load','-t',identifier(a[1]),str(path)],'Build '+a[1])
  if name=='cancel':
+  # Job ids are time_ns() digits; anything else could name a path outside JOBS.
+  if not re.fullmatch(r'\d+',str(a[0])):raise ValueError('Choose a Docker task to cancel.')
   p=JOBS/(a[0]+'.json');d=json.loads(p.read_text());pid=d.get('pid',0)
-  if d['state']=='running' and str(p) in Path(f'/proc/{pid}/cmdline').read_text():os.killpg(pid,signal.SIGTERM);d['state']='cancelled';atomic(p,d)
+  try:live=str(p) in Path(f'/proc/{pid}/cmdline').read_text()
+  except OSError:live=False
+  if d['state']!='running' or pid<=0 or not live:return {'ok':False,'output':'Task is not running.'}
+  os.killpg(pid,signal.SIGTERM);d['state']='cancelled';atomic(p,d)
   return {'ok':True,'output':'Task cancelled.'}
  if name=='cli':
   args=shlex.split(a[0]);args=args[1:] if args and args[0]=='docker' else args
