@@ -460,11 +460,18 @@ Singleton {
         refresh.restart();
     }
 
+    // Only a name inside the wallpaper folder. An absolute path or a `..` would
+    // reach outside it, so both are refused.
+    //
+    // The file is moved to a dated folder under the state directory, not
+    // removed, so a wallpaper deleted by mistake can still be put back.
     function deleteFile(relative: string): void {
+        if (!relative || relative.startsWith("/") || relative.split("/").includes(".."))
+            return;
         const path = absolute(relative);
         if (!path)
             return;
-        run(`rm -f ${quote(path)}`);
+        run(`d="$HOME/.local/state/wrayth/removed-wallpapers/$(date +%Y%m%d)"; mkdir -p "$d" && mv -n -- ${quote(path)} "$d/"`);
         refresh.restart();
     }
 
