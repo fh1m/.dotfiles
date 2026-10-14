@@ -1,5 +1,5 @@
 # Sensei · fast daily terminal. Kitty remains available for the Wrayth deck.
-# Match the live Kitty palette, ZedMono metrics and opaque compositor profile.
+# Match the live Kitty palette, Iosevka metrics and opaque compositor profile.
 [general]
 live_config_reload = true
 

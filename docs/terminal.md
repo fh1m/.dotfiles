@@ -6,7 +6,7 @@
 
 | Same feel | Implementation |
 |---|---|
-| ZedMono Nerd Font Mono, 11.5 pt; black/red/blue palette | `~/.config/alacritty/alacritty.toml` |
+| Iosevka Nerd Font Mono, 11.2 pt; black/red/blue palette | `~/.config/alacritty/alacritty.toml` |
 | Independent terminal tabs and panes | tmux windows/panes; `BAY-NN` clients share the persistent `Sensei` window set |
 | Closing a terminal preserves work | systemd supervises the tmux server; detached windows remain in `Sensei` |
 | Fast image preview | `chafa image.png`; character-cell image, less fidelity than Kitty graphics |
@@ -41,7 +41,7 @@ The tmux prefix is the backtick (`` ` ``). The six retained plugins each have on
 
 The base session starts at login. The user service runs tmux in the foreground with restart supervision, so a successful one-shot startup cannot hide a vanished server. Each daily window gets its own `BAY-NN` view so switching windows in one terminal does not move another. On close, that view disappears; the window and its processes remain in `Sensei`. Use `` ` + s `` to revisit them. A reboot cannot keep live processes; resurrect saves layouts and supported commands on demand.
 
-The statusline is one continuous dark rail: an operator block, linked BAY, active window in muted red, quiet inactive windows, a thin neutral separator, and the current path. Prefix, copy, zoom, and synchronized panes appear only when active. It uses ZedMono Nerd Font Mono's regular/bold faces with Alacritty's native box drawing; no underline or pointy Powerline separators.
+The statusline is one continuous dark rail: an operator block, linked BAY, active window in muted red, quiet inactive windows, a thin neutral separator, and the current path. Prefix, copy, zoom, and synchronized panes appear only when active. It uses Iosevka Nerd Font Mono's regular/bold faces with Alacritty's native box drawing; no underline or pointy Powerline separators.
 
 Task windows opened by widgets use Alacritty **without attaching to the daily tmux session**, so a package or Bluetooth command cannot take over your workbench. `sim-console` explicitly offloads its terminal to NVIDIA when training mode is off; the ordinary terminal stays on Intel. A scratch Alacritty run reported RTX 2060 OpenGL 3.3 successfully. The `.desktop` entry and `xdg-terminals.list` select the same launcher.
 
