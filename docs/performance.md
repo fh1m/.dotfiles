@@ -100,6 +100,7 @@ Intel Render/3D with the deck open on the focused HDMI output, read with `intel_
 | State | Intel Render/3D |
 |---|---|
 | Deck closed | about 10% |
+| Deck terminal open, idle (Alacritty, no output) | about 13% (12 one-second samples, 2026-10-14) |
 | Deck open | about 73% |
 | Deck open, deck stage hidden (live copy, reverted) | about 52% |
 | Deck open, deck layer surface unmapped (live copy, reverted) | about 50% |
