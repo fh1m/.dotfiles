@@ -31,9 +31,9 @@ def iface(path,name):return dbus.Interface(dbus.SessionBus().get_object(NAME,pat
 def props(path,name):
     try:return plain(iface(path,'org.freedesktop.DBus.Properties').GetAll(name,timeout=2))
     except dbus.DBusException:return {}
-def run(args,timeout=8):
+def run(args,timeout=8,stdin=None):
     try:
-        r=subprocess.run(args,capture_output=True,text=True,timeout=timeout);return {'ok':r.returncode==0,'output':(r.stdout+'\n'+r.stderr).strip()[-14000:]}
+        r=subprocess.run(args,capture_output=True,text=True,timeout=timeout,input=stdin);return {'ok':r.returncode==0,'output':(r.stdout+'\n'+r.stderr).strip()[-14000:]}
     except subprocess.TimeoutExpired as e:return {'ok':False,'output':((e.stdout or b'').decode() if isinstance(e.stdout,bytes) else e.stdout or '')+'\nStill waiting or timed out. Refresh status before retrying.'}
 def job_start(args,label):
     folder=STATE/'jobs';folder.mkdir(exist_ok=True,mode=0o700);path=folder/(str(time.time_ns())+'.json')
@@ -261,7 +261,8 @@ def action(a,id='',args=None):
         return run(['adb','connect',args[0]])
     if a=='adb-pair':
         if not re.fullmatch(r'[a-zA-Z0-9.:-]+',args[0]) or not re.fullmatch(r'[0-9]{6}',args[1]):raise ValueError('Enter pairing host:port and the six-digit Android code.')
-        return run(['adb','pair',args[0],args[1]])
+        # The code goes on stdin: argv is visible to every local user in /proc.
+        return run(['adb','pair',args[0]],stdin=args[1]+'\n')
     if a=='sync-folder':
         folder=args[0]
         if folder not in ('models','transfers'):raise ValueError('Unknown Phone folder.')
