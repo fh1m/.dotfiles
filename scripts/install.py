@@ -4,6 +4,22 @@ import argparse, datetime, json, os, re, shutil, subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+# Machine state written by the desktop itself. Installed only when missing, so
+# a live choice (a validated GPU record, a touchpad switch, a wallpaper pool)
+# is never reset to the repository's default.
+SEED_ONLY = {
+    '.config/hypr/chrome-gpu.json',
+    '.config/hypr/zenbook-controls.json',
+    '.config/wrayth/wallpapers.json',
+    '.config/wrayth/runner',
+    '.config/wrayth/profile',
+}
+# Caches and editor leftovers are never configuration.
+SKIPPED_PARTS = {'__pycache__', '.DS_Store'}
+SKIPPED_SUFFIXES = ('.pyc', '.tmp', '.bak', '.dotfiles-new')
+
+def wanted(relative):
+    return not (set(relative.parts) & SKIPPED_PARTS) and not relative.name.endswith(SKIPPED_SUFFIXES)
 
 def render(data, home, hardware):
     try:
@@ -32,9 +48,13 @@ def install(home, apply=False, hardware='generic'):
         if not source.is_file() or source.name.endswith('.example'):
             continue
         relative = source.relative_to(ROOT / 'home')
+        if not wanted(relative):
+            continue
         if relative.parts[:2] == ('.local', 'bin') and source.name in linked:
             continue
         dest = home / relative
+        if relative.as_posix() in SEED_ONLY and (dest.exists() or dest.is_symlink()):
+            continue
         data = render(source.read_bytes(), home, hardware)
         if dest.is_file() and not dest.is_symlink() and dest.read_bytes() == data:
             continue
@@ -88,7 +108,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--target-home', type=Path, default=Path.home())
-    parser.add_argument('--hardware', choices=['generic', 'zenbook'], default='generic')
+    # No default: a generic install strips the dual-panel monitor rules, so
+    # applying it must be a deliberate choice, never an accident of the default.
+    parser.add_argument('--hardware', choices=['generic', 'zenbook'], default=None)
     args = parser.parse_args()
+    if args.hardware is None: args.hardware = 'generic' if not args.apply else None
     if os.geteuid() == 0: parser.error('Run as your desktop user, not root.')
+    if args.apply and args.hardware is None: parser.error('--apply needs --hardware generic or --hardware zenbook.')
     print(json.dumps(install(args.target_home, args.apply, args.hardware), indent=2))

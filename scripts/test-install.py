@@ -15,4 +15,19 @@ with tempfile.TemporaryDirectory(prefix='dotfiles-test-') as directory:
     assert str(home) in (home/'.config/hypr/hyprland.lua').read_text()
     assert (home/'.local/bin/wrayth-shell').is_symlink()
     assert m.install(home, True)['changed'] == []
-print('PASS: dry run, home rendering, backup, generic monitors, helper links, idempotence')
+    # Caches never reach the home directory.
+    assert not any('__pycache__' in p.parts or p.suffix == '.pyc' for p in home.rglob('*'))
+    # Seed-only state keeps a live value, and is seeded only when missing.
+    state = home/'.config/hypr/zenbook-controls.json'
+    state.write_text('{"touchpad": false}\n')
+    assert '.config/hypr/zenbook-controls.json' not in m.install(home, True)['changed']
+    assert state.read_text() == '{"touchpad": false}\n'
+    fresh = Path(tempfile.mkdtemp(prefix='dotfiles-seed-'))
+    m.install(fresh, True)
+    assert (fresh/'.config/hypr/zenbook-controls.json').is_file()
+print('PASS: dry run, home rendering, backup, generic monitors, helper links, idempotence, seed-only state, no caches')
+# --apply needs an explicit hardware choice; the CLI refuses an implicit one.
+import subprocess, sys
+refused = subprocess.run([sys.executable, str(Path(__file__).with_name('install.py')), '--apply'], capture_output=True, text=True)
+assert refused.returncode != 0 and '--hardware' in refused.stderr, refused.stderr
+print('PASS: --apply without --hardware is refused')
