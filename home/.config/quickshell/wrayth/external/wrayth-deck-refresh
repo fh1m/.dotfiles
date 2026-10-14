@@ -73,8 +73,13 @@ sys.exit(1)
 # the check read empty, and the refresh cleared a prompt with `echo
 # do-not-lose-me` sitting in it. A check that fails open is worse than no check.
 typed=0
+unreadable=0
 if [ "$busy" = 0 ]; then
-    screen=$(kitty_rc get-text --extent screen || true)
+    # An empty read is not an empty prompt. It means kitty did not answer, and
+    # that refuses, the same as a typed line does: clearing on a guess is the
+    # one thing this check exists to prevent.
+    screen=$(kitty_rc get-text --extent screen) || screen=
+    [ -n "$screen" ] || unreadable=1
     typed=$(printf '%s' "$screen" | python3 -c '
 import re, sys
 text = sys.stdin.read()
@@ -91,46 +96,12 @@ print(1 if (m and text[m.end():].strip()) else 0)
 fi
 
 # --- A refusal says why, and touches nothing ---------------------------------
-# **Written to the window tty, never sent as input.** Sending it as input would
-# append it to whatever was being typed, which is the one thing this must not
-# do. SIGWINCH afterwards is what makes readline repaint the prompt and the
-# half-typed command under it.
-# Two ways to say it, because the two cases are not alike.
-#
-# **At a prompt with something typed in it**, the note goes through the shell:
-# the reason is left in a file and `SIGUSR2` is sent, and the shell's own trap
-# prints it *between* readline's reads -- so bash redraws the prompt and the
-# half-typed command underneath it by itself. Writing to the tty here instead
-# left the display out of step with readline's buffer until the next keystroke.
-#
-# **While a command is running** there is no prompt to redraw and the trap
-# would not run until the command finished, which is a note arriving minutes
-# after the keypress. That one is written straight to the window's tty, where
-# it lands in the command's own output, which is where the user is looking.
-#
-# Neither is ever sent as *input*: that would append the note to whatever was
-# being typed, which is the one thing this must not do.
-note_via_shell() {
-    [ "$QUIET" = 1 ] && return 0
-    local tty
-    tty=$(readlink -f "/proc/$shell_pid/fd/1" 2> /dev/null) || return 0
-    case "$tty" in
-        /dev/pts/*) ;;
-        *) return 0 ;;
-    esac
-    # **The note goes below the prompt, and the prompt is left alone.** Two
-    # other ways were tried and both were worse. A `SIGUSR2` trap does not run
-    # while readline is waiting -- bash defers traps until readline returns, so
-    # the note arrived only when the user pressed Enter. And wiping the prompt
-    # line to print in its place did print the note, but nothing brings
-    # readline back: `SIGWINCH` moved the cursor down and redrew nothing, so
-    # the half-typed command was still in the buffer and no longer on the
-    # screen. Printing underneath leaves the command where the user can see it,
-    # and readline repaints over the note on the next keystroke.
-    printf '\n\033[2m-- deck refresh skipped: %s --\033[0m\n' "$1" > "$tty" 2> /dev/null || true
-}
-
-note_via_tty() {
+# The note goes to the window's own tty, below the prompt, and is never sent as
+# input: input would append it to whatever was being typed. The prompt and any
+# half-typed command stay where they are, and readline repaints over the note on
+# the next keystroke. A command that is running has no prompt, so the note lands
+# in its output, which is where the user is looking.
+note() {
     [ "$QUIET" = 1 ] && return 0
     local tty
     tty=$(readlink -f "/proc/$shell_pid/fd/1" 2> /dev/null) || return 0
@@ -142,11 +113,15 @@ note_via_tty() {
 }
 
 if [ "$busy" = 1 ]; then
-    note_via_tty "a command is running"
+    note "a command is running"
+    exit 0
+fi
+if [ "$unreadable" = 1 ]; then
+    note "the prompt could not be read"
     exit 0
 fi
 if [ "$typed" = 1 ]; then
-    note_via_shell "there is something typed at the prompt"
+    note "there is something typed at the prompt"
     exit 0
 fi
 
