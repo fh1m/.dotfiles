@@ -26,7 +26,7 @@ out() { printf '%s|%s|%s\n' "$1" "$2" "${3:-}"; }
 # the exception.
 measure() {
     local host=$1 port=${2:-443} icmp t0 t1
-    icmp=$(ping -c1 -W2 "$host" 2>/dev/null | sed -n 's/.*time=\([0-9.]*\).*/\1/p')
+    icmp=$(ping -c1 -W2 -- "$host" 2>/dev/null | sed -n 's/.*time=\([0-9.]*\).*/\1/p')
     if [ -n "$icmp" ]; then printf '%.0f icmp' "$icmp"; return 0; fi
     t0=$(date +%s%N)
     # host/port are passed as positional args, never interpolated into the
