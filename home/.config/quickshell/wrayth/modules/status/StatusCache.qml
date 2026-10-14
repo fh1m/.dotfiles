@@ -18,7 +18,7 @@ Scope {
     // printed on camera by `wrayth-welcome`. The planner's own file still
     // holds the real one; this is a cache the shell rewrites constantly and
     // puts back the moment demo mode ends.
-    readonly property string activeTask: (Planner.ordered.find(entry => !entry.done)?.label ?? "").replace(/'/g, "")
+    readonly property string activeTask: shellValue(Planner.ordered.find(entry => !entry.done)?.label ?? "")
 
     // Every value the deck terminal's fetch and welcome message show comes from
     // here, so neither ever runs checkupdates, arch-audit or systemctl itself.
@@ -26,7 +26,7 @@ Scope {
     // to leave the shell: `fastfetch`'s title module reads `{$WR_TITLE}`,
     // `_wrayth_fetch` exports it from here, and without this the recording
     // would carry `<user>@<hostname>` in 20 px type above the prompt.
-    readonly property string fetchTitle: Demo.fetchTitle(Runner.user, Machine.hostname).replace(/'/g, "")
+    readonly property string fetchTitle: shellValue(Demo.fetchTitle(Runner.user, Machine.hostname))
 
     // **The shell prompt's identity, for every terminal already open.** `\u`
     // and `\h` are bash's own escapes and cannot be overridden, so
@@ -34,6 +34,14 @@ Scope {
     // it reads on every prompt, a terminal open before the recording began
     // picks the masked identity up at its next line.
     readonly property string promptIdent: Demo.promptIdentity(Runner.user, Machine.hostname).replace(/[^A-Za-z0-9@._-]/g, "")
+
+    // Every value below is written inside single quotes and then `.`-sourced by
+    // bash in wrayth-fetch and wrayth-welcome. A quote, newline or carriage
+    // return in a value would end the quoting early and run the rest of the
+    // value as shell, so all three are dropped here, in every quoted field.
+    function shellValue(value: string): string {
+        return String(value).replace(/['\n\r]/g, "");
+    }
 
     readonly property string contents: `QUEUE_DONE=${Planner.done}
 QUEUE_TOTAL=${Planner.total}
@@ -44,10 +52,10 @@ VULN_FIXABLE=${Vuln.fixReady.length}
 ICE=${SystemStatus.failedUnits}
 PKG=${SystemStatus.pendingUpdates}
 SHIELD=${SystemStatus.shieldState === "armed" ? "ARMED" : SystemStatus.shieldState === "down" ? "DOWN" : "UNKNOWN"}
-SHIELD_FW='${SystemStatus.shieldFirewall.replace(/['\n\r]/g, "")}'
-PROFILE='${Theme.profile.replace(/['\n\r]/g, "")}'
+SHIELD_FW='${shellValue(SystemStatus.shieldFirewall)}'
+PROFILE='${shellValue(Theme.profile)}'
 FETCH_TITLE='${root.fetchTitle}'
-HANDLE='${Demo.handle(Runner.handle).replace(/'/g, "")}'
+HANDLE='${shellValue(Demo.handle(Runner.handle))}'
 PROMPT_IDENT='${root.promptIdent}'
 `
 
