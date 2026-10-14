@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Publish Signal Ledger's stable colors for the shell and terminal tools."""
+"""Publish the palette of the main wallpaper for the shell and terminal tools.
+
+The wallpaper is the visual guide: its most vivid, readable colour becomes the
+accent, and the surfaces take its hue at near-black lightness. An image with no
+usable colour falls back to the Signal Ledger tokens.
+"""
 
 import json
 import os
@@ -8,11 +13,80 @@ import re
 import subprocess
 import sys
 import tempfile
+import colorsys
+
+from PIL import Image
 
 home = Path.home()
 state = home / ".config/sensei"
 wallpapers = state / "wallpapers.json"
 out = state / "wallpaper-palette.json"
+
+
+# Used when the wallpaper has no usable colour (greyscale or near-empty).
+FALLBACK = {
+    "ground": "#090807", "surface": "#141210", "raised": "#1e1b18",
+    "primary": "#f23d70", "vibrant": "#f23d70", "secondary": "#76bcc0",
+    "tertiary": "#d6a65e", "text": "#e8e2da", "muted": "#a9a29a",
+    "outline": "#39342f", "error": "#f23d70",
+}
+DANGER = "#ff647f"
+
+
+def _clamp(value, low, high):
+    return max(low, min(high, value))
+
+
+def _hex(hue, lightness, saturation):
+    rgb = colorsys.hls_to_rgb(hue % 1.0, _clamp(lightness, 0, 1), _clamp(saturation, 0, 1))
+    return "#%02x%02x%02x" % tuple(round(channel * 255) for channel in rgb)
+
+
+def _hue_gap(a, b):
+    gap = abs(a - b) % 1.0
+    return min(gap, 1.0 - gap)
+
+
+def palette_from_image(image):
+    """Derive the UI palette from the image's own colours."""
+    picture = Image.open(image).convert("RGB")
+    picture.thumbnail((160, 160))
+    quantised = picture.quantize(colors=12, method=Image.Quantize.MEDIANCUT)
+    raw = quantised.getpalette()
+    counts = quantised.getcolors()
+    total = sum(count for count, _ in counts) or 1
+    swatches = []
+    for count, index in counts:
+        red, green, blue = (raw[index * 3 + i] / 255 for i in range(3))
+        hue, lightness, saturation = colorsys.rgb_to_hls(red, green, blue)
+        swatches.append((count / total, hue, lightness, saturation))
+    # Vivid enough to see, and not so dark or pale that it disappears on black.
+    usable = [item for item in swatches if item[3] >= 0.30 and 0.12 <= item[2] <= 0.85]
+    if not usable:
+        return dict(FALLBACK)
+    weight = lambda item: item[0] * item[3] * (1 - abs(item[2] - 0.55))
+    accent = max(usable, key=weight)
+    hue = accent[1]
+    primary = _hex(hue, _clamp(accent[2], 0.54, 0.66), max(accent[3], 0.75))
+    others = [item for item in usable if _hue_gap(item[1], hue) >= 0.12]
+    if others:
+        other = max(others, key=lambda item: item[0] * item[3])
+        secondary = _hex(other[1], 0.64, max(other[3], 0.45))
+    else:
+        secondary = _hex(hue + 0.5, 0.64, 0.45)
+    return {
+        "ground": _hex(hue, 0.035, 0.22),
+        "surface": _hex(hue, 0.065, 0.20),
+        "raised": _hex(hue, 0.10, 0.20),
+        "primary": primary,
+        "vibrant": _hex(hue, 0.66, 1.0),
+        "secondary": secondary,
+        "tertiary": _hex(hue - 0.06, 0.66, 0.60),
+        "text": _hex(hue, 0.92, 0.12),
+        "muted": _hex(hue, 0.66, 0.08),
+        "outline": _hex(hue, 0.22, 0.12),
+        "error": DANGER,
+    }
 
 
 def write_if_changed(path, value):
@@ -42,21 +116,17 @@ def main():
         image = Path(sys.argv[1] if len(sys.argv) > 1 else config["displays"]["eDP-1"]["file"]).expanduser()
         if not image.is_file():
             raise ValueError(f"main wallpaper unavailable: {image}")
-        fingerprint = [str(image), image.stat().st_mtime_ns, image.stat().st_size, 8, "signal-ledger-1"]
+        fingerprint = [str(image), image.stat().st_mtime_ns, image.stat().st_size, 8, "wallpaper-derived-1"]
         cached = json.loads(out.read_text()) if out.exists() else {}
         if cached.get("fingerprint") == fingerprint:
             palette = cached
         else:
-            palette = {
-                "wallpaper": str(image), "fingerprint": fingerprint,
-                "ground": "#090807", "surface": "#141210",
-                "raised": "#1e1b18", "primary": "#f23d70",
-                "vibrant": "#f23d70",
-                "secondary": "#76bcc0",
-                "tertiary": "#d6a65e",
-                "text": "#e8e2da", "muted": "#a9a29a",
-                "outline": "#39342f", "error": "#f23d70",
-            }
+            try:
+                colours = palette_from_image(image)
+            except (OSError, ValueError) as exc:
+                print(f"sensei-palette: using fallback colours: {exc}", file=sys.stderr)
+                colours = dict(FALLBACK)
+            palette = {"wallpaper": str(image), "fingerprint": fingerprint, **colours}
         write_if_changed(out, json.dumps(palette, indent=2) + "\n")
 
         terminal = home / ".config/alacritty/alacritty.toml"

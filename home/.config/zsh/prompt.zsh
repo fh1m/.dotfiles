@@ -14,9 +14,24 @@ fi
 [[ ${functions[precmd]-} == *last_exit_code* ]] && unfunction precmd
 [[ ${functions[preexec]-} == *timer=* ]] && unfunction preexec
 
+# Open shells follow the wallpaper: sensei-palette rewrites the palette file,
+# and the next prompt reloads it when its modification time has changed.
+zmodload -F zsh/stat b:zstat 2>/dev/null
+_sensei_palette_file=~/.config/zsh/sensei-palette.zsh
+_sensei_palette_mtime=0
+_sensei_palette_watch() {
+    local -a info
+    zstat -A info +mtime $_sensei_palette_file 2>/dev/null || return 0
+    (( info[1] == _sensei_palette_mtime )) && return 0
+    _sensei_palette_mtime=$info[1]
+    source $_sensei_palette_file
+    [[ -r ~/.config/fzf/sensei-colors ]] && export FZF_DEFAULT_OPTS="${FZF_DEFAULT_OPTS%% --color=*} $(<~/.config/fzf/sensei-colors)"
+}
+
 _sensei_prompt_start() { _sensei_started=$EPOCHREALTIME; }
 _sensei_prompt_refresh() {
     local result=$? elapsed=0 context='' branch='' location=${PWD/#$HOME/~}
+    _sensei_palette_watch
     local paper=${WHITE:-'%F{#e8e2da}'} accent=${BLUE:-'%F{#f23d70}'} dim='%F{#9b9290}'
     if [[ -n ${_sensei_started-} ]]; then
         elapsed=$(( EPOCHREALTIME - _sensei_started ))

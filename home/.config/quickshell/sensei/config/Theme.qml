@@ -52,19 +52,20 @@ Singleton {
     }
     readonly property string description: Profiles.descriptions[profile] ?? ""
 
-    // Signal Ledger / foundation. These are independent of wallpaper sampling:
-    // signal means identity and active work, amber means caution, cyan means a
-    // connected external path. A wallpaper change may alter imagery, not UI
-    // semantics. Components below use these tokens, including legacy aliases.
-    readonly property color ink: "#090807"
-    readonly property color paper: "#e8e2da"
-    readonly property color paperMuted: "#a9a29a"
-    readonly property color signalRed: "#f23d70"
-    readonly property color semanticCyan: "#76bcc0"
+    // The main wallpaper is the visual guide: sensei-palette writes its colours to
+    // wallpaper-palette.json, and the core tokens follow it. The Signal Ledger
+    // values are the fallback until that file exists. Amber stays fixed: it is
+    // the caution colour whatever the wallpaper is. Components below use these
+    // tokens, including legacy aliases.
+    readonly property color ink: adaptive.ground ?? "#090807"
+    readonly property color paper: adaptive.text ?? "#e8e2da"
+    readonly property color paperMuted: adaptive.muted ?? "#a9a29a"
+    readonly property color signalRed: adaptive.primary ?? "#f23d70"
+    readonly property color semanticCyan: adaptive.secondary ?? "#76bcc0"
     readonly property color semanticAmber: "#d6a65e"
-    readonly property color surfaceOne: "#141210"
-    readonly property color surfaceTwo: "#1e1b18"
-    readonly property color rule: "#39342f"
+    readonly property color surfaceOne: adaptive.surface ?? "#141210"
+    readonly property color surfaceTwo: adaptive.raised ?? "#1e1b18"
+    readonly property color rule: adaptive.outline ?? "#39342f"
     readonly property color inactiveTab: "#b9b3aa"
     readonly property int radiusSmall: 2
     readonly property int radiusPanel: 5
