@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Bluetooth
+import qs.config
 Singleton {
  id:root
  property var devices:[]
@@ -18,9 +19,19 @@ Singleton {
  onSelectedIdChanged:updateDevices(devices)
  readonly property var device:devices.find(d=>d.id===selectedId)||devices[0]||({plugins:[],notifications:[],commands:[],directories:{},battery:{}})
  readonly property bool ready:!!device.isPaired&&!!device.isReachable
- // Set to your phone's Bluetooth address locally; never commit a real address.
- readonly property string phoneAddress:""
- readonly property var phoneBluetooth:phoneAddress===""?null:((Bluetooth.devices?.values??[]).find(d=>d.address?.toUpperCase()===phoneAddress.toUpperCase())??null)
+ // The phone's Bluetooth address is read from a machine-local file, never from
+ // this repo, which is public. Write it there once, in colon form:
+ // ~/.config/sensei/phone-address. No file means no phone is matched.
+ property string phoneAddress:""
+ FileView {
+   path:`${Paths.configDir}/phone-address`
+   watchChanges:true
+   printErrors:false
+   onLoaded:root.phoneAddress=text().trim().toUpperCase()
+   onFileChanged:reload()
+   onLoadFailed:error=>root.phoneAddress=""
+ }
+ readonly property var phoneBluetooth:phoneAddress===""?null:((Bluetooth.devices?.values??[]).find(d=>d.address?.toUpperCase()===phoneAddress)??null)
  readonly property bool phoneNearby:phoneBluetooth?.connected??false
  property var actionQueue:[]
  property string message:""
