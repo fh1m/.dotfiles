@@ -96,6 +96,14 @@ Singleton {
         return (tag || "").trim().toUpperCase().slice(0, 8);
     }
 
+    // **A gig name cannot hold `|` or a line break.** The file writes a gig as
+    // `name | TAG` and reads the tag back from the last `|`, so a name with a
+    // bar in it and no tag came back as a name cut short and a tag. A line
+    // break would start a new, unintended gig. Both are dropped on the way in.
+    function _normName(name: string): string {
+        return (name || "").replace(/[|\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+    }
+
     function _commit(next: var): void {
         tasks = next;
         _save();
@@ -105,7 +113,7 @@ Singleton {
     function append(name: string, tag: string): void {
         if (Demo.active)
             return;
-        const clean = (name || "").trim();
+        const clean = root._normName(name);
         if (clean === "")
             return;
         _commit(tasks.concat([{
@@ -121,7 +129,7 @@ Singleton {
             return;
         if (index < 0 || index >= tasks.length)
             return;
-        const clean = (name || "").trim();
+        const clean = root._normName(name);
         if (clean === "") {
             root.remove(index);
             return;
@@ -154,7 +162,7 @@ Singleton {
             return;
         _commit(list.map(t => ({
             done: !!t.done,
-            name: t.name,
+            name: root._normName(t.name),
             tag: root._normTag(t.tag)
         })));
     }
