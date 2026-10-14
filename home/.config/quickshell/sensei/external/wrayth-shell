@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+#
+# wrayth-shell -- start the wrayth shell, and never leave a locked session
+# without a lockscreen.
+#
+# Hyprland's start-up runs this instead of `qs -c wrayth` directly. It runs the
+# shell in the foreground and waits. When the shell exits:
+#
+#   - if Hyprland says the session is still locked (`hyprctl locked`), the lock
+#     client has died -- a crash, a kill, or the lockscreen handing itself to a
+#     fresh process after it lost the keyboard -- so the shell is started again
+#     at once. The new shell sees the lock at start-up and takes it over
+#     (Hyprland allows that with misc:allow_session_lock_restore, which
+#     hypr-wrayth.lua sets). The session is never unlocked in between: the old
+#     client never sent an unlock, so Hyprland kept the session locked;
+#   - if it fails while unlocked, bring the desktop back as well;
+#   - a clean, intentional stop while unlocked ends the supervisor.
+#
+# Nothing here can unlock anything. It only ever starts a lockscreen.
+#
+# WRAYTH_QS_ARGS overrides how the shell is started (default `-c wrayth`); the
+# build's lock tests use it to point at a scratch copy with a test PAM stack.
+
+set -u
+
+# Display-manager sessions have a minimal PATH. Widget actions and launchers
+# must resolve the same user tools that an interactive shell can see.
+export PATH="$HOME/.local/bin:$PATH"
+
+read -r -a QS_ARGS <<< "${WRAYTH_QS_ARGS:--c wrayth}"
+
+# A private rebuild tracks Qt's private ABI without replacing the distro
+# package. Never launch it after a Qt version change; the fallback remains the
+# packaged binary until the local build is refreshed.
+qs_bin="${WRAYTH_QS_BIN:-qs}"
+local_qs="${HOME}/.local/opt/sensei-quickshell/bin/qs"
+qt_stamp="${HOME}/.local/opt/sensei-quickshell/qt-version"
+if [ -z "${WRAYTH_QS_BIN:-}" ] && [ -x "$local_qs" ] && [ -r "$qt_stamp" ]; then
+    current_qt="$(/usr/lib/qt6/bin/qtpaths --query QT_VERSION 2>/dev/null || true)"
+    if [ -n "$current_qt" ] && [ "$(cat "$qt_stamp")" = "$current_qt" ]; then
+        qs_bin="$local_qs"
+    fi
+fi
+
+runtime="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+tag="$(printf '%s' "${QS_ARGS[*]}" | cksum | cut -d' ' -f1)"
+
+# One supervisor per shell per login: a second one exits at once.
+exec 9> "$runtime/wrayth-shell-$tag.lock"
+flock -n 9 || exit 0
+
+locked() {
+    [ "$(hyprctl locked 2> /dev/null)" = "true" ]
+}
+
+# A live instance answers IPC; -n below makes a duplicate exit at once, and
+# this tells that apart from a death.
+alive() {
+    "$qs_bin" "${QS_ARGS[@]}" ipc show > /dev/null 2>&1
+}
+
+starts=()
+logdir="${XDG_STATE_HOME:-$HOME/.local/state}/wrayth"
+mkdir -p "$logdir"
+while :; do
+    WRAYTH_SUPERVISED=1 QS_NO_RELOAD_POPUP=1 "$qs_bin" "${QS_ARGS[@]}" -n >> "$logdir/shell.log" 2>&1 9>&-
+    rc=$?
+
+    if ! locked && [ "$rc" -eq 0 ]; then
+        exit 0
+    fi
+    # Another instance is running and holding things; leave it be.
+    alive && exit 0
+
+    # Relaunch straight away, but back off if the shell keeps dying: more than
+    # five starts in thirty seconds waits five seconds between tries. It never
+    # gives up after a crash or while locked -- giving up is the wedge.
+    now=$(date +%s)
+    kept=()
+    for t in "${starts[@]}"; do
+        [ $((now - t)) -lt 30 ] && kept+=("$t")
+    done
+    starts=("${kept[@]}" "$now")
+    if [ "${#starts[@]}" -gt 5 ]; then
+        if [ "$qs_bin" = "$local_qs" ]; then
+            printf 'Local Quickshell failed repeatedly; falling back to packaged qs.\n' >> "$logdir/shell.log"
+            qs_bin=qs
+            starts=()
+        fi
+        sleep 5
+    else
+        sleep 0.2
+    fi
+done
