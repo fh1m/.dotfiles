@@ -24,7 +24,7 @@
 #      repository, or from --source) -- nothing else is downloaded, and nothing
 #      from anywhere else is run;
 #   3. sets up everything else as you: sensei's folders (owner-only), the
-#      sensei-* helpers in ~/.local/bin, the kitty and hypridle configs, the
+#      sensei-* helpers in ~/.local/bin, the hypridle config, the
 #      bundled Chakra Petch font, the six preset wallpapers in
 #      ~/Pictures/wallpapers/sensei, one line in ~/.bashrc, and Hyprland:
 #        - no Hyprland config yet, or only Hyprland's own generated default,
@@ -78,7 +78,7 @@ BIN_SCRIPTS=(sensei-profile sensei-deck-reset sensei-deck-refresh sensei-fetch
 # them, installed in the same one command because a desktop should simply
 # work. (power-profiles-daemon and ufw are deliberately left out: they can
 # conflict with what a machine already runs. sensei works without them.)
-REQUIRED=(quickshell hyprland kitty networkmanager pipewire wireplumber python
+REQUIRED=(quickshell hyprland networkmanager pipewire wireplumber python
           python-pillow python-gobject fontconfig ttf-jetbrains-mono
           ttf-jetbrains-mono-nerd noto-fonts-cjk)
 RECOMMENDED=(cava fastfetch pacman-contrib arch-audit brightnessctl bluez
@@ -229,6 +229,8 @@ uninstall() {
     for s in "${BIN_SCRIPTS[@]}"; do unlink_ours "$BIN/$s" "$src/external/$s" "bin/$s"; done
     unlink_ours "$CONFIG/sensei/fastfetch.jsonc"     "$src/external/fastfetch.jsonc"     "fastfetch.jsonc"
     unlink_ours "$CONFIG/sensei/emblem-fallback.txt" "$src/external/emblem-fallback.txt" "emblem-fallback.txt"
+    # Legacy: kitty was the deck terminal before Alacritty. Unlink only the files
+    # this installer made, so an old install does not keep stale kitty links.
     if same "$CONFIG/kitty/kitty.conf" "$src/external/kitty.conf" && [ -f "$CONFIG/kitty/sensei-colors.conf" ]; then
         rm -f "$CONFIG/kitty/sensei-colors.conf"
         did rm "kitty colours"
@@ -435,13 +437,9 @@ step "4. Helpers and configs"
 for s in "${BIN_SCRIPTS[@]}"; do link_to "$BIN/$s" "$SRC/external/$s" "bin/$s"; done
 link_to "$CONFIG/sensei/fastfetch.jsonc"     "$SRC/external/fastfetch.jsonc"     "fastfetch.jsonc"
 link_to "$CONFIG/sensei/emblem-fallback.txt" "$SRC/external/emblem-fallback.txt" "emblem-fallback.txt"
-link_to "$CONFIG/kitty/kitty.conf"           "$SRC/external/kitty.conf"          "kitty.conf"
-link_to "$CONFIG/kitty/tab_bar.py"           "$SRC/external/tab_bar.py"          "kitty tab_bar.py"
-# kitty.conf includes the per-profile colours sensei-profile writes; made once
-# now so the first terminal opens in the right colours.
-# The same call makes the deck terminal's recoloured distro logo, which must
-# exist before the deck terminal first opens.
-if [ ! -f "$CONFIG/kitty/sensei-colors.conf" ] || [ ! -s "$CACHE_DIR/emblem.raw" ]; then
+# The deck terminal is Alacritty now; its recoloured distro logo must exist
+# before the deck terminal first opens, so it is made here once.
+if [ ! -s "$CACHE_DIR/emblem.raw" ]; then
     "$BIN/sensei-profile" -n Circuit >/dev/null 2>&1 && did set "terminal colours and logo"
 fi
 

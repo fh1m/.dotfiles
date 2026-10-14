@@ -24,14 +24,11 @@ SEED_ONLY = {
     '.config/qt6ct/colors/matugen.conf',
     '.config/zsh/sensei-palette.zsh',
     '.config/fzf/sensei-colors',
-    '.config/kitty/colors.conf',
 }
 # Live paths that are symlinks into the sensei tree, not copies. A copy here would
 # shadow the file the shell loads, so each is linked to the external file instead.
 LINKS = {
     '.config/hypr/hypr-sensei.lua': '.config/quickshell/sensei/external/hypr-sensei.lua',
-    '.config/kitty/kitty.conf': '.config/quickshell/sensei/external/kitty.conf',
-    '.config/kitty/tab_bar.py': '.config/quickshell/sensei/external/tab_bar.py',
     '.config/sensei/fastfetch.jsonc': '.config/quickshell/sensei/external/fastfetch.jsonc',
     '.config/sensei/emblem-fallback.txt': '.config/quickshell/sensei/external/emblem-fallback.txt',
 }

@@ -95,8 +95,8 @@ try:
     if not code.exists():
         code = ROOT / 'examples/robotics-bringup.py'
     showcase_window('sensei-showcase-lab',
-                    ['kitty', '-o', 'font_size=10.4', '--class', 'sensei-showcase-lab',
-                     '--title', 'Mongla // optical flow', '--hold', 'bat',
+                    ['alacritty', '-o', 'font.size=10.4', '--class', 'sensei-showcase-lab',
+                     '-T', 'Mongla // optical flow', '--hold', '-e', 'bat',
                      '--paging=never', '--style=numbers,header', '--color=always',
                      '--line-range=84:113', str(code)],
                     70, 145, 950, 835)

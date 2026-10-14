@@ -1,7 +1,6 @@
 # Review package names for your current Arch release before installing.
 hyprland
 quickshell
-kitty
 alacritty
 chafa
 tmux

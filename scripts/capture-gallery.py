@@ -29,11 +29,11 @@ try:
  hypr('hl.dsp.focus({workspace="4"})')
  shot('desktop-empty-main')
  shot('desktop-empty-screenpad','DP-2')
- subprocess.Popen(['kitty','-o','font_size=10.4','--class','sensei-showcase','--title','Mongla // held-out flow fit','--hold','bat','--paging=never','--style=numbers,header','--color=always',*ROS_RANGE,str(ROS_SOURCE)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+ subprocess.Popen(['alacritty','-o','font.size=10.4','--class','sensei-showcase','-T','Mongla // held-out flow fit','--hold','-e','bat','--paging=never','--style=numbers,header','--color=always',*ROS_RANGE,str(ROS_SOURCE)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  time.sleep(1.5)
  # The second terminal is real source, not fabricated telemetry or a chat.
  hypr('hl.dsp.focus({workspace="5"})')
- subprocess.Popen(['kitty','-o','font_size=10.4','--class','sensei-showcase','--title','CUDA // container recipe','--hold','bat','--paging=never','--style=numbers,header','--color=always',str(ROOT/'examples/compose.robotics.yaml')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+ subprocess.Popen(['alacritty','-o','font.size=10.4','--class','sensei-showcase','-T','CUDA // container recipe','--hold','-e','bat','--paging=never','--style=numbers,header','--color=always',str(ROOT/'examples/compose.robotics.yaml')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  time.sleep(1)
  hypr('hl.dsp.focus({workspace="4"})');ipc('dropdown','close')
  shot('desktop-main');shot('desktop-screenpad','DP-2')

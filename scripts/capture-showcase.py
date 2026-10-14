@@ -49,7 +49,7 @@ def window_for(cls):
 
 
 def terminal(cls, title, args, x, y, width, height):
-    subprocess.Popen(['kitty', '-o', 'font_size=10.4', '--class', cls, '--title', title, '--hold', *args],
+    subprocess.Popen(['alacritty', '-o', 'font.size=10.4', '--class', cls, '-T', title, '--hold', '-e', *args],
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     c = window_for(cls)
     target = 'address:' + c['address']

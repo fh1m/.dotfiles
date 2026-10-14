@@ -43,10 +43,10 @@ with tempfile.TemporaryDirectory(prefix='dotfiles-test-') as directory:
     # A live symlink must be replaced by a link, never written through.
     live = Path(tempfile.mkdtemp(prefix='dotfiles-live-'))
     other = live/'elsewhere.conf'; other.write_text('keep me\n')
-    (live/'.config/kitty').mkdir(parents=True); (live/'.config/kitty/kitty.conf').symlink_to(other)
+    (live/'.config/hypr').mkdir(parents=True); (live/'.config/hypr/hypr-sensei.lua').symlink_to(other)
     m.install(live, True, 'generic')
     assert other.read_text() == 'keep me\n'
-    assert (live/'.config/kitty/kitty.conf').resolve() == (live/'.config/quickshell/sensei/external/kitty.conf').resolve()
+    assert (live/'.config/hypr/hypr-sensei.lua').resolve() == (live/'.config/quickshell/sensei/external/hypr-sensei.lua').resolve()
     # Caches never reach the home directory.
     assert not any('__pycache__' in p.parts or p.suffix == '.pyc' for p in home.rglob('*'))
     # Seed-only state keeps a live value, and is seeded only when missing.
