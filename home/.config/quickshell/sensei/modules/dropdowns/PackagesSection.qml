@@ -9,10 +9,14 @@ Column {
  property var selected:({})
  readonly property var rows:(updatesOnly?(DesktopExtras.packages.updates||[]):(DesktopExtras.packages.installed||[])).filter(p=>p.name.toLowerCase().includes(filter.text.toLowerCase()))
  Component.onCompleted:{DesktopExtras.loadPackages();DesktopExtras.loadPackageJob();}
+ // Removing a package and upgrading the whole system are one press to arm, one to run.
+ property string armed:''
+ function confirm(key,action,name){if(armed===key){armed='';armTimer.stop();DesktopExtras.packageAction(action,name||'');}else{armed=key;armTimer.restart();}}
+ Timer {id:armTimer;interval:4000;onTriggered:root.armed=''}
  Text { textFormat: Text.PlainText;width:parent.width;text:'󰏖 '+(DesktopExtras.packages.total||0)+' installed · '+(DesktopExtras.packages.official||0)+' pacman · '+(DesktopExtras.packages.foreign||0)+' AUR/local';font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetText;wrapMode:Text.Wrap}
  Row {spacing:7
   ControlTile {implicitWidth:132;label:DesktopExtras.packagesLoading?'Checking…':'Check';enabled:!DesktopExtras.packagesLoading;onActivated:DesktopExtras.loadPackages(true)}
-  ControlTile {implicitWidth:132;label:'Update all';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('all')}
+  ControlTile {implicitWidth:132;label:root.armed==='all'?'Confirm update':'Update all';selected:root.armed==='all';enabled:!DesktopExtras.packageBusy;onActivated:root.confirm('all','all')}
   ControlTile {implicitWidth:132;label:'Repositories';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('repo')}
   ControlTile {implicitWidth:132;label:'AUR';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('aur')}
  }
@@ -36,7 +40,7 @@ Column {
  Row {spacing:7
   ControlTile {implicitWidth:132;label:'Update';enabled:!!root.selected.name&&!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('selected',root.selected.name)}
   ControlTile {implicitWidth:132;label:'Details';enabled:!!root.selected.name&&!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('info',root.selected.name)}
-  ControlTile {implicitWidth:132;label:'Remove';enabled:!!root.selected.name&&!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('remove',root.selected.name)}
+  ControlTile {implicitWidth:132;label:root.armed==='remove'?'Confirm remove':'Remove';selected:root.armed==='remove';enabled:!!root.selected.name&&!DesktopExtras.packageBusy;onActivated:root.confirm('remove','remove',root.selected.name)}
   ControlTile {implicitWidth:132;label:'Install';enabled:!!filter.text.trim()&&!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('install',filter.text.trim())}
  }
  Row {spacing:7;ControlTile {implicitWidth:170;label:'List orphans';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('orphans')}ControlTile {implicitWidth:170;label:'Clean cache';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('clean')}ControlTile {implicitWidth:170;label:'Remove orphans';enabled:!DesktopExtras.packageBusy;onActivated:DesktopExtras.packageAction('orphan-clean')}}

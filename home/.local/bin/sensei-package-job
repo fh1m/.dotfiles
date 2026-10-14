@@ -33,7 +33,7 @@ def save(data):
     temp.replace(STATE/'job.json')
 
 def command(action,name=''):
-    if action in NAMES and not re.fullmatch(r'[A-Za-z0-9@+_.:-]+',name):raise ValueError('Choose one valid package name')
+    if action in NAMES and not re.fullmatch(r'[A-Za-z0-9@+_.:][A-Za-z0-9@+_.:-]*',name):raise ValueError('Choose one valid package name')
     paru=['paru','--color','never','--sudo','sudo','--sudoflags','-A','--review','--noupgrademenu']
     if action=='selected':
         native=subprocess.run(['pacman','-Qn',name],capture_output=True).returncode==0

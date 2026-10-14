@@ -12,6 +12,8 @@ Singleton {
  readonly property var currentContext:publisherLive?(projection.context||{}):({})
  readonly property string activeVault:currentContext.vault||""
  readonly property bool windowOpen:publisherLive&&projection.visible===true
+ // False until the external Noesis UI (~/.local/share/sensei-learning/ui, linked in as noesis-ui) is found; the companion is only loaded then.
+ property bool uiPresent:false
  function startLearning(){Quickshell.execDetached(["@HOME@/.local/bin/noesis","window","--start"]);}
  function open(){Quickshell.execDetached(["@HOME@/.local/bin/noesis","window"]);}
  function resume(){if(currentContext.id&&currentContext.vault_id)Quickshell.execDetached(["@HOME@/.local/bin/noesis","window","--owner",currentContext.vault,"--vault-id",currentContext.vault_id,"--record-id",currentContext.id]);else open();}
@@ -21,5 +23,7 @@ Singleton {
  Timer {interval:5000;running:!!root.projection.instance?.pid;repeat:true;onTriggered:{root.clock=Date.now()/1000;processStat.reload();}}
  Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==="oasis"){ShellState.dropdown="";root.open();}}}
  IpcHandler {target:"noesis-bridge";function state():string{return JSON.stringify({live:root.publisherLive,context:root.currentContext,visible:root.windowOpen});}}
- IpcHandler {target:"oasis";function open():void{root.open();}function toggle():void{root.open();}function close():void{Quickshell.execDetached(["@HOME@/.local/opt/sensei-quickshell/bin/qs","-p",Quickshell.env("NOESIS_HOST")==="embedded"?"@HOME@/.config/quickshell/sensei":"@HOME@/.config/quickshell/noesis","ipc","call","noesis","hide"]);}}
+ function close(){Quickshell.execDetached(["@HOME@/.local/opt/sensei-quickshell/bin/qs","-p",Quickshell.env("NOESIS_HOST")==="embedded"?"@HOME@/.config/quickshell/sensei":"@HOME@/.config/quickshell/noesis","ipc","call","noesis","hide"]);}
+ IpcHandler {target:"oasis";function open():void{root.open();}function toggle():void{if(root.windowOpen)root.close();else root.open();}function close():void{root.close();}}
+ FileView {id:uiProbe;path:"@HOME@/.local/share/sensei-learning/ui/NoesisStyle.qml";printErrors:false;onLoaded:root.uiPresent=true;onLoadFailed:root.uiPresent=false}
 }
