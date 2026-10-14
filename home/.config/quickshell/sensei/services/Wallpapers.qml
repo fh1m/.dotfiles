@@ -222,6 +222,25 @@ Singleton {
         write();
     }
 
+    // A deleted library file leaves every saved pool at once. DELETE is final
+    // on disk the moment it is pressed, so the pools must not keep pointing at
+    // it while the draft on the pools screen is still unsaved.
+    function dropFile(file: string): void {
+        const next = Object.assign({}, root.pools);
+        let changed = false;
+        for (const name of Object.keys(next)) {
+            const pool = next[name];
+            if (!pool?.items?.some(item => item.file === file))
+                continue;
+            next[name] = Object.assign({}, pool, {
+                items: pool.items.filter(item => item.file !== file)
+            });
+            changed = true;
+        }
+        if (changed)
+            setPools(next);
+    }
+
     // A profile the user just made, or one whose pool was never stored: give
     // it the default pool so the pools screen shows it straight away.
     function seed(name: string): void {

@@ -931,6 +931,7 @@ Item {
                     onClicked: {
                         const file = root.confirmingDelete;
                         Wallpapers.deleteFile(file);
+                        Wallpapers.dropFile(file);
                         for (const name of Profiles.names)
                             root.removeFrom(name, file);
                         root.confirmingDelete = "";
