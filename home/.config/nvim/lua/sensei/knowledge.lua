@@ -55,6 +55,8 @@ function M.open(kind)
     -- Capture unsaved selection explicitly, without changing or autosaving code.
     local path = vim.fn.tempname() .. '.txt'
     vim.fn.writefile(vim.api.nvim_buf_get_lines(0, first - 1, last, false), path)
+    -- /tmp is shared: the excerpt is source code, so keep it owner-only (0600).
+    vim.uv.fs_chmod(path, 384)
     vim.list_extend(args, { '--excerpt', path, '--source-file', vim.api.nvim_buf_get_name(0), '--start', tostring(first), '--end', tostring(last), '--filetype', vim.bo.filetype })
   end
   vim.system(args, { text = true }, function(r)
