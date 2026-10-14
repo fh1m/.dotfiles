@@ -102,7 +102,13 @@ def api(path,method='GET',body=None,retry=True):
   if e.code==429:
    try:after=int(e.headers.get('Retry-After','60'))
    except ValueError:after=60
-   wait=penalise(after);raise MusicError(f'Sensei, Spotify requested a {wait}-second pause in library requests.')
+   try:body=json.load(e)
+   except Exception:body={}
+   # QUOTA_EXCEEDED is the account's own quota (July 2026 changelog), not the rolling window.
+   reason=body.get('reason') or (body.get('error') or {}).get('reason','')
+   wait=penalise(after)
+   if reason=='QUOTA_EXCEEDED':raise MusicError(f'Sensei, Spotify’s quota for this developer account is used up. Retrying in {wait} seconds.')
+   raise MusicError(f'Sensei, Spotify requested a {wait}-second pause in library requests.')
   try:message=json.load(e).get('error',{}).get('message','Request refused')
   except Exception:message='Request refused'
   raise MusicError(f'Spotify {e.code}: {message}')
