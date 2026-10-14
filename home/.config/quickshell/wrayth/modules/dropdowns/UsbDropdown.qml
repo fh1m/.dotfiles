@@ -35,31 +35,31 @@ DropdownFrame {
      Repeater {model:root.page===1?(root.device.mounts||[]):[]
       ChamferPanel {required property var modelData;width:body.width;height:94;scanlines:false;chamfer:7;fillColor:Theme.widgetSurface;borderColor:Theme.widgetBorder
        Column {x:12;y:10;width:parent.width-24;spacing:8
-        Text {width:parent.width;text:modelData.path+" · "+(modelData.filesystem||"unknown")+" · "+(modelData.readOnly?"read-only":"read/write");font.family:Appearance.font.data;font.pixelSize:13;font.bold:true;color:Theme.widgetText;elide:Text.ElideRight}
-        Text {text:root.size(modelData.free)+" free / "+root.size(modelData.total)+" total";font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetMuted}
+        Text {width:parent.width;textFormat:Text.PlainText;text:modelData.path+" · "+(modelData.filesystem||"unknown")+" · "+(modelData.readOnly?"read-only":"read/write");font.family:Appearance.font.data;font.pixelSize:13;font.bold:true;color:Theme.widgetText;elide:Text.ElideRight}
+        Text {textFormat:Text.PlainText;text:root.size(modelData.free)+" free / "+root.size(modelData.total)+" total";font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetMuted}
         Rectangle {width:parent.width;height:4;color:Theme.widgetBorder;Rectangle {height:4;width:parent.width*(modelData.total?(modelData.total-modelData.free)/modelData.total:0);color:Theme.widgetAccent}}
-        Text {text:modelData.device+" · "+(modelData.label||"no volume label");font.family:Appearance.font.data;font.pixelSize:11;color:Theme.widgetMuted}
+        Text {textFormat:Text.PlainText;text:modelData.device+" · "+(modelData.label||"no volume label");font.family:Appearance.font.data;font.pixelSize:11;color:Theme.widgetMuted}
        }
       }
      }
      Text {visible:root.page===1&&!(root.device.mounts||[]).length;width:parent.width;text:"No mounted filesystem on this device. Serial boards, cameras and HID devices do not expose disk space. Unmounted block devices are listed under Access.";wrapMode:Text.Wrap;font.family:Appearance.font.data;font.pixelSize:13;color:Theme.widgetMuted}
      Repeater {model:root.page===2?(root.device.nodes||[]):[]
-      Text {required property var modelData;width:body.width;wrapMode:Text.Wrap;text:modelData.path+" · "+modelData.subsystem+"\n"+modelData.permissions+" · "+modelData.owner+":"+modelData.group+" · Sensei: "+(modelData.canRead?"read ":"")+(modelData.canWrite?"write":"no write access");font.family:Appearance.font.data;font.pixelSize:12;lineHeight:1.3;color:Theme.widgetText}
+      Text {required property var modelData;width:body.width;wrapMode:Text.Wrap;textFormat:Text.PlainText;text:modelData.path+" · "+modelData.subsystem+"\n"+modelData.permissions+" · "+modelData.owner+":"+modelData.group+" · Sensei: "+(modelData.canRead?"read ":"")+(modelData.canWrite?"write":"no write access");font.family:Appearance.font.data;font.pixelSize:12;lineHeight:1.3;color:Theme.widgetText}
      }
      Text {visible:root.page===2;text:"Open device / filesystem handles";font.family:Appearance.font.data;font.pixelSize:13;font.bold:true;color:Theme.widgetAccent}
      Repeater {model:root.page===2?(root.device.processes||[]):[]
       ChamferPanel {required property var modelData;width:body.width;height:processText.implicitHeight+20;scanlines:false;chamfer:6;fillColor:Theme.widgetSurface;borderColor:Theme.widgetBorder
-       Text {id:processText;x:10;y:10;width:parent.width-20;text:modelData.name+" · PID "+modelData.pid+" · "+modelData.user+"\nProcess-wide I/O: read "+root.size(modelData.readBps)+"/s · write "+root.size(modelData.writeBps)+"/s\n"+modelData.handles.map(h=>h.access+" · "+h.path).join("\n");font.family:Appearance.font.data;font.pixelSize:12;lineHeight:1.3;color:Theme.widgetText;wrapMode:Text.Wrap}
+       Text {id:processText;x:10;y:10;width:parent.width-20;textFormat:Text.PlainText;text:modelData.name+" · PID "+modelData.pid+" · "+modelData.user+"\nProcess-wide I/O: read "+root.size(modelData.readBps)+"/s · write "+root.size(modelData.writeBps)+"/s\n"+modelData.handles.map(h=>h.access+" · "+h.path).join("\n");font.family:Appearance.font.data;font.pixelSize:12;lineHeight:1.3;color:Theme.widgetText;wrapMode:Text.Wrap}
       }
      }
      Text {visible:root.page===2&&!(root.device.processes||[]).length;width:parent.width;text:"No visible userspace handles. This does not mean the kernel or a restricted process is idle.";wrapMode:Text.Wrap;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetMuted}
      Repeater {model:root.page===3?(UsbLab.history.events||[]):[]
-      Text {required property var modelData;width:body.width;text:new Date(modelData.time*1000).toLocaleString()+" · "+modelData.action+" · "+modelData.port+"\n"+modelData.name+" · "+modelData.subsystem+" "+modelData.node;font.family:Appearance.font.data;font.pixelSize:12;color:/remove/.test(modelData.action)?Theme.widgetAccent:Theme.widgetText;wrapMode:Text.Wrap;lineHeight:1.25}
+      Text {required property var modelData;width:body.width;textFormat:Text.PlainText;text:new Date(modelData.time*1000).toLocaleString()+" · "+modelData.action+" · "+modelData.port+"\n"+modelData.name+" · "+modelData.subsystem+" "+modelData.node;font.family:Appearance.font.data;font.pixelSize:12;color:/remove/.test(modelData.action)?Theme.widgetAccent:Theme.widgetText;wrapMode:Text.Wrap;lineHeight:1.25}
      }
      Text {visible:root.page===4;width:parent.width;text:(UsbLab.data.logs||[]).join("\n\n")||"No readable USB kernel messages. Kernel log visibility depends on journal permissions.";font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetText;wrapMode:Text.Wrap;textFormat:Text.PlainText}
     }
    }
   }
-  Text {width:parent.width;text:UsbLab.error||((root.page===2?(UsbLab.data.audit||"")+" Restricted: "+(UsbLab.data.processesRestricted||0)+". ":"")+(UsbLab.data.notes||"Sensei, reading the USB topology…"));font.family:Appearance.font.data;font.pixelSize:10;color:Theme.widgetMuted;wrapMode:Text.Wrap;maximumLineCount:3;elide:Text.ElideRight}
+  Text {width:parent.width;textFormat:Text.PlainText;text:UsbLab.error||((root.page===2?(UsbLab.data.audit||"")+" Restricted: "+(UsbLab.data.processesRestricted||0)+". ":"")+(UsbLab.data.notes||"Sensei, reading the USB topology…"));font.family:Appearance.font.data;font.pixelSize:10;color:Theme.widgetMuted;wrapMode:Text.Wrap;maximumLineCount:3;elide:Text.ElideRight}
  }
 }
