@@ -2,6 +2,7 @@
 import json,subprocess,sys,os,time
 from pathlib import Path
 state=Path.home()/'.config/hypr/power-state.json'
+fan='/usr/local/libexec/fh1m-zenbook-fan'
 def call(*a):return subprocess.check_output(a,text=True,stderr=subprocess.STDOUT,timeout=20).strip()
 def current():
  text=call('system76-power','profile');return next((n for n in ('performance','balanced','battery') if 'Power Profile: '+n.title() in text),'balanced')
@@ -19,7 +20,8 @@ try:
     if int((p/'brightness').read_text())!=v:call('brightnessctl','-d',p.name,'set',str(v))
    # CPU policy and fan policy are separate. Full-speed PWM is a manual,
    # short-lived override; Performance must leave firmware fan control intact.
-   call('sudo','-n','/usr/local/libexec/fh1m-zenbook-fan','auto')
+   # Only on the machine that has the helper; elsewhere there is no fan to hand back.
+   if Path(fan).exists():call('sudo','-n',fan,'auto')
   except Exception:
    # A step failed after the profile may already have changed: publish what is
    # actually in force, so the shell never shows a profile that is not set.
