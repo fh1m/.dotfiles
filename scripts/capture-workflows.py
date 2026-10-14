@@ -22,7 +22,7 @@ def run(*args, timeout=20):
 
 
 def ipc(*args):
-    return run(QS, '-c', 'wrayth', 'ipc', 'call', *args)
+    return run(QS, '-c', 'sensei', 'ipc', 'call', *args)
 
 
 def dispatch(command):

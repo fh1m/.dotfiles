@@ -13,7 +13,7 @@ with tempfile.TemporaryDirectory(prefix='dotfiles-test-') as directory:
     config = (home/'.config/hypr/custom-setup.lua').read_text()
     assert '@HOME@' not in config and 'position = "0x1080"' not in config
     assert str(home) in (home/'.config/hypr/hyprland.lua').read_text()
-    assert (home/'.local/bin/wrayth-shell').is_symlink()
+    assert (home/'.local/bin/sensei-shell').is_symlink()
     assert m.install(home, True)['changed'] == []
     # Caches never reach the home directory.
     assert not any('__pycache__' in p.parts or p.suffix == '.pyc' for p in home.rglob('*'))

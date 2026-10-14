@@ -56,7 +56,7 @@ def screenshot(args):
         # A frozen compositor frame made area selection look like a desktop
         # stall, and kept the shell from animating while the picker was open.
         command += ['copysave', args.mode, str(output)]
-        logpath = HOME_DIR / ".local/state/wrayth/capture.log"
+        logpath = HOME_DIR / ".local/state/sensei/capture.log"
         logpath.parent.mkdir(parents=True, exist_ok=True)
         with logpath.open("a") as errors:
             result = subprocess.run(command, stdout=subprocess.DEVNULL, stderr=errors)

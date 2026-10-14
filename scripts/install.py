@@ -10,9 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 SEED_ONLY = {
     '.config/hypr/chrome-gpu.json',
     '.config/hypr/zenbook-controls.json',
-    '.config/wrayth/wallpapers.json',
-    '.config/wrayth/runner',
-    '.config/wrayth/profile',
+    '.config/sensei/wallpapers.json',
+    '.config/sensei/runner',
+    '.config/sensei/profile',
 }
 # Caches and editor leftovers are never configuration.
 SKIPPED_PARTS = {'__pycache__', '.DS_Store'}
@@ -40,10 +40,10 @@ def install(home, apply=False, hardware='generic'):
     stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
     backup = home / '.local/state/dotfiles-backups' / stamp
     changes = []
-    # wrayth helpers are linked from the checkout below, not copied. A tracked
+    # sensei helpers are linked from the checkout below, not copied. A tracked
     # copy in home/.local/bin would be replaced by that link on every run and
     # show up as a change each time, so it is skipped here.
-    linked = {p.name for p in (ROOT / 'home/.config/quickshell/wrayth/external').glob('wrayth-*') if p.is_file() and not p.suffix}
+    linked = {p.name for p in (ROOT / 'home/.config/quickshell/sensei/external').glob('sensei-*') if p.is_file() and not p.suffix}
     for source in sorted((ROOT / 'home').rglob('*')):
         if not source.is_file() or source.name.endswith('.example'):
             continue
@@ -74,9 +74,9 @@ def install(home, apply=False, hardware='generic'):
         temp.chmod(source.stat().st_mode & 0o777)
         temp.replace(dest)
     if apply:
-        # Wrayth's helpers remain linked to their retained upstream sources.
+        # sensei helpers are linked from the checkout, so edits show up without a reinstall.
         bindir = home / '.local/bin'
-        for source in (home / '.config/quickshell/wrayth/external').glob('wrayth-*'):
+        for source in (home / '.config/quickshell/sensei/external').glob('sensei-*'):
             if not source.is_file() or source.suffix:
                 continue
             dest = bindir / source.name
@@ -89,16 +89,16 @@ def install(home, apply=False, hardware='generic'):
                 else: shutil.copy2(dest, old)
                 dest.unlink()
             dest.symlink_to(source)
-        for relative in ['.config/wrayth', '.local/state/wrayth', '.cache/wrayth',
-                         'Pictures/wallpapers/wrayth', 'Pictures/Screenshots',
+        for relative in ['.config/sensei', '.local/state/sensei', '.cache/sensei',
+                         'Pictures/wallpapers/sensei', 'Pictures/Screenshots',
                          'Videos/Screencasts', 'Phone/Transfers', 'Phone/Models']:
             (home / relative).mkdir(parents=True, exist_ok=True)
-        wallpapers = home / '.config/quickshell/wrayth/assets/wallpapers'
+        wallpapers = home / '.config/quickshell/sensei/assets/wallpapers'
         for source in wallpapers.glob('*.png'):
-            dest = home / 'Pictures/wallpapers/wrayth' / source.name
+            dest = home / 'Pictures/wallpapers/sensei' / source.name
             if not dest.exists(): shutil.copy2(source, dest)
         fontdir = home / '.local/share/fonts/chakra-petch'
-        shutil.copytree(home / '.config/quickshell/wrayth/assets/fonts/chakra-petch', fontdir, dirs_exist_ok=True)
+        shutil.copytree(home / '.config/quickshell/sensei/assets/fonts/chakra-petch', fontdir, dirs_exist_ok=True)
         if home == Path.home().resolve():
             subprocess.run(['fc-cache', '-f'], check=False)
             subprocess.run(['systemctl', '--user', 'daemon-reload'], check=False)
