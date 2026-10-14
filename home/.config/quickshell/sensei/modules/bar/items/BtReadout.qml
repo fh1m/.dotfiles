@@ -25,8 +25,8 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 7
 
-    // The rune stands in for the word `BT`, so it keeps that word's grey in
-    // every state. The device name beside it is what carries the reading.
+    // The rune stands in for the word `BT`. It goes red while a device is
+    // linked or audio is playing, grey otherwise; the label beside it says how many.
     Item {
         width: 24; height: 24
         y: (readout.height - height) / 2
@@ -43,8 +43,7 @@ Item {
             }
         }
     }
-    // Left-aligned so a short name sits next to the label, but capped at 120px
-    // so a long one truncates instead of pushing the ticker around.
+    // The status line is a count or a single word, so it cannot grow the readout.
     Column { visible: !root.condensed; y: (readout.height - height) / 2; spacing: -1
         Text { textFormat: Text.PlainText;text:"Bluetooth";font.family:Appearance.font.barUi;font.pixelSize:12;font.weight:Font.DemiBold;color:Theme.text}
         Text { textFormat: Text.PlainText;text:!root.adapter||!root.adapter.enabled?"Off":root.connectedDevices.length?`${root.connectedDevices.length} linked`:"Ready";font.family:Appearance.font.barUi;font.pixelSize:10;color:root.connectedDevices.length?Theme.widgetAccent:Theme.dim}
