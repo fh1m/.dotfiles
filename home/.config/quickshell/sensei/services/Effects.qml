@@ -419,7 +419,9 @@ Singleton {
             return;
         }
         try {
-            const parsed = JSON.parse(contents);
+            // A file holding `null` is read as empty rather than throwing, which
+            // would leave `loaded` false and block every write until it changed.
+            const parsed = JSON.parse(contents) ?? {};
             if (root.glitchModes.indexOf(parsed.glitch) >= 0)
                 glitch = parsed.glitch;
             if (typeof parsed.glitchRange === "boolean")
