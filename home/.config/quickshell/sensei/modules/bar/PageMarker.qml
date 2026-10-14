@@ -100,6 +100,6 @@ Item {
         }
     }
 
-    MouseArea {anchors.fill:parent;enabled:!root.external&&Spaces.special;onClicked:{const name=Spaces.activeSpecial.slice(8);Quickshell.execDetached(["hyprctl","dispatch",'hl.dsp.workspace.toggle_special("'+name+'")']);}}
+    MouseArea {anchors.fill:parent;enabled:!root.external&&Spaces.special;onClicked:{const name=Spaces.activeSpecial.slice(8);if(!/^[A-Za-z0-9._-]+$/.test(name))return;Quickshell.execDetached(["hyprctl","dispatch",'hl.dsp.workspace.toggle_special("'+name+'")']);}}
 
 }
