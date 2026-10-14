@@ -10,7 +10,9 @@ if op=='orphan-clean':
  else:print('Sensei, no orphan packages found.');input('Press Enter to close…');raise SystemExit(0)
 if op not in actions:raise SystemExit('Unknown package operation')
 if op=='selected' and subprocess.run(['pacman','-Qn',name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0:
+ # Installing a repo package upgrades the whole repo set, so ask first.
  print('Repository packages update together: this will perform a full repository upgrade including '+name+'.',flush=True)
+ if input('Type "upgrade" to continue, anything else cancels: ').strip()!='upgrade':raise SystemExit('Cancelled; nothing changed.')
  actions[op]=['paru','-Syu','--repo',name]
 
 print('Sensei, review the package operation below.\n',flush=True)

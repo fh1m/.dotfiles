@@ -13,12 +13,17 @@ try:
   name=sys.argv[2];native={'power-saver':'battery','balanced':'balanced','performance':'performance'}[name]
   # The battery backend may dim displays; preserve the user's chosen levels.
   levels={p:int((p/'brightness').read_text()) for p in Path('/sys/class/backlight').iterdir()}
-  call('system76-power','profile',native)
-  for p,v in levels.items():
-   if int((p/'brightness').read_text())!=v:call('brightnessctl','-d',p.name,'set',str(v))
-  # CPU policy and fan policy are separate. Full-speed PWM is a manual,
-  # short-lived override; Performance must leave firmware fan control intact.
-  call('sudo','-n','/usr/local/libexec/fh1m-zenbook-fan','auto')
+  try:
+   call('system76-power','profile',native)
+   for p,v in levels.items():
+    if int((p/'brightness').read_text())!=v:call('brightnessctl','-d',p.name,'set',str(v))
+   # CPU policy and fan policy are separate. Full-speed PWM is a manual,
+   # short-lived override; Performance must leave firmware fan control intact.
+   call('sudo','-n','/usr/local/libexec/fh1m-zenbook-fan','auto')
+  except Exception:
+   # A step failed after the profile may already have changed: publish what is
+   # actually in force, so the shell never shows a profile that is not set.
+   publish(current());raise
   d=publish(current())
  else:d=publish(current())
  print(d['name'] if action=='name' else json.dumps(d))
