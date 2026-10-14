@@ -637,8 +637,17 @@ int main(int argc, char **argv) {
     copy(e, "playing", get(o, "playing"));
     integer(e, "progress", target);
     boolean(e, "seek", 1);
+    // A seek keeps the same player process and device. Carry those over, or
+    // status() stops recognising this player as the owner of the event.
     int lock = lock_event();
+    J *old = readfile("native-event.json");
+    integer(e, "player_pid", (long long)num(get(old, "player_pid")));
+    J *device_id = get(old, "deviceId");
+    if (device_id)
+      copy(e, "deviceId", device_id);
     writefile("native-event.json", e);
+    if (old)
+      json_object_put(old);
     if (lock >= 0)
       close(lock);
     json_object_put(o);
