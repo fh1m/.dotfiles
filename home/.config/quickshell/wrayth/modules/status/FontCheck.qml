@@ -13,7 +13,7 @@ Scope {
         running: true
         // fc-list may itself be absent (fontconfig not installed); then skip
         // quietly rather than warning about a tool we cannot use.
-        command: ["sh", "-c", "command -v fc-list >/dev/null 2>&1 || exit 0; miss=''; for f in 'ZedMono Nerd Font' 'ZedMono Nerd Font'; do fc-list : family 2>/dev/null | grep -qiF \"$f\" || miss=\"${miss:+$miss, }$f\"; done; printf '%s' \"$miss\""]
+        command: ["sh", "-c", "command -v fc-list >/dev/null 2>&1 || exit 0; miss=''; for f in 'JetBrainsMono Nerd Font Propo' 'JetBrainsMono Nerd Font Mono' 'Iosevka Nerd Font Mono' 'ZedMono Nerd Font'; do fc-list : family 2>/dev/null | grep -qiF \"$f\" || miss=\"${miss:+$miss, }$f\"; done; printf '%s' \"$miss\""]
 
         stdout: StdioCollector {
             onStreamFinished: {
