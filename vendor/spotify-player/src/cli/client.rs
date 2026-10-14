@@ -453,7 +453,8 @@ async fn handle_playback_request(
         Command::Volume { percent, is_offset } => {
             let percent = if is_offset {
                 let volume = playback.as_ref().context("no active playback found!")?.volume.context("playback has no volume!")?;
-                std::cmp::max(0, (volume as i8) + percent)
+                // Widen before adding: an i8 sum overflows (90 + 50 wraps to a mute).
+                (volume as i32 + percent as i32).clamp(0, 100) as i8
             } else {
                 percent
             };
