@@ -1,5 +1,5 @@
-# Sensei · fast daily terminal. Kitty remains available for the Wrayth deck.
-# Match the live Kitty palette, Iosevka metrics and opaque compositor profile.
+# Sensei · fast daily terminal. The deck uses Alacritty too.
+# Match the live Alacritty palette, Iosevka metrics and opaque compositor profile.
 [general]
 live_config_reload = true
 
@@ -9,7 +9,7 @@ TERM = "alacritty"
 [window]
 decorations = "None"
 opacity = 1.0
-padding = { x = 20, y = 12 }
+padding = { x = 14, y = 8 }
 dynamic_padding = true
 resize_increments = true
 title = "Sensei · Terminal"
@@ -20,13 +20,14 @@ history = 10000
 multiplier = 3
 
 [font]
-normal = { family = "Iosevka Nerd Font Mono", style = "Regular" }
+normal = { family = "Iosevka Nerd Font Mono", style = "Medium" }
 bold = { family = "Iosevka Nerd Font Mono", style = "Bold" }
 italic = { family = "Iosevka Nerd Font Mono", style = "Italic" }
 bold_italic = { family = "Iosevka Nerd Font Mono", style = "Bold Italic" }
-size = 11.2
-offset = { x = 3, y = 4 }
-glyph_offset = { x = 0, y = 0 }
+size = 11.4
+offset = { x = 1, y = 4 }
+# Center ink in the extra letter/line spacing at integer pixel positions.
+glyph_offset = { x = 1, y = 2 }
 builtin_box_drawing = true
 
 [colors.primary]
@@ -125,7 +126,7 @@ key = "G"
 mods = "Control|Shift"
 command = { program = "@HOME@/.local/bin/sensei-terminal", args = ["--title", "Sensei · nvtop", "-e", "nvtop"] }
 
-# Kitty-style tab and layout keys routed into the persistent tmux session.
+# Tab and layout keys routed into the persistent tmux session.
 [[keyboard.bindings]]
 key = "'"
 mods = "Super"
@@ -171,3 +172,20 @@ chars = "\u0060\u001b[5~"
 key = "PageDown"
 mods = "Shift"
 chars = "\u0060\u001b[6~"
+
+# Deliberate window navigation, leaving Shift-arrows to editors and agents.
+[[keyboard.bindings]]
+key = "ArrowLeft"
+mods = "Control|Alt"
+chars = "\u0060p"
+
+[[keyboard.bindings]]
+key = "ArrowRight"
+mods = "Control|Alt"
+chars = "\u0060n"
+
+# Native scrollback exploration and keyboard URL hints.
+[[keyboard.bindings]]
+key = "Space"
+mods = "Control|Shift"
+action = "ToggleViMode"
