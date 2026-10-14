@@ -19,6 +19,9 @@ def put(path,value):
  temp=path.with_suffix('.tmp');temp.write_text(json.dumps(value,ensure_ascii=False));temp.chmod(0o600);temp.replace(path)
 def rpc(request):
  with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as s:
+  # The player answers in 4 KiB datagrams. A large reply (a long queue) overflows the
+  # default ~200 KiB receive buffer, and the dropped datagrams corrupt the JSON.
+  s.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF,4*1024*1024)
   s.settimeout(10);s.connect(('127.0.0.1',PORT));s.send(json.dumps(request).encode());parts=[];size=0
   try:
    while True:
@@ -49,15 +52,42 @@ def token(force=False):
    except urllib.error.HTTPError:raise MusicError('Sensei, Spotify needs you to sign in again. Use Account → Sign in.')
    d.update(fresh);d['expires_at']=datetime.datetime.fromtimestamp(time.time()+fresh.get('expires_in',3600),datetime.timezone.utc).isoformat().replace('+00:00','Z');put(TOKEN,d)
   return d['access_token']
+# Spotify's own limit is unpublished and counted over a rolling 30 s window.
+# Stay under a self-imposed budget shared by every process that calls the Web API.
+BUDGET=10
+COOLDOWN=STORE/'cooldown.json';CALLS=STORE/'calls.json'
+def cooldown_until():
+ try:return json.loads(COOLDOWN.read_text()).get('until',0)
+ except (OSError,ValueError):return 0
+def penalise(retry_after):
+ try:prev=json.loads(COOLDOWN.read_text())
+ except (OSError,ValueError):prev={}
+ now=time.time()
+ # Spotify's Retry-After is the wait it asks for: follow it, with a short floor.
+ # A 429 that comes right after a pause means the limit has not reset: back off harder.
+ strikes=prev.get('strikes',0)+1 if now-prev.get('until',0)<120 else 1
+ wait=min(900,max(retry_after,5)*(2**(strikes-1)))
+ put(COOLDOWN,{'until':now+wait,'strikes':strikes});return wait
+def gate(max_wait=60):
+ deadline=time.time()+max_wait
+ with (STORE/'gate.lock').open('a') as lock:
+  fcntl.flock(lock,fcntl.LOCK_EX)
+  while True:
+   now=time.time()
+   try:stamps=[t for t in json.loads(CALLS.read_text()) if now-t<30]
+   except (OSError,ValueError):stamps=[]
+   if len(stamps)<BUDGET:
+    stamps.append(now);put(CALLS,stamps);return
+   if now>=deadline:raise MusicError('Sensei, Spotify requests are paced to stay under its limit. Showing saved data.')
+   time.sleep(min(1,max(0.05,stamps[0]+30-now)))
 def api(path,method='GET',body=None,retry=True):
- cooldown=STORE/'cooldown.json'
- if cooldown.exists():
-  until=json.loads(cooldown.read_text()).get('until',0)
-  if until>time.time():raise MusicError('Sensei, Spotify is limiting requests. Retry in '+str(int(until-time.time())+1)+' seconds; playback controls remain available.')
+ until=cooldown_until()
+ if until>time.time():raise MusicError('Sensei, Spotify is limiting requests. Retry in '+str(int(until-time.time())+1)+' seconds; playback controls remain available.')
  if path.startswith('https://'):
   if not path.startswith('https://api.spotify.com/v1/'):raise MusicError('Unexpected Spotify endpoint')
   url=path
  else:url='https://api.spotify.com/v1/'+path.lstrip('/')
+ gate()
  req=urllib.request.Request(url,headers={'Authorization':'Bearer '+token(),'Content-Type':'application/json'},data=json.dumps(body).encode() if body is not None else None,method=method)
  try:
   with API.open(req,timeout=12) as r:
@@ -70,23 +100,42 @@ def api(path,method='GET',body=None,retry=True):
  except urllib.error.HTTPError as e:
   if e.code==401 and retry:token(True);return api(path,method,body,False)
   if e.code==429:
-   wait=int(e.headers.get('Retry-After','60'));put(cooldown,{'until':time.time()+wait});raise MusicError(f'Sensei, Spotify requested a {wait}-second pause in library requests.')
+   try:after=int(e.headers.get('Retry-After','60'))
+   except ValueError:after=60
+   wait=penalise(after);raise MusicError(f'Sensei, Spotify requested a {wait}-second pause in library requests.')
   try:message=json.load(e).get('error',{}).get('message','Request refused')
   except Exception:message='Request refused'
   raise MusicError(f'Spotify {e.code}: {message}')
+def paged(endpoint,cap=1000):
+ # Walk every page up to cap. A page that fails mid-way keeps what was loaded
+ # and reports complete=False, so the caller can resume from next later.
+ items=[];total=0;nxt=''
+ d=api(endpoint)
+ try:
+  while d:
+   d=d.get('artists',d) if isinstance(d,dict) else d
+   total=d.get('total',total) or total
+   items.extend(d.get('items',[]))
+   nxt=d.get('next') or ''
+   if not nxt or len(items)>=cap:break
+   d=api(nxt)
+ except MusicError:
+  if not items:raise
+  return items,total,nxt,False
+ return items[:cap],total or len(items),nxt,not nxt
 def pages(endpoint,max_rows=100):
- rows=[];d=api(endpoint)
- while d:
-  rows.extend(d.get('items',[]))
-  if not d.get('next') or len(rows)>=max_rows:break
-  d=api(d['next'])
- return rows[:max_rows]
+ items,_,_,_=paged(endpoint,max_rows);return items
 def cached(key,ttl,fetch,force=False):
  p=STORE/(hashlib.sha256(key.encode()).hexdigest()+'.json')
  if not force and p.exists() and time.time()-p.stat().st_mtime<ttl:return json.loads(p.read_text())
- try:d=fetch();put(p,d);return d
+ try:
+  d=fetch()
+  # Incomplete results are returned but never saved: a partial list must not
+  # stand in for the whole playlist for the next hour.
+  if d.get('complete',True) is not False:put(p,d)
+  return d
  except Exception:
-  if p.exists():return {'stale':True,'rows':json.loads(p.read_text()),'error':'Sensei, showing your cached library while Spotify is unavailable.'}
+  if p.exists():return {'stale':True,'rows':json.loads(p.read_text()),'error':'Sensei, showing saved data while Spotify is unavailable.'}
   raise
 
 def duration(d):
@@ -102,35 +151,42 @@ def row(item,kind='track'):
  if isinstance(owner,list):owner=owner[0] if owner else ''
  elif isinstance(owner,dict):owner=owner.get('display_name') or owner.get('id','')
  return {'id':item.get('id',''),'uri':item.get('uri') or 'spotify:'+kind+':'+item.get('id',''),'kind':kind,'title':item.get('name','Untitled'),'artist':artist or owner or kind.capitalize(),'album':album.get('name',''),'albumId':album.get('id',''),'art':imgs[0].get('url','') if imgs else '', 'duration':duration(item.get('duration_ms',item.get('duration',0))),'explicit':item.get('explicit',False),'description':re.sub('<[^>]+>','',item.get('description',item.get('desc',''))),'count':(item.get('tracks') or {}).get('total',0) if isinstance(item.get('tracks'),dict) else 0,'release':item.get('release_date','')}
-def rows(items,kind='track'):
+def rows(items,kind='track',dedupe=False):
+ # Playlists can repeat a song and the order is the list, so keep every row
+ # unless a caller asks otherwise.
  result=[];seen=set()
  for item in items:
   r=row(item,kind);key=r.get('uri')
-  if r.get('id') and key not in seen:result.append(r);seen.add(key)
+  if r.get('id') and (not dedupe or key not in seen):result.append(r);seen.add(key)
  return result
+LIBRARY={'playlists':('me/playlists?limit=50','playlist',3600,2000),'liked':('me/tracks?limit=50','track',3600,2000),'albums':('me/albums?limit=50','album',3600,1000),'artists':('me/following?type=artist&limit=50','artist',3600,1000),'recent':('me/player/recently-played?limit=50','track',900,50),'top':('me/top/tracks?limit=50&time_range=medium_term','track',3600,50)}
 def library(kind,force=False):
- endpoint={'playlists':'me/playlists?limit=50','liked':'me/tracks?limit=50','albums':'me/albums?limit=50','artists':'me/following?type=artist&limit=50','recent':'me/player/recently-played?limit=50','top':'me/top/tracks?limit=50&time_range=medium_term'}[kind]
- typ='playlist' if kind=='playlists' else 'album' if kind=='albums' else 'artist' if kind=='artists' else 'track'
+ endpoint,typ,ttl,cap=LIBRARY[kind]
  def load():
-  d=api(endpoint)
-  if kind=='artists':d=d['artists']
-  return {'rows':rows(d.get('items',[]),typ),'next':d.get('next') or '', 'total':d.get('total',len(d.get('items',[])))}
- d=cached('library-v2-'+kind,900,load,force)
- if isinstance(d,list):d={'rows':d,'next':'','total':len(d)}
+  items,total,nxt,complete=paged(endpoint,cap)
+  return {'rows':rows(items,typ),'next':nxt,'total':total,'complete':complete}
+ d=cached('library-v3-'+kind,ttl,load,force)
  if d.get('stale'):
-  inner=d['rows'];inner={'rows':inner,'next':'','total':len(inner)} if isinstance(inner,list) else inner
-  return {'kind':kind,**inner,'warning':d['error'],'stale':True}
+  inner=d['rows'];return {'kind':kind,**inner,'warning':d['error'],'stale':True}
  return {'kind':kind,**d,'warning':'','stale':False}
 def context(kind,id,force=False):
  if kind not in ('playlist','album','artist') or not re.fullmatch('[A-Za-z0-9]{22}',id):raise MusicError('Invalid Spotify item')
  def load():
   if kind=='artist':
-   info=api('artists/'+id);items=api('artists/'+id+'/top-tracks?market=from_token')['tracks']
-  else:
-   info=api(kind+'s/'+id);d=api(kind+'s/'+id+('/items?limit=100' if kind=='playlist' else '/tracks?limit=50'));items=d.get('items',[])
-  return {'item':row(info,kind),'rows':rows(items),'next':d.get('next') or '' if kind!='artist' else '', 'total':d.get('total',len(items)) if kind!='artist' else len(items)}
- d=cached(kind+'-v2-'+id,900,load,force)
+   info=api('artists/'+id);items=api('artists/'+id+'/top-tracks?market=from_token').get('tracks',[])
+   return {'item':row(info,kind),'rows':rows(items),'next':'','total':len(items),'complete':True}
+  info=api(kind+'s/'+id)
+  first=kind+'s/'+id+('/items?limit=100' if kind=='playlist' else '/tracks?limit=50')
+  items,total,nxt,complete=paged(first,1000)
+  out=rows(items)
+  if kind=='album':
+   # Album tracks carry no cover of their own; use the album's.
+   art=((info.get('images') or [{}])[0] or {}).get('url','')
+   for r in out:r['art']=r.get('art') or art
+  return {'item':row(info,kind),'rows':out,'next':nxt,'total':total,'complete':complete}
+ d=cached(kind+'-v3-'+id,3600,load,force)
  return d if not d.get('stale') else {**d['rows'],'warning':d['error']}
+
 def status():
  native=HOME/'.local/bin/sensei-spotify-transport'
  if native.exists():return json.loads(subprocess.check_output([str(native),'status'],text=True))
@@ -208,15 +264,15 @@ def action(name,args):
   if name=='play-track':return api(endpoint('play'),'PUT',{'uris':['spotify:track:'+args[0]]})
   if name=='play-list':
    playlist=json.loads(args[0]);uris=playlist.get('uris',[])
-   if not uris or len(uris)>100 or any(not re.fullmatch(r'spotify:track:[A-Za-z0-9]{22}',uri) for uri in uris):raise MusicError('Invalid playback list')
+   if not uris or len(uris)>90 or any(not re.fullmatch(r'spotify:track:[A-Za-z0-9]{22}',uri) for uri in uris):raise MusicError('Invalid playback list')
    offset=max(0,min(len(uris)-1,int(playlist.get('offset',0))))
    return api(endpoint('play'),'PUT',{'uris':uris,'offset':{'position':offset}})
   if name=='play-context-track':return api(endpoint('play'),'PUT',{'context_uri':'spotify:'+args[0]+':'+args[1],'offset':{'uri':args[2]}})
   if name=='play-context':return api(endpoint('play'),'PUT',{'context_uri':'spotify:'+args[0]+':'+args[1]})
   if name=='liked-play':
-   tracks=library('liked')['rows'];return action('play-list',[json.dumps({'uris':[t['uri'] for t in tracks[:100]],'tracks':tracks[:100],'offset':0})])
+   tracks=library('liked')['rows'][:90];return action('play-list',[json.dumps({'uris':[t['uri'] for t in tracks],'tracks':tracks,'offset':0})])
  if name=='connect':
-  devices=rpc({'Get':{'Key':'Devices'}}) or []
+  devices=api('me/player/devices').get('devices',[])
   chosen=next((v for v in devices if v.get('id')==args[0]),None)
   if not chosen:raise MusicError('Sensei, this device is no longer available. Refresh Devices.')
   result=api('me/player','PUT',{'device_ids':[args[0]],'play':False})
@@ -227,9 +283,9 @@ def action(name,args):
   if not id:raise MusicError('Sensei, start a song first.')
   return api('me/tracks?ids='+id,'DELETE' if name=='unlike' else 'PUT')
  if name=='enqueue':return api('me/player/queue?'+urllib.parse.urlencode({'uri':args[0]}),'POST')
- if name=='playlist-add':return api('playlists/'+args[0]+'/tracks','POST',{'uris':[args[1]]})
+ if name=='playlist-add':return api('playlists/'+args[0]+'/items','POST',{'uris':[args[1]]})
  if name=='playlist-create':
-  user=api('me');return api('users/'+user['id']+'/playlists','POST',{'name':args[0],'public':False,'description':'Sensei’s music on the ZenBook Duo'})
+  return api('me/playlists','POST',{'name':args[0],'public':False,'description':'Sensei’s music on the ZenBook Duo'})
  raise MusicError('Unknown Spotify action')
 def main(a):
  if not a:raise MusicError('Choose a music operation')
@@ -254,11 +310,16 @@ def main(a):
   except (OSError,ValueError,KeyError):pass
   return {'rows':server_rows,'current':current}
 
- if cmd=='devices':return {'rows':rpc({'Get':{'Key':'Devices'}}) or []}
+ if cmd=='devices':
+  d=cached('devices-v1',30,lambda:api('me/player/devices'));return {'rows':(d['rows'] if d.get('stale') else d).get('devices',[])}
  if cmd=='search':
   q=a[1].strip()
-  if len(q)<2:return {'tracks':[],'albums':[],'artists':[],'playlists':[]}
-  d=api('search?'+urllib.parse.urlencode({'q':q,'type':'track,album,artist,playlist','limit':20}));return {k:rows(d.get(k,{}).get('items',[]),k[:-1]) for k in ('tracks','albums','artists','playlists')}
+  if len(q)<3:return {'tracks':[],'albums':[],'artists':[],'playlists':[]}
+  # Cached per query: typing re-runs the same searches, and each one is an API call.
+  d=cached('search-v3-'+q.lower(),600,lambda:api('search?'+urllib.parse.urlencode({'q':q,'type':'track,album,artist,playlist','limit':20})))
+  warning=d.get('error','') if d.get('stale') else ''
+  if d.get('stale'):d=d['rows']
+  return {**{k:rows(d.get(k,{}).get('items',[]),k[:-1]) for k in ('tracks','albums','artists','playlists')},'warning':warning}
  if cmd=='synced-lyrics':return synced_lyrics(json.loads(a[1]))
  if cmd=='lyrics':return {'text':rpc({'Lyrics':{'id_or_name':None}}) or 'No lyrics are available for this track.'}
  if cmd=='art':
