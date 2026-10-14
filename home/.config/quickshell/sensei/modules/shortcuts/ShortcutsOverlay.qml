@@ -60,6 +60,14 @@ Variants {
         WlrLayershell.namespace: "sensei-shortcuts"
         WlrLayershell.keyboardFocus: shown ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore
+
+        // Escape closes from the search field, and from anywhere else the field
+        // has let go of the keyboard (see OverlayKeys).
+        OverlayKeys {
+            anchors.fill: parent
+            active: overlay.shown
+            onEscaped: ShellState.shortcutsOpen = false
+        }
         anchors { top: true; bottom: true; left: true; right: true }
         onShownChanged: if (shown) { query = ""; selected = 0; searchInput.text = ""; searchInput.forceActiveFocus(); }
 

@@ -31,6 +31,14 @@ Variants {
 
         exclusionMode: ExclusionMode.Ignore
 
+        // The keyboard is this overlay's while it is up. Escape closes from the
+        // field, and from anywhere else the field has let go of the focus.
+        OverlayKeys {
+            anchors.fill: parent
+            active: overlay.shown
+            onEscaped: Launcher.close()
+        }
+
         anchors {
             top: true
             bottom: true

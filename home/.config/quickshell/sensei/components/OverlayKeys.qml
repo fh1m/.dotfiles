@@ -34,7 +34,9 @@ Item {
         root.forceActiveFocus();
     }
 
-    onActiveChanged: if (active) take()
+    // Deferred, and only when nothing that answers keys holds the focus: a text
+    // field an overlay has just focused on open must not be taken from it.
+    onActiveChanged: if (active) regrab.restart()
     Component.onCompleted: if (active) take()
 
     Keys.onEscapePressed: event => {
@@ -76,7 +78,7 @@ Item {
         id: regrab
 
         interval: 1
-        onTriggered: root.take()
+        onTriggered: if (!root.answersKeys(root.Window.activeFocusItem)) root.take()
     }
 
     // The line above catches every route into that state seen so far. This
