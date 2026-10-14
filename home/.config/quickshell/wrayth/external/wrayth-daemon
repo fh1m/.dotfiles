@@ -150,7 +150,9 @@ case "$id" in
         iface=$(ip -o link show 2>/dev/null | awk -F': ' '/wl/{print $2; exit}')
         if [ -z "$iface" ]; then out "NO ADAPTER" dim "No wireless interface found."; exit 0; fi
         sig=$(awk -v i="$iface:" '$1 == i {printf "%.0f", ($3 / 70) * 100}' /proc/net/wireless 2>/dev/null)
-        read -r ssid sec < <(nmcli -t -f IN-USE,SSID,SECURITY device wifi 2>/dev/null | awk -F: '$1=="*"{print $2, $3; exit}')
+        # Tab-separated, not space: an SSID can hold spaces, and splitting on a
+        # space put the rest of the name into the security field.
+        IFS=$'\t' read -r ssid sec < <(nmcli -t -f IN-USE,SSID,SECURITY device wifi 2>/dev/null | awk -F: '$1=="*"{print $2 "\t" $3; exit}')
         tone=signal
         [ -n "$sig" ] && [ "$sig" -lt 40 ] && tone=alert
         case "${sec:-}" in ''|'--') sec="OPEN"; tone=accent ;; esac
@@ -283,10 +285,14 @@ case "$id" in
         ;;
 
     reboot)
+        # The newest kernel whose modules are installed. Asking pacman for the
+        # stock `linux` package was wrong on a CachyOS machine: it named a
+        # different kernel from the one running, and read it as pending.
         running=$(uname -r)
-        installed=$(pacman -Q linux 2>/dev/null | awk '{print $2}' | sed 's/\.arch/-arch/')
-        if [ -n "$installed" ] && [ "${running%%-arch*}" != "${installed%%-arch*}" ]; then
-            out "PENDING" alert "A newer kernel is installed than the one running.//Running // $running//Installed // $installed//A restart is needed to use it."
+        newest=$(ls /usr/lib/modules 2>/dev/null | sort -V | tail -n1)
+        if [ -n "$newest" ] && [ "$newest" != "$running" ] \
+            && [ "$(printf '%s\n%s\n' "$running" "$newest" | sort -V | tail -n1)" = "$newest" ]; then
+            out "PENDING" alert "A newer kernel is installed than the one running.//Running // $running//Installed // $newest//A restart is needed to use it."
         else
             out "CURRENT" signal "The running kernel is the installed one.//Running // $running"
         fi
