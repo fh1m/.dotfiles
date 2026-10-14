@@ -47,18 +47,25 @@ def status():
     except OSError:pass
   except OSError:pass
  return {**config(),'actual':actual,'running':bool(browsers()),'nvidiaAvailable':availability(),'settingsPending':not (backup/'applied.json').exists(),'note':('Hybrid: NVIDIA Vulkan rendering + Intel hardware video decode through XWayland. Training uses native Intel Wayland.' if availability() else 'Nvidia is not validated on this kernel and driver. Intel only until the hybrid setup is validated again.')}
+def loaded(p):
+ # A profile file that does not parse is left exactly as it is, never rewritten.
+ try:return json.loads(p.read_text())
+ except (OSError,ValueError):return None
 def prepare():
  if browsers():return
  if not (backup/'applied.json').exists():
   backup.mkdir(parents=True,exist_ok=True)
   if data.exists() and not (backup/'profiles').exists():shutil.copytree(data,backup/'profiles',symlinks=True,ignore=shutil.ignore_patterns('Singleton*'))
   p=data/'Local State'
-  if p.exists():
-   d=json.loads(p.read_text());perf=d.setdefault('performance_tuning',{});eff=perf.setdefault('high_efficiency_mode',{});eff.update(state=2,aggressiveness=1)
+  d=loaded(p) if p.exists() else None
+  if d is not None:
+   perf=d.setdefault('performance_tuning',{});eff=perf.setdefault('high_efficiency_mode',{});eff.update(state=2,aggressiveness=1)
    d.setdefault('hardware_acceleration_mode',{})['enabled']=True
    t=p.with_suffix('.sensei.tmp');t.write_text(json.dumps(d));t.replace(p)
   for p in data.glob('*/Preferences'):
-   d=json.loads(p.read_text());d.setdefault('net',{})['network_prediction_options']=2
+   d=loaded(p)
+   if d is None:continue
+   d.setdefault('net',{})['network_prediction_options']=2
    perf=d.setdefault('performance_tuning',{});entries=perf.setdefault('tab_discarding',{}).setdefault('exceptions',[])
    # Existing exception lists stay intact; protected origins use Chrome patterns.
    for pattern in ['localhost','127.0.0.1','[*.]colab.research.google.com']:
