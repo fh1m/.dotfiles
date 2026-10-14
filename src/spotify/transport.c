@@ -105,6 +105,10 @@ static J *rpc(J *request) {
     fail("Sensei, the player connection could not be opened.");
   struct timeval tv = {2, 0};
   setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
+  // The player answers in 4 KiB datagrams; a long queue overflows the default
+  // receive buffer and the dropped datagrams corrupt the reply.
+  int rcvbuf = 4 * 1024 * 1024;
+  setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof rcvbuf);
   struct sockaddr_in a = {.sin_family = AF_INET, .sin_port = htons(port)};
   a.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   if (connect(fd, (void *)&a, sizeof a) < 0)
@@ -444,14 +448,11 @@ static void cache_rows(J *rows) {
 }
 static void music_start(int argc, char **argv) {
   const char *name = argv[1];
-  // The local player accepts these commands directly. A Web API playback
-  // snapshot can sit behind Spotify's rate limit for seconds even while the
-  // local socket is ready, so only consult it when a remote device was chosen.
-  J *selection = readfile("selected-device.json");
-  int selected_local = !selection || !strlen(str(get(selection, "name"))) ||
-      !strcmp(str(get(selection, "name")), "Sensei · ZenBook Duo");
-  if (selection) json_object_put(selection);
-  J *d = selected_local ? NULL : playback();
+  // Route by the device that is actually playing, not by the saved selection:
+  // playback can move to another device in the Spotify app, and the selection
+  // file never hears about it. The snapshot comes from the local player, so
+  // checking it costs no Web API call.
+  J *d = playback();
   const char *device = str(get(get(d, "device"), "name"));
   if (*device && strcmp(device, "Sensei · ZenBook Duo")) {
     char exe[4096];
@@ -490,9 +491,12 @@ static void music_start(int argc, char **argv) {
       list = json_object_new_object();
       add(list, "uris", uris);
     }
+    // The player's control socket takes one 4 KiB request, and a track URI
+    // costs about 39 bytes of it: 90 tracks is the most one request can carry.
+    // Whole albums and playlists play through the context path instead.
     if (!uris || !json_object_is_type(uris, json_type_array) ||
         !json_object_array_length(uris) ||
-        json_object_array_length(uris) > 1000)
+        json_object_array_length(uris) > 90)
       fail("Invalid queue size");
     for (size_t i = 0; i < json_object_array_length(uris); i++)
       if (!valid_uri(str(json_object_array_get_idx(uris, i))))
@@ -532,19 +536,28 @@ static void music_start(int argc, char **argv) {
       if (argc < 5 || !valid_uri(argv[4]))
         fail("Invalid context track");
       text(options, "offset_uri", argv[4]);
-      if (argc > 5) {
-        J *rows = json_tokener_parse(argv[5]);
-        cache_rows(rows);
-        if (rows)
-          json_object_put(rows);
-      }
     } else
       add(options, "offset_uri", NULL);
     add(request, "StartLocalContext", options);
     control(request);
-    J *empty = json_object_new_object();
-    writefile("local-queue.json", empty);
-    json_object_put(empty);
+    // The queue reads what follows the current track from this file. A context
+    // play passes its URI list (argv[5]); rows would overflow argv, so the queue
+    // shows titles only where they are cached. Without a list, the server queue shows.
+    J *queue = json_object_new_object(), *uris = json_object_new_array();
+    J *given = argc > 5 ? json_tokener_parse(argv[5]) : NULL;
+    for (size_t i = 0; given && json_object_is_type(given, json_type_array) &&
+                       i < json_object_array_length(given);
+         i++) {
+      const char *u = str(json_object_array_get_idx(given, i));
+      if (valid_uri(u))
+        json_object_array_add(uris, json_object_new_string(u));
+    }
+    if (given)
+      json_object_put(given);
+    add(queue, "uris", uris);
+    add(queue, "time", json_object_new_double(now()));
+    writefile("local-queue.json", queue);
+    json_object_put(queue);
   }
   puts("{\"ok\":true}");
 }
