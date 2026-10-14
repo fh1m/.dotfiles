@@ -97,7 +97,7 @@ Item {
                     text: button.modelData.glyph ?? ""
                     font.family: "ZedMono Nerd Font"
                     font.pixelSize: root.external ? 16 : 14
-                    color: button.active ? Theme.signalRed : button.occupied ? Theme.paper : Theme.mute
+                    color: button.active ? Theme.signalRed : button.occupied ? Theme.paper : Theme.widgetMuted
                     renderType: Text.NativeRendering
                 }
                 NrLabel {
@@ -106,7 +106,9 @@ Item {
                     centred: true
                     text: button.modelData.label
                     font.capitalization: Font.MixedCase
-                    color: button.active ? Theme.paper : button.occupied ? Theme.paper : Theme.mute
+                    // Empty workspaces are quieter than occupied ones but must stay legible:
+                    // Theme.mute is 3.6:1 on the bar, below WCAG AA for text.
+                    color: button.active ? Theme.paper : button.occupied ? Theme.paper : Theme.widgetMuted
                     pixelSize: root.external ? 13 : 11
                     font.family: Appearance.font.barUi
                     tracked: false
