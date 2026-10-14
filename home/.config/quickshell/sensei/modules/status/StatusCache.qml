@@ -18,7 +18,7 @@ Scope {
     // printed on camera by `sensei-welcome`. The planner's own file still
     // holds the real one; this is a cache the shell rewrites constantly and
     // puts back the moment demo mode ends.
-    readonly property string activeTask: (Planner.ordered.find(entry => !entry.done)?.label ?? "").replace(/'/g, "")
+    readonly property string activeTask: (Planner.ordered.find(entry => !entry.done)?.label ?? "").replace(/['\n\r]/g, "")
 
     // Every value the deck terminal's fetch and welcome message show comes from
     // here, so neither ever runs checkupdates, arch-audit or systemctl itself.
@@ -26,7 +26,7 @@ Scope {
     // to leave the shell: `fastfetch`'s title module reads `{$WR_TITLE}`,
     // `_sensei_fetch` exports it from here, and without this the recording
     // would carry `<user>@<hostname>` in 20 px type above the prompt.
-    readonly property string fetchTitle: Demo.fetchTitle(Runner.user, Machine.hostname).replace(/'/g, "")
+    readonly property string fetchTitle: Demo.fetchTitle(Runner.user, Machine.hostname).replace(/['\n\r]/g, "")
 
     // **The shell prompt's identity, for every terminal already open.** `\u`
     // and `\h` are bash's own escapes and cannot be overridden, so
@@ -47,7 +47,7 @@ SHIELD=${SystemStatus.shieldState === "armed" ? "ARMED" : SystemStatus.shieldSta
 SHIELD_FW='${SystemStatus.shieldFirewall.replace(/['\n\r]/g, "")}'
 PROFILE='${Theme.profile.replace(/['\n\r]/g, "")}'
 FETCH_TITLE='${root.fetchTitle}'
-HANDLE='${Demo.handle(Runner.handle).replace(/'/g, "")}'
+HANDLE='${Demo.handle(Runner.handle).replace(/['\n\r]/g, "")}'
 PROMPT_IDENT='${root.promptIdent}'
 `
 
