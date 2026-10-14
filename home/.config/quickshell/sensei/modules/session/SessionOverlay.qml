@@ -46,6 +46,7 @@ Variants {
 
             Wallpaper {
                 anchors.fill: parent
+                source: Wallpapers.displaySource(ShellState.overlayScreenName)
                 dim: 0.58
             }
 

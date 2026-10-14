@@ -509,8 +509,9 @@ Scope {
             return Wallpapers.displayedPath;
         }
 
+        // The file the main display shows: its own choice, else the profile's.
         function current(): string {
-            return Wallpapers.displayedPath;
+            return Wallpapers.displays["eDP-1"]?.file || Wallpapers.displayedPath;
         }
 
         function folder(path: string): string {

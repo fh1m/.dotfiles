@@ -37,7 +37,11 @@ Singleton {
     function syncStartup(output: string, path: string): void {
         Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-startup-wallpaper`,path||"",output]);
     }
-    function displaySource(output: string): url { const name=ShellState.isExternalOutput(output)?"eDP-1":output; const path=displays[name]?.file; return path ? Paths.url(path) : displayed; }
+    // The main display's own file when one is chosen, else the profile's image. Every
+    // default `Wallpaper` takes this, so a surface with no explicit source (the power
+    // menu, the EFFECTS tiles) shows the same image as the picker and the lock.
+    readonly property url displayed: displays["eDP-1"]?.file ? Paths.url(displays["eDP-1"].file) : profileImage
+    function displaySource(output: string): url { const name=ShellState.isExternalOutput(output)?"eDP-1":output; const path=displays[name]?.file; return path ? Paths.url(path) : profileImage; }
     function displayMode(output: string): int { const name=ShellState.isExternalOutput(output)?"eDP-1":output;return displays[name]?.mode ?? Image.PreserveAspectCrop; }
     function updatePalette(): void { Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-palette`,String(displaySource("eDP-1")).replace(/^file:\/\//,"")]); }
     onLoadedChanged: if (loaded) updatePalette()
@@ -183,7 +187,9 @@ Singleton {
     // or the PNG not generated), a preset profile falls back to its bundled
     // wallpaper so first boot is never a flat colour; a custom profile stays
     // empty and shows the solid Theme.deep.
-    readonly property url displayed: {
+    // The main display's image as the profile would have it, for an output with no
+    // image of its own (DP-2 "Follows theme").
+    readonly property url profileImage: {
         if (!root.dynamic)
             return lockedFile ? Paths.url(lockedFile) : root.presetAsset(Theme.profile);
         const own = root.imageOf(root.currentFile(Theme.profile));
