@@ -24,6 +24,18 @@ use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::config::apply_config_override;
 
+/// Create (truncating) a file that only the owner can read and write.
+fn create_private_file(path: &std::path::Path) -> std::io::Result<std::fs::File> {
+    let mut options = std::fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    options.open(path)
+}
+
 fn init_logging(
     log_folder: &std::path::Path,
     log_buffer: Arc<Mutex<VecDeque<String>>>,
@@ -46,7 +58,8 @@ fn init_logging(
     if !log_folder.exists() {
         std::fs::create_dir_all(log_folder)?;
     }
-    let log_file = std::fs::File::create(log_folder.join(format!("{log_prefix}.log")))
+    // Logs can name tracks and playlists, so keep them owner-only (umask would give 0644).
+    let log_file = create_private_file(&log_folder.join(format!("{log_prefix}.log")))
         .context("failed to create log file")?;
 
     let fmt_layer = tracing_subscriber::fmt::layer()
@@ -62,7 +75,7 @@ fn init_logging(
         .init();
 
     // initialize the application's panic backtrace
-    let backtrace_file = std::fs::File::create(log_folder.join(format!("{log_prefix}.backtrace")))
+    let backtrace_file = create_private_file(&log_folder.join(format!("{log_prefix}.backtrace")))
         .context("failed to create backtrace file")?;
     let backtrace_file = std::sync::Mutex::new(backtrace_file);
     std::panic::set_hook(Box::new(move |info| {
@@ -294,7 +307,9 @@ fn main() -> Result<()> {
                 .context("failed to initialize application's logging")?;
 
             // log the application's configurations
-            tracing::info!("Configurations: {:?}", config::get_config());
+            // Debug only: the dump includes the personal client_id, which should not
+            // land in the default info-level log.
+            tracing::debug!("Configurations: {:?}", config::get_config());
 
             let is_daemon;
 
