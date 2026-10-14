@@ -30,7 +30,7 @@ Item {
         return `${root.custom ? "CUSTOM" : "PROFILE"} ${String(within + 1).padStart(2, "0")}`;
     }
 
-    // APPLYING while the shell and kitty recolour.
+    // APPLYING while the shell and Alacritty recolour.
     property bool working: false
     property bool succeeded: false
 

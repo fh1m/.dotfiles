@@ -64,8 +64,8 @@ Variants {
         // a panel's frame. `termW` and `termH` are therefore the outer box; the
         // window's own geometry is this inset by the border.
         //
-        // The width is not free. kitty's tab bar is a grid of whole cells, so
-        // the window's width is rounded down to a multiple of one and the outer
+        // The width is not free. The width is rounded down to a multiple of
+        // Appearance.metrics.terminalCellWidth (a legacy kitty grid; see there), and the outer
         // box is that plus a border each side. **The panels are laid out from
         // the rounded figure, which is the fix:** the rounding used to happen
         // out of sight inside `placeTerminal`, so the bottom row was laid out

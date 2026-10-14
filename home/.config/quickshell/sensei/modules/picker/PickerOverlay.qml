@@ -143,7 +143,7 @@ Variants {
             // The card says APPLYING until the profile has actually landed,
             // rather than for a fixed moment: `Theme.apply` writes the file and
             // bumps activeProfile, and that is what runs the helper script for
-            // kitty and the Hyprland borders. Re-applying the profile already
+            // Alacritty and the Hyprland borders. Re-applying the profile already
             // in force changes nothing, so it is settled here instead of
             // waiting for a signal that will never come.
             if (Theme.activeProfile === name) {

@@ -2,7 +2,6 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import qs.config
@@ -176,7 +175,7 @@ Singleton {
     }
 
     // Whenever the profile changes -- picker, launcher, or a hand edit of the
-    // file -- the helper script brings kitty and Hyprland along. `-n` stops it
+    // file -- the helper script brings Alacritty and Hyprland along. `-n` stops it
     // rewriting the file the shell has just read, which would come straight
     // back as another change.
     // The command is set here rather than bound: a binding on `command` has not
@@ -185,7 +184,7 @@ Singleton {
     // **A second sync while the first is running is remembered, not dropped.**
     // `Process.running = true` on a process that is already running is a
     // no-op, so two profile changes inside the script's own runtime left
-    // kitty and the Hyprland borders on the first of them while the shell
+    // Alacritty and the Hyprland borders on the first of them while the shell
     // wore the second. It could not be reproduced from a session -- the
     // FileView coalesces and the script is quick -- but the mechanism is
     // plain, and "the colours are one profile behind and nobody can say why"

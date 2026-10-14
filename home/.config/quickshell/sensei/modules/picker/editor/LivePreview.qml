@@ -43,7 +43,7 @@ Item {
         previewPalette: root.previewPalette
     }
 
-    // A terminal, in the colours `sensei-profile` writes into kitty's
+    // A terminal, in the colours `sensei-profile` writes into Alacritty's
     // config: the prompt in accent, body in text, katakana in signal, warnings
     // in alert, and the selection reversed -- `ground` on `bright`, which is
     // the locked rule and the same contrast in every previewPalette.
@@ -99,7 +99,7 @@ Item {
 
         // The selection sample. It is a filled box rather than a real
         // selection because there is nothing here to select; the colours are
-        // the ones kitty is given.
+        // the ones Alacritty is given.
         Rectangle {
             width: selected.implicitWidth + 8
             height: selected.implicitHeight + 4

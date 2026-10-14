@@ -123,13 +123,11 @@ Singleton {
         // ticks, the code is editable -- and nothing on the bar may move when
         // they do. It is also what the text is centred within.
         readonly property int idBlockWidth: 92
-        // kitty's logical cell width at JetBrains Mono 11.5pt with the deck's
-        // 120% cell-width setting. Keep deck layout on complete cells.
-        // measured with `cell_size_for_window`. The deck terminal's width is
-        // rounded down to a multiple of this so kitty's tab bar grid covers
-        // the whole window: the pixels a partial cell would leave over are
-        // what put a mark in the header strip's top corners. If the terminal
-        // font size changes, this has to change with it.
+        // Legacy: the deck terminal was kitty, whose tab bar drew a grid of
+        // whole cells. The deck terminal is Alacritty now, which does not snap
+        // its size to cells, so this rounding only keeps the deck's width a
+        // whole number of these steps. Open: check on screen whether the
+        // rounding still earns its keep, and drop it if not.
         readonly property int terminalCellWidth: 11
         readonly property int hairline: 1
         readonly property int dividerHeight: 18
