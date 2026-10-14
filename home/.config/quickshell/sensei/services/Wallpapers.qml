@@ -466,7 +466,10 @@ Singleton {
         // `..` segment would otherwise reach anywhere `rm` can go.
         if (!path || !folder || !path.startsWith(folder.replace(/\/+$/, "") + "/") || path.split("/").includes(".."))
             return;
-        run(`rm -f ${quote(path)}`);
+        // Moved, not removed: a wallpaper the user deleted by mistake is one `mv`
+        // away from back. The holding folder lives under the state dir.
+        const holding = `${Paths.home}/.local/state/sensei/deleted-wallpapers`;
+        run(`mkdir -p ${quote(holding)} && mv -n ${quote(path)} ${quote(holding)}/`);
         refresh.restart();
     }
 
