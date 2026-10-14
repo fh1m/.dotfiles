@@ -2,7 +2,7 @@
 
 [← Workstation](../README.md)
 
-**Daily:** Alacritty 0.17 + tmux 3.7c. **Special deck:** Kitty. The deck needs Kitty's remote-control socket, image protocol and custom tab bar; replacing that one window would break the control surface. The old Kitty configuration is preserved in `backups/kitty/kitty.conf.20261004`.
+**Daily and deck:** Alacritty 0.17 + tmux 3.7c. The deck is `alacritty --class sensei-deck` running `sensei-tmux`. Kitty is retired; its last configuration is kept in `backups/kitty/kitty.conf.20261004`.
 
 | Same feel | Implementation |
 |---|---|
@@ -13,9 +13,9 @@
 | URL detection / navigation | Not configured in Alacritty (no URL hints, no Vi mode). Use tmux copy mode (`Ctrl+Shift+Up`) and its history search (`/`) |
 | Clipboard | Alacritty OSC 52 + tmux `set-clipboard external` + tmux-yank / `wl-copy` |
 
-**No native tabs, splits, remote control, graphics protocol or Kitty kitten overlays exist in Alacritty.** tmux covers tabs/splits/session recovery; Chafa covers inline image inspection. The deck stays on Kitty for the remaining features. Alacritty's native Wayland/OpenGL path was measured on this laptop, not assumed faster everywhere. [Alacritty manual](https://alacritty.org/config-alacritty.html) · [tmux FAQ](https://github.com/tmux/tmux/wiki/FAQ) · [Kitty remote control](https://sw.kovidgoyal.net/kitty/remote-control/) · [Chafa](https://hpjansson.org/chafa/).
+**No native tabs, splits, remote control, graphics protocol or Kitty kitten overlays exist in Alacritty.** tmux covers tabs/splits/session recovery; Chafa covers inline image inspection. The deck runs on Alacritty too, so Kitty is not needed for it. Alacritty's native Wayland/OpenGL path was measured on this laptop, not assumed faster everywhere. [Alacritty manual](https://alacritty.org/config-alacritty.html) · [tmux FAQ](https://github.com/tmux/tmux/wiki/FAQ) · [Kitty remote control](https://sw.kovidgoyal.net/kitty/remote-control/) · [Chafa](https://hpjansson.org/chafa/).
 
-Graphics forks exist: [ayosec/alacritty](https://github.com/ayosec/alacritty) adds Sixel and iTerm2 protocols; [microo8/alacritty-sixel](https://github.com/microo8/alacritty-sixel) adds Sixel. Neither supplies the deck's Kitty remote-control API. They have not had the same GPU/load test on this laptop, so the measured upstream Alacritty build remains the daily choice. For full-resolution images, open the file in an image viewer or the preserved Kitty deck; `chafa` is the quick terminal preview.
+Graphics forks exist: [ayosec/alacritty](https://github.com/ayosec/alacritty) adds Sixel and iTerm2 protocols; [microo8/alacritty-sixel](https://github.com/microo8/alacritty-sixel) adds Sixel. Neither supplies the deck's Kitty remote-control API. They have not had the same GPU/load test on this laptop, so the measured upstream Alacritty build remains the daily choice. For full-resolution images, open the file in an image viewer; `chafa` is the quick terminal preview.
 
 ## Keys
 
