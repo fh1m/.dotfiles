@@ -130,8 +130,9 @@ pub fn render_playback_window(
                 }
             };
 
+            // playback_progress is None when Spotify reports no progress; draw an empty bar
             let progress = std::cmp::min(
-                player.playback_progress().expect("non-empty playback"),
+                player.playback_progress().unwrap_or(chrono::Duration::zero()),
                 duration,
             );
             render_playback_progress_bar(frame, ui, progress, duration, progress_bar_rect);
@@ -342,7 +343,12 @@ fn construct_playback_text(
             },
             "{genres}" => match playable {
                 rspotify::model::PlayableItem::Track(full_track) => {
-                    let genre = match data.caches.genres.get(&full_track.artists[0].name) {
+                    // local files can come with no artists; `artists[0]` would panic the UI thread
+                    let genre = match full_track
+                        .artists
+                        .first()
+                        .and_then(|a| data.caches.genres.get(&a.name))
+                    {
                         Some(genres) => &format_genres(genres, configs.app_config.genre_num),
                         None => "no genre",
                     };
