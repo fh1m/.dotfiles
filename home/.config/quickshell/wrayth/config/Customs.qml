@@ -21,6 +21,12 @@ Singleton {
 
     readonly property var names: root.list.map(entry => entry.name)
 
+    // Entries the file holds that this shell will not load (a bad name or
+    // colour, typically a hand edit), and profiles the user has deleted. Both
+    // are written back to the file untouched, so a save never destroys them.
+    property var rejectedEntries: []
+    property var removed: []
+
     // The nine, in the order the editor lists them. The role text is the
     // editor's, so it lives with the key rather than in the view.
     readonly property var roles: [
@@ -97,7 +103,15 @@ Singleton {
         write();
     }
 
+    // A delete is a move, not a loss: the entry goes under `removed` in the
+    // file, stamped, the same way a deleted wallpaper goes to a recovery folder.
     function remove(name: string): void {
+        const gone = list.filter(entry => entry.name.toLowerCase() === name.toLowerCase());
+        if (!gone.length)
+            return;
+        removed = removed.concat(gone.map(entry => Object.assign({}, entry, {
+            removedAt: new Date().toISOString()
+        })));
         list = list.filter(entry => entry.name.toLowerCase() !== name.toLowerCase());
         write();
     }
@@ -110,9 +124,14 @@ Singleton {
     function write(): void {
         if (!root.loaded)
             return;
-        file.setText(`${JSON.stringify({
+        const out = {
             profiles: root.list
-        }, null, 2)}\n`);
+        };
+        if (root.rejectedEntries.length)
+            out.rejected = root.rejectedEntries;
+        if (root.removed.length)
+            out.removed = root.removed;
+        file.setText(`${JSON.stringify(out, null, 2)}\n`);
     }
 
     function adopt(contents: string): void {
@@ -126,8 +145,10 @@ Singleton {
         try {
             const parsed = JSON.parse(contents);
             const profiles = parsed?.profiles;
+            // Not readable as a profile list: say so, and do not mark the file
+            // as loaded, so no save can write over what was not understood.
             if (!Array.isArray(profiles)) {
-                loaded = true;
+                console.warn("wrayth: custom-profiles.json has no profiles list; leaving it alone");
                 return;
             }
             // A hand-edited file is not trusted to be complete **or safe**: an
@@ -138,12 +159,16 @@ Singleton {
             // sources as shell) and used to build a wallpaper path; the colours
             // are interpolated into a `hyprctl eval` Lua string. So both are
             // validated to the same charset the editor enforces, and any entry
-            // that fails is dropped rather than loaded. This is the single point
+            // that fails is not loaded; it stays in the file under `rejected`,
+            // so the user can fix it by hand. This is the single point
             // that keeps a crafted colour like `")); os.execute(...)` or a name
             // like `x=y;id` or `../../evil` out of every downstream sink.
             const nameOk = n => typeof n === "string" && /^[A-Za-z0-9 -]{1,40}$/.test(n);
             const hexOk = c => typeof c === "string" && /^#[0-9A-Fa-f]{6}$/.test(c);
-            list = profiles.filter(entry => entry && nameOk(entry.name) && entry.colors && root.roles.every(r => hexOk(entry.colors[r.key])));
+            const valid = entry => entry && nameOk(entry.name) && entry.colors && root.roles.every(r => hexOk(entry.colors[r.key]));
+            list = profiles.filter(valid);
+            rejectedEntries = profiles.filter(entry => !valid(entry));
+            removed = Array.isArray(parsed.removed) ? parsed.removed : [];
             loaded = true;
         } catch (e) {
             console.warn(`wrayth: custom-profiles.json is not readable JSON (${e})`);
