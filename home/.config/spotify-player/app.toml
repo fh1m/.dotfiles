@@ -42,7 +42,7 @@ volume_scroll_step = 5
 enable_mouse_scroll_volume = true
 
 pause_on_startup = true
-custom_queue = true
+custom_queue = false
 player_event_hook_command = { command = "@HOME@/.local/bin/sensei-spotify-transport", args = ["event"] }
 
 [notify_format]
