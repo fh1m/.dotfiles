@@ -19,6 +19,20 @@ Lan Mouse does not implement clipboard sharing. `den-clipboard.py` supplies a sm
 
 `den-session.py` discovers the current Wayland socket on each start, including after logout/login. New dedicated user units are linked from the private connection directory; they restart after failure and wait for a graphical session. These additions do not rewrite Claude's existing laptop services or desktop configuration.
 
+## Reproduce the service wiring
+
+Copy the maintained scripts into `~/.local/state/homie-control/`. Create the private input configuration and certificates there, authorize each independently read fingerprint, and configure the pinned SSH profile on the laptop. No credentials are supplied by this repository. Store the service files alongside the scripts, then:
+
+```sh
+systemctl --user link ~/.local/state/homie-control/den-input.service
+systemctl --user enable --now den-input.service
+# Laptop only:
+systemctl --user link ~/.local/state/homie-control/den-clipboard.service
+systemctl --user enable --now den-clipboard.service
+```
+
+The laptop client config uses `position = "top"`, `hostname = "homie.local"` and `activate_on_startup = true`. Homie has no outgoing client. Both use `release_bind = ["KeyLeftCtrl", "KeyLeftAlt", "KeyEsc"]`, the layer-shell capture backend and wlroots emulation. Certificate fingerprints belong under `[authorized_fingerprints]` in each private config, and are never guessed or auto-trusted.
+
 ## Controls
 
 On Arete:
