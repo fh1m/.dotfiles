@@ -43,6 +43,10 @@ Singleton {
     // --- faillock lockout ---------------------------------------------------
     // True while pam_faillock is refusing every attempt, correct or not.
     property bool lockedOut: false
+    // Set when this side ends an attempt (timeout, empty prompt). PamResult has
+    // no "aborted" value, so the completion that follows reads as a failure;
+    // this flag keeps it from counting as one.
+    property bool aborting: false
     // When the lockout ends (ms since the epoch), or 0 when that is not known.
     // Known from the tally file when it is readable (it normally is: the tally
     // is the user's own file); otherwise from PAM's "(N minutes left to
@@ -102,6 +106,7 @@ Singleton {
         buffer = "";
         notice = "";
         state = "checking";
+        aborting = false;
         pam.start();
     }
 
@@ -153,6 +158,7 @@ Singleton {
                 // context was started by something other than a deliberate
                 // submit, and pam_faillock would count the failure all the
                 // same.
+                root.aborting = true;
                 abort();
                 authWatchdog.stop();
                 root.state = "";
@@ -163,6 +169,12 @@ Singleton {
         }
 
         onCompleted: result => {
+            if (root.aborting) {
+                // Our own abort: no verdict, nothing counted, state already set.
+                root.aborting = false;
+                root.pending = "";
+                return;
+            }
             if (result === PamResult.Success) {
                 authWatchdog.stop();
                 root.pending = "";
@@ -191,6 +203,7 @@ Singleton {
         onTriggered: {
             if (!root.busy)
                 return;
+            root.aborting = true;
             pam.abort();
             root.pending = "";
             root.notice = "timeout";
