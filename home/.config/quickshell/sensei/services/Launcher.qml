@@ -137,8 +137,8 @@ Singleton {
             Deck.leave();
             // `execute()` runs the command as it stands and ignores
             // `Terminal=true`, so a terminal app (btop, htop, nmtui...) ran with
-            // nowhere to draw and exited unseen. Those open in kitty, the
-            // shell's own terminal.
+            // nowhere to draw and exited unseen. Those open in the
+            // daily terminal (sensei-terminal, Alacritty).
             if (chosen.entry.runInTerminal)
                 Quickshell.execDetached({
                     command: ["@HOME@/.local/bin/sensei-terminal", "-e"].concat(Array.from(chosen.entry.command)),
