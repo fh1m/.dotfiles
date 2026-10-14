@@ -46,7 +46,7 @@ Bridge status calls measured roughly 2–4 ms in short local samples. Cold audio
 
 The Sound panel reports active output/source, devices/profiles and per-application streams. Volume acknowledgement is separate from delayed catalogue requests, so a slider does not snap back to an old server value. Detailed subscriptions run while the panel is open; native PipeWire controls provide immediate feedback.
 
-The system output slider and sound-badge wheel allow up to 150% gain. Spotify Connect's own volume remains 0–100%; use the system output for extra gain. Values above 100% can clip a loud recording.
+The system output slider in the Sound panel allows up to 150% gain. The bar's sound badge wheel stops at 100%, so an accidental scroll cannot push the output past full. Spotify Connect's own volume remains 0–100%; use the system output for extra gain. Values above 100% can clip a loud recording.
 
 The experiment with an aggressive Spotify client latency override made listening less robust. It was removed. Normal client buffering (~145 ms observed in one sample) and normal CPU priority provide scheduling headroom without slowing UI command dispatch. Global PipeWire quantum/sample rate were not broadly changed.
 
