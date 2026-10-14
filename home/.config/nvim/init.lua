@@ -12,6 +12,9 @@ vim.opt.rtp:prepend(lazy)
 require('lazy').setup({ { import = 'sensei.plugins' } }, {
   lockfile = vim.fn.stdpath('config') .. '/lazy-lock.json',
   checker = { enabled = false }, change_detection = { enabled = false },
+  -- No plugin here needs luarocks; without this, checkhealth reports a missing
+  -- hererocks/luarocks that nothing uses.
+  rocks = { enabled = false },
   install = { colorscheme = { 'sensei' } },
   ui = { border = 'single' },
   performance = { rtp = { disabled_plugins = { 'netrwPlugin', 'matchit' } } },
