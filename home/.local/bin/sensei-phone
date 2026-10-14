@@ -235,7 +235,7 @@ def action(a,id='',args=None):
         addr=str(ipaddress.ip_address(args[0]));o=iface(BASE,'org.freedesktop.DBus.Properties');old=list(o.Get(NAME+'.daemon','customDevices',timeout=3));o.Set(NAME+'.daemon','customDevices',dbus.Array(list(dict.fromkeys([*map(str,old),addr])),signature='s',variant_level=1),timeout=3);iface(BASE,NAME+'.daemon').forceOnNetworkChange(timeout=3);return {'ok':True,'output':'Private address added. Add this laptop’s Tailscale IP in Android KDE Connect → Add devices by IP.'}
     if a=='save-ssh':
         host,user,port=args
-        if not re.fullmatch(r'[a-zA-Z0-9.:-]+',host) or not re.fullmatch(r'[a-zA-Z0-9_-]+',user) or not 1<=int(port)<=65535:raise ValueError('Check hostname, username and port.')
+        if not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9.:-]*',host) or not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_-]*',user) or not 1<=int(port)<=65535:raise ValueError('Check hostname, username and port.')
         save_json(CFG,{'host':host,'user':user,'port':int(port)});return {'ok':True,'output':'SSH target saved. Use Trust / shell to verify its host key and install your public key before widget commands.'}
     if a=='ssh-key':
         if SSH_KEY.exists():return {'ok':True,'output':'Dedicated Phone SSH key already exists.'}

@@ -41,10 +41,10 @@ DropdownFrame {
      Row {width:parent.width;spacing:12
       ChamferPanel {width:316;height:126;scanlines:false;chamfer:10;fillColor:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.08)
        Column {x:14;y:12;width:parent.width-28;spacing:10
-        Text {text:(root.device.name||"Samsung A52");font.family:Appearance.font.ui;font.pixelSize:17;font.bold:true;color:Theme.widgetText}
+        Text {textFormat:Text.PlainText;text:(root.device.name||"Samsung A52");font.family:Appearance.font.ui;font.pixelSize:17;font.bold:true;color:Theme.widgetText}
         Text {text:root.device.isPaired?"Trusted device · "+(root.device.isReachable?"reachable":"offline"):"Not paired · accept on your A52";font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted}
-        Text {width:parent.width;text:(root.device.reachableAddresses||[]).join("\n")||"Waiting for discovery";font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetAccent;wrapMode:Text.Wrap}
-        Text {text:(root.device.activeProviderNames||[]).join(" · ")+" · "+(root.device.connectivity?.cellularNetworkType||"cellular unknown");font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}
+        Text {width:parent.width;textFormat:Text.PlainText;text:(root.device.reachableAddresses||[]).join("\n")||"Waiting for discovery";font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetAccent;wrapMode:Text.Wrap}
+        Text {textFormat:Text.PlainText;text:(root.device.activeProviderNames||[]).join(" · ")+" · "+(root.device.connectivity?.cellularNetworkType||"cellular unknown");font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}
        }
       }
       ChamferPanel {width:316;height:126;scanlines:false;chamfer:10;fillColor:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.08)
@@ -153,7 +153,7 @@ DropdownFrame {
      Row {spacing:10
       Image {width:64;height:64;sourceSize.width:128;sourceSize.height:128;source:root.device.media?.localAlbumArtUrl||"";fillMode:Image.PreserveAspectFit}
       Column {spacing:8;width:body.width-74
-       Text {width:parent.width;text:(root.device.media?.title||"No phone media session")+" · "+(root.device.media?.artist||"");elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetText}
+       Text {width:parent.width;textFormat:Text.PlainText;text:(root.device.media?.title||"No phone media session")+" · "+(root.device.media?.artist||"");elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetText}
        Row {spacing:7;DeskComboBox {width:225;height:32;model:root.device.media?.playerList||[];onActivated:root.act("phone-player",[model[currentIndex]])}ControlTile {label:"Previous";implicitWidth:100;implicitHeight:30;enabled:!!root.device.media?.player;onActivated:root.act("phone-media",["Previous"])}ControlTile {label:root.device.media?.isPlaying?"Pause":"Play";implicitWidth:90;implicitHeight:30;enabled:!!root.device.media?.player;onActivated:root.act("phone-media",["PlayPause"])}ControlTile {label:"Next";implicitWidth:90;implicitHeight:30;enabled:!!root.device.media?.player;onActivated:root.act("phone-media",["Next"])}ControlTile {label:"Vol −";implicitWidth:85;implicitHeight:30;enabled:!!root.device.media?.player;onActivated:root.act("phone-volume",[String(Math.max(0,(root.device.media?.volume||0)-5))])}ControlTile {label:"Vol +";implicitWidth:85;implicitHeight:30;enabled:!!root.device.media?.player;onActivated:root.act("phone-volume",[String(Math.min(100,(root.device.media?.volume||0)+5))])}}
       }
      }
@@ -185,12 +185,12 @@ DropdownFrame {
      Text {width:parent.width;text:"Tailscale · "+(root.state.vpn?.state||"Loading")+" · laptop "+(root.state.vpn?.ips||[]).join(" / ");wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:14;font.bold:true;color:Theme.widgetText}
      Flow {width:parent.width;spacing:8
       ControlTile {label:root.state.vpn?.state==="Running"?"Mesh connected":"Sign in / connect";glyph:"\uf0ac";implicitWidth:220;enabled:root.state.vpn?.state!=="Running";onActivated:root.act("vpn-login")}
-      ControlTile {label:"Open sign-in page";implicitWidth:205;enabled:!!root.state.vpn?.authUrl;onActivated:Quickshell.execDetached(["xdg-open",root.state.vpn.authUrl])}
+      ControlTile {label:"Open sign-in page";implicitWidth:205;enabled:/^https:\/\//.test(root.state.vpn?.authUrl??"");onActivated:Quickshell.execDetached(["xdg-open",root.state.vpn.authUrl])}
       ControlTile {label:"Disconnect mesh";implicitWidth:190;enabled:root.state.vpn?.state==="Running";onActivated:root.act("vpn-disconnect")}
       ControlTile {label:"Test private tunnel";implicitWidth:190;enabled:root.androidPeers.length>0;onActivated:root.act("vpn-test")}
       ControlTile {label:"Tailscale devices";implicitWidth:190;onActivated:Quickshell.execDetached(["xdg-open","https://login.tailscale.com/admin/machines"])}
      }
-     Repeater {model:root.state.vpn?.peers||[];Text {required property var modelData;width:body.width;text:(modelData.online?"● ":"○ ")+modelData.name+" · "+modelData.os+" · "+modelData.ips.join(" / ")+"\n"+(modelData.address?"Direct path "+modelData.address:"Relay / idle: "+(modelData.relay||"not established"));font.family:Appearance.font.ui;font.pixelSize:12;color:modelData.online?Theme.widgetText:Theme.widgetMuted;wrapMode:Text.Wrap}}
+     Repeater {model:root.state.vpn?.peers||[];Text {required property var modelData;width:body.width;textFormat:Text.PlainText;text:(modelData.online?"● ":"○ ")+modelData.name+" · "+modelData.os+" · "+modelData.ips.join(" / ")+"\n"+(modelData.address?"Direct path "+modelData.address:"Relay / idle: "+(modelData.relay||"not established"));font.family:Appearance.font.ui;font.pixelSize:12;color:modelData.online?Theme.widgetText:Theme.widgetMuted;wrapMode:Text.Wrap}}
      Row {spacing:8;DeskTextField {id:phoneIp;width:440;placeholderText:"Phone’s private Tailscale IP · 100.x.x.x"}ControlTile {label:"Add phone address";implicitWidth:220;enabled:phoneIp.text!=="";onActivated:root.act("add-address",[phoneIp.text])}}
      Text {width:parent.width;text:"Android tailnet addresses are added to desktop KDE Connect discovery when Phone refreshes. On your A52: KDE Connect → Add devices by IP → add this laptop’s 100.x address. Both Tailscale apps must be connected to the same account/tailnet. Internet availability alone is not enough without the VPN and Android permissions.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted}
      Row {spacing:8;ControlTile {label:"Enable laptop Tailscale SSH";implicitWidth:285;enabled:root.state.vpn?.state==="Running";onActivated:root.act("vpn-ssh",["on"])}ControlTile {label:"Disable Tailscale SSH";implicitWidth:230;enabled:true;onActivated:root.act("vpn-ssh",["off"])}}
