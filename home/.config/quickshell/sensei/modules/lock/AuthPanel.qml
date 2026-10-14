@@ -87,32 +87,32 @@ ChamferPanel {
             height: authRow.implicitHeight
             scrambleItems: [authTitle]
 
-        Row {
-            id: authRow
+            Row {
+                id: authRow
 
-            anchors.fill: parent
-            spacing: 8
+                anchors.fill: parent
+                spacing: 8
 
-            NrLabel {
-                id: authTitle
+                NrLabel {
+                    id: authTitle
 
-                anchors.verticalCenter: parent.verticalCenter
-                color: Theme.bright
-                text: `AUTH${Appearance.separator}PASSPHRASE`
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: Theme.bright
+                    text: `AUTH${Appearance.separator}PASSPHRASE`
+                }
+
+                Text {
+                    textFormat: Text.PlainText
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "ДОСТУП"
+                    color: Theme.signal
+                    font.family: Appearance.font.accent
+                    font.letterSpacing: 0
+                    font.pixelSize: Appearance.size.katakana
+                    font.weight: Appearance.font.weightMedium
+                    renderType: Text.NativeRendering
+                }
             }
-
-            Text {
-                textFormat: Text.PlainText
-                anchors.verticalCenter: parent.verticalCenter
-                text: "ДОСТУП"
-                color: Theme.signal
-                font.family: Appearance.font.accent
-                font.letterSpacing: 0
-                font.pixelSize: Appearance.size.katakana
-                font.weight: Appearance.font.weightMedium
-                renderType: Text.NativeRendering
-            }
-        }
         }
 
         NrLabel {
