@@ -24,6 +24,11 @@ SEED_ONLY = {
     '.config/qt6ct/colors/matugen.conf',
     '.config/zsh/sensei-palette.zsh',
     '.config/fzf/sensei-colors',
+    # sensei-palette rewrites the colour sections of the terminal config in place
+    # and renders the tmux theme from its template. The live copy holds the
+    # wallpaper's palette, so the committed copy must not overwrite it.
+    '.config/alacritty/alacritty.toml',
+    '.config/tmux/sensei-theme.conf',
 }
 # Live paths that are symlinks into the sensei tree, not copies. A copy here would
 # shadow the file the shell loads, so each is linked to the external file instead.
@@ -77,7 +82,9 @@ def install(home, apply=False, hardware='generic'):
         if relative.as_posix() in SEED_ONLY and (dest.exists() or dest.is_symlink()):
             continue
         data = render(source.read_bytes(), home, hardware)
-        if dest.is_file() and not dest.is_symlink() and dest.read_bytes() == data:
+        # A symlink whose target already holds these bytes is not a change. Without
+        # the symlink case, every linked file reads as drift and --apply copies over it.
+        if dest.is_file() and dest.read_bytes() == data:
             continue
         changes.append(str(relative))
         if not apply:
