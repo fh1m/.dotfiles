@@ -65,7 +65,9 @@ impl PlayerState {
         match self.playback {
             None => None,
             Some(ref playback) => {
-                let progress = playback.progress.unwrap()
+                // Spotify can report a playback without progress. Return None here;
+                // a panic would end the player-event watcher thread for good.
+                let progress = playback.progress?
                     + if playback.is_playing {
                         chrono::Duration::from_std(
                             self.playback_last_updated_time.unwrap().elapsed(),
