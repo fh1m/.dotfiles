@@ -46,7 +46,7 @@ def status():
      elif target==str(Path('/dev/dri/by-path/pci-'+config().get('nvidiaPCI','0000:01:00.0')+'-render').resolve()):actual='NVIDIA'
     except OSError:pass
   except OSError:pass
- return {**config(),'actual':actual,'running':bool(browsers()),'nvidiaAvailable':availability(),'settingsPending':not (backup/'applied.json').exists(),'note':('Nvidia is blocked on this kernel after driver errors. Reboot validation is still required.' if os.uname().release=='7.2.5-1-cachyos' else 'Hybrid: NVIDIA Vulkan rendering + Intel hardware video decode through XWayland. Training uses native Intel Wayland.')}
+ return {**config(),'actual':actual,'running':bool(browsers()),'nvidiaAvailable':availability(),'settingsPending':not (backup/'applied.json').exists(),'note':('Hybrid: NVIDIA Vulkan rendering + Intel hardware video decode through XWayland. Training uses native Intel Wayland.' if availability() else 'Nvidia is not validated on this kernel and driver. Intel only until the hybrid setup is validated again.')}
 def prepare():
  if browsers():return
  if not (backup/'applied.json').exists():

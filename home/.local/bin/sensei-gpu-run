@@ -9,8 +9,14 @@ mode=args.pop(0);env=dict(os.environ)
 try:training=json.loads((Path.home()/'.config/hypr/zenbook-controls.json').read_text()).get('training',False)
 except (OSError,ValueError):training=False
 if training:mode='intel'
-if mode=='nvidia' and os.uname().release=='7.2.5-1-cachyos':
- print('Sensei, reboot into the installed kernel before Nvidia graphics offload.',file=sys.stderr);sys.exit(1)
+# Nvidia offload needs the hybrid record validated on this exact kernel (written by
+# the hybrid check in sensei-chrome). No record, or a kernel change, means Intel only.
+def nvidia_validated():
+ try:record=json.loads((Path.home()/'.config/hypr/chrome-gpu.json').read_text())
+ except (OSError,ValueError):return False
+ return bool(record.get('validatedHybrid')) and record.get('validatedKernel')==os.uname().release
+if mode=='nvidia' and not nvidia_validated():
+ print('Sensei, Nvidia offload is not validated for this kernel. Use intel, or validate the hybrid setup again.',file=sys.stderr);sys.exit(1)
 for key in ['__NV_PRIME_RENDER_OFFLOAD','__GLX_VENDOR_LIBRARY_NAME','__EGL_VENDOR_LIBRARY_FILENAMES','__VK_LAYER_NV_optimus','VK_ICD_FILENAMES','NVD_BACKEND','DRI_PRIME']:env.pop(key,None)
 if mode=='nvidia':
  env.update(GDK_BACKEND='x11',QT_QPA_PLATFORM='xcb')

@@ -120,6 +120,8 @@ def action(name,a):
   if cfg.get('workspace'):
    path=Path(cfg['workspace']).expanduser().resolve()
    if not path.is_dir():raise ValueError('Choose an existing workspace directory.')
+   # --mount reads commas as option separators; a comma or quote in the path would inject mount options.
+   if any(c in str(path) for c in ',"'):raise ValueError('Workspace path cannot contain commas or quotes.')
    args+=['--mount','type=bind,src='+str(path)+',dst=/workspace','-w','/workspace']
   for device in cfg.get('devices',[]):
    if not re.fullmatch(r'/dev/tty(?:USB|ACM)[0-9]+',device) or not Path(device).exists():raise ValueError('Choose a current serial device.')
