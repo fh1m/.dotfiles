@@ -53,6 +53,16 @@ try:
 except Exception:
     profiles = []
 
+# The rule Customs.validName applies in the shell, applied here too. A name is
+# written into kitty.conf as a comment, so a line break in one would let the
+# rest of it be read as config, and a preset's name would shadow that preset.
+import re
+PRESETS = {"circuit", "sodium", "prism", "redline", "oxide", "cobalt"}
+def good_name(p):
+    n = p.get("name") if isinstance(p, dict) else None
+    return isinstance(n, str) and re.fullmatch(r"[A-Za-z0-9 -]{1,40}", n) is not None and n.lower() not in PRESETS
+profiles = [p for p in profiles if good_name(p)]
+
 if mode == "names":
     print("\n".join(p["name"] for p in profiles if isinstance(p.get("name"), str)))
     raise SystemExit(0)
