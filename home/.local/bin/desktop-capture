@@ -45,27 +45,34 @@ def geometry_monitor(geometry, displays):
             return display['name']
     raise ValueError('For recording, select an area inside one display')
 
+def copy_image(path):
+    # The clipboard is set from the saved file, then read back: a copy that did not
+    # take must not be reported as one.
+    with path.open('rb') as data:
+        run(['wl-copy', '--type', 'image/png'], stdin=data, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    offered = subprocess.run(['wl-paste', '--list-types'], capture_output=True, text=True, timeout=5).stdout.split()
+    if 'image/png' not in offered:
+        raise RuntimeError('Screenshot saved, but the clipboard did not take the image')
+
 def screenshot(args):
     output = filename(HOME_DIR / 'Pictures/Screenshots', 'Screenshot', 'png')
     if args.geometry:
         run(['grim', '-g', args.geometry, str(output)])
-        with output.open('rb') as data:
-            run(['wl-copy', '--type', 'image/png'], stdin=data, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     else:
-        command = ['grimblast']
-        # A frozen compositor frame made area selection look like a desktop
-        # stall, and kept the shell from animating while the picker was open.
-        command += ['copysave', args.mode, str(output)]
+        # Save only; the copy below is explicit so both paths report the same thing.
+        # No --freeze: a frozen compositor frame made area selection look like a
+        # desktop stall, and kept the shell from animating while the picker was open.
         logpath = HOME_DIR / ".local/state/sensei/capture.log"
         logpath.parent.mkdir(parents=True, exist_ok=True)
         with logpath.open("a") as errors:
-            result = subprocess.run(command, stdout=subprocess.DEVNULL, stderr=errors)
+            result = subprocess.run(['grimblast', 'save', args.mode, str(output)], stdout=subprocess.DEVNULL, stderr=errors)
         if result.returncode != 0:
             if args.mode == 'area' and not output.exists():
                 return  # Escape is a normal cancellation.
             raise RuntimeError('Screenshot failed; check grimblast output')
     if not output.exists() or output.stat().st_size == 0:
         return
+    copy_image(output)
     notify('Screenshot saved and copied', output)
     print(output)
 
