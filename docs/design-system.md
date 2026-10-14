@@ -1,6 +1,6 @@
 # Sensei interface
 
-> **Superseded.** This page describes the earlier wallpaper-driven accent (Matugen sampling, rose `#ff4297`). The current rule is the fixed Signal Ledger palette: the accent is a token in `Theme.qml`, and wallpapers no longer run Matugen. See [Signal Ledger](design/signal-ledger.md). The type and motion notes below still hold.
+> **Current rule (2026-10-14).** The main wallpaper is the visual guide. `sensei-palette` derives the accent, surfaces and text from the image, and it writes the shell, terminal, tmux, fzf, GTK, Qt and Hyprland border colours. The Quickshell core tokens in `config/Theme.qml` read the same palette. The Signal Ledger values are only the fallback when the image has no usable colour. Amber stays fixed as the caution colour. The type and motion notes below still hold.
 
 The wallpaper provides the color. The shell provides the instrument panel.
 

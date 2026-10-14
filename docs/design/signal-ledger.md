@@ -32,7 +32,7 @@ Three routes were considered: **Signal Ledger** (warm instrument rail), **Field 
 
 JetBrainsMono Nerd Font Propo carries UI labels; Iosevka Nerd Font Mono carries values, terminal text, and telemetry. The spacing step is 4 px; ordinary cuts are 2–5 px. Borders are one pixel. Actions acknowledge in 100 ms, selections travel in 180 ms, and panels reveal in 210 ms. Motion is reserved for selection, loading, opening, and live playback. No idle dashboard animation, sampled blur, or decorative scanlines.
 
-The token source is `home/.config/quickshell/sensei/config/Theme.qml` and the shell/terminal palette publisher is `home/.local/bin/sensei-palette`. Wallpaper changes no longer rotate the meaning of UI colors or run Matugen. Other widgets inherit the same tokens through the shared frame and control components.
+The token source is `home/.config/quickshell/sensei/config/Theme.qml`, and the shell/terminal palette publisher is `home/.local/bin/sensei-palette`. The table above is the fallback: since 2026-10-14 the wallpaper is the visual guide, so the core tokens (ink, paper, signal, cyan, surfaces, rule) are read from the main wallpaper palette whenever it exists. Amber stays fixed for caution. Other widgets inherit the same tokens through the shared frame and control components.
 
 ## Interaction rules
 
