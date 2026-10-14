@@ -29,7 +29,9 @@ Singleton {
 
     Process {
         running: true
-        command: ["sh", "-c", "printf /sys/class/backlight/intel_backlight/"]
+        // The main panel first (intel_backlight, or amdgpu_bl*), then any backlight but
+        // the ASUS screenpad, which is a second panel. Nothing printed when there is none.
+        command: ["sh", "-c", "for p in intel_backlight amdgpu_bl*; do for d in /sys/class/backlight/$p/; do [ -r $d/brightness ] && { printf '%s' $d; exit 0; }; done; done; for d in /sys/class/backlight/*/; do case $d in *screenpad*) continue;; esac; [ -r $d/brightness ] && { printf '%s' $d; exit 0; }; done"]
         stdout: StdioCollector {
             onStreamFinished: root.device = text.trim()
         }
