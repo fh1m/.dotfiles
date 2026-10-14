@@ -123,12 +123,6 @@ Singleton {
         // ticks, the code is editable -- and nothing on the bar may move when
         // they do. It is also what the text is centred within.
         readonly property int idBlockWidth: 92
-        // Legacy: the deck terminal was kitty, whose tab bar drew a grid of
-        // whole cells. The deck terminal is Alacritty now, which does not snap
-        // its size to cells, so this rounding only keeps the deck's width a
-        // whole number of these steps. Open: check on screen whether the
-        // rounding still earns its keep, and drop it if not.
-        readonly property int terminalCellWidth: 11
         readonly property int hairline: 1
         readonly property int dividerHeight: 18
         // Every hairline divider on the bar stands off whatever is beside it by

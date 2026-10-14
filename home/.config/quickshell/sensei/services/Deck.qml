@@ -66,17 +66,6 @@ Singleton {
         Quickshell.execDetached(command);
     }
 
-    // A width rounded down to whole terminal cells keeps the deck layout aligned.
-    //
-    // **The layout calls this, not `placeTerminal`.** The rounding used to
-    // happen on the way out to Hyprland, where nothing else could see it, so
-    // the panels were laid out from the nominal width and the bottom row
-    // overhung the terminal by the pixels the rounding had given up. The
-    // deck asks for the figure first and lays itself out from it.
-    function fitCells(w: real): real {
-        return Math.floor(w / Appearance.metrics.terminalCellWidth) * Appearance.metrics.terminalCellWidth;
-    }
-
     // Puts the deck terminal exactly where the deck says. A window rule cannot
     // do this: rules are evaluated in raw monitor coordinates and know nothing
     // of the area the bars reserve, which is what the rest of the deck is laid

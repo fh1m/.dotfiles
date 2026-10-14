@@ -64,19 +64,13 @@ Variants {
         // a panel's frame. `termW` and `termH` are therefore the outer box; the
         // window's own geometry is this inset by the border.
         //
-        // The width is not free. The width is rounded down to a multiple of
-        // Appearance.metrics.terminalCellWidth (a legacy kitty grid; see there), and the outer
-        // box is that plus a border each side. **The panels are laid out from
-        // the rounded figure, which is the fix:** the rounding used to happen
-        // out of sight inside `placeTerminal`, so the bottom row was laid out
-        // from the nominal width and overhung the terminal by the pixels the
-        // rounding had given up.
+        // Alacritty takes any pixel size, so the width is simply what the layout
+        // leaves over: the window's own width is this less the border each side.
         readonly property real termH: bottomY - gap - margin
-        readonly property real termW: Deck.fitCells(boxW - gap - Appearance.metrics.deckColumnWidth - border * 2) + border * 2
+        readonly property real termW: boxW - gap - Appearance.metrics.deckColumnWidth
 
         // The right column starts a gap past the terminal's outer edge and runs
-        // to the margin, so the pixels the cell rounding gave up are absorbed
-        // here rather than showing up as an uneven outer margin.
+        // to the margin.
         readonly property real columnX: margin + termW + gap
         readonly property real columnW: margin + boxW - columnX
 
