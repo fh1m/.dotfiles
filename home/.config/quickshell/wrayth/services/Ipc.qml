@@ -140,6 +140,10 @@ Scope {
                 return "save <name>";
             if (!/^[A-Za-z0-9 -]+$/.test(trimmed))
                 return "letters, numbers, spaces and hyphens only";
+            // The same ceiling the NAME // PROFILE prompt types to. A longer
+            // name would be saved and then dropped on the next load.
+            if (trimmed.length > 24)
+                return "24 characters at most";
             if (Profiles.names.some(existing => existing.toLowerCase() === trimmed.toLowerCase()))
                 return `${trimmed} is already a profile`;
             ShellState.editorSave(trimmed);
@@ -300,13 +304,6 @@ Scope {
         }
     }
 
-    // **Real, not scaffolding.** The glitch scheduler picks its own target at
-    // its own time, which is right for atmosphere and useless for a recording
-    // or a demonstration -- "fire one on the SYS.DIAG header, now" has no
-    // other way in. `qa fire` stays where it is; that one exists to drive the
-    // scheduler's internals and takes effects and durations with it.
-    // The deck, so a script has one way in rather than reaching past the
-    // shell to Hyprland for the one overlay the shell itself owns the state of.
     // Read-only: the planner's cleared/total, exactly what its header shows.
     // For tests (the nested install test checks a new account starts at 0/0).
     IpcHandler {
@@ -317,6 +314,8 @@ Scope {
         }
     }
 
+    // The deck, so a script has one way in rather than reaching past the
+    // shell to Hyprland for the one overlay the shell itself owns the state of.
     IpcHandler {
         target: "deck"
 
@@ -340,6 +339,11 @@ Scope {
         }
     }
 
+    // **Real, not scaffolding.** The glitch scheduler picks its own target at
+    // its own time, which is right for atmosphere and useless for a recording
+    // or a demonstration -- "fire one on the SYS.DIAG header, now" has no
+    // other way in. `qa fire` stays where it is; that one exists to drive the
+    // scheduler's internals and takes effects and durations with it.
     IpcHandler {
         target: "glitch"
 
