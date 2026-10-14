@@ -104,7 +104,7 @@ Singleton {
     }
 
     function advisoryUrl(name: string): string {
-        return `https://security.archlinux.org/package/${name}`;
+        return `https://security.archlinux.org/package/${encodeURIComponent(name)}`;
     }
 
     function _updateAge(): void {
