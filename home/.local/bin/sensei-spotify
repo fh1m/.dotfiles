@@ -11,6 +11,10 @@ HOME=Path.home();STORE=HOME/'.cache/sensei-spotify';STORE.mkdir(mode=0o700,paren
 CONFIG=tomllib.loads((HOME/'.config/spotify-player/app.toml').read_text());PORT=int(CONFIG.get('client_port',8089));CLIENT=CONFIG['client_id']
 TOKEN=HOME/'.cache/spotify-player'/f'{CLIENT}_token.json'
 class MusicError(Exception):pass
+# The bearer token goes only to api.spotify.com; a redirect would carry it elsewhere.
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+ def redirect_request(self,*args,**kwargs):return None
+API=urllib.request.build_opener(NoRedirect)
 def put(path,value):
  temp=path.with_suffix('.tmp');temp.write_text(json.dumps(value,ensure_ascii=False));temp.chmod(0o600);temp.replace(path)
 def rpc(request):
@@ -56,7 +60,7 @@ def api(path,method='GET',body=None,retry=True):
  else:url='https://api.spotify.com/v1/'+path.lstrip('/')
  req=urllib.request.Request(url,headers={'Authorization':'Bearer '+token(),'Content-Type':'application/json'},data=json.dumps(body).encode() if body is not None else None,method=method)
  try:
-  with urllib.request.urlopen(req,timeout=12) as r:
+  with API.open(req,timeout=12) as r:
    raw=r.read()
    if not raw:return None
    try:return json.loads(raw)
