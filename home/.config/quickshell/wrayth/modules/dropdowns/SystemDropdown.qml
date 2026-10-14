@@ -13,7 +13,7 @@ DropdownFrame {
     katakana: "УПРАВЛЕНИЕ"
     implicitWidth: 596
     function action(name, value = ""): void {
-        Quickshell.execDetached(value === "" ? ["/home/fh1m/.local/bin/zenbook-controls", name] : ["/home/fh1m/.local/bin/zenbook-controls", name, value]);
+        Quickshell.execDetached(value === "" ? ["@HOME@/.local/bin/zenbook-controls", name] : ["@HOME@/.local/bin/zenbook-controls", name, value]);
         refresh.restart();
     }
     function launch(args): void { ShellState.dropdown = ""; Quickshell.execDetached(args); }
@@ -63,7 +63,7 @@ DropdownFrame {
                     ActionRow { implicitWidth: 268; label: "Bluetooth devices"; detail: "Pair and connect"; glyph: "\uf293"; onActivated: { ShellState.dropdownAnchorX = ShellState.anchorFor("bluetooth"); ShellState.dropdown = "bluetooth"; } }
                     ActionRow { implicitWidth: 268; label: "Audio mixer"; detail: "Per-app levels"; glyph: "\uf1de"; onActivated: root.launch(["pavucontrol"]) }
                     ActionRow { implicitWidth: 268; label: "Shortcuts"; detail: "Search every binding"; glyph: "\uf11c"; onActivated: ShellState.openExclusive("shortcuts") }
-                    ActionRow { implicitWidth: 268; label: "Processes"; detail: "Open btop"; glyph: "\uf201"; onActivated: root.launch(["/home/fh1m/.local/bin/sensei-terminal", "--title", "System-Monitor", "btop"]) }
+                    ActionRow { implicitWidth: 268; label: "Processes"; detail: "Open btop"; glyph: "\uf201"; onActivated: root.launch(["@HOME@/.local/bin/sensei-terminal", "--title", "System-Monitor", "btop"]) }
                     ActionRow { implicitWidth: 268; label: "Lock"; detail: "Secure this session"; glyph: "\uf023"; onActivated: { ShellState.dropdown = ""; ShellState.locked = true; } }
                     ActionRow { implicitWidth: 268; label: "Power menu"; detail: "Suspend or shut down"; glyph: "\uf011"; onActivated: { ShellState.dropdown = ""; ShellState.openExclusive("power"); } }
                 }
@@ -115,13 +115,13 @@ DropdownFrame {
             
             Row {spacing:8
                 ControlTile {label:"Containers";glyph:"\uf308";detail:"Docker / Distrobox";implicitWidth:278;implicitHeight:48;onActivated:ShellState.dropdown="docker"}
-                ControlTile {label:"Projects";glyph:"\uf07b";detail:"Search / resume";implicitWidth:278;implicitHeight:48;onActivated:root.launch(["/home/fh1m/.local/bin/sensei-terminal","--title","Project navigator","-e","/home/fh1m/.local/bin/sensei-project-picker"])}
+                ControlTile {label:"Projects";glyph:"\uf07b";detail:"Search / resume";implicitWidth:278;implicitHeight:48;onActivated:root.launch(["@HOME@/.local/bin/sensei-terminal","--title","Project navigator","-e","@HOME@/.local/bin/sensei-project-picker"])}
             }
             Row {
                 spacing: 8
                 ControlTile { label: "Training mode"; glyph: "\uf135"; selected: RobotBench.data.trainingMode ?? false; onActivated: root.action("training", (RobotBench.data.trainingMode ?? false) ? "off" : "on") }
-                ControlTile { label: "NVIDIA terminal"; glyph: "\uf120"; onActivated: root.launch(["/home/fh1m/.local/bin/sim-console"]) }
-                ControlTile { label: "GPU monitor"; glyph: "\uf201"; onActivated: root.launch(["/home/fh1m/.local/bin/sensei-terminal", "--title", "GPU-Monitor", "nvtop"]) }
+                ControlTile { label: "NVIDIA terminal"; glyph: "\uf120"; onActivated: root.launch(["@HOME@/.local/bin/sim-console"]) }
+                ControlTile { label: "GPU monitor"; glyph: "\uf201"; onActivated: root.launch(["@HOME@/.local/bin/sensei-terminal", "--title", "GPU-Monitor", "nvtop"]) }
             }
             Text { width: parent.width; wrapMode: Text.WordWrap; text: "Training mode moves Chrome to Intel (saved tabs reopen), enables Performance + Keep Awake, and restores your previous choices when turned off. Other running GPU apps need relaunching."; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
             NrLabel { pixelSize: 13; color: (RobotBench.data.gpu.computeCount ?? 0) > 0 ? Theme.widgetAccent : Theme.widgetAccent; text: RobotBench.data.gpu.state === "sleep" ? "RTX 2060 · SLEEP · 0%" : (RobotBench.data.gpu.state === "active" ? `RTX ${Math.round(RobotBench.data.gpu.usage)}% · ${Math.round(RobotBench.data.gpu.temperature)}°C` : "RTX · DATA UNAVAILABLE") }
@@ -143,11 +143,11 @@ DropdownFrame {
             }
             Grid {
                 columns: 3; spacing: 8
-                ControlTile { label: "USB / serial"; glyph: "\uf287"; onActivated: root.launch(["/home/fh1m/.local/bin/sensei-terminal", "--title", "USB-Devices", "/home/fh1m/.local/bin/robot-bench-data", "--watch"]) }
-                ControlTile { label: "Screenshot"; glyph: "\uf030"; onActivated: root.launch(["/home/fh1m/.local/bin/desktop-capture", "screenshot", "area"]) }
-                ControlTile { label: RobotBench.data.recording ? "Stop recording" : "Record screen"; glyph: RobotBench.data.recording ? "\uf04d" : "\uf03d"; selected: RobotBench.data.recording ?? false; onActivated: root.launch(["/home/fh1m/.local/bin/desktop-capture", "record", "output"]) }
-                ControlTile { label: "Screenshots"; glyph: "\uf07b"; onActivated: root.launch(["nautilus", "/home/fh1m/Pictures/Screenshots"]) }
-                ControlTile { label: "Screencasts"; glyph: "\uf07b"; onActivated: root.launch(["nautilus", "/home/fh1m/Videos/Screencasts"]) }
+                ControlTile { label: "USB / serial"; glyph: "\uf287"; onActivated: root.launch(["@HOME@/.local/bin/sensei-terminal", "--title", "USB-Devices", "@HOME@/.local/bin/robot-bench-data", "--watch"]) }
+                ControlTile { label: "Screenshot"; glyph: "\uf030"; onActivated: root.launch(["@HOME@/.local/bin/desktop-capture", "screenshot", "area"]) }
+                ControlTile { label: RobotBench.data.recording ? "Stop recording" : "Record screen"; glyph: RobotBench.data.recording ? "\uf04d" : "\uf03d"; selected: RobotBench.data.recording ?? false; onActivated: root.launch(["@HOME@/.local/bin/desktop-capture", "record", "output"]) }
+                ControlTile { label: "Screenshots"; glyph: "\uf07b"; onActivated: root.launch(["nautilus", "@HOME@/Pictures/Screenshots"]) }
+                ControlTile { label: "Screencasts"; glyph: "\uf07b"; onActivated: root.launch(["nautilus", "@HOME@/Videos/Screencasts"]) }
                 ControlTile { label: "Shortcuts"; detail:"Key bindings"; glyph: "\uf11c"; onActivated: ShellState.openExclusive("shortcuts") }
             }
         }

@@ -1,5 +1,5 @@
 -- Additive Noesis bridge: coding stays here, durable models stay in Markdown.
-local executable = '/home/fh1m/.local/bin/noesis'
+local executable = '@HOME@/.local/bin/noesis'
 local in_container=vim.fn.filereadable('/run/.containerenv')==1 or vim.fn.filereadable('/.dockerenv')==1
 local function host_path(path)
   return in_container and path:gsub('^/run/host/', '/') or path
@@ -18,7 +18,7 @@ local function run(args)
     local scope=vim.env.NOESIS_VAULT
     if not scope or scope=='' then
       local ok,config=pcall(function()
-        local config='/home/fh1m/.config/sensei-learning/config.json'
+        local config='@HOME@/.config/sensei-learning/config.json'
         if in_container and vim.fn.filereadable(config)==0 then config='/run/host'..config end
         return vim.json.decode(table.concat(vim.fn.readfile(config), '\n'))
       end)

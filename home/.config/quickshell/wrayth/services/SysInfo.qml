@@ -125,7 +125,7 @@ Singleton {
     Process {
         id: netSampler
         running: true
-        command: ["/home/fh1m/.local/bin/sensei-net-sampler"]
+        command: ["@HOME@/.local/bin/sensei-net-sampler"]
         stdout: SplitParser { onRead: data => {
             try {
                 const sample=JSON.parse(data);

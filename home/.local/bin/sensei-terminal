@@ -36,6 +36,6 @@ while i < len(args):
 if not explicit_command:
     if not any(arg in ('--title', '-T') for arg in args):
         out.extend(['--title', 'Sensei · Terminal'])
-    out.extend(['-e', '/home/fh1m/.local/bin/sensei-tmux'])
+    out.extend(['-e', '@HOME@/.local/bin/sensei-tmux'])
 
 os.execvp('alacritty', ['alacritty', *out])

@@ -38,7 +38,7 @@ export PATH=$PATH:/usr/local/go/bin
 
 
 # MISC
-export PATH="$PATH:/home/fh1m/.local/bin"
+export PATH="$PATH:@HOME@/.local/bin"
 export KEYTIMEOUT=1
 export FZF_BASE=/usr/share/doc/fzf/examples
 export FZF_DEFAULT_COMMAND='fd --type file --hidden --no-ignore --follow --exclude .git'
@@ -197,7 +197,7 @@ h() {
 }
 
 export DBX_CONTAINER_MANAGER=docker
-export PATH="$PATH:/home/fh1m/go/bin"
+export PATH="$PATH:@HOME@/go/bin"
 
 # Distrobox
 alias dt="distrobox-tui"
@@ -205,18 +205,21 @@ alias auv="distrobox enter auv-ros2"
 alias auv-run="distrobox run --name auv-ros2 --"
 
 
-# conda init block removed: /home/fh1m/Envs/conda no longer exists (dead
+# conda init block removed: @HOME@/Envs/conda no longer exists (dead
 # subprocess call on every shell startup). uv is the active Python manager.
 
 
-export PATH=$PATH:/home/fh1m/.spicetify
+export PATH=$PATH:@HOME@/.spicetify
 # Pyenv
-# export PYENV_ROOT="/home/fh1m/.pyenv"
+# export PYENV_ROOT="@HOME@/.pyenv"
 # [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 # eval "$(pyenv init - zsh)"
 
-alias claude-mem='bun "/home/fh1m/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs"'
+alias claude-mem='bun "@HOME@/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs"'
 
 
 # Added by Antigravity CLI installer
-export PATH="/home/fh1m/.local/bin:$PATH"
+export PATH="@HOME@/.local/bin:$PATH"
+
+# Shared development environment (keeps project dependencies separate).
+[[ -r "$HOME/.config/zsh/sensei-dev.zsh" ]] && source "$HOME/.config/zsh/sensei-dev.zsh"

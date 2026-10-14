@@ -59,7 +59,7 @@ DropdownFrame {
        Column {x:14;y:12;spacing:10
         Text {text:"Robotics handoff";font.family:Appearance.font.ui;font.pixelSize:16;font.bold:true;color:Theme.widgetText}
         Text {text:"Models · transfer inbox · remote commands";font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}
-        ControlTile {label:"Open Phone folders";glyph:"\uf07c";implicitWidth:240;onActivated:Quickshell.execDetached(["xdg-open","/home/fh1m/Phone"])}
+        ControlTile {label:"Open Phone folders";glyph:"\uf07c";implicitWidth:240;onActivated:Quickshell.execDetached(["xdg-open","@HOME@/Phone"])}
        }
       }
      }
@@ -93,11 +93,11 @@ DropdownFrame {
      Flow {width:parent.width;spacing:8
       ControlTile {label:"Choose file / model";glyph:"\uf093";enabled:root.ready;onActivated:root.chooseFile("kde")}
       ControlTile {label:root.state.sshMounted?"SSH files · mounted":"Mount SSH files";glyph:"\uf07c";enabled:root.state.sshKeyExists;onActivated:root.act("ssh-mount")}
-      ControlTile {label:"Open SSH files";glyph:"\uf07c";enabled:root.state.sshMounted;onActivated:Quickshell.execDetached(["xdg-open","/home/fh1m/Phone/Browse"])}
+      ControlTile {label:"Open SSH files";glyph:"\uf07c";enabled:root.state.sshMounted;onActivated:Quickshell.execDetached(["xdg-open","@HOME@/Phone/Browse"])}
       ControlTile {label:"Unmount SSH files";enabled:root.state.sshMounted;onActivated:root.act("ssh-unmount")}
       ControlTile {label:"Mount phone folders";glyph:"\uf07c";enabled:root.ready;onActivated:root.act("browse")}
       ControlTile {label:"Refresh folders";glyph:"\uf021";onActivated:PhoneBridge.refresh()}
-      ControlTile {label:"Transfer inbox";glyph:"\uf019";onActivated:Quickshell.execDetached(["xdg-open","/home/fh1m/Downloads"])}
+      ControlTile {label:"Transfer inbox";glyph:"\uf019";onActivated:Quickshell.execDetached(["xdg-open","@HOME@/Downloads"])}
      }
      Flow {width:parent.width;spacing:8
       ControlTile {label:"Send through Taildrop";glyph:"\uf0ac";implicitWidth:220;enabled:root.androidPeers.length>0;onActivated:root.chooseFile("taildrop")}
