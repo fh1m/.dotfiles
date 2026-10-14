@@ -13,7 +13,9 @@
 #     (Hyprland allows that with misc:allow_session_lock_restore, which
 #     hypr-sensei.lua sets). The session is never unlocked in between: the old
 #     client never sent an unlock, so Hyprland kept the session locked;
-#   - if it fails while unlocked, bring the desktop back as well;
+#   - if it fails while unlocked, it is started again with the same backoff
+#     (more than five starts in thirty seconds waits five seconds between them);
+#     it never gives up, because giving up is the wedge;
 #   - a clean, intentional stop while unlocked ends the supervisor.
 #
 # Nothing here can unlock anything. It only ever starts a lockscreen.

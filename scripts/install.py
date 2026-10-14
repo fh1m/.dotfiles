@@ -13,6 +13,27 @@ SEED_ONLY = {
     '.config/sensei/wallpapers.json',
     '.config/sensei/runner',
     '.config/sensei/profile',
+    # Written on this machine at runtime (sensei-palette) or holding a local value
+    # (the phone's Bluetooth address, the Spotify client). The repo copy is only a
+    # starting point: installed when missing, never over the live file.
+    '.config/quickshell/sensei/services/PhoneBridge.qml',
+    '.config/spotify-player/app.toml',
+    '.config/gtk-3.0/colors.css',
+    '.config/gtk-4.0/colors.css',
+    '.config/qt5ct/colors/matugen.conf',
+    '.config/qt6ct/colors/matugen.conf',
+    '.config/zsh/sensei-palette.zsh',
+    '.config/fzf/sensei-colors',
+    '.config/kitty/colors.conf',
+}
+# Live paths that are symlinks into the sensei tree, not copies. A copy here would
+# shadow the file the shell loads, so each is linked to the external file instead.
+LINKS = {
+    '.config/hypr/hypr-sensei.lua': '.config/quickshell/sensei/external/hypr-sensei.lua',
+    '.config/kitty/kitty.conf': '.config/quickshell/sensei/external/kitty.conf',
+    '.config/kitty/tab_bar.py': '.config/quickshell/sensei/external/tab_bar.py',
+    '.config/sensei/fastfetch.jsonc': '.config/quickshell/sensei/external/fastfetch.jsonc',
+    '.config/sensei/emblem-fallback.txt': '.config/quickshell/sensei/external/emblem-fallback.txt',
 }
 # Caches and editor leftovers are never configuration.
 SKIPPED_PARTS = {'__pycache__', '.DS_Store'}
@@ -53,6 +74,9 @@ def install(home, apply=False, hardware='generic'):
         if relative.parts[:2] == ('.local', 'bin') and source.name in linked:
             continue
         dest = home / relative
+        # A live directory link (e.g. ~/.config/nvim -> the repo) makes dest the source itself.
+        if dest.exists() and dest.resolve() == source.resolve():
+            continue
         if relative.as_posix() in SEED_ONLY and (dest.exists() or dest.is_symlink()):
             continue
         data = render(source.read_bytes(), home, hardware)
@@ -73,6 +97,21 @@ def install(home, apply=False, hardware='generic'):
         temp.write_bytes(data)
         temp.chmod(source.stat().st_mode & 0o777)
         temp.replace(dest)
+    for relative, target in LINKS.items():
+        dest, source = home / relative, home / target
+        if dest.is_symlink() and os.readlink(dest) == str(source):
+            continue
+        changes.append(relative + ' (link)')
+        if not apply:
+            continue
+        if dest.exists() or dest.is_symlink():
+            old = backup / relative
+            old.parent.mkdir(parents=True, exist_ok=True)
+            if dest.is_symlink(): old.symlink_to(os.readlink(dest))
+            else: shutil.copy2(dest, old)
+            dest.unlink()
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.symlink_to(source)
     if apply:
         # sensei helpers are linked from the checkout, so edits show up without a reinstall.
         bindir = home / '.local/bin'
