@@ -141,17 +141,30 @@ Item {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
 
-            text: root.entry.fixed ? "FIX" : "NO FIX"
-            alsoText: ["FIX", "NO FIX"]
+            // **The first press only arms.** FIX runs `sudo pacman -Syu`, a
+            // full system upgrade, not this package alone, so a second press
+            // within four seconds is what starts it.
+            text: root.upgradeArmed ? "CONFIRM" : root.entry.fixed ? "FIX" : "NO FIX"
+            alsoText: ["FIX", "NO FIX", "CONFIRM"]
             verbText: "UPDATING"
-            accented: root.entry.fixed
+            accented: root.entry.fixed || root.upgradeArmed
             usable: root.entry.fixed
             action: upgradeAction
             onClicked: {
+                if (!root.upgradeArmed) {
+                    root.upgradeArmed = true;
+                    armTimer.restart();
+                    root.explain("CONFIRM: THIS RUNS A FULL SYSTEM UPGRADE (sudo pacman -Syu)", fix);
+                    return;
+                }
+                root.upgradeArmed = false;
+                armTimer.stop();
                 upgradeAction.begin("UPDATING");
                 Vuln.upgrade();
             }
             onHoveredChanged: hovered => {
+                if (root.upgradeArmed)
+                    return;
                 if (root.entry.fixed)
                     return;
                 if (hovered)
@@ -300,6 +313,14 @@ Item {
                 root.requiredKnown = true;
             }
         }
+    }
+
+    // Armed by the first FIX press; disarmed by the timer or the second press.
+    property bool upgradeArmed: false
+    Timer {
+        id: armTimer
+        interval: 4000
+        onTriggered: root.upgradeArmed = false
     }
 
     // The upgrade runs in a terminal the user types a password into, so it can
