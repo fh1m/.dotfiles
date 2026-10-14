@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import sys,os,re,subprocess
 op=sys.argv[1];name=sys.argv[2] if len(sys.argv)>2 else ''
-if op in ['selected','install','remove','info'] and not re.fullmatch(r'[A-Za-z0-9@+_.:-]+',name):raise SystemExit('Choose a valid package name')
+if op in ['selected','install','remove','info'] and (not re.fullmatch(r'[A-Za-z0-9@+_.:-]+',name) or name.startswith('-')):raise SystemExit('Choose a valid package name')
 actions={'all':['paru','-Syu'],'repo':['paru','-Syu','--repo'],'aur':['paru','-Sua'],'selected':['paru','-S','--needed',name],'install':['paru','-S',name],'remove':['paru','-Rns',name],'orphans':['paru','-Qtd'],'clean':['paru','-Sc'],'info':['paru','-Si',name],'log':['less','/var/log/pacman.log']}
 if op=='orphan-clean':
  result=subprocess.run(['pacman','-Qtdq'],capture_output=True,text=True)
