@@ -268,10 +268,9 @@ Variants {
         Item {
             anchors.fill: parent
 
-            // The picker's own backdrop: the previewed profile's card image,
-            // never the desktop wallpaper. The desktop is what the picker is
-            // for changing, so showing it here left a stale trace of whatever
-            // was on screen before the picker opened.
+            // The picker's backdrop is the current main-display wallpaper, so it
+            // moves with whatever is set on the desktop and never shows a stale
+            // profile card image.
             // Opaque under everything, so a profile with no card image yet
             // shows the picker's own colour and never what is behind it.
             Rectangle {
@@ -281,7 +280,7 @@ Variants {
 
             Wallpaper {
                 anchors.fill: parent
-                source: Wallpapers.cardImage(overlay.previewed)
+                source: Wallpapers.displaySource("eDP-1")
                 dim: 0.62
             }
 
