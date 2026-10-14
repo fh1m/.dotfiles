@@ -24,7 +24,7 @@ def files_from(data):
         paths.append(path)
     return paths
 def store(kind,data):
-    if not data or os.environ.get('CLIPBOARD_STATE') in ('nil','clear'): return
+    if not data or (ROOT/'paused').exists() or os.environ.get('CLIPBOARD_STATE') in ('nil','clear','sensitive'): return
     files=files_from(data) if kind in ('files','files-gnome') or (kind=='text' and data.lstrip().startswith(b'file://')) else []
     if kind in ('files','files-gnome') and not files: return
     if files:
@@ -64,11 +64,16 @@ def listing(query='',kind='all',limit=150):
     if kind in ('text','image','files'): where.append('kind=?');args.append(kind)
     if query: where.append('(content like ? or title like ?)');args.extend(['%'+query+'%']*2)
     rows=c.execute('select id,kind,mime,path,title,last,copies,pinned,archived,length(content) as chars from items where '+' and '.join(where)+' order by pinned desc,last desc limit ?',args+[min(10000,max(150,limit))]).fetchall()
-    return {'items':[dict(r) for r in rows],'count':c.execute('select count(*) from items').fetchone()[0], 'bytes':sum(p.stat().st_size for p in (ROOT/'items').iterdir()),'events':c.execute('select count(*) from events').fetchone()[0]}
+    return {'items':[dict(r) for r in rows],'count':c.execute('select count(*) from items').fetchone()[0], 'bytes':sum(p.stat().st_size for p in (ROOT/'items').iterdir()),'events':c.execute('select count(*) from events').fetchone()[0], 'paused':(ROOT/'paused').exists()}
 a=sys.argv[1:]
 if not a: a=['list']
 cmd=a[0]
-if cmd=='store': store(a[1],sys.stdin.buffer.read())
+if cmd=='pause':
+    marker=ROOT/'paused'
+    if marker.exists():marker.unlink()
+    else:marker.touch()
+    revision()
+elif cmd=='store': store(a[1],sys.stdin.buffer.read())
 elif cmd=='watch':
     lock=open(ROOT/'watch.lock','w');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     children=[]

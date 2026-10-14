@@ -182,9 +182,6 @@ def action(name,args):
     if name in ('seek','seek-to'):
      position=max(0,min(int(args[0])+(d['progress'] if name=='seek' else 0),max(0,d['track'].get('duration',0)-1000)))
      put(STORE/'native-event.json',{'uri':d['track'].get('uri'),'time':time.time(),'track':d['track'],'playing':d['playing'],'progress':position,'seek':True})
-    if name in ('next','previous'):
-     playing=(args[0]=='playing') if args and args[0] in ('playing','paused') else d['playing']
-     rpc({'Playback':'Play' if playing else 'Pause'})
     return result
    except MusicError as e:
     if 'no active playback' not in str(e):raise
