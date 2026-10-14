@@ -373,10 +373,11 @@ impl AppClient {
     }
     #[cfg(feature = "streaming")]
     pub fn load_local_tracks(&self, uris: Vec<String>, offset: usize, position_ms: u32, start_playing: bool) -> Result<()> {
-        crate::streaming::USER_STARTED_PLAYBACK.store(true, std::sync::atomic::Ordering::SeqCst);
         use librespot_connect::{LoadRequest, LoadRequestOptions, PlayingTrack};
         anyhow::ensure!(!uris.is_empty() && uris.len() <= 1000, "invalid local queue size");
         anyhow::ensure!(uris.iter().all(|uri| uri.starts_with("spotify:track:") || uri.starts_with("spotify:episode:")), "invalid track URI");
+        // Only a request that passed validation counts as user-started playback.
+        crate::streaming::USER_STARTED_PLAYBACK.store(true, std::sync::atomic::Ordering::SeqCst);
         let conn = self.stream_conn.lock();
         let spirc = conn.as_ref().context("integrated player is not connected")?;
         spirc.activate()?; // Explicit user playback request selects this device.
@@ -387,9 +388,9 @@ impl AppClient {
     }
     #[cfg(feature = "streaming")]
     pub fn load_local_context(&self, uri: String, offset_uri: Option<String>, start_playing: bool) -> Result<()> {
-        crate::streaming::USER_STARTED_PLAYBACK.store(true, std::sync::atomic::Ordering::SeqCst);
         use librespot_connect::{LoadRequest, LoadRequestOptions, PlayingTrack};
         anyhow::ensure!(uri.starts_with("spotify:playlist:") || uri.starts_with("spotify:album:") || uri.starts_with("spotify:artist:"), "invalid context URI");
+        crate::streaming::USER_STARTED_PLAYBACK.store(true, std::sync::atomic::Ordering::SeqCst);
         let conn = self.stream_conn.lock();
         let spirc = conn.as_ref().context("integrated player is not connected")?;
         spirc.activate()?; // Explicit user playback request selects this device.
@@ -867,11 +868,12 @@ impl AppClient {
         let client = self.clone();
         let state = state.clone();
         tokio::task::spawn(async move {
-            struct Reset;
-            impl Drop for Reset {
-                fn drop(&mut self) { REFRESH_ACTIVE.store(false, Ordering::SeqCst); }
+            // Frees the slot if this task unwinds, so one panic cannot stop refreshes for good.
+            struct Slot { held: bool }
+            impl Drop for Slot {
+                fn drop(&mut self) { if self.held { REFRESH_ACTIVE.store(false, Ordering::SeqCst); } }
             }
-            let _reset = Reset;
+            let mut slot = Slot { held: true };
             loop {
                 tokio::time::sleep(std::time::Duration::from_millis(200)).await;
                 REFRESH_DIRTY.store(false, Ordering::SeqCst);
@@ -879,7 +881,13 @@ impl AppClient {
                 // Allow Spotify to settle; avoid parallel per-event HTTP tasks.
                 tokio::time::sleep(std::time::Duration::from_millis(1200)).await;
                 let _ = client.retrieve_current_playback(&state, false).await;
-                if !REFRESH_DIRTY.swap(false, Ordering::SeqCst) { break; }
+                if REFRESH_DIRTY.load(Ordering::SeqCst) { continue; }
+                // Release the slot, then look again. An event that set DIRTY after the check
+                // above saw the slot still taken and returned, so take that work back here.
+                slot.held = false;
+                REFRESH_ACTIVE.store(false, Ordering::SeqCst);
+                if !REFRESH_DIRTY.load(Ordering::SeqCst) || REFRESH_ACTIVE.swap(true, Ordering::SeqCst) { break; }
+                slot.held = true;
             }
         });
     }
