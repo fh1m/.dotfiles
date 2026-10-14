@@ -40,18 +40,6 @@ Singleton {
     // measured at 513 TypeErrors in a few seconds, from the picker's
     // miniatures alone.
     readonly property var palette: Profiles.palettes[profile] ?? Profiles.presets.Circuit
-    property var adaptive: ({})
-    FileView {
-        path: Paths.configDir + "/wallpaper-palette.json"
-        watchChanges: true
-        printErrors: false
-        onLoaded: {
-            try { root.adaptive = JSON.parse(text()); }
-            catch (e) { console.warn("wrayth: invalid wallpaper palette", e); }
-        }
-        onFileChanged: reload()
-    }
-    readonly property string description: Profiles.descriptions[profile] ?? ""
     readonly property url wallpaper: Paths.url(Paths.wallpaperFor(profile))
 
     // Signal Ledger / foundation. These are independent of wallpaper sampling:
@@ -67,13 +55,10 @@ Singleton {
     readonly property color surfaceOne: "#141210"
     readonly property color surfaceTwo: "#1e1b18"
     readonly property color rule: "#39342f"
-    readonly property color inactiveTab: "#b9b3aa"
     readonly property int radiusSmall: 2
     readonly property int radiusPanel: 5
-    readonly property int strokeHair: 1
     readonly property int motionAck: 100
     readonly property int motionTravel: 180
-    readonly property int motionReveal: 210
     // --- Compatibility tokens ----------------------------------------------
     // Backgrounds
     readonly property color ground: ink
@@ -95,14 +80,8 @@ Singleton {
     readonly property color widgetGlass: ink
     readonly property color widgetSurface: surfaceOne
     readonly property color widgetRaised: surfaceTwo
-    readonly property color uiSurface: widgetSurface
-    readonly property color uiRaised: widgetRaised
-    readonly property color uiBorder: alpha(widgetText, .20)
-    readonly property color uiSuccess: semanticCyan
     readonly property color uiWarning: semanticAmber
-    readonly property color spotifyGreen: signalRed
     readonly property color track: surfaceOne
-    readonly property color cell: surfaceTwo
 
     // Type
     readonly property color text: widgetText
@@ -141,10 +120,6 @@ Singleton {
     function groundOf(name: string): color {
         const p = Profiles.palettes[name];
         return p ? p.ground : ground;
-    }
-
-    function wallpaperOf(name: string): url {
-        return Paths.url(Paths.wallpaperFor(name));
     }
 
     // --- Persistence --------------------------------------------------------

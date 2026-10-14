@@ -75,26 +75,16 @@ Singleton {
     readonly property QtObject size: QtObject {
         readonly property int label: 11      // uppercase tracked labels
         readonly property int ticker: 12
-        readonly property int date: 11
         readonly property int katakana: 12
-        readonly property int workspace: 12
-        // Four-letter special-workspace labels, which have to fit the same slot.
-        readonly property int workspaceSpecial: 9
         readonly property int body: 13       // readout values
         readonly property int logo: 18
-        readonly property int clock: 19
-        // The bar clock's seconds, raised beside HH:MM in accent.
-        readonly property int clockSeconds: 12
     }
 
     // Fixed slot widths. Every changing number on the bar sits in one of these
     // so nothing on the bar ever moves when a value updates.
     readonly property QtObject slot: QtObject {
         readonly property int percent: 38
-        readonly property int memory: 92
-        readonly property int netRate: 50
         readonly property int idleValue: 34
-        readonly property int btName: 120
     }
 
     // letter-spacing, as the em fractions the spec gives.
@@ -119,10 +109,6 @@ Singleton {
 
     readonly property QtObject metrics: QtObject {
         readonly property int barHeight: 44
-        // The ID block is a fixed width: its contents change -- the counter
-        // ticks, the code is editable -- and nothing on the bar may move when
-        // they do. It is also what the text is centred within.
-        readonly property int idBlockWidth: 92
         // kitty's logical cell width at JetBrains Mono 11.5pt with the deck's
         // 120% cell-width setting. Keep deck layout on complete cells.
         // measured with `cell_size_for_window`. The deck terminal's width is
@@ -194,10 +180,6 @@ Singleton {
         // reading is data settling rather than an element arriving, and 0.9 s
         // is the spec's own figure for it.
         readonly property int meter: 900
-        // **Not on the scale either.** It matches Hyprland's specialWorkspace
-        // animation (speed 4), so the deck and the deck terminal come up as
-        // one thing; retuning it alone would pull them apart.
-        readonly property int deck: 400
     }
 
     // The rise an appearing element fades up through. A transform, never a
