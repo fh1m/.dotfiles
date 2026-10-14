@@ -256,7 +256,7 @@ Running it again updates Sensei and changes nothing else.
 Each of these features degrades gracefully without its package:
 
     sudo pacman -S --needed cava fastfetch pacman-contrib arch-audit \
-        brightnessctl power-profiles-daemon bluez bluez-utils hypridle ufw xdg-utils
+        brightnessctl system76-power bluez bluez-utils hypridle ufw xdg-utils
 
 | Package | Powers | Without it |
 | --- | --- | --- |
@@ -265,7 +265,7 @@ Each of these features degrades gracefully without its package:
 | `pacman-contrib` | the update count | PKG reads 0 |
 | `arch-audit` | the VULN WATCH panel | `NOT INSTALLED` |
 | `brightnessctl` | brightness keys | no brightness control |
-| `power-profiles-daemon` | the power-profile readout and switch | blank |
+| `system76-power` | the power-profile readout and switch | blank |
 | `bluez`, `bluez-utils` | the Bluetooth dropdown | no Bluetooth |
 | `hypridle` | lock on idle and before sleep | no automatic lock |
 | a firewall (`ufw`, `nftables`, `firewalld`) | the SHIELD readout | `NOT CONFIGURED` |
