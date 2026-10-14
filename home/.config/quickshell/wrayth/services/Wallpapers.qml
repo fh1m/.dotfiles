@@ -455,7 +455,17 @@ Singleton {
     function importFiles(paths: var): void {
         if (!folder || !paths.length)
             return;
-        const args = paths.map(p => quote(String(p).replace("file://", ""))).join(" ");
+        // A dropped file arrives as a file:// URI, with spaces and other
+        // characters percent-encoded; the path that cp needs is the decoded one.
+        const plain = p => {
+            const text = String(p).replace(/^file:\/\//, "");
+            try {
+                return decodeURIComponent(text);
+            } catch (error) {
+                return text;
+            }
+        };
+        const args = paths.map(p => quote(plain(p))).join(" ");
         run(`mkdir -p ${quote(folder)} && cp -n ${args} ${quote(folder)}/`);
         refresh.restart();
     }
