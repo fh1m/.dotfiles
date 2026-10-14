@@ -15,7 +15,7 @@ Column {
   ControlTile {implicitWidth:170;label:'Connections / SSH';navigation:true;selected:DesktopExtras.networkPage===1;onActivated:DesktopExtras.networkPage=1}
   ControlTile {implicitWidth:170;label:'Diagnostics';navigation:true;selected:DesktopExtras.networkPage===2;onActivated:{DesktopExtras.networkPage=2;DesktopExtras.loadNetwork();}}
  }
- Text {width:parent.width;text:(Wifi.activeSsid|| (Wifi.wired?'Ethernet':'Disconnected'))+' ['+SysInfo.netInterfaces+']'+'  ·  ↑ '+Fmt.rateLong(SysInfo.netTxRate)+'  ↓ '+Fmt.rateLong(SysInfo.netRxRate);font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetAccent;elide:Text.ElideRight}
+ Text {width:parent.width;textFormat:Text.PlainText;text:(Wifi.activeSsid|| (Wifi.wired?'Ethernet':'Disconnected'))+' ['+SysInfo.netInterfaces+']'+'  ·  ↑ '+Fmt.rateLong(SysInfo.netTxRate)+'  ↓ '+Fmt.rateLong(SysInfo.netRxRate);font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetAccent;elide:Text.ElideRight}
  ScrollView {width:parent.width;height:Math.min(550,wifiPanel.implicitHeight);clip:true;visible:DesktopExtras.networkPage===0
   WifiDropdown {id:wifiPanel;width:root.width;implicitWidth:root.width}
  }

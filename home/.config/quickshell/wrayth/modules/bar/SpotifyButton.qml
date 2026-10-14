@@ -6,7 +6,7 @@ import qs.services
 Item {
  Behavior on width {NumberAnimation {duration:180;easing.type:Easing.OutCubic}}
  id:root;implicitHeight:36;implicitWidth:Math.max(180,Math.min(420,titleMeasure.implicitWidth+94));clip:true
- Text { renderType: Text.QtRendering; renderTypeQuality: 104;id:titleMeasure;visible:false;text:(SpotifyDesk.trackLoading?'LOADING · ':'')+SpotifyDesk.title+' - '+SpotifyDesk.artist;font.family:Appearance.font.barUi;font.pixelSize:13}
+ Text { renderType: Text.QtRendering; renderTypeQuality: 104;id:titleMeasure;visible:false;textFormat:Text.PlainText;text:(SpotifyDesk.trackLoading?'LOADING · ':'')+SpotifyDesk.title+' - '+SpotifyDesk.artist;font.family:Appearance.font.barUi;font.pixelSize:13}
  Rectangle { anchors.fill:parent; color:Theme.ink }
  Rectangle { anchors.left:parent.left; anchors.leftMargin:2; anchors.verticalCenter:parent.verticalCenter; width:2; height:24; color:SpotifyDesk.playing?Theme.signalRed:Theme.rule }
  RoundedArtwork {id:art;cornerRadius:4;anchors.left:parent.left;anchors.leftMargin:12;anchors.verticalCenter:parent.verticalCenter;width:28;height:28;rotation:0;opacity:SpotifyDesk.trackLoading?.48:1

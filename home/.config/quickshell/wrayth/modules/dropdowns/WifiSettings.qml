@@ -48,6 +48,7 @@ Item {
             Text {
                 width: parent.width
                 renderType: Text.NativeRendering
+                textFormat: Text.PlainText
                 text: Wifi.connected ? Demo.ssid(Wifi.activeSsid) : "NOT CONNECTED"
                 color: Wifi.connected ? Theme.widgetText : Theme.widgetMuted
                 font.family: Appearance.font.display

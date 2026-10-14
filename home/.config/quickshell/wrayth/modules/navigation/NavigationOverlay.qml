@@ -29,7 +29,7 @@ Variants {
  delegate:ChamferPanel {id:resultCard;required property var modelData;required property int index;width:searchResults.width;height:70;chamfer:8;fillColor:WindowDesk.selected===index?Theme.widgetRaised:Theme.widgetSurface;borderColor:WindowDesk.selected===index?Theme.widgetAccent:Theme.widgetBorder
  Row {anchors.fill:parent;anchors.margins:10;spacing:12
  AppIcon {width:36;height:36;size:36;anchors.verticalCenter:parent.verticalCenter;entry:resultCard.modelData}
- Column {width:parent.width-170;spacing:6;Text {width:parent.width;text:WindowDesk.resultName(resultCard.modelData);font.family:Appearance.font.data;font.pixelSize:15;color:Theme.text;elide:Text.ElideRight}Text {width:parent.width;text:WindowDesk.isWindow(resultCard.modelData)?"Running · "+(resultCard.modelData.lastIpcObject?.class||'')+" · workspace "+(resultCard.modelData.workspace?.name||''):(resultCard.modelData.genericName||Launcher.tagFor(resultCard.modelData))+" · "+(resultCard.modelData.id||'');font.family:Appearance.font.data;font.pixelSize:11;color:Theme.dim;elide:Text.ElideRight}}
+ Column {width:parent.width-170;spacing:6;Text {width:parent.width;textFormat:Text.PlainText;text:WindowDesk.resultName(resultCard.modelData);font.family:Appearance.font.data;font.pixelSize:15;color:Theme.text;elide:Text.ElideRight}Text {width:parent.width;textFormat:Text.PlainText;text:WindowDesk.isWindow(resultCard.modelData)?"Running · "+(resultCard.modelData.lastIpcObject?.class||'')+" · workspace "+(resultCard.modelData.workspace?.name||''):(resultCard.modelData.genericName||Launcher.tagFor(resultCard.modelData))+" · "+(resultCard.modelData.id||'');font.family:Appearance.font.data;font.pixelSize:11;color:Theme.dim;elide:Text.ElideRight}}
  Text {width:110;anchors.verticalCenter:parent.verticalCenter;text:WindowDesk.isWindow(resultCard.modelData)?"Focus window":"Launch app";font.family:Appearance.font.data;font.pixelSize:12;color:Theme.signal}
  }
  MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:WindowDesk.selectResult(resultCard.modelData)}
@@ -42,10 +42,10 @@ Variants {
  ChamferPanel {id:card;required property var modelData;required property int index;width:390;height:440;fillColor:Theme.widgetSurface;borderColor:WindowDesk.selected===index?Theme.widgetAccent:Theme.widgetBorder;borderWidth:WindowDesk.selected===index?2:1;chamfer:10;scale:WindowDesk.selected===index?1:.985;Behavior on scale {NumberAnimation {duration:130}}
  MouseArea {anchors.fill:parent;onClicked:WindowDesk.choose(card.modelData)}
  Column {anchors.fill:parent;anchors.margins:12;spacing:10
- Row {width:parent.width;spacing:10;AppIcon {size:32;entry:card.modelData}Text {width:parent.width-42;anchors.verticalCenter:parent.verticalCenter;text:WindowDesk.desktopEntryFor(card.modelData)?.name||card.modelData.wayland?.appId||card.modelData.lastIpcObject?.class||"Application";font.family:Appearance.font.data;font.pixelSize:15;color:Theme.signal;elide:Text.ElideRight}}
+ Row {width:parent.width;spacing:10;AppIcon {size:32;entry:card.modelData}Text {width:parent.width-42;anchors.verticalCenter:parent.verticalCenter;textFormat:Text.PlainText;text:WindowDesk.desktopEntryFor(card.modelData)?.name||card.modelData.wayland?.appId||card.modelData.lastIpcObject?.class||"Application";font.family:Appearance.font.data;font.pixelSize:15;color:Theme.signal;elide:Text.ElideRight}}
  WindowPreview {width:parent.width;height:220;window:card.modelData;frameInterval:WindowDesk.selected===card.index?33:100;retainFrame:overlay.visible&&overlay.previewPaused;livePreview:overlay.visible&&!overlay.previewPaused&&card.index>=windows.currentIndex-1&&card.index<=windows.currentIndex+2;MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:WindowDesk.choose(card.modelData)}}
- Text {width:parent.width;maximumLineCount:2;wrapMode:Text.Wrap;text:card.modelData.title;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.text;elide:Text.ElideRight}
- Text {text:"Workspace "+(card.modelData.workspace?.name??"—")+" · "+(card.modelData.monitor?.name??"");font.family:Appearance.font.data;font.pixelSize:10;color:Theme.dim}
+ Text {width:parent.width;maximumLineCount:2;wrapMode:Text.Wrap;textFormat:Text.PlainText;text:card.modelData.title;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.text;elide:Text.ElideRight}
+ Text {textFormat:Text.PlainText;text:"Workspace "+(card.modelData.workspace?.name??"—")+" · "+(card.modelData.monitor?.name??"");font.family:Appearance.font.data;font.pixelSize:10;color:Theme.dim}
  Row {spacing:5;ControlTile {implicitWidth:105;implicitHeight:28;label:"Focus";onActivated:WindowDesk.choose(card.modelData)}ControlTile {implicitWidth:105;implicitHeight:28;label:"Float / tile";onActivated:WindowDesk.floatWindow(card.modelData)}ControlTile {implicitWidth:105;implicitHeight:28;label:"Close app";onActivated:{WindowDesk.pinned=true;card.modelData.wayland?.close();}}}
  DeskComboBox {width:parent.width;height:29;model:Spaces.workspaceNames;currentIndex:Math.max(0,(card.modelData.workspace?.id??1)-1);onActivated:WindowDesk.move(card.modelData,currentIndex+1);font.family:Appearance.font.data;font.pixelSize:11}
  }
@@ -57,7 +57,7 @@ Variants {
  }
  Row {visible:!WindowDesk.query.trim()&&(WindowDesk.mode==='apps'||WindowDesk.mode==='same');spacing:7
  Repeater {model:WindowDesk.apps;ChamferPanel {id:quickCard;required property var modelData;width:Math.min(190,(panel.width-36-49)/8);height:36;chamfer:6;fillColor:quickHover.containsMouse?Theme.widgetRaised:Theme.widgetSurface;borderColor:Theme.widgetBorder
- Row {anchors.fill:parent;anchors.margins:6;spacing:7;AppIcon {size:24;entry:quickCard.modelData}Text {width:parent.width-31;anchors.verticalCenter:parent.verticalCenter;text:quickCard.modelData.name;elide:Text.ElideRight;font.family:Appearance.font.data;font.pixelSize:11;color:Theme.text}}
+ Row {anchors.fill:parent;anchors.margins:6;spacing:7;AppIcon {size:24;entry:quickCard.modelData}Text {width:parent.width-31;anchors.verticalCenter:parent.verticalCenter;textFormat:Text.PlainText;text:quickCard.modelData.name;elide:Text.ElideRight;font.family:Appearance.font.data;font.pixelSize:11;color:Theme.text}}
  MouseArea {id:quickHover;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:WindowDesk.launch(quickCard.modelData)}
  }}
  }
