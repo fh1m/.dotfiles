@@ -216,9 +216,18 @@ def main():
                 subprocess.run(['tmux', 'source-file', str(theme)], capture_output=True)
         border = palette['primary'].lstrip('#') + 'FF'
         outline = palette['outline'].lstrip('#') + 'FF'
+        # Group borders match the window borders, and the deck's frame sits on
+        # the outline colour whether it is focused or not. The profile script
+        # no longer writes borders, so this is the only place they are set.
         subprocess.run(['hyprctl','--instance','0','eval',
                         'hl.config({["general.col.active_border"]="rgba(' + border +
-                        ')",["general.col.inactive_border"]="rgba(' + outline + ')"})'],
+                        ')",["general.col.inactive_border"]="rgba(' + outline + ')",'
+                        '["group.col.border_active"]="rgba(' + border + ')",'
+                        '["group.col.border_inactive"]="rgba(' + outline + ')"})'],
+                       capture_output=True,timeout=2)
+        subprocess.run(['hyprctl','--instance','0','eval',
+                        'hl.window_rule({match={class="sensei-deck"},'
+                        'border_color="rgba(' + outline + ') rgba(' + outline + ')"})'],
                        capture_output=True,timeout=2)
         print(json.dumps(palette))
     except (OSError, KeyError, ValueError, subprocess.SubprocessError, json.JSONDecodeError) as exc:

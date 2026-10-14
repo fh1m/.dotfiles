@@ -9,8 +9,8 @@
 #                                  be told about its own change
 #
 # Writes ~/.config/sensei/profile, which the shell watches and follows, then
-# does the two things the shell cannot: regenerate Alacritty's colours and signal
-# let live configuration reload update terminals, and set Hyprland's borders.
+# hands colours to sensei-palette. Colours come from the main wallpaper; the
+# profile only names the shell's preset.
 #
 # The palette below is a second copy of the one in config/Profiles.qml. It has
 # to be, because this script must work with the shell stopped. Change one and
@@ -153,29 +153,10 @@ if [ "$write_profile" -eq 1 ]; then
     printf '%s\n' "$name" > "$PROFILE_FILE"
 fi
 
-# 2. The shared palette helper below updates Alacritty and tmux.
-
-# 3. Hyprland borders. This config is Lua, so `hyprctl keyword` does not work --
-#    the values go through an eval of hl.config.
-if command -v hyprctl > /dev/null 2>&1; then
-    hyprctl --instance 0 eval "hl.config({
-        [\"general.col.active_border\"]     = \"rgba(${accent}FF)\",
-        [\"general.col.inactive_border\"]   = \"rgba(${hair}FF)\",
-        [\"group.col.border_active\"]       = \"rgba(${accent}FF)\",
-        [\"group.col.border_inactive\"]     = \"rgba(${hair}FF)\",
-        [\"group.col.border_locked_active\"]   = \"rgba(${accent}FF)\",
-        [\"group.col.border_locked_inactive\"] = \"rgba(${hair}FF)\",
-    })" > /dev/null 2>&1
-
-    # The deck terminal's frame follows the panels around it, not the focus
-    # state: `hair` whether focused or not. It is a window rule rather than a
-    # global, so it has to be re-emitted per profile.
-    hyprctl --instance 0 eval "hl.window_rule({
-        match        = { class = \"sensei-deck\" },
-        border_color = \"rgba(${hair}FF) rgba(${hair}FF)\",
-    })" > /dev/null 2>&1
-fi
-
+# 2. Colours are not the profile's. sensei-palette owns Alacritty, tmux, the
+#    Hyprland borders and the deck frame, from the main wallpaper, so a profile
+#    switch cannot repaint them. The palette below still checks that the profile
+#    has usable values.
 printf '%s\n' "$name"
 if [ -x "$HOME/.local/bin/sensei-palette" ]; then
     "$HOME/.local/bin/sensei-palette" >/dev/null 2>&1 || true
