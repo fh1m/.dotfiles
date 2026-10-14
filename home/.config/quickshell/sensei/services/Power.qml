@@ -84,7 +84,9 @@ Singleton {
 
     Process {id:setProc;onExited:{if(root.queuedProfile){let next=root.queuedProfile;root.queuedProfile="";root.setProfile(next);}}command:["@HOME@/.local/bin/sensei-power","get"];stdout:StdioCollector{onStreamFinished:{try{let d=JSON.parse(text);if(d.error)root.error=d.error;else{root.profileName=d.name;root.error="";}}catch(e){root.error=String(e);}}}}
     FileView {path:"@HOME@/.config/hypr/power-state.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{let d=JSON.parse(text());root.profileName=d.name;}catch(e){}}}
-    onOnBatteryChanged:if(!RobotBench.data.trainingMode)root.setProfile("balanced")
+    // Unplugging drops to balanced. Plugging back in must not: it would
+    // overwrite a Performance choice the user made on AC.
+    onOnBatteryChanged:if(onBattery&&!RobotBench.data.trainingMode)root.setProfile("balanced")
     Timer {interval:60000;repeat:true;running:ShellState.dropdown==="system";onTriggered:if(!setProc.running){setProc.command=["@HOME@/.local/bin/sensei-power","get"];setProc.running=true;}}
     // Read the existing profile at startup. Reloading the shell must not
     // silently promote AC to Performance or cancel a deliberate user choice.
