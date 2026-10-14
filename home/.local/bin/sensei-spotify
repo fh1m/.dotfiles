@@ -8,7 +8,8 @@ import json,sys,os,socket,time,re,hashlib,datetime,urllib.request,urllib.parse,u
 from pathlib import Path
 os.umask(0o077)
 HOME=Path.home();STORE=HOME/'.cache/sensei-spotify';STORE.mkdir(mode=0o700,parents=True,exist_ok=True)
-CONFIG=tomllib.loads((HOME/'.config/spotify-player/app.toml').read_text());PORT=int(CONFIG.get('client_port',8089));CLIENT=CONFIG['client_id']
+try:CONFIG=tomllib.loads((HOME/'.config/spotify-player/app.toml').read_text());PORT=int(CONFIG.get('client_port',8089));CLIENT=CONFIG['client_id']
+except (OSError,ValueError,KeyError):raise SystemExit('Sensei, Spotify is not set up: ~/.config/spotify-player/app.toml is missing, invalid, or has no client_id.')
 TOKEN=HOME/'.cache/spotify-player'/f'{CLIENT}_token.json'
 class MusicError(Exception):pass
 def put(path,value):

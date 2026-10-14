@@ -30,7 +30,8 @@ def main():
  if command=='snapshot':return snapshot()
  if command=='quality':run(['wpctl','settings','--save','bluetooth.profile-preference','quality']);return {'ok':True}
  if command=='profile':
-  addr,profile=sys.argv[2:4];d=snapshot();card=next(c for c in d['cards'] if c['properties'].get('api.bluez5.address')==addr)
+  addr,profile=sys.argv[2:4];d=snapshot();card=next((c for c in d['cards'] if c['properties'].get('api.bluez5.address')==addr),None)
+  if card is None:raise RuntimeError('That device has no audio card; connect it first')
   if profile not in card['profiles']:raise RuntimeError('This device does not support that profile')
   player='@HOME@/.local/bin/sensei-spotify-transport';old={}
   try:old=json.loads(run([player,'status']))
@@ -39,7 +40,8 @@ def main():
   if old.get('playing'):run([player,'play'])
   return {'ok':True}
  if command in ['alias','wake','block','trust']:
-  addr,value=sys.argv[2:4];o=objects();path=next(p for p,i in o.items() if i.get('org.bluez.Device1',{}).get('Address')==addr)
+  addr,value=sys.argv[2:4];o=objects();path=next((p for p,i in o.items() if i.get('org.bluez.Device1',{}).get('Address')==addr),None)
+  if path is None:raise RuntimeError('That device is not known to Bluetooth')
   prop={'alias':'Alias','wake':'WakeAllowed','block':'Blocked','trust':'Trusted'}[command]
   if command=='alias':kind='s';value=value.strip()[:64]
   else:
