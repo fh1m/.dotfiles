@@ -142,7 +142,7 @@ Singleton {
         ShellState.closeAll();
     }
 
-    // No second press within three seconds and the tile disarms itself.
+    // No second press within confirmMs and the tile disarms itself.
     Timer {
         id: countdown
 

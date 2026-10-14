@@ -127,7 +127,7 @@ ChamferPanel {
         }
     }
 
-    // The three seconds the armed tile has to be confirmed in.
+    // The window (Session.confirmMs) the armed tile has to be confirmed in.
     Rectangle {
         id: countdown
 
