@@ -3,7 +3,6 @@
 -- volume, and brightness shortcuts.
 
 local mod = "SUPER"
-local terminal = "@HOME@/.local/bin/sensei-terminal"
 
 -- Preserve the original monitor arrangement and session environment.
 hl.monitor({
@@ -91,10 +90,6 @@ hl.env("PATH", os.getenv("HOME") .. "/.local/bin:" .. (os.getenv("PATH") or "/us
 hl.env("QT_QPA_PLATFORM", "wayland")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
 
-hl.bind(mod .. " + RETURN", hl.dsp.exec_cmd(terminal))
-hl.bind("ALT + RETURN", hl.dsp.exec_cmd("@HOME@/.local/bin/sensei-terminal"))
-hl.bind("ALT + W", hl.dsp.exec_cmd("google-chrome-stable"))
-hl.bind("ALT + F", hl.dsp.exec_cmd("nautilus"))
 hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs -c wrayth ipc call picker toggle"))
 hl.bind(mod .. " + A", hl.dsp.exec_cmd("qs -c wrayth ipc call switcher overview"))
 hl.bind(mod .. " + SHIFT + D", hl.dsp.exec_cmd("grimblast --freeze save area - | tesseract stdin stdout | wl-copy"))
@@ -193,7 +188,6 @@ hl.bind("XF86Display", hl.dsp.exec_cmd("qs -c wrayth ipc call system page 1"))
 hl.bind("XF86Launch1", hl.dsp.exec_cmd("qs -c wrayth ipc call system page 0"))
 hl.bind("XF86RFKill", hl.dsp.exec_cmd(zenbook .. "airplane"))
 hl.bind("XF86WLAN", hl.dsp.exec_cmd(zenbook .. "wifi"))
-hl.bind("XF86Calculator", hl.dsp.exec_cmd("gnome-calculator"))
 hl.bind("XF86WebCam", hl.dsp.exec_cmd(zenbook .. "camera"))
 hl.bind("XF86SelectiveScreenshot", hl.dsp.exec_cmd(capture .. "screenshot area"))
 -- Extra functions on Super+Fn preserve the application's plain F1-F12 keys.
