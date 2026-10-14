@@ -5,7 +5,7 @@ import Quickshell.Hyprland
 import qs.services
 
 // Which overlays are up. IPC and keybinds flip these; the overlay modules bind
-// their visibility to them. Nothing draws these yet — that starts at step 10.
+// their visibility to them.
 Singleton {
     id: root
     property int systemPage: 0
@@ -68,7 +68,7 @@ Singleton {
     // and `ipc call lock lock` did not.
     onLockedChanged: if (locked) closeAll()
 
-    // Set by the deck plumbing in step 4, from Hyprland's workspace events.
+    // Set by the deck plumbing, from Hyprland's workspace events.
     property bool deckVisible: false
 
     // The bar's PanelWindow, published by Bar.qml. The dropdown layer needs it
@@ -77,7 +77,8 @@ Singleton {
     property var barWindow: null
     property var bottomBarWindow: null
 
-    // Which bar dropdown is open: "", "wifi", "bluetooth" or "power".
+    // Which bar dropdown is open, by name, or "" for none. The names are the ones
+    // Ipc's dropdownNames lists.
     property string dropdown: ""
     // The x of the bar readout that opened it, in bar-window coordinates. The
     // dropdown overlay shares that origin, so it can use the value directly.

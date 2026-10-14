@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 
-// CPU, memory and network counters for the bar. The HUD (step 5) reuses the
+// CPU, memory and network counters for the bar. The deck HUD reuses the
 // per-thread figures, which come free from the same /proc/stat read.
 Singleton {
     id: root
