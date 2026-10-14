@@ -19,6 +19,28 @@ Singleton {
     readonly property bool connectingOpenCode: consoleLogin.running
     function disconnectOpenCode():void {consoleLogin.running=false;consoleLogout.running=true;}
     function connectOpenCode():void {if(!consoleLogin.running){openCodeConnection={state:"starting",message:"Starting browser authorization…"};consoleLogin.running=true;}}
+    // Claude Code: every config dir is an account; "" selects the first one.
+    property var claudeAccounts: ({})
+    property string claudeAccount: ""
+    property int claudeDays: 30
+    property var claudeUsage: ({})
+    function selectClaudeAccount(id: string): void {
+        claudeAccount = id;
+        refreshClaude(false);
+    }
+    function setClaudeDays(days: int): void {
+        claudeDays = days;
+        refreshClaude(false);
+    }
+    function refreshClaude(force: bool): void {
+        if (!claudeAccountsProc.running) {
+            claudeAccountsProc.command = [Quickshell.env("HOME") + "/.local/bin/sensei-code", "claude-accounts", "--days", "7"];
+            claudeAccountsProc.running = true;
+        }
+        claudeUsageProc.running = false;
+        claudeUsageProc.command = [Quickshell.env("HOME") + "/.local/bin/sensei-code", "claude", "--days", String(claudeDays), "--account", claudeAccount].concat(force ? ["--refresh"] : []);
+        claudeUsageProc.running = true;
+    }
     property int feed: 0
     property bool pinnedOnly: false
     property int activityPage: 1
@@ -44,6 +66,7 @@ Singleton {
             return;
         }
         if (tab === 1 && provider === 1) { if(!openCode.running){openCode.command=[Quickshell.env("HOME")+"/.local/bin/sensei-code","opencode","--days",String(openCodeDays)].concat(force?["--refresh"]:[]);openCode.running=true;} return; }
+        if (tab === 1 && provider === 2) { refreshClaude(force); return; }
         if (tab === 1) { if (quota.running) quota.running = false; Qt.callLater(() => {if(root.opened && root.tab===1 && root.provider===0) quota.running=true;}); return; }
         if (overview.running) return;
         error = "";
@@ -71,8 +94,8 @@ Singleton {
         if (local) Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-dev", "open", local.path]);
         else browse(repo.url);
     }
-    onOpenedChanged: { if (opened) {quoteIndex=(quoteIndex+1)%Math.max(1,nerd.quotes?.length||3);refresh(false);} else {quota.running=false; openCode.running=false; consoleLogin.running=false; overview.running=false; nerdFetch.running=false; curiosityFetch.running=false; details.running=false; more.running=false; activity.running=false;} }
-    onProviderChanged: {quota.running=false;openCode.running=false;if(opened && tab===1)refresh(false);}
+    onOpenedChanged: { if (opened) {quoteIndex=(quoteIndex+1)%Math.max(1,nerd.quotes?.length||3);refresh(false);} else {quota.running=false; openCode.running=false; claudeUsageProc.running=false; claudeAccountsProc.running=false; consoleLogin.running=false; overview.running=false; nerdFetch.running=false; curiosityFetch.running=false; details.running=false; more.running=false; activity.running=false;} }
+    onProviderChanged: {quota.running=false;openCode.running=false;claudeUsageProc.running=false;if(opened && tab===1)refresh(false);}
     onTabChanged: {error="";quota.running=false;openCode.running=false; if(opened) Qt.callLater(() => {if(root.opened)root.refresh(false);});}
     // Separate collectors keep late responses attached to their own feed.
     // SplitParser ignores an empty stream when a closed window cancels a request.
@@ -104,6 +127,14 @@ Singleton {
         command: [Quickshell.env("HOME")+"/.local/bin/sensei-code", "opencode"]
         stdout: SplitParser {onRead: line => {try {const d=JSON.parse(line);if(!d.go && root.openCodeUsage.go)d.go=root.openCodeUsage.go;root.openCodeUsage=d;}catch(e){root.openCodeUsage={state:"Local statistics unavailable"};}}}
     }
+    Process {
+        id: claudeAccountsProc
+        stdout: SplitParser {onRead: line => {try {const d=JSON.parse(line); if(d.accounts) {root.claudeAccounts=d; if(!root.claudeAccount && d.accounts.length) root.claudeAccount=d.accounts[0].id;}} catch(e){}}}
+    }
+    Process {
+        id: claudeUsageProc
+        stdout: SplitParser {onRead: line => {try {const d=JSON.parse(line); root.claudeUsage=d;} catch(e){root.claudeUsage={error:"Invalid Claude usage response"};}}}
+    }
     Process {id:consoleLogout;command:[Quickshell.env("HOME")+"/.local/bin/sensei-opencode-connect","disconnect"]
         stdout:SplitParser {onRead:line=>{try{root.openCodeConnection=JSON.parse(line);}catch(e){}}}
         onExited:root.refresh(true)
@@ -112,6 +143,6 @@ Singleton {
         stdout:SplitParser {onRead:line=>{try{root.openCodeConnection=JSON.parse(line);}catch(e){root.openCodeConnection={state:"error",message:"Invalid authorization response"};}}}
         onExited:if(root.openCodeConnection.state==="connected")root.refresh(true)
     }
-    Timer {interval:60000;repeat:true;running:root.opened && root.tab===1 && root.provider===1;onTriggered:root.refresh(false)}
-    IpcHandler { target: "code"; function page(index:int):void {if(index<0||index>3)return;root.tab=index;ShellState.publishAnchor("code",12);ShellState.dropdown="code";} function toggle():void {ShellState.publishAnchor("code",12);ShellState.toggleDropdown("code");} function state():string {return JSON.stringify({open:root.opened,tab:root.tab,loading:root.loading,repositories:root.repositories.length,quotaRunning:quota.running,error:root.error,curiosityLoading:curiosityFetch.running,showStories:root.curiosity.show?.length||0,askStories:root.curiosity.ask?.length||0,quote:root.quoteIndex});} function subscriptions():void {root.tab=1;} function agent(name:string):void {if(name!=="codex" && name!=="opencode")return;root.provider=name==="opencode"?1:0;root.tab=1;} }
+    Timer {interval:60000;repeat:true;running:root.opened && root.tab===1 && root.provider>0;onTriggered:root.refresh(false)}
+    IpcHandler { target: "code"; function page(index:int):void {if(index<0||index>3)return;root.tab=index;ShellState.publishAnchor("code",12);ShellState.dropdown="code";} function toggle():void {ShellState.publishAnchor("code",12);ShellState.toggleDropdown("code");} function state():string {return JSON.stringify({open:root.opened,tab:root.tab,loading:root.loading,repositories:root.repositories.length,quotaRunning:quota.running,error:root.error,curiosityLoading:curiosityFetch.running,showStories:root.curiosity.show?.length||0,askStories:root.curiosity.ask?.length||0,quote:root.quoteIndex});} function subscriptions():void {root.tab=1;} function agent(name:string):void {if(name!=="codex" && name!=="opencode" && name!=="claude")return;root.provider=name==="opencode"?1:name==="claude"?2:0;root.tab=1;} function account(id:string):void {root.selectClaudeAccount(id);} }
 }
