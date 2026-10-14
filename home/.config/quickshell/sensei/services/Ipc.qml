@@ -157,9 +157,9 @@ Scope {
             return trimmed;
         }
 
-        // **Not scaffolding.** The editor, the pools and the effects page are
-        // reached by clicking, and a recording has no pointer -- this is the
-        // only way to put one of them on screen without one.
+        // The editor, the pools and the effects page are reached by clicking,
+        // and a recording has no pointer -- this is the only way to put one of
+        // them on screen without one.
         function view(name: string): string {
             if (["grid", "editor", "pools", "effects"].indexOf(name) < 0)
                 return `unknown view ${name}`;
@@ -169,7 +169,7 @@ Scope {
         }
     }
 
-    // TEMPORARY (QA): the library opens on a click of the HUD heading and
+    // Test seam: the library opens on a click of the HUD heading, and
     // `ydotoold` is not running, so this is how a test reaches it.
     IpcHandler {
         target: "daemons"
@@ -186,9 +186,9 @@ Scope {
         }
     }
 
-    // **Not scaffolding any more.** The dropdowns are click-only by design,
-    // which nothing in a test or a recording can drive, and both of those are
-    // reasons to have a way in that is not the pointer. It validates the name
+    // The dropdowns are click-only by design, which nothing in a test or a
+    // recording can drive, and both of those are reasons to have a way in
+    // that is not the pointer. It validates the name
     // now: setting `dropdown` to something no panel answers to left `overlay
     // state` reporting a dropdown that was not on screen.
     IpcHandler {
@@ -265,8 +265,8 @@ Scope {
         }
     }
 
-    // TEMPORARY (QA): drives the shared interaction states so the frame bursts
-    // can photograph each one. Paired with ShellState.qaAction.
+    // Test seam: drives the shared interaction states so the frame bursts can
+    // photograph each one. Paired with ShellState.qaAction.
     IpcHandler {
         target: "qa"
 
@@ -275,10 +275,10 @@ Scope {
             return kind;
         }
 
-        // TEMPORARY (QA). The glitch schedule is 30 to 90 seconds and its
-        // targets are picked at random, so nothing in a test session can make
-        // a chosen element glitch with a chosen set of effects -- and a frame
-        // burst of a 150 ms effect cannot be aimed at a random one.
+        // Test seam. The glitch schedule is 30 to 90 seconds and its targets
+        // are picked at random, so nothing in a test session can make a chosen
+        // element glitch with a chosen set of effects -- and a frame burst of a
+        // 150 ms effect cannot be aimed at a random one.
         //
         //   glitch fire <key> [effects] [duration]
         //   glitch keys
@@ -307,20 +307,19 @@ Scope {
             return Glitch.running.length > before ? `fired on ${Glitch.current?.key || "-"}` : "nothing eligible";
         }
 
-        // TEMPORARY (QA): the EFFECTS page's own PREVIEW button, which nothing
-        // in a test session can click.
+        // Test seam: the EFFECTS page's own PREVIEW button, which nothing in a
+        // test session can click.
         function preview(): string {
             return Glitch.preview();
         }
     }
 
-    // **Real, not scaffolding.** The glitch scheduler picks its own target at
-    // its own time, which is right for atmosphere and useless for a recording
-    // or a demonstration -- "fire one on the SYS.DIAG header, now" has no
-    // other way in. `qa fire` stays where it is; that one exists to drive the
-    // scheduler's internals and takes effects and durations with it.
-    // The deck, so a script has one way in rather than reaching past the
-    // shell to Hyprland for the one overlay the shell itself owns the state of.
+    // Real control, not a test seam: the glitch scheduler picks its own target
+    // at its own time, which is right for atmosphere and useless for a
+    // recording or a demonstration -- "fire one on the SYS.DIAG header, now"
+    // has no other way in. `qa fire` stays where it is; that one exists to
+    // drive the scheduler's internals and takes effects and durations with it.
+    //
     // Read-only: the planner's cleared/total, exactly what its header shows.
     // For tests (the nested install test checks a new account starts at 0/0).
     IpcHandler {
@@ -331,6 +330,8 @@ Scope {
         }
     }
 
+    // The deck, so a script has one way in rather than reaching past the
+    // shell to Hyprland for the one overlay the shell itself owns the state of.
     IpcHandler {
         target: "deck"
 
@@ -481,8 +482,8 @@ Scope {
         }
     }
 
-    // Real controls, not scaffolding: each of these is a thing worth binding a
-    // key to, and each is the same call the picker's own buttons make.
+    // Real controls: each of these is a thing worth binding a key to, and each
+    // is the same call the picker's own buttons make.
     IpcHandler {
         target: "wallpaper"
         function choose(output: string): void { WallpaperChooser.open(output); }
@@ -631,8 +632,8 @@ Scope {
         }
     }
 
-    // Not scaffolding: `available` is the answer to "why does the panel say
-    // nothing", and it cannot be read off the screen.
+    // `available` is the answer to "why does the panel say nothing", and it
+    // cannot be read off the screen.
     IpcHandler {
         target: "vuln"
 

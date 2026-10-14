@@ -27,6 +27,17 @@ Item {
         return false;
     }
 
+    // Left and right step through the treatments in the order the tiles are
+    // laid out, stopping at either end. Each step is a live change, the same as
+    // a click on a tile.
+    function step(delta: int): void {
+        const list = Effects.treatments;
+        const at = list.findIndex(entry => entry.key === Effects.scanlines);
+        const next = Math.max(0, Math.min(list.length - 1, at + delta));
+        if (next !== at)
+            Effects.setScanlines(list[next].key);
+    }
+
     // Laid out at the composition's own coordinates, like the grid screen: the
     // header, the tiles and the rows below them are one thing, and centring
     // each piece separately is what lets them drift apart.
@@ -534,6 +545,18 @@ Item {
         x: root.originX
         y: 906
         spacing: 6
+
+        Keycap {
+            anchors.verticalCenter: parent.verticalCenter
+            key: "←→"
+            color: Theme.mute
+        }
+
+        NrLabel {
+            anchors.verticalCenter: parent.verticalCenter
+            color: Theme.mute
+            text: "TREATMENT    "
+        }
 
         Keycap {
             anchors.verticalCenter: parent.verticalCenter

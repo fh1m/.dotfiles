@@ -769,9 +769,16 @@ Variants {
 
             readonly property bool onGrid: overlay.view === "grid"
             readonly property bool onPools: overlay.view === "pools"
+            readonly property bool onEffects: overlay.view === "effects"
 
-            Keys.onLeftPressed: if (onGrid) overlay.move(-1)
-            Keys.onRightPressed: if (onGrid) overlay.move(1)
+            Keys.onLeftPressed: {
+                if (onGrid) overlay.move(-1);
+                else if (onEffects) effectsScreen.step(-1);
+            }
+            Keys.onRightPressed: {
+                if (onGrid) overlay.move(1);
+                else if (onEffects) effectsScreen.step(1);
+            }
             Keys.onUpPressed: if (onGrid) overlay.move(-overlay.columns)
             Keys.onDownPressed: if (onGrid) overlay.move(overlay.columns)
             Keys.onReturnPressed: overlay.accept()

@@ -29,6 +29,10 @@ Singleton {
         return main ? [main] : screens.slice(0, 1);
     }
 
+    // SENSEI-HDMI-TEST and SENSEI-UPPER-TEST are names for headless outputs
+    // made by hand, to rehearse an HDMI screen and a top-bar external screen
+    // without the hardware. Nothing in the repo creates them; they are seams
+    // for the same reason as the names in sensei-displays.
     function isExternalOutput(name:string):bool {return name!=="DP-2"&&(name.startsWith("HDMI-")||name.startsWith("DP-")||name.startsWith("DVI-")||name==="SENSEI-HDMI-TEST"||name==="SENSEI-UPPER-TEST");}
     function externalBarEdge(name:string):string {return ExternalDisplays.display(name)?.barEdge??((name==="DP-1"||name==="SENSEI-UPPER-TEST")?"top":"bottom");}
     readonly property var externalScreens: screens.filter(s => isExternalOutput(s.name))
