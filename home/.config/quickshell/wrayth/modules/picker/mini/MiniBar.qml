@@ -54,7 +54,7 @@ Item {
                 id: code
 
                 anchors.centerIn: parent
-                text: Runner.code
+                text: Demo.code(Runner.code)
                 color: root.previewPalette.ground
                 font.family: Appearance.font.data
                 font.pixelSize: 11
@@ -72,7 +72,7 @@ Item {
                 id: suffix
 
                 anchors.centerIn: parent
-                text: `//${Runner.suffix}`
+                text: `//${Demo.suffix(Runner.suffix)}`
                 // The real block draws this as `ground` at 55% over the
                 // accent; at this size that blend is what keeps the slashes
                 // from closing up into a smudge.

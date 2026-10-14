@@ -709,6 +709,7 @@ DropdownFrame {
             width:parent.width
             adapter:root.adapter
             selectedDevice:root.devices.find(d=>d.address===root.open)||root.devices.find(d=>d.connected&&/audio|headset|headphone/i.test(d.icon||''))||root.devices.find(d=>d.connected)||root.devices[0]||null
+            deviceIndex:root.devices.indexOf(selectedDevice)
         }
 
         // --- Settings ------------------------------------------------------

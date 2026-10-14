@@ -6,6 +6,8 @@ import qs.services
 Column {
  id:root
  property var selectedDevice:null
+    // The device's place in the list, so a recording masks it as its row is masked.
+    property int deviceIndex:0
  property var adapter:Bluetooth.defaultAdapter
  readonly property int page:BluetoothDesk.page
  readonly property string address:selectedDevice?.address||''
@@ -25,7 +27,7 @@ Column {
   width:parent.width;height:root.page===0?250:root.page===1?326:root.page===2?226:218
   fillColor:Theme.widgetSurface;borderColor:Theme.widgetBorder;chamfer:6;scanlines:false
   Column {anchors.fill:parent;anchors.margins:12;spacing:10
-   Text {width:parent.width;textFormat:Text.PlainText;text:root.page===0?(root.selectedDevice?.name||'Choose a device above'):root.page===1?'Music quality and routing':root.page===2?'Bluetooth controller':'Sensei, your Bluetooth toolbox';color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:14;font.bold:true;elide:Text.ElideRight}
+   Text {width:parent.width;textFormat:Text.PlainText;text:root.page===0?(Demo.device(root.selectedDevice?.name||'',root.deviceIndex)||'Choose a device above'):root.page===1?'Music quality and routing':root.page===2?'Bluetooth controller':'Sensei, your Bluetooth toolbox';color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:14;font.bold:true;elide:Text.ElideRight}
    Text {width:parent.width;text:root.page===0?(root.info.Connected?'Connected · ':'Disconnected · ')+(root.info.Trusted?'trusted':'ask before reconnecting'):root.page===1?(root.codec.codec?root.codec.codec.toUpperCase()+' · '+(root.codec.formats?.[0]?.rate||'—')+' Hz · stereo':'No audio transport for this device'):root.page===2?'Intel AX200 · paired devices appear without a scan':'Diagnostics and recovery tools run only when requested.';color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:12;wrapMode:Text.WordWrap}
    Column {width:parent.width;spacing:10;visible:root.page===0
     Text {width:parent.width;wrapMode:Text.WordWrap;text:`Address  ${root.address||'—'}\nBattery  ${root.info.battery===null||root.info.battery===undefined?'not reported':root.info.battery+'%'}   ·   Type  ${root.info.Icon||'Bluetooth device'}\nRadio  ${root.info.RSSI===undefined?'not reported':root.info.RSSI+' dBm (last discovery)'}   ·   Services  ${(root.info.UUIDs||[]).length}`;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetText;lineHeight:1.45}
