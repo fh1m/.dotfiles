@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.components
 import qs.config
 import qs.services
@@ -196,6 +197,14 @@ Item {
         }
     }
 
+    // Minute precision, as the bar's own clock is. A plain `new Date()` in a
+    // binding is read once, so an open picker showed the time it opened at.
+    SystemClock {
+        id: minuteClock
+
+        precision: SystemClock.Minutes
+    }
+
     // **14 px from the right edge, not 22.** The old figure cleared the card's
     // whole 16 px chamfer; the cut is a diagonal, and what the clock has to
     // clear is where that diagonal is **at the clock's own top row**, which is
@@ -208,7 +217,7 @@ Item {
         anchors.rightMargin: 14
         anchors.verticalCenter: parent.verticalCenter
 
-        text: Qt.formatDateTime(new Date(), "HH:mm")
+        text: Qt.formatDateTime(minuteClock.date, "HH:mm")
         color: root.previewPalette.bright
         font.family: Appearance.font.display
         font.pixelSize: 12

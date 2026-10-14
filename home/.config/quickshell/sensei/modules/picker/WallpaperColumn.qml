@@ -13,12 +13,12 @@ ChamferPanel {
  Image {x:8;y:9;width:100;height:100;source:Wallpapers.displaySource(displayRow.modelData.output);sourceSize:Qt.size(256,256);fillMode:Wallpapers.displayMode(displayRow.modelData.output);asynchronous:true}
  Column {x:119;y:10;width:parent.width-129;spacing:8
  Text { textFormat: Text.PlainText;text:displayRow.modelData.name+" · "+displayRow.modelData.output;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.signal}
- Row {spacing:5;ControlTile {implicitWidth:105;implicitHeight:25;label:"Choose image";onActivated:WallpaperChooser.open(displayRow.modelData.output)}ControlTile {implicitWidth:105;implicitHeight:25;label:"Theme image";onActivated:Wallpapers.setDisplay(displayRow.modelData.output,"",Image.PreserveAspectCrop)}}
- Row {spacing:4;Repeater {model:[{name:"Fill",mode:2},{name:"Fit",mode:1},{name:"Stretch",mode:0},{name:"Tile",mode:3}];ControlTile {required property var modelData;implicitWidth:modelData.name==="Stretch"?75:45;implicitHeight:25;label:modelData.name;selected:Wallpapers.displayMode(displayRow.modelData.output)===modelData.mode;onActivated:Wallpapers.setDisplay(displayRow.modelData.output,Wallpapers.displays[displayRow.modelData.output]?.file||"",modelData.mode)}}}
+ Row {spacing:5;ControlTile {implicitWidth:105;implicitHeight:25;glyph:"";label:"Choose image";onActivated:WallpaperChooser.open(displayRow.modelData.output)}ControlTile {implicitWidth:105;implicitHeight:25;glyph:"";label:"Theme image";onActivated:Wallpapers.setDisplay(displayRow.modelData.output,"",Image.PreserveAspectCrop)}}
+ Row {spacing:4;Repeater {model:[{name:"Fill",mode:2},{name:"Fit",mode:1},{name:"Stretch",mode:0},{name:"Tile",mode:3}];ControlTile {required property var modelData;implicitWidth:modelData.name==="Stretch"?75:45;implicitHeight:25;glyph:"";label:modelData.name;selected:Wallpapers.displayMode(displayRow.modelData.output)===modelData.mode;onActivated:Wallpapers.setDisplay(displayRow.modelData.output,Wallpapers.displays[displayRow.modelData.output]?.file||"",modelData.mode)}}}
  }
  }
  }
  InputField {width:parent.width;text:Paths.display(Wallpapers.folder);placeholder:"Wallpaper library folder";onAccepted:Wallpapers.setFolder(Paths.expand(text))}
- Row {spacing:6;ControlTile {implicitWidth:175;implicitHeight:29;label:"Manage theme pools";onActivated:root.poolsRequested()}ControlTile {implicitWidth:175;implicitHeight:29;label:"Open library folder";onActivated:Wallpapers.openFolder()}}
+ Row {spacing:6;ControlTile {implicitWidth:175;implicitHeight:29;label:"Manage theme pools";onActivated:root.poolsRequested()}ControlTile {implicitWidth:175;implicitHeight:29;glyph:"";label:"Open library folder";onActivated:Wallpapers.openFolder()}}
  }
 }

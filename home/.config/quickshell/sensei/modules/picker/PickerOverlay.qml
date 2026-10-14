@@ -268,12 +268,20 @@ Variants {
         Item {
             anchors.fill: parent
 
-            // Whatever the shell is showing: with DYNAMIC on that is the
-            // previewed profile's wallpaper, because previewing moves
-            // `Theme.profile` and the wallpaper follows it. With DYNAMIC off
-            // it does not move, which is what the switch promises.
+            // The picker's own backdrop: the previewed profile's card image,
+            // never the desktop wallpaper. The desktop is what the picker is
+            // for changing, so showing it here left a stale trace of whatever
+            // was on screen before the picker opened.
+            // Opaque under everything, so a profile with no card image yet
+            // shows the picker's own colour and never what is behind it.
+            Rectangle {
+                anchors.fill: parent
+                color: Theme.deep
+            }
+
             Wallpaper {
                 anchors.fill: parent
+                source: Wallpapers.cardImage(overlay.previewed)
                 dim: 0.62
             }
 
