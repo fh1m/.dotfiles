@@ -1,8 +1,8 @@
 # Digital Den — laptop controls Homie
 
-Arete is the input master. Homie is physically above the laptop. Move through the **top edge of eDP-1** to enter Homie; move down out of Homie to return. **Ctrl + Alt + Esc** releases capture immediately. Existing laptop monitor geometry, bindings, shell and development configuration remain owned by Claude.
+Arete is the input master. Homie is physically above the laptop. Move through the **top edge of eDP-1** or **right edge of upper DP-1** to enter Homie. Leave Homie through its bottom edge to return to the laptop, or through its left edge to return to the upper external monitor. **Ctrl + Alt + Esc** releases capture immediately. Existing laptop monitor geometry, bindings, shell and development configuration remain owned by Claude.
 
-Lan Mouse 0.11.0 uses native layer-shell capture and wlroots input emulation. Its upstream top-edge selection chooses the highest output in a multi-monitor group; `capture-output.patch` adds the optional `DEN_CAPTURE_OUTPUT` environment variable so the physical laptop edge can be selected without changing any display position. If that output disappears, capture is disabled rather than moved unexpectedly. The PC uses the stock packaged binary. The laptop uses a private headless build from upstream revision `0d2190e787db9e482e17d4c16fb7c00ef4841bcb`:
+Lan Mouse 0.11.0 uses native layer-shell capture and wlroots input emulation. Its upstream edge selection is insufficient for this two-edge physical arrangement. `capture-output.patch` adds `DEN_CAPTURE_OUTPUTS=top=eDP-1,right=DP-1`, two receiver return edges, and a bounded authenticated return-edge message using the existing Leave payload. Only the active connection accepts a return; duplicate late returns are ignored. If a selected output disappears, its capture is disabled rather than moved unexpectedly. Both machines use the same private headless build from upstream revision `0d2190e787db9e482e17d4c16fb7c00ef4841bcb`:
 
 ```sh
 git apply capture-output.patch
@@ -31,7 +31,7 @@ systemctl --user link ~/.local/state/homie-control/den-clipboard.service
 systemctl --user enable --now den-clipboard.service
 ```
 
-The laptop client config uses `position = "top"`, `hostname = "homie.local"` and `activate_on_startup = true`. Homie has no outgoing client. Both use `release_bind = ["KeyLeftCtrl", "KeyLeftAlt", "KeyEsc"]`, the layer-shell capture backend and wlroots emulation. Certificate fingerprints belong under `[authorized_fingerprints]` in each private config, and are never guessed or auto-trusted.
+The laptop has two client entries for the same authenticated Homie: `position = "top"` and `position = "right"`, both with `hostname = "homie.local"` and `activate_on_startup = true`. Their fixed local `enter_hook` calls `den-edge-return.py enter-top` or `enter-right`. Homie has no outgoing client. Both use `release_bind = ["KeyLeftCtrl", "KeyLeftAlt", "KeyEsc"]`, the layer-shell capture backend and wlroots emulation. Certificate fingerprints belong under `[authorized_fingerprints]` in each private config, and are never guessed or auto-trusted.
 
 ## Controls
 
@@ -52,3 +52,17 @@ The SSH endpoint uses `homie.local` with the independently verified host key pin
 A temporary native GTK receiver recorded the expected `d`, `e`, `n` keys, Ctrl+A, pointer motion, a click and wheel scrolling. A fixed-US native virtual-keyboard fixture was used; wtype's custom synthetic keymap is unsuitable as proof of physical scancode forwarding. The emergency release generated a verified capture-release event. Text and generated valid PNG clipboard fixtures passed both directions repeatedly, including after service startup. The test restored the laptop's previous clipboard; no test payload or private desktop screenshot is committed.
 
 Both computers' input services and the laptop clipboard service are enabled. Cold boot, physical suspend/resume and unplugging the network still require hardware acceptance; the implementation does not claim these tests happened. Reboot is not performed while user work is open.
+
+## Physical layout verified from the user’s photograph
+
+```text
+DP-1 upper external  ⇄  Homie DP-3
+        ⇅                     ⇅
+HDMI lower external  ⇄  eDP-1 laptop
+                              ⇅
+                         DP-2 ScreenPad
+```
+
+The red displays remain one Hyprland desktop; the blue display remains Homie’s own desktop. Laptop keyboard/mouse are the master. All four return combinations are tested, including entering from one red display and leaving onto the other. `den-edge-return.py` maps the crossing coordinate to the adjacent screen using actual logical sizes/scales and places the pointer a few pixels inward to prevent immediate recapture. It uses the existing pinned SSH connection only when crossing, not continuous polling; no display positions or Claude-owned Hyprland files are changed. A fixed local executable handles only validated edge IDs 1/2. The native virtual-keyboard, pointer, click, wheel and emergency-release tests remain available as private receiver fixtures.
+
+`test_edges_desktop.py` is an explicitly invoked desktop acceptance harness, run on the laptop only while the private `Den input harness` receiver is open on Homie. It asserts focus before any test interaction, moves the cursor through the four routes and checks actual return coordinates. It is never run automatically by installation or at login.

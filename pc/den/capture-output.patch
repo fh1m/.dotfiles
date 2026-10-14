@@ -1,18 +1,166 @@
 diff --git a/input-capture/src/layer_shell.rs b/input-capture/src/layer_shell.rs
-index 698c584..cba69dd 100644
+index 698c584..cfe4fe3 100644
 --- a/input-capture/src/layer_shell.rs
 +++ b/input-capture/src/layer_shell.rs
-@@ -241,6 +241,13 @@ fn get_edges(outputs: &[Output], pos: Position) -> Vec<(Output, i32)> {
+@@ -241,6 +241,14 @@ fn get_edges(outputs: &[Output], pos: Position) -> Vec<(Output, i32)> {
  }
- 
+
  fn get_output_configuration(state: &State, pos: Position) -> Vec<Output> {
-+    // Den: explicitly target a physical screen without changing compositor geometry.
-+    // Missing target disables the edge instead of unexpectedly grabbing another screen.
-+    if let Ok(name) = env::var("DEN_CAPTURE_OUTPUT") {
++    // Den: per-edge physical output selection, independent of compositor geometry.
++    if let Ok(mapping) = env::var("DEN_CAPTURE_OUTPUTS") {
++        let name = mapping.split(',').filter_map(|entry| entry.split_once('='))
++            .find(|(edge, _)| *edge == pos.to_string()).map(|(_, name)| name);
 +        return state.outputs.iter().filter(|output| {
-+            output.info.as_ref().is_some_and(|info| info.name == name)
++            output.info.as_ref().is_some_and(|info| Some(info.name.as_str()) == name)
 +        }).cloned().collect();
 +    }
      // get all output edges corresponding to the position
      let edges = get_edges(&state.outputs, pos);
      let opposite_edges = get_edges(&state.outputs, pos.opposite());
+diff --git a/src/capture.rs b/src/capture.rs
+index 8f739bd..d8dc948 100644
+--- a/src/capture.rs
++++ b/src/capture.rs
+@@ -37,6 +37,7 @@ pub(crate) enum ICaptureEvent {
+     /// either the remote client leaving its device region,
+     /// a new device entering the screen or the release bind.
+     ClientEntered(u64),
++    RemoteLeft(u32),
+ }
+
+ #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+@@ -286,9 +287,14 @@ impl CaptureTask {
+                             self.state = State::Sending;
+                         }
+                         // client disconnected
+-                        ProtoEvent::Leave(_) => {
++                        ProtoEvent::Leave(edge) => {
++                            // Ignore duplicate/late returns after input has already been released.
++                            if self.active_client.is_none() { continue; }
+                             log::info!("releasing capture: left remote client device region");
+                             self.release_capture(capture).await?;
++                            if edge == 1 || edge == 2 {
++                                self.event_tx.send(ICaptureEvent::RemoteLeft(edge)).expect("channel closed");
++                            }
+                         },
+                         _ => {}
+                     }
+diff --git a/src/emulation.rs b/src/emulation.rs
+index 853267c..f0184d1 100644
+--- a/src/emulation.rs
++++ b/src/emulation.rs
+@@ -56,7 +56,7 @@ pub(crate) enum EmulationEvent {
+
+ enum EmulationRequest {
+     Reenable,
+-    Release(SocketAddr),
++    Release(SocketAddr, u32),
+     ChangePort(u16),
+     Terminate,
+ }
+@@ -83,9 +83,9 @@ impl Emulation {
+         }
+     }
+
+-    pub(crate) fn send_leave_event(&self, addr: SocketAddr) {
++    pub(crate) fn send_leave_event(&self, addr: SocketAddr, edge: u32) {
+         self.request_tx
+-            .send(EmulationRequest::Release(addr))
++            .send(EmulationRequest::Release(addr, edge))
+             .expect("channel closed");
+     }
+
+@@ -171,7 +171,7 @@ impl ListenTask {
+                     // reenable emulation
+                     EmulationRequest::Reenable => self.emulation_proxy.reenable(),
+                     // notify the other end that we hit a barrier (should release capture)
+-                    EmulationRequest::Release(addr) => self.listener.reply(addr, ProtoEvent::Leave(0)).await,
++                    EmulationRequest::Release(addr, edge) => self.listener.reply(addr, ProtoEvent::Leave(edge)).await,
+                     EmulationRequest::ChangePort(port) => {
+                         self.listener.request_port_change(port);
+                         let result = self.listener.port_changed().await;
+diff --git a/src/service.rs b/src/service.rs
+index d0772f6..e42d914 100644
+--- a/src/service.rs
++++ b/src/service.rs
+@@ -328,7 +328,20 @@ impl Service {
+                 // we entered the capture zone for an incoming connection
+                 // => notify it that its capture should be released
+                 if let Some(incoming) = self.incoming_conn_info.get(&handle) {
+-                    self.emulation.send_leave_event(incoming.addr);
++                    if std::env::var("DEN_RETURN_EDGES").is_ok() {
++                        let edge = match incoming.pos { Position::Bottom => 1, Position::Left => 2, _ => 0 };
++                        // Both connections belong to the same authenticated laptop. Notify
++                        // each; only the master's active connection accepts the return.
++                        for addr in &self.incoming_conns { self.emulation.send_leave_event(*addr, edge); }
++                    } else { self.emulation.send_leave_event(incoming.addr, 0); }
++                }
++            }
++            ICaptureEvent::RemoteLeft(edge) => {
++                if let Ok(command) = std::env::var("DEN_RETURN_COMMAND") {
++                    // Fixed local executable, bounded edge argument; never a remote shell command.
++                    if let Err(error) = std::process::Command::new(command).arg(edge.to_string()).spawn() {
++                        log::warn!("Den return helper: {error}");
++                    }
+                 }
+             }
+             ICaptureEvent::CaptureDisabled => {
+@@ -386,18 +399,16 @@ impl Service {
+     const ENTER_HANDLE_BEGIN: u64 = u64::MAX / 2 + 1;
+
+     fn add_incoming(&mut self, addr: SocketAddr, pos: Position, fingerprint: String) {
+-        let handle = Self::ENTER_HANDLE_BEGIN + self.next_trigger_handle;
+-        self.next_trigger_handle += 1;
+-        self.capture.create(handle, pos, CaptureType::EnterOnly);
++        let positions = if std::env::var("DEN_RETURN_EDGES").is_ok() {
++            vec![Position::Bottom, Position::Left]
++        } else { vec![pos] };
++        for pos in positions {
++            let handle = Self::ENTER_HANDLE_BEGIN + self.next_trigger_handle;
++            self.next_trigger_handle += 1;
++            self.capture.create(handle, pos, CaptureType::EnterOnly);
++            self.incoming_conn_info.insert(handle, Incoming { fingerprint: fingerprint.clone(), addr, pos });
++        }
+         self.incoming_conns.insert(addr);
+-        self.incoming_conn_info.insert(
+-            handle,
+-            Incoming {
+-                fingerprint,
+-                addr,
+-                pos,
+-            },
+-        );
+     }
+
+     fn update_incoming(&mut self, addr: SocketAddr, pos: Position, fingerprint: String) {
+@@ -412,7 +423,7 @@ impl Service {
+             incoming.fingerprint = fingerprint.clone();
+             changed = true;
+         }
+-        if incoming.pos != pos {
++        if std::env::var("DEN_RETURN_EDGES").is_err() && incoming.pos != pos {
+             incoming.pos = pos;
+             changed = true;
+         }
+@@ -429,16 +440,12 @@ impl Service {
+     }
+
+     fn remove_incoming(&mut self, addr: SocketAddr) -> Option<SocketAddr> {
+-        let handle = self
+-            .incoming_conn_info
+-            .iter()
+-            .find(|(_, incoming)| incoming.addr == addr)
+-            .map(|(k, _)| *k)?;
+-        self.capture.destroy(handle);
++        let handles: Vec<_> = self.incoming_conn_info.iter()
++            .filter(|(_, incoming)| incoming.addr == addr).map(|(handle, _)| *handle).collect();
++        if handles.is_empty() { return None; }
++        for handle in handles { self.capture.destroy(handle); self.incoming_conn_info.remove(&handle); }
+         self.incoming_conns.remove(&addr);
+-        self.incoming_conn_info
+-            .remove(&handle)
+-            .map(|incoming| incoming.addr)
++        Some(addr)
+     }
+
+     fn notify_frontend(&mut self, event: FrontendEvent) {

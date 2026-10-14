@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Dedicated Den services; discover the actual graphical session at each start."""
-import json, os, pathlib, subprocess, sys, time
+import json, os, pathlib, subprocess, sys, time, tomllib
 state=pathlib.Path.home()/".local/state/homie-control"
 while True:
     try:
@@ -13,6 +13,11 @@ os.environ.update(HYPRLAND_INSTANCE_SIGNATURE=instance["instance"],WAYLAND_DISPL
 if sys.argv[1]=="clipboard":
     os.execv(sys.executable,[sys.executable,str(state/"den-clipboard.py"),"hub"])
 binary=state/"bin/lan-mouse"
-if binary.exists():os.environ["DEN_CAPTURE_OUTPUT"]="eDP-1"
-else:binary=pathlib.Path("/usr/bin/lan-mouse")
+if not binary.exists():binary=pathlib.Path("/usr/bin/lan-mouse")
+config=tomllib.loads((state/"input/config.toml").read_text())
+if config.get("clients"):
+    os.environ["DEN_CAPTURE_OUTPUTS"]="top=eDP-1,right=DP-1"
+    os.environ["DEN_RETURN_COMMAND"]=str(state/"den-edge-return.py")
+else:
+    os.environ["DEN_RETURN_EDGES"]="bottom,left"
 os.execv(str(binary),[str(binary),"-c",str(state/"input/config.toml"),"--cert-path",str(state/"input/cert.pem"),"--capture-backend","layer-shell","--emulation-backend","wlroots","daemon"])

@@ -48,3 +48,5 @@ Laptop-master input and clipboard sharing is documented in [Den](den/README.md).
 The latest main installer also preserves palette-owned files and avoids matching-symlink drift; the PC profile already includes these protections while separating generated Alacritty colours into their own seed-only fragment. Its managed font/binding settings remain deployable. Claude’s uncommitted laptop files were inspected only and not transplanted.
 
 Homie retains its existing UFW policy. The firewall status action reads UFW on this host; laptop-only nftables-table assumptions are not transplanted. The launcher-history load guard is shared from current main.
+
+The user’s physical photo clarified Homie’s position: above the laptop and to the right of the upper external display. Both edges and all four cross-return combinations are verified, with logical-coordinate alignment and duplicate-return suppression. This supersedes the earlier one-edge arrangement. Native input, emergency release and bidirectional text/PNG clipboard tests were repeated after the change. See the Den document for the exact layout and narrow maintained native-tool patch.
