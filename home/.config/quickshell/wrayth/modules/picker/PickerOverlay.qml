@@ -9,8 +9,9 @@ import qs.modules.picker.effects
 import qs.modules.picker.pools
 
 // PROFILE // SELECT, and the two screens it leads to. Moving the selection
-// recolours the whole shell at once; Enter keeps it, Escape puts the old one
-// back.
+// previews that profile on the wallpaper and the cards; Enter keeps it, Escape
+// puts the old one back. The interface chrome is the Signal Ledger's fixed
+// palette and does not change with the profile (see Theme.qml).
 //
 // One layer surface holds all three screens. The editor and the pools are not
 // separate overlays -- they are reached from here, return to here, and share

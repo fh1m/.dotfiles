@@ -34,8 +34,9 @@ Singleton {
 
     // **Never undefined.** A profile can stop existing under the shell's feet
     // -- a hand edit of `custom-profiles.json`, a delete racing a repaint --
-    // and every token below is bound to this. Without the fallback the whole
-    // shell re-evaluated its colours against `undefined` once a frame:
+    // and the tokens derived from it (`panelHex`, and the picker's previews)
+    // are bound to this. Without the fallback those re-evaluated against
+    // `undefined` once a frame:
     // measured at 513 TypeErrors in a few seconds, from the picker's
     // miniatures alone.
     readonly property var palette: Profiles.palettes[profile] ?? Profiles.presets.Circuit
