@@ -125,9 +125,10 @@ Modified keys are forwarded when the application requests the extended protocol.
 - Shift+PageDown: move down in tmux history.
 - Shift+Enter: a distinct modified Enter; agent apps can use it for multiline prompts.
 
-Codex uses `tui.alternate_screen = "never"` on the host and current ROS container;
-the agent launcher also passes `--no-alt-screen`. New sessions retain normal
-terminal output in tmux's 50,000-line history. Already-running fullscreen Codex
+`sensei-dev` starts Codex with `--no-alt-screen`, so its output stays in the normal
+terminal buffer. (A `tui.alternate_screen = "never"` setting in `~/.codex/config.toml`
+does the same and is not tracked here.) New sessions retain normal
+terminal output in tmux's 200,000-line history. Already-running fullscreen Codex
 sessions keep their current rendering mode until resumed/restarted. Previously
 unretained terminal output cannot be restored by changing tmux history settings.
 App transcript views remain useful for output the application has not printed.

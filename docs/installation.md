@@ -76,7 +76,7 @@ systemctl --user enable --now clipboard-vault.service
 systemctl --user enable --now sensei-spotify.service
 ```
 
-The idle policy does not dim or lock automatically. It watches battery-only suspend after ten minutes. Manual lock remains available. Optional suspend-lock changes are your choice; no false claim that the manual-lock policy authenticates every resume.
+The idle policy does not dim or lock on idle. It watches for battery-only suspend after ten minutes. Suspend always locks first (`before_sleep_cmd` in `hypridle.conf`), so a lid close or the power-menu sleep never leaves the desktop visible after resume. Manual lock remains available. The lock itself is the only authentication on resume; do not assume more than the PAM path provides.
 
 ## 6. Configure the hardware layer
 
