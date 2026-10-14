@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """USB inventory and event journal. No device reset, claim, or permission changes."""
 import json, os, sys, time, sqlite3, stat, pwd, grp, subprocess, warnings, socket
+from contextlib import closing
 from pathlib import Path
 import pyudev
 
@@ -18,7 +19,7 @@ def record(d, action=None):
     if d.subsystem!='usb' and not d.find_parent('usb','usb_device'):return
     u=d if d.subsystem=='usb' else d.find_parent('usb','usb_device')
     name=d.properties.get('ID_MODEL_FROM_DATABASE') or d.properties.get('ID_MODEL') or (read(Path(u.sys_path)/'product') if u else '') or d.sys_name
-    with db() as c:c.execute('INSERT INTO events VALUES (?,?,?,?,?,?)',(time.time(),action or d.action or 'seen',u.sys_name if u else d.sys_name,name,d.subsystem,d.device_node or ''))
+    with closing(db()) as c, c:c.execute('INSERT INTO events VALUES (?,?,?,?,?,?)',(time.time(),action or d.action or 'seen',u.sys_name if u else d.sys_name,name,d.subsystem,d.device_node or ''))
 def watch():
     monitor=pyudev.Monitor.from_netlink(CTX);monitor.start()
     def publish():
@@ -123,7 +124,7 @@ def inventory():
         except ValueError:pass
         if any(n['subsystem']=='tty' and not n['canWrite'] for n in d['nodes']):d['warnings'].append('Your user cannot write to the serial device; check group membership and udev rules.')
         if any(i['driver']=='none' and i['class'] not in ('ff','00') for i in d['interfaces']):d['warnings'].append('An interface has no bound driver; inspect its class and kernel log.')
-    with db() as c:history=[dict(zip(['time','action','port','name','subsystem','node'],r)) for r in c.execute('SELECT * FROM events ORDER BY time DESC LIMIT 200')]
+    with closing(db()) as c, c:history=[dict(zip(['time','action','port','name','subsystem','node'],r)) for r in c.execute('SELECT * FROM events ORDER BY time DESC LIMIT 200')]
     logs=subprocess.run(['journalctl','-k','-b','--no-pager','-g','usb|xhci|ttyUSB|ttyACM|uvcvideo','--case-sensitive=no','-n','150','-o','short-iso'],capture_output=True,text=True,timeout=4)
     lines=[s for s in logs.stdout.splitlines() if any(w in s.lower() for w in ('usb','xhci','ttyusb','ttyacm','uvcvideo'))][-70:]
     return {'devices':devices,'history':history,'logs':lines,'processesRestricted':denied,'audit':audit,'notes':'Open handles do not prove active transfer. I/O rates are process-wide; first sample establishes a baseline. Kernel-owned camera/audio/HID usage may not appear as a device fd. Cable quality cannot be inferred from speed alone. History is retained in SQLite from installation; use History search and pagination for older events.'}
@@ -131,14 +132,14 @@ if __name__=='__main__':
     if '--watch' in sys.argv:watch()
     elif '--history' in sys.argv:
         query=sys.argv[2] if len(sys.argv)>2 else '';offset=max(0,int(sys.argv[3])) if len(sys.argv)>3 else 0
-        with db() as c:
+        with closing(db()) as c, c:
             pattern='%'+query+'%';count=c.execute('SELECT COUNT(*) FROM events WHERE port LIKE ? OR name LIKE ? OR node LIKE ?',(pattern,)*3).fetchone()[0]
             rows=c.execute('SELECT * FROM events WHERE port LIKE ? OR name LIKE ? OR node LIKE ? ORDER BY time DESC LIMIT 100 OFFSET ?',(*((pattern,)*3),offset))
             print(json.dumps({'events':[dict(zip(['time','action','port','name','subsystem','node'],r)) for r in rows],'total':count,'offset':offset}))
     elif '--export' in sys.argv:
         dest=Path.home()/'Documents'/('USB-Lab-'+time.strftime('%Y%m%d-%H%M%S')+'.json');dest.parent.mkdir(exist_ok=True)
         data=inventory()
-        with db() as c:data['history']=[dict(zip(['time','action','port','name','subsystem','node'],r)) for r in c.execute('SELECT * FROM events ORDER BY time DESC')]
+        with closing(db()) as c, c:data['history']=[dict(zip(['time','action','port','name','subsystem','node'],r)) for r in c.execute('SELECT * FROM events ORDER BY time DESC')]
         dest.write_text(json.dumps(data,indent=2));dest.chmod(0o600);print(json.dumps({'path':str(dest)}))
     else:
         try:print(json.dumps(inventory()))
