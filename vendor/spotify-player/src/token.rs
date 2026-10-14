@@ -40,7 +40,8 @@ pub async fn get_token_rspotify(session: &Session) -> Result<rspotify::Token> {
         refresh_token: None,
     };
 
-    tracing::info!("Got new token: {token:?}");
+    // Log the expiry only: `{token:?}` would write the bearer token into the log file.
+    tracing::info!("Got new token, expires in {}s", token.expires_in.num_seconds());
 
     Ok(token)
 }
