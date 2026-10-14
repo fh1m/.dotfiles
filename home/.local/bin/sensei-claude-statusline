@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Claude Code status line. Records the subscription windows for the config dir
+# this session runs under, then draws the claude-hud line from the same input.
+# The record lives in $CLAUDE_CONFIG_DIR/sensei-usage.json so each account keeps
+# its own, which the Agents tab reads. Nothing is fetched; the numbers are the
+# ones Claude Code already sends on stdin.
+input=$(cat)
+dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+
+# Only a snapshot that carries a window is worth keeping. Epoch resets become ISO.
+snapshot=$(printf '%s' "$input" | jq -c '
+  def iso: if type == "number" then todate else . end;
+  select((.rate_limits.five_hour.used_percentage // .rate_limits.seven_day.used_percentage) != null)
+  | {updated_at: (now | todate),
+     five_hour: {used_percentage: .rate_limits.five_hour.used_percentage, resets_at: (.rate_limits.five_hour.resets_at | iso)},
+     seven_day: {used_percentage: .rate_limits.seven_day.used_percentage, resets_at: (.rate_limits.seven_day.resets_at | iso)}}
+' 2>/dev/null)
+if [ -n "$snapshot" ] && [ -d "$dir" ]; then
+  tmp="$dir/.sensei-usage.$$.tmp"
+  printf '%s\n' "$snapshot" > "$tmp" && chmod 600 "$tmp" && mv -f "$tmp" "$dir/sensei-usage.json"
+fi
+
+# The status line the user built: ~/.claude/statusline-command.sh. Same stdin, same output.
+own="$HOME/.claude/statusline-command.sh"
+if [ -f "$own" ]; then
+  printf '%s' "$input" | exec bash "$own"
+fi
+
+# Fallback only: claude-hud, if the user's script is gone. Its plugin may only be
+# installed under the default config dir, so fall back there.
+cols=$({ stty size </dev/tty; } 2>/dev/null | awk '{print $2}')
+export COLUMNS=$(( ${cols:-120} > 4 ? ${cols:-120} - 4 : 1 ))
+plugin_dir=""
+for root in "$dir" "$HOME/.claude"; do
+  plugin_dir=$(ls -d "$root"/plugins/cache/*/claude-hud/*/ 2>/dev/null | awk -F/ '{ print $(NF-1) "\t" $0 }' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+[[:space:]]' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1 | cut -f2-)
+  [ -n "$plugin_dir" ] && break
+done
+[ -n "$plugin_dir" ] || exit 0
+printf '%s' "$input" | bun --env-file /dev/null "${plugin_dir}src/index.ts"

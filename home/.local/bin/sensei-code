@@ -343,12 +343,139 @@ def codex_snapshot(watch=False):
         try: p.wait(timeout=3)
         except subprocess.TimeoutExpired: p.kill(); p.wait()
 
+CLAUDE_ACCOUNTS = HOME/'.config'/'sensei'/'claude-accounts.json'
+CLAUDE_SNAPSHOT = 'sensei-usage.json'
+
+def claude_accounts():
+    """Default config dir, ~/.claude-* dirs holding a .claude.json, and the optional registry.
+    One config dir per account: Claude Code picks it with CLAUDE_CONFIG_DIR."""
+    found = []
+    def add(name, directory):
+        directory = Path(directory).expanduser()
+        if any(a['configDir'] == str(directory) for a in found): return
+        found.append({'name': name, 'configDir': str(directory)})
+    try:
+        for item in json.loads(CLAUDE_ACCOUNTS.read_text()).get('accounts', []):
+            if isinstance(item, dict) and item.get('configDir'):
+                add(item.get('name') or Path(item['configDir']).name, item['configDir'])
+    except (OSError, ValueError, AttributeError): pass
+    add('Default', HOME/'.claude')
+    for directory in sorted(HOME.glob('.claude-*')):
+        if (directory/'.claude.json').is_file(): add(directory.name[len('.claude-'):].replace('-', ' ').title(), directory)
+    ids = set()
+    for account in found:
+        base = ''.join(c if c.isalnum() else '-' for c in account['name'].lower()).strip('-') or 'account'
+        ident, n = base, 2
+        while ident in ids: ident, n = f'{base}-{n}', n+1
+        ids.add(ident)
+        account['id'] = ident
+    return found
+
+def claude_identity(directory):
+    """Who is signed in to a config dir, from the oauthAccount block Claude Code writes. Read only."""
+    path = HOME/'.claude.json' if Path(directory) == HOME/'.claude' else Path(directory)/'.claude.json'
+    try: account = (json.loads(path.read_text()).get('oauthAccount') or {})
+    except (OSError, ValueError, AttributeError): return {'signedIn': False}
+    if not account: return {'signedIn': False}
+    import re
+    org = (account.get('organizationType') or '').replace('claude_', '').replace('_', ' ').title()
+    tier = re.search(r'(\d+x)', account.get('organizationRateLimitTier') or '')
+    return {'signedIn': True, 'email': account.get('emailAddress'), 'name': account.get('displayName'),
+            'plan': ' '.join(p for p in [org, tier[1] if tier else ''] if p) or None,
+            'organization': account.get('organizationName')}
+
+def claude_limits(directory):
+    """Windows the statusline recorded for this config dir. Missing or unreadable means none."""
+    snapshot = cached(Path(directory)/CLAUDE_SNAPSHOT)
+    if not snapshot.get('updated_at'): return None
+    return {'updatedAt': snapshot['updated_at'], 'fiveHour': snapshot.get('five_hour'), 'sevenDay': snapshot.get('seven_day')}
+
+def claude_usage(days=30, directory=None):
+    """Aggregate token counts from one account's local transcripts. Message text is never kept."""
+    from datetime import datetime, timedelta
+    directory = Path(directory or HOME/'.claude')
+    root = directory/'projects'
+    since = time.time()-days*86400 if days else 0
+    # Streamed responses repeat one requestId per chunk; keep the largest output count.
+    responses = {}
+    for path in root.rglob('*.jsonl') if root.is_dir() else []:
+        try:
+            if since and path.stat().st_mtime < since: continue
+            lines = path.open(errors='replace')
+        except OSError: continue
+        with lines:
+            for line in lines:
+                if '"usage"' not in line: continue
+                try: d = json.loads(line)
+                except ValueError: continue
+                message = d.get('message') or {}
+                usage = message.get('usage')
+                if d.get('type') != 'assistant' or not isinstance(usage, dict): continue
+                model = message.get('model') or 'unknown'
+                if model.startswith('<'): continue
+                try: stamp = datetime.fromisoformat(d['timestamp'].replace('Z', '+00:00')).timestamp()
+                except (KeyError, AttributeError, ValueError): continue
+                if stamp < since: continue
+                key = d.get('requestId') or message.get('id') or d.get('uuid')
+                record = {'model': model, 'session': d.get('sessionId'), 'stamp': stamp, 'project': Path(d.get('cwd') or '').name or 'unknown',
+                          'input': usage.get('input_tokens') or 0, 'output': usage.get('output_tokens') or 0,
+                          'cacheRead': usage.get('cache_read_input_tokens') or 0, 'cacheWrite': usage.get('cache_creation_input_tokens') or 0}
+                if key not in responses or record['output'] >= responses[key]['output']: responses[key] = record
+    records = list(responses.values())
+    models, projects, daily = {}, {}, {}
+    today = datetime.now().date()
+    for r in records:
+        m = models.setdefault(r['model'], {'model': r['model'], 'responses': 0, 'input': 0, 'output': 0, 'cacheRead': 0, 'cacheWrite': 0})
+        for k in ('input', 'output', 'cacheRead', 'cacheWrite'): m[k] += r[k]
+        m['responses'] += 1
+        projects[r['project']] = projects.get(r['project'], 0)+1
+        day = datetime.fromtimestamp(r['stamp']).date()
+        daily[day] = daily.get(day, 0)+r['output']+r['input']
+    totals = {k: sum(r[k] for r in records) for k in ('input', 'output', 'cacheRead', 'cacheWrite')}
+    totals.update(responses=len(records), sessions=len({r['session'] for r in records if r['session']}))
+    reads = totals['input']+totals['cacheRead']+totals['cacheWrite']
+    totals['cacheHitPercent'] = round(100*totals['cacheRead']/reads, 1) if reads else None
+    # Fourteen days ending today, zero-filled, so the bars keep their place.
+    series = [{'date': (today-timedelta(days=i)).isoformat(), 'tokens': daily.get(today-timedelta(days=i), 0)} for i in range(13, -1, -1)]
+    return {'provider': 'claude', 'state': 'Local transcripts · '+(f'last {days} days' if days else 'all time'),
+            'days': days, 'directory': str(directory), 'identity': claude_identity(directory),
+            'totals': totals,
+            'models': sorted(models.values(), key=lambda m: m['output'], reverse=True)[:10],
+            'projects': [{'name': n, 'responses': c} for n, c in sorted(projects.items(), key=lambda p: p[1], reverse=True)[:5]],
+            'daily': series, 'limits': claude_limits(directory),
+            'quotaNote': 'Token counts come from local transcripts. Subscription windows show only when a status line has recorded them.',
+            'fetchedAt': time.time()}
+
+
+def claude_account(ident):
+    accounts = claude_accounts()
+    if not ident: return accounts[0]
+    for account in accounts:
+        if account['id'] == ident: return account
+    raise RuntimeError(f'Unknown Claude account: {ident}')
+
+def claude_snapshot(days=30, ident=None):
+    account = claude_account(ident)
+    data = claude_usage(days, account['configDir'])
+    data.update(account=account['id'], accountName=account['name'])
+    emit(data)
+
+def claude_accounts_snapshot(days=7):
+    rows = []
+    for account in claude_accounts():
+        usage = claude_usage(days, account['configDir'])
+        rows.append({'id': account['id'], 'name': account['name'], 'directory': account['configDir'],
+                     'identity': usage['identity'], 'limits': usage['limits'], 'totals': usage['totals']})
+    emit({'accounts': rows, 'days': days, 'fetchedAt': time.time()})
+
+
 def main():
     import signal
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--days',type=int,choices=[0,7,30],default=30)
-    parser.add_argument('action', choices=['overview', 'details', 'repositories', 'activity', 'codex', 'codex-watch', 'opencode'])
+    parser.add_argument('action', choices=['overview', 'details', 'repositories', 'activity', 'codex', 'codex-watch', 'opencode', 'claude', 'claude-accounts'])
+    parser.add_argument('--account', default='')
     parser.add_argument('repo', nargs='?')
     parser.add_argument('--refresh', action='store_true')
     args = parser.parse_args()
@@ -357,6 +484,8 @@ def main():
     elif args.action == 'repositories': repositories(args.repo or '')
     elif args.action == 'activity': activity(args.repo or '1')
     elif args.action == 'opencode': opencode_snapshot(args.refresh,args.days)
+    elif args.action == 'claude': claude_snapshot(args.days, args.account)
+    elif args.action == 'claude-accounts': claude_accounts_snapshot(args.days if args.days else 7)
     else:
         # SIGTERM from Quickshell closes both the adapter and its child server.
         import signal
