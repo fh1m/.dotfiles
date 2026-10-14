@@ -337,7 +337,7 @@ Variants {
                     case "docker": return dockerPanel;
                     case "usb": return usbPanel;
                     case "phone": return phonePanel;
-                    case "oasis": return null;
+                    case "oasis": return null; // Noesis opens its own window; see services/NoesisBridge.qml
                     case "comic": return comicPanel;
                     case "spotify": return spotifyPanel;
                     case "sound": return soundPanel;
@@ -363,8 +363,6 @@ Variants {
                     }
                 }
             }
-
-            Component { id: oasisPanel; OasisDropdown { width: holder.width } }
 
             Component {
                 id: identPanel
