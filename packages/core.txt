@@ -55,3 +55,10 @@ json-c
 openssl
 libpulse
 dbus
+
+# Used by the workstation scripts; installed on the reference machine.
+lsd
+trash-cli
+cliphist
+nvtop
+tesseract

@@ -13,3 +13,11 @@ jobs:
         run: python3 scripts/test-install.py
       - name: Check shell syntax
         run: bash -n scripts/build-native.sh scripts/build-spotify.sh
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pytest
+        run: python3 -m pip install --user pytest
+      - name: Run repo tests
+        run: python3 -m pytest -q tests

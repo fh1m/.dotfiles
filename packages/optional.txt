@@ -5,3 +5,9 @@ asusctl
 # UX581 ScreenPad module: install from Plippo/asus-wmi-screenpad upstream.
 # NVIDIA kernel module must match your GPU generation and installed kernel.
 # Intel media driver: intel-media-driver; Vulkan: vulkan-intel / nvidia-utils.
+# AUR packages the workstation scripts call (installed on the reference machine).
+paru
+grimblast-git
+tgpt
+# ufw is installed on the reference machine but conflicts with the nftables plan in system/etc/nftables.conf; decide before enabling.
+ufw
