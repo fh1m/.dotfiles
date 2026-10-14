@@ -486,9 +486,13 @@ Singleton {
         if (!path || !folder || !path.startsWith(folder.replace(/\/+$/, "") + "/") || path.split("/").includes(".."))
             return;
         // Moved, not removed: a wallpaper the user deleted by mistake is one `mv`
-        // away from back. The holding folder lives under the state dir.
+        // away from back. The holding folder lives under the state dir. Each
+        // copy gets a timestamp prefix: a plain `mv -n` into the folder quietly
+        // did nothing once a file of the same name was already held, and the
+        // deleted wallpaper stayed in the library.
         const holding = `${Paths.home}/.local/state/sensei/deleted-wallpapers`;
-        run(`mkdir -p ${quote(holding)} && mv -n ${quote(path)} ${quote(holding)}/`);
+        const base = path.split("/").pop();
+        run(`mkdir -p ${quote(holding)} && mv -n ${quote(path)} ${quote(holding)}/"$(date +%s%N)-"${quote(base)}`);
         refresh.restart();
     }
 
