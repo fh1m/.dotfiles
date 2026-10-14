@@ -388,8 +388,9 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 // One row per access point, so several per network. Keep the
-                // strongest reading of each name and drop hidden ones.
-                const best = {};
+                // strongest reading of each name and drop hidden ones. A
+                // null prototype keeps a name such as `__proto__` a plain key.
+                const best = Object.create(null);
                 let activeSec = "";
                 for (const line of text.split("\n")) {
                     if (!line)
