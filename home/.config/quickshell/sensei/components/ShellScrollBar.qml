@@ -28,7 +28,7 @@ Item {
         width: parent.width
         height: Math.max(24, root.view.height * root.fraction)
         y: root.view.height > 0 ? (root.view.height - height) * Math.max(0, Math.min(1, root.view.contentY / Math.max(1, root.span - root.view.height))) : 0
-        color: hover.hovered || drag.drag.active ? Theme.accent : Theme.dim
+        color: hover.hovered || drag.pressed ? Theme.accent : Theme.dim
 
         Behavior on color {
             ColorAnimation {
