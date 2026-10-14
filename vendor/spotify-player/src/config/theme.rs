@@ -460,10 +460,11 @@ impl<'de> serde::de::Deserialize<'de> for StyleColor {
             if !s.starts_with('#') || s.len() != 7 {
                 None
             } else {
+                // `get` returns None off a char boundary; `&s[..]` would panic on multi-byte input
                 Some((
-                    u8::from_str_radix(&s[1..3], 16).ok()?,
-                    u8::from_str_radix(&s[3..5], 16).ok()?,
-                    u8::from_str_radix(&s[5..7], 16).ok()?,
+                    u8::from_str_radix(s.get(1..3)?, 16).ok()?,
+                    u8::from_str_radix(s.get(3..5)?, 16).ok()?,
+                    u8::from_str_radix(s.get(5..7)?, 16).ok()?,
                 ))
             }
         }
