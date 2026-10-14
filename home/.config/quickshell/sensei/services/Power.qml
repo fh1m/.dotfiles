@@ -23,7 +23,7 @@ Singleton {
     readonly property int profile: profileName === "performance" ? PowerProfile.Performance : profileName === "power-saver" ? PowerProfile.PowerSaver : PowerProfile.Balanced
     readonly property bool hasPerformance: true
 
-    // Tile order in the dropdown, with the names powerprofilesctl expects.
+    // Tile order in the dropdown, with the names sensei-power accepts (system76-power profiles).
     readonly property var profiles: [
         {
             id: PowerProfile.PowerSaver,
