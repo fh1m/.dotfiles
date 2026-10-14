@@ -297,16 +297,9 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 24
 
-            NrLabel {
-                anchors.verticalCenter: parent.verticalCenter
-                text: `QUEUE ${Planner.done}/${Planner.total} CLEARED`
-            }
-
-            NrLabel {
-                anchors.verticalCenter: parent.verticalCenter
-                color: Vuln.count > 0 ? Theme.text : Theme.dim
-                text: `VULN ${Vuln.count} AFFECTED`
-            }
+            // Planner progress and the vulnerability count are not for a locked
+            // screen: anyone at the machine could read them. Only the system
+            // health readout below stays.
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter

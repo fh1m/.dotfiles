@@ -213,7 +213,8 @@ def synced_lyrics(track):
  if path.exists():
   saved=json.loads(path.read_text());ttl=30*86400 if saved.get('synced') else 86400
   if time.time()-path.stat().st_mtime<ttl:return saved
- query=urllib.parse.urlencode({'track_name':title,'artist_name':artist,'album_name':track.get('album',''),'duration':round(float(track.get('duration',0))/1000)})
+ # Title, artist and duration only: the album name is not needed to match a song, and LRCLIB is a third party.
+ query=urllib.parse.urlencode({'track_name':title,'artist_name':artist,'duration':round(float(track.get('duration',0))/1000)})
  req=urllib.request.Request('https://lrclib.net/api/get?'+query,headers={'User-Agent':'SenseiDesktop/1.0 (personal desktop lyrics follower)'})
  try:
   with urllib.request.urlopen(req,timeout=10) as response:data=json.load(response)
