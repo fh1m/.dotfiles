@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 import os,time,json,re,platform,subprocess
 from pathlib import Path
-now=time.monotonic(); cache=Path(os.environ.get('XDG_RUNTIME_DIR','/tmp'))/'fh1m-monitor.json'
+# Never fall back to /tmp: a predictable name there can be planted as a symlink.
+now=time.monotonic(); cache_dir=Path(os.environ.get('XDG_RUNTIME_DIR') or Path.home()/'.cache'); cache_dir.mkdir(parents=True,exist_ok=True); cache=cache_dir/'fh1m-monitor.json'
 details=os.environ.get('SENSEI_MONITOR_DETAIL')=='1'
 inventory=os.environ.get('SENSEI_MONITOR_INVENTORY')=='1'
 try: old=json.loads(cache.read_text())
