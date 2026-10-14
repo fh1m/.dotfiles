@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.components
 import qs.config
 import qs.services
@@ -126,7 +127,7 @@ Item {
         readonly property int slotHeight: 14
         readonly property int gap: 3
         // Where the row has to stop.
-        readonly property real limit: (root.active ? activeBadge.x : clock.x) - 6
+        readonly property real limit: (root.active ? activeBadge.x : clockText.x) - 6
         readonly property int fits: Math.max(0, Math.min(5, Math.floor((limit - x + gap) / (slotWidth + gap))))
 
         anchors.left: pips.right
@@ -167,7 +168,7 @@ Item {
     SlantBlock {
         id: activeBadge
 
-        anchors.right: clock.left
+        anchors.right: clockText.left
         anchors.rightMargin: 6
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -193,18 +194,27 @@ Item {
         }
     }
 
+    // A minute's precision is what the clock shows, and it is shared by every
+    // card the picker is drawing, so the clock ticks rather than freezing at
+    // the minute the picker was opened.
+    SystemClock {
+        id: clock
+
+        precision: SystemClock.Minutes
+    }
+
     // **14 px from the right edge, not 22.** The old figure cleared the card's
     // whole 16 px chamfer; the cut is a diagonal, and what the clock has to
     // clear is where that diagonal is **at the clock's own top row**, which is
     // 12 px in. Measured against the mask rather than assumed from the depth.
     Text {
-        id: clock
+        id: clockText
 
         anchors.right: parent.right
         anchors.rightMargin: 14
         anchors.verticalCenter: parent.verticalCenter
 
-        text: Qt.formatDateTime(new Date(), "HH:mm")
+        text: Qt.formatDateTime(clock.date, "HH:mm")
         color: root.previewPalette.bright
         font.family: Appearance.font.display
         font.pixelSize: 12
