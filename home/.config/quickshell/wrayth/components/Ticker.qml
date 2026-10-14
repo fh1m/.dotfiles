@@ -52,6 +52,7 @@ Item {
                 font.family: root.fontFamily
                 font.pixelSize: root.pixelSize
                 font.letterSpacing: Appearance.size.ticker * Appearance.tickerTracking
+                textFormat: Text.PlainText
                 renderType: Text.QtRendering
                 renderTypeQuality: 104
             }
@@ -64,6 +65,7 @@ Item {
                 color: first.color
                 text: first.text
                 font: first.font
+                textFormat: Text.PlainText
                 renderType: Text.QtRendering
                 renderTypeQuality: 104
             }
@@ -76,6 +78,7 @@ Item {
                 color: first.color
                 text: first.text
                 font: first.font
+                textFormat: Text.PlainText
                 renderType: Text.QtRendering
                 renderTypeQuality: 104
             }
