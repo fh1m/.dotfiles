@@ -23,7 +23,7 @@ Scope {
   PanelWindow {
    required property ShellScreen modelData
    screen:modelData;color:"transparent";implicitHeight:8
-   readonly property bool topEdge: ShellState.isExternalOutput(modelData.name) && ShellState.externalBarEdge(modelData.name)==="top"
+   readonly property bool topEdge: !!modelData && ShellState.isExternalOutput(modelData.name) && ShellState.externalBarEdge(modelData.name)==="top"
    anchors {top:topEdge;bottom:!topEdge;left:true;right:true}
    margins.top:topEdge?Appearance.metrics.barHeight:0
    margins.bottom:topEdge?0:Appearance.metrics.barHeight
