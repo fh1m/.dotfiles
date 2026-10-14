@@ -29,7 +29,9 @@ Singleton {
 
     Process {
         running: true
-        command: ["sh", "-c", "printf /sys/class/backlight/intel_backlight/"]
+        // Intel's panel backlight first, as before; otherwise the first backlight
+        // there is. Prints nothing when there is none.
+        command: ["sh", "-c", "for d in /sys/class/backlight/intel_backlight/ /sys/class/backlight/*/; do [ -e \"$d/brightness\" ] && { printf '%s' \"$d\"; break; }; done"]
         stdout: StdioCollector {
             onStreamFinished: root.device = text.trim()
         }
