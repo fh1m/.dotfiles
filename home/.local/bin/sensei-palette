@@ -226,7 +226,7 @@ def main():
                         '["group.col.border_inactive"]="rgba(' + outline + ')"})'],
                        capture_output=True,timeout=2)
         subprocess.run(['hyprctl','--instance','0','eval',
-                        'hl.window_rule({match={class="sensei-deck"},'
+                        'hl.window_rule({name="sensei-deck-border",match={class="sensei-deck"},'
                         'border_color="rgba(' + outline + ') rgba(' + outline + ')"})'],
                        capture_output=True,timeout=2)
         print(json.dumps(palette))
