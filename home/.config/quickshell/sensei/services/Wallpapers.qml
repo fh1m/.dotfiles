@@ -403,6 +403,8 @@ Singleton {
 
         Component.onCompleted: folder = root.folder ? Paths.url(root.folder) : ""
         nameFilters: root.imageSuffixes
+        // Cameras write IMG_0001.JPG; a case-sensitive filter drops it silently.
+        caseSensitive: false
         showDirs: false
         showHidden: false
         sortField: FolderListModel.Name
@@ -416,6 +418,8 @@ Singleton {
 
         Component.onCompleted: folder = root.senseiFolder ? Paths.url(root.senseiFolder) : ""
         nameFilters: root.imageSuffixes
+        // Cameras write IMG_0001.JPG; a case-sensitive filter drops it silently.
+        caseSensitive: false
         showDirs: false
         showHidden: false
         sortField: FolderListModel.Name

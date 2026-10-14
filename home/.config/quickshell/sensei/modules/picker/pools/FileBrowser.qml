@@ -169,6 +169,7 @@ Item {
 
                         folder: root.dir ? Paths.url(root.dir) : ""
                         nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp"]
+                        caseSensitive: false
                         showDirs: true
                         showDirsFirst: true
                         showDotAndDotDot: false
