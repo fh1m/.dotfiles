@@ -52,7 +52,6 @@ Singleton {
         onFileChanged: reload()
     }
     readonly property string description: Profiles.descriptions[profile] ?? ""
-    readonly property url wallpaper: Paths.url(Paths.wallpaperFor(profile))
 
     // Signal Ledger / foundation. These are independent of wallpaper sampling:
     // signal means identity and active work, amber means caution, cyan means a
@@ -143,10 +142,6 @@ Singleton {
     function groundOf(name: string): color {
         const p = Profiles.palettes[name];
         return p ? p.ground : ground;
-    }
-
-    function wallpaperOf(name: string): url {
-        return Paths.url(Paths.wallpaperFor(name));
     }
 
     // --- Persistence --------------------------------------------------------

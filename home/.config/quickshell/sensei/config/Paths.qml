@@ -84,14 +84,9 @@ Singleton {
     // existence is the flag. Delete it (or the state dir) to see the notice again.
     readonly property string shortScreenFlag: `${stateDir}/shortscreen-notified`
 
-    // The library folder the user points the picker at. It is only a default:
-    // the real value is `Wallpapers.folder`, which is empty until this exists
-    // or the user types a path. The `sensei` subfolder inside it is where
-    // the generated `net-*.png` wallpapers live -- both the presets', which
-    // are already there, and every custom profile's.
-    readonly property string defaultWallpaperRoot: `${home}/Pictures/wallpapers`
-    readonly property string wallpaperDir: senseiSubfolder(defaultWallpaperRoot)
-
+    // The `sensei` subfolder of the library folder the user picks, where the
+    // generated `net-*.png` wallpapers live. The library folder itself is
+    // `Wallpapers.folder`; this is only the naming rule for its subfolder.
     function senseiSubfolder(root: string): string {
         return root ? `${root}/sensei` : "";
     }
@@ -114,13 +109,6 @@ Singleton {
     // was 3.9 MB of the repo carrying nothing; the mapping's source colours
     // (`#FF3B45` / `#4FC3C9`) are Circuit's either way.
     readonly property string baseRender: Quickshell.shellPath("assets/wallpapers/net-circuit.png")
-
-    function wallpaperFor(profile: string): string {
-        // Same sanitising as Wallpapers.generatedName: spaces to hyphens, every
-        // other non-`[a-z0-9-]` character dropped. Keeps the read path inside
-        // the wallpaper folder and matching the file the generator wrote.
-        return `${wallpaperDir}/net-${profile.toLowerCase().replace(/ /g, "-").replace(/[^a-z0-9-]/g, "")}.png`;
-    }
 
     // Path -> file:// url, for Image.source and friends. Each segment is
     // percent-encoded: a raw `#` starts a fragment and a raw `%` is read as an

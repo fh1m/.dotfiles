@@ -56,7 +56,7 @@ Singleton {
         // Spaces become hyphens and **every other non-`[a-z0-9-]` character is
         // dropped**, so a profile name can never build a path outside the
         // wallpaper folder (`../`, a `/`, a leading dot). Must match
-        // Paths.wallpaperFor, which reads the file this writes.
+        // the name the generator script writes.
         return `net-${name.toLowerCase().replace(/ /g, "-").replace(/[^a-z0-9-]/g, "")}.png`;
     }
 
