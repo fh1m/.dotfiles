@@ -10,13 +10,10 @@ elif op=='ping':
 elif op=='ssh-on':args=['sudo','systemctl','start','sshd']
 elif op=='ssh-off':args=['sudo','systemctl','stop','sshd']
 elif op=='ssh-config':args=['nano',str(__import__('pathlib').Path.home()/'.ssh/config')]
-elif op=='firewall':args=['sudo','ufw','status','verbose']
+# The host firewall is the nftables table inet sensei_fw (system/etc/nftables.conf).
+# ufw is installed but not the firewall in use; its rules would sit beside ours.
+elif op=='firewall':args=['sudo','nft','list','table','inet','sensei_fw']
 elif op=='connections':args=['nmtui']
-elif op=='firewall-on':args=['sudo','ufw','enable']
-elif op=='firewall-off':args=['sudo','ufw','disable']
-elif op in ['allow-port','deny-port']:
- if not value.isdecimal() or not 1<=int(value)<=65535:raise SystemExit('Enter a port between 1 and 65535')
- args=['sudo','ufw','allow' if op=='allow-port' else 'deny',value]
 elif op=='ssh-edit':args=['sudo','nano','/etc/ssh/sshd_config']
 elif op=='vpn':args=['nmcli','connection','edit']
 elif op=='ssh-check':args=['sudo','sshd','-t']

@@ -72,7 +72,9 @@ Singleton {
         return points;
     }
 
-    readonly property var results: {
+    // Every match, best first. `results` is the page the list shows; the header
+    // counts the whole set, so a query with forty hits does not read "6 matches".
+    readonly property var matched: {
         const needle = query.trim();
         const found = [];
 
@@ -114,9 +116,11 @@ Singleton {
         // most used first, alphabetical among apps never launched. With a query
         // the match score leads and the count only breaks ties.
         found.sort((a, b) => b.points - a.points || b.uses - a.uses || a.name.localeCompare(b.name));
-        return found.slice(0, maxResults);
+        return found;
     }
 
+    readonly property var results: matched.slice(0, maxResults)
+    readonly property int matches: matched.length
     readonly property int count: results.length
 
     function move(delta: int): void {
@@ -159,7 +163,14 @@ Singleton {
         save();
     }
 
+    // Nothing writes before the history has been read. The file loads
+    // asynchronously, so a launch in that window would otherwise save a history
+    // holding only the new entry, and every earlier count would be lost.
+    property bool loaded: false
+
     function save(): void {
+        if (!root.loaded)
+            return;
         let out = "";
         for (const id of Object.keys(launches))
             out += `${id} ${launches[id]}\n`;
@@ -189,6 +200,12 @@ Singleton {
                     counts[line.slice(0, at)] = n;
             }
             root.launches = counts;
+            root.loaded = true;
+        }
+        // No history yet is the first run: nothing to protect, so writing is safe.
+        onLoadFailed: error => {
+            if (error === FileViewError.FileNotFound)
+                root.loaded = true;
         }
     }
 

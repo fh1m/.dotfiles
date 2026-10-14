@@ -36,13 +36,6 @@ Column {
    ControlTile {implicitWidth:175;label:'Validate SSH config';onActivated:root.action('ssh-check')}
    ControlTile {implicitWidth:175;label:'Reload SSH server';onActivated:root.action('ssh-reload')}
   }
-  Row {spacing:7
-   DeskTextField {placeholderTextColor:Theme.widgetMuted;selectionColor:Theme.widgetAccent;selectedTextColor:Theme.widgetText;id:port;width:110;height:36;placeholderText:'Port';color:Theme.widgetText;validator:IntValidator {bottom:1;top:65535} }
-   ControlTile {implicitWidth:100;label:'Allow';enabled:port.acceptableInput;onActivated:root.action('allow-port',port.text)}
-   ControlTile {implicitWidth:100;label:'Deny';enabled:port.acceptableInput;onActivated:root.action('deny-port',port.text)}
-   ControlTile {implicitWidth:100;label:'Firewall on';onActivated:root.action('firewall-on')}
-   ControlTile {implicitWidth:100;label:'Firewall off';onActivated:root.action('firewall-off')}
-  }
   ScrollView {width:parent.width;height:240;clip:true
    TextArea {readOnly:true;wrapMode:Text.Wrap;textFormat:TextEdit.PlainText;text:'Active connections\n'+(DesktopExtras.network.connections||'None')+'\n\nInterfaces\n'+(DesktopExtras.network.addresses||'');font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetText;background:ChamferPanel {fillColor:Theme.widgetSurface;chamfer:6;scanlines:false}}
   }
