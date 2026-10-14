@@ -50,15 +50,15 @@ Singleton {
  }
 
     readonly property QtObject font: QtObject {
-        // Personal ZedMono Nerd typography for titles and clock.
+        // Titles, clock and UI text: JetBrainsMono Nerd Font.
         readonly property string display: "JetBrainsMono Nerd Font Mono"
         readonly property string heading: "JetBrainsMono Nerd Font Propo"
         readonly property string ui: "JetBrainsMono Nerd Font Propo"
-        // ZedMono: labels, readouts and body text.
+        // Bar labels: JetBrainsMono Nerd Font. Data readouts and telemetry: Iosevka Nerd Font.
         readonly property string barUi: "JetBrainsMono Nerd Font Propo"
         readonly property string data: "Iosevka Nerd Font Mono"
         readonly property string telemetry: "Iosevka Nerd Font Mono"
-        // Russian accent labels use the same personal font.
+        // Russian accent labels use the JetBrainsMono face.
         readonly property string accent: "JetBrainsMono Nerd Font Propo"
         // Icons that are somebody else's standard rather than ours -- the
         // Bluetooth rune, so far. It is the data family's own Nerd Font
