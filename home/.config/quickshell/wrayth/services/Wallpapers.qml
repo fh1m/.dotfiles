@@ -384,6 +384,7 @@ Singleton {
 
         Component.onCompleted: folder = root.folder ? Paths.url(root.folder) : ""
         nameFilters: root.imageSuffixes
+        caseSensitive: false
         showDirs: false
         showHidden: false
         sortField: FolderListModel.Name
@@ -397,6 +398,7 @@ Singleton {
 
         Component.onCompleted: folder = root.wraythFolder ? Paths.url(root.wraythFolder) : ""
         nameFilters: root.imageSuffixes
+        caseSensitive: false
         showDirs: false
         showHidden: false
         sortField: FolderListModel.Name
