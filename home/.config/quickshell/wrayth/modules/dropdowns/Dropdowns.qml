@@ -79,7 +79,7 @@ Variants {
         // is still behind the bar at the start of the slide.
         readonly property real slide: 12
 
-        IpcHandler {target:"popupmotion-"+popup.modelData.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,ready:popup.surfaceReady,width:popup.width,height:popup.height,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
+        IpcHandler {target:"popupmotion-"+popup.modelData.name;function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,ready:popup.surfaceReady,width:popup.width,height:popup.height,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
         screen: modelData
         color: "transparent"
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }
