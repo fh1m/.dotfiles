@@ -20,4 +20,3 @@ target/
 node_modules/
 .DS_Store
 home/.config/sensei-phone.json
-home/.config/quickshell/wrayth/screenshots/
