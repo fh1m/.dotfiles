@@ -122,8 +122,10 @@ Singleton {
         return `${wallpaperDir}/net-${profile.toLowerCase().replace(/ /g, "-").replace(/[^a-z0-9-]/g, "")}.png`;
     }
 
-    // Path -> file:// url, for Image.source and friends.
+    // Path -> file:// url, for Image.source and friends. Each segment is
+    // percent-encoded: a raw `#` starts a fragment and a raw `%` is read as an
+    // escape, so a wallpaper named "net 50%#1.png" failed to load.
     function url(path: string): url {
-        return Qt.resolvedUrl(`file://${path}`);
+        return Qt.resolvedUrl(`file://${String(path).split("/").map(encodeURIComponent).join("/")}`);
     }
 }
