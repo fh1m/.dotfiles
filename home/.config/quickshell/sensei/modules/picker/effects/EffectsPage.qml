@@ -518,7 +518,8 @@ Item {
 
         Text {
             textFormat: Text.PlainText
-            width: parent.width
+            // A measure a reader can follow: the full span is ~190 characters a line.
+            width: Math.min(parent.width, 900)
             text: "The lines are one tiled texture per surface and measured inside the run-to-run spread on a test laptop: 15.6% of a core with them off against 16.1% with them on everything. The rolling band adds a second layer with an animation behind it, and the vignette a third, and both are paid on every surface they are drawn on -- so FINE + ROLLING BAND and FULL CRT cost more than the three above them, and EVERYTHING costs more than PANELS ONLY."
             color: Theme.text
             font.family: Appearance.font.data
