@@ -92,3 +92,20 @@ A simultaneous 12-second sample measured **4.35% global I/O `full`, 0.00% user-s
 Codex’s supported `tui.animations = false` setting is enabled in the private `~/.codex/config.toml` for future launches; the running CLI does not hot-reload it. The current session was left intact. A fresh CLI with this setting, visibly running a 20-second local wait task, measured **0.066% global I/O `full`** during a ten-second sample. That is a separate session and task, so it confirms the low-motion path works but is not a controlled same-workload speedup claim. A portable snippet is in [`examples/codex-display.toml`](../examples/codex-display.toml). [Official OpenAI configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference). Continuous motion in any visible application will still require real display flips; zero global PSI during motion is not a sensible optimization target.
 
 The UX581 ScreenPad touchscreen (`ELAN9009`) was already disabled by a service, but its I²C parent still generated about **286 device interrupts per second** and drove the I²C bus IRQ. An A/B unbind removed the interrupts, yet global I/O pressure remained ~3–4%, so this was a separate waste, not the display-fence cause. The revised `disabletouchpad_second.service` now detaches the unused I²C touch controller at boot. Both the ScreenPad IRQ 28 and its I²C controller IRQ 19 measured **0/s** afterward. The ScreenPad display remained at 3840×1100 and its brightness stayed 255/255. Stop that service if touch/stylus input is wanted again.
+
+### Deck open: measured A/B (2026-10-14)
+
+Intel Render/3D with the deck open on the focused HDMI output, read with `intel_gpu_top -J -s 1000` (four one-second samples per state):
+
+| State | Intel Render/3D |
+|---|---|
+| Deck closed | about 10% |
+| Deck open | about 73% |
+| Deck open, deck stage hidden (live copy, reverted) | about 52% |
+| Deck open, deck layer surface unmapped (live copy, reverted) | about 50% |
+| Deck open, `decoration:blur:special` off (`hyprctl eval`) | 62% |
+| Deck open, `decoration:blur:special` on | 65%, 72% |
+
+NVIDIA (HDMI scanout path) rose from about 7% to about 30% in the same state.
+
+What this says: the blur on special workspaces is not the cost (the on/off samples overlap). Hiding the deck's widgets removes about 20 points. Unmapping the deck's full-screen layer surface removes almost nothing. The rest tracks the deck terminal itself, which is a live tmux client; its pane repaints continuously while output or a spinner is changing, and that repaint sits under a special workspace. The measurements above were taken while the deck terminal was showing an active session, so they do not give an idle-terminal baseline. Next step: measure with a static pane (or an idle session) before changing any deck code.
