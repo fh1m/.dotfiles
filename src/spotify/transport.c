@@ -111,6 +111,10 @@ static J *rpc(J *request) {
     fail("Sensei, the local player is unavailable.");
   const char *s =
       json_object_to_json_string_ext(request, JSON_C_TO_STRING_PLAIN);
+  // The player reads each request into a 4096-byte buffer, and a longer
+  // datagram is cut short. Refuse here rather than send a request it cannot parse.
+  if (strlen(s) > 4096)
+    fail("Sensei, that list is too long for one request.");
   if (send(fd, s, strlen(s), 0) < 0)
     fail("Sensei, the local player is unavailable.");
   size_t cap = 65536, len = 0;
