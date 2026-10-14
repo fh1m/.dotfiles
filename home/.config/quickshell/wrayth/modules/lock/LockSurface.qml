@@ -245,7 +245,7 @@ Item {
                 NrLabel {
                     anchors.verticalCenter: parent.verticalCenter
                     color: Theme.text
-                    text: Runner.user.toUpperCase()
+                    text: (Demo.active ? Demo.userPlaceholder : Runner.user).toUpperCase()
                 }
             }
 
