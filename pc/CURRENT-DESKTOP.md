@@ -1,6 +1,6 @@
 # Homie — current Sensei desktop
 
-The desktop is based on Claude's audited `main` revision `b3f5b55259db706e1198490b1851541a337b80e5`. Laptop configuration and repositories are read-only to this PC work. PC changes live on `feat/homie-current-desktop` in `~/.local/share/dotfiles-worktrees/homie-current`.
+The desktop is based on Claude's audited base `b3f5b55259db706e1198490b1851541a337b80e5`, with the completed launcher/firewall fixes from `07a3b89b5bef7e2e17bd7c31677d844b2a84a1ac`. Laptop configuration and repositories are read-only to this PC work. PC changes live on `feat/homie-current-desktop` in `~/.local/share/dotfiles-worktrees/homie-current`.
 
 ## Hardware and policy
 
@@ -40,3 +40,11 @@ NVIDIA CDI was generated for the installed driver. The packaged CDI refresh path
 The original desktop snapshot is under `~/.local/state/homie-control/backups/`; `rollback.json` records the exact location. Each installer apply also saves replaced files under `~/.local/state/dotfiles-backups/`. The old shell tree remains available. To roll back, use a TTY or working terminal, stop the Sensei shell cleanly, restore the selected Hyprland/terminal/shell files and original helper links from those backups, reload Hyprland, and start the old shell. Do not restore or delete browser profiles, agent credentials or learning content.
 
 A pre-existing `homie-boot-order.service` fails because its firmware loader selection is ambiguous. It was recorded without modifying firmware. Unattended boot/Windows return still requires its own hardware-backed acceptance; this desktop work does not claim to resolve that earlier boot experiment. Cold login, physical suspend/resume and interrupted network recovery have not been performed. Kitty's empty old auto-created deck was retired; the user's normal Alacritty window remains open. Obsidian CLI enablement and private vault/account synchronization remain user-local choices.
+
+## Den follow-up
+
+Laptop-master input and clipboard sharing is documented in [Den](den/README.md). Existing tmux was reloaded without closing sessions: two rows now show the quiet spacer and instrument rail, not the default pane listing. Missing optional TPM is guarded. The System panel exposes Ethernet and disables unavailable CPU modes. `nm-connection-editor` is installed for native wired-connection management.
+
+The latest main installer also preserves palette-owned files and avoids matching-symlink drift; the PC profile already includes these protections while separating generated Alacritty colours into their own seed-only fragment. Its managed font/binding settings remain deployable. Claude’s uncommitted laptop files were inspected only and not transplanted.
+
+Homie retains its existing UFW policy. The firewall status action reads UFW on this host; laptop-only nftables-table assumptions are not transplanted. The launcher-history load guard is shared from current main.

@@ -38,7 +38,7 @@ def facts():
         output = next((m['name'] for m in monitors if m.get('focused')), monitors[0]['name'] if monitors else '')
     return {**settings, 'primaryOutput': output, 'gpuPCI': gpu_pci(), 'gpuName': gpu_name,
             'cpuName': cpu, 'hasBattery': bool(list(Path('/sys/class/power_supply').glob('BAT*'))),
-            'hasWireless': bool(list(Path('/sys/class/net').glob('*/wireless'))), 'hasScreenPad': False, 'hasIntelGPU': False, 'hasPowerProfiles': bool(command(['powerprofilesctl','list']))}
+            'hasWireless': bool(list(Path('/sys/class/net').glob('*/wireless'))), 'hasScreenPad': False, 'hasIntelGPU': False, 'hasPowerProfiles': bool(json.loads(command([str(Path.home()/'.local/bin/sensei-power'),'get'],'{}')).get('supported',[]))}
 
 def desktop_state():
     path = Path.home()/'.config/sensei/desktop-state.json'

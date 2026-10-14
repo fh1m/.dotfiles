@@ -1,0 +1,18 @@
+diff --git a/input-capture/src/layer_shell.rs b/input-capture/src/layer_shell.rs
+index 698c584..cba69dd 100644
+--- a/input-capture/src/layer_shell.rs
++++ b/input-capture/src/layer_shell.rs
+@@ -241,6 +241,13 @@ fn get_edges(outputs: &[Output], pos: Position) -> Vec<(Output, i32)> {
+ }
+ 
+ fn get_output_configuration(state: &State, pos: Position) -> Vec<Output> {
++    // Den: explicitly target a physical screen without changing compositor geometry.
++    // Missing target disables the edge instead of unexpectedly grabbing another screen.
++    if let Ok(name) = env::var("DEN_CAPTURE_OUTPUT") {
++        return state.outputs.iter().filter(|output| {
++            output.info.as_ref().is_some_and(|info| info.name == name)
++        }).cloned().collect();
++    }
+     // get all output edges corresponding to the position
+     let edges = get_edges(&state.outputs, pos);
+     let opposite_edges = get_edges(&state.outputs, pos.opposite());

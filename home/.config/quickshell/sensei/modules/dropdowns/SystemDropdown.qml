@@ -42,11 +42,11 @@ DropdownFrame {
         Loader {width:parent.width;active:ShellState.systemPage===4;visible:active;height:active?(item?.implicitHeight??0):0;sourceComponent:Component {PackagesSection {width:parent.width}}}
         Column { id: systemPageEnter0Container
             width: parent.width; spacing: 10; visible: ShellState.systemPage === 0
-            WidgetSection { width: parent.width; title: "Connections"; subtitle: Networking.wifiEnabled ? "Wi-Fi on" : "Wi-Fi off"; glyph: "\uf1eb"
+            WidgetSection { width: parent.width; title: "Connections"; subtitle: MachineProfile.facts.hasWireless ? (Networking.wifiEnabled ? "Wi-Fi on" : "Wi-Fi off") : "Wired network"; glyph: "\uf1eb"
                 Grid { columns: 3; spacing: 8
-                    ControlTile { implicitWidth: 176; label: "Wi-Fi"; glyph: "\uf1eb"; selected: Networking.wifiEnabled; onActivated: Networking.wifiEnabled = !Networking.wifiEnabled }
+                    ControlTile { implicitWidth: 176; label: MachineProfile.facts.hasWireless ? "Wi-Fi" : "Ethernet"; glyph: MachineProfile.facts.hasWireless ? "\uf1eb" : "\uf6ff"; selected: MachineProfile.facts.hasWireless && Networking.wifiEnabled; onActivated: { if (MachineProfile.facts.hasWireless) Networking.wifiEnabled = !Networking.wifiEnabled; else Quickshell.execDetached(["nm-connection-editor"]) } }
                     ControlTile { implicitWidth: 176; label: "Bluetooth"; glyph: "\uf293"; enabled: Bluetooth.defaultAdapter !== null; selected: Bluetooth.defaultAdapter?.enabled ?? false; onActivated: Bluetooth.defaultAdapter.enabled = !Bluetooth.defaultAdapter.enabled }
-                    ControlTile { implicitWidth: 176; label: "Airplane"; glyph: "\uf072"; selected: RobotBench.data.airplaneMode ?? false; onActivated: root.action("airplane") }
+                    ControlTile { visible: MachineProfile.facts.hasWireless; implicitWidth: 176; label: "Airplane"; glyph: "\uf072"; selected: RobotBench.data.airplaneMode ?? false; onActivated: root.action("airplane") }
                     ControlTile { implicitWidth: 176; label: Audio.muted ? "Unmute" : "Mute"; glyph: Audio.muted ? "\uf026" : "\uf028"; selected: !Audio.muted; onActivated: Quickshell.execDetached(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"]) }
                     ControlTile { implicitWidth: 176; label: Audio.micMuted ? "Mic on" : "Mic off"; glyph: "\uf130"; selected: !Audio.micMuted; onActivated: { if (Audio.source?.audio) Audio.source.audio.muted = !Audio.micMuted; } }
                     ControlTile { implicitWidth: 176; label: "Keep awake"; glyph: "\uf186"; selected: Idle.hold; onActivated: Idle.toggle() }
