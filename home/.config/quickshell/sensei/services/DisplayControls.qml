@@ -33,9 +33,12 @@ Singleton {
         const output = outputs[0];
         const request = [output, pending[output]];
         delete pending[output];
+        // The panel's backlight is the one Brightness found, so the OSD and the
+        // slider always drive the same node.
+        const panel = Brightness.device.replace(/\/+$/, "").split("/").pop() || "intel_backlight";
         control.command = request[0] === "screenpad"
             ? ["asusctl", "backlight", "--screenpad-brightness", String(request[1])]
-            : ["brightnessctl", "-d", "intel_backlight", "set", `${request[1]}%`];
+            : ["brightnessctl", "-d", panel, "set", `${request[1]}%`];
         control.running = true;
     }
     Process {
