@@ -115,8 +115,8 @@ input, reserve no screen area, and use no blur, shaders or idle animation.
 A cursor-locator request animates briefly. Temporary lock-recovery outputs are
 excluded. `qs -p ~/.local/state/homie-control/cursor-ui ipc call den-cursor state`
 reports actual focus/dim state for diagnostics. While sharing, ownership changes
-update both machines. Outside sharing, independently used machines can each
-have a local focused display.
+update both machines. The laptop remains the Den focus authority; Homie is marked inactive whenever
+the laptop owns input.
 The laptop's existing desktop configuration is not modified; Den uses isolated
 user services and a runtime-only, removable Ctrl-event subscription.
 
@@ -187,3 +187,5 @@ and centre the pointer. Double-Ctrl requests the locator. Normal Ctrl chords and
 long holds do not count; unit tests cover both. Outside capture the non-consuming
 runtime Lua hook provides the same gestures. Ctrl+Alt+Esc remains the native
 release chord. The operator's desktop is never a target for automated typing.
+
+Focus ownership acceptance: owner-off → no active PC output, owner-on → DP-3, owner-off → inactive again passed against the actual QML IPC state.

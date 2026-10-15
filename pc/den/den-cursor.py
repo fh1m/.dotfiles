@@ -109,8 +109,7 @@ def daemon():
                     continue
                 action=server.recv(128).decode()
                 try:
-                    if action=='owner-on':peer_owned=True;refresh_focus()
-                    elif action=='owner-off':peer_owned=True;refresh_focus()
+                    if action in ('owner-on','owner-off'):peer_owned=(action=='owner-on');refresh_focus()
                     elif action=='recover':recover();refresh_focus()
                     elif action=='show-local':pulse()
                     elif action=='show':
