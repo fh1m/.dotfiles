@@ -2,17 +2,17 @@ import QtQuick
 import qs.components
 import qs.config
 
-// One vertical bar per CPU thread. A thread at or above 70% goes accent with a
-// glow; the rest are signal.
+// One vertical bar per CPU thread. A thread at or above 70% goes accent; the
+// rest are signal.
 Item {
     id: root
 
     property var values: []
     property int count: Machine.threadCount
     property real hotThreshold: 0.7
-    // Twelve 900 ms animations, retriggered by /proc/stat once a second --
-    // which is continuously, deck open or closed. The host says when they
-    // are worth running.
+    // One height animation per thread, retriggered by /proc/stat about once a
+    // second, so they run continuously whether the deck is open or not. The
+    // host turns them off while nobody can see them.
     property bool animate: true
 
     implicitHeight: 50

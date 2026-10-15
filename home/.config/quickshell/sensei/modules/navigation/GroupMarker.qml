@@ -8,9 +8,14 @@ import qs.services
 // A stable, opaque tab surface over Hyprland's native window group.
 // Native grouping owns membership; direct click targets own focus and close.
 Variants {
+    // **One bar per group, not one per member.** Every member of a group lists
+    // the whole group in `grouped`, so filtering on the count alone drew one
+    // identical bar for each member, each highlighting a different tab. Only the
+    // head -- the first address in the list, which every member agrees on -- gets
+    // a bar.
     model: Hyprland.toplevels.values.filter(t => {
         const w = t.lastIpcObject;
-        return w && w.visible && !w.hidden && (w.grouped?.length ?? 0) > 1;
+        return w && w.visible && !w.hidden && (w.grouped?.length ?? 0) > 1 && w.grouped[0] === w.address;
     })
     PanelWindow {
         id: marker
@@ -19,7 +24,10 @@ Variants {
         readonly property var groupScreen: ShellState.screens.find(s => s.name === modelData.monitor?.name) ?? null
         readonly property var monitor: Hyprland.monitors.values.find(m => m.name === groupScreen?.name) ?? null
         readonly property var members: group?.grouped ?? []
-        readonly property int position: Math.max(1, members.indexOf(group?.address) + 1)
+        // The highlighted tab is the focused member's, so focusing another
+        // tab moves the highlight. Falls back to the head when focus is elsewhere.
+        readonly property string activeAddress: Hyprland.activeToplevel?.lastIpcObject?.address ?? ""
+        readonly property int position: Math.max(1, members.indexOf(activeAddress) >= 0 ? members.indexOf(activeAddress) + 1 : members.indexOf(group?.address) + 1)
         readonly property int groupWorkspace: group?.workspace?.id ?? -1
         readonly property int shownWorkspace: monitor?.activeWorkspace?.id ?? -2
         screen: groupScreen

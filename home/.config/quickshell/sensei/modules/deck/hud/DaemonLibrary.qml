@@ -67,6 +67,13 @@ Variants {
                 inset: 6
             }
 
+            // Swallows clicks on the panel's own empty space, so only the
+            // scrim outside it dismisses the library. Declared first, so the
+            // rows and buttons inside still get their clicks.
+            MouseArea {
+                anchors.fill: parent
+            }
+
             // --- Header ----------------------------------------------------
             Row {
                 id: head

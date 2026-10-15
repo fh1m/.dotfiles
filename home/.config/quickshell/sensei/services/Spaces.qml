@@ -8,8 +8,8 @@ import Quickshell.Io
 // The workspace rail follows the focused display, including ScreenPad Misc.
 // Switching a workspace must be reflected even when it belongs to another output.
 // The indicator is always seven regular slots wide: the numbered workspaces
-// holding the active one, or -- while any special workspace is visible -- the
-// special workspaces themselves.
+// holding the active one. While a special workspace is visible, the page marker
+// names it instead (`pageLabel`, `modeGlyph`).
 //
 // Kept out of the bar component so the indicator stays pure rendering, and out
 // of `Deck` so it does not depend on the deck being constructed.
@@ -56,27 +56,14 @@ Singleton {
     readonly property string activeSpecial: focusedMonitor?.specialWorkspace?.name ?? ""
     readonly property bool special: activeSpecial.startsWith("special:")
 
-    // The bare names of every special workspace Hyprland currently knows about,
-    // in a stable order so slots do not shuffle under the pointer.
-    readonly property var specials: {
-        const names = [];
-        for (const ws of Hyprland.workspaces.values)
-            if (ws.name?.startsWith("special:"))
-                names.push(ws.name.slice(8));
-        names.sort();
-        return names;
-    }
-
     function labelFor(name: string): string {
         return specialLabels[name] ?? name.charAt(0).toUpperCase() + name.slice(1);
     }
 
-    // Regular slots use the configured order; a special page is padded
-    // with empty slots, because the indicator's width is fixed and a short page
-    // must not shrink it.
+    // Always the seven regular slots in the configured order. Special workspaces
+    // are not slots here: while one is up, the page label and mode glyph say so.
     readonly property var slots: {
         const out = [];
-        const page = 0;
         for (let i = 0; i < perPage; i++) {
             const id = workspaceIds[i];
             out.push({

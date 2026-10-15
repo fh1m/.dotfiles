@@ -174,7 +174,13 @@ Singleton {
         return out;
     }
 
+    // No write until the file has been read. Before that `tasks` is empty, and
+    // a task edit made in that window would overwrite the user's planner.
+    property bool loaded: false
+
     function _save(): void {
+        if (!root.loaded)
+            return;
         file.setText(_serialise());
     }
 
@@ -214,6 +220,7 @@ Singleton {
             });
         }
         tasks = entries;
+        loaded = true;
         // After the load settles, so the write does not re-enter the parse.
         Qt.callLater(root._resetIfStale);
     }
@@ -228,8 +235,14 @@ Singleton {
         onLoaded: root._parse(text())
         onFileChanged: reload()
         onLoadFailed: error => {
-            if (error === FileViewError.FileNotFound)
+            // Only a missing file is seeded. Any other failure leaves `loaded`
+            // false, so nothing is written over a file that could not be read.
+            if (error === FileViewError.FileNotFound) {
                 setText(root.initialContents);
+                root.loaded = true;
+            } else {
+                console.warn(`sensei: planner.txt could not be read (${error}); left untouched`);
+            }
         }
     }
 

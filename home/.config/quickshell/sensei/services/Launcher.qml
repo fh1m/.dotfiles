@@ -6,8 +6,9 @@ import Quickshell.Io
 import qs.config
 import qs.services
 
-// The launcher's matching and results. Desktop entries and the six colour
-// profiles share one list; a profile entry applies itself rather than exec'ing.
+// The launcher's matching and results. Desktop entries and the colour
+// profiles, built-in and custom, share one list; a profile entry applies itself
+// rather than exec'ing.
 Singleton {
     id: root
 
@@ -72,8 +73,9 @@ Singleton {
         return points;
     }
 
-    // Every match, best first. `results` is the page the list shows; the header
-    // counts the whole set, so a query with forty hits does not read "6 matches".
+    // Every match, best first. `results` is the rows the list shows, and there
+    // is no paging behind it: the header counts the whole set, so a query with
+    // forty hits reads "6 OF 40" rather than as a list of forty.
     readonly property var matched: {
         const needle = query.trim();
         const found = [];

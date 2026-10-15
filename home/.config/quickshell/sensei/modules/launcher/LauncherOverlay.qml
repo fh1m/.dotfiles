@@ -121,7 +121,10 @@ Variants {
                     anchors.right: parent.right
                     anchors.rightMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
-                    text: `${Launcher.matches} matches`
+                    // Six rows, and no paging: when there are more, say how
+                    // many are shown rather than let "166 matches" read as a
+                    // list the user can reach.
+                    text: Launcher.matches > Launcher.count ? `${Launcher.count} OF ${Launcher.matches}` : `${Launcher.matches} matches`
                 }
             }
 

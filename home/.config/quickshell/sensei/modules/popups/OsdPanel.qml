@@ -98,6 +98,4 @@ ChamferPanel {
         litColor: root.muted ? Theme.mute : Theme.accent
         animate: false
     }
-
-    // The spec's "slight glow" on the bar.
 }

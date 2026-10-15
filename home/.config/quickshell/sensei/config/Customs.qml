@@ -114,6 +114,12 @@ Singleton {
         onExited: root.write()
     }
 
+    // A copy of the file as found, taken when adopt() drops an invalid entry.
+    // It does not gate writes: the copy is for recovery only.
+    Process {
+        id: invalidBackup
+    }
+
     // See `Wallpapers.loaded`: a reload rebuilds this with an empty list and
     // the file loads asynchronously, so a write in that window would delete
     // every custom profile the user has.
@@ -138,8 +144,11 @@ Singleton {
         try {
             const parsed = JSON.parse(contents);
             const profiles = parsed?.profiles;
+            // Not a profile list (a missing key, or some other schema): refuse
+            // to adopt it, so `loaded` stays false and no save can overwrite the
+            // file. Same rule as Wallpapers.
             if (!Array.isArray(profiles)) {
-                loaded = true;
+                console.warn("sensei: custom-profiles.json has no profiles array; left untouched");
                 return;
             }
             // A hand-edited file is not trusted to be complete **or safe**: an
@@ -155,7 +164,14 @@ Singleton {
             // like `x=y;id` or `../../evil` out of every downstream sink.
             const nameOk = n => typeof n === "string" && /^[A-Za-z0-9 -]{1,40}$/.test(n);
             const hexOk = c => typeof c === "string" && /^#[0-9A-Fa-f]{6}$/.test(c);
-            list = profiles.filter(entry => entry && nameOk(entry.name) && entry.colors && root.roles.every(r => hexOk(entry.colors[r.key])));
+            const kept = profiles.filter(entry => entry && nameOk(entry.name) && entry.colors && root.roles.every(r => hexOk(entry.colors[r.key])));
+            // Dropped entries would vanish on the next save. Keep the file as it
+            // stands on disk before that can happen.
+            if (kept.length !== profiles.length && !invalidBackup.running) {
+                invalidBackup.command = ["sh", "-c", 'mkdir -p "$1" && cp -f "$2" "$1/custom-profiles-$(date +%Y%m%d-%H%M%S)-invalid.json" 2>/dev/null; exit 0', "sh", `${Paths.stateDir}/profile-backups`, Paths.customProfilesFile];
+                invalidBackup.running = true;
+            }
+            list = kept;
             loaded = true;
         } catch (e) {
             console.warn(`sensei: custom-profiles.json is not readable JSON (${e})`);

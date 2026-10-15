@@ -38,10 +38,6 @@ Variants {
             if (terms.length) ranked.sort((a, b) => b.score - a.score || a.index - b.index);
             return ranked.map(row => row.entry);
         }
-        IpcHandler {
-            target: "shortcutview"
-            function state(): string { return JSON.stringify({shown: overlay.shown, screen: overlay.modelData.name, width: overlay.width, height: overlay.height, panelWidth: panel.width, panelHeight: panel.height, panelX: panel.x, panelY: panel.y, results: overlay.results.length, listCount: list.count}); }
-        }
 
         function move(delta) {
             if (!results.length) return;

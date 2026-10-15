@@ -4,7 +4,8 @@ import qs.config
 import qs.services
 
 // One gig, as a reorderable list delegate. Collapsed it is a grip, a tickbox,
-// the name, its category and its status, with a quiet minus to remove it.
+// the name, its category and its status, with a quiet minus to remove it (two
+// presses: there is no undo).
 // Clicking the name turns the row into the inline editor. The grip drags the
 // row to reorder it; the others slide out of the way through the ListView's
 // own move transitions.
@@ -31,6 +32,15 @@ Item {
     readonly property bool isActive: model.status === "ACTIVE"
     readonly property bool isDone: model.status === "DONE"
     property bool held: false
+    // The minus removes on the second press. Planner has no undo, so the first
+    // press only arms it, and the arm lapses if the second press does not come.
+    property bool armed: false
+
+    Timer {
+        running: dg.armed
+        interval: 3000
+        onTriggered: dg.armed = false
+    }
 
     // --- The inline editor, in place of the row -----------------------------
     Loader {
@@ -249,8 +259,8 @@ Item {
 
             MinusGlyph {
                 anchors.centerIn: parent
-                color: minusArea.containsMouse ? Theme.alert : Theme.mute
-                opacity: rowHover.hovered || minusArea.containsMouse ? 1 : 0.4
+                color: minusArea.containsMouse || dg.armed ? Theme.alert : Theme.mute
+                opacity: rowHover.hovered || minusArea.containsMouse || dg.armed ? 1 : 0.4
 
                 Behavior on opacity {
                     NumberAnimation {
@@ -268,7 +278,14 @@ Item {
                 hoverEnabled: true
                 enabled: !dg.anyEditing
                 cursorShape: Qt.PointingHandCursor
-                onClicked: Planner.remove(dg.model.taskIndex)
+                onClicked: {
+                    if (!dg.armed) {
+                        dg.armed = true;
+                        return;
+                    }
+                    dg.armed = false;
+                    Planner.remove(dg.model.taskIndex);
+                }
             }
         }
 

@@ -105,8 +105,8 @@ Singleton {
         return pixelSize * labelTracking;
     }
 
-    // Digits that never change width, so fixed slots stay put. JetBrains Mono is
-    // monospaced anyway; this is what keeps Chakra Petch's clock steady.
+    // Digits that never change width, so fixed slots stay put. Applied where a
+    // label sits in a fixed-width slot (AuthPanel, Workspaces).
     readonly property var tabularFigures: ({
         tnum: 1,
         lnum: 1
@@ -134,8 +134,8 @@ Singleton {
         readonly property int deckMargin: 24
         readonly property int deckGap: 24
 
-        // The deck at 1920x1080, all measured inside the area the bar leaves so
-        // the same numbers hold once Caelestia's own bar stops reserving space.
+        // The deck at 1920x1080, all measured inside the area the bar leaves, so
+        // the numbers hold if the space the bar reserves ever changes.
         readonly property int deckColumnWidth: 420
         // The HUD takes the terminal's height and the signal panel the bottom
         // row's, so the right column lines up with the left.

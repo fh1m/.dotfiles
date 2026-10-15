@@ -39,7 +39,7 @@ Rounded button shapes and an extra dark backing rectangle made cut-corner panels
 
 A fade applied to a whole application can look like a flash when focus or workspace changes. Those broad fades were removed; geometry transitions carry movement instead. Entry/exit scales are restrained. Workspace slides are kept independent of popup animations.
 
-Widgets have one animation owner: QML. Hyprland layer animation is disabled for those namespaces. Surface reconfiguration is avoided during reveals; the layout must settle first. Focus/input is released at closing time, rather than waiting for a decorative exit to end. The switcher defers final application activation until its overlay has unmapped.
+Each piece has one animation owner. Whole sensei layer surfaces (bar, deck, popups, overlay, notifications) fade in Hyprland, through the `fade` layer rule in `external/hypr-sensei.lua`; QML does not fade those surfaces itself. Content inside them is animated by QML. Surface reconfiguration is avoided during reveals; the layout must settle first. Focus/input is released at closing time, rather than waiting for a decorative exit to end. The switcher defers final application activation until its overlay has unmapped.
 
 Those fixes came from reported discomfort, not from a claim that every animation must run at a specific benchmarked frame rate. The dual high-resolution Intel compositor remains a meaningful load. Real listening and interaction feedback remain part of testing.
 

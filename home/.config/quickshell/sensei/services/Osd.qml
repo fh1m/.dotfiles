@@ -5,7 +5,8 @@ import Quickshell
 import qs.services
 
 // Which of the two popups is up, and for how long. They show on a change and
-// never at start-up, so the first reading of each source only arms them.
+// never at start-up: nothing shows until the timer below has armed them, so the
+// sources' starting values do not pop a panel up when the shell loads.
 Singleton {
     id: root
 

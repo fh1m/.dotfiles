@@ -226,7 +226,7 @@ ChamferPanel {
         NrLabel {
             anchors.horizontalCenter: parent.horizontalCenter
             color: Theme.mute
-            text: "+ ADD GIG BELOW TO QUEUE YOUR FIRST"
+            text: "+ ADD GIG BELOW TO QUEUE YOUR FIRST ONE"
         }
     }
 

@@ -20,7 +20,7 @@ Item {
     implicitWidth: 48
     implicitHeight: 16
 
-    readonly property real scale: {
+    readonly property real ceiling: {
         let peak = floorValue;
         for (const value of downValues.concat(upValues))
             peak = Math.max(peak, value);
@@ -35,7 +35,7 @@ Item {
         const step = points > 1 ? width / (points - 1) : 0;
         const offset = points - used.length;
         for (let i = 0; i < used.length; i++) {
-            const y = height - Math.min(1, used[i] / scale) * (height - strokeWidth) - strokeWidth / 2;
+            const y = height - Math.min(1, used[i] / ceiling) * (height - strokeWidth) - strokeWidth / 2;
             path.push(Qt.point((offset + i) * step, y));
         }
         return path;

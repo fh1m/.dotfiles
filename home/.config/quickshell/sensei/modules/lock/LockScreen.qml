@@ -303,6 +303,7 @@ Scope {
         target: lock
 
         function onSecureChanged(): void {
+            ShellState.lockSecure = lock.secure;
             if (lock.secure && root.covering) {
                 root.covering = false;
                 assistRun.run(["uncover"]);

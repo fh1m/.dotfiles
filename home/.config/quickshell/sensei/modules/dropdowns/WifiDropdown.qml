@@ -77,8 +77,13 @@ DropdownFrame {
     }
 
     function submit(): void {
-        if (!pending || !passphrase || Wifi.linking)
+        if (!pending || Wifi.linking)
             return;
+        // An empty field is not a silent no-op: the field takes the keyboard.
+        if (!passphrase) {
+            input.forceActiveFocus();
+            return;
+        }
         actionSsid = pending;
         netAction.begin("LINKING");
         Wifi.connectWithPsk(pending, passphrase);

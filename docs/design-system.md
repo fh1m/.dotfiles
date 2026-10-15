@@ -14,17 +14,19 @@ JetBrains Mono keeps labels, glyphs and terminal metrics coherent. Icons lead ea
 
 ## Color roles
 
-`sensei-palette` samples the main display image with Matugen. It keeps the image's dominant hue as the only chromatic UI accent; on the current hot-pink skyline, that becomes rose `#ff4297`. The source hue `#df106d` stays in small identity marks. No cyan, yellow or purple companion is invented. Backgrounds remain OLED `#000000` regardless of wallpaper.
+`sensei-palette` derives the palette from the main display image (`palette_from_image` in `home/.local/bin/sensei-palette`). The primary colour is the image's dominant hue and is the one chromatic accent for selection and focus. Companion colours (`secondary`, `tertiary`) are also taken from the image, not invented. Backgrounds are very dark tints of the image's hue (lightness about 3.5%), so panels stay near-black whatever the wallpaper.
 
-| Role | Current value | Use |
+The values below are the live palette on 2026-10-14 (`~/.config/sensei/wallpaper-palette.json`, wallpaper `wallhaven-1q2p3v.png`). They change with the wallpaper; read the file, not this table.
+
+| Role | Live value (2026-10-14) | Use |
 | --- | --- | --- |
-| Ground | `#000000` | Widget canvas, bars, GTK/Qt windows, terminals |
-| Surface | `#111114` | Quiet controls and cards |
-| Raised | `#1c1c21` | Hover and active subpanels |
-| Text | `#edf3fb` | Titles and essential data |
-| Muted | `#a9b5c5` | Secondary readings |
-| Accent | `#ff4297` | Selection, focus, active work and small indicators |
-| Outline | `#424957` | Structural edges; never a grid around every action |
+| Ground | `#0b0709` | Widget canvas, bars, GTK/Qt windows, terminals |
+| Surface | `#140d10` | Quiet controls and cards |
+| Raised | `#1f1419` | Hover and active subpanels |
+| Text | `#ede8ea` | Titles and essential data |
+| Muted | `#afa1a8` | Secondary readings |
+| Accent (primary) | `#f91b84` | Selection, focus, active work and small indicators |
+| Outline | `#3f3138` | Structural edges; never a grid around every action |
 
 The visual weight order is **one emphasized action → selected state → ordinary action → passive reading**. Multiple toggles on one page do not all become large saturated tiles. A selected control gets a narrow rose marker and a small tonal lift; danger uses its own red role. Icons and words agree about state.
 
@@ -38,6 +40,6 @@ Press feedback begins immediately (60–70 ms); hover/selection settles within 1
 
 ## Surface map
 
-`Theme.qml` owns the live tokens. `WidgetSection.qml`, `ControlTile.qml`, `DropdownFrame.qml` and `BarSurface.qml` own the recurring shapes and states. `sensei-palette` writes the terminal, tmux, GTK, Qt and shell-prompt counterparts. `wrayth-profile` re-applies the wallpaper palette after its legacy profile sync, so startup cannot put the old colors back.
+`Theme.qml` owns the live tokens. `WidgetSection.qml`, `ControlTile.qml`, `DropdownFrame.qml` and `BarSurface.qml` own the recurring shapes and states. `sensei-palette` writes the terminal, tmux, GTK, Qt and shell-prompt counterparts.
 
 Sources and the 40-query research log: [UI research](research/ui-design.md).

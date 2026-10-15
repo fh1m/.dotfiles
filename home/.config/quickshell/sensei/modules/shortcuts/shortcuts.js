@@ -1,12 +1,14 @@
 .pragma library
 
-// The UI's concise action names; scripts/doctor.py checks its Hyprland keys.
+// The UI's concise action names. Nothing checks these keys against the Hyprland
+// binds automatically: when a bind changes, update this list by hand (see
+// home/.config/hypr/*.lua and external/hypr-sensei.lua).
 var shortcuts = [
     { key: "Ctrl+Shift+?", title: "Search this field guide", group: "Desktop", detail: "Ctrl+Shift+/ on the US keyboard" },
     { key: "Super+F2", title: "Open the field guide", group: "Desktop", detail: "Accessible alternate binding" },
-    { key: "Tap Super", title: "Application launcher", group: "Desktop", detail: "Search installed apps on the focused display" },
-    { key: "Super+1…6", title: "Named workspaces", group: "Workspace", detail: "Terminal · Web · Code · Sim · Work · Misc" },
-    { key: "Super+Shift+1…6", title: "Move window to workspace", group: "Workspace", detail: "Preserves the focused window" },
+    { key: "Super+Space", title: "Application launcher", group: "Desktop", detail: "Search installed apps on the focused display" },
+    { key: "Super+1…7", title: "Named workspaces", group: "Workspace", detail: "Terminal · Web · Code · Study · Sim · Work · Misc (7 on the ScreenPad)" },
+    { key: "Super+Shift+1…7", title: "Move window to workspace", group: "Workspace", detail: "Preserves the focused window" },
     { key: "Super+Tab", title: "Workspace switcher", group: "Workspace", detail: "Shift reverses direction" },
     { key: "Super+A", title: "Workspace overview", group: "Workspace", detail: "Drag windows between workspaces" },
     { key: "Alt+Tab", title: "Application switcher", group: "Window", detail: "Shift reverses direction" },

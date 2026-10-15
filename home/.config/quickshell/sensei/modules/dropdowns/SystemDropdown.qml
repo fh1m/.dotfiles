@@ -56,7 +56,7 @@ DropdownFrame {
                 Column { width: parent.width; spacing: 3
                     ControlSlider { title: "Speaker volume"; glyph: "\uf028"; level: Audio.volume * 100; onEdited: percent => { if (Audio.sink?.audio) Audio.sink.audio.volume = Math.min(1, percent / 100); } }
                     ControlSlider { title: "Microphone gain"; maximum: 200; glyph: "\uf130"; level: Audio.micVolume * 100; onEdited: percent => { if (Audio.source?.audio) Audio.source.audio.volume = Math.min(2, percent / 100); } }
-                    ControlSlider { title: "Main display"; glyph: "\uf108"; level: RobotBench.data.mainBrightness ?? 0; onEdited: percent => DisplayControls.setLevel("main", percent) }
+                    ControlSlider { title: "Main display"; glyph: "\uf108"; level: Brightness.ready ? Brightness.value * 100 : (RobotBench.data.mainBrightness ?? 0); onEdited: percent => DisplayControls.setLevel("main", percent) }
                     ControlSlider { title: "ScreenPad"; glyph: "\uf26c"; level: RobotBench.data.brightness ?? 0; onEdited: percent => DisplayControls.setLevel("screenpad", percent) }
                     Repeater {model:ExternalDisplays.displays
                         Column {required property var modelData;width:parent.width
@@ -119,7 +119,7 @@ DropdownFrame {
                 ControlTile { label: "CPU boost"; glyph: "\udb80\ude10"; enabled: RobotBench.data.fanControlAvailable ?? false; selected: RobotBench.data.fanMode === 0; onActivated: root.action("fan", "boost") }
                 ControlTile { label: "CPU mode"; glyph: "\uf135"; onActivated: root.action("profile") }
             }
-            Text { textFormat: Text.PlainText; width: parent.width; text: `CPU ${RobotBench.data.cpuTemperature ?? "--"}°C  ·  CPU/GPU fans ${(RobotBench.data.fans ?? []).join(" / ")} RPM`; font.family: Appearance.font.ui; font.pixelSize: 13; color: (RobotBench.data.cpuTemperature ?? 0) >= 85 ? Theme.widgetAccent : Theme.widgetAccent }
+            Text { textFormat: Text.PlainText; width: parent.width; text: `CPU ${RobotBench.data.cpuTemperature ?? "--"}°C  ·  CPU/GPU fans ${(RobotBench.data.fans ?? []).join(" / ")} RPM`; font.family: Appearance.font.ui; font.pixelSize: 13; color: (RobotBench.data.cpuTemperature ?? 0) >= 85 ? Theme.semanticAmber : Theme.widgetAccent }
             Grid {
                 columns: 3; spacing: 8
                 ControlTile { label: "Touchpad"; glyph: "\uf245"; selected: RobotBench.data.touchpadEnabled ?? true; onActivated: root.action("touchpad") }

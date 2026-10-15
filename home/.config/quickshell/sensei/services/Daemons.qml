@@ -124,7 +124,13 @@ Singleton {
         return Theme.signal;
     }
 
+    // See `Planner.loaded`: nothing is written until the file has been read, or
+    // a read error would overwrite the user's choices with the defaults.
+    property bool loaded: false
+
     function _save(): void {
+        if (!root.loaded)
+            return;
         file.setText(`selected=${selected.join(",")}\nping=${pingTarget}\n`);
     }
 
@@ -181,6 +187,7 @@ Singleton {
         printErrors: false
 
         onLoaded: {
+            root.loaded = true;
             for (const line of text().split("\n")) {
                 const split = line.indexOf("=");
                 if (split < 0)
@@ -208,8 +215,12 @@ Singleton {
         }
         onFileChanged: reload()
         onLoadFailed: error => {
-            if (error === FileViewError.FileNotFound)
+            if (error === FileViewError.FileNotFound) {
+                root.loaded = true;
                 root._save();
+            } else {
+                console.warn(`sensei: daemons could not be read (${error}); left untouched`);
+            }
         }
     }
 

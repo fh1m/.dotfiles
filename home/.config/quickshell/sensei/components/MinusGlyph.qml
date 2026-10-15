@@ -5,7 +5,7 @@ import qs.config
 // pool chip: it takes a wallpaper out of one profile and never touches a file,
 // so it is a mark rather than a word and it is not on screen at rest.
 //
-// It is drawn rather than typed for the same reason `CloseGlyph` is: a font's
+// It is drawn rather than typed, because a font's
 // `-` is a small mark floating inside its own bearings, and at 18 px it reads
 // as a speck sitting wherever the font's metrics put it.
 Item {

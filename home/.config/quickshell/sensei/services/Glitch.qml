@@ -322,6 +322,10 @@ Singleton {
         if (!pool.length)
             return "nothing visible to glitch";
         const fx = root.pick(pool);
+        // Same rule as `run`: a target is never in `running` twice, or the
+        // overlap count would count it twice.
+        if (root.running.indexOf(fx) >= 0)
+            return `${fx.key || "-"} already glitching`;
         const effects = root.allowed(fx, root.rollEffects(root.rollCount()));
         const duration = root.rollDuration();
         root.running = root.running.concat([fx]);

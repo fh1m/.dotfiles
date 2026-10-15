@@ -73,6 +73,9 @@ Singleton {
     readonly property string profileFile: `${configDir}/profile`
     readonly property string customProfilesFile: `${configDir}/custom-profiles.json`
     readonly property string wallpapersFile: `${configDir}/wallpapers.json`
+    // The first-run prefill for the wallpaper folder (services/Wallpapers.qml
+    // seedFolder). README: "The folder defaults to ~/Pictures/wallpapers".
+    readonly property string defaultWallpaperRoot: `${home}/Pictures/wallpapers`
     readonly property string effectsFile: `${configDir}/effects.json`
     readonly property string plannerFile: `${configDir}/planner.txt`
     readonly property string runnerFile: `${configDir}/runner`

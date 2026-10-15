@@ -7,8 +7,8 @@ import Quickshell.Services.Notifications
 import qs.config
 import qs.services
 
-// The shell's notification daemon. Only one can own the bus at a time, so
-// Caelestia has to be stopped before this takes over.
+// The shell's notification daemon. Only one process can own the bus name at a
+// time, so any other notification daemon has to be stopped before this one starts.
 //
 // Each card is its own layer surface rather than one surface holding a column:
 // the `sensei-notifications` blur rule ignores alpha, so a single surface

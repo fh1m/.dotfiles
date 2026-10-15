@@ -34,7 +34,7 @@ The terminal's internal tab, pane, copy and session shortcuts are in [Terminal â
 | Drag onto group title | Add another window to that tab group |
 | Super+Shift+V | Persistent clipboard |
 | Super+Shift+M | System Monitor |
-| Super+E | sensei deck |
+| Super+E | sensei deck (Super+Shift+E restarts its terminal) |
 | Super+L | Manual lock |
 | Super+Ctrl+P | Power menu |
 | Ctrl+Space | Spotify play/pause |
@@ -47,6 +47,18 @@ The terminal's internal tab, pane, copy and session shortcuts are in [Terminal â
 | Super+Print | Output recording toggle |
 | Super+Shift+Print | Area recording toggle |
 | Super+Shift+D | Area OCR to clipboard (requires tesseract) |
+| Super+Space | Launcher (the same as tapping Super) |
+| Super+P | Calculator (the power menu is Super+Ctrl+P) |
+| Super+J | Toggle split layout |
+| Super+Y | Pin the focused window |
+| Super+G / Super+Shift+G | Remove / restore window gaps |
+| Super+Ctrl+Left/Right | Focus the left / right monitor |
+| Super+Ctrl+Shift+Left/Right | Move the focused window to the left / right monitor |
+| Alt+Shift+G | Resume the native tab group |
+| Super+Shift+Space | Workbench scratch window |
+| Super+Alt+P | Workbench lab capture |
+| Super+Ctrl+D | Toggle quiet mode |
+| Super+Shift+] / Super+Shift+[ | ScreenPad brightness up / down, 10% steps |
 
 Screenshots go to `~/Pictures/Screenshots`, recordings to `~/Videos/Screencasts`. Clipboard history is local/private, not part of Git. Review global Ctrl+arrow choices if they conflict with your editorâ€™s word-navigation preferences.
 

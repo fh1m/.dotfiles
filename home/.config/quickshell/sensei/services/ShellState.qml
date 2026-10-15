@@ -64,6 +64,9 @@ Singleton {
     // The custom profile the editor is editing, or "" for a new one.
     property string pickerEditing: ""
     property bool locked: false
+    // True only once the compositor has confirmed the session lock (`lock.secure`
+    // in LockScreen). `locked` says the shell wants a lock; this says it has one.
+    property bool lockSecure: false
 
     // **Locking closes whatever was up.** The session lock draws over every
     // layer, so an overlay left open behind it is invisible -- and still

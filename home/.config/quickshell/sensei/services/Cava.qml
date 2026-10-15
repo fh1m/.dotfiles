@@ -23,9 +23,6 @@ Singleton {
     Component.onCompleted:checkStreams()
     readonly property int bars: 48
 
-    // Throttle spectrum frames when its detailed view is closed.
-    readonly property int idleEvery: 1
-    property int _skipped: 0
 
     // One 0..1 value per bar, left to right.
     property var levels: []
@@ -64,11 +61,6 @@ Singleton {
             onRead: line => {
                 if (!line)
                     return;
-                if (!ShellState.deckVisible) {
-                    if (++root._skipped < root.idleEvery)
-                        return;
-                }
-                root._skipped = 0;
                 const parts = line.split(";");
                 const values = [];
                 let peak = 0;

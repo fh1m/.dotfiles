@@ -64,6 +64,15 @@ Singleton {
         return `net-${name.toLowerCase().replace(/ /g, "-").replace(/[^a-z0-9-]/g, "")}.png`;
     }
 
+    // The profile whose wallpaper file `name` would write, or "". Two names that
+    // map to one file ("Night Owl" and "night-owl") would overwrite each other's
+    // image, so a name is taken by its file, not only by its spelling. Both the
+    // NAME prompt and `picker save` ask here.
+    function clashOf(name: string): string {
+        const file = root.generatedName(name);
+        return Profiles.names.find(existing => root.generatedName(existing) === file) ?? "";
+    }
+
     // A profile's own generated wallpaper, relative to the folder.
     function ownFile(name: string): string {
         return `sensei/${root.generatedName(name)}`;

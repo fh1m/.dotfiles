@@ -115,7 +115,14 @@ Singleton {
             Hyprland.dispatch("hl.dsp.exit()");
             break;
         case "sleep":
-            Quickshell.execDetached(["systemctl", "suspend"]);
+            // Lock first, then suspend: Hyprland keeps a session lock held
+            // across suspend, so wake never shows the desktop. Suspend waits
+            // for the compositor to confirm the lock (ShellState.lockSecure),
+            // and refuses if it does not confirm in time -- a machine that
+            // sleeps unlocked is worse than one that stays awake.
+            ShellState.locked = true;
+            sleepWait.waited = 0;
+            sleepWait.restart();
             close();
             break;
         case "reboot":
@@ -140,6 +147,28 @@ Singleton {
         armed = "";
         countdown.stop();
         ShellState.closeAll();
+    }
+
+    // Polls for the confirmed lock. 3 s is a ceiling, not an expected wait.
+    Timer {
+        id: sleepWait
+
+        property int waited: 0
+
+        interval: 100
+        repeat: true
+        onTriggered: {
+            if (ShellState.lockSecure) {
+                stop();
+                Quickshell.execDetached(["systemctl", "suspend"]);
+                return;
+            }
+            waited += interval;
+            if (waited >= 3000) {
+                stop();
+                console.warn("sensei: lock not confirmed in 3 s; suspend refused");
+            }
+        }
     }
 
     // No second press within confirmMs (four seconds) and the tile disarms itself.

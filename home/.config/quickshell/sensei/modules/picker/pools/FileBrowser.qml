@@ -38,7 +38,12 @@ Item {
 
     // Everything above is inert while this is hidden, so the model does not
     // sit on a directory nobody is looking at.
-    onVisibleChanged: if (!visible) selected = []
+    onVisibleChanged: {
+        if (!visible) {
+            selected = [];
+            dir = "";
+        }
+    }
 
     // Nothing behind the panel is clickable while it is up.
     MouseArea {

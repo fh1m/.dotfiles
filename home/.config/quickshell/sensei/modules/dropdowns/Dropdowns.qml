@@ -8,9 +8,10 @@ import qs.config
 import qs.services
 
 // The layer the bar dropdowns live on. The surface is sized to the panel and
-// nothing more: the `sensei-popup` layer rule blurs whatever it covers
-// (Caelestia's decoration sets ignore_opacity, so alpha does not limit it), so a
-// full-screen surface would frost the whole screen. It anchors top-left with a
+// nothing more. `sensei-popup` is not blurred (home/.config/hypr/custom-setup.lua
+// sets `blur = false`), but that is one setting: a theme that turns blur on
+// would frost whatever a full-screen surface covers, so the surface stays
+// panel-sized. It anchors top-left with a
 // zero exclusive zone, which puts its origin on the bar's, and slides down from
 // under the bar in QML — Hyprland's own layer animation is off for this
 // namespace, see external/hypr-sensei.lua.

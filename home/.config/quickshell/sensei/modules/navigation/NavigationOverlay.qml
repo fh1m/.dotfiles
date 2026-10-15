@@ -7,24 +7,29 @@ import qs.components
 import qs.config
 import qs.services
 import qs.modules.dropdowns
-Variants {
+// The navigationview IPC lives outside the per-screen Variants. Inside it, one
+// handler per screen made Qt drop all but the first ("another handler is
+// registered for target navigationview"), so only one screen could be driven.
+Scope {
+ IpcHandler {target:"navigationview";function showcaseHide(addresses:string):void{WindowDesk.showcaseHidden=addresses==="clear"?[]:addresses.split(",").filter(Boolean);}
+ function freeze(paused:bool):void{WindowDesk.previewPaused=paused;}function state():string{return JSON.stringify({opened:WindowDesk.opened,previewPaused:WindowDesk.previewPaused,showcaseHidden:WindowDesk.showcaseHidden});}}
+ Variants {
  model:ShellState.overlayScreens
  PanelWindow {
- id:overlay;property bool presented:false;property bool previewPaused:false;property real reveal:0;required property ShellScreen modelData;screen:modelData;color:"transparent";visible:presented;anchors {top:true;bottom:true;left:true;right:true}mask:Region {width:WindowDesk.opened?overlay.width:0;height:overlay.height}exclusionMode:ExclusionMode.Ignore;WlrLayershell.layer:WlrLayer.Overlay;WlrLayershell.namespace:"sensei-navigation";WlrLayershell.keyboardFocus:WindowDesk.opened?WlrKeyboardFocus.Exclusive:WlrKeyboardFocus.None
- IpcHandler {target:"navigationview";function showcaseHide(addresses:string):void{WindowDesk.showcaseHidden=addresses==="clear"?[]:addresses.split(",").filter(Boolean);}
- function freeze(paused:bool):void{overlay.previewPaused=paused;}function state():string{return JSON.stringify({presented:overlay.presented,reveal:overlay.reveal,width:panel.width,height:panel.height,enter:enter.running,leave:leave.running});}}
+ id:overlay;property bool presented:false;property real reveal:0;required property ShellScreen modelData;screen:modelData;color:"transparent";visible:presented;anchors {top:true;bottom:true;left:true;right:true}mask:Region {width:WindowDesk.opened?overlay.width:0;height:overlay.height}exclusionMode:ExclusionMode.Ignore;WlrLayershell.layer:WlrLayer.Overlay;WlrLayershell.namespace:"sensei-navigation";WlrLayershell.keyboardFocus:WindowDesk.opened?WlrKeyboardFocus.Exclusive:WlrKeyboardFocus.None
+
  Timer {id:selectionHandoff;interval:45;onTriggered:WindowDesk.finishSelection()}
  NumberAnimation {id:enter;target:overlay;property:"reveal";to:1;duration:230;easing.type:Easing.OutCubic}
  SequentialAnimation {id:leave;NumberAnimation {target:overlay;property:"reveal";to:0;duration:150;easing.type:Easing.InCubic}ScriptAction {script:{overlay.presented=false;selectionHandoff.restart();}}}
  Rectangle {anchors.fill:parent;opacity:overlay.reveal;color:Theme.alpha(Theme.deep,.18);MouseArea {anchors.fill:parent;onClicked:WindowDesk.cancel()}}
  ChamferPanel {id:panel;anchors.centerIn:parent;anchors.verticalCenterOffset:12*(1-overlay.reveal);opacity:overlay.reveal;enabled:WindowDesk.opened;width:Math.min(Math.max(320,(overlay.screen?.width??1920)-64),1660);height:WindowDesk.mode==='overview'||WindowDesk.mode==='workspaces'?820:730;fillColor:Theme.widgetGlass;borderColor:Theme.widgetBorder;borderWidth:1;chamfer:Appearance.chamfer.panel
  Column {anchors.fill:parent;anchors.margins:18;spacing:12
- Row {spacing:10;Text { textFormat: Text.PlainText;width:620;text:WindowDesk.mode==='overview'||WindowDesk.mode==='workspaces'?"Sensei, your workspace constellation.":WindowDesk.mode==='same'?"Sensei, instances of your current app.":"Sensei, choose your next focus.";font.family:Appearance.font.data;font.pixelSize:18;color:Theme.signal}ControlTile {implicitWidth:155;implicitHeight:29;label:"Applications";selected:WindowDesk.mode==='apps';onActivated:{WindowDesk.mode='apps';WindowDesk.pinned=true;WindowDesk.selected=0}}ControlTile {implicitWidth:155;implicitHeight:29;label:"Workspaces";selected:WindowDesk.mode==='overview';onActivated:{WindowDesk.mode='overview';WindowDesk.pinned=true}}ControlTile {implicitWidth:135;implicitHeight:29;label:overlay.previewPaused?"Frozen":"Live";glyph:"\uf03d";selected:!overlay.previewPaused;onActivated:overlay.previewPaused=!overlay.previewPaused}ControlTile {implicitWidth:150;implicitHeight:29;label:"Close · Esc";onActivated:WindowDesk.cancel()}}
+ Row {spacing:10;Text { textFormat: Text.PlainText;width:620;text:WindowDesk.mode==='overview'||WindowDesk.mode==='workspaces'?"Sensei, your workspace constellation.":WindowDesk.mode==='same'?"Sensei, instances of your current app.":"Sensei, choose your next focus.";font.family:Appearance.font.data;font.pixelSize:18;color:Theme.signal}ControlTile {implicitWidth:155;implicitHeight:29;label:"Applications";selected:WindowDesk.mode==='apps';onActivated:{WindowDesk.mode='apps';WindowDesk.pinned=true;WindowDesk.selected=0}}ControlTile {implicitWidth:155;implicitHeight:29;label:"Workspaces";selected:WindowDesk.mode==='overview';onActivated:{WindowDesk.mode='overview';WindowDesk.pinned=true}}ControlTile {implicitWidth:135;implicitHeight:29;label:WindowDesk.previewPaused?"Frozen":"Live";glyph:"\uf03d";selected:!WindowDesk.previewPaused;onActivated:WindowDesk.previewPaused=!WindowDesk.previewPaused}ControlTile {implicitWidth:150;implicitHeight:29;label:"Close · Esc";onActivated:WindowDesk.cancel()}}
  DeskTextField {id:search;width:parent.width;height:37;placeholderText:"Fuzzy search every installed app and running window · arrows / Tab select · Enter launches or focuses";text:WindowDesk.query;onTextEdited:{WindowDesk.query=text;WindowDesk.selected=0;WindowDesk.pinned=true;}font.family:Appearance.font.data;font.pixelSize:14;color:Theme.text;Keys.onPressed:e=>{if(e.key===Qt.Key_Tab){WindowDesk.cycle(e.modifiers&Qt.ShiftModifier?-1:1);e.accepted=true;}else if((e.key===Qt.Key_Return||e.key===Qt.Key_Enter)){WindowDesk.commit();e.accepted=true;}else if(e.key===Qt.Key_Escape){WindowDesk.cancel();e.accepted=true;}else if(e.key===Qt.Key_Left||e.key===Qt.Key_Up){WindowDesk.cycle(-1);e.accepted=true;}else if(e.key===Qt.Key_Right||e.key===Qt.Key_Down){WindowDesk.cycle(1);e.accepted=true;}}Keys.onReleased:e=>{if(e.key===Qt.Key_Alt||e.key===Qt.Key_Meta)e.accepted=true;}}
  Item {width:parent.width;height:WindowDesk.mode==='overview'||WindowDesk.mode==='workspaces'?665:475
  Flickable {id:workspaceScroll;anchors.fill:parent;visible:!WindowDesk.query.trim()&&(WindowDesk.mode==='overview'||WindowDesk.mode==='workspaces');clip:true;contentHeight:workspaceGrid.implicitHeight;contentWidth:width;ScrollBar.vertical:ScrollBar {}
  Grid {id:workspaceGrid;width:workspaceScroll.width;columns:4;spacing:12
- Repeater {model:WindowDesk.workspaceIds;WorkspacePreview {required property int index;required property int modelData;workspace:modelData;width:(parent.width-36)/4;height:315;selected:WindowDesk.selected===index;retainFrame:overlay.visible&&overlay.previewPaused;livePreview:overlay.visible&&!overlay.previewPaused}}
+ Repeater {model:WindowDesk.workspaceIds;WorkspacePreview {required property int index;required property int modelData;workspace:modelData;width:(parent.width-36)/4;height:315;selected:WindowDesk.selected===index;retainFrame:overlay.visible&&WindowDesk.previewPaused;livePreview:overlay.visible&&!WindowDesk.previewPaused}}
  }
  }
  ListView {id:searchResults;anchors.fill:parent;visible:!!WindowDesk.query.trim();clip:true;spacing:7;model:WindowDesk.searchResults;currentIndex:WindowDesk.selected;onCurrentIndexChanged:positionViewAtIndex(currentIndex,ListView.Contain);ScrollBar.vertical:ScrollBar {}
@@ -45,7 +50,7 @@ Variants {
  MouseArea {anchors.fill:parent;onClicked:WindowDesk.choose(card.modelData)}
  Column {anchors.fill:parent;anchors.margins:12;spacing:10
  Row {width:parent.width;spacing:10;AppIcon {size:32;entry:card.modelData}Text { textFormat: Text.PlainText;width:parent.width-42;anchors.verticalCenter:parent.verticalCenter;text:WindowDesk.desktopEntryFor(card.modelData)?.name||card.modelData.wayland?.appId||card.modelData.lastIpcObject?.class||"Application";font.family:Appearance.font.data;font.pixelSize:15;color:Theme.signal;elide:Text.ElideRight}}
- WindowPreview {width:parent.width;height:220;window:card.modelData;frameInterval:WindowDesk.selected===card.index?33:100;retainFrame:overlay.visible&&overlay.previewPaused;livePreview:overlay.visible&&!overlay.previewPaused&&card.index>=windows.currentIndex-1&&card.index<=windows.currentIndex+2;MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:WindowDesk.choose(card.modelData)}}
+ WindowPreview {width:parent.width;height:220;window:card.modelData;frameInterval:WindowDesk.selected===card.index?33:100;retainFrame:overlay.visible&&WindowDesk.previewPaused;livePreview:overlay.visible&&!WindowDesk.previewPaused&&card.index>=windows.currentIndex-1&&card.index<=windows.currentIndex+2;MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:WindowDesk.choose(card.modelData)}}
  Text { textFormat: Text.PlainText;width:parent.width;maximumLineCount:2;wrapMode:Text.Wrap;text:card.modelData.title;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.text;elide:Text.ElideRight}
  Text { textFormat: Text.PlainText;text:"Workspace "+(card.modelData.workspace?.name??"—")+" · "+(card.modelData.monitor?.name??"");font.family:Appearance.font.data;font.pixelSize:10;color:Theme.dim}
  Row {spacing:5;ControlTile {implicitWidth:105;implicitHeight:28;label:"Focus";onActivated:WindowDesk.choose(card.modelData)}ControlTile {implicitWidth:105;implicitHeight:28;label:"Float / tile";onActivated:WindowDesk.floatWindow(card.modelData)}ControlTile {implicitWidth:105;implicitHeight:28;label:"Close app";onActivated:{WindowDesk.pinned=true;card.modelData.wayland?.close();}}}
@@ -72,4 +77,5 @@ Variants {
  }
  Connections {target:WindowDesk;function onOpenedChanged(){enter.stop();leave.stop();if(WindowDesk.opened){overlay.presented=true;enter.start();Qt.callLater(()=>search.forceActiveFocus());}else leave.start();}}
  }
+}
 }

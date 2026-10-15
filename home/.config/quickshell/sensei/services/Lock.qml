@@ -63,20 +63,8 @@ Singleton {
 
     signal unlockRequested
 
-    function type(character: string): void {
-        if (busy || granted || buffer.length >= 64)
-            return;
-        buffer += character;
-        if (state === "denied")
-            state = "";
-    }
-
-    function backspace(): void {
-        if (busy || granted)
-            return;
-        buffer = buffer.slice(0, -1);
-    }
-
+    // The field in LockScreen writes `buffer` directly; there is no separate
+    // typing path to keep in step with it.
     function clear(): void {
         buffer = "";
     }

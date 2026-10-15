@@ -88,16 +88,12 @@ Variants {
             chamferTopRight: Theme.radiusPanel
 
             opacity: card.reveal
-            // Slides in from the right with a brief shear, settling as it lands.
-            transform: [
-                Matrix4x4 {
-                    property real skew: 0
-                    matrix: Qt.matrix4x4(1, Math.tan(skew * Math.PI / 180), 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
-                },
-                Translate {
-                    x: (1 - card.reveal) * card.slide
-                }
-            ]
+            // Slides in from the right and settles as it lands. The shear the
+            // lock and picker use is not here: its skew was never animated, so
+            // it sat at 0 and did nothing.
+            transform: Translate {
+                x: (1 - card.reveal) * card.slide
+            }
 
             onDismissed: {entry.stop();exitAnimation.start();}
         }

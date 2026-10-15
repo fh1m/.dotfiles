@@ -255,13 +255,27 @@ Item {
             }
 
             InputField {
+                id: everyField
+
                 anchors.verticalCenter: parent.verticalCenter
                 width: 54
                 pixelSize: 10
-                text: `${root.pool.every ?? 15}`
                 validator: IntValidator {
                     bottom: 1
                     top: 1440
+                }
+
+                // **Not a live binding while typing.** Each keystroke writes the
+                // pool back, and a `text:` binding would rewrite the field from
+                // that on the same pass -- clearing it to type a new number
+                // snapped it to `1`. The field takes the stored value when the
+                // user is not in it, which is also how a half-typed entry is
+                // tidied on blur.
+                Binding {
+                    target: everyField
+                    property: "text"
+                    when: !everyField.editing
+                    value: `${root.pool.every ?? 15}`
                 }
 
                 onEdited: value => root.everyChanged(parseInt(value) || 1)
@@ -281,15 +295,25 @@ Item {
             }
 
             InputField {
+                id: fadeField
+
                 anchors.verticalCenter: parent.verticalCenter
                 width: 54
                 pixelSize: 10
-                text: `${root.pool.fade ?? 1.5}`
                 validator: DoubleValidator {
                     bottom: 0.1
                     top: 30
                     decimals: 1
                     notation: DoubleValidator.StandardNotation
+                }
+
+                // Same as EVERY: "1." must stay "1." until the user leaves
+                // the field, or the decimal point cannot be typed at all.
+                Binding {
+                    target: fadeField
+                    property: "text"
+                    when: !fadeField.editing
+                    value: `${root.pool.fade ?? 1.5}`
                 }
 
                 onEdited: value => root.fadeChanged(parseFloat(value) || 1.5)

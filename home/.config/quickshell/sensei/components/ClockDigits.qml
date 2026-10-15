@@ -5,10 +5,9 @@ import qs.config
 // even **ink-to-ink** gap between them -- not in fixed cells, and not merely by
 // advance either.
 //
-// The bar clock uses `TabularText`, which gives every digit the widest digit's
-// cell so nothing beside it ever shifts. The lockscreen clock cannot: at 168px
-// Chakra Petch a `1` is 64px of ink in a 110px cell, so it floated with a false
-// gap either side of it. Setting the digits by advance still leaves each
+// Fixed cells are the wrong tool for this. A digit's ink is narrower than its
+// cell, and at 168px (measured in an earlier face) a `1` was 64px of ink in a
+// 110px cell, so it floated with a false gap either side of it. Setting the digits by advance still leaves each
 // glyph's own side bearings, so a `1` next to a `0` reads with more air than a
 // `4` next to a `1` -- measured 28px against 13px. So each digit is placed so
 // that the clear space between its ink and its neighbour's ink is the same

@@ -194,7 +194,8 @@ end
 hl.bind("SUPER + E", hl.dsp.workspace.toggle_special("deck"))
 hl.bind("SUPER + SHIFT + E", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/sensei-deck-refresh"))
 
--- Super (tap) opens the launcher.
+-- Super + Space opens the launcher. (A bare Super tap is not bound: SUPER_L is
+-- cleared above.)
 hl.bind("SUPER + SPACE", hl.dsp.exec_cmd("qs -c sensei ipc call launcher toggle"))
 
 -- Super + P opens the power menu here; custom-setup.lua rebinds Super + P to the

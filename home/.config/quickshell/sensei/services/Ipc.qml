@@ -5,15 +5,15 @@ import qs.config
 import qs.services
 
 // IPC surface: `qs -c sensei ipc call <target> <function> [args]`.
-// The overlay targets are wired to ShellState now and gain their UI in later
-// steps, so binds and hypridle can be pointed here once and left alone.
+// The overlay targets are wired to ShellState, so binds and hypridle can call
+// them here and need no change when an overlay's internals move.
 Scope {
     id: root
 
     IpcHandler {
         target: "display-brightness"
         function set(output: string, level: real): void { DisplayControls.setLevel(output, level); }
-        function state(): string { return JSON.stringify({main:RobotBench.data.mainBrightness,screenpad:RobotBench.data.brightness,error:DisplayControls.error}); }
+        function state(): string { return JSON.stringify({main:Brightness.ready ? Brightness.value * 100 : RobotBench.data.mainBrightness,screenpad:RobotBench.data.brightness,error:DisplayControls.error}); }
     }
 
     IpcHandler {
@@ -151,8 +151,11 @@ Scope {
                 return "save <name>";
             if (!/^[A-Za-z0-9 -]+$/.test(trimmed))
                 return "letters, numbers, spaces and hyphens only";
-            if (Profiles.names.some(existing => existing.toLowerCase() === trimmed.toLowerCase()))
-                return `${trimmed} is already a profile`;
+            // The same rule as the NAME prompt: taken by file, so "night-owl"
+            // is refused while "Night Owl" exists.
+            const clash = Wallpapers.clashOf(trimmed);
+            if (clash)
+                return `${clash} is already a profile`;
             ShellState.editorSave(trimmed);
             return trimmed;
         }

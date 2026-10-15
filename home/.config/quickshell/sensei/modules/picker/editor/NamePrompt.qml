@@ -21,10 +21,17 @@ ChamferPanel {
 
     readonly property string trimmed: value.trim()
     readonly property bool badCharacters: trimmed.length > 0 && !/^[A-Za-z0-9 -]+$/.test(trimmed)
-    readonly property bool taken: trimmed.length > 0 && Profiles.names.some(name => name.toLowerCase() === trimmed.toLowerCase())
+    // The wallpaper this name would write. **Asked of the service, not
+    // rebuilt here**: the generator's own rule is the one that decides which
+    // file a name lands on, and a copy of it here drifted (a double space
+    // showed as one hyphen).
+    readonly property string filename: Wallpapers.generatedName(trimmed)
+    // Taken by name, or by file: "Night Owl" and "night-owl" are different
+    // names that would write the same wallpaper, so the second one would
+    // overwrite the first profile's image.
+    readonly property string clash: trimmed.length > 0 ? Wallpapers.clashOf(trimmed) : ""
+    readonly property bool taken: clash.length > 0
     readonly property bool valid: trimmed.length > 0 && !badCharacters && !taken
-
-    readonly property string filename: `net-${trimmed.toLowerCase().replace(/ +/g, "-")}.png`
 
     function take(): void {
         field.take();
@@ -119,7 +126,7 @@ ChamferPanel {
                 if (root.badCharacters)
                     return "LETTERS, NUMBERS, SPACES AND HYPHENS ONLY";
                 if (root.taken)
-                    return `${root.trimmed.toUpperCase()} IS ALREADY A PROFILE`;
+                    return `${root.clash.toUpperCase()} IS ALREADY A PROFILE`;
                 return "";
             }
         }

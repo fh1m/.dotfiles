@@ -5,8 +5,8 @@ import qs.components
 import qs.config
 import qs.services
 
-// One notification. The level decides the tab, the katakana, the frame and
-// whether it times out at all.
+// One notification. The level decides the tab, the frame and whether it times
+// out at all.
 ChamferPanel {
     id: root
 
@@ -19,7 +19,6 @@ ChamferPanel {
     readonly property color tone: low ? Theme.paperMuted : Theme.signalRed
 
     readonly property string tabText: critical ? "ACTION REQUIRED" : (low ? "QUIET" : "NOTICE")
-    readonly property string katakana: critical ? "ТРЕВОГА" : (low ? "ЖУРНАЛ" : "СВЯЗЬ")
 
     // Critical never times out; everything else gets the spec's six seconds.
     readonly property int lifetime: critical ? 0 : 6000
@@ -77,9 +76,9 @@ ChamferPanel {
             }
         }
 
-        // The app name is a label like any other: uppercase and tracked. Only
-        // the sender's own name in the body and the message text are rendered
-        // exactly as received.
+        // The app name is the one label set in mixed case and untracked: it is
+        // the sender's own word and reads as a name, not as a tag. The body and
+        // the message text are rendered exactly as received.
         Image {
             id: appImage
             anchors.left: tab.right; anchors.leftMargin: 8; anchors.verticalCenter: parent.verticalCenter
@@ -103,24 +102,6 @@ ChamferPanel {
             font.capitalization: Font.MixedCase
             tracked: false
             pixelSize: 11
-        }
-
-        Text {
-            textFormat: Text.PlainText
-            id: kana
-            visible: false
-
-            anchors.right: age.left
-            anchors.rightMargin: 8
-            anchors.verticalCenter: parent.verticalCenter
-
-            text: root.katakana
-            color: root.tone
-            font.family: Appearance.font.accent
-            font.letterSpacing: 0
-            font.pixelSize: Appearance.size.katakana
-            font.weight: Appearance.font.weightMedium
-            renderType: Text.NativeRendering
         }
 
         NrLabel {

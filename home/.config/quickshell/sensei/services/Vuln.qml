@@ -67,6 +67,10 @@ Singleton {
         // the upgrade's result.
         Deck.leave();
         upgradeProc.running = true;
+        // A terminal that fails to start leaves `running` false both before and
+        // after, so onRunningChanged never fires and the latch would hold.
+        if (!upgradeProc.running)
+            upgrading = false;
     }
 
     // Set by the collector, cleared before each run: it is the one thing

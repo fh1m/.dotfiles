@@ -44,7 +44,7 @@ handle=${defaultHandle}
     function saveIdent(nextCode: string, nextSuffix: string): void {
         const code2 = nextCode.toUpperCase();
         const suffix2 = nextSuffix.toUpperCase();
-        if (!_validCode(code2) || !_validCode(suffix2))
+        if (!loaded || !_validCode(code2) || !_validCode(suffix2))
             return;
         code = code2;
         suffix = suffix2;
@@ -77,6 +77,12 @@ handle=${defaultHandle}
     }
 
     property string _raw: initialContents
+
+    // A file that could not be read is not one to overwrite. Nothing is saved
+    // until it has been read, or seeded because it was missing -- otherwise a
+    // save from an unreadable file would rewrite it from the defaults and drop
+    // the user's handle.
+    property bool loaded: false
 
     Process {
         id: writer
@@ -128,13 +134,16 @@ handle=${defaultHandle}
         onLoaded: {
             root._raw = text();
             root._parse(text());
+            root.loaded = true;
         }
         onFileChanged: reload()
         onLoadFailed: error => {
             // Seeded rather than left absent, so the file is there to be found
             // and edited. The defaults it carries are the ones already in use.
-            if (error === FileViewError.FileNotFound)
+            if (error === FileViewError.FileNotFound) {
                 setText(root.initialContents);
+                root.loaded = true;
+            }
         }
     }
 }

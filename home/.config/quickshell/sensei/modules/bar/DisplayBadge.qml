@@ -10,7 +10,10 @@ Item {
     property string output: "screenpad"
     readonly property bool external:output!=="main"&&output!=="screenpad"
     readonly property var externalDisplay:ExternalDisplays.display(output)
-    readonly property real level: external?(externalDisplay?.level??0):output === "main" ? (RobotBench.data.mainBrightness ?? 0) : (RobotBench.data.brightness ?? 0)
+    // The main panel follows the event-driven Brightness service (inotify on the
+    // backlight), so the badge moves with the hardware keys at once. RobotBench
+    // polls every 10 s and is only the fallback. The ScreenPad has no such source.
+    readonly property real level: external?(externalDisplay?.level??0):output === "main" ? (Brightness.ready ? Brightness.value * 100 : (RobotBench.data.mainBrightness ?? 0)) : (RobotBench.data.brightness ?? 0)
     implicitWidth: condensed ? 44 : external ? 156 : output === "main" ? 108 : 120
     implicitHeight: 34
     Behavior on implicitWidth { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }

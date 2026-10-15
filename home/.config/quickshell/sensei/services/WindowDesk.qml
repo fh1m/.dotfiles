@@ -8,6 +8,9 @@ import qs.services
 Singleton {
  id:root;property var previews:[];property bool opened:false;property string mode:"apps";property string query:"";property int selected:0;property bool pinned:false;property var mru:[];property var snapshot:[];property string sameClass:"";property string focusTitle:"";property int focusWorkspace:1;property string focusScreen:"eDP-1";property int focusStamp:0;property string lastFocusAddress:""
  property var showcaseHidden:[]
+ // Freezes the previews while the overlay is open. Global, not per screen: the
+ // navigationview IPC answers for the whole shell.
+ property bool previewPaused:false
  readonly property var all:Hyprland.toplevels.values.filter(t=>(!Demo.active||!showcaseHidden.includes(root.addressFor(t)))&&t.wayland?.appId!=="sensei-deck"&&t.workspace?.name!=="special:deck"&&t.workspace?.name!=="deck")
  readonly property var workspaceIds: Spaces.workspaceIds.concat(Array.from(new Set(all.map(t=>t.workspace?.id).filter(id=>Number.isInteger(id)&&id<0))).sort((a,b)=>b-a))
  function workspaceTitle(id){if(id>0)return Spaces.workspaceNames[Spaces.logicalId(id)-1]||String(id);const name=all.find(t=>t.workspace?.id===id)?.workspace?.name||"Special";return Spaces.labelFor(name.replace(/^special:/,""));}

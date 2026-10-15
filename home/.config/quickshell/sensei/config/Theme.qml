@@ -213,8 +213,8 @@ Singleton {
     }
 
     // A fresh start loads the profile it already had, so nothing changes and
-    // nothing syncs -- yet the borders are still Caelestia's until ours are
-    // set. Sync once on the way up. This also (re)makes the deck terminal's
+    // nothing syncs -- yet the Hyprland borders can still hold whatever the last
+    // session left. Sync once on the way up. This also (re)makes the deck terminal's
     // emblem, so a missing one is made at every start; sensei-emblem renames
     // it into place, so the deck terminal printing its greeting at the same
     // moment never reads a half-written file.
@@ -224,8 +224,8 @@ Singleton {
         onTriggered: root.syncExternal()
     }
 
-    // A Hyprland reload re-reads Caelestia's config, which puts its own border
-    // colours back. Ours go on again afterwards.
+    // A Hyprland reload re-reads the static border colours in its config, which
+    // puts those back. Ours go on again afterwards.
     Connections {
         target: Hyprland
 

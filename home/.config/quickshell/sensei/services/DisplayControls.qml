@@ -11,7 +11,9 @@ Singleton {
     property var targets: ({})
     function adjustLevel(output: string, delta: real): void {
         const previous = targets[output];
-        const actual = output === "main" ? RobotBench.data.mainBrightness : output === "screenpad"?RobotBench.data.brightness:ExternalDisplays.display(output)?.level;
+        // The main panel is read live from the backlight, as the sliders are.
+        // RobotBench's copy is polled every few seconds and is only the fallback.
+        const actual = output === "main" ? (Brightness.ready ? Brightness.value * 100 : RobotBench.data.mainBrightness) : output === "screenpad"?RobotBench.data.brightness:ExternalDisplays.display(output)?.level;
         if(!Number.isFinite(actual))return;
         const base = previous && Date.now() - previous.time < 2500 ? previous.level : actual;
         setLevel(output, base + delta);
