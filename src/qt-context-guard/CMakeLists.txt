@@ -13,3 +13,7 @@ target_compile_options(context_guard_test PRIVATE -UNDEBUG)
 enable_testing()
 add_test(NAME context_guard COMMAND context_guard_test)
 set_tests_properties(context_guard PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+add_test(NAME context_guard_plugin_lifecycle COMMAND context_guard_test --plugin-only)
+set_tests_properties(context_guard_plugin_lifecycle PROPERTIES ENVIRONMENT
+    "QT_QPA_PLATFORM=offscreen;QT_PLUGIN_PATH=${CMAKE_BINARY_DIR};QT_QPA_GENERIC_PLUGINS=sensei-context-guard")

@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
     assert(!guard.eventFilter(&ordinary, &origin));
     QEvent mouse(QEvent::MouseButtonPress);
     assert(!guard.eventFilter(&window, &mouse));
-    if (argc > 1 && QString::fromLocal8Bit(argv[1]) == "--unguarded") {
+    if (argc > 1 && (QString::fromLocal8Bit(argv[1]) == "--unguarded" || QString::fromLocal8Bit(argv[1]) == "--plugin-only")) {
         QCoreApplication::sendEvent(&window, &origin);
         return 0;
     }

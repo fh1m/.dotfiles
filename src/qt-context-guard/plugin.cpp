@@ -9,7 +9,8 @@ class GuardPlugin final : public QGenericPlugin {
 public:
     QObject *create(const QString &key, const QString &) override {
         if (key.compare("sensei-context-guard", Qt::CaseInsensitive)) return nullptr;
-        auto *guard = new ContextGuard(qApp);
+        // Qt owns the returned generic instance; do not also parent it to qApp.
+        auto *guard = new ContextGuard();
         qApp->installEventFilter(guard);
         qInfo("Sensei: null-focus context-menu guard loaded");
         return guard;
