@@ -1,0 +1,8 @@
+[Unit]
+Description=Sensei persistent desktop workbench
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/sensei-tmux --prepare
+RemainAfterExit=yes
+[Install]
+WantedBy=default.target

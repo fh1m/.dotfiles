@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Google Chrome · Sensei
+Comment=Native Wayland browser with locally validated NVIDIA decoding
+Exec=/home/fh1m/.local/bin/sensei-chrome launch %U
+Icon=google-chrome
+Terminal=false
+Categories=Network;WebBrowser;
+MimeType=text/html;x-scheme-handler/http;x-scheme-handler/https;
+StartupNotify=true
+StartupWMClass=Google-chrome

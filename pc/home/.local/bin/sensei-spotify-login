@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+"""Start native Spotify authentication only with a configured local OAuth ID."""
+import os, subprocess, tomllib
+from pathlib import Path
+path=Path.home()/'.config/spotify-player/app.toml'
+config=tomllib.loads(path.read_text())
+client=config.get('client_id','')
+if not client or client.startswith('YOUR_'):
+    print('Spotify needs your OAuth application client ID first.\nSet client_id in ~/.config/spotify-player/app.toml and register the matching redirect URL in your Spotify application. Your credentials stay local.')
+    input('Press Enter to close.')
+    raise SystemExit(1)
+result=subprocess.run([str(Path.home()/'.local/share/sensei-spotify-client/bin/spotify_player'),'authenticate']).returncode
+if result==0:subprocess.run(['systemctl','--user','enable','--now','sensei-spotify.service'],check=False)
+input('Sign-in finished. Press Enter to close.')
+raise SystemExit(result)

@@ -1,0 +1,7 @@
+[Unit]
+Description=Sensei desktop screen recording
+[Service]
+ExecStart=%h/.local/bin/desktop-capture worker
+ExecStopPost=%h/.local/bin/desktop-capture finished
+KillSignal=SIGINT
+TimeoutStopSec=15

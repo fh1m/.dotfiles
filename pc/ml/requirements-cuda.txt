@@ -1,0 +1,4 @@
+# Latest observed CUDA 12.8 wheel retaining sm_75 on this Turing desktop.
+# Install in a dedicated Python 3.12 venv; do not overwrite system Python.
+--index-url https://download.pytorch.org/whl/cu128
+torch==2.11.0
