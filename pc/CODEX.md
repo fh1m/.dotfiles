@@ -1,3 +1,5 @@
+> **Historical handoff.** Current development uses `main` on both machines. Start with [the current Digital Den guide](../docs/digital-den/README.md) and [PC guide](README.md). Preserve the recovery evidence below; do not repeat old installation steps.
+
 # Codex on Windows, CachyOS, and the laptop
 
 Use a fresh login on each OS. Do not put ~/.codex credentials, session databases, GitHub tokens or private keys in this public repository. A Git handoff shares documented state, not the full conversation or a live agent connection.

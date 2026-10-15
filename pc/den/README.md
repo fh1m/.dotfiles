@@ -5,7 +5,7 @@
 
 # Digital Den — laptop controls Homie
 
-Arete is the input master. Homie is physically above the laptop. Move through the **top edge of eDP-1** or **right edge of upper DP-1** to enter Homie. Leave Homie through its bottom edge to return to the laptop, or through its left edge to return to the upper external monitor. **Ctrl + Alt + Esc** releases capture immediately. Existing laptop monitor geometry, bindings, shell and development configuration remain owned by Claude.
+Arete is the input master. Homie is physically above the laptop. Move through the **top edge of eDP-1** or **right edge of upper DP-1** to enter Homie. Leave Homie through its bottom edge to return to the laptop, or through its left edge to return to the upper external monitor. **Ctrl + Alt + Esc** releases capture immediately. Both hosts use the unified main branch; hardware policy remains isolated by profile.
 
 Lan Mouse 0.11.0 uses native layer-shell capture and wlroots input emulation. Its upstream edge selection is insufficient for this two-edge physical arrangement. `capture-output.patch` adds `DEN_CAPTURE_OUTPUTS=top=eDP-1,right=DP-1`, two receiver return edges, and a bounded authenticated return-edge message using the existing Leave payload. Only the active connection accepts a return; duplicate late returns are ignored. If a selected output disappears, its capture is disabled rather than moved unexpectedly. Both machines use the same private headless build from upstream revision `0d2190e787db9e482e17d4c16fb7c00ef4841bcb`:
 
@@ -103,11 +103,10 @@ request local recovery. The cursor UI has a pidfd death watch and its service
 restarts independently. Keyboard/mouse authority stays with the laptop.
 
 The independent cursor service remains enabled. Two bare Ctrl taps locate the
-cursor; three stop capture and return to the laptop main-screen centre. Recovery
-never restarts sharing. Ctrl chords are excluded from gesture recognition.
+cursor; three toggle sharing: pause and return to the laptop main-screen centre,
+then resume on the next triple tap. Ctrl chords are excluded from gesture recognition.
 Local Homie input remains available with den-input stopped. If needed:
-`systemctl --user stop den-input.service` on each machine. After manual recovery, restart sharing with `systemctl --user start den-input`
-on the laptop when ready. Certificate/key material stays private.
+`systemctl --user stop den-input.service` on each machine. After recovery, triple-tap Ctrl again or use System → Digital Den → Sharing. Certificate/key material stays private.
 
 Corner marks are pink on the focused display and muted on others. Inactive
 screens also get a 14% black overlay. These surfaces accept no mouse/keyboard
@@ -189,3 +188,5 @@ runtime Lua hook provides the same gestures. Ctrl+Alt+Esc remains the native
 release chord. The operator's desktop is never a target for automated typing.
 
 Focus ownership acceptance: owner-off → no active PC output, owner-on → DP-3, owner-off → inactive again passed against the actual QML IPC state.
+
+The System widget on either machine controls the same laptop-master state via `den-control`. Old Deskflow control is not used by this widget.

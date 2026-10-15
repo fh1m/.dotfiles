@@ -1,3 +1,5 @@
+> **Historical handoff.** Current development uses `main` on both machines. Start with [the current Digital Den guide](../docs/digital-den/README.md) and [PC guide](README.md). Preserve the recovery evidence below; do not repeat old installation steps.
+
 # Den runtime and recovery
 
 Arete coordinates shared architecture and design; Homie implements and verifies local desktop hardware and services. Current observed results and pending gates are in STATE.md. Private endpoint, trust, certificate and account settings remain outside Git.

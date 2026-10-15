@@ -9,21 +9,19 @@ def main():
     def hypr(*args):return subprocess.check_output(["hyprctl","-i","0",*args],timeout=2).decode()
     def warp(x,y):hypr("dispatch",f"hl.dsp.cursor.move({{x={x},y={y}}})")
     # Independent systemd timers survive this harness or SSH process failing.
-    subprocess.run(["systemd-run","--user","--unit=den-safety-expiry","--on-active=15s","--collect","/usr/bin/systemctl","--user","stop","den-input.service"],check=True)
-    remote("systemd-run --user --unit=den-safety-expiry --on-active=15s --collect /usr/bin/systemctl --user stop den-input.service")
+    subprocess.run(["systemd-run","--user","--unit=den-safety-expiry","--on-active=30s","--collect","/usr/bin/systemctl","--user","stop","den-input.service"],check=True)
+    remote("systemd-run --user --unit=den-safety-expiry --on-active=30s --collect /usr/bin/systemctl --user stop den-input.service")
     try:
      remote("systemctl --user start den-input")
      subprocess.run(["systemctl","--user","start","den-input"],check=True)
      time.sleep(.5)
      for entry,exit in [("top","bottom"),("right","left"),("top","left"),("right","bottom")]:
-      for n in range(2):
+      for n in range(10):
        if entry=="top":warp(960,40);warp(960,0)
        else:warp(-40,-540);warp(-1,-540)
-       time.sleep(.35)
-      for n in range(20):
+       time.sleep(.3)
        ready=remote("cat /home/fh1m/.local/state/homie-control/input/return-armed").strip()
        if ready=="1":break
-       time.sleep(.05)
       assert ready=="1",(entry,"not ready")
       pos=json.loads(remote("hyprctl -i 0 cursorpos -j"))
       assert (pos["y"]>=1060 if entry=="top" else pos["x"]<=20),(entry,pos)
@@ -48,6 +46,13 @@ def main():
       if status!=0 and pos=={"x":960,"y":540}:break
      assert status!=0 and pos=={"x":960,"y":540},("gesture",status,pos)
      print("Triple Ctrl stops sharing and returns to main centre: passed",flush=True)
+     time.sleep(.8)
+     subprocess.run([str(root/'input-test/test'),'taps3'],env=env,check=True)
+     for _ in range(60):
+      time.sleep(.1)
+      if subprocess.run(["systemctl","--user","is-active","--quiet","den-input"],stdout=subprocess.DEVNULL).returncode==0:break
+     else:raise AssertionError("Triple Ctrl failed to resume sharing")
+     print("Triple Ctrl resumes sharing outside capture: passed",flush=True)
     finally:
      subprocess.run(["systemctl","--user","stop","den-input"],check=False)
      try:remote("systemctl --user stop den-input")

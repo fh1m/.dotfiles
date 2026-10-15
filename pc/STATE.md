@@ -1,3 +1,13 @@
+# Current unified checkpoint — 2026-10-15
+
+Both machines now share main and profile-aware deployment; see [Digital Den operations](../docs/digital-den/README.md). Current verified hardware/storage details are in [HARDWARE.md](../docs/digital-den/HARDWARE.md). The chronological records below include superseded states (including old Ethernet speed and driver versions).
+
+Homie is running native NVIDIA on its 75 Hz LG panel. Wired Ethernet now negotiates 1000 Mbps. Six data mounts are readable with the intended read-only protections. Digital Den uses non-capturing receiver input, independent recovery, toggle controls on both hosts, and private pinned SSH. The four crossing/return combinations and native pause/resume gesture passed supervised live acceptance.
+
+**Unattended firmware boot remains unverified and previously failed.** No reboot, firmware flash or storage repartition was performed during consolidation. Preserve the boot recovery evidence and all original data gates.
+
+---
+
 # Verified checkpoint - 2026-10-13, Asia/Dhaka
 
 Latest inspection: new installed CachyOS desktop, 2026-10-13. Only Dahua NBYC26A00A16934 is connected. Root and independent 4096 MiB EFI are verified; NVIDIA rendering and a synthetic hardware encode/decode test passed. Workstation deployment is in progress. Isolated restart/cold boot, LTS recovery and protected-drive reinspection remain pending.

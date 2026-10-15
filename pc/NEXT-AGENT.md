@@ -1,3 +1,5 @@
+> **Historical handoff.** Current development uses `main` on both machines. Start with [the current Digital Den guide](../docs/digital-den/README.md) and [PC guide](README.md). Preserve the recovery evidence below; do not repeat old installation steps.
+
 # Paste this into the next Codex session
 
 If this session is on the NEW installed CachyOS desktop, use CACHYOS-RESUME.md and CACHYOS-PROMPT.txt for the current continuation. Verify its actual root/EFI first; do not rerun old Windows retry or Dahua wipe instructions from historical stage logs. The last Windows preparation does not establish that Linux installation passed.
