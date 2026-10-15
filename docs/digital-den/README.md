@@ -43,6 +43,14 @@ Text and PNG clipboard offers bridge in both directions; sensitive offers are ex
 
 Homie's `~/Drives` exposes the six UUID-based mounts. Arete's `~/Den/Homie` is an encrypted SSHFS view with reconnect. Windows and legacy Linux mounts remain read-only; only Datasets and the designated Storage workspace are writable. Disconnects never justify changing disk ownership or formatting anything.
 
+## Qt context-menu guard
+
+`bash scripts/build-qt-context-guard.sh` builds and tests the small local Qt guard
+for the verified null-focus right-click crash. It is also part of `build-native.sh`.
+The shell wrapper loads only a matching Qt build. Rebuild after Qt upgrades;
+[the source and regression tests](../../src/qt-context-guard/README.md) explain
+what is filtered and how to remove it. System libraries remain untouched.
+
 ## Recovery
 
 If input behaves unexpectedly, use triple Ctrl or Ctrl+Alt+Esc, then `den-control home`. On either host's own keyboard, `systemctl --user stop den-input` stops that host's service. Restart sharing with `den-control start` only after the peer is available.

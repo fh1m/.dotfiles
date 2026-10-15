@@ -34,7 +34,7 @@ Singleton {
     // made by hand, to rehearse an HDMI screen and a top-bar external screen
     // without the hardware. Nothing in the repo creates them; they are seams
     // for the same reason as the names in sensei-displays.
-    function isExternalOutput(name:string):bool {return name!==MachineProfile.primaryOutput&&(MachineProfile.desktop||name!=="DP-2")&&(name.startsWith("HDMI-")||name.startsWith("DP-")||name.startsWith("DVI-")||name==="SENSEI-HDMI-TEST"||name==="SENSEI-UPPER-TEST");}
+    function isExternalOutput(name:string):bool {return name!==(barScreens[0]?.name??MachineProfile.primaryOutput)&&(MachineProfile.desktop||name!=="DP-2")&&(name.startsWith("HDMI-")||name.startsWith("DP-")||name.startsWith("DVI-")||name==="SENSEI-HDMI-TEST"||name==="SENSEI-UPPER-TEST");}
     function externalBarEdge(name:string):string {return ExternalDisplays.display(name)?.barEdge??((name==="DP-1"||name==="SENSEI-UPPER-TEST")?"top":"bottom");}
     readonly property var externalScreens: screens.filter(s => isExternalOutput(s.name))
     readonly property var bottomBarScreens: MachineProfile.desktop ? barScreens.concat(externalScreens) : screens.filter(s => s.name === "DP-2" || externalScreens.some(e=>e.name===s.name))

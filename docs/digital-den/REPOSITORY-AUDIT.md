@@ -35,3 +35,12 @@ The same null-focus/origin event crashed a disposable Qt 6.11.2 test. A local
 public-Qt-API generic plugin filters only that invalid synthesized context-menu
 event. Original mouse actions and valid context menus pass through. See
 [the guard source and tests](../../src/qt-context-guard/README.md).
+
+
+Final desktop stress: four right-clicks at the bar origin and five cycles through
+System, Monitor, Calendar and Sound passed on each host with the same shell PID.
+Both Qt 6.11.2 (Arete) and Qt 6.12.0 (Homie) crashed the isolated unguarded
+reproducer and passed the guarded delivery plus plugin startup/shutdown tests.
+The production shells loaded the guard; the historical PC crash reporter was
+closed without deleting its diagnostic core. This validates the observed crash
+path, not a promise that all possible Qt defects are eliminated.
