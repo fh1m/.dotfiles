@@ -22,8 +22,16 @@ GitHub audit found one open PC-to-main PR (#1) and no issues. Its install-safety
 
 Cross-profile rendering and installer idempotence are automated. Live checks cover the four configured Den crossing/return combinations, triple-Ctrl pause and resume, bidirectional text/PNG clipboard and actual service state. Main installation is previewed/applied separately on each host; private pairing is not overwritten.
 
-One cold-start test reached a crossing before the second DTLS connection was ready. The harness now waits for receiver arming and retries the boundary rather than asserting a fixed handshake delay. This does not prove zero connection latency. Native receiver input stays ungrabbed and the independent expiry guard remains mandatory during supervised tests.
+Cold-start tests exposed competing same-address DTLS connections for the two source edges. The native connection layer now reuses a live matching peer, propagates liveness to its handles, and clears them together on disconnect. Three Rust regressions passed. The supervised desktop run completed 12 routed typing/Ctrl+A/click/scroll sequences (three passes of every route), followed by pause/resume. The harness also generates relative device motion: compositor warps alone are insufficient to exercise handshake retry behavior. Native receiver input stays ungrabbed and independent expiry guards remain mandatory during supervised tests.
 
 ## Working agreement
 
 Both checkouts use main. Fetch, inspect local changes, fast-forward, validate the correct hardware profile. Keep feature experiments in disposable detached worktrees when needed, then integrate promptly. Do not maintain machine-specific development branches. Public reusable source and private live state are separate trust domains.
+
+
+The PC crash reporter retained an 08:23 context-menu SIGSEGV. The running shell
+was responding; the report was not evidence of a new crash during deployment.
+The same null-focus/origin event crashed a disposable Qt 6.11.2 test. A local
+public-Qt-API generic plugin filters only that invalid synthesized context-menu
+event. Original mouse actions and valid context menus pass through. See
+[the guard source and tests](../../src/qt-context-guard/README.md).

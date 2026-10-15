@@ -16,9 +16,15 @@ def main():
      subprocess.run(["systemctl","--user","start","den-input"],check=True)
      time.sleep(.5)
      for entry,exit in [("top","bottom"),("right","left"),("top","left"),("right","bottom")]:
+      inst=json.loads(hypr("instances","-j"))[0]
+      import os
+      env=dict(os.environ,WAYLAND_DISPLAY=inst['wl_socket'],HYPRLAND_INSTANCE_SIGNATURE=inst['instance'])
       for n in range(10):
        if entry=="top":warp(960,40);warp(960,0)
        else:warp(-40,-540);warp(-1,-540)
+       # A compositor warp is not device motion. Exercise the real capture stream
+       # so a fresh DTLS connection can receive/retry its Enter handshake.
+       subprocess.run([str(root/'input-test/test'),'motion',"0" if entry=="top" else "1","-1" if entry=="top" else "0"],env=env,check=True)
        time.sleep(.3)
        ready=remote("cat /home/fh1m/.local/state/homie-control/input/return-armed").strip()
        if ready=="1":break

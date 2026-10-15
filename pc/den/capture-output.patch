@@ -4,7 +4,7 @@ index 698c584..b8d355a 100644
 +++ b/input-capture/src/layer_shell.rs
 @@ -241,6 +241,14 @@ fn get_edges(outputs: &[Output], pos: Position) -> Vec<(Output, i32)> {
  }
-
+ 
  fn get_output_configuration(state: &State, pos: Position) -> Vec<Output> {
 +    // Den: per-edge physical output selection, independent of compositor geometry.
 +    if let Ok(mapping) = env::var("DEN_CAPTURE_OUTPUTS") {
@@ -26,7 +26,7 @@ index 698c584..b8d355a 100644
          while let Some(i) = inner.state.active_windows.iter().position(|w| w.pos == pos) {
              inner.state.active_windows.remove(i);
 @@ -478,16 +487,11 @@ impl State {
-
+ 
      fn ungrab(&mut self) {
          // get focused client
 -        let window = match self.focused.as_ref() {
@@ -44,7 +44,7 @@ index 698c584..b8d355a 100644
 +            window.layer_surface.set_keyboard_interactivity(KeyboardInteractivity::None);
 +            window.surface.commit();
 +        }
-
+ 
          // destroy pointer lock
          if let Some(pointer_lock) = &self.pointer_lock {
 diff --git a/input-capture/src/lib.rs b/input-capture/src/lib.rs
@@ -58,11 +58,11 @@ index 6a850b3..1cdfcf5 100644
 -        assert!(!self.id_map.contains_key(&id));
 +        if self.id_map.get(&id) == Some(&pos) { return Ok(()); }
 +        if self.id_map.contains_key(&id) { self.destroy(id).await?; }
-
+ 
          self.id_map.insert(id, pos);
-
+ 
 @@ -147,11 +148,9 @@ impl InputCapture {
-
+ 
      /// destroy the client with the given id, if it exists
      pub async fn destroy(&mut self, id: CaptureHandle) -> Result<(), CaptureError> {
 -        let pos = self
@@ -70,7 +70,7 @@ index 6a850b3..1cdfcf5 100644
 -            .remove(&id)
 -            .expect("no position for this handle");
 +        let Some(pos) = self.id_map.remove(&id) else { return Ok(()); };
-
+ 
 +        self.pending.retain(|(handle, _)| *handle != id);
          log::debug!("destroying capture {id} @ {pos}");
          let remaining = self.position_map.get_mut(&pos).expect("id vector");
@@ -161,7 +161,7 @@ index 8f739bd..4437c89 100644
 +    ClientReady(u64),
 +    CaptureReleased,
  }
-
+ 
  #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 @@ -73,6 +76,7 @@ impl Capture {
          let (event_tx, event_rx) = channel();
@@ -173,22 +173,22 @@ index 8f739bd..4437c89 100644
              cancellation_token: cancellation_token.clone(),
 @@ -157,6 +161,7 @@ macro_rules! debounce {
  }
-
+ 
  struct CaptureTask {
 +    ctrl_taps: CtrlTaps,
      active_client: Option<CaptureHandle>,
      backend: Option<input_capture::Backend>,
      cancellation_token: CancellationToken,
 @@ -170,6 +175,7 @@ struct CaptureTask {
-
+ 
  impl CaptureTask {
      fn add_capture(&mut self, handle: CaptureHandle, pos: Position, capture_type: CaptureType) {
 +        self.captures.retain(|&(h, ..)| h != handle);
          self.captures.push((handle, pos, capture_type));
      }
-
+ 
 @@ -281,14 +287,22 @@ impl CaptureTask {
-
+ 
                      match event {
                          // connection acknowlegded => set state to Sending
 -                        ProtoEvent::Ack(_) => {
@@ -220,7 +220,7 @@ index 8f739bd..4437c89 100644
          let (handle, event) = event;
 +        if !self.captures.iter().any(|&(h, ..)| h == handle) { return Ok(()); }
          log::trace!("({handle}): {event:?}");
-
+ 
 +        if let CaptureEvent::Input(Event::Keyboard(KeyboardEvent::Key { key, state, .. })) = event {
 +            if std::env::var("DEN_CTRL_COMMAND").is_ok() && self.active_client.is_some() {
 +                let taps=self.ctrl_taps.key(key,state,Instant::now());
@@ -242,7 +242,7 @@ index 8f739bd..4437c89 100644
              log::info!("releasing capture: release-bind pressed");
              return self.release_capture(capture).await;
 @@ -347,6 +379,7 @@ impl CaptureTask {
-
+ 
          // activated a new client
          if event == CaptureEvent::Begin && Some(handle) != self.active_client {
 +            self.ctrl_taps=CtrlTaps::default();
@@ -309,7 +309,7 @@ index 8f739bd..4437c89 100644
 +    }
 +}
 diff --git a/src/connect.rs b/src/connect.rs
-index cc067f7..50b30eb 100644
+index cc067f7..f36413e 100644
 --- a/src/connect.rs
 +++ b/src/connect.rs
 @@ -3,7 +3,7 @@ use lan_mouse_ipc::{ClientHandle, DEFAULT_PORT};
@@ -321,15 +321,27 @@ index cc067f7..50b30eb 100644
      collections::{HashMap, HashSet},
      io,
      net::SocketAddr,
-@@ -92,6 +92,7 @@ async fn connect_any(
+@@ -91,7 +91,19 @@ async fn connect_any(
+     }
  }
-
+ 
++// Two physical edges can target one peer. Reuse its established DTLS socket,
++// rather than replacing the address-keyed connection with a second socket.
++fn shared_live_peer(manager: &ClientManager, handle: ClientHandle) -> Option<SocketAddr> {
++    let ips = manager.get_ips(handle)?;
++    let port = manager.get_port(handle).unwrap_or(DEFAULT_PORT);
++    manager.active_clients().into_iter().filter(|h| *h != handle).find_map(|h| {
++        let addr = manager.active_addr(h)?;
++        (manager.alive(h) && addr.port() == port && ips.contains(&addr.ip())).then_some(addr)
++    })
++}
++
  pub(crate) struct LanMouseConnection {
 +    route: Cell<Option<ClientHandle>>,
      cert: Certificate,
      client_manager: ClientManager,
      conns: Rc<Mutex<HashMap<SocketAddr, Arc<dyn Conn + Send + Sync>>>>,
-@@ -105,6 +106,7 @@ impl LanMouseConnection {
+@@ -105,6 +117,7 @@ impl LanMouseConnection {
      pub(crate) fn new(cert: Certificate, client_manager: ClientManager) -> Self {
          let (recv_tx, recv_rx) = channel();
          Self {
@@ -337,9 +349,9 @@ index cc067f7..50b30eb 100644
              cert,
              client_manager,
              conns: Default::default(),
-@@ -116,7 +118,12 @@ impl LanMouseConnection {
+@@ -116,7 +129,12 @@ impl LanMouseConnection {
      }
-
+ 
      pub(crate) async fn recv(&mut self) -> (ClientHandle, ProtoEvent) {
 -        self.recv_rx.recv().await.expect("channel closed")
 +        let (handle, event) = self.recv_rx.recv().await.expect("channel closed");
@@ -349,17 +361,44 @@ index cc067f7..50b30eb 100644
 +        ).unwrap_or(handle);
 +        (routed, event)
      }
-
+ 
      pub(crate) async fn send(
-@@ -124,6 +131,7 @@ impl LanMouseConnection {
+@@ -124,6 +142,15 @@ impl LanMouseConnection {
          event: ProtoEvent,
          handle: ClientHandle,
      ) -> Result<(), LanMouseConnectionError> {
 +        if matches!(event, ProtoEvent::Enter(_)) { self.route.set(Some(handle)); }
++        if self.client_manager.active_addr(handle).is_none() {
++            if let Some(addr) = shared_live_peer(&self.client_manager, handle) {
++                if self.conns.lock().await.contains_key(&addr) {
++                    self.client_manager.set_active_addr(handle, Some(addr));
++                    self.client_manager.set_alive(handle, true);
++                }
++            }
++        }
          let (buf, len): ([u8; MAX_EVENT_SIZE], usize) = event.into();
          let buf = &buf[..len];
          if let Some(addr) = self.client_manager.active_addr(handle) {
-@@ -283,3 +291,23 @@ async fn disconnect(
+@@ -261,6 +288,9 @@ async fn receive_loop(
+                 ProtoEvent::Pong(b) => {
+                     client_manager.set_active_addr(handle, Some(addr));
+                     client_manager.set_alive(handle, b);
++                    for peer in client_manager.active_clients() {
++                        if client_manager.active_addr(peer) == Some(addr) { client_manager.set_alive(peer, b); }
++                    }
+                     ping_response.borrow_mut().insert(addr);
+                 }
+                 event => tx.send((handle, event)).expect("channel closed"),
+@@ -280,6 +310,47 @@ async fn disconnect(
+     log::warn!("client ({handle}) @ {addr} connection closed");
+     conns.lock().await.remove(&addr);
+     client_manager.set_active_addr(handle, None);
++    for peer in client_manager.active_clients() {
++        if client_manager.active_addr(peer) == Some(addr) {
++            client_manager.set_active_addr(peer, None);
++            client_manager.set_alive(peer, false);
++        }
++    }
      let active: Vec<SocketAddr> = conns.lock().await.keys().copied().collect();
      log::info!("active connections: {active:?}");
  }
@@ -367,6 +406,21 @@ index cc067f7..50b30eb 100644
 +#[cfg(test)]
 +mod den_route_tests {
 +    use super::*;
++    #[test]
++    fn den_second_edge_reuses_live_peer_only_on_matching_address_and_port() {
++        let manager=ClientManager::default();
++        let a=manager.add_client();let b=manager.add_client();
++        manager.activate_client(a);manager.activate_client(b);
++        let addr: SocketAddr="127.0.0.1:4242".parse().unwrap();
++        manager.set_active_addr(a,Some(addr));manager.set_alive(a,true);
++        manager.set_fix_ips(b,vec![addr.ip()]);
++        assert_eq!(shared_live_peer(&manager,b),Some(addr));
++        manager.set_alive(a,false);assert_eq!(shared_live_peer(&manager,b),None);
++        manager.set_alive(a,true);manager.set_active_addr(a,Some("127.0.0.1:4243".parse().unwrap()));
++        assert_eq!(shared_live_peer(&manager,b),None);
++        manager.set_active_addr(a,Some("127.0.0.2:4242".parse().unwrap()));
++        assert_eq!(shared_live_peer(&manager,b),None);
++    }
 +    #[test]
 +    fn reply_for_shared_peer_routes_to_current_edge() {
 +        let manager=ClientManager::default();
@@ -393,7 +447,7 @@ index 853267c..e9f08e2 100644
      ReleaseNotify,
 +    Left { addr: SocketAddr },
  }
-
+ 
  enum EmulationRequest {
      Reenable,
 -    Release(SocketAddr),
@@ -404,7 +458,7 @@ index 853267c..e9f08e2 100644
 @@ -83,9 +84,9 @@ impl Emulation {
          }
      }
-
+ 
 -    pub(crate) fn send_leave_event(&self, addr: SocketAddr) {
 +    pub(crate) fn send_leave_event(&self, addr: SocketAddr, edge: u32) {
          self.request_tx
@@ -412,7 +466,7 @@ index 853267c..e9f08e2 100644
 +            .send(EmulationRequest::Release(addr, edge))
              .expect("channel closed");
      }
-
+ 
 @@ -128,6 +129,7 @@ impl ListenTask {
      async fn run(mut self) {
          let mut interval = tokio::time::interval(Duration::from_secs(5));
@@ -462,7 +516,7 @@ index 853267c..e9f08e2 100644
                              self.event_tx.send(EmulationEvent::Disconnected { addr }).expect("channel closed");
                              false
 @@ -210,6 +219,7 @@ pub(crate) struct EmulationProxy {
-
+ 
  enum ProxyRequest {
      Input(Event, SocketAddr),
 +    Prepare(SocketAddr, tokio::sync::oneshot::Sender<bool>),
@@ -472,7 +526,7 @@ index 853267c..e9f08e2 100644
 @@ -259,6 +269,12 @@ impl EmulationProxy {
          }
      }
-
+ 
 +    async fn prepare(&self, addr: SocketAddr) -> bool {
 +        let (tx, rx) = tokio::sync::oneshot::channel();
 +        self.request_tx.send(ProxyRequest::Prepare(addr, tx)).expect("channel closed");
@@ -606,7 +660,7 @@ index d0772f6..b0b1eb7 100644
      }
 @@ -386,18 +438,17 @@ impl Service {
      const ENTER_HANDLE_BEGIN: u64 = u64::MAX / 2 + 1;
-
+ 
      fn add_incoming(&mut self, addr: SocketAddr, pos: Position, fingerprint: String) {
 -        let handle = Self::ENTER_HANDLE_BEGIN + self.next_trigger_handle;
 -        self.next_trigger_handle += 1;
@@ -631,7 +685,7 @@ index d0772f6..b0b1eb7 100644
 -            },
 -        );
      }
-
+ 
      fn update_incoming(&mut self, addr: SocketAddr, pos: Position, fingerprint: String) {
 @@ -412,7 +463,7 @@ impl Service {
              incoming.fingerprint = fingerprint.clone();
@@ -644,7 +698,7 @@ index d0772f6..b0b1eb7 100644
          }
 @@ -429,16 +480,12 @@ impl Service {
      }
-
+ 
      fn remove_incoming(&mut self, addr: SocketAddr) -> Option<SocketAddr> {
 -        let handle = self
 -            .incoming_conn_info
@@ -662,5 +716,5 @@ index d0772f6..b0b1eb7 100644
 -            .map(|incoming| incoming.addr)
 +        Some(addr)
      }
-
+ 
      fn notify_frontend(&mut self, event: FrontendEvent) {

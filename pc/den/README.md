@@ -22,7 +22,7 @@ Mouse/keyboard traffic is encrypted with DTLS. Each peer authorizes the other ce
 
 Lan Mouse does not implement clipboard sharing. `den-clipboard.py` supplies a small event-driven bridge using `wl-paste --watch`, the existing strictly pinned key-only SSH connection, and `wl-copy`. It supports text and PNG up to 8 MiB, keeps payloads in memory, suppresses echoes, and excludes clipboard offers marked sensitive. It never logs or saves clipboard contents. Other MIME types and large file transfers are intentionally outside this bridge. The laptop owns the initial clipboard on reconnect; subsequent copies flow both ways. Clipboard history remains each desktop's existing local responsibility.
 
-`den-session.py` discovers the current Wayland socket on each start, including after logout/login. New dedicated user units are linked from the private connection directory; they restart after failure and wait for a graphical session. These additions do not rewrite Claude's existing laptop services or desktop configuration.
+`den-session.py` discovers the current Wayland socket on each start, including after logout/login. New dedicated user units are linked from the private connection directory; they restart after failure and wait for a graphical session. These units remain separate from the desktop compositor's lifecycle.
 
 ## Reproduce the service wiring
 
@@ -68,7 +68,7 @@ HDMI lower external  ⇄  eDP-1 laptop
                          DP-2 ScreenPad
 ```
 
-The red displays remain one Hyprland desktop; the blue display remains Homie’s own desktop. Laptop keyboard/mouse are the master. All four return combinations are tested, including entering from one red display and leaving onto the other. `den-edge-return.py` maps the crossing coordinate to the adjacent screen using actual logical sizes/scales and places the pointer a few pixels inward to prevent immediate recapture. It uses the existing pinned SSH connection only when crossing, not continuous polling; no display positions or Claude-owned Hyprland files are changed. A fixed local executable handles only validated edge IDs 1/2. The native virtual-keyboard, pointer, click, wheel and emergency-release tests remain available as private receiver fixtures.
+The red displays remain one Hyprland desktop; the blue display remains Homie’s own desktop. Laptop keyboard/mouse are the master. All four return combinations are tested, including entering from one red display and leaving onto the other. `den-edge-return.py` maps the crossing coordinate to the adjacent screen using actual logical sizes/scales and places the pointer a few pixels inward to prevent immediate recapture. It uses the existing pinned SSH connection only when crossing, not continuous polling; no display positions or unrelated Hyprland files are changed. A fixed local executable handles only validated edge IDs 1/2. The native virtual-keyboard, pointer, click, wheel and emergency-release tests remain available as private receiver fixtures.
 
 `test_edges_desktop.py` is an explicitly invoked desktop acceptance harness, run on the laptop only while the private `Den input harness` receiver is open on Homie. It asserts focus before any test interaction, moves the cursor through the four routes and checks actual return coordinates. It is never run automatically by installation or at login.
 
@@ -190,3 +190,14 @@ release chord. The operator's desktop is never a target for automated typing.
 Focus ownership acceptance: owner-off → no active PC output, owner-on → DP-3, owner-off → inactive again passed against the actual QML IPC state.
 
 The System widget on either machine controls the same laptop-master state via `den-control`. Old Deskflow control is not used by this widget.
+
+
+### Shared connection regression (2026-10-15)
+
+Two edges aimed at one peer now reuse the existing live DTLS connection, scoped
+to the configured address and port. Pong/disconnect state is propagated to both
+handles. This avoids replacing an address-keyed socket with a competing second
+connection. Three Rust tests cover reply routing, connection selection, and the
+Ctrl gesture. A supervised test completed three passes of all four crossings
+with typing, Ctrl+A, clicks and scrolling into an owned GTK test window. The
+receiver event log confirmed every sequence; user applications were not typed into.

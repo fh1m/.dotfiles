@@ -44,6 +44,16 @@ if [ -z "${SENSEI_QS_BIN:-}" ] && [ -x "$local_qs" ] && [ -r "$qt_stamp" ]; then
     fi
 fi
 
+# QTBUG-146671 can crash a non-focusing panel on a right-click at (0,0).
+# Filter only the invalid synthesized context-menu event, keeping mouse actions.
+# Public Qt API plugin; rebuild after Qt updates instead of loading stale code.
+qt_plugins="$HOME/.local/share/sensei-qt-plugins"
+current_qt="$(/usr/lib/qt6/bin/qtpaths --query QT_VERSION 2>/dev/null || true)"
+if [ -f "$qt_plugins/generic/libsensei_context_guard.so" ] && [ -r "$qt_plugins/qt-version" ] && [ "$(cat "$qt_plugins/qt-version")" = "$current_qt" ]; then
+    export QT_PLUGIN_PATH="$qt_plugins${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
+    export QT_QPA_GENERIC_PLUGINS="sensei-context-guard${QT_QPA_GENERIC_PLUGINS:+,$QT_QPA_GENERIC_PLUGINS}"
+fi
+
 runtime="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 tag="$(printf '%s' "${QS_ARGS[*]}" | cksum | cut -d' ' -f1)"
 
