@@ -13,14 +13,14 @@ No disk conversion, forced Git operations, automatic purchases or off-site backu
 
 | Stage | Done when | State |
 |---|---|---|
-| P0 recovery | Private backups, baseline, outstanding-work ledger | Verified baseline; final refresh pending |
+| P0 recovery | Private backups, baseline, outstanding-work ledger | Encrypted backups refreshed; restore proofs pass |
 | P1 music | Shared request control, quota handling, native transport regression tests | Native tests and budget implemented; live Connect test open |
 | P2 displays | Identity-based roles and routes, hotplug fallback, PC DP-2 accepted | Identity/role tests pass; physical handoff open |
 | P3 continuity | Capacity-aware personal mirror, agent parity, verified local restore | Sync, conflict, Git and restore proofs pass |
 | P4 remote/compute | Private connectivity, persistent job, checked artifact | Private stream, persistent jobs, both GPUs and ROS pass |
-| P5 companion/UI | Isolated click-through companion, host/role labels, quiet control | Live asset reviewed; final parity/interaction check open |
+| P5 companion/UI | Isolated click-through companion, host/role labels, quiet control | Both hosts deployed; live quiet suppression passes |
 | P6 display handoff | Guided modes; physical switching explicitly gated | Software prepared; physical gate remains |
-| P7 acceptance | Tests, clean reviewed gallery, identical revisions, idempotence | 223 Python tests and installer safety pass; final deployment pending |
+| P7 acceptance | Tests, clean reviewed gallery, identical revisions, idempotence | 223 Python tests and installer safety pass; both hosts deployed |
 
 ## Discovered constraints
 
@@ -59,3 +59,14 @@ travel, monitor-cable handoff or Spotify Connect acceptance passed from unit tes
 The laptop Ethernet link is measured at 100 Mb/s; two independent GPU checks are
 not a pooled-memory or distributed-training result. Private settings and credentials
 were transferred selectively, without replacing valid existing agent accounts.
+
+## Final deployment audit
+
+Both hosts deployed 7a649da with zero remaining installer changes. Presence
+watchers and daily backup timers enabled on both. Fresh backup services exited
+successfully and independent restore fixtures matched on both machines. Manual
+pause survived a watcher cycle; away released capture and auto resumed. All four
+live cursor crossing/return combinations passed again with independent expiry
+timers; the cursor was returned to Arete and sharing restored afterward. Homie
+desktop/storage diagnostics passed. A real Spotify device-list request still
+returned HTTP 429, so live Connect acceptance remains explicitly open.

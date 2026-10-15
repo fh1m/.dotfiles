@@ -6,7 +6,7 @@ under `~/.local/state/homie-control/` and `~/.local/state/sensei-den/`.
 
 | Workflow | Observed result | Boundary |
 |---|---|---|
-| Shared input | Four main/upper crossing and return combinations; triple-Ctrl pause/resume passed with independent expiry timers | Physical unplug/replug and suspend are separate tests |
+| Shared input | Four main/upper crossing and return combinations; triple-Ctrl pause/resume passed with independent expiry timers | Repeated on final deployment; physical unplug/replug and suspend are separate tests |
 | Personal files | Eleven folders reached idle with no outstanding files/errors; a deliberate conflict retained both versions; payload checksum matched | A mirror propagates deletion; it is not a backup |
 | Project history | Seven private Git handoffs passed connectivity checks; staged changes and independent work files preserved in fixture tests | Git metadata is excluded from Syncthing; commit/pull remains explicit |
 | Account continuity | Both agent CLIs report authentication; Spotify local login available | No billed agent request made; refresh-token rotation is provider-owned |
@@ -17,7 +17,7 @@ under `~/.local/state/homie-control/` and `~/.local/state/sensei-den/`.
 | Robotics transport | Isolated ROS domain 83 exchanged a nonce and return acknowledgement between hosts; both processes exited successfully with scoped firewall active | Synthetic String topic, no actuators; not production robot acceptance |
 | Spotify transport | Owned UDP fixture verifies one Next/Previous command and bounds stale progress; Rust middleware tests cover request behavior | Provider/device-transfer acceptance remains open |
 | Playback observation | 90 minutes: 1,076 samples, 121 playing samples, two track transitions, zero status errors or unexpected resets | About ten minutes observed playing; not 90 minutes of continuous audio |
-| Companion | Actual wallpaper capture reviewed; text bubble and poses recorded; no sound or input region | Fullscreen/quiet behavior still needs final desktop acceptance |
+| Companion | Actual wallpaper capture reviewed; text bubble and poses recorded; no sound or input region | Live quiet suppression passed; fullscreen/click-through still needs final interaction acceptance |
 
 ## Remaining acceptance gates
 
@@ -46,3 +46,15 @@ den backup restore-test
 
 The wired laptop link currently negotiates **100 Mb/s**. The measured transfer
 was about 11.3 MB/s. Software tuning cannot promise gigabit throughput on that link.
+
+## Final deployment checks
+
+- Both profiles applied with no remaining installer changes; main branch shared.
+- Both presence services and daily backup timers enabled and active.
+- Fresh encrypted backup runs succeeded; both restore checks repeated successfully.
+- Manual pause remained paused across presence refresh; away released input and
+  returning to auto resumed sharing. Final four cursor routes passed.
+- Homie desktop checks all passed; all six designated data mounts readable with
+  intended writable/read-only separation. Both agent authentication checks passed.
+- Live Spotify catalogue query returned HTTP 429. Cooldown was preserved; this is
+  an unresolved provider-facing behavior, not a passed playback acceptance test.
