@@ -6,8 +6,8 @@ import qs.services
 DropdownFrame {
  title:"\uf085 Sensei // operator deck";katakana:"ОПЕРАТОР";implicitWidth:596
  Column {width:parent.width;spacing:14
- NrLabel {text:"fh1m / R-01  ·  ZenBook Pro Duo UX581GV";pixelSize:15;color:Theme.widgetAccent}
- NrLabel {text:"Two panels. One RTX. Zero patience for mystery load.";pixelSize:11;color:Theme.widgetMuted}
+ NrLabel {text:"fh1m · "+(MachineProfile.desktop?"Homie":"Arete")+" · "+MachineProfile.cpuName;pixelSize:15;color:Theme.widgetAccent}
+ NrLabel {text:MachineProfile.desktop?"The home lab. Direct graphics. Room to build.":"Two panels. One RTX. Zero patience for mystery load.";pixelSize:11;color:Theme.widgetMuted}
  Rectangle {width:parent.width;height:1;color:Theme.rule}
  Row {width:parent.width;height:55;spacing:0
   Repeater {model:[

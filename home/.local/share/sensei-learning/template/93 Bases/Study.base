@@ -1,0 +1,38 @@
+filters:
+  and:
+  - file.ext == "md"
+  - '!file.inFolder("92 Templates") && !file.inFolder("Templates")'
+views:
+- type: table
+  name: Papers
+  filters:
+    and:
+    - type == "paper"
+  order:
+  - file.name
+  - status
+  - reading_pass
+  - position
+  - source
+- type: table
+  name: Courses
+  filters:
+    and:
+    - type == "course"
+  order:
+  - file.name
+  - status
+  - position
+  - progress_current
+  - progress_total
+- type: table
+  name: Resources
+  filters:
+    and:
+    - type == "resource" || type == "source"
+  order:
+  - file.name
+  - source_kind
+  - status
+  - position
+  - source

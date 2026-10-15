@@ -28,8 +28,8 @@ Variants {
         Wallpaper {
             // The saved per-display choices arrive asynchronously. Never show
             // a bundled theme wallpaper in the gap before that file is read.
-            source: Wallpapers.loaded ? Wallpapers.displaySource((modelData?.name ?? "eDP-1")) : Wallpapers.startupSource(ShellState.isExternalOutput(modelData?.name ?? "eDP-1")?"eDP-1":(modelData?.name ?? "eDP-1"))
-            imageFillMode: Wallpapers.displayMode((modelData?.name ?? "eDP-1"))
+            source: Wallpapers.loaded ? Wallpapers.displaySource((modelData?.name ?? (MachineProfile.primaryOutput||"DP-3"))) : Wallpapers.startupSource(ShellState.isExternalOutput(modelData?.name ?? (MachineProfile.primaryOutput||"DP-3"))?(MachineProfile.primaryOutput||"DP-3"):(modelData?.name ?? (MachineProfile.primaryOutput||"DP-3")))
+            imageFillMode: Wallpapers.displayMode((modelData?.name ?? (MachineProfile.primaryOutput||"DP-3")))
             anchors.fill: parent
 
             // Crisp wallpaper with a mild static dim behind workspaces.

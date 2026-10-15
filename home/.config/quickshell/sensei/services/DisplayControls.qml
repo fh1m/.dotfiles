@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import qs.config
 
 Singleton {
     id: root
@@ -10,6 +11,7 @@ Singleton {
     property var pending: ({})
     property var targets: ({})
     function adjustLevel(output: string, delta: real): void {
+        if(MachineProfile.desktop&&output==="main")output=MachineProfile.primaryOutput;
         const previous = targets[output];
         // The main panel is read live from the backlight, as the sliders are.
         // RobotBench's copy is polled every few seconds and is only the fallback.
@@ -19,6 +21,7 @@ Singleton {
         setLevel(output, base + delta);
     }
     function setLevel(output: string, percent: real): void {
+        if(MachineProfile.desktop&&output==="main")output=MachineProfile.primaryOutput;
         if(output!=="main"&&output!=="screenpad"){
             const externalLevel = Math.max(0, Math.min(100, Math.round(percent)));
             targets[output] = {level: externalLevel, time: Date.now()};

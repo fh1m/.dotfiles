@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import qs.config
 
 // The workspace rail follows the focused display, including ScreenPad Misc.
 // Switching a workspace must be reflected even when it belongs to another output.
@@ -47,7 +48,7 @@ Singleton {
         stdout:StdioCollector {onStreamFinished:{try{const data=JSON.parse(text);if(Array.isArray(data))root.outputState=data;}catch(e){console.warn("Workspace monitor snapshot unavailable");}}}
         onExited:if(root.outputRefreshPending){root.outputRefreshPending=false;Qt.callLater(()=>root.refreshOutputs());}
     }
-    readonly property var mainMonitor: outputState.find(m=>m.name==="eDP-1") ?? outputState[0] ?? null
+    readonly property var mainMonitor: outputState.find(m=>m.name===MachineProfile.primaryOutput) ?? outputState[0] ?? null
     readonly property var monitorIpc: mainMonitor
     readonly property var focusedMonitor: outputState.find(m=>m.focused) ?? mainMonitor
     function windowWorkspace(t){return t.lastIpcObject?.workspace?.id??t.workspace?.id;}

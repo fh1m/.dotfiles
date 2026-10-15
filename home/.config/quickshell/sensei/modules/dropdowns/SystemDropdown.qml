@@ -14,7 +14,7 @@ DropdownFrame {
     katakana: "УПРАВЛЕНИЕ"
     implicitWidth: 596
     function action(name, value = ""): void {
-        Quickshell.execDetached(value === "" ? ["@HOME@/.local/bin/zenbook-controls", name] : ["@HOME@/.local/bin/zenbook-controls", name, value]);
+        Quickshell.execDetached(value === "" ? [(Quickshell.env("HOME")+"/.local/bin/"+(MachineProfile.desktop?"sensei-desktop-control":"zenbook-controls")), name] : [(Quickshell.env("HOME")+"/.local/bin/"+(MachineProfile.desktop?"sensei-desktop-control":"zenbook-controls")), name, value]);
         refresh.restart();
     }
     function launch(args): void { ShellState.dropdown = ""; Quickshell.execDetached(args); }
@@ -42,11 +42,11 @@ DropdownFrame {
         Loader {width:parent.width;active:ShellState.systemPage===4;visible:active;height:active?(item?.implicitHeight??0):0;sourceComponent:Component {PackagesSection {width:parent.width}}}
         Column { id: systemPageEnter0Container
             width: parent.width; spacing: 10; visible: ShellState.systemPage === 0
-            WidgetSection { width: parent.width; title: "Connections"; subtitle: Networking.wifiEnabled ? "Wi-Fi on" : "Wi-Fi off"; glyph: "\uf1eb"
+            WidgetSection { width: parent.width; title: "Connections"; subtitle: MachineProfile.facts.hasWireless ? (Networking.wifiEnabled ? "Wi-Fi on" : "Wi-Fi off") : "Wired network"; glyph: "\uf1eb"
                 Grid { columns: 3; spacing: 8
-                    ControlTile { implicitWidth: 176; label: "Wi-Fi"; glyph: "\uf1eb"; selected: Networking.wifiEnabled; onActivated: Networking.wifiEnabled = !Networking.wifiEnabled }
+                    ControlTile { implicitWidth: 176; label: MachineProfile.facts.hasWireless ? "Wi-Fi" : "Ethernet"; glyph: MachineProfile.facts.hasWireless ? "\uf1eb" : "\uf6ff"; selected: MachineProfile.facts.hasWireless && Networking.wifiEnabled; onActivated: { if (MachineProfile.facts.hasWireless) Networking.wifiEnabled = !Networking.wifiEnabled; else Quickshell.execDetached(["nm-connection-editor"]) } }
                     ControlTile { implicitWidth: 176; label: "Bluetooth"; glyph: "\uf293"; enabled: Bluetooth.defaultAdapter !== null; selected: Bluetooth.defaultAdapter?.enabled ?? false; onActivated: Bluetooth.defaultAdapter.enabled = !Bluetooth.defaultAdapter.enabled }
-                    ControlTile { implicitWidth: 176; label: "Airplane"; glyph: "\uf072"; selected: RobotBench.data.airplaneMode ?? false; onActivated: root.action("airplane") }
+                    ControlTile { visible: MachineProfile.facts.hasWireless; implicitWidth: 176; label: "Airplane"; glyph: "\uf072"; selected: RobotBench.data.airplaneMode ?? false; onActivated: root.action("airplane") }
                     ControlTile { implicitWidth: 176; label: Audio.muted ? "Unmute" : "Mute"; glyph: Audio.muted ? "\uf026" : "\uf028"; selected: !Audio.muted; onActivated: Quickshell.execDetached(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"]) }
                     ControlTile { implicitWidth: 176; label: Audio.micMuted ? "Mic on" : "Mic off"; glyph: "\uf130"; selected: !Audio.micMuted; onActivated: { if (Audio.source?.audio) Audio.source.audio.muted = !Audio.micMuted; } }
                     ControlTile { implicitWidth: 176; label: "Keep awake"; glyph: "\uf186"; selected: Idle.hold; onActivated: Idle.toggle() }
@@ -56,20 +56,20 @@ DropdownFrame {
                 Column { width: parent.width; spacing: 3
                     ControlSlider { title: "Speaker volume"; glyph: "\uf028"; level: Audio.volume * 100; onEdited: percent => { if (Audio.sink?.audio) Audio.sink.audio.volume = Math.min(1, percent / 100); } }
                     ControlSlider { title: "Microphone gain"; maximum: 200; glyph: "\uf130"; level: Audio.micVolume * 100; onEdited: percent => { if (Audio.source?.audio) Audio.source.audio.volume = Math.min(2, percent / 100); } }
-                    ControlSlider { title: "Main display"; glyph: "\uf108"; level: Brightness.ready ? Brightness.value * 100 : (RobotBench.data.mainBrightness ?? 0); onEdited: percent => DisplayControls.setLevel("main", percent) }
-                    ControlSlider { title: "ScreenPad"; glyph: "\uf26c"; level: RobotBench.data.brightness ?? 0; onEdited: percent => DisplayControls.setLevel("screenpad", percent) }
+                    ControlSlider { visible:!MachineProfile.desktop; title: "Main display"; glyph: "\uf108"; level: Brightness.ready ? Brightness.value * 100 : (RobotBench.data.mainBrightness ?? 0); onEdited: percent => DisplayControls.setLevel("main", percent) }
+                    ControlSlider { visible:!MachineProfile.desktop; title: "ScreenPad"; glyph: "\uf26c"; level: RobotBench.data.brightness ?? 0; onEdited: percent => DisplayControls.setLevel("screenpad", percent) }
                     Repeater {model:ExternalDisplays.displays
                         Column {required property var modelData;width:parent.width
-                            ControlSlider {visible:modelData.ready;height:visible?implicitHeight:0;title:(modelData.barEdge==="top"?"Upper":"Lower")+" · "+modelData.label;glyph:"\uf26c";level:modelData.level??0;onEdited:percent=>ExternalDisplays.setLevel(modelData.output,percent)}
-                            Text { textFormat: Text.PlainText;visible:!modelData.ready;width:parent.width;wrapMode:Text.Wrap;text:(modelData.barEdge==="top"?"Upper":"Lower")+" · monitor brightness controls unavailable";color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:12}
+                            ControlSlider {visible:modelData.ready;height:visible?implicitHeight:0;title:(modelData.output===MachineProfile.primaryOutput?"Display":modelData.barEdge==="top"?"Upper":"Lower")+" · "+modelData.label;glyph:"\uf26c";level:modelData.level??0;onEdited:percent=>ExternalDisplays.setLevel(modelData.output,percent)}
+                            Text { textFormat: Text.PlainText;visible:!modelData.ready;width:parent.width;wrapMode:Text.Wrap;text:(modelData.output===MachineProfile.primaryOutput?"Display":modelData.barEdge==="top"?"Upper":"Lower")+" · monitor brightness controls unavailable";color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:12}
                         }
                     }
                 }
             }
-            WidgetSection { width: parent.width; title: "Power"; subtitle: `Battery ${Math.round(Power.charge)}% · ${Power.onBattery ? "battery" : "AC"}`; glyph: "\uf240"
+            WidgetSection { width: parent.width; title: "Power"; subtitle: MachineProfile.desktop ? (MachineProfile.facts.hasPowerProfiles?"Desktop · AC":"Desktop · firmware CPU policy") : (`Battery ${Math.round(Power.charge)}% · ${Power.onBattery ? "battery" : "AC"}`); glyph: "\uf240"
                 Row { spacing: 8
-                    ControlTile { implicitWidth: 176; label: "Eco"; glyph: "\uf06c"; selected: Power.profile === PowerProfile.PowerSaver; onActivated: Power.setProfile("power-saver") }
-                    ControlTile { implicitWidth: 176; label: "Balanced"; glyph: "\uf24e"; selected: Power.profile === PowerProfile.Balanced; onActivated: Power.setProfile("balanced") }
+                    ControlTile { implicitWidth: 176; label: "Eco"; enabled:!MachineProfile.desktop||MachineProfile.facts.hasPowerProfiles===true; glyph: "\uf06c"; selected: Power.profile === PowerProfile.PowerSaver; onActivated: Power.setProfile("power-saver") }
+                    ControlTile { implicitWidth: 176; label: "Balanced"; enabled:!MachineProfile.desktop||MachineProfile.facts.hasPowerProfiles===true; glyph: "\uf24e"; selected: Power.profile === PowerProfile.Balanced; onActivated: Power.setProfile("balanced") }
                     ControlTile { implicitWidth: 176; label: "Performance"; glyph: "\uf135"; enabled: Power.hasPerformance; selected: Power.profile === PowerProfile.Performance; onActivated: Power.setProfile("performance") }
                 }
             }
@@ -84,12 +84,13 @@ DropdownFrame {
                     ActionRow { implicitWidth: 268; label: "Power menu"; detail: "Suspend or shut down"; glyph: "\uf011"; onActivated: { ShellState.dropdown = ""; ShellState.openExclusive("power"); } }
                 }
             }
-            ActionRow { implicitWidth: parent.width; label: ServicesControl.remoteActive ? "Stop remote access" : "Start remote access"; glyph: "\uf108"; detail: "NoMachine · on demand"; onActivated: ServicesControl.toggleRemote() }
+            ActionRow { visible:!MachineProfile.desktop; implicitWidth: parent.width; label: ServicesControl.remoteActive ? "Stop remote access" : "Start remote access"; glyph: "\uf108"; detail: "NoMachine · on demand"; onActivated: ServicesControl.toggleRemote() }
             Text { textFormat: Text.PlainText; width: parent.width; visible: (Power.error + ServicesControl.error).length > 0; text: Power.error || ServicesControl.error; color: Theme.widgetAccent; wrapMode: Text.WordWrap; font.family: Appearance.font.ui; font.pixelSize: 12 }
         }
         Column {id:systemPageEnter1Container;
             width: parent.width; spacing: 12; visible: ShellState.systemPage === 1
             
+            Column { width: parent.width; spacing: 12; visible: !MachineProfile.desktop
             NrLabel { pixelSize: 12; color: Theme.widgetAccent; text: "\uf11c KEYBOARD BACKLIGHT" }
             Row {
                 spacing: 8
@@ -107,6 +108,7 @@ DropdownFrame {
                 }
             }
             Text { textFormat: Text.PlainText; width: parent.width; text: "60% desk use · 80% everyday · 100% travel"; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
+            }
             Row {
                 spacing: 8
                 ControlTile { label: "Auto fans"; glyph: "\udb80\ude10"; enabled: RobotBench.data.fanControlAvailable ?? false; selected: RobotBench.data.fanMode === 2; onActivated: root.action("fan", "auto") }
@@ -116,15 +118,15 @@ DropdownFrame {
             Text { textFormat: Text.PlainText; width: parent.width; text: `CPU ${RobotBench.data.cpuTemperature ?? "--"}°C  ·  CPU/GPU fans ${(RobotBench.data.fans ?? []).join(" / ")} RPM`; font.family: Appearance.font.ui; font.pixelSize: 13; color: (RobotBench.data.cpuTemperature ?? 0) >= 85 ? Theme.semanticAmber : Theme.widgetAccent }
             Grid {
                 columns: 3; spacing: 8
-                ControlTile { label: "Touchpad"; glyph: "\uf245"; selected: RobotBench.data.touchpadEnabled ?? true; onActivated: root.action("touchpad") }
-                ControlTile { label: "Natural scroll"; glyph: "\uf07d"; selected: RobotBench.data.naturalScroll ?? true; onActivated: root.action("natural") }
+                ControlTile { visible:!MachineProfile.desktop; label: "Touchpad"; glyph: "\uf245"; selected: RobotBench.data.touchpadEnabled ?? true; onActivated: root.action("touchpad") }
+                ControlTile { visible:!MachineProfile.desktop; label: "Natural scroll"; glyph: "\uf07d"; selected: RobotBench.data.naturalScroll ?? true; onActivated: root.action("natural") }
                 ControlTile { label: "Animations"; glyph: "\uf0d0"; selected: RobotBench.data.animationsEnabled ?? true; onActivated: root.action("animations") }
-                ControlTile { label: "ScreenPad on/off"; glyph: "\uf26c"; selected: RobotBench.data.screenpadOn ?? true; onActivated: root.action("screenpad") }
-                ControlTile { label: "Swap screens"; glyph: "\uf074"; onActivated: root.action("swap") }
+                ControlTile { visible:!MachineProfile.desktop; label: "ScreenPad on/off"; glyph: "\uf26c"; selected: RobotBench.data.screenpadOn ?? true; onActivated: root.action("screenpad") }
+                ControlTile { visible:!MachineProfile.desktop; label: "Swap screens"; glyph: "\uf074"; onActivated: root.action("swap") }
                 ControlTile { label: RobotBench.data.cameraEnabled ? "Camera on" : "Camera off"; glyph: "\uf030"; enabled: RobotBench.data.cameraControlAvailable ?? false; selected: RobotBench.data.cameraEnabled ?? false; onActivated: root.action("camera") }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.widgetBorder }
-            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: `UX581GV · Intel UHD + RTX 2060\nStorage free: ${RobotBench.data.diskFreeGiB ?? "--"} GiB · ${RobotBench.data.diskUsedPercent ?? "--"}% used\nBuilt-in RGB / IR camera: ${RobotBench.data.cameraEnabled ? "ON" : "OFF"} · ScreenPad stays connected when switched off`; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetMuted; lineHeight: 1.5 }
+            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: MachineProfile.cpuName+" · "+MachineProfile.gpuName+"\nStorage free: "+(RobotBench.data.diskFreeGiB??"--")+" GiB · "+(RobotBench.data.diskUsedPercent??"--")+"% used"; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetMuted; lineHeight: 1.5 }
         }
         Column {id:systemPageEnter2Container;
             width: parent.width; spacing: 12; visible: ShellState.systemPage === 2
@@ -135,12 +137,12 @@ DropdownFrame {
             }
             Row {
                 spacing: 8
-                ControlTile { label: "Training mode"; glyph: "\uf135"; selected: RobotBench.data.trainingMode ?? false; onActivated: root.action("training", (RobotBench.data.trainingMode ?? false) ? "off" : "on") }
+                ControlTile { label: "Training mode"; enabled:!MachineProfile.desktop||MachineProfile.facts.hasPowerProfiles===true; glyph: "\uf135"; selected: RobotBench.data.trainingMode ?? false; onActivated: root.action("training", (RobotBench.data.trainingMode ?? false) ? "off" : "on") }
                 ControlTile { label: "NVIDIA terminal"; glyph: "\uf120"; onActivated: root.launch(["@HOME@/.local/bin/sim-console"]) }
                 ControlTile { label: "GPU monitor"; glyph: "\uf201"; onActivated: root.launch(["@HOME@/.local/bin/sensei-terminal", "--title", "GPU-Monitor", "nvtop"]) }
             }
-            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: "Training mode moves Chrome to Intel (saved tabs reopen), enables Performance + Keep Awake, and restores your previous choices when turned off. Other running GPU apps need relaunching."; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
-            NrLabel { pixelSize: 13; color: Theme.widgetAccent; text: RobotBench.data.gpu.state === "sleep" ? "RTX 2060 · SLEEP · 0%" : (RobotBench.data.gpu.state === "active" ? `RTX ${Math.round(RobotBench.data.gpu.usage)}% · ${Math.round(RobotBench.data.gpu.temperature)}°C` : "RTX · DATA UNAVAILABLE") }
+            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: "Training mode enables the desktop performance policy and keeps the session awake. Display and compute share the GTX GPU; VRAM is not pooled with the laptop."; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
+            NrLabel { pixelSize: 13; color: Theme.widgetAccent; text: MachineProfile.gpuName+" · "+(RobotBench.data.gpu.state==="active"?`${Math.round(RobotBench.data.gpu.usage)}% · ${Math.round(RobotBench.data.gpu.temperature)}°C`:"Telemetry unavailable") }
             Text { textFormat: Text.PlainText; width: parent.width; text: RobotBench.data.gpu.state === "active" ? `VRAM ${Math.round(RobotBench.data.gpu.memoryUsedMiB ?? 0)} / ${Math.round(RobotBench.data.gpu.memoryTotalMiB ?? 0)} MiB` : "No GPU workload while sleeping"; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetText }
             SegmentMeter { width: parent.width; segments: 40; segmentWidth: 11; segmentHeight: 8; value: (RobotBench.data.gpu.memory ?? 0) / 100; litColor: Theme.widgetAccent; hotThreshold: 0.85 }
             Column {

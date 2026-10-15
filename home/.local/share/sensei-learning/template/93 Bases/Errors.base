@@ -1,0 +1,17 @@
+filters:
+  and:
+    - 'file.ext == "md"'
+    - '!file.inFolder("92 Templates")'
+    - 'type == "error"'
+views:
+  - type: table
+    name: Models reality corrected
+    filters:
+      and:
+        - 'true'
+    order:
+      - file.name
+      - note.status
+      - note.domain
+      - note.created
+    limit: 12

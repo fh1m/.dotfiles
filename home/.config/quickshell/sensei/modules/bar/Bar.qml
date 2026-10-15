@@ -64,7 +64,7 @@ Variants {
             DisplayBadge { output: "main"; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             SoundButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             NotificationsButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
-            BatteryButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
+            BatteryButton { visible:!MachineProfile.desktop; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             SystemButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
         }
     }

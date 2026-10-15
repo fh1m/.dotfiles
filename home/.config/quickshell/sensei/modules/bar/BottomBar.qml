@@ -22,7 +22,7 @@ Variants {
         Component.onCompleted: {outputName=modelData.name;if(outputName==="DP-2")ShellState.bottomBarWindow = bar;registerEdge();}
         Component.onDestruction: {if (ShellState.bottomBarWindow === bar) ShellState.bottomBarWindow = null;ShellState.registerBar(registration,null);}
         required property ShellScreen modelData
-        IpcHandler {target:"bar-controls-"+bar.outputName;function expand(side:string,value:string):void {if(side==="left")bar.archiveOpen=value==="on";else if(side==="right")bar.machineOpen=value==="on";}function state():string {return JSON.stringify({left:bar.archiveOpen,right:bar.machineOpen});}}
+        IpcHandler {target:"bar-controls-bottom-"+bar.outputName;function expand(side:string,value:string):void {if(side==="left")bar.archiveOpen=value==="on";else if(side==="right")bar.machineOpen=value==="on";}function state():string {return JSON.stringify({left:bar.archiveOpen,right:bar.machineOpen});}}
         readonly property bool external: ShellState.externalScreens.some(s=>s.name===outputName)
         HoverHandler {onHoveredChanged:{ShellState.barHovered=hovered;if(hovered)ShellState.barContext(bar.outputName);}}
         property bool archiveOpen: false
@@ -61,7 +61,7 @@ Variants {
             ArchiveButton { visible:!bar.external; condensed: !bar.machineOpen; target: "oasis"; label: "Noesis"; detail:LearningBridge.NoesisBridge.activeVault?"Build · understand":"Choose a vault"; glyph: "\uf02d"; anchors.verticalCenter: parent.verticalCenter }
             UsbBadge { visible:!bar.external; condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
             SimLaunchpad { visible:!bar.external; condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
-            DisplayBadge { output: bar.external?bar.outputName:bar.outputName==="DP-2"?"screenpad":"main"; condensed: !bar.external && !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
+            DisplayBadge { output: MachineProfile.desktop ? bar.outputName : bar.external?bar.outputName:bar.outputName==="DP-2"?"screenpad":"main"; condensed: !bar.external && !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
             anchors.right: parent.right
             anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter

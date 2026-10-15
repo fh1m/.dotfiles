@@ -8,7 +8,11 @@ ROOT = Path(__file__).resolve().parents[1]
 # a live choice (a validated GPU record, a touchpad switch, a wallpaper pool)
 # is never reset to the repository's default.
 SEED_ONLY = {
+    ".config/alacritty/sensei-colors.toml",
+    ".config/tmux/sensei-theme.conf",
+    '.config/sensei/machine.json',
     '.config/hypr/chrome-gpu.json',
+    '.config/sensei/machine.json',
     '.config/hypr/zenbook-controls.json',
     '.config/sensei/wallpapers.json',
     '.config/sensei/runner',
@@ -33,6 +37,11 @@ SEED_ONLY = {
 # Live paths that are symlinks into the sensei tree, not copies. A copy here would
 # shadow the file the shell loads, so each is linked to the external file instead.
 LINKS = {
+    '.config/quickshell/noesis/ui': '.local/share/sensei-learning/ui',
+    '.config/quickshell/noesis/config': '.config/quickshell/sensei/config',
+    '.config/quickshell/noesis/services': '.config/quickshell/sensei/services',
+    '.config/quickshell/noesis/components': '.config/quickshell/sensei/components',
+    '.config/quickshell/sensei/noesis-ui': '.local/share/sensei-learning/ui',
     '.config/hypr/hypr-sensei.lua': '.config/quickshell/sensei/external/hypr-sensei.lua',
     '.config/sensei/fastfetch.jsonc': '.config/quickshell/sensei/external/fastfetch.jsonc',
     '.config/sensei/emblem-fallback.txt': '.config/quickshell/sensei/external/emblem-fallback.txt',
@@ -71,6 +80,7 @@ def install(home, apply=False, hardware='generic'):
         if not source.is_file() or source.name.endswith('.example'):
             continue
         relative = source.relative_to(ROOT / 'home')
+        if hardware == 'pc' and (relative.as_posix()=='.config/environment.d/vaapi.conf' or 'zenbook' in str(relative) or 'battery-idle' in str(relative) or relative.as_posix()=='.config/systemd/user/sensei-tmux.service'):continue
         if not wanted(relative):
             continue
         if relative.parts[:2] == ('.local', 'bin') and source.name in linked:
@@ -81,7 +91,11 @@ def install(home, apply=False, hardware='generic'):
             continue
         if relative.as_posix() in SEED_ONLY and (dest.exists() or dest.is_symlink()):
             continue
-        data = render(source.read_bytes(), home, hardware)
+        overlay = ROOT / 'profiles' / hardware / 'home' / relative
+        selected = overlay if overlay.is_file() else source
+        data = render(selected.read_bytes(), home, hardware)
+        if relative.as_posix() == '.config/sensei/machine.json' and hardware == 'zenbook':
+            data = b'{"profile":"zenbook","primaryOutput":"eDP-1","gpuPolicy":"hybrid"}\n'
         # A symlink whose target already holds these bytes is not a change. Without
         # the symlink case, every linked file reads as drift and --apply copies over it.
         if dest.is_file() and dest.read_bytes() == data:
@@ -101,7 +115,9 @@ def install(home, apply=False, hardware='generic'):
         temp.write_bytes(data)
         temp.chmod(source.stat().st_mode & 0o777)
         temp.replace(dest)
-    for relative, target in LINKS.items():
+    links = dict(LINKS)
+    if hardware == "pc":links[".local/opt/sensei-quickshell/bin/qs"] = "/usr/bin/qs"
+    for relative, target in links.items():
         dest, source = home / relative, home / target
         if dest.is_symlink() and os.readlink(dest) == str(source):
             continue
@@ -153,7 +169,7 @@ if __name__ == '__main__':
     parser.add_argument('--target-home', type=Path, default=Path.home())
     # No default: a generic install strips the dual-panel monitor rules, so
     # applying it must be a deliberate choice, never an accident of the default.
-    parser.add_argument('--hardware', choices=['generic', 'zenbook'], default=None)
+    parser.add_argument('--hardware', choices=['generic', 'zenbook', 'pc'], default=None)
     args = parser.parse_args()
     if args.hardware is None: args.hardware = 'generic' if not args.apply else None
     if os.geteuid() == 0: parser.error('Run as your desktop user, not root.')

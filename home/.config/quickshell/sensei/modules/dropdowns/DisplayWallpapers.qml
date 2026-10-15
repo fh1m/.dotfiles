@@ -7,11 +7,11 @@ import qs.config
 import qs.services
 DropdownFrame {
  id:root;title:"\uf03e Display wallpapers";katakana:"ОБОИ";implicitWidth:740
- property string selectedOutput:"eDP-1"
+ property string selectedOutput:MachineProfile.primaryOutput
 
  Column {width:parent.width;spacing:12
  Text { textFormat: Text.PlainText;width:parent.width;text:"Set independent images and layouts, or let either screen follow your theme's wallpaper pool.";color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:12;wrapMode:Text.Wrap}
- Repeater {model:[{output:"eDP-1",name:"Main display"},{output:"DP-2",name:"ScreenPad"}]
+ Repeater {model:ShellState.screens.map(screen=>({output:screen.name,name:screen.name===MachineProfile.primaryOutput?"Main display":screen.name}))
  Rectangle {required property var modelData;width:parent.width;height:169;color:Theme.alpha(Theme.widgetSurface,.6);border.color:Theme.widgetBorder
  Image {x:10;y:10;width:230;height:147;source:Wallpapers.displaySource(modelData.output);sourceSize:Qt.size(512,328);fillMode:Wallpapers.displayMode(modelData.output);asynchronous:true}
  Column {x:253;y:10;width:parent.width-263;spacing:9
