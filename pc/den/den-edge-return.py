@@ -27,8 +27,12 @@ try:
     dispatch=f'hl.dsp.cursor.move({{x={round(x)},y={round(y)}}})'
     if mode.startswith('enter-'):
         subprocess.run(ssh+['hyprctl -i 0 dispatch '+shlex.quote(dispatch)],stdout=subprocess.DEVNULL,check=True,timeout=4)
+        subprocess.run(ssh+['python3 /home/fh1m/.local/state/homie-control/den-arm-return.py'],stdout=subprocess.DEVNULL,check=True,timeout=4)
+        subprocess.run(ssh+['python3 /home/fh1m/.local/state/homie-control/den-cursor.py show-local'],stdout=subprocess.DEVNULL,timeout=4)
     else:
         subprocess.run(['hyprctl','-i','0','dispatch',dispatch],stdout=subprocess.DEVNULL,check=True,timeout=2)
+        subprocess.run(['python3',str(state/'den-cursor.py'),'show-local'],stdout=subprocess.DEVNULL,timeout=2)
 except (StopIteration,ValueError,KeyError,subprocess.SubprocessError):
-    # A disconnected display/peer cannot cause a warp onto another unintended output.
-    pass
+    # Fail open locally if placement/readiness fails. Never leave capture latched.
+    if mode.startswith('enter-'):
+        subprocess.run(['python3',str(state/'den-cursor.py'),'recover'],timeout=2)
