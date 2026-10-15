@@ -6,6 +6,10 @@ _G.den_ctrl_subscription = hl.on("input.keyboard.key", function(code, time, stat
         if state == 1 then dirty = true; count = 0 end
         return
     end
+    local flag=io.open("/home/fh1m/.local/state/homie-control/input/active","r")
+    local captured=false
+    if flag then captured=flag:read("*a")=="1"; flag:close() end
+    if captured then count=0; pressed=false; return end -- native capture handles its own escape
     if state == 1 then
         if pressed then dirty = true else pressed = true; dirty = false; start = time end
     elseif state == 0 then

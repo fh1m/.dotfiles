@@ -24,6 +24,7 @@ if not binary.exists():binary=pathlib.Path("/usr/bin/lan-mouse")
 config=tomllib.loads((state/"input/config.toml").read_text())
 if config.get("clients"):
     os.environ["DEN_CAPTURE_OUTPUTS"]="top=eDP-1,right=DP-1"
+    os.environ["DEN_CTRL_COMMAND"]=str(state/"den-cursor.py")
     os.environ["DEN_CAPTURE_STATE"]=str(state/"input/active")
     os.environ["DEN_RETURN_COMMAND"]=str(state/"den-edge-return.py")
 else:

@@ -176,3 +176,14 @@ and developer launcher; 11 desktop checks; six volume checks; Python compilation
 installer apply then zero-change dry run; reverse-applicability of the native
 patch; shared-peer Rust routing regression; actual four-route and recovery checks;
 text and PNG clipboard checks in both directions. No unattended live input tests.
+
+
+### Capture-native escape
+
+Triple-Ctrl release is handled inside Lan Mouse while it owns input, independently
+of the compositor Lua hook. It releases the native pointer lock first, sends the
+final Ctrl-up to the receiver, then asks the separate cursor daemon to stop sharing
+and centre the pointer. Double-Ctrl requests the locator. Normal Ctrl chords and
+long holds do not count; unit tests cover both. Outside capture the non-consuming
+runtime Lua hook provides the same gestures. Ctrl+Alt+Esc remains the native
+release chord. The operator's desktop is never a target for automated typing.

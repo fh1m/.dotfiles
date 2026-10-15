@@ -20,6 +20,7 @@ def recover():
     subprocess.run(['systemctl','--user','stop','den-input'],check=True,timeout=5)
     (ROOT/'input/active').write_text('0')
     monitors=json.loads(hypr('monitors','-j'));m=next((m for m in monitors if m['name']=='eDP-1'),monitors[0]);x=round(m['x']+m['width']/m['scale']/2);y=round(m['y']+m['height']/m['scale']/2)
+    hypr('dispatch','hl.dsp.focus({monitor='+json.dumps(m['name'])+'})')
     hypr('dispatch',f'hl.dsp.cursor.move({{x={x},y={y}}})')
     hypr('setcursor','Sensei-Signal','24')
     pulse()  # Recovery deliberately leaves sharing stopped; never recapture after escape.
@@ -35,7 +36,7 @@ def daemon():
     ipc=None
     pool=concurrent.futures.ThreadPoolExecutor(max_workers=2)
     master=bool(tomllib.loads((ROOT/'input/config.toml').read_text()).get('clients'))
-    peer_owned=True
+    peer_owned=False
     previous_owner=None
     return_armed=False
     return_monitor=None

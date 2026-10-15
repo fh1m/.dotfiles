@@ -150,7 +150,7 @@ index a2c7112..95818fa 100644
      EnableEmulation,
      /// synchronize all state
 diff --git a/src/capture.rs b/src/capture.rs
-index 8f739bd..06caa2d 100644
+index 8f739bd..4437c89 100644
 --- a/src/capture.rs
 +++ b/src/capture.rs
 @@ -37,6 +37,9 @@ pub(crate) enum ICaptureEvent {
@@ -163,7 +163,23 @@ index 8f739bd..06caa2d 100644
  }
 
  #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-@@ -170,6 +173,7 @@ struct CaptureTask {
+@@ -73,6 +76,7 @@ impl Capture {
+         let (event_tx, event_rx) = channel();
+         let cancellation_token = CancellationToken::new();
+         let capture_task = CaptureTask {
++            ctrl_taps: CtrlTaps::default(),
+             active_client: None,
+             backend,
+             cancellation_token: cancellation_token.clone(),
+@@ -157,6 +161,7 @@ macro_rules! debounce {
+ }
+
+ struct CaptureTask {
++    ctrl_taps: CtrlTaps,
+     active_client: Option<CaptureHandle>,
+     backend: Option<input_capture::Backend>,
+     cancellation_token: CancellationToken,
+@@ -170,6 +175,7 @@ struct CaptureTask {
 
  impl CaptureTask {
      fn add_capture(&mut self, handle: CaptureHandle, pos: Position, capture_type: CaptureType) {
@@ -171,7 +187,7 @@ index 8f739bd..06caa2d 100644
          self.captures.push((handle, pos, capture_type));
      }
 
-@@ -281,14 +285,22 @@ impl CaptureTask {
+@@ -281,14 +287,22 @@ impl CaptureTask {
 
                      match event {
                          // connection acknowlegded => set state to Sending
@@ -198,15 +214,42 @@ index 8f739bd..06caa2d 100644
                          },
                          _ => {}
                      }
-@@ -320,6 +332,7 @@ impl CaptureTask {
+@@ -320,8 +334,26 @@ impl CaptureTask {
          event: (CaptureHandle, CaptureEvent),
      ) -> Result<(), CaptureError> {
          let (handle, event) = event;
 +        if !self.captures.iter().any(|&(h, ..)| h == handle) { return Ok(()); }
          log::trace!("({handle}): {event:?}");
 
++        if let CaptureEvent::Input(Event::Keyboard(KeyboardEvent::Key { key, state, .. })) = event {
++            if std::env::var("DEN_CTRL_COMMAND").is_ok() && self.active_client.is_some() {
++                let taps=self.ctrl_taps.key(key,state,Instant::now());
++                if taps==2 || taps==3 {
++                    if taps==3 {
++                        // Forward this final Ctrl-up before releasing; do not strand a peer modifier.
++                        if let CaptureEvent::Input(input)=event { let _=self.conn.send(ProtoEvent::Input(input),handle).await; }
++                        self.release_capture(capture).await?;
++                    }
++                    if let Ok(command)=std::env::var("DEN_CTRL_COMMAND") {
++                        let _=std::process::Command::new(command).arg(if taps==3 { "recover" } else { "show" }).spawn();
++                    }
++                    if taps==3 { return Ok(()); }
++                }
++            }
++        }
++
          if capture.keys_pressed(&self.release_bind.borrow()) {
-@@ -368,7 +381,7 @@ impl CaptureTask {
+             log::info!("releasing capture: release-bind pressed");
+             return self.release_capture(capture).await;
+@@ -347,6 +379,7 @@ impl CaptureTask {
+
+         // activated a new client
+         if event == CaptureEvent::Begin && Some(handle) != self.active_client {
++            self.ctrl_taps=CtrlTaps::default();
+             self.state = State::WaitingForAck;
+             self.active_client.replace(handle);
+             self.event_tx
+@@ -368,7 +401,7 @@ impl CaptureTask {
          if let Err(e) = self.conn.send(event, handle).await {
              const DUR: Duration = Duration::from_millis(500);
              debounce!(PREV_LOG, DUR, log::warn!("releasing capture: {e}"));
@@ -215,7 +258,7 @@ index 8f739bd..06caa2d 100644
          }
          Ok(())
      }
-@@ -376,6 +389,7 @@ impl CaptureTask {
+@@ -376,6 +409,7 @@ impl CaptureTask {
      async fn release_capture(&mut self, capture: &mut InputCapture) -> Result<(), CaptureError> {
          // If we have an active client, notify them we're leaving
          if let Some(handle) = self.active_client.take() {
@@ -223,6 +266,48 @@ index 8f739bd..06caa2d 100644
              // Synthesize key-up events for every key still held in the
              // capture's pressed_keys set BEFORE sending Leave. Without
              // this, pressing the release-bind chord (typically all four
+@@ -469,3 +503,41 @@ impl<T> Drop for DropGuard<T> {
+             .expect("channel closed");
+     }
+ }
++
++#[derive(Default)]
++struct CtrlTaps { down: Option<Instant>, last: Option<Instant>, count:u8, dirty:bool }
++impl CtrlTaps {
++    fn key(&mut self,key:u32,state:u8,now:Instant)->u8 {
++        if key!=29 && key!=97 { if state==1 { self.dirty=true; self.count=0; } return 0; }
++        if state==1 {
++            if self.down.is_some() { self.dirty=true; }
++            else { self.down=Some(now); self.dirty=false; }
++            return 0;
++        }
++        if state!=0 { return 0; }
++        let valid=self.down.take().is_some_and(|start| now.duration_since(start)<Duration::from_millis(260)) && !self.dirty;
++        if !valid { self.count=0; return 0; }
++        if self.last.is_none_or(|last| now.duration_since(last)>Duration::from_millis(360)) { self.count=0; }
++        self.last=Some(now); self.count+=1;
++        let result=self.count;
++        if result==3 { self.count=0; }
++        result
++    }
++}
++#[cfg(test)]
++mod den_ctrl_tests {
++    use super::*;
++    #[test]
++    fn triple_ctrl_releases_and_chords_do_not_count() {
++        let mut taps=CtrlTaps::default(); let start=Instant::now();
++        for n in 0..3 {
++            assert_eq!(taps.key(29,1,start+Duration::from_millis(n*120)),0);
++            assert_eq!(taps.key(29,0,start+Duration::from_millis(n*120+40)),(n+1) as u8);
++        }
++        taps.key(29,1,start+Duration::from_secs(1));
++        taps.key(46,1,start+Duration::from_millis(1010));
++        assert_eq!(taps.key(29,0,start+Duration::from_millis(1040)),0);
++        taps.key(29,1,start+Duration::from_secs(2));
++        assert_eq!(taps.key(29,0,start+Duration::from_millis(2500)),0);
++    }
++}
 diff --git a/src/connect.rs b/src/connect.rs
 index cc067f7..50b30eb 100644
 --- a/src/connect.rs
