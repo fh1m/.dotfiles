@@ -11,10 +11,18 @@ The shell began with **[Wrayth](https://github.com/bowenbride/wrayth)** by **bow
 | librespot | Native Spotify streaming underneath the player | Included dependency licenses; see Cargo.lock |
 | Plippo/asus-wmi-screenpad | UX581 ScreenPad brightness support | External driver; install from its own upstream |
 | KDE Connect, Tailscale, Termux, Syncthing | Phone control, private transport, commands and sync | External dependencies; each project retains its own license |
+| [Lan Mouse / feschber](https://github.com/feschber/lan-mouse/tree/v0.11.0) | DTLS input sharing, with maintained local patch in `pc/den` | GPL-3.0; pinned upstream revision in the Den guide |
 | PipeWire, WirePlumber, BlueZ | Audio graph, policy and Bluetooth | External dependencies |
 | Chakra Petch | Bundled accent font | OFL; bundled `OFL.txt` |
 | Zed Mono, Iosevka / Nerd Fonts | Text and glyphs | Installed separately; retain upstream font licenses |
 
 Desktop screenshots show fh1m’s actual setup. Wallpaper references: [main](https://wallhaven.cc/w/w5q8px), [ScreenPad](https://wallhaven.cc/w/6lqvql). Original artwork belongs to its creators; the original wallpaper files are not redistributed here. Bundled Wrayth-generated wallpapers retain their original provenance.
 
-The custom setup, experiments and documentation were developed by fh1m with coding assistance. Hardware findings are observations on one laptop, not upstream promises. Original source notices are retained rather than replaced.
+The custom setup, experiments and documentation were developed by fh1m with coding assistance. Hardware findings are observations on Arete and Homie, not upstream promises. Original source notices are retained rather than replaced.
+
+The Digital Den hoodie avatar is an original AI-assisted illustration generated
+with OpenAI image generation at the author's request. It is a fictional stand-in,
+not a portrait. The sprite sheet and typing loop are in `docs/assets/digital-den/`.
+Screenshot windows show actual public applications; composition and provenance
+are documented in `docs/digital-den/GALLERY.md`. Mongla's calibration source is
+referenced at a pinned public revision; its full source is not vendored here.

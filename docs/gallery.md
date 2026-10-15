@@ -1,6 +1,44 @@
 # Actual desktop gallery
 
-[← Workstation](../README.md)
+[← Digital Den](../README.md)
+
+## The whole Den
+
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="assets/digital-den/den-layout.png"><img src="assets/digital-den/den-layout.gif" alt="Five real workspaces in their physical orientation, with animated pink input routes and a typing engineer avatar" width="100%"></picture>
+
+Two external displays stacked at left. Homie at upper right. Arete and ScreenPad below. [Full-size still](assets/digital-den/den-layout.png) · [Capture and illustration notes](digital-den/GALLERY.md).
+
+## Code and context / main
+
+![Neovim and tmux beside Mongla on GitHub](assets/digital-den/arete-main.gif)
+
+[Native-size image](assets/digital-den/arete-main.png) · [Actual executed check](../examples/den-calibration-check.py)
+
+## Reasoning and mechanisms / upper
+
+![Obsidian with a real MathJax equation and experiment Canvas](assets/digital-den/arete-upper.png)
+
+[Native-size image](assets/digital-den/arete-upper.png) · [Public study example](../examples/den-study/Calibration%20lab.md)
+
+## Documentation and the day / lower
+
+![ROS documentation, Calendar and Weather in floating panels](assets/digital-den/arete-lower.gif)
+
+[Native-size image](assets/digital-den/arete-lower.png)
+
+## Small jobs / ScreenPad
+
+![Examples folder and the executed calibration sanity-check summary](assets/digital-den/arete-screenpad.gif)
+
+[Native-size image](assets/digital-den/arete-screenpad.png)
+
+## Home base / Homie
+
+![Live PC telemetry and System over Neovim and NVIDIA documentation](assets/digital-den/homie-live.gif)
+
+[System](assets/digital-den/homie-system.png) · [Monitor](assets/digital-den/homie-monitor.png) · [Code](assets/digital-den/homie-code.png) · [Hardware](digital-den/HARDWARE.md)
+
+## Arete, portable
 
 These are real screenshots of fh1m’s desktop. A temporary privacy mode suppresses personal notifications and private window previews. The code window opens [Mongla’s public optical-flow calibration](https://github.com/fh1m/mongla_ws/blob/main/tools/flow_derot_calibrate.py); the other shows this repo’s CUDA Compose recipe. Neither screenshot claims a vehicle or container was running. The system numbers are live samples.
 

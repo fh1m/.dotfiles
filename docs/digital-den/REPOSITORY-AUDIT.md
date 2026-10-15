@@ -44,3 +44,17 @@ reproducer and passed the guarded delivery plus plugin startup/shutdown tests.
 The production shells loaded the guard; the historical PC crash reporter was
 closed without deleting its diagnostic core. This validates the observed crash
 path, not a promise that all possible Qt defects are eliminated.
+
+
+Final acceptance also used actual pointer clicks on Homie's System tiles:
+Sharing on → Paused → Sharing on, Bring home → Paused, then the same sharing
+tile resumed it. The controller reached the expected service state each time.
+The full Python suite passed 198 tests, plus five Den protocol/recovery tests;
+installer safety and repeat previews passed. Three native routing/gesture tests
+and two Qt tests per host passed. No firmware acceptance is inferred from these.
+
+Main is the sole remote/local development branch on both hosts. The former PC
+checkout path remains a compatibility symlink to `~/.dotfiles`; the private dirty
+learning worktree is detached and locked under a recovery backup, not an active
+development branch. PR #1 was marked merged by GitHub when its merge ancestry
+reached main. Archive tags are pushed.

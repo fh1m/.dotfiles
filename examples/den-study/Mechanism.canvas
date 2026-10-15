@@ -1,0 +1,86 @@
+{
+  "nodes": [
+    {
+      "id": "rates",
+      "type": "text",
+      "x": -480,
+      "y": -230,
+      "width": 280,
+      "height": 160,
+      "text": "## IMU angular rates\n\nWhich axis? Which frame?\nWhat timestamp?",
+      "color": "1"
+    },
+    {
+      "id": "align",
+      "type": "text",
+      "x": -80,
+      "y": -230,
+      "width": 280,
+      "height": 160,
+      "text": "## Align observations\n\nSynchronize samples.\nCheck units and sign.",
+      "color": "1"
+    },
+    {
+      "id": "predict",
+      "type": "text",
+      "x": 320,
+      "y": -230,
+      "width": 280,
+      "height": 160,
+      "text": "## Predict rotational flow\n\nStart with a small model.\nFit on training folds.",
+      "color": "1"
+    },
+    {
+      "id": "test",
+      "type": "text",
+      "x": -80,
+      "y": 80,
+      "width": 280,
+      "height": 190,
+      "text": "## Test held-out residuals\n\nCompare against zero correction.\nPreserve contradictions.\n\nLow error \u2260 correct mechanism.",
+      "color": "1"
+    },
+    {
+      "id": "lab",
+      "type": "file",
+      "file": "Calibration lab.md",
+      "x": 320,
+      "y": 80,
+      "width": 300,
+      "height": 240
+    }
+  ],
+  "edges": [
+    {
+      "id": "a",
+      "fromNode": "rates",
+      "fromSide": "right",
+      "toNode": "align",
+      "toSide": "left",
+      "label": "time + frame"
+    },
+    {
+      "id": "b",
+      "fromNode": "align",
+      "fromSide": "right",
+      "toNode": "predict",
+      "toSide": "left"
+    },
+    {
+      "id": "c",
+      "fromNode": "predict",
+      "fromSide": "bottom",
+      "toNode": "test",
+      "toSide": "right",
+      "label": "unseen samples"
+    },
+    {
+      "id": "d",
+      "fromNode": "test",
+      "fromSide": "right",
+      "toNode": "lab",
+      "toSide": "left",
+      "label": "evidence"
+    }
+  ]
+}

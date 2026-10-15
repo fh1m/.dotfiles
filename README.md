@@ -1,82 +1,168 @@
 <div align="center">
 
-<sub>FH1M / FIELD R-01</sub>
+<sub>FH1M / FIELD R-01 / A WORKBENCH WITH A HOME ADDRESS</sub>
 
-<h1>Sensei Robotics Workstation</h1>
+<h1>Digital Den</h1>
 
-<p>Two screens. Two GPUs. One opinionated workbench.</p>
+<p>Arete goes out. Homie holds the fort. The robot still needs debugging.</p>
 
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/duo-hero.png"><img src="docs/assets/duo-hero.gif" alt="Sensei Robotics Workstation: the main display above the ScreenPad, both showing real desktop activity" width="100%"></picture>
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/digital-den/den-layout.png"><img src="docs/assets/digital-den/den-layout.gif" alt="The actual desk arrangement: two Arete external displays stacked at left, Homie at upper right, laptop and ScreenPad below. Real code, browser, Obsidian, calendar and telemetry; animated pink input routes and a typing fh1m avatar." width="100%"></picture>
 
-<sub>THE MAIN CANVAS ↑ &nbsp;·&nbsp; THE SCREENPAD ↓ &nbsp;·&nbsp; <a href="docs/assets/duo-hero.mp4">WATCH THE MP4</a></sub>
+<sub>TWO HOSTS · FIVE PANELS · ONE KEYBOARD · <a href="docs/assets/digital-den/den-layout.png">FULL-SIZE STILL</a></sub>
 
-[![Hyprland](https://img.shields.io/badge/Hyprland-0.56%2B-f23d70?style=flat-square)](docs/installation.md) [![Quickshell](https://img.shields.io/badge/Quickshell-0.3-f23d70?style=flat-square)](home/.config/quickshell/sensei) [![Displays](https://img.shields.io/badge/displays-2-17131a?style=flat-square)](docs/hardware-and-boot.md) [![RTX](https://img.shields.io/badge/RTX-2060-f23d70?style=flat-square)](docs/gpu-and-chrome.md) [![Lab](https://img.shields.io/badge/lab-ARM_%2B_CUDA-17131a?style=flat-square)](docs/robotics.md) [![License](https://img.shields.io/badge/license-GPL--3.0-f23d70?style=flat-square)](LICENSE)
+[![Hyprland](https://img.shields.io/badge/Hyprland-0.56%2B-f23d70?style=flat-square)](docs/installation.md) [![Quickshell](https://img.shields.io/badge/Quickshell-0.3-f23d70?style=flat-square)](home/.config/quickshell/sensei) [![Displays](https://img.shields.io/badge/displays-5_docked-17131a?style=flat-square)](docs/hardware-and-boot.md) [![GPUs](https://img.shields.io/badge/GPUs-RTX_2060_%2B_GTX_1660_SUPER-f23d70?style=flat-square)](docs/gpu-and-chrome.md) [![Lab](https://img.shields.io/badge/lab-ARM_%2B_CUDA-17131a?style=flat-square)](docs/robotics.md) [![License](https://img.shields.io/badge/license-GPL--3.0-f23d70?style=flat-square)](LICENSE)
 
-[Install](docs/installation.md) · [Gallery](docs/gallery.md) · [Keybinds](docs/keybindings.md) · [Robotics lab](docs/robotics.md) · [Development](docs/development.md) · [Performance](docs/performance.md) · [Recovery](docs/operations.md)
+[Gallery](docs/gallery.md) · [Install](docs/installation.md) · [Digital Den](docs/digital-den/README.md) · [Keybinds](docs/keybindings.md) · [Robotics](docs/robotics.md) · [Development](docs/development.md) · [Recovery](docs/operations.md)
 
 </div>
 
-## Two displays, one desk
+## Welcome to my slightly overqualified desk
 
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/duo-lab.png"><img src="docs/assets/duo-lab.gif" alt="Robotics lab on the main display while Monitor and USB tools move across the ScreenPad" width="100%"></picture></p>
+I'm **fh1m**. I build underwater robots and work through the software, sensors, electronics and mathematics that make them move. This is the daily driver behind that work: CachyOS, Hyprland, a custom Quickshell desktop, Neovim, persistent tmux sessions, and a lot of hot pink.
 
-<sub>MAIN // ARM + CUDA LAB &nbsp;↓&nbsp; SCREENPAD // MONITOR + USB · [MP4](docs/assets/duo-lab.mp4) · [Empty main](docs/assets/desktop-empty-main.png) · [Tiled ScreenPad](docs/assets/desktop-empty-screenpad.png)</sub>
+**Arete** is the laptop that comes along. **Homie** is the home PC with the storage and a dedicated display GPU. Docked, they become one place to read, derive, code, test, and occasionally remember to eat.
 
-## Code in the foreground, lab one click away
+The little hoodie engineer is an illustrated stand-in. The desktops are real.
 
-![Real floating terminal windows with Mongla calibration code and a CUDA Compose recipe](docs/assets/floating-workstation.png)
+## 01 / Open the code. Keep the context.
 
-<sub>[Mongla’s held-out optical-flow calibration](https://github.com/fh1m/mongla_ws/blob/main/tools/flow_derot_calibrate.py) · [CUDA/ARM Compose recipe](examples/compose.robotics.yaml). Actual files, not terminal wallpaper.</sub>
+![Neovim and tmux beside Mongla's public GitHub repository, in floating windows on Arete](docs/assets/digital-den/arete-main.gif)
 
-![The robotics panel moving through Launch, tmux, ARM/GPU and Tasks](docs/assets/robotics-lab.gif)
+<sub>MAIN // NEOVIM + TMUX + GITHUB · [Native-size image](docs/assets/digital-den/arete-main.png) · [Terminal guide](docs/terminal.md)</sub>
 
-<sub>Docker / ARM / CUDA / tmux · [MP4](docs/assets/robotics-lab.mp4) · [Lab guide](docs/robotics.md)</sub>
+[Mongla](https://github.com/fh1m/mongla_ws) is my ROS 2 underwater-autonomy stack. Here, the editor holds a real numerical check against its optical-flow calibration code; the browser keeps the repository within reach. Room for both. Room for the wallpaper too.
 
-## The terminal remembers
+Alacritty stays light. Tmux keeps the session alive. Neovim handles the source, navigation, diagnostics and review. Agents can share the workbench; independent reasoning still gets a seat.
 
-![A real Alacritty and isolated tmux lab session switching between calibration and GPU/container facts](docs/assets/tmux-field-lab.gif)
+## 02 / Turn “I think” into something testable
 
-<sub>Alacritty + Iosevka + persistent tmux. Sessions survive the window; the status line tells you where you landed. [Full-size still](docs/assets/tmux-field-lab.png) · [MP4](docs/assets/tmux-field-lab.mp4) · [Terminal guide](docs/terminal.md)</sub>
+![Obsidian with a rendered calibration equation and a connected experimental Canvas](docs/assets/digital-den/arete-upper.png)
 
-## Small windows, useful jobs
+<sub>UPPER // OBSIDIAN + MATHJAX + CANVAS · [Open full size](docs/assets/digital-den/arete-upper.png) · [Public study example](examples/den-study/Calibration%20lab.md)</sub>
 
-![Spotify panel with large album art, queue and transport](docs/assets/music-panel.png)
+A small model, a prediction, a held-out test. The note and Canvas connect angular rates, alignment, rotational flow and residuals. Code belongs in the repository; the reasoning can breathe beside it.
 
-<sub>Music // album art, queue, library, devices, lyrics. [Audio notes](docs/audio-and-spotify.md)</sub>
+This example actually ran on **both** hosts, using the hash-pinned numerical function from [Mongla's calibration source](https://github.com/fh1m/mongla_ws/blob/c67a0805206b88a25e541a5fe0c3a95afb168b40/tools/flow_derot_calibrate.py).
 
-<p align="center"><img src="docs/assets/system-panel.png" alt="System panel with connection controls, volume, brightness and power" width="70%"></p>
+| Synthetic check | Arete | Homie |
+|---|---:|---:|
+| Recovered gain, expected 0.8 | 0.799351 | 0.799351 |
+| Held-out RMS, noise σ = 0.02 | 0.020161 | 0.020161 |
+| Null-model RMS | 0.797713 | 0.797713 |
+| Numerical checks | 4 / 4 | 4 / 4 |
 
-<sub>System // controls, hardware, robotics, network, packages.</sub>
+<sub>Seeded, dimensionless test data. A reproducible sanity check, not a claim about sensor accuracy. [Run it yourself](docs/digital-den/GALLERY.md#reproduce-the-numerical-check).</sub>
 
-![Inset native tabs for Alacritty and Obsidian](docs/assets/signal-ledger/tabs-v2.webp)
+## 03 / Meanwhile, on the other screen
 
-<sub>Alacritty ⇄ Obsidian. Native Hyprland tabs, inside the window silhouette. [Keybinds](docs/keybindings.md)</sub>
+![ROS documentation beside the native Calendar and Weather panels, with wallpaper visible](docs/assets/digital-den/arete-lower.gif)
 
-<details><summary>More panels, code, and a very serious comic</summary>
+<sub>LOWER // REFERENCE + THE REST OF THE DAY · [Native-size image](docs/assets/digital-den/arete-lower.png)</sub>
 
-[Every widget, full-size](docs/gallery.md) · [Mongla code close-up](docs/assets/mongla-code.png) · [XKCD intermission](docs/assets/comic.png) · [Phone bridge](docs/phone.md) · [Audio route](docs/audio-and-spotify.md)
+ROS docs stay open. Calendar and weather slide into the day without replacing it. The desktop has jobs beyond being a terminal stand.
 
-</details>
+![Spotify's native panel with album artwork, playback controls and queue](docs/assets/music-panel.png)
 
-## Numbers before adjectives
+<sub>SOUNDTRACK // QUEUE · LIBRARY · DEVICES · LYRICS · [Audio guide](docs/audio-and-spotify.md)</sub>
 
-| Measured on this machine | Why it matters |
+Music gets album art and proper controls. The queue is allowed to have a personality. So is the desk.
+
+## 04 / Big brother holds the fort
+
+![Homie with real code and NVIDIA documentation, moving between live Monitor, System and the unobstructed desktop](docs/assets/digital-den/homie-live.gif)
+
+<sub>HOMIE // GPU + STORAGE + THE SAME DESKTOP LANGUAGE · [System](docs/assets/digital-den/homie-system.png) · [Monitor](docs/assets/digital-den/homie-monitor.png) · [Code](docs/assets/digital-den/homie-code.png)</sub>
+
+Same shell, same tools, same visual language. Desktop-specific graphics, display, power and storage policy. Homie keeps the native NVIDIA work and larger files at home; Arete can reach the designated shared storage over SSHFS.
+
+| | Arete · portable lab | Homie · home base |
+|---|---|---|
+| CPU | i7-9750H · 6 cores / 12 threads | Ryzen 5 3600X · 6 cores / 12 threads |
+| Memory | 16 GiB | 16 GiB |
+| Graphics | Intel display + RTX 2060 | GTX 1660 SUPER · 6 GiB |
+| Displays | 4K main + ScreenPad; two 1080p / 100 Hz externals | LG 1080p / 75 Hz |
+| Storage role | Active projects and portable work | Five drives; six preserved, readable volumes |
+
+[Hardware and drives](docs/digital-den/HARDWARE.md) · [Homie setup and boot recovery](pc/README.md)
+
+## 05 / One mouse. A known way home.
+
+Push through the **top of the laptop** to reach Homie, or through the **right edge of the upper external**. Come back through Homie's bottom or left edge. The animated pink wires in the header trace those routes.
+
+| Gesture / control | What it does |
 |---|---|
-| **22.6% → 6.6%** Intel render share | Alacritty replaced Kitty for the same animated terminal test. |
-| **286/s → 0/s** unused ScreenPad I²C interrupts | Disabled touch-controller noise; display and brightness still work. |
-| **0.225%** NVMe busy in an apparent “I/O stall” | The bottleneck was Intel display fences, not the SSD. |
+| **Ctrl × 2** | Light up the cursor |
+| **Ctrl × 3** | Pause sharing and bring it home; repeat to resume |
+| **Ctrl + Alt + Esc** | Release native input capture immediately |
+| **System → Digital Den** | Sharing, locator, bring home, storage and status |
 
-*Workload samples, not universal benchmarks.* [Methods and limits](docs/performance.md). Built for an [ASUS ZenBook Pro Duo UX581GV](docs/hardware-and-boot.md); the starting spark was [Wrayth by bowenbride](https://github.com/bowenbride/wrayth). [Credits](THIRD_PARTY.md).
+Text and PNG clipboard travel both ways. Pairing uses private keys and pinned hosts. The receiver leaves its local keyboard usable. Slight dimming identifies the active display without keeping a blur animation running.
+
+The tiny engineer may lose a semicolon. The mouse should have an escape route.
+
+[Input, clipboard, storage and recovery details](docs/digital-den/README.md)
+
+## 06 / The small screen earns its keep
+
+![ScreenPad with the actual examples folder and the executed numerical-check summary](docs/assets/digital-den/arete-screenpad.gif)
+
+<sub>SCREENPAD // FILES + QUICK RESULTS · [Full-size image](docs/assets/digital-den/arete-screenpad.png)</sub>
+
+A file picker, a result, a monitor, USB diagnostics. Small jobs belong here; the main screen stays available for the hard part.
+
+## 07 / Unplug. The lab comes along.
+
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/duo-hero.png"><img src="docs/assets/duo-hero.gif" alt="Arete's main display and ScreenPad arranged as a real two-screen portable workbench" width="100%"></picture>
+
+<sub>PORTABLE MODE // MAIN + SCREENPAD · [Still](docs/assets/duo-hero.png) · [MP4](docs/assets/duo-hero.mp4)</sub>
+
+![Robotics lab panel on the main display, paired with Monitor and USB tools below](docs/assets/duo-lab.gif)
+
+<sub>LAB // DOCKER · COMPOSE · ARM THROUGH QEMU · NVIDIA CDI · TMUX · EXPERIMENT TASKS · [MP4](docs/assets/duo-lab.mp4) · [Lab guide](docs/robotics.md)</sub>
+
+Ubuntu-based robotics environments live in containers. The host remains the daily driver. Serial devices, GPU tooling and project sessions have a place in the same workflow. ARM emulation still runs on the CPU; two GPUs do not magically become one pool of VRAM.
+
+## 08 / A little less solemn
+
+<div align="center"><img src="docs/assets/digital-den/fh1m-typing.gif" alt="A small illustrated hoodie engineer typing, blinking and thinking" width="210"></div>
+
+Native tabs keep Alacritty and Obsidian together. The identity deck has developer tools and a Nerd Talk corner. XKCD is a right-click research break. The palette takes itself seriously enough for the rest of us.
+
+![Native themed tab strip with Alacritty and Obsidian](docs/assets/signal-ledger/tabs-v2.webp)
+
+[Comic break](docs/assets/comic.png) · [Every panel, larger](docs/gallery.md) · [Phone bridge](docs/phone.md) · [Keybindings](docs/keybindings.md)
+
+## 09 / Numbers before adjectives
+
+| Measured on Arete | Result |
+|---|---|
+| Same animated terminal workload | **22.6% → 6.6%** Intel render share after switching to Alacritty |
+| Unused ScreenPad touch-controller interrupts | **286/s → 0/s**, with display and brightness retained |
+| NVMe busy during an apparent I/O stall | **0.225%**; the investigation pointed to Intel display fences |
+
+*Workload samples, not universal benchmarks.* [Methods and limitations](docs/performance.md).
+
+For the Den baseline: **12 real cross-host cursor routes** exercised with keyboard, clicks and scrolling in an owned test window; text and PNG clipboard checked in both directions; both installers checked for a second run with no changes. [Validation record](docs/digital-den/REPOSITORY-AUDIT.md).
 
 ## Bring your own workbench
 
 ```sh
 git clone https://github.com/fh1m/.dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
-python3 scripts/install.py                 # preview
-python3 scripts/install.py --apply         # backs up user files
+python3 scripts/install.py --hardware zenbook         # preview; use pc on Homie
+python3 scripts/install.py --hardware zenbook --apply # backs up replaced files
 bash scripts/build-native.sh
 python3 scripts/doctor.py
 ```
 
-[Read the install guide](docs/installation.md) before applying the UX581GV display preset. Credentials, browser profiles, device pairings, and clipboard history stay out of this repo.
+**One development branch: `main`.** Shared configuration lives in `home/`; Homie's hardware overlays live in `profiles/pc/home/`. Former branch tips are preserved with archive tags. Notes, browser profiles, credentials, pairing keys and actual datasets stay private.
+
+[Install guide](docs/installation.md) · [Development](docs/development.md) · [Operations](docs/operations.md) · [Known Homie cold-boot gate](pc/BOOT-EXPERIENCE.md)
+
+<div align="center">
+
+<sub>BUILT BY FH1M / FOR THE NEXT THING THAT DOESN'T WORK YET</sub>
+
+<sub>The shell started with <a href="https://github.com/bowenbride/wrayth">Wrayth by bowenbride</a>. Original notices are preserved. <a href="THIRD_PARTY.md">Credits</a> · <a href="docs/digital-den/GALLERY.md">Capture notes and illustration provenance</a></sub>
+
+</div>
