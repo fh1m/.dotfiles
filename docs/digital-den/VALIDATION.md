@@ -58,3 +58,19 @@ was about 11.3 MB/s. Software tuning cannot promise gigabit throughput on that l
   intended writable/read-only separation. Both agent authentication checks passed.
 - Live Spotify catalogue query returned HTTP 429. Cooldown was preserved; this is
   an unresolved provider-facing behavior, not a passed playback acceptance test.
+
+## Aesthetic/companion pass — 2026-10-16
+
+- 32 targeted searches plus direct technical-source checks are recorded in
+  [the research ledger](POLISH-RESEARCH.md); no additional pet framework installed.
+- 230 Python tests pass. New cases exercise geometry, floating-window/bubble
+  avoidance, short displays, non-repetition, contextual messages and motion input.
+- Live temporary-renderer preview passed speech, movement, reduced motion and
+  quiet controls. Its actual capture was visually inspected; a source-clip bug
+  caught during visual review was fixed before replacing the gallery capture.
+- Neovim headless checks loaded the theme and opened/closed the explicit DenTip
+  float; terminal semantic green matched. Zsh syntax and repeated hook loading
+  passed. Installer dry-run/backup/seed-state/idempotence checks passed.
+- No automatic message claims a test passed. Only a newly observed backup result
+  emits backup status. No assistant/model service, extra persistent renderer,
+  clipboard access or source-code inspection was added.

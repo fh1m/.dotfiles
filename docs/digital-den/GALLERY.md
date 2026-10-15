@@ -96,3 +96,14 @@ returned gain `0.7993510846`, held-out RMS `0.02016117985` and null RMS
 `0.7977129094`, passing four sanity checks. This tests numerical portability and
 model behavior; it does not establish real sensor accuracy, distributed training,
 or GPU performance.
+
+
+## Companion polish / second shift
+
+![Actual live companion, with the new frame sheet and text bubble](../assets/digital-den/companion-v2.gif)
+
+[Still](../assets/digital-den/companion-v2.png). Captured in the actual compositor
+on a temporary empty workspace, restored afterward. The generated night-shift
+illustration in the README is artwork, not a screenshot or claim of a physical
+desk arrangement. The live character checks free space and yields to applications.
+See [asset provenance and prompts](ARTWORK.md).

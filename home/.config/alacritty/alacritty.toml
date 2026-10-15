@@ -44,24 +44,24 @@ text = "#000000"
 background = "#f23d70"
 
 [colors.normal]
-black = "#0f0f0f"
-red = "#f23d70"
-green = "#0090ff"
-yellow = "#f7ed30"
-blue = "#f23d70"
+black = "#171311"
+red = "#ff567a"
+green = "#9dbf9e"
+yellow = "#d6b59a"
+blue = "#a6b9d1"
 magenta = "#f23d70"
 cyan = "#76bcc0"
-white = "#ffffff"
+white = "#e8e2da"
 
 [colors.bright]
-black = "#002766"
-red = "#ff1767"
-green = "#abe05a"
-yellow = "#ffda00"
-blue = "#D8054A"
-magenta = "#ff1767"
-cyan = "#D8054A"
-white = "#ffffff"
+black = "#706963"
+red = "#ff8099"
+green = "#b5d3b1"
+yellow = "#e8caa9"
+blue = "#c1d0e4"
+magenta = "#ff80a3"
+cyan = "#9bd4d6"
+white = "#fff3ea"
 
 [cursor]
 style = { shape = "Underline", blinking = "Never" }

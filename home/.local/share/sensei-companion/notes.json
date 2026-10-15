@@ -1,0 +1,156 @@
+[
+  {
+    "kind": "tip",
+    "text": "tmux: prefix + z zooms a pane. Repeat to return.",
+    "contexts": [
+      "terminal"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "tmux: prefix + / searches your scrollback.",
+    "contexts": [
+      "terminal"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "tmux: prefix + w finds a window without losing your place.",
+    "contexts": [
+      "terminal"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "tmux: prefix + g opens your project picker.",
+    "contexts": [
+      "terminal"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "Ctrl+R searches shell history. Your past self left clues.",
+    "contexts": [
+      "terminal"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "Neovim: <leader>xx opens diagnostics; fix one cause at a time.",
+    "contexts": [
+      "editor"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "Neovim: <leader>ks searches your vault knowledge.",
+    "contexts": [
+      "editor"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "Neovim: ]d / [d visits the next / previous diagnostic.",
+    "contexts": [
+      "editor"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "Before the explanation: make one prediction you can test.",
+    "contexts": [
+      "study"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "A saved paper is a resource. An independent derivation is evidence.",
+    "contexts": [
+      "study"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "Keep the failed prediction. Future-you needs the plot twist.",
+    "contexts": [
+      "study"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "Before changing two variables, try changing one.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Tiny data. Simple baseline. One measurable claim.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A green test checks its assertion, not every assumption.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Robotics check: units, coordinate frames, timestamps. In that order?",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "den job list checks persistent work without reopening its terminal.",
+    "contexts": [
+      "terminal"
+    ]
+  },
+  {
+    "kind": "tip",
+    "text": "Double Ctrl locates your cursor. Triple Ctrl pauses or resumes sharing.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "den companion quiet on gives the desk some silence.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I checked the coordinate frames. They are blaming each other.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The robot has confidence. We are still collecting evidence.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "Two GPUs. Still only one missing semicolon.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "Rubber duck unavailable. Tiny hoodie engineer reporting for duty.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "It worked in simulation. The ocean has filed an objection.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "No streaks. No guilt. Just the next interesting question.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "Arete roams. Homie holds the fort. I supervise the pixels.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "An elegant solution may begin with an extremely inelegant sketch.",
+    "contexts": []
+  }
+]

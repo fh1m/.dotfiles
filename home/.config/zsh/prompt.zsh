@@ -1,6 +1,8 @@
 # Quiet two-line engineering prompt. No filled badges or external timing jobs.
 export VIRTUAL_ENV_DISABLE_PROMPT=1 CONDA_CHANGEPS1=false
 setopt PROMPT_SUBST
+# No stray percent marker when a command deliberately omits its final newline.
+PROMPT_EOL_MARK=''
 zmodload zsh/datetime
 autoload -Uz add-zsh-hook
 [[ -r ~/.config/zsh/sensei-palette.zsh ]] && source ~/.config/zsh/sensei-palette.zsh
@@ -51,6 +53,8 @@ _sensei_prompt_refresh() {
         fi
         context="box ${container_name//\%/%%}"
     fi
+    # Distinguish a remote shell at a glance; no network lookup or extra process.
+    [[ -n ${SSH_CONNECTION-} ]] && context+="${context:+  ·  }ssh ${HOST%%.*}"
     local env_name=${CONDA_DEFAULT_ENV:-${VIRTUAL_ENV:t}}
     [[ -n $env_name ]] && context+="${context:+  ·  }py ${env_name//\%/%%}"
     [[ -n ${ROS_DISTRO-} ]] && context+="${context:+  ·  }ROS ${ROS_DISTRO//\%/%%}"

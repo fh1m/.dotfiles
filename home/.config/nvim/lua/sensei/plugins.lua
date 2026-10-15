@@ -187,9 +187,13 @@ return {
       map('<leader>ki', '<cmd>Obsidian template<cr>', 'Insert note template') } },
   { 'nvim-lualine/lualine.nvim', event = 'VeryLazy', config = function()
     local p = { bg = '#171311', fg = '#e8e2da', dim = '#a9a29a', pink = '#f23d70' }
+    local normal = vim.api.nvim_get_hl(0, { name = 'Normal', link = false })
+    local title = vim.api.nvim_get_hl(0, { name = 'Title', link = false })
+    if normal.bg then p.bg = string.format('#%06x', normal.bg) end
+    if title.fg then p.pink = string.format('#%06x', title.fg) end
     local theme = {}
     for _, mode in ipairs({ 'normal', 'insert', 'visual', 'replace', 'command' }) do
-      theme[mode] = { a = { fg = '#000000', bg = p.pink, gui = 'bold' },
+      theme[mode] = { a = { fg = p.pink, bg = p.bg, gui = 'bold' },
         b = { fg = p.fg, bg = p.bg }, c = { fg = p.dim, bg = '#090807' } }
     end
     theme.inactive = { a = { fg = '#706963', bg = '#090807' }, b = { fg = '#706963', bg = '#090807' }, c = { fg = '#706963', bg = '#090807' } }

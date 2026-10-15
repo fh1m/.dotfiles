@@ -50,6 +50,10 @@ class Continuity(unittest.TestCase):
             with self.assertRaises(ValueError):m.remote(['job','run'],private=True)
             self.assertEqual(call.call_count,1)
             self.assertIn('homie-remote',call.call_args.args[0])
+    def test_motion_control_rejects_ambiguous_input(self):
+        m.companion('motion','off');self.assertTrue(m.companion('status')['reducedMotion'])
+        with self.assertRaises(ValueError):m.companion('motion','maybe')
+
     def test_companion_text_is_bounded_plain_content(self):
         self.assertEqual(len(m.companion('say','x'*200)['message']),160)
         m.companion('chatter','off');self.assertFalse(m.companion('status')['chatter'])

@@ -80,8 +80,10 @@ outside these two machines as well. Nothing is uploaded publicly.
 ### The little engineer
 
 The README character now lives in the independent cursor renderer. It follows
-the active display, speaks in short **text bubbles**, occasionally moves, and
-never receives clicks. System → Digital Den provides its controls.
+the active display, checks for a free corner, speaks in short **text bubbles**,
+and occasionally walks using the new 16-frame sheet. It never receives clicks.
+If application windows fill the display, it hides; it is below applications even
+while geometry refreshes. It does not read window titles, code, clipboard or keys. System → Digital Den provides its controls.
 
 ```sh
 den companion say "One small baseline. Then the universe."
@@ -89,12 +91,21 @@ den companion wave
 den companion walk
 den companion quiet on
 den companion chatter off
+den companion motion off
+den companion tip
 den companion hide
 ```
 
 `show`, `follow`, `here` and `size 96` restore or adjust it. Preferences are private;
 the sprite sheet and QML are shared. Quiet mode, lock and fullscreen suppress it.
 There is no speech service, model download or additional companion renderer.
+
+The shared local catalogue mixes context-relevant tips with occasional original
+humour; recent lines do not repeat. Automatic chatter is limited to once per six
+minutes while visible. A new backup completion can produce a factual message;
+startup does not replay old completions. No test or learning success is inferred.
+`:DenTip` opens an explicit field note inside Neovim; q/Esc/Enter closes it.
+[Research and decisions](POLISH-RESEARCH.md) · [Artwork provenance](ARTWORK.md).
 
 ### Machine-local setup
 

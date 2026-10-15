@@ -37,6 +37,11 @@ WidgetSection {
             ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Say hello";glyph:"\uf075";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","companion","wave"])}
             ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Homie desk";detail:"Private · on demand";glyph:"\uf108";visible:Den.data.role!=="receiver";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","workbench","open"])}
         }
+        Row {
+            width:parent.width;spacing:8
+            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:30;label:"Desk tip";detail:"A useful nudge";glyph:"\uf0eb";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","companion","tip"])}
+            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:30;label:"Quiet companion";glyph:"\uf186";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","companion","quiet"])}
+        }
         Text { textFormat: Text.PlainText; width: parent.width; visible: Den.error !== ""; text: Den.error; wrapMode: Text.Wrap; font.family: Appearance.font.ui; font.pixelSize: 11; color: Theme.signalRed }
     }
 }

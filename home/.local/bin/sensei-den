@@ -100,6 +100,10 @@ def companion(action,value=None):
         if not value or not value.strip():raise ValueError('Give the companion a short message')
         cfg.update(message=value.strip()[:160],messageAt=time.time())
     elif action=='chatter':cfg['chatter']=value=='on' if value else not cfg.get('chatter',True)
+    elif action=='motion':
+        if value not in ('on','off'):raise ValueError('Use motion on or off')
+        cfg['reducedMotion']=value=='off'
+    elif action=='tip':cfg['tipAt']=time.time()
     elif action!='status':raise ValueError('Unsupported companion action')
     if action!='status':write(CONFIG/'companion.json',cfg)
     return cfg
@@ -376,7 +380,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);s=p.add_subparsers(dest='command_name',required=True)
     for n in ['status','doctor','watch']:s.add_parser(n)
     q=s.add_parser('mode');q.add_argument('value',nargs='?',choices=['auto','together','away','homie'])
-    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','say','chatter']);q.add_argument('value',nargs='?')
+    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','say','chatter','motion','tip']);q.add_argument('value',nargs='?')
     q=s.add_parser('sync');q.add_argument('action',nargs='?',default='status',choices=['status','scan','pause','resume'])
     q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','peer-copy'])
     q=s.add_parser('workbench');q.add_argument('action',nargs='?',default='open',choices=['open','start','stop','status'])

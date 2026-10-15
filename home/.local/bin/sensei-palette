@@ -138,8 +138,13 @@ def main():
             content = replace_section(content, "colors.selection", {
                 "background": palette["primary"]})
             content = replace_section(content, "colors.normal", {
-                "red": palette["error"], "blue": palette["primary"],
-                "magenta": palette["vibrant"], "cyan": palette["secondary"]})
+                "black": "#171311", "red": "#ff567a", "green": "#9dbf9e",
+                "yellow": "#d6b59a", "blue": "#a6b9d1",
+                "magenta": palette["primary"], "cyan": "#76bcc0", "white": palette["text"]})
+            content = replace_section(content, "colors.bright", {
+                "black": "#706963", "red": "#ff8099", "green": "#b5d3b1",
+                "yellow": "#e8caa9", "blue": "#c1d0e4", "magenta": "#ff80a3",
+                "cyan": "#9bd4d6", "white": "#fff3ea"})
             write_if_changed(terminal, content)
 
         for gtk in ("gtk-3.0", "gtk-4.0"):

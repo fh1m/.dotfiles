@@ -124,13 +124,13 @@ Ubuntu-based robotics environments live in containers. The host remains the dail
 
 ## 08 / A little less solemn
 
-<div align="center"><img src="docs/assets/digital-den/fh1m-typing.gif" alt="A small illustrated hoodie engineer typing, blinking and thinking" width="210"></div>
+<img src="home/.local/share/sensei-companion/night-shift.png" alt="An original illustrated night shift: fh1m tinkers with a small underwater robot while a pink cable connects the Den" width="100%">
 
 He escaped the README.
 
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/digital-den/companion.png"><img src="docs/assets/digital-den/companion.gif" alt="The actual desktop companion waves, walks gently and offers a short text bubble over Arete's wallpaper" width="750"></picture>
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/digital-den/companion-v2.png"><img src="docs/assets/digital-den/companion-v2.gif" alt="The actual desktop companion waves, walks gently and offers a short text bubble over Arete's wallpaper" width="750"></picture>
 
-A small fh1m companion follows the active display. Text, occasional movement, no sound. Clicks pass through; fullscreen and quiet mode give the work its space. **System → Digital Den → Say hello.** [Companion controls](docs/digital-den/README.md#the-little-engineer).
+A small fh1m companion finds a free corner, types, wanders a little, and occasionally has opinions about coordinate frames. Useful tips, small jokes, no sound. Applications always win the space; quiet and reduced-motion controls are one command away. **System → Digital Den → Desk tip.** Try `:DenTip` inside Neovim. [Companion controls](docs/digital-den/README.md#the-little-engineer).
 
 Native tabs keep Alacritty and Obsidian together. The identity deck has developer tools and a Nerd Talk corner. XKCD is a right-click research break. The palette takes itself seriously enough for the rest of us.
 

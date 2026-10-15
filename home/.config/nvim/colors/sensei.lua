@@ -3,6 +3,14 @@ vim.g.colors_name = 'sensei'
 local p = { bg = '#090807', black = '#000000', surface = '#171311', text = '#e8e2da',
   muted = '#a9a29a', dim = '#706963', pink = '#f23d70', light = '#ff80a3',
   green = '#9dbf9e', blue = '#a6b9d1', warn = '#d6b59a', error = '#ff567a' }
+-- Share the existing wallpaper palette when available; retain durable fallback.
+local palette_path = vim.fn.expand('~/.config/sensei/wallpaper-palette.json')
+local ok, live = pcall(function() return vim.json.decode(table.concat(vim.fn.readfile(palette_path), '\n')) end)
+if ok and type(live) == 'table' then
+  for key, field in pairs({ bg = 'ground', surface = 'surface', text = 'text', muted = 'muted', pink = 'primary', light = 'vibrant' }) do
+    if type(live[field]) == 'string' and live[field]:match('^#%x%x%x%x%x%x$') then p[key] = live[field] end
+  end
+end
 local function h(name, opts) vim.api.nvim_set_hl(0, name, opts) end
 h('Normal', { fg = p.text, bg = p.bg })
 h('NormalFloat', { fg = p.text, bg = p.surface })
@@ -58,3 +66,14 @@ h('@markup.raw', { fg = p.green })
 h('LspReferenceText', { bg = '#292020' })
 h('LspReferenceRead', { link = 'LspReferenceText' })
 h('LspReferenceWrite', { link = 'LspReferenceText' })
+
+-- ANSI output in :terminal agrees with the outer terminal, not rainbow defaults.
+local ansi = { '#171311', p.error, p.green, p.warn, p.blue, p.pink, '#76bcc0', p.text,
+  p.dim, '#ff8099', '#b5d3b1', '#e8caa9', '#c1d0e4', p.light, '#9bd4d6', '#fff3ea' }
+for i, color in ipairs(ansi) do vim.g['terminal_color_' .. (i - 1)] = color end
+h('DiagnosticFloatingError', { fg = p.error, bg = p.surface })
+h('DiagnosticFloatingWarn', { fg = p.warn, bg = p.surface })
+h('DiagnosticFloatingInfo', { fg = p.blue, bg = p.surface })
+h('DiagnosticFloatingHint', { fg = p.muted, bg = p.surface })
+h('WinBar', { fg = p.muted, bg = p.bg })
+h('WinBarNC', { fg = p.dim, bg = p.bg })
