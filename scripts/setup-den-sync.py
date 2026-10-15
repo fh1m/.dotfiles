@@ -92,7 +92,7 @@ def main():
     ignores=['.git','.obsidian/workspace*','.obsidian/cache','node_modules','__pycache__','.venv','venv','.Trash-*','*.tmp','*.crdownload','.DS_Store']
     for f in folders:
         for remote in (False,True):
-            prior=api('GET','db/ignores?folder='+f['id'],remote=remote).get('ignore',[])
+            prior=api('GET','db/ignores?folder='+f['id'],remote=remote).get('ignore') or []
             api('POST','db/ignores?folder='+f['id'],{'ignore':list(dict.fromkeys([*prior,*ignores]))},remote=remote)
     write(HOME/'.config/sensei-den/sync.json',{'schema':1,'folders':[dict(f,floorGiB=80) for f in folders]})
     data={'schema':1,'folders':[dict(f,path=str(HOME/'Den/Mirror/arete'/f['id']),floorGiB=60) for f in folders]}
