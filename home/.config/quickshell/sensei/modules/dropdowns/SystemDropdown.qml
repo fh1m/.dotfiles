@@ -73,13 +73,7 @@ DropdownFrame {
                     ControlTile { implicitWidth: 176; label: "Performance"; glyph: "\uf135"; enabled: Power.hasPerformance; selected: Power.profile === PowerProfile.Performance; onActivated: Power.setProfile("performance") }
                 }
             }
-            WidgetSection {width:parent.width;title:"Den";subtitle:Den.online?"Homie · authenticated":"Homie unavailable";glyph:"\uf233"
-                Row {spacing:8
-                    ControlTile {implicitWidth:268;label:"Home storage";detail:Den.working?"Connecting…":Den.data.storage;glyph:"\uf07b";enabled:!Den.working&&Den.online&&Den.data.storage!=="not configured";onActivated:Den.openStorage()}
-                    ControlTile {implicitWidth:268;label:Den.inputRunning?"Stop shared input":"Start shared input";detail:Den.inputRunning?"Input client running":"Keyboard · mouse";glyph:"\uf11c";selected:Den.inputRunning;enabled:!Den.working&&(Den.online||Den.inputRunning);onActivated:Den.inputToggle()}
-                }
-                Text { textFormat: Text.PlainText;width:parent.width;visible:Den.error!=="";text:Den.error;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.signalRed}
-            }
+            DenControls { width: parent.width }
             WidgetSection { width: parent.width; title: "Tools"; glyph: "\uf0b1"
                 Grid { columns: 2; spacing: 8
                     ActionRow { implicitWidth: 268; label: "Bluetooth devices"; detail: "Pair and connect"; glyph: "\uf293"; onActivated: { ShellState.dropdownAnchorX = ShellState.anchorFor("bluetooth"); ShellState.dropdown = "bluetooth"; } }

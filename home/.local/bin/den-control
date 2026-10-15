@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+"""One control surface for the laptop-master Digital Den. No arbitrary remote jobs."""
+import argparse
+import fcntl
+import json
+import os
+from pathlib import Path
+import shlex
+import socket
+import subprocess
+import sys
+import time
+import tomllib
+
+ROOT = Path(os.environ.get('DEN_CONTROL_ROOT', str(Path.home()/'.local/state/homie-control')))
+ACTIONS = {'status', 'toggle', 'start', 'stop', 'locate', 'home', 'storage', 'check'}
+
+
+def run(args, timeout=6):
+    return subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+
+
+def master():
+    return bool(tomllib.loads((ROOT/'input/config.toml').read_text()).get('clients'))
+
+
+def unit(name):
+    result = run(['systemctl', '--user', 'is-active', name])
+    return result.stdout.strip() or 'inactive'
+
+
+def peer_command(command):
+    result = run(['ssh', '-F', str(ROOT/'client.conf'), 'homie', command], timeout=5)
+    if result.returncode:
+        raise RuntimeError('Homie is unavailable. Local input remains yours.')
+    return result.stdout
+
+
+def send(action):
+    with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as sock:
+        sock.sendto(action.encode(), str(ROOT/'cursor.sock'))
+
+
+def status():
+    active = unit('den-input') == 'active'
+    try:
+        result = json.loads(peer_command("python3 -c " + shlex.quote(
+            "import json,socket,subprocess; print(json.dumps({'host':socket.gethostname(),"
+            "'input':subprocess.run(['systemctl','--user','is-active','--quiet','den-input']).returncode==0}))")))
+        online = result['host'].split('.')[0] == 'homie'
+    except (RuntimeError, OSError, ValueError, subprocess.SubprocessError):
+        online = False
+    try:
+        captured = active and (ROOT/'input/active').read_text().strip() == '1'
+    except OSError:
+        captured = False
+    return {'peer': {'host': 'homie', 'authenticated': online},
+            'input': 'active' if active else 'inactive', 'captured': captured,
+            'state': 'Controlling Homie' if captured else ('Ready at screen edges' if active else 'Paused'),
+            'clipboard': unit('den-clipboard'), 'storage': unit('den-storage'),
+            'storageMounted': os.path.ismount(Path.home()/'Den/Homie'),
+            'master': socket.gethostname(), 'role': 'master'}
+
+
+def wait_input(expected):
+    for _ in range(80):
+        state = unit('den-input')
+        if (expected and state == 'active') or (not expected and state in ('inactive', 'failed')):
+            return
+        time.sleep(.05)
+    raise RuntimeError('Input service did not reach the requested state.')
+
+
+def pause():
+    # Native capture already releases before requesting recovery. The separate
+    # daemon stops the unit, centres the cursor, and remains alive to resume it.
+    try:
+        send('recover')
+        wait_input(False)
+    except (OSError, RuntimeError):
+        result = run(['systemctl', '--user', 'stop', 'den-input'])
+        if result.returncode:
+            raise RuntimeError('Could not stop sharing; use Ctrl+Alt+Esc.')
+
+
+def start():
+    # Establish the receiver first; never capture locally into an offline peer.
+    peer_command('systemctl --user start den-cursor.service den-input.service')
+    result = run(['systemctl', '--user', 'start', 'den-cursor.service', 'den-input.service'])
+    if result.returncode:
+        raise RuntimeError('Sharing could not start. Local input is unchanged.')
+    wait_input(True)
+
+
+def local_action(action):
+    if action == 'status' or action == 'check':
+        return status()
+    if action in ('toggle', 'start', 'stop', 'home'):
+        with (ROOT/'control.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            if action in ('stop', 'home') or (action == 'toggle' and unit('den-input') == 'active'):
+                pause()
+            else:
+                start()
+        return {'ok': True, 'input': unit('den-input')}
+    if action == 'locate':
+        send('show')
+        return {'ok': True}
+    if action == 'storage':
+        path = Path.home()/'Den/Homie'
+        if not os.path.ismount(path):
+            result = run(['systemctl', '--user', 'start', 'den-storage'])
+            if result.returncode or not os.path.ismount(path):
+                raise RuntimeError('Home storage is unavailable; existing files are preserved.')
+        subprocess.Popen(['xdg-open', str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return {'ok': True}
+    raise ValueError('Unsupported Den action')
+
+
+def dispatch(action):
+    if master():
+        return local_action(action)
+    if action == 'storage':
+        subprocess.Popen(['xdg-open', str(Path.home()/'Drives')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return {'ok': True}
+    result = run(['ssh', '-F', str(ROOT/'master-client.conf'), 'arete-den-control', 'den-control', action], timeout=12)
+    if result.returncode:
+        raise RuntimeError('Arete is unavailable. Homie local input is unaffected.')
+    value = json.loads(result.stdout)
+    if action in ('status', 'check'):
+        value['role'] = 'receiver'
+        value['peer'] = {'host': value['master'], 'authenticated': True}
+    return value
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', nargs='?', choices=sorted(ACTIONS), default='status')
+    parser.add_argument('--json', action='store_true')
+    parser.add_argument('--serve', action='store_true')
+    args = parser.parse_args()
+    if args.serve:
+        words = shlex.split(os.environ.get('SSH_ORIGINAL_COMMAND', ''))
+        if len(words) != 2 or words[0] != 'den-control' or words[1] not in ACTIONS - {'storage'}:
+            raise ValueError('Restricted Den control request rejected')
+        # Forced commands cannot use the remote shell or inherit caller arguments.
+        value = local_action(words[1])
+    else:
+        value = dispatch(args.action)
+    print(json.dumps(value))
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError) as error:
+        print('Den: '+str(error) if isinstance(error, (ValueError, RuntimeError)) else 'Den: Action unavailable; check the connection.', file=sys.stderr)
+        raise SystemExit(1)

@@ -127,9 +127,17 @@ def main():
     sub.add_parser('inbox');read=sub.add_parser('read');read.add_argument('id')
     get=sub.add_parser('peer-get');get.add_argument('id');sub.add_parser('peer-list')
     send=sub.add_parser('send');send.add_argument('file',type=Path)
-    control=sub.add_parser('input');control.add_argument('action',choices=['start','stop','status'])
+    control=sub.add_parser('input');control.add_argument('action',choices=['start','stop','status','toggle'])
     files=sub.add_parser('storage');files.add_argument('action',choices=['open','check'])
     args=parser.parse_args()
+    native = HOME/'.local/bin/den-control'
+    if native.is_file() and (HOME/'.local/state/homie-control/input/config.toml').is_file():
+        action = None
+        if args.command == 'status': action = 'status'
+        elif args.command == 'input': action = 'status' if args.action == 'status' else args.action
+        elif args.command == 'storage': action = 'storage' if args.action == 'open' else 'check'
+        if action:
+            os.execv(sys.executable, [sys.executable, str(native), action, '--json'])
     if args.command=='status':
         value=status()
         if args.json:print(json.dumps(value))
