@@ -10,6 +10,7 @@ Singleton {
  function toggleQuiet():void {
   if(!quiet){previousDnd=Notifications.doNotDisturb;Notifications.doNotDisturb=true;quiet=true;}
   else {quiet=false;Notifications.doNotDisturb=previousDnd;}
+  Quickshell.execDetached([Quickshell.env('HOME')+'/.local/bin/sensei-den','companion','quiet',quiet?'on':'off']);
  }
  function scratch():void {ShellState.closeAll();Quickshell.execDetached([Quickshell.env('HOME')+'/.local/bin/sensei-workbench','scratch']);}
  function capture():void {ShellState.closeAll();Quickshell.execDetached([Quickshell.env('HOME')+'/.local/bin/sensei-workbench','capture']);}

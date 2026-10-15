@@ -55,37 +55,19 @@ def token(force=False):
    except urllib.error.HTTPError:raise MusicError('Sensei, Spotify needs you to sign in again. Use Account → Sign in.')
    d.update(fresh);d['expires_at']=datetime.datetime.fromtimestamp(time.time()+fresh.get('expires_in',3600),datetime.timezone.utc).isoformat().replace('+00:00','Z');put(TOKEN,d)
   return d['access_token']
-# Spotify's own limit is unpublished and counted over a rolling 30 s window.
-# Stay under a self-imposed budget shared by every process that calls the Web API.
-BUDGET=10
-COOLDOWN=STORE/'cooldown.json';CALLS=STORE/'calls.json'
-def cooldown_until():
- try:return json.loads(COOLDOWN.read_text()).get('until',0)
- except (OSError,ValueError):return 0
-def penalise(retry_after):
- try:prev=json.loads(COOLDOWN.read_text())
- except (OSError,ValueError):prev={}
- now=time.time()
- # Spotify's Retry-After is the wait it asks for: follow it, with a short floor.
- # A 429 that comes right after a pause means the limit has not reset: back off harder.
- strikes=prev.get('strikes',0)+1 if now-prev.get('until',0)<120 else 1
- wait=min(900,max(retry_after,5)*(2**(strikes-1)))
- put(COOLDOWN,{'until':now+wait,'strikes':strikes});return wait
-def gate(max_wait=60):
- deadline=time.time()+max_wait
- with (STORE/'gate.lock').open('a') as lock:
-  fcntl.flock(lock,fcntl.LOCK_EX)
-  while True:
-   now=time.time()
-   try:stamps=[t for t in json.loads(CALLS.read_text()) if now-t<30]
-   except (OSError,ValueError):stamps=[]
-   if len(stamps)<BUDGET:
-    stamps.append(now);put(CALLS,stamps);return
-   if now>=deadline:raise MusicError('Sensei, Spotify requests are paced to stay under its limit. Showing saved data.')
-   time.sleep(min(1,max(0.05,stamps[0]+30-now)))
+# The Rust daemon and this helper share one locked, persistent local budget.
+sys.path.insert(0,str(HOME/'.local/share/sensei'))
+from spotify_budget import Budget
+BUDGET=Budget()
+def gate(max_wait=0):
+ d=BUDGET.transact('acquire','library')
+ if not d['allowed']:
+  if d['reason']=='quota':raise MusicError('Spotify catalogue quota is exhausted. Saved music data and local controls remain available; no reset time was supplied. Use Account after checking Spotify.')
+  wait=max(0,int((d.get('retryAt') or time.time())-time.time())+1)
+  raise MusicError(f'Spotify catalogue requests paused for {wait} seconds. Showing saved data; local playback is independent.')
+def penalise(seconds,reason='rate'):
+ return BUDGET.transact('penalise',seconds=seconds,reason=reason)
 def api(path,method='GET',body=None,retry=True):
- until=cooldown_until()
- if until>time.time():raise MusicError('Sensei, Spotify is limiting requests. Retry in '+str(int(until-time.time())+1)+' seconds; playback controls remain available.')
  if path.startswith('https://'):
   if not path.startswith('https://api.spotify.com/v1/'):raise MusicError('Unexpected Spotify endpoint')
   url=path
@@ -109,8 +91,8 @@ def api(path,method='GET',body=None,retry=True):
    except Exception:body={}
    # QUOTA_EXCEEDED is the account's own quota (July 2026 changelog), not the rolling window.
    reason=body.get('reason') or (body.get('error') or {}).get('reason','')
-   wait=penalise(after)
-   if reason=='QUOTA_EXCEEDED':raise MusicError(f'Sensei, Spotify’s quota for this developer account is used up. Retrying in {wait} seconds.')
+   state=penalise(after,reason);wait=max(0,int((state.get('retryAt') or time.time())-time.time()))
+   if reason=='QUOTA_EXCEEDED':raise MusicError(f'Sensei, Spotify’s quota for this developer account is used up. Saved data is available; no reset time was supplied.')
    raise MusicError(f'Sensei, Spotify requested a {wait}-second pause in library requests.')
   try:message=json.load(e).get('error',{}).get('message','Request refused')
   except Exception:message='Request refused'
@@ -301,6 +283,8 @@ def main(a):
  if not a:raise MusicError('Choose a music operation')
  cmd=a[0]
  if cmd=='status':return status()
+ if cmd=='budget':return BUDGET.transact('status')
+ if cmd=='budget-reset':return BUDGET.transact('reset')
  if cmd=='library':return library(a[1],len(a)>2 and a[2]=='refresh')
  if cmd=='home':return library('recent')
  if cmd=='context':return context(a[1],a[2],len(a)>3 and a[3]=='refresh')
@@ -341,7 +325,7 @@ def main(a):
    with urllib.request.urlopen(url,timeout=8) as r:raw=r.read(5*1024*1024)
    temp=path.with_name(path.name+f'.{os.getpid()}.tmp');temp.write_bytes(raw);temp.replace(path)
   return {'path':path.as_uri()}
- if cmd=='account':return {'deviceName':LOCAL_DEVICE,'cachedLogin':TOKEN.exists(),'service':subprocess.run(['systemctl','--user','is-active','sensei-spotify.service'],capture_output=True,text=True).stdout.strip(),'version':'0.25.1','device':LOCAL_DEVICE}
+ if cmd=='account':return {'deviceName':LOCAL_DEVICE,'cachedLogin':TOKEN.exists(),'service':subprocess.run(['systemctl','--user','is-active','sensei-spotify.service'],capture_output=True,text=True).stdout.strip(),'version':'0.25.1','device':LOCAL_DEVICE,'budget':BUDGET.transact('status')}
  action(cmd,a[1:]);return {'ok':True}
 if __name__=='__main__':
  try:print(json.dumps(main(sys.argv[1:]),ensure_ascii=False))

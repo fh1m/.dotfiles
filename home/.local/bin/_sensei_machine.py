@@ -20,6 +20,7 @@ def gpu_pci():
     return ''
 
 def command(args, default=''):
+    if args[0]=='hyprctl' and not os.environ.get('HYPRLAND_INSTANCE_SIGNATURE'):args=[args[0],'-i','0',*args[1:]]
     try:
         return subprocess.check_output(args, text=True, stderr=subprocess.DEVNULL, timeout=3).strip()
     except (OSError, subprocess.SubprocessError):
@@ -36,9 +37,16 @@ def facts():
     output = settings.get('primaryOutput', '')
     if not any(m['name'] == output for m in monitors):
         output = next((m['name'] for m in monitors if m.get('focused')), monitors[0]['name'] if monitors else '')
+    import sys, socket
+    sys.path.insert(0,str(Path.home()/'.local/share/sensei'))
+    try:
+        from den_layout import roles
+        resolved=roles(monitors,profile=settings.get('profile'))
+    except (ImportError,ValueError):resolved={}
+    if resolved.get('main'):output=resolved['main']['name']
     battery=bool(list(Path('/sys/class/power_supply').glob('BAT*')))
     if settings.get('profile','generic')=='generic':settings['profile']='zenbook' if battery else 'pc'
-    return {**settings, 'primaryOutput': output, 'gpuPCI': gpu_pci(), 'gpuName': gpu_name,
+    return {**settings, 'host': socket.gethostname().split('.')[0], 'displayRoles': {m['name']:role for role,m in resolved.items()}, 'primaryOutput': output, 'gpuPCI': gpu_pci(), 'gpuName': gpu_name,
             'cpuName': cpu, 'hasBattery': bool(list(Path('/sys/class/power_supply').glob('BAT*'))),
             'hasWireless': bool(list(Path('/sys/class/net').glob('*/wireless'))), 'hasScreenPad': battery and any(m['name']=='DP-2' for m in monitors), 'hasIntelGPU': any((d/'vendor').is_file() and (d/'vendor').read_text().strip()=='0x8086' and (d/'class').read_text().strip().startswith('0x03') for d in Path('/sys/bus/pci/devices').glob('*')), 'hasPowerProfiles': bool(json.loads(command([str(Path.home()/'.local/bin/sensei-power'),'get'],'{}')).get('supported',[]))}
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Dedicated Den services; discover the actual graphical session at each start."""
 import json, os, pathlib, subprocess, sys, time, tomllib
+sys.path.insert(0,str(pathlib.Path.home()/'.local/share/sensei'))
+from den_layout import roles as display_roles
 state=pathlib.Path.home()/".local/state/homie-control"
 if sys.argv[1]=="reset":
     for name in ("active","return-armed"):
@@ -23,12 +25,18 @@ if not binary.exists():binary=pathlib.Path("/usr/bin/lan-mouse")
 (state/"input/active").write_text("0")
 config=tomllib.loads((state/"input/config.toml").read_text())
 if config.get("clients"):
-    os.environ["DEN_CAPTURE_OUTPUTS"]="top=eDP-1,right=DP-1"
+    outputs=display_roles(json.loads(subprocess.check_output(["hyprctl","monitors","-j"])))
+    edges=[]
+    if "main" in outputs:edges.append("top="+outputs["main"]["name"])
+    if "upper" in outputs:edges.append("right="+outputs["upper"]["name"])
+    os.environ["DEN_CAPTURE_OUTPUTS"]=",".join(edges)
     os.environ["DEN_CTRL_COMMAND"]=str(state/"den-cursor.py")
     os.environ["DEN_CAPTURE_STATE"]=str(state/"input/active")
     os.environ["DEN_RETURN_COMMAND"]=str(state/"den-edge-return.py")
 else:
-    os.environ["DEN_CAPTURE_OUTPUTS"]="left=DP-3,bottom=DP-3"
+    outputs=display_roles(json.loads(subprocess.check_output(["hyprctl","monitors","-j"])))
+    primary=outputs.get("main",{}).get("name","")
+    os.environ["DEN_CAPTURE_OUTPUTS"]="left="+primary+",bottom="+primary
     os.environ["DEN_RETURN_EDGES"]="bottom,left"
     os.environ["DEN_RETURN_WATCH"]="1"
     (state/"input/return-armed").write_text("0")

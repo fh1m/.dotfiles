@@ -243,6 +243,30 @@ impl SpotifyApiMiddleware {
                     .is_some_and(|suffix| suffix.starts_with('/')))
     }
 
+    // Python catalogue helpers and the daemon must observe the same cooldown.
+    // This helper receives only fixed categories, never credentials or URLs.
+    async fn shared_budget(&self, url: &Url, action: &str, seconds: u64, reason: &str) -> reqwest_middleware::Result<()> {
+        if url.host_str() != Some("api.spotify.com") { return Ok(()); }
+        let Some(home) = dirs_next::home_dir() else { return Ok(()); };
+        let helper = home.join(".local/share/sensei/spotify_budget.py");
+        if !helper.is_file() { return Ok(()); }
+        let action = action.to_owned();
+        let reason = reason.to_owned();
+        let category = if url.path().contains("/player") { "player" }
+            else if url.path().contains("/search") { "search" } else { "catalogue" };
+        tokio::task::spawn_blocking(move || {
+            let out = std::process::Command::new("/usr/bin/python3")
+                .arg(helper).arg(action).arg(category).arg("--seconds").arg(seconds.to_string())
+                .arg("--reason").arg(reason).output()?;
+            anyhow::ensure!(out.status.success(), "Spotify request budget unavailable");
+            let value: serde_json::Value = serde_json::from_slice(&out.stdout)?;
+            anyhow::ensure!(value["allowed"].as_bool() == Some(true),
+                "Spotify catalogue paused ({}); local playback remains available", value["reason"]);
+            Ok::<(), anyhow::Error>(())
+        }).await.map_err(|e| Error::Middleware(e.into()))?
+          .map_err(Error::Middleware)
+    }
+
     fn retry_after(headers: &HeaderMap) -> Option<Duration> {
         headers
             .get(RETRY_AFTER)
@@ -323,6 +347,7 @@ impl SpotifyApiMiddleware {
         let url = request.url();
 
         for attempt in 0..=self.requests.max_retries {
+            self.shared_budget(url, "acquire", 0, "rate").await?;
             self.requests.wait_for_retry_after().await;
             if attempt > 0 {
                 tracing::warn!(
@@ -338,9 +363,20 @@ impl SpotifyApiMiddleware {
                 )));
             };
 
-            let response = next.clone().run(request, extensions).await?;
+            let mut response = next.clone().run(request, extensions).await?;
             self.observe_rate_limit(&response, &Method::GET, url).await;
 
+            if response.status() == StatusCode::TOO_MANY_REQUESTS {
+                let seconds = Self::retry_after(response.headers()).unwrap_or(Duration::from_secs(60)).as_secs();
+                let cached = CachedResponse::from_response(response).await?;
+                let body: serde_json::Value = serde_json::from_slice(&cached.body).unwrap_or_default();
+                let quota = body["error"]["reason"] == "QUOTA_EXCEEDED" || body["reason"] == "QUOTA_EXCEEDED";
+                let _ = self.shared_budget(url, "penalise", seconds,
+                    if quota { "QUOTA_EXCEEDED" } else { "rate" }).await;
+                response = cached.to_response();
+                // Production calls do not sleep/retry inside a growing request queue.
+                if quota || url.host_str() == Some("api.spotify.com") { return Ok(response); }
+            }
             let retry_after = Self::retry_after(response.headers());
             if response.status() != StatusCode::TOO_MANY_REQUESTS
                 || retry_after.is_none()
@@ -373,13 +409,21 @@ impl Middleware for SpotifyApiMiddleware {
             return self.run_get(request, extensions, next).await;
         }
 
+        self.shared_budget(&url, "acquire", 0, "rate").await?;
         tracing::info!(%method, %url, "Making a Spotify Web API request");
 
-        let response = next.run(request, extensions).await;
-        if let Ok(response) = &response {
-            self.observe_rate_limit(response, &method, &url).await;
+        let response = next.run(request, extensions).await?;
+        self.observe_rate_limit(&response, &method, &url).await;
+        if response.status() == StatusCode::TOO_MANY_REQUESTS {
+            let seconds = Self::retry_after(response.headers()).unwrap_or(Duration::from_secs(60)).as_secs();
+            let cached = CachedResponse::from_response(response).await?;
+            let body: serde_json::Value = serde_json::from_slice(&cached.body).unwrap_or_default();
+            let quota = body["error"]["reason"] == "QUOTA_EXCEEDED" || body["reason"] == "QUOTA_EXCEEDED";
+            let _ = self.shared_budget(&url, "penalise", seconds,
+                if quota { "QUOTA_EXCEEDED" } else { "rate" }).await;
+            return Ok(cached.to_response());
         }
-        response
+        Ok(response)
     }
 }
 
@@ -583,6 +627,18 @@ mod tests {
 
         assert_eq!(first.text().await.unwrap(), "shared");
         assert_eq!(second.text().await.unwrap(), "shared");
+    }
+
+    #[tokio::test]
+    async fn quota_exhaustion_is_not_retried() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET")).and(path("/v1/me"))
+            .respond_with(ResponseTemplate::new(429).insert_header("retry-after", "0")
+                .set_body_json(serde_json::json!({"error":{"reason":"QUOTA_EXCEEDED"}})))
+            .expect(1).mount(&server).await;
+        let client = ClientBuilder::new(reqwest::Client::new())
+            .with(SpotifyApiMiddleware::new(&format!("{}/v1",server.uri()),3).unwrap()).build();
+        assert_eq!(client.get(format!("{}/v1/me",server.uri())).send().await.unwrap().status(),StatusCode::TOO_MANY_REQUESTS);
     }
 
     #[tokio::test]

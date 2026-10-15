@@ -54,7 +54,13 @@ def status():
         captured = active and (ROOT/'input/active').read_text().strip() == '1'
     except OSError:
         captured = False
-    return {'peer': {'host': 'homie', 'authenticated': online},
+    try:
+        prefs=json.loads((Path.home()/'.config/sensei-den/continuity.json').read_text())
+    except (OSError,ValueError):prefs={}
+    try:
+        companion=json.loads((Path.home()/'.config/sensei-den/companion.json').read_text())
+    except (OSError,ValueError):companion={}
+    return {'mode':prefs.get('mode','auto'),'companion':companion.get('enabled',True),'peer': {'host': 'homie', 'authenticated': online},
             'input': 'active' if active else 'inactive', 'captured': captured,
             'state': 'Controlling Homie' if captured else ('Ready at screen edges' if active else 'Paused'),
             'clipboard': unit('den-clipboard'), 'storage': unit('den-storage'),
@@ -89,6 +95,7 @@ def start():
     result = run(['systemctl', '--user', 'start', 'den-cursor.service', 'den-input.service'])
     if result.returncode:
         raise RuntimeError('Sharing could not start. Local input is unchanged.')
+    (ROOT/"input/user-paused").unlink(missing_ok=True)
     wait_input(True)
 
 

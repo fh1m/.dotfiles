@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Cursor locator/recovery independent of input sharing. No keystroke recording."""
 import json,os,pathlib,selectors,signal,socket,subprocess,sys,time,tomllib,ctypes,concurrent.futures
+sys.path.insert(0,str(pathlib.Path.home()/'.local/share/sensei'))
+from den_layout import roles as display_roles
 ROOT=pathlib.Path.home()/'.local/state/homie-control'
 SOCK=ROOT/'cursor.sock'
 QS=str(pathlib.Path.home()/'.local/opt/sensei-quickshell/bin/qs')
@@ -15,11 +17,12 @@ def pulse(peer=False):
         if m['x']<=pos['x']<m['x']+w and m['y']<=pos['y']<m['y']+h:
             subprocess.run([QS,'-p',str(ROOT/'cursor-ui'),'ipc','call','den-cursor','pulse',m['name'],str(pos['x']-m['x']),str(pos['y']-m['y'])],check=True,timeout=3);return
 
-def recover():
+def recover(manual=True):
+    if manual:(ROOT/'input/user-paused').write_text('1')
     # Stop the master capture completely before moving the cursor. Independent of a peer reply.
     subprocess.run(['systemctl','--user','stop','den-input'],check=True,timeout=5)
     (ROOT/'input/active').write_text('0')
-    monitors=json.loads(hypr('monitors','-j'));m=next((m for m in monitors if m['name']=='eDP-1'),monitors[0]);x=round(m['x']+m['width']/m['scale']/2);y=round(m['y']+m['height']/m['scale']/2)
+    monitors=json.loads(hypr('monitors','-j'));m=display_roles(monitors).get('main',monitors[0]);x=round(m['x']+m['width']/m['scale']/2);y=round(m['y']+m['height']/m['scale']/2)
     hypr('dispatch','hl.dsp.focus({monitor='+json.dumps(m['name'])+'})')
     hypr('dispatch',f'hl.dsp.cursor.move({{x={x},y={y}}})')
     hypr('setcursor','Sensei-Signal','24')
@@ -61,7 +64,7 @@ def daemon():
             gui_focus(next((m['name'] for m in monitors if m.get('focused')),'') if peer_owned else '')
             try:return_armed=(ROOT/'input/return-armed').read_text().strip()=='1'
             except OSError:return_armed=False
-            return_monitor=next((m for m in monitors if m['name']=='DP-3'),None)
+            return_monitor=display_roles(monitors).get('main')
 
     def install():
         if not tomllib.loads((ROOT/"input/config.toml").read_text()).get("clients"):return
@@ -110,7 +113,7 @@ def daemon():
                 action=server.recv(128).decode()
                 try:
                     if action in ('owner-on','owner-off'):peer_owned=(action=='owner-on');refresh_focus()
-                    elif action=='recover':recover();refresh_focus()
+                    elif action in ('recover','peer-lost'):recover(manual=action=='recover');refresh_focus()
                     elif action=='show-local':pulse()
                     elif action=='show':
                         try:peer=(ROOT/'input/active').read_text().strip()=='1'

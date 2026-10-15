@@ -34,8 +34,8 @@ Singleton {
     // made by hand, to rehearse an HDMI screen and a top-bar external screen
     // without the hardware. Nothing in the repo creates them; they are seams
     // for the same reason as the names in sensei-displays.
-    function isExternalOutput(name:string):bool {return name!==(barScreens[0]?.name??MachineProfile.primaryOutput)&&(MachineProfile.desktop||name!=="DP-2")&&(name.startsWith("HDMI-")||name.startsWith("DP-")||name.startsWith("DVI-")||name==="SENSEI-HDMI-TEST"||name==="SENSEI-UPPER-TEST");}
-    function externalBarEdge(name:string):string {return ExternalDisplays.display(name)?.barEdge??((name==="DP-1"||name==="SENSEI-UPPER-TEST")?"top":"bottom");}
+    function isExternalOutput(name:string):bool {return name!==(barScreens[0]?.name??MachineProfile.primaryOutput)&&(MachineProfile.role(name)!=="screenpad")&&(name.startsWith("HDMI-")||name.startsWith("DP-")||name.startsWith("DVI-")||name==="SENSEI-HDMI-TEST"||name==="SENSEI-UPPER-TEST");}
+    function externalBarEdge(name:string):string {return MachineProfile.role(name)==="upper"?"top":ExternalDisplays.display(name)?.barEdge??((name==="DP-1"||name==="SENSEI-UPPER-TEST")?"top":"bottom");}
     readonly property var externalScreens: screens.filter(s => isExternalOutput(s.name))
     readonly property var bottomBarScreens: MachineProfile.desktop ? barScreens.concat(externalScreens) : screens.filter(s => s.name === "DP-2" || externalScreens.some(e=>e.name===s.name))
     property string dropdownOriginScreen: ""
@@ -74,7 +74,10 @@ Singleton {
     // holding the keyboard when the lock lifts, over a screen that looks
     // ordinary. The power menu's own LOCK already closed itself; Super + L
     // and `ipc call lock lock` did not.
-    onLockedChanged: if (locked) closeAll()
+    onLockedChanged: {
+        if (locked) closeAll()
+        Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","companion","suspended",locked?"on":"off"])
+    }
 
     // Set by the deck plumbing, from Hyprland's workspace events.
     property bool deckVisible: false

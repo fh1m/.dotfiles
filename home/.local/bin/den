@@ -12,6 +12,10 @@ import socket
 import tempfile
 from urllib.parse import quote
 
+# Current continuity commands supersede the historical mailbox/Deskflow status.
+if __name__=='__main__' and len(sys.argv)>1 and sys.argv[1] in {'status','doctor','mode','sync','backup','job','companion','watch'}:
+    os.execv(str(Path.home()/'.local/bin/sensei-den'),['sensei-den',*sys.argv[1:]])
+
 HOME = Path.home()
 STATE = HOME / '.local/state/den'
 SETTINGS = HOME / '.config/sensei-den/config.json'

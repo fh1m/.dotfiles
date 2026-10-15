@@ -256,7 +256,8 @@ impl WebApiClient {
     fn fallback_status(error: &ClientError) -> Option<reqwest::StatusCode> {
         match error {
             ClientError::Http(error) => match error.as_ref() {
-                HttpError::StatusCode(response) if response.status().is_client_error() => {
+                HttpError::StatusCode(response) if response.status().is_client_error()
+                    && response.status() != reqwest::StatusCode::TOO_MANY_REQUESTS => {
                     Some(response.status())
                 }
                 HttpError::Client(_) | HttpError::StatusCode(_) => None,
@@ -480,7 +481,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn custom_rate_limit_falls_back_before_ncspot_retries() {
+    async fn rate_limit_does_not_switch_client_identity() {
         let primary_server = MockServer::start().await;
         Mock::given(method("GET"))
             .and(path("/v1/test"))
@@ -503,11 +504,8 @@ mod tests {
             Some(client(&fallback_server, true).await),
         );
 
-        assert_eq!(
-            client.api_get("test", &Query::new()).await.unwrap(),
-            "fallback"
-        );
-        assert_eq!(fallback_calls.load(std::sync::atomic::Ordering::SeqCst), 2);
+        assert!(client.api_get("test", &Query::new()).await.is_err());
+        assert_eq!(fallback_calls.load(std::sync::atomic::Ordering::SeqCst), 0);
     }
 
     #[tokio::test]

@@ -10,6 +10,11 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+sys.path.insert(0,str(Path.home()/".local/share/sensei"))
+try:
+    from den_layout import role_for, roles as display_roles
+except ImportError:
+    role_for = None
 
 STATE = Path(os.environ.get('XDG_CACHE_HOME', Path.home()/'.cache'))/'sensei-displays'
 DRM = Path('/sys/class/drm')
@@ -17,15 +22,23 @@ WORKSPACE_NAMES = ('Terminal','Web','Code','Study','Sim','Work')
 
 
 def run(command, timeout=15):
+    if command[0]=='hyprctl' and not os.environ.get('HYPRLAND_INSTANCE_SIGNATURE'):command=[command[0],'-i','0',*command[1:]]
     return subprocess.check_output(command, text=True, stderr=subprocess.PIPE, timeout=timeout)
 
 
-def monitors():return json.loads(run(['hyprctl','monitors','-j']))
+def monitors():
+    rows=json.loads(run(['hyprctl','monitors','-j']));globals()['_role_monitors']=rows;return rows
 def known_workspaces():return json.loads(run(['hyprctl','workspaces','-j']))
 def clients():return json.loads(run(['hyprctl','clients','-j']))
 def dispatch(expression):run(['hyprctl','dispatch',expression])
 def external(name):
-    return name != 'DP-2' and (name.startswith(('HDMI-','DP-','DVI-')) or name in ('SENSEI-HDMI-TEST','SENSEI-UPPER-TEST'))
+    current=globals().get('_role_monitors')
+    if role_for and current is not None:
+        return role_for(name,current) not in ('main','screenpad') and (name.startswith(('HDMI-','DP-','DVI-')) or name.startswith('SENSEI-'))
+    desktop=globals().get('MACHINE',{}).get('profile')=='pc'
+    return name != globals().get('PRIMARY','eDP-1') and (desktop or name!='DP-2') and (name.startswith(('HDMI-','DP-','DVI-')) or name.startswith('SENSEI-'))
+
+
 
 
 def workspace_slots(outputs=None):
@@ -56,7 +69,9 @@ def workspace_slots(outputs=None):
     return result
 
 
-def bar_edge(output):return 'top' if output in ('DP-1','SENSEI-UPPER-TEST') or workspace_slots().get(output,1)>1 else 'bottom'
+def bar_edge(output):
+    if role_for and role_for(output,globals().get('_role_monitors') or [])=='upper':return 'top'
+    return 'top' if output=='SENSEI-UPPER-TEST' or workspace_slots().get(output,1)>1 else 'bottom'
 
 def selector(name):
     if not re.fullmatch(r'[A-Za-z0-9_-]+',name):raise ValueError('Invalid output name')
@@ -123,7 +138,7 @@ def optimal_mode(monitor):
 
 
 def configure(outputs):
-    selected=sorted((m for m in outputs if external(m['name'])),key=lambda m:(m['name']!='HDMI-A-1',m['name']))
+    selected=sorted((m for m in outputs if external(m['name'])),key=lambda m:((role_for(m['name'],outputs)!='lower') if role_for else m['name']!='HDMI-A-1',m['name']))
     lower=None
     for monitor in selected:
         mode,width,height,rate=optimal_mode(monitor)

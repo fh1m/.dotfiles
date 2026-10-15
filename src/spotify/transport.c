@@ -25,6 +25,24 @@ static J *get(J *o, const char *k) {
   return v;
 }
 static const char *str(J *v) { return v ? json_object_get_string(v) : ""; }
+static char local_device[256] = "Sensei · ZenBook Duo";
+static void load_local_device(void) {
+  char path[8192], line[2048]; int device_section = 0;
+  snprintf(path,sizeof path,"%s/.config/spotify-player/app.toml",home);
+  FILE *file=fopen(path,"r"); if(!file)return;
+  while(fgets(line,sizeof line,file)) {
+    char *p=line+strspn(line," \t");
+    if(*p=='[') {device_section=!strncmp(p,"[device]",8);continue;}
+    if(device_section && !strncmp(p,"name",4)) {
+      p+=4; p+=strspn(p," \t"); if(*p++!='=')continue;
+      J *value=json_tokener_parse(p);
+      if(value && json_object_is_type(value,json_type_string))
+        snprintf(local_device,sizeof local_device,"%s",str(value));
+      if(value)json_object_put(value);
+    }
+  }
+  fclose(file);
+}
 static double num(J *v) { return v ? json_object_get_double(v) : 0; }
 static int yes(J *v) { return v && json_object_get_boolean(v); }
 static void add(J *o, const char *k, J *v) {
@@ -173,6 +191,9 @@ static J *rpc(J *request) {
     if (child > 0 && waitpid(child, &result, 0) == child &&
         WIFEXITED(result) && WEXITSTATUS(result) == 0) {
       usleep(500000);
+      const char *operation = str(get(request, "Playback"));
+      if (!strcmp(operation, "Next") || !strcmp(operation, "Previous"))
+        fail("The player session recovered. Check the current track before skipping again.");
       return rpc(request);
     }
     fail("Sensei, the Spotify player lost its session and could not restart.");
@@ -272,12 +293,12 @@ static J *status(J *d) {
   int loading = yes(get(event, "loading")) && age >= 0 && age < 30;
   int native_playing = yes(get(event, "playing"));
   long long native_progress = num(get(event, "progress")) + (native_playing ? (long long)(age * 1000) : 0);
-  int local_selection = !strlen(str(get(selection, "name"))) || !strcmp(str(get(selection, "name")), "Sensei · ZenBook Duo");
+  int local_selection = !strlen(str(get(selection, "name"))) || !strcmp(str(get(selection, "name")), local_device);
   int native_owner = local_selection && native_playing && age >= 0 &&
       native_progress <= num(get(et, "duration")) + 2000 &&
       num(get(event, "player_pid")) > 0 && kill((pid_t)num(get(event, "player_pid")), 0) == 0;
 
-  if ((native_owner || (!strcmp(str(get(device, "name")), "Sensei · ZenBook Duo") && age >= 0 &&
+  if ((native_owner || (!strcmp(str(get(device, "name")), local_device) && age >= 0 &&
       (age < 8 || !strlen(str(get(track, "id")))))) &&
       strlen(str(get(et, "id")))) {
     if (strcmp(str(get(track, "uri")), str(get(event, "uri"))) ||
@@ -297,7 +318,7 @@ static J *status(J *d) {
   copy(o, "volume", get(device, "volume_percent"));
   copy(o, "reportedDevice", get(device, "name"));
   if (native_owner) {
-    text(o, "device", "Sensei · ZenBook Duo");
+    text(o, "device", local_device);
     copy(o, "deviceId", strlen(str(get(event, "deviceId"))) ? get(event, "deviceId") : get(device, "id"));
   } else {
     copy(o, "device", get(device, "name"));
@@ -454,7 +475,7 @@ static void music_start(int argc, char **argv) {
   // checking it costs no Web API call.
   J *d = playback();
   const char *device = str(get(get(d, "device"), "name"));
-  if (*device && strcmp(device, "Sensei · ZenBook Duo")) {
+  if (*device && strcmp(device, local_device)) {
     char exe[4096];
     snprintf(exe, sizeof exe, "%s/.local/bin/sensei-spotify", home);
     argv[0] = exe;
@@ -569,6 +590,7 @@ int main(int argc, char **argv) {
     base = getenv("HOME");
   snprintf(home, sizeof home, "%s", base ? base : "@HOME@");
   snprintf(store, sizeof store, "%s/.cache/sensei-spotify", home);
+  load_local_device();
   if (argc < 2)
     fail("Missing action");
   const char *name = argv[1];
@@ -611,16 +633,9 @@ int main(int argc, char **argv) {
   J *d = NULL;
   if (simple) {
     if (!strcmp(name, "next") || !strcmp(name, "previous")) {
-      int playing;
-      if (argc > 2 &&
-          (!strcmp(argv[2], "playing") || !strcmp(argv[2], "paused")))
-        playing = !strcmp(argv[2], "playing");
-      else {
-        d = playback();
-        playing = yes(get(d, "is_playing"));
-      }
+      /* Next/Previous are one non-idempotent command. A following Play/Pause
+       * races remote Connect ownership and can revive a replaced queue. */
       control(json_object_new_string(simple));
-      control(json_object_new_string(playing ? "Play" : "Pause"));
     } else
       control(json_object_new_string(simple));
   } else if (!strcmp(name, "volume")) {

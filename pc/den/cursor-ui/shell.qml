@@ -4,6 +4,11 @@ import Quickshell.Io
 import Quickshell.Wayland
 ShellRoot {
     id: root
+    Loader {
+        asynchronous:true
+        source:Quickshell.env("HOME")+"/.local/share/sensei-companion/Companion.qml"
+        onLoaded:item.ownerOutput=Qt.binding(()=>root.focusedOutput)
+    }
     property string output: ""
     property string focusedOutput: ""
     property real px: 0

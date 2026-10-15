@@ -34,6 +34,12 @@ Variants {
         WlrLayershell.namespace: "sensei-bar"
         anchors { top: bar.topEdge; bottom: !bar.topEdge; left: true; right: true }
         Rectangle { anchors.fill: parent; color: Theme.barBg }
+        Text {
+            visible:bar.external
+            anchors.left:parent.left;anchors.leftMargin:20;anchors.verticalCenter:parent.verticalCenter
+            text:MachineProfile.host+" / "+MachineProfile.role(bar.outputName)
+            font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetMuted
+        }
         Row {
             id: meters
             visible: !bar.external
