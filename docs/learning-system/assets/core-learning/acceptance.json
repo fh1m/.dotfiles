@@ -1,0 +1,492 @@
+{
+  "frame_sample_count": 303,
+  "frame_p95_ms": 17.158239,
+  "fixture": "/var/tmp/noesis-lifecycle-c2wgvlyq",
+  "record_creation": "native controls only",
+  "question_title_preserved": true,
+  "canvas_created_opened": true,
+  "freehand_created_opened": true,
+  "native_editor": true,
+  "terminal_execution": {
+    "status": "completed",
+    "record_id": "e0de0a68-aba5-4798-a62a-42a01da62f6d",
+    "command": [
+      "/usr/sbin/python3",
+      "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/scratch.py"
+    ],
+    "cwd": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51",
+    "code_sha256": "3b68ee287433dcd68d895783b8e8372001f9f315b2087674f88a7595ec571a92",
+    "prediction": "Agent validation prediction: integer samples cannot distinguish these two frequencies.",
+    "python": "3.14.7 (main, Aug 14 2026, 06:38:32) [GCC 16.2.1 20260810]",
+    "started_at": "2026-10-11T01:33:24.273338+00:00",
+    "learner_achievement": false,
+    "environment": {
+      "NOESIS_RUN_DIRECTORY": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7"
+    },
+    "package_versions": {
+      "numpy": "2.5.3",
+      "scipy": "1.18.1",
+      "sympy": "1.14.0",
+      "matplotlib": "3.11.2"
+    },
+    "code_snapshot": {
+      "authority": "owned scratch file; no Git revision",
+      "sha256": "3b68ee287433dcd68d895783b8e8372001f9f315b2087674f88a7595ec571a92"
+    },
+    "exit_code": 0,
+    "finished_at": "2026-10-11T01:33:27.140372+00:00",
+    "code_changed": false,
+    "outputs": [
+      {
+        "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7/stdout.txt",
+        "sha256": "c71e54f4c173a707e4dee4b6e7c07a782dedd98c9880a324d7dc41db4c02a0b3",
+        "size": 46
+      },
+      {
+        "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7/stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 0
+      }
+    ]
+  },
+  "stdout": "max sampled difference 1.1102230246251565e-15\n",
+  "exact_restart": true,
+  "domains": {
+    "mathematics": {
+      "source": "8e673737-388e-4b26-8010-e5e3d9088011",
+      "question": "801bdc30-8fd8-4519-9001-295bf2a0f866",
+      "experiment": "e0de0a68-aba5-4798-a62a-42a01da62f6d"
+    },
+    "computer_science": {
+      "problem": "3b8edd32-c48f-44d3-b2fc-f1f6fd73ddd5",
+      "invariant_question": "45bce595-ad4d-4b60-80fe-2794c7a3d663",
+      "experiment": "581cae59-97d3-4242-b74e-dae1b19e606c",
+      "failed_execution": {
+        "status": "completed",
+        "record_id": "581cae59-97d3-4242-b74e-dae1b19e606c",
+        "command": [
+          "/usr/sbin/python3",
+          "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/scratch.py"
+        ],
+        "cwd": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141",
+        "code_sha256": "a180b569a2704896cc6cc7e687edefe5749db99c73e9722c5faeb9f9c42265f1",
+        "prediction": "Reversed edges invalidate vertex-number order; a cycle has no valid ordering.",
+        "python": "3.14.7 (main, Aug 14 2026, 06:38:32) [GCC 16.2.1 20260810]",
+        "started_at": "2026-10-11T01:34:26.766856+00:00",
+        "learner_achievement": false,
+        "environment": {
+          "NOESIS_RUN_DIRECTORY": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/runs/92422520-4053-43bb-95b0-20fde6638b12"
+        },
+        "package_versions": {
+          "numpy": "2.5.3",
+          "scipy": "1.18.1",
+          "sympy": "1.14.0",
+          "matplotlib": "3.11.2"
+        },
+        "code_snapshot": {
+          "authority": "owned scratch file; no Git revision",
+          "sha256": "a180b569a2704896cc6cc7e687edefe5749db99c73e9722c5faeb9f9c42265f1"
+        },
+        "exit_code": 1,
+        "finished_at": "2026-10-11T01:34:26.874385+00:00",
+        "code_changed": false,
+        "outputs": [
+          {
+            "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/runs/92422520-4053-43bb-95b0-20fde6638b12/stdout.txt",
+            "sha256": "1d188076cddbfc45cad434793826834ac6f3c5cd8adaa01664a13a678a33c369",
+            "size": 19
+          },
+          {
+            "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/runs/92422520-4053-43bb-95b0-20fde6638b12/stderr.txt",
+            "sha256": "866ccd9194d4f0a2a77e8f96f00a51e75423fe3db74c5036ab76bf7ac41e9185",
+            "size": 392
+          }
+        ],
+        "stdout": "naive order [0, 1]\n",
+        "stderr": "Traceback (most recent call last):\n  File \"/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/scratch.py\", line 4, in <module>\n    assert all(order.index(a)<order.index(b) for a,b in edges), \"vertex-number order violates dependency\"\n           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: vertex-number order violates dependency\n"
+      },
+      "corrected_execution": {
+        "status": "completed",
+        "record_id": "581cae59-97d3-4242-b74e-dae1b19e606c",
+        "command": [
+          "/usr/sbin/python3",
+          "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/scratch.py"
+        ],
+        "cwd": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141",
+        "code_sha256": "e3c3787d75644f4dad5802fd0bb03f8a4ff4d0606b15e2ca6f0d2ece6966c290",
+        "prediction": "Reversed edges invalidate vertex-number order; a cycle has no valid ordering.",
+        "python": "3.14.7 (main, Aug 14 2026, 06:38:32) [GCC 16.2.1 20260810]",
+        "started_at": "2026-10-11T01:34:32.627807+00:00",
+        "learner_achievement": false,
+        "environment": {
+          "NOESIS_RUN_DIRECTORY": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/runs/efe2c34c-594e-42f0-a791-728135205f9c"
+        },
+        "package_versions": {
+          "numpy": "2.5.3",
+          "scipy": "1.18.1",
+          "sympy": "1.14.0",
+          "matplotlib": "3.11.2"
+        },
+        "code_snapshot": {
+          "authority": "owned scratch file; no Git revision",
+          "sha256": "e3c3787d75644f4dad5802fd0bb03f8a4ff4d0606b15e2ca6f0d2ece6966c290"
+        },
+        "exit_code": 0,
+        "finished_at": "2026-10-11T01:34:32.669005+00:00",
+        "code_changed": false,
+        "outputs": [
+          {
+            "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/runs/efe2c34c-594e-42f0-a791-728135205f9c/stdout.txt",
+            "sha256": "a92f0b5c72f0e60d5d16f0f6ae03244c846782aa5d47e3cfc348951628aaeb4f",
+            "size": 186
+          },
+          {
+            "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/062ebd0d-fe06-4865-9910-1f0982c6c141/runs/efe2c34c-594e-42f0-a791-728135205f9c/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        ],
+        "stdout": "2 [(1, 0)] => [1, 0]\n3 [(0, 1), (1, 2)] => [0, 1, 2]\n3 [(0, 1), (1, 0)] => None\n4 [(0, 2), (1, 2), (2, 3)] => [0, 1, 2, 3]\n0 [] => []\nfive cases agree with exhaustive small-graph oracle\n",
+        "stderr": ""
+      },
+      "assistance": "agent; no learner achievement"
+    },
+    "engineering": {
+      "question": "2ae7a16c-5c51-438a-b176-a81e9bd0e6fc",
+      "drawing": "1189d60c-18c6-4f1a-8f4c-99aedacaf2e7",
+      "experiment": "dadcd844-32c2-44aa-957a-cc80ab4fa56e",
+      "execution": {
+        "status": "completed",
+        "record_id": "dadcd844-32c2-44aa-957a-cc80ab4fa56e",
+        "command": [
+          "/usr/sbin/python3",
+          "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/8dd13432-9faf-44d0-aba4-5a97de6830db/scratch.py"
+        ],
+        "cwd": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/8dd13432-9faf-44d0-aba4-5a97de6830db",
+        "code_sha256": "067494a1112acb961ba9702583a5e638e9ddc467edd7d5f9b2c8571cb2639cbd",
+        "prediction": "Conditional integration may reduce recovery delay in this illustrative model; it does not establish vehicle performance.",
+        "python": "3.14.7 (main, Aug 14 2026, 06:38:32) [GCC 16.2.1 20260810]",
+        "started_at": "2026-10-11T01:34:56.567862+00:00",
+        "learner_achievement": false,
+        "environment": {
+          "NOESIS_RUN_DIRECTORY": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/8dd13432-9faf-44d0-aba4-5a97de6830db/runs/e14b0751-505b-4425-8a84-da1ccb74296f"
+        },
+        "package_versions": {
+          "numpy": "2.5.3",
+          "scipy": "1.18.1",
+          "sympy": "1.14.0",
+          "matplotlib": "3.11.2"
+        },
+        "code_snapshot": {
+          "authority": "owned scratch file; no Git revision",
+          "sha256": "067494a1112acb961ba9702583a5e638e9ddc467edd7d5f9b2c8571cb2639cbd"
+        },
+        "exit_code": 0,
+        "finished_at": "2026-10-11T01:34:57.512411+00:00",
+        "code_changed": false,
+        "outputs": [
+          {
+            "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/8dd13432-9faf-44d0-aba4-5a97de6830db/runs/e14b0751-505b-4425-8a84-da1ccb74296f/stdout.txt",
+            "sha256": "a8f915460a5a7cb649160cc6aaec1aaaba085c008e3e61217eb774c618f64507",
+            "size": 257
+          },
+          {
+            "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/8dd13432-9faf-44d0-aba4-5a97de6830db/runs/e14b0751-505b-4425-8a84-da1ccb74296f/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        ],
+        "stdout": "conditional integration False late RMSE 0.7067005938646196 normalized illustrative units\nconditional integration True late RMSE 0.12102297044880174 normalized illustrative units\nhypothetical plant only: xdot=-x+u; actuator limit +/-2; no hardware inference\n",
+        "stderr": ""
+      },
+      "limitation": "illustrative first-order software model; no physical performance claim"
+    },
+    "research": {
+      "paper": "71748c3f-2377-530a-a9d0-79d86da06a61",
+      "annotation_question": "78fb5419-cedf-4828-9954-72d2b503c43d",
+      "experiment": "6f88f8bc-9b44-469f-ab26-072aaf7a6ff9",
+      "execution": {
+        "status": "completed",
+        "record_id": "6f88f8bc-9b44-469f-ab26-072aaf7a6ff9",
+        "command": [
+          "/usr/sbin/python3",
+          "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/23fa4a5a-6cff-44ad-a3e2-e1d733f4f9c3/scratch.py"
+        ],
+        "cwd": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/23fa4a5a-6cff-44ad-a3e2-e1d733f4f9c3",
+        "code_sha256": "d5bb66af0ef5747f38fde83f530364fab089644b1389918095c53cd417eebed5",
+        "prediction": "Matched stable softmax and explicit row computation should agree; this is an equation check, not paper reproduction.",
+        "python": "3.14.7 (main, Aug 14 2026, 06:38:32) [GCC 16.2.1 20260810]",
+        "started_at": "2026-10-11T01:35:46.286736+00:00",
+        "learner_achievement": false,
+        "environment": {
+          "NOESIS_RUN_DIRECTORY": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/23fa4a5a-6cff-44ad-a3e2-e1d733f4f9c3/runs/639fd900-38aa-4c07-ba40-2480b5db1453"
+        },
+        "package_versions": {
+          "numpy": "2.5.3",
+          "scipy": "1.18.1",
+          "sympy": "1.14.0",
+          "matplotlib": "3.11.2"
+        },
+        "code_snapshot": {
+          "authority": "owned scratch file; no Git revision",
+          "sha256": "d5bb66af0ef5747f38fde83f530364fab089644b1389918095c53cd417eebed5"
+        },
+        "exit_code": 0,
+        "finished_at": "2026-10-11T01:35:46.847626+00:00",
+        "code_changed": false,
+        "outputs": [
+          {
+            "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/23fa4a5a-6cff-44ad-a3e2-e1d733f4f9c3/runs/639fd900-38aa-4c07-ba40-2480b5db1453/stdout.txt",
+            "sha256": "55b93c224ecaad6eaac7b1e76341a78483d98b94716ecc3cf7e721ee31b9162c",
+            "size": 191
+          },
+          {
+            "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/23fa4a5a-6cff-44ad-a3e2-e1d733f4f9c3/runs/639fd900-38aa-4c07-ba40-2480b5db1453/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        ],
+        "stdout": "attention equation output [[0.856033835302118, 1.4279615744391418], [0.7966637219606423, 1.6044483707191437]]\nexplicit row calculation agrees; no trained-model or learner-understanding claim\n",
+        "stderr": ""
+      }
+    }
+  },
+  "annotation": {
+    "attachment": "PZBX29JX",
+    "annotation": "BZXQYUXI",
+    "physical_page": 3,
+    "page_label": "iii"
+  },
+  "native_reader": {
+    "readers": [
+      {
+        "itemID": 2,
+        "state": {
+          "splitType": null,
+          "splitSize": "50%",
+          "primary": true,
+          "freeze": false,
+          "errorMessage": "",
+          "annotations": [
+            {
+              "libraryID": 1,
+              "type": "highlight",
+              "isExternal": "",
+              "readOnly": "",
+              "text": "Scaled dot-product attention",
+              "comment": "Agent validation question: why the square-root scaling?",
+              "pageLabel": "iii",
+              "color": "#ffd400",
+              "sortIndex": "00002|000100|00000",
+              "position": {
+                "pageIndex": 2,
+                "rects": [
+                  [
+                    50,
+                    400,
+                    400,
+                    420
+                  ]
+                ]
+              },
+              "dateModified": "2026-10-11T01:35:12Z",
+              "id": "BZXQYUXI",
+              "tags": []
+            }
+          ],
+          "selectedAnnotationIDs": [
+            "BZXQYUXI"
+          ],
+          "filter": {
+            "query": "",
+            "colors": [],
+            "tags": [],
+            "authors": [],
+            "enabledTypes": null
+          },
+          "readOnly": false,
+          "authorName": "",
+          "title": "Attention Is All You Need - agent source fixture - Vaswani - 2017",
+          "loggedIn": "",
+          "fontSize": "1.00",
+          "fontFamily": "Georgia, serif",
+          "hyphenate": true,
+          "showAnnotations": true,
+          "customThemes": [],
+          "lightTheme": null,
+          "darkTheme": {
+            "id": "dark",
+            "label": "Dark",
+            "background": "#2E3440",
+            "foreground": "#D8DEE9"
+          },
+          "autoDisableNoteTool": true,
+          "autoDisableTextTool": true,
+          "autoDisableImageTool": true,
+          "textSelectionAnnotationMode": "highlight",
+          "tool": {
+            "type": "pointer"
+          },
+          "thumbnails": [
+            {
+              "pageIndex": 0,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 1,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 2,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 3,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 4,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 5,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 6,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 7,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 8,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 9,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 10,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 11,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 12,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 13,
+              "width": 120,
+              "height": 155
+            },
+            {
+              "pageIndex": 14,
+              "width": 120,
+              "height": 155
+            }
+          ],
+          "outline": null,
+          "outlineQuery": "",
+          "pageLabels": [],
+          "sidebarOpen": false,
+          "sidebarWidth": 240,
+          "sidebarView": "annotations",
+          "contextPaneOpen": false,
+          "bottomPlaceholderHeight": null,
+          "toolbarPlaceholderWidth": 0,
+          "showContextPaneToggle": true,
+          "enableAddToNote": false,
+          "labelPopup": null,
+          "passwordPopup": null,
+          "printPopup": null,
+          "appearancePopup": null,
+          "themePopup": null,
+          "contextMenu": null,
+          "readAloudState": {
+            "popupOpen": false,
+            "annotationPopup": null,
+            "segmentAnnotations": {},
+            "savedPosition": null,
+            "highlightGranularity": "sentence"
+          },
+          "readAloudVoices": {},
+          "readAloudFirstRunPopup": false,
+          "sdtProgress": 5,
+          "primaryReadingModeEnabled": false,
+          "secondaryReadingModeEnabled": false,
+          "readingModeLoading": false,
+          "primaryViewState": null,
+          "primaryViewStats": {
+            "pageIndex": 2,
+            "pageLabel": "3",
+            "pagesCount": 15,
+            "outlinePath": null,
+            "canCopy": 1,
+            "canZoomOut": true,
+            "canZoomIn": true,
+            "canZoomReset": false,
+            "canNavigateBack": true,
+            "canNavigateForward": false,
+            "canNavigateToFirstPage": true,
+            "canNavigateToLastPage": true,
+            "canNavigateToPreviousPage": true,
+            "canNavigateToNextPage": true,
+            "zoomAutoEnabled": false,
+            "zoomPageWidthEnabled": true,
+            "zoomPageHeightEnabled": false,
+            "scrollMode": 0,
+            "spreadMode": 0
+          },
+          "primaryViewOverlayPopup": null,
+          "primaryViewFindState": {
+            "popupOpen": false,
+            "active": false,
+            "query": "",
+            "highlightAll": true,
+            "caseSensitive": false,
+            "entireWord": false,
+            "index": null,
+            "result": null
+          },
+          "secondaryViewState": null,
+          "secondaryViewStats": {},
+          "secondaryViewAnnotationPopup": null,
+          "secondaryViewSelectionPopup": null,
+          "secondaryViewOverlayPopup": null,
+          "secondaryViewFindState": {
+            "popupOpen": false,
+            "active": false,
+            "query": "",
+            "highlightAll": true,
+            "caseSensitive": false,
+            "entireWord": false,
+            "index": null,
+            "result": null
+          },
+          "secondaryViewOverlyPopup": null
+        }
+      }
+    ],
+    "requested_uri": "zotero://open-pdf/library/items/PZBX29JX?page=3&annotation=BZXQYUXI"
+  },
+  "learner_achievement": false
+}

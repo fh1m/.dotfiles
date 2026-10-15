@@ -1,0 +1,754 @@
+# Connected redesign: implementation and acceptance evidence
+
+The connected foundation is implemented and deployed. Full P0–P8 release
+acceptance remains open. This ledger distinguishes tested behavior from remaining
+work; the presence of a module does not complete its milestone.
+
+## Current core-learning and Zotero evidence, 2026-10-11
+
+The populated native Zotero encrypted restore regression is reproduced and fixed for the installed 10.0.6 build; see [diagnosis, compatibility boundary and rollback](zotero-startup-evidence.md). The broader fault matrix remains open. Native annotation-specific selection and physical-page navigation pass in an isolated copy of this build; other versions and readers remain unverified. Latest core suite: 157 passing tests, including self-service, drawing, actual execution, ownership and source-projection regressions. See the [canonical user guide](user-guide.md) for the native self-service entry points.
+
+## Observed verification, 2026-10-09
+
+- Sixteen existing factory/import tests and fifty-six new core/workflow/recovery/
+  watcher/Zotero/capture/reader/scope tests pass: 72 total. Fixtures are synthetic and disposable.
+- Capture, paged query, progress and attempt CLI operations pass with PATH containing
+  no Obsidian executable. Native note opening remains a separate application action.
+- Merged progress rejects current-only overflow, lowered totals, negative counts,
+  invalid types and zero totals; zero current and unknown total remain valid.
+- Exact frontmatter delimiters, duplicate YAML keys and malformed/incomplete
+  frontmatter are checked without rewriting malformed content.
+- Attempts preserve failed, reference-assisted and independent outcomes. Protected
+  starts correlate reference exposure; a later assistance label cannot erase it.
+  An independent retry receives a new identity. Capability acceptance requires an
+  explicit learner actor, criterion, evidence and explanation.
+- A six-lecture course fixture keeps two task records and a project independent
+  of material consumption. Ordered links and exact resume positions are retained.
+- A numerical tiny-network gradient fixture preserves the missing-input-factor
+  bug, correction, reference assistance and finite-difference check through a move
+  and cache deletion. These outcomes describe fixtures, not the learner's ability.
+- Synthetic experiment records retain their prediction, contradictory comparison,
+  code/configuration fields and an unavailable external artifact reference.
+- CSL metadata/DOI changes preserve resource identity and learner prose; generated
+  bibliographic revisions retain their own identities. Existing annotation-export
+  tests preserve learner notes and historical generated content.
+- Divergent study heads refuse another update. Explicit resolution retains both
+  branches. Repeated operation IDs are idempotent; changed payloads are refused.
+- Duplicate record IDs block mutation. Moves and deleted caches preserve durable
+  references after reconstruction. A changed-file update is tested without a full
+  vault walk.
+- A real disposable Linux inotify queue was overflowed. The watcher emitted an
+  explicit full-reconciliation request. Watch failures are surfaced with manual
+  refresh recovery rather than quiet permanent polling.
+- Legacy tar restore verifies hashes and rejects unsafe manifest directories and
+  destination overwrite. Restic integrity/restore verifies included file hashes;
+  large MCAP data remains an explicitly classified external reference.
+- Installation into a temporary home is repeatable. Python cache files are not
+  deployed. Live deployment used targeted copies, replacement backups and three-way
+  preservation of runtime differences; the original checkout was not installed.
+
+## Real-vault rollout
+
+Copy migrations passed for all four managed vaults before activation. Read-only
+native Obsidian checks found no unsaved Markdown editor content. Each vault then
+received a local encrypted Restic snapshot, verified restore into a new location,
+metadata migration and rebuilt index check. All original prose and existing user
+fields compared equal; repeated migration changed no notes.
+
+Administrative inventory: 18 Knowledge, 40 CS, 13 Workbench and 10 robotics notes
+received identity/schema additions. These counts are not learning-progress metrics.
+Existing IDs stayed intact. Downloads and archives were not adopted. Private
+changes remain local and were not committed to the public feature worktree.
+
+CS retains its original map, seven stages, predictions, corrections and unclaimed
+lab work. Additive stable path/order links and its explicitly declared frontier
+gate were created without changing those notes. Doctor passes all four vaults.
+
+Private rollout receipts and snapshot IDs are stored in local state; public
+documentation contains no private note bodies, reader databases or credentials.
+The password/repository remain local. Off-device protection remains deferred.
+
+## Backend performance
+
+Measured by scripts/benchmark-noesis.py with real NDJSON worker round trips.
+Each warm-query sample set has 50 requests; capture has ten CLI samples.
+
+| Records | Cold rebuild | Warm worker p95 | Largest summary response | Capture CLI p95 |
+|---:|---:|---:|---:|---:|
+| 100 | 0.034 s | 0.754 ms | 6,572 bytes | 109.515 ms |
+| 1,000 | 0.339 s | 1.261 ms | 6,666 bytes | 103.238 ms |
+| 10,000 | 3.476 s | 9.006 ms | 6,758 bytes | 101.804 ms |
+
+An initial 10,000-record run took 9.991 seconds. Repeated FTS path scans were
+replaced with row-ID deletion; the table above records the corrected result.
+These are synthetic backend measurements, not Qt frame timing or native tool
+startup measurements. Ten capture samples provide limited percentile precision.
+
+A 300-second open-but-idle Python worker sample recorded zero CPU ticks (0.0% of
+one core) and exited on EOF. This does not establish the entire shared Quickshell
+process's CPU or memory use.
+
+## Native observations
+
+The disposable native window and deployed window open at 1440×880 on eDP-1.
+Native IPC verifies the six-workspace interface, bounded Library results, selected
+record preview and active worker/watch. Closing verifies both processes stop.
+The composed window was inspected in a synthetic screenshot. The companion loads
+on the configured ScreenPad and keeps a selected context without a second query
+worker. The previous UI remains selectable. Pane preferences are machine-local.
+
+The native check caught an invalid QML separator in the final watcher patch before
+deployment; it was corrected and the native check passed afterward. System
+qmllint returned no useful diagnostic for that error, so it is not treated as
+sufficient native acceptance evidence.
+
+## Remaining release gates and limitations
+
+- P0: fresh consistent reader backup publication, supported native registration handoff acceptance
+  and exhaustive interruption/concurrent publication cases. Reader restore
+  now verifies SQLite integrity and row content on synthetic populated databases.
+  Actual Sioyek/Zotero snapshots restored to new private directories with matching
+  rows; the actual Zotero snapshot contains no bibliography or annotation items,
+  so it cannot establish a populated native annotation recovery journey.
+- P1: restored-vault fork/registration conflict workflow, complete cross-vault
+  resolution and broader property/concurrency/fault-injection coverage. Activities
+  captures and record creation now provide cancellation commit receipts. Operations lacking a
+  receipt still report uncertainty. Capture drafts are private machine state.
+- P2: populated native Zotero lifecycle and exhaustive multi-file recovery. An
+  isolated installed Zotero 10.0.6 profile passed the supported local API probe;
+  its root returns plain text, handled without assuming JSON. Instance/permission
+  checks and native annotation revision/deletion are tested through synthetic API
+  responses. Sioyek one-based pages, Zotero PDF page URIs and YouTube timestamps
+  have tested command construction; populated native reader-resume acceptance
+  remains open. Multiple Zotero PDF attachments require selection in Zotero.
+- P3–P5: all representative end-to-end course, paper, derivation and experiment
+  desktop journeys; reorder/replacement history, repository/environment launches
+  and criterion-level capability presentation. Child units, questions, tasks, runs
+  and artifact references now publish with durable parent links in one file.
+  Artifact checks stream and distinguish unavailable, unverified, match/mismatch.
+  Lab comparison controls are implemented; their complete native journey remains
+  an acceptance gate. These additions do not complete the milestones by themselves.
+- P6: exhaustive tab-order/resize/fallback-output matrix, repeated Qt memory
+  measurements, complete specialized study layouts and long-absence journeys.
+  Main placement, keyboard capture/search/workspace changes and append pagination
+  have native checks. The companion uses the same visual tokens without another
+  query worker. Machine preferences and unfinished attempts survive independently.
+- P7: fuller role-specific agent exports, ancestor parking/manual overrides and
+  repeated prerequisite bottleneck views. Path scoping, ordered-unit frontiers and
+  explicit schedule/snooze/retire plans are implemented and tested. Configurable
+  1/7/30-day defaults are convenience policy, never competence estimates.
+- P8: Qt input/frame timing, actual warm workspace p95, host/container acceptance,
+  no-growth lifecycle measurements and full release privacy/recovery matrix.
+  Optional P9 tools remain uninstalled; off-device protection remains deferred.
+
+No milestone is marked fully accepted on the strength of source files alone.
+The deployment is a working connected baseline, with the above release gates
+still requiring implementation or verification.
+
+
+## Product coherence continuation
+
+The shared visual language uses existing Sensei fonts/surfaces and a single pink
+accent. Read/Work/History/Connections reveal controls according to current work;
+Details is optional. Native Markdown preview is selectable; equations, diagrams,
+editing, PDF annotation and code remain specialist handoffs. Learn includes concept
+and legacy stage records. Today separates Continue from at most five suggestions.
+
+The 10,000 ordered-unit fixture rebuilt in 5.986 seconds, queried at p95 8.975 ms,
+returned at most 5,808 bytes, suggested Today at p95 115.477 ms and captured at
+p95 111.573 ms. This exercises relationships as well as flat concept records.
+These remain backend measurements, not Qt input/frame measurements.
+
+Native interaction checks caught and repaired a nonfunctional Ctrl+Enter capture
+shortcut and stale selected-context state after filesystem changes. Reference
+reveal waits for a successful exposure record instead of showing material before
+its provenance commits. Clock-skewed activity predecessors reduce causally;
+missing/cyclic predecessors fail visibly rather than silently changing state.
+
+
+The native disposable 123-record window appended 50 → 100 → 123. Actual Hyprland
+key delivery verified Ctrl+K, Ctrl+Shift+N, typing, Ctrl+Enter, Escape and Ctrl+2/6.
+Capture took three explicit keyboard steps (open, text, save) with no classification.
+An externally finalized attempt-start updated the selected context through inotify.
+A full process restart recovered its exact unfinished attempt and protected reference.
+The window was resized by the compositor from 1440×880 to 1000×650 Qt units;
+the optional inspector collapsed. The companion was observed on DP-2 at 480×112
+Qt units. Closing stopped the worker and watch. These dimensions are Qt units,
+not a new measurement of the compositor's monitor scale. The main monitor remains
+1920×1080 logical; screenshots and IPC assertions cover different evidence.
+
+scripts/check-noesis-desktop.py reproduces these checks in a disposable HOME.
+The before/after images show a synthetic selected task, not private content.
+Before, permanent capture/progress/attempt controls competed with reading. After,
+Work gives reasoning room, History and Connections are separate, and Details can
+collapse. The screenshots demonstrate hierarchy; the keyboard/history checks
+establish behavior. Full paper/course/Lab journey metrics remain release gates.
+
+
+Noesis registration now owns only its private machine-local location registry.
+Synthetic checks preserve the native registry byte-for-byte, register/capture with
+Obsidian absent, retain unknown registry fields, reject restored duplicate UUIDs
+without changing either copy, and permit independent capture when the native
+registry is malformed. Native process detection covers Electron, standalone and
+AppImage shapes. The read-only CLI startup handshake has an eight-second deadline;
+mutating native commands are never retried. Existing native registrations remain
+usable; new ones use the supported manual Open folder as vault fallback.
+Replacement/fork and full cross-vault reference resolution remain unfinished.
+
+
+The native fixture now opens a six-lecture course with two problem sets and one
+project using actual Ctrl+K → text → Down → Enter. Its two consumed lectures leave
+assignment/project outcomes untouched. At 1000×650 Qt units, the context has a
+340-unit scroll viewport for 548 units of content instead of overflowing fixed
+panels. Lecture/read completion and pause/resume are explicit actions; paused
+ownership suppresses pending work, while a shared unit with an active parent stays
+available. New problems have a separate declared statement section; protected
+preview does not expose following reference sections or infer a legacy statement.
+
+Exact DOI/UUID search resolves resource identity without returning whole metadata.
+Study activities preserve source URL/edition/revision and owned projection pointers.
+Zotero search pagination appends and binds subsequent pages to the same server
+instance. These are reliable workflow increments, not complete native paper/Lab
+acceptance. The course fixture uses CLI setup; it does not prove UI course creation.
+
+Schema checks refuse future-version downgrades while keeping their records readable.
+Migration preserves original CRLF body bytes and backup bytes. A 10,000-event
+causal history reduces without recursive traversal or quadratic dependency setup.
+The full automated suite passes 72 tests (56 connected-core and 16 compatibility).
+
+Record-creation fault checks interrupt before and after atomic publication, retry
+after a move, retain the reserved identity/parent order, refuse changed payloads,
+and refuse recreation of an unavailable committed record. Ctrl+N and Ctrl+Enter
+provide a discoverable creation action in each workspace, including Practice.
+
+The native check creates a problem through Ctrl+4 → Ctrl+N → title → Ctrl+Enter
+and verifies one saved record with its committed receipt. QML logs contain no
+errors or warnings for the tested main/compact/companion lifecycle.
+
+
+## Connected research/development slice — 2026-10-09
+
+Nine additional checks cover observed Git revisions, dirty and uncommitted trees,
+missing storage, atomic project creation failure, receipts after disconnection,
+stable capture links after moves, native Neovim vault binding, and stale reader
+identity refusal. Neovim's actual headless runtime executes the bridge test; the
+external launch command itself is tested as an argument vector, not as proof of a
+complete native editing session.
+
+The disposable native desktop completes paper → question → implementation → run
+→ comparison → paper using actual keyboard delivery, dialogs and history. It checks
+all parent identities and the comparison's retained Git snapshot. Setup creates
+only a synthetic local repository; no CLI repairs are used for the connected route.
+The route does not yet prove paper PDF annotation, populated Zotero lifecycle,
+execution/reproduction, or a container handoff. Those remain release gates.
+
+Context Actions replaces permanently visible administrative buttons. Related
+questions and implementations are visible beside the source context. Comparison
+and review dialogs capture initiating vault/target IDs; reader opening refuses a
+stale target and reports a native handoff rather than raw JSON. Git inspection uses
+bounded read commands with optional locks disabled; no code is automatically run.
+
+The measured connected-record route uses 28 keyboard actions plus 161 typed
+characters (including the repository path), with no filename hunting or metadata
+copying. Artificial key-delivery delays are not a human resumption-time metric.
+Research excludes course/book resources; Learn retains their units and concepts;
+Library remains universal. This classification has explicit query tests.
+
+After the source-kind query changes, current concept benchmarks are: 100 records,
+0.039 s cold / 1.122 ms warm query p95 / 117.509 ms capture; 1,000 records, 0.347 s /
+3.299 ms / 148.592 ms; 10,000 records, 3.784 s / 30.010 ms / 132.470 ms. Summary
+responses remain below 7,809 bytes. These replace the earlier table for this slice;
+Qt frame timing, populated native readers and complete lifecycle memory measurements
+remain unfinished. Synthetic before/after research captures are in visual-language.md.
+
+
+### Real Today correction — 2026-10-09
+
+Read-only inspection of the four managed local vaults found no index errors. The selected robotics vault named Noesis contains notes but zero activity records and zero next actions. Knowledge has four activities and a resumable context; CS has a path and a next action; Workbench has a project but no activities. Counts describe inventory, not learning. No private note was changed to populate Today.
+
+A real running-window capture was inspected locally (`/tmp/noesis-real-today-before.png`); it is not a synthetic fixture or proof of workflow completion. Private screenshots remain outside public Git. The empty suggestion heading and duplicate Today capture controls were removed. Today now explains local scope, offers other managed vaults, exposes existing path/course outlines, and provides direct start actions. Prose uses installed Adwaita Sans; technical metadata retains its existing monospace font.
+
+Practice native acceptance passed: failed independent, assisted successful, and later independent successful attempts retain distinct IDs. Explicit learner criterion decisions preserve failed evidence honestly. Restart after deleting the disposable cache recovered history and decisions. This is synthetic native interaction evidence, not a real learner observation.
+
+Remaining Today gate: opt-in, bounded unified Continue/Search across authorized vaults with each result carrying vault identity; cross-vault selection must preserve scoped drafts and mutations. This intermediate release still queries the selected vault and labels that limit. A–F product acceptance is not yet complete.
+
+Real deployed Today was inspected in both the selected robotics vault and Knowledge. Knowledge displayed its real Continue context and two course outlines; the original robotics selection was restored. These were local visual inspections, not click-through resume proof. Today onboarding scrolls rather than clipping at compact sizes. Current automated total: 75 tests (59 core and 16 compatibility); the added Today state test passed separately.
+
+## Release continuation evidence — 2026-10-09
+
+The worktree was clean at `4813ad0` at re-entry; there was no newer uncommitted
+local implementation. The original dotfiles checkout was not edited. The user's
+real screenshots were inspected locally; private vaults were not modified to
+populate Today. Earlier vault-inventory counts are time-specific observations,
+not current claims of learner progress.
+
+New acceptance commands:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_noesis*.py'
+python3 -m unittest discover -s tests -p 'test_learning.py'
+python3 scripts/check-noesis-desktop.py
+python3 scripts/check-noesis-collection-desktop.py
+python3 scripts/check-noesis-experiment.py
+python3 scripts/check-noesis-zotero.py
+python3 scripts/benchmark-noesis.py
+```
+
+Automated: 75 core and 16 compatibility tests passed. Added coverage includes
+registered cross-vault scope and duplicate identity refusal, pagination/cursor
+ownership, unavailable registered storage and malformed active-scope isolation, concurrent attempt-start refusal, research source filters, completed-material continuation,
+course-resource distinction, explicit restore replacement/fork and interrupted
+publication, safe bounded previews, interrupted outline retry, foreign concept
+resolution after moves, and Zotero item/library-version distinction and omitted
+attachment annotations. No real vault migration was used for acceptance.
+
+The broad native disposable run passed 50 → 100 → 123 append pagination,
+keyboard search/capture/Escape, 1000×650 resize, inspector, protected durable
+attempt restart, DP-2 480×112 companion, stopped worker/watch, six-lecture course
+with assessments untouched, creation receipts, connected paper → question →
+implementation → run → comparison → paper, and failed/assisted/independent
+attempts plus a learner criterion decision recovered after cache deletion.
+The connected-record route still uses 28 keyboard actions plus 161 typed characters.
+It does not establish actual paper reproduction or human resumption speed.
+
+The separate cross-vault native run passed explicit collection search, opening a
+CS task while Robotics was selected, and capture in CS only. Native outline
+review/create yielded six lectures, two readings, two assignments and a project,
+with no reported successes. Workspace was 1916×1032, Tiled 939×1008, and Window
+1440×880 Qt units; compositor floating/fullscreen state was checked. No QML
+warnings/errors occurred. A startup race exposed by the broad run was repaired
+with bounded compositor-state verification rather than assuming dispatcher exit
+established geometry. Native acceptance is run serially to avoid competing fixture
+applications stealing focus; one earlier overlapping run is not accepted evidence.
+
+Measured isolated launch: 536.13 ms; conservative warm-open p95: 119.91 ms;
+instrumented animation-frame p95: 16.945 ms / 1,188 samples. Twelve-cycle RSS
+ranged from 191,584 to 192,256 KiB, ending at 191,640 KiB. This small
+measurement does not prove absence of long-term growth or input latency.
+
+Current concept benchmark: 100 / 1,000 / 10,000 records rebuilt in
+0.037 / 0.368 / 3.654 seconds; warm worker-query p95
+0.864 / 3.026 / 29.873 ms; capture p95
+109.293 / 108.028 / 106.743 ms. Largest summary was 7,808 bytes.
+
+The executed trusted software calibration used 1,000 generated measurements
+(rad/s), a committed estimator, CSV and plot references, an original contradicted
+zero-bias prediction, and a second held-out check. Mean was 0.1200065 rad/s;
+held-out residual mean was 0.000005331 rad/s after bias estimation. Missing artifact
+storage remained explicit; Restic restored both comparisons and the code revision.
+This is generated-data software evidence, not hardware measurement or Transformer
+paper reproduction.
+
+A populated isolated Zotero 10.0.6 profile imported the genuine
+[Attention Is All You Need paper](https://arxiv.org/abs/1706.03762), its accessible
+PDF and native annotation. Metadata/annotation edits and deletion produced three
+retained projections with the resource UUID and learner analysis unchanged.
+Its real API exposed two defects: item version is not library version, and local
+attachment `/children` omits annotations. Collection-version checkpoints and a
+bounded annotation reconciliation now handle those cases. If the bounded library
+projection exceeds 1,000 annotations, import refuses and requests a scoped export;
+it does not silently pretend annotations were deleted. Production imports remain
+GET-only. Test authorization applies only to a disposable profile.
+
+The authoritative remaining P0–P8 gates are in PLAN.md. Native PDF page/annotation
+navigation, transfer/review, outline reorder/replacement, other native reader-state/position acceptance,
+Distrobox, disconnected ScreenPad and complete long-term/input/idle acceptance
+remain open. Off-device protection is not configured; the encrypted strategy is
+in migration-recovery.md. This evidence is not a complete-release claim.
+
+
+### P0 reader recovery follow-through
+
+The populated Zotero acceptance now closes its isolated reader, snapshots the
+fresh native SQLite database consistently, includes that verified reader snapshot
+in encrypted Restic, restores into a new directory, and restarts native Zotero
+against the restored directory. Its actual annotation comment, page label and
+original PDF bytes are recovered. This is native application/data recovery,
+not a claim that PDF page navigation has been accepted.
+
+Reader snapshots are serialized, publish manifests atomically, detect attachments
+changing while copied, and classify large media as explicit external references.
+They do not automatically prune potentially unique recovery copies. Restic can
+include up to four verified owning reader snapshots. A restored vault carries
+those snapshots into subsequent backups without copying a changing live database.
+The repeated-backup test also exposed a self-manifest checksum defect; recovery
+manifests are now generated metadata rather than files hashing themselves.
+Automated total after this slice: 76 core + 16 compatibility tests.
+Native reader handoff, broader fault injection and explicit verified retention
+remain separate gates.
+
+
+## Course continuity and idle acceptance — 2026-10-09
+
+P1/P3/P6 slice: paged course outlines, immutable Arrange, existing-course import,
+and normal-window placement. The Python suites passed 81 core and 16 compatibility
+tests. Regression cases cover repeated moves with the correct causal head, stale
+head refusal, unchanged learner notes, cache deletion, 123 direct members,
+interrupted import retry, existing-parent preservation and explicit restored
+replacement after original-storage loss. No actual private vault was modified.
+
+`NOESIS_IDLE_SECONDS=300 python3 scripts/check-noesis-collection-desktop.py`
+passed in the real native desktop using a disposable HOME. Actual keyboard actions
+reviewed/created the six-lecture course, moved a lesson down and back up, retained
+focus and two separate ordering events, and appended 50 → 100 → 123 lessons in a
+larger outline. Importing that outline again into its selected existing course
+retained 123 lessons instead of duplicating them. Cross-vault capture remained in
+its owner. Workspace/Tiled/Window geometry and main-display containment passed.
+
+Measured on that run: startup 556.67 ms; instrumented animation-frame p95 16.894 ms
+(1,200 samples); five-minute open idle average 0.0133% of one CPU core across the
+isolated shell, query worker and watcher, after the test animation stopped; warm
+open p95 109.24 ms across twelve cycles. Shell RSS ranged 191,072–191,432 KiB during
+those cycles, ending at 191,392 KiB. Closing stopped both worker and watcher. QML
+emitted no warnings/errors. These are fixture/process measurements, not physical
+input latency, the live Sensei shell's incremental memory, or a long-term leak proof.
+
+Native failures found and repaired before acceptance: ListView selection resetting
+on model replacement; lightweight query omitting the activity head needed by a
+second move; import path appending on dialog reopening; normal resize retaining an
+off-screen tiled position. The test waits for import completion rather than treating
+old course counts as proof of a committed import.
+
+Material replacement and the complete lesson/prerequisite/assignment/reader journey
+remain open. The changed-task transfer/later-check native run is recorded separately
+when it completes; this section does not claim that acceptance in advance.
+
+
+## Practice, owner isolation and container acceptance — 2026-10-09
+
+The current suites pass 83 core and 16 compatibility tests. A reproduced UUID
+collision between different vaults previously included an unrelated local unit in
+a course through a foreign relationship. Outline, course counts and path policies
+now require both owning endpoints to be local; foreign Connections still resolve
+against the actual owning vault. A copied foreign activity is preserved but reported
+by Doctor and cannot alter local progress. Cache schema 6 revalidates these derived
+projections without migrating learner files.
+
+`python3 scripts/check-noesis-desktop.py` passed the native disposable workflow:
+failed → assisted → independent results remain distinct; a new changed problem
+retains its source relationship, starts in transfer mode and records an independent
+attempt; a learner-selected seven-day later check is saved. Modal review shortcuts
+and backward editor focus were repaired after actual failed interaction tests.
+Cache deletion/restart preserves the original attempts and criterion decision.
+Executing the scheduled review and inspecting long attempt histories remain open.
+These are automated native interactions, not human usability observations.
+
+`python3 scripts/check-noesis-container.py --container auv-ros2` passed against the
+already-running Ubuntu 22.04 container with its existing host-spawn 1.6.0. Actual
+host-bridge capture retries are idempotent. Headless guest Neovim captures resolve
+the host vault, host file path and target owner, including host-config fallback.
+The test exposed guest working-directory and guest-HOME assumptions; the bridge
+now uses a host-valid working directory and rendered host paths. Files outside Git
+no longer inherit an unrelated working-directory commit. No container was started,
+package installed or guest configuration overwritten. Headless editor acceptance
+is integration evidence, not a visual editor usability test.
+
+
+## Planned check execution — 2026-10-09
+
+P4/P7: **Perform planned check** now starts a protected attempt explicitly linked
+to the learner-selected plan. Finalization retains that link and assistance history.
+A failed, partial or successful result fulfills the selected check; unknown or
+incomplete work leaves it pending. Ordinary practice cannot silently discharge a
+plan. Stale, retired, foreign-target and already-assessed plans are refused. No
+capability is awarded and no next review date is selected automatically.
+
+84 core and 16 compatibility tests pass. A due-time disposable fixture verifies
+that unrelated success and incomplete assessment leave the due action visible,
+while an explicitly linked failed result preserves its failure and removes that
+fulfilled plan from suggestions. No real activity timestamps were changed.
+
+The native desktop script passed changed-task transfer, explicit check start with
+reference hidden, independent reconstruction, outcome save and cache-loss/restart
+recovery of both transfer attempts and the plan. The seven-day check was performed
+early in this automated fixture; this is not evidence of seven days of human
+retention. The first run caught an invalid QML pane assignment; the corrected run
+completed with no QML warnings/errors. Long-history usability and realistic
+returning-learner inspection remain open. No data migration is required.
+
+## Lesson replacement and native reader recovery — 2026-10-09
+
+93 core and 16 compatibility tests pass. New source-version tests cover expected-head
+conflicts, concurrent replacement, interruption before/after publication, idempotent
+retry, source inheritance, UUID collisions, moves and cache loss. Attempts retain
+the source edition captured at their start. An unfinished attempt blocks replacing
+its lesson material; new attempts use the replacement without changing old evidence.
+
+`python3 scripts/check-noesis-collection-desktop.py` passed native reviewable course
+creation, six lectures, two readings, two assignments and project, keyboard Arrange,
+lesson replacement and 123-row append pagination. Original note bytes and old study
+positions were preserved. Startup 558.45 ms; warm opening p95 212.15 ms over twelve
+cycles; animation frame p95 16.968 ms over 1,200 samples. Isolated RSS ranged from
+194,920 to 195,292 KiB. These are fixture-process measurements, not physical input
+latency or the incremental memory of the live Sensei shell.
+
+`python3 scripts/check-noesis-reader-desktop.py` passed with an isolated portable
+Sioyek 2.0.0 profile and authored six-page PDF. The saved lesson opens visibly at
+page 3, gains actual compositor focus, and recovers selection after cache deletion
+and restart. The reader bookmark database was consistently backed up, restored to
+a new profile, and reopened visibly at page 3 without a page command. The test found
+that this portable build stores data beneath XDG_CONFIG_HOME/.local/share/Sioyek;
+backup discovery now includes that location as well as historical/distro locations.
+
+Cold Sioyek loading ignored its initial page request; a bounded second supported
+reuse-window request applies the locator after loading. Its wrapper explicitly uses
+the shipped XCB platform. On this compositor Qt minimization did not hide Noesis:
+the control now says Hide and safely preserves drafts/context while stopping the
+worker. Normal/workspace reader handoff hides Noesis; tiled handoff keeps both views.
+
+The screenshots below are actual native captures of disposable authored fixtures,
+not private-vault screenshots or human usability studies. Automated interactions
+prove the recorded behavior, not learning efficacy. Zotero annotation-specific
+handoff and the complete course/prerequisite/assignment journey remain open.
+
+![Native lesson replacement](assets/material-replacement-native.png)
+![Native saved PDF page](assets/sioyek-page-native.png)
+![Native restored reader position](assets/sioyek-restored-native.png)
+
+## Cross-vault search coherence — 2026-10-09
+
+Collection search merges bounded per-owner result pages using identity/alias, exact
+title, title prefix and remaining-match tiers. It no longer exhausts one vault
+before considering a better match in another. Deterministic title/path/owner ties
+and per-owner offsets preserve pagination. Cursors bind scope, filters, owning
+UUIDs, index generations and cache incarnation; changed indexed records, rebuilt
+caches or changed availability require refreshing rather than skipping results.
+Append requests reuse incrementally invalidated indexes and do not add full scans.
+
+Regression fixtures cover global relevance, page boundaries, record changes,
+missing storage, malformed cursors and equal-generation cache reconstruction.
+Native collection acceptance passed keyboard owner selection/capture, course import,
+replacement, append results, tiled/normal geometry and stopped closed workers.
+The native run measured startup 509.83 ms, animation frame p95 16.943 ms and warm
+opening p95 161.93 ms. These remain isolated automated fixture measurements; they
+are not a human learning-day usability finding. Cache-incarnation refusal is
+automated model coverage added after this native run.
+
+Current automated total: 97 core tests and 16 compatibility tests pass.
+
+## Connected learning cycle — 2026-10-09
+
+107 core and 16 compatibility tests pass. New coverage checks bounded lesson
+context, source ownership, foreign UUID collisions, latest reported assessment,
+next lessons beyond the first 50 rows, durable reordering, module semantics,
+explicit prerequisite readiness, interrupted link publication and idempotent
+receipts. Lab tests preserve prediction/comparison differences, missing data,
+relative artifacts and bounded local PNG previews. No remote images are fetched.
+
+`python3 scripts/check-noesis-learning-day.py` installs into a disposable HOME and
+uses real QML/compositor keyboard delivery. It resumes a CS NAND reconstruction
+from another owning vault; follows a six-lecture mathematics outline with two
+readings, two assignments and a project; connects an existing prerequisite through
+the native dialog; records an assessment and explicit lesson-scoped readiness;
+returns to the exact lesson, completes an assignment, and inspects separate counts.
+Original Markdown bytes remain unchanged. Cache deletion and native restart
+recover position, prerequisite decisions and assignment assessment.
+
+The same fixture opens a genuine paper's source context and committed implementation
+record, then a generated gyroscope experiment with actually executed code, CSV,
+configuration, original contradicted prediction, units, next test and a loaded local
+PNG. Image.Ready and keyboard scrolling are asserted; screenshots supplement these
+interaction checks. Generated sensor data is not hardware evidence. The authored
+attention forward implementation passes an analytic case, 100 scalar-reference
+cases, uniform-query and dimension checks. Maximum error is 4.440892098500626e-16;
+the omitted-scale counterexample differs by 0.6129702930334808. This verifies Eq. 1
+of [Attention Is All You Need](https://arxiv.org/html/1706.03762v7#S3.SS2.SSS1), not
+training, gradients, translation benchmarks or independent learner competence.
+
+A prerequisite assessment and return used 14 non-text key actions, compared with
+17 before Ctrl+Enter primary attempt/save actions. Opening the prerequisite and
+returning themselves require two shortcuts. Full-day action totals include search,
+workspace changes, explicit assistance/outcome selection and readiness; they exclude
+fixture CLI setup and count typed characters separately. Native context recovery
+was 0.597 seconds in the latest recorded run (84 non-text actions; 362 typed characters). Controlled key pacing is not human task time
+and these injected interactions are not human usability observations.
+
+The populated isolated Zotero run also passed genuine PDF/annotation import, revisions,
+preserved learner prose, moved-paper relationships and the executed equation route.
+It then failed at native reader restart after encrypted restoration: the API accepted
+a connection but did not answer before startup timeout. Recovery is **not accepted**
+for this cycle. The harness now retains reader preferences, waits for native children
+instead of only the launcher shell, and bounds startup by wall-clock time. Its
+corrected restore rerun remains pending: a normal Zotero instance owns the local API
+and was left untouched. Earlier successful recovery evidence is retained, but does
+not erase this failed run. Sioyek's separately accepted native restore is unaffected.
+
+All screenshots in this section are native disposable fixtures. No personal notes,
+reader data, vault registration or project repository was modified for acceptance.
+No framework replacement, speculative package installation or untrusted code
+execution was introduced. Complete physical-input/live-shell/monitor-disconnection
+acceptance and the configured off-device destination remain outside these results.
+
+![Native lesson context](assets/lesson-context-day-native.png)
+![Native course assessment separation](assets/course-day-native.png)
+![Native experiment comparison](assets/lab-day-native.png)
+![Native experiment figure](assets/lab-figure-native.png)
+
+## Learning-engine M1 validation — 2026-10-10
+
+The new concept investigation slice passes **129 core tests and 16 compatibility
+tests**, scoped repeated-install/rollback checks and native keyboard/pointer testing
+through `scripts/check-noesis-frontier.py`. Native evidence includes working-page entry,
+protected reconstruction, draft/owner/navigation recovery across Hide and restart,
+partial result plus rejected scoped claim, concept creation and same-UUID cross-vault
+return. [Evidence and limits](frontier-evidence.md) and [native gallery](ui-gallery.md#concept-investigation-and-knowledge-frontier)
+retain actual renders and the remaining learning-engine M2–M5 work.
+
+The populated Zotero native restore gate remains **unresolved**. A bounded isolated
+control pass still failed unchanged-profile restart while copied empty profiles opened;
+empty-profile success is not populated annotation/PDF recovery. Off-device configuration
+remains owner-deferred, post-V1. These results do not replace the real learner trial.
+
+The native reading refinement also passes source typing, saved section, source-linked
+question creation and exact return; rendered table cells and protected source handoffs
+are asserted. Shared rendering is exercised in Course, Practice, Research and ScreenPad.
+The gallery retains same-content Read before/after captures. Source Markdown, stable
+identities and historical activities are unchanged. Rich equation rendering remains a
+specialist responsibility; generic top-level History/Connections navigation still
+needs further product refinement. These are explicit limits, not completed M2–M5 gates.
+
+
+### 2026-10-10 — failure, prerequisite and delayed-evidence continuation
+
+**130 core tests and 16 compatibility tests pass**, together with scoped installation
+and rollback checks. The current native Frontier harness verifies failed/partial
+assessment → exact owned question, preserved editorial exposure, optional Mongla
+PID mechanism descent → source → exact return/restart, and an explicit retained
+ability assessment that rejects an unmet interval. Retention time is simulated in
+the disposable fixture; it is not observed owner retention. No Mongla controller,
+ROS command or firmware was executed.
+
+The 184-frame native sample records **17.13 ms p95**. This is instrumented frame
+timing, not physical input latency or sustained-session performance. Native screenshots
+and capture identities remain in [the gallery](ui-gallery.md) and
+[Frontier evidence](assets/frontier/after.json). The owner trial, authentic executable
+learning journeys, complete specialist-tool round trips, supporting-context pinning
+and populated Zotero restoration remain release gates.
+
+The current dual-display studio run also passes native course/lesson navigation,
+shared ScreenPad notes, protected references, Hide/return and Close/restart drafts.
+Its separate 189-frame sample is 16.54 ms p95, with process RSS 277760 KiB and
+PSS 207001 KiB. This short fixture sample does not establish a sustained memory
+trend or a complete disconnected-monitor matrix. Existing ordinary creation-form
+draft keys are preserved; assessment-linked questions use an additional attempt key.
+
+All ten shutdown fault cases pass again, including debounce, active mutation/import,
+failed preferences, simulated handoff, forced termination and unavailable receipts.
+[Sanitized current results](assets/frontier/shutdown.json) are retained. These checks
+do not promise graceful shutdown under power loss or establish actual specialist
+application return behavior. Scoped dry run, two idempotent installations, rollback,
+later-edit protection and unrelated-file preservation also pass.
+
+
+### 2026-10-10 — supporting context without changing draft ownership
+
+Native dual-display acceptance passes for per-pane Source, Context and Figures
+keeping. A kept lesson stays beside another lesson’s notes with exact owning vault
+and UUID. Tests cover native pointer selection, scroll preservation, source moves,
+missing/reappearing records, a colliding UUID in another owner, Hide/return and
+Close/restart, including closing during the scroll-save debounce. Notes always
+follow the active activity; kept content is read only and is concealed during
+protected attempts. The existing main worker supplies these projections. No second
+learning index or authoritative record schema was introduced.
+
+Actual compositor captures are retained in [the gallery](ui-gallery.md), including
+100%, 150% and 200% kept-source states, contextual prerequisites, unavailable source,
+protected attempt and synthetic Lab figure. Visual review confirms separated source
+and reasoning areas with reflowed controls; the 200% shallow ScreenPad leaves less
+reading height and relies on independent scrolling. This is not owner usability
+acceptance. Ordinary lesson navigation protection also now requires a nonempty
+matching active attempt, fixing concealment after Hide/return.
+
+The 189-frame studio sample is **16.52 ms p95**, process RSS **331588 KiB**,
+PSS **302425 KiB**. This three-second fixture measurement is not physical input
+latency, sustained memory evidence or a claim of improvement over earlier samples.
+Authentic executable YOLO/DSA/bottom-up/Mongla journeys, full multi-tool round trips,
+populated Zotero restoration and the owner learner trial remain incomplete.
+
+Native Frontier regression and all ten shutdown fault cases pass for this slice.
+Scoped installation tests pass: dry run, two idempotent installs, rollback,
+later-edit protection and unrelated-file preservation. Existing backend acceptance
+remains 130 core plus 16 compatibility tests from the preceding slice; these were
+not rerun for this QML-only continuation.
+
+## Convolution reference lesson, 2026-10-10
+
+- 137 core tests and 16 compatibility tests pass. New cases cover reversal, boundary,
+  stride, invalid inputs, protected-parent checks, prediction receipts, actual NumPy
+  match/mismatch, code revision/dirty state, duplicate execution refusal, interrupted
+  execution uncertainty and known-failure provenance.
+- Full native disposable journey passes: predict then reveal, keyboard boundary
+  manipulation, create Git implementation/ordinary Lab, actual matching/failing/
+  corrected code execution, native editor and isolated Obsidian return, actual figure,
+  protected changed-case failure, evidence-linked question, optional prerequisite
+  descent and exact question restart/return. No automatic competence claim.
+- Today’s editable example entry creates a durable concept only after Save. Existing
+  implementations are reopened after deletion of the local implementation preference;
+  Lab/code/evidence remain authoritative and are not duplicated. Ctrl+Enter performs
+  the native primary action.
+- Generic Frontier native regression passes independently of the lesson adapter.
+- Ten native lifecycle/fault cases pass: draft debounce, active mutation/import,
+  simulated handoff, failed save, forced termination, unavailable receipt and
+  interrupted import. Simulated handoff is labelled; convolution additionally tests
+  real tools. Scoped installer repeatability/rollback/later-edit protection passes.
+- Native before/after, arithmetic, Lab, restart and ScreenPad captures are retained
+  under `assets/convolution/`; 100/150/200% scales exercise reflow and scrolling.
+  Capture conditions and the short instrumented frame sample are in
+  `assets/convolution/acceptance.json`. This does not measure physical input latency
+  or a sustained learning session.
+- Actual `[1,2,3]` with `[2,1,-1]`: zero-boundary convolution `[5,7,1]`;
+  repeated-edge `[4,7,7]`. Executed matched NumPy results `[4,7,7]`; deliberately
+  wrong code `[0,0,0]` fails, corrected committed code matches. NumPy 2.5.3,
+  Python 3.14.7; tolerance rtol/atol 1e-10. Values are examples/agent validation,
+  not real sensor measurements or independently demonstrated owner understanding.
+
+Populated Zotero restoration, full cross-domain journeys, sustained desktop tests
+and the real owner learner trial remain release gates. Off-device configuration is
+owner-deferred; existing local recovery and historical acceptance remain authoritative.
+
+## Dijkstra shared-thread acceptance — 2026-10-10
+
+- **142 core tests and 16 compatibility tests pass.** The additions cover empty
+  convolution reconstruction, actual skeleton failure, independent expected graph
+  cases, exact contained editor file/option handling and inherited code context.
+- `check-noesis-dijkstra.py` passes a complete disposable native journey: original
+  failed Practice reasoning, exact assessment-linked question, nonblocking invariant
+  visit/return, real editor skeleton and executions, Git revisions, Lab comparisons
+  and checked artifacts, reusable concept reflection, isolated Obsidian exact note,
+  changed destination graph with recorded reference exposure and unaided retry,
+  and exact original-question/draft recovery after graceful restart.
+- The corrected implementation agrees with eight initial cases; the separately
+  revealed changed graph agrees too. All output and Git history are retained in
+  [Dijkstra evidence](dijkstra-evidence.md). These are agent-authored test outcomes,
+  not learner achievements or a correctness proof.
+- Actual native normal/fullscreen, ScreenPad and 200% screenshots were inspected.
+  Inspection found and corrected workspace routing, clipped comparison fields,
+  an oversized/clipped thread drawer and a Practice minimum-height binding loop.
+  Final Dijkstra and convolution native journeys report no application QML warnings;
+  their distinct disposable application IDs lack production portal registration.
+- Final Dijkstra three-second animation-frame p95: **16.235ms**, 189 samples. This
+  is not physical input latency, a sustained memory/lifecycle trend or a human trial.
+- The existing convolution native journey passes after its new starter becomes an
+  empty skeleton. Existing implementations/history are preserved.
+- Ten native shutdown/uncertainty scenarios pass; scoped installer dry run, twice
+  repeated installation, rollback and later-edit protection pass. Personal Sensei
+  is not restarted during fixture validation or scoped Noesis deployment.
+
+Owner usability/learning observation remains required. Populated Zotero restoration,
+remaining original P0–P8 fault/journey gates and other cross-domain slices remain
+open; off-device configuration remains owner-deferred.
+
+
+### 2026-10-11 — general visual thinking and executable exploration
+
+See [core learning evidence](core-learning-evidence.md) for the native empty-vault
+cross-domain harness, actual execution receipts, diagram/tool handoffs and remaining
+limits. The older populated-Zotero startup failure entries are historical: the guarded
+10.0.6 fix and populated encrypted restore success in
+[zotero startup evidence](zotero-startup-evidence.md) supersede them. Supported native
+annotation selection is now checked separately from bibliography-only import.
+Off-device configuration remains deferred; the owner's learner trial remains open.
+
+### 2026-10-11 — bounded release hardening
+
+[Release hardening](release-hardening.md) supersedes the generic open fault/storage/history/portability placeholders with executed cases and explicit support boundaries. 181 tests pass (165 core, 16 compatibility); native shutdown, coordination, host exclusion, recovered vault copies, 1,001-event history and five-minute idle checks are retained. Zed native editing and Zotero 10.0.5/10.0.6 annotation/restore checks pass; 9.0.6 uses safe export fallback. Physical unplug/input observations and owner usability/learning outcomes remain distinct unperformed gates.

@@ -1,0 +1,232 @@
+{
+  "source_revision": "dcfcb01d5835f2aab342db9235fe7d6487195747",
+  "source_was_dirty": true,
+  "fixture_only": true,
+  "captures": [
+    {
+      "image": "after-normal.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1440,
+      "height": 880,
+      "fixture_only": true
+    },
+    {
+      "image": "after-study.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "first-protected-attempt.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "protected-attempt-200.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "statement-beside-reasoning.png",
+      "kind": "actual ScreenPad compositor",
+      "fixture_only": true
+    },
+    {
+      "image": "failure-to-question.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "invariant-question.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "optional-invariant-descent.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "implementation-skeleton-context.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "reported-execution-comparison.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "comparison-200.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "lab-executed-evidence.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "reusable-invariant-insight.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "shared-thread-navigation.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "independent-changed-problem.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "deliberate-reference-exposure.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "changed-problem-result.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "question-before-restart.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "exact-question-after-restart.png",
+      "kind": "actual native Qt application and popup pixels",
+      "width": 1920,
+      "height": 1080,
+      "fixture_only": true
+    },
+    {
+      "image": "resumed-question-screenpad.png",
+      "kind": "actual ScreenPad compositor",
+      "fixture_only": true
+    }
+  ],
+  "code_revision": "8c953efec29bfa0566c4101fc7a794909e4eef48",
+  "performance": {
+    "frame_p95_ms": 16.235,
+    "samples": 189,
+    "note": "Three-second animation interval, not physical input latency or a human trial"
+  },
+  "assertions": [
+    "failure preserved before question",
+    "native nonblocking prerequisite and exact return",
+    "empty skeleton and actual editor execution",
+    "wrong and corrected code revisions",
+    "eight independent expected cases",
+    "actual outputs attached to Lab",
+    "reusable concept reflection",
+    "isolated native Obsidian exact file",
+    "protected transfer and irreversible exposure",
+    "restart exact question and draft",
+    "no automatic mastery"
+  ],
+  "source_files": {
+    "home/.local/share/sensei-learning/ui/NoesisPracticePage.qml": "fdc6a9a51bd9b2aecb6226c3c93f8ef3a10260edd5c01d5d33f1440bd1477f23",
+    "home/.local/share/sensei-learning/ui/NoesisLabPage.qml": "9245e8b89bcf461c254dde7ce1227293859612beceeaadcf44eb6f50b6ba629d",
+    "home/.local/share/sensei-learning/ui/NoesisPrerequisiteDialog.qml": "c67c48a2a852d67d934f552793bd62e54c3a8bf742ca1931b11485a2f8a93f9d",
+    "home/.local/share/sensei-learning/ui/NoesisOutlineDialog.qml": "103414d6896903d6a77e305f91f7987dade1f3546562e8c25ac60a75dab6fe32",
+    "home/.local/share/sensei-learning/ui/NoesisActionDialog.qml": "7bf19f2103e3b1e768e132a8284deea6ab852f29448bad14d3df7757907a06f3",
+    "home/.local/share/sensei-learning/ui/NoesisDocumentBlock.qml": "592c020ec6a4ebaee88759ba1388536dd0a99bde475af8d1c49b6ea8961e7c45",
+    "home/.local/share/sensei-learning/ui/NoesisController.qml": "545262bd910299a828f7686c527298c25f17d8cc056e6a000716aeff88aa12d7",
+    "home/.local/share/sensei-learning/ui/NoesisWindow.qml": "44fbf61acadb40f576345c5123f1f735358f597ea452dd58955a820e4c7e2541",
+    "home/.local/share/sensei-learning/ui/NoesisConvolutionPage.qml": "36877b9f102eb7793811c125397e34a9154ce790753753546bc771b8270bfbc6",
+    "home/.local/share/sensei-learning/ui/NoesisCoursePage.qml": "ae80378f2d710c625e485660d7d7c1133ccf0865c5a90e5852f3036005a3aa1e",
+    "home/.local/share/sensei-learning/ui/NoesisDocument.qml": "0ad7b38351493178796fac24b2a81f24c2e277adb4e61fc9abce4fffa5430b15",
+    "home/.local/share/sensei-learning/ui/NoesisCourseStudio.qml": "57a18e32d564f9f9dd5298fe8ee1fa5249ebea83bf7414b26d2adc73f66c67bf",
+    "home/.local/share/sensei-learning/ui/NoesisDialog.qml": "793c6585098e5d2b2cb0839c2db1b66048c480c5e736cf3b40fce07532273f4b",
+    "home/.local/share/sensei-learning/ui/NoesisStudyDesk.qml": "7056c88e22513bb1544ee7c171f4713f13e16ce50ea386464e99748248176daa",
+    "home/.local/share/sensei-learning/ui/NoesisEditor.qml": "75ac9657a427486e3cbb3ba58a80552862b1d914dd41361597607df01f6c652d",
+    "home/.local/share/sensei-learning/ui/NoesisMaterialDialog.qml": "8e4ddbd04a0278f6fc9f51731331b0c10520f4903572eeef960999fd0735479a",
+    "home/.local/share/sensei-learning/ui/NoesisStyle.qml": "ab1d475911cbc01d7e3c1ca59aa67c4f84e3c6a20f17761eb6b32869cd5ecd1b",
+    "home/.local/share/sensei-learning/ui/NoesisNavigation.qml": "5845f55ee97794a2adf9c4bc4a847caa5dc39740a858fc6cb9e6cec1021e17d3",
+    "home/.local/share/sensei-learning/ui/NoesisRow.qml": "bdbfe90766b61a310a681b79283c3fa6dbe06ccbb5f5b9871c8768ab02cfd2e2",
+    "home/.local/share/sensei-learning/ui/NoesisResearchPage.qml": "fbe9b8200a92f9ddd4aa6f1791f45247927497d58cc6c983d773968a5b51b0f2",
+    "home/.local/share/sensei-learning/ui/NoesisInvestigationPage.qml": "66e1a903130d9489814e077758a2da3bd36327837bf2163c4bd335e26583487e",
+    "home/.local/share/sensei-learning/ui/NoesisEmpty.qml": "274f5b7db2f163490619c859c51a4e86c660ef39270e346cec587a8042b8ec03",
+    "home/.local/share/sensei-learning/ui/NoesisCourseOutline.qml": "15bfa0b061b17611d0d1082da9e0360bbbaaf86d86e1413d7b86444f291317e7",
+    "home/.local/share/sensei-learning/ui/NoesisStudyPane.qml": "e105caa0e55ed287c0d488e01e64a9829c5032c2da27bbee1d19ba2a3dfcf80f",
+    "home/.local/share/sensei-learning/ui/NoesisLearningContext.qml": "e12219822e2b1798bd9e4fc738719a1e59ab312eb3e46450edf457e26c291dfe",
+    "home/.local/share/sensei-learning/ui/NoesisZoteroDialog.qml": "d8a1f2736381e36affec93bf1c151a045c1e88c26fb39ff50a53de4a3a86e9db",
+    "home/.local/share/sensei-learning/ui/NoesisCreateDialog.qml": "4fb06585a0fc158f5635dcebf4b5c4914d75f7dddaac8d90ce04a773c6bf2abb",
+    "home/.local/share/sensei-learning/ui/NoesisButton.qml": "3bee8f4fa9d285ce08d119d03fb8e3ac0bb721ece6f0fadc62d9f940968ace85",
+    "home/.local/share/sensei-learning/ui/NoesisExperimentContext.qml": "69b390c390bc47fe76fc45a4eceee7c717f13afdcbb1b6b786a3adbef6c9831a",
+    "home/.local/share/sensei-learning/ui/NoesisSelect.qml": "1755710ee41cf8e23ccf625d1ed6e6bed0a2cb84cdbc4a7cc3a66495d530f1fe",
+    "home/.local/share/sensei-learning/ui/NoesisField.qml": "f3cf32e78c80f384c80a0c7e1faa74c2bf68ebb7a34b007b635c9c28a5e71e5e",
+    "home/.local/share/sensei-learning/ui/NoesisTodayPage.qml": "c8e7c4c01750e8fea1d865aa895f9beb03b83a84ed79774800a51e394e11f163",
+    "home/.local/share/sensei-learning/ui/NoesisEvidenceDialog.qml": "8efb09d044e62ef519ef34f69cdd232ef1f99649b0b9b67ab739dd40f97a1c58",
+    "home/.local/share/sensei-learning/ui/NoesisReadingPage.qml": "3fc4a67a45418a61696a450a3c9f377280f62293a738e6d8407754109ff9abe2",
+    "home/.local/share/sensei-learning/ui/NoesisWorkspace.qml": "7f70fcbf6d0c7a60485a81b1b86befc04dc9af94b83b2aa89229b0a71a1d1db7",
+    "home/.local/share/sensei-learning/noesis/outlines.py": "9bc339b1935604d4d6c2ee8e7d40b5774860bd8bb8844beebffce4d33a8eea93",
+    "home/.local/share/sensei-learning/noesis/scopes.py": "cc34e9e040e866ebbdc8a33d2cbb75268254ec9d9ae58cf930b47e9be6b74b83",
+    "home/.local/share/sensei-learning/noesis/__init__.py": "6f10aa2f26c5cf81921fc456a2458f7c81fdbed6009318e31dd21df64001dde2",
+    "home/.local/share/sensei-learning/noesis/development.py": "43d33d5ec4b5ba514b3e1f2d086c5aea2b966d1f45ad718f8e009c64c533c6a9",
+    "home/.local/share/sensei-learning/noesis/presentation.py": "6c5ff499557437789204f0de0caba42390bab6726d18e79e6ab0c0503b754f92",
+    "home/.local/share/sensei-learning/noesis/convolution.py": "00d0e717cd706e985912a10d6dc09de80e524d475067e915a465941eeea452e9",
+    "home/.local/share/sensei-learning/noesis/models.py": "a02944e4ceaa2a5b54ce84b5d9b18b614b411060f8ce05da507f043af0c684e8",
+    "home/.local/share/sensei-learning/noesis/identity_recovery.py": "c2f010400f61fd6b34a079fe43cc9d62db2c258c989fb0ff573d3b4a820f3715",
+    "home/.local/share/sensei-learning/noesis/index.py": "eede52805b6dd5cb6f09425aa30604b551e5eddbc9057a6d710cacfbf638dd06",
+    "home/.local/share/sensei-learning/noesis/readers.py": "8476a2754b0dcc5e10f4451a552a0c36364049bc87305fbc038f4af9da378e1e",
+    "home/.local/share/sensei-learning/noesis/captures.py": "70308104c83b9aaa0f2518c13f0df2ec843362b67ba86dee81c2adf7bbee6d0a",
+    "home/.local/share/sensei-learning/noesis/courses.py": "f0e9ce92226a1e6d95becd8b8287c64108ffaf942726e6af0f7942c6cea4fa85",
+    "home/.local/share/sensei-learning/noesis/worker.py": "9f31a6ff0d8a15b80b0e50721c146995af3d40f5a88d50bb06a312e2c21714c7",
+    "home/.local/share/sensei-learning/noesis/hosting.py": "c39b229c2234a2918644ba717cdaf7789e2851bc027a221dd69f850e40b8d7ad",
+    "home/.local/share/sensei-learning/noesis/collection.py": "dfebbb63cbce6436f99637e519d6c50aca3f54f77b654df0ddc4d61a8dfaa664",
+    "home/.local/share/sensei-learning/noesis/sources.py": "78c6a127ac3ff93c733e6be775aaafd7b500f10465773c9e7892a085d392e16a",
+    "home/.local/share/sensei-learning/noesis/recovery.py": "8ff3f0af09a79a4566eed3fe243b4f75ae568abe6cc532c818466905b360e876",
+    "home/.local/share/sensei-learning/noesis/persistence.py": "5240e9c75a67a10350e5cf08d9ad05c365a53a8f60a2027d4ab116abe50084b0",
+    "home/.local/share/sensei-learning/noesis/activities.py": "095bbb391a7e2e698c477d636d93690aaf514bd3f1c674b39ecef4bc733fc9de",
+    "home/.local/share/sensei-learning/noesis/imports.py": "73717a9067d4971b8db47eb8c5bd83ef54e4a10280af8c8f1b6e5ce4a21f7a2e",
+    "home/.local/share/sensei-learning/noesis/zotero.py": "a862d66dc41c926b4b6137d8383b7035545759ff8a7930c2915ed621ecb2fb73",
+    "home/.local/share/sensei-learning/noesis/materials.py": "66860895eb3dc22f555339157fa26796dbaee28742dbb9fe8645c1fe9d9445d4",
+    "home/.local/share/sensei-learning/noesis/experiments.py": "eeeb603d13bc5add063f18778ebedfa00a02717db2043b9c32b18cf5b2f178fe",
+    "home/.local/share/sensei-learning/noesis/locators.py": "97af5ff39138419c1363fa0b9d56aca2df5f0fe9dafd266960550ef6cad908e4",
+    "home/.local/share/sensei-learning/noesis/views.py": "837a0c908b406e4ce540dee34bb281325c25a61d31392a67ed4e6380e3375c52",
+    "home/.local/share/sensei-learning/noesis/frontier.py": "3836d81353ab9c88559632995ac5aa1cb0129434c7e95d9571849c94eec0e172",
+    "home/.local/share/sensei-learning/noesis/artifacts.py": "f1b75bf6caee74e2682867d2bae1fc0b3d0cb87bdb5f799e62c0a2b85286f806",
+    "home/.local/share/sensei-learning/noesis/policies.py": "82b23ee747ca3405b362e8e3e7638ef92affc25ed38142b80239dab828ab62d3",
+    "home/.local/share/sensei-learning/noesis/obsidian.py": "552a527cc55ff7782d3b60d5cb755387a33b77e7dc924fc6e8f73f138c98789a",
+    "home/.local/share/sensei-learning/noesis/references.py": "9b74163feb0f17d1ba746a591792c4c2a78a31abca0b5d2394ad4c0114e92e6e",
+    "home/.local/share/sensei-learning/examples/dijkstra/dijkstra.py": "b525ebaf177172397e65383af0e030d42db9e80fc3c9a39356b5e09ed1af3f16",
+    "home/.local/share/sensei-learning/examples/dijkstra/check_cases.py": "8109b1d7906ee850c154682645fe043f2bfe695a7579157650db3a25ef90e155",
+    "home/.local/share/sensei-learning/examples/dijkstra/README.md": "7e06ff6d55ecc74d3a0ba835fe91d1b9e577209b96536072be4873a09c1441ee"
+  }
+}

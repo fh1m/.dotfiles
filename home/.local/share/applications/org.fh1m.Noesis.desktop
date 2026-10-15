@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Noesis
+Comment=Learning, research and independent practice
+Exec=@HOME@/.local/bin/noesis window
+Icon=org.fh1m.Noesis
+Terminal=false
+Categories=Education;Science;
+StartupWMClass=org.fh1m.Noesis

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Noesis
+Comment=Build, understand, reconstruct — your current learning frontier
+Exec=@HOME@/.local/bin/noesis window
+Icon=obsidian
+Terminal=false
+Categories=Education;Development;
+Keywords=learning;notes;frontier;Obsidian;

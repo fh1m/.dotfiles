@@ -1,0 +1,16 @@
+{
+  "unit_tests": 181,
+  "core": 165,
+  "compatibility": 16,
+  "unit_seconds": 73.342,
+  "native_shutdown_cases": 10,
+  "native_coordination": "passed",
+  "scoped_installer": "passed: two homes, idempotence, rollback, later edit protection",
+  "distrobox": "passed: auv-ros2 Ubuntu22.04 host bridge and guest Neovim",
+  "zotero_restore": [
+    "10.0.5 guarded",
+    "10.0.6 guarded",
+    "9.0.6 native reader with export fallback"
+  ],
+  "provenance": "agent validation; no owner achievement"
+}

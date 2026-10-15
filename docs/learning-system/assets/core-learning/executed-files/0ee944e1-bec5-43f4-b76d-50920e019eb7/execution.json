@@ -1,0 +1,42 @@
+{
+  "status": "completed",
+  "record_id": "e0de0a68-aba5-4798-a62a-42a01da62f6d",
+  "command": [
+    "/usr/sbin/python3",
+    "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/scratch.py"
+  ],
+  "cwd": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51",
+  "code_sha256": "3b68ee287433dcd68d895783b8e8372001f9f315b2087674f88a7595ec571a92",
+  "prediction": "Agent validation prediction: integer samples cannot distinguish these two frequencies.",
+  "python": "3.14.7 (main, Aug 14 2026, 06:38:32) [GCC 16.2.1 20260810]",
+  "started_at": "2026-10-11T01:33:24.273338+00:00",
+  "learner_achievement": false,
+  "environment": {
+    "NOESIS_RUN_DIRECTORY": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7"
+  },
+  "package_versions": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "sympy": "1.14.0",
+    "matplotlib": "3.11.2"
+  },
+  "code_snapshot": {
+    "authority": "owned scratch file; no Git revision",
+    "sha256": "3b68ee287433dcd68d895783b8e8372001f9f315b2087674f88a7595ec571a92"
+  },
+  "exit_code": 0,
+  "finished_at": "2026-10-11T01:33:27.140372+00:00",
+  "code_changed": false,
+  "outputs": [
+    {
+      "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7/stdout.txt",
+      "sha256": "c71e54f4c173a707e4dee4b6e7c07a782dedd98c9880a324d7dc41db4c02a0b3",
+      "size": 46
+    },
+    {
+      "path": "/var/tmp/noesis-lifecycle-c2wgvlyq/vault/Explorations/a58ab2c5-fddc-48ca-96bf-7a8f30ff2f51/runs/0ee944e1-bec5-43f4-b76d-50920e019eb7/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily Oasis snapshot (catch up after laptop was off)
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=10m
+[Install]
+WantedBy=timers.target

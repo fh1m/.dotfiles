@@ -1,0 +1,20 @@
+[
+  {
+    "records": 1000,
+    "fixture": "concepts",
+    "cold_rebuild_seconds": 0.389,
+    "warm_worker_p95_ms": 3.19,
+    "max_response_bytes": 7720,
+    "warm_today_p95_ms": 2.123,
+    "capture_cli_p95_ms": 153.828
+  },
+  {
+    "records": 10000,
+    "fixture": "concepts",
+    "cold_rebuild_seconds": 3.859,
+    "warm_worker_p95_ms": 47.91,
+    "max_response_bytes": 7812,
+    "warm_today_p95_ms": 32.263,
+    "capture_cli_p95_ms": 148.213
+  }
+]
