@@ -140,3 +140,5 @@ python3 pc/tools/check-homie-storage.py       # on Homie
 The live edge harness requires explicit `--live`, a dedicated gesture fixture and supervision. It installs independent expiry timers, tests all four crossing/return combinations and the pause/resume gesture, then stops sharing and centres the cursor. Restore normal sharing afterward with `den-control start`. It never types text or clicks user applications.
 
 [Hardware](HARDWARE.md) · [Consolidation record](REPOSITORY-AUDIT.md) · [Boot acceptance still pending](../../pc/BOOT-EXPERIENCE.md)
+
+[Input handoff hardening and minimal bars — 2026-10-16](INPUT-HARDENING.md).

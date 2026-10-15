@@ -19,6 +19,9 @@ Singleton {
 
     IpcHandler {target:"workspaces";function state():string {return JSON.stringify({monitors:root.outputState.map(m=>({name:m.name,active:m.activeWorkspace?.id,focused:m.focused})),mode:root.pageLabel,glyph:root.modeGlyph,special:root.activeSpecial,active:root.activeId,slots:root.slots.map(s=>({label:s.label,active:s.active}))});}}
     property var attentionAddresses: []
+    property bool remoteCapture: false
+    FileView {path:Quickshell.env("HOME")+"/.local/state/homie-control/input/active";watchChanges:true;printErrors:false
+        onFileChanged:reload();onLoaded:root.remoteCapture=text().trim()==="1"}
     function attention(address):void {const a=String(address||"").replace(/^0x/,"");if(a&&!attentionAddresses.includes(a))attentionAddresses=attentionAddresses.concat([a]);}
     function acknowledge(address):void {const a=String(address||"").replace(/^0x/,"");attentionAddresses=attentionAddresses.filter(x=>x!==a);}
     readonly property int perPage: 7
@@ -123,7 +126,12 @@ Singleton {
         if(!output)return slots;
         const monitor=outputState.find(m=>m.name===output);
         const active=logicalId(monitor?.activeWorkspace?.id ?? 1);
-        return slots.map(s=>Object.assign({},s,{active:Number(s.target)===active}));
+        return slots.map(s=>{
+            const id=Number(s.target);
+            const local=Hyprland.toplevels.values.filter(t=>logicalId(windowWorkspace(t))===id && (t.monitor?.name===output||t.lastIpcObject?.monitor===monitor?.id));
+            return Object.assign({},s,{active:id===active,count:local.length,occupied:local.length>0,
+                elsewhere:outputState.some(m=>m.name!==output&&logicalId(m.activeWorkspace?.id)===id)});
+        });
     }
     function activate(slot, output = "") {
         if (slot.empty)

@@ -1,3 +1,7 @@
+> **2026-10-16 update:** prior bar controls retained; generation-safe entry,
+> bounded return placement and stationary disconnect release added.
+> [Current hardening record](../../docs/digital-den/INPUT-HARDENING.md).
+
 > **Current status (2026-10-15): corrected sharing deployed and enabled.**
 > Four photo-layout routes and triple-Ctrl recovery passed on the final build.
 > Homie uses a non-capturing return watcher; its local input is never grabbed.

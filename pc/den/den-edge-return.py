@@ -1,39 +1,61 @@
 #!/usr/bin/env python3
-"""Align a Den edge crossing to the physical laptop/upper-left/PC arrangement."""
-import json, pathlib, shlex, subprocess, sys
-mode=sys.argv[1]
-if mode not in ('1','2','enter-top','enter-right'):raise SystemExit('Unknown edge')
+"""Serialize crossings and reject stale entry hooks after a release/new entry."""
+import fcntl,json,os,pathlib,shlex,subprocess,sys
 sys.path.insert(0,str(pathlib.Path.home()/'.local/share/sensei'))
 from den_layout import roles as display_roles
-state=pathlib.Path.home()/'.local/state/homie-control'
-ssh=['ssh','-F',str(state/'client.conf'),'homie']
-def query(args):return json.loads(subprocess.check_output(['hyprctl','-i','0',*args],timeout=2))
-remote_query="python3 -c 'import subprocess,json; print(json.dumps({\"monitors\":json.loads(subprocess.check_output([\"hyprctl\",\"-i\",\"0\",\"monitors\",\"-j\"])),\"cursor\":json.loads(subprocess.check_output([\"hyprctl\",\"-i\",\"0\",\"cursorpos\",\"-j\"]))}))'"
-try:
-    monitors=query(['monitors','-j'])
-    target=display_roles(monitors)['main' if mode in ('1','enter-top') else 'upper']
-    peer=json.loads(subprocess.check_output(ssh+[remote_query],timeout=4))
-    pc=display_roles(peer['monitors'],host='homie')['main']
-    def size(m):return m['width']/m['scale'],m['height']/m['scale']
-    tw,th=size(target);pw,ph=size(pc)
-    def clamp(value,maximum):return max(3,min(maximum-4,value))
-    if mode=='1':
-        x=target['x']+clamp((peer['cursor']['x']-pc['x'])/pw*tw,tw);y=target['y']+3
-    elif mode=='2':
-        x=target['x']+tw-4;y=target['y']+clamp((peer['cursor']['y']-pc['y'])/ph*th,th)
-    else:
-        cur=query(['cursorpos','-j'])
-        if mode=='enter-top':x=pc['x']+clamp((cur['x']-target['x'])/tw*pw,pw);y=pc['y']+ph-4
-        else:x=pc['x']+3;y=pc['y']+clamp((cur['y']-target['y'])/th*ph,ph)
-    dispatch=f'hl.dsp.cursor.move({{x={round(x)},y={round(y)}}})'
-    if mode.startswith('enter-'):
-        subprocess.run(ssh+['hyprctl -i 0 dispatch '+shlex.quote(dispatch)],stdout=subprocess.DEVNULL,check=True,timeout=4)
-        subprocess.run(ssh+['python3 /home/fh1m/.local/state/homie-control/den-arm-return.py'],stdout=subprocess.DEVNULL,check=True,timeout=4)
-        subprocess.run(ssh+['python3 /home/fh1m/.local/state/homie-control/den-cursor.py show-local'],stdout=subprocess.DEVNULL,timeout=4)
-    else:
-        subprocess.run(['hyprctl','-i','0','dispatch',dispatch],stdout=subprocess.DEVNULL,check=True,timeout=2)
-        subprocess.run(['python3',str(state/'den-cursor.py'),'show-local'],stdout=subprocess.DEVNULL,timeout=2)
-except (StopIteration,ValueError,KeyError,subprocess.SubprocessError):
-    # Fail open locally if placement/readiness fails. Never leave capture latched.
-    if mode.startswith('enter-'):
-        subprocess.run(['python3',str(state/'den-cursor.py'),'recover'],timeout=2)
+STATE=pathlib.Path.home()/'.local/state/homie-control'
+
+def current_entry(root,token):
+    try:return bool(token) and (root/'input/active').read_text().strip()=='1' and (root/'input/active.session').read_text().strip()==token
+    except OSError:return False
+
+def current_return(root,token):
+    try:return bool(token) and (root/'input/active').read_text().strip()!='1' and (root/'input/active.session').read_text().strip()==token
+    except OSError:return False
+
+def clear_return(root,token):
+    guard=root/'input/active.returning'
+    try:
+        if guard.read_text().strip()==token:guard.unlink(missing_ok=True)
+    except OSError:pass
+
+def main():
+    mode=sys.argv[1]
+    if mode not in ('1','2','enter-top','enter-right'):raise ValueError('Unknown edge')
+    entering=mode.startswith('enter-');token=os.environ.get('DEN_CAPTURE_GENERATION' if entering else 'DEN_RETURN_GENERATION','')
+    ssh=['ssh','-n','-F',str(STATE/'client.conf'),'homie']
+    def query(args):return json.loads(subprocess.check_output(['hyprctl','-i','0',*args],timeout=1))
+    with (STATE/'input/edge-placement.lock').open('a') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX)
+        if entering and not current_entry(STATE,token):return
+        if not entering and not current_return(STATE,token):clear_return(STATE,token);return
+        try:
+            monitors=query(['monitors','-j']);roles=display_roles(monitors)
+            target=roles['main'] if mode in ('1','enter-top') else roles['upper'] if entering else roles.get('upper',roles['main'])
+            tw,th=target['width']/target['scale'],target['height']/target['scale']
+            if entering:
+                cur=query(['cursorpos','-j'])
+                ratio=(cur['x']-target['x'])/tw if mode=='enter-top' else (cur['y']-target['y'])/th
+                args=['python3',str(STATE/'den-entry-place.py'),mode,str(max(0,min(1,ratio))),token]
+                if not current_entry(STATE,token):return
+                subprocess.run(ssh+[shlex.join(args)],check=True,timeout=2.5,stdout=subprocess.DEVNULL,stdin=subprocess.DEVNULL)
+            else:
+                code='import json,subprocess;print(json.dumps({"cursor":json.loads(subprocess.check_output(["hyprctl","-i","0","cursorpos","-j"])),"monitors":json.loads(subprocess.check_output(["hyprctl","-i","0","monitors","-j"]))}))'
+                peer=json.loads(subprocess.check_output(ssh+[shlex.join(['python3','-c',code])],timeout=2))
+                pos=peer['cursor'];pc=display_roles(peer['monitors'],host='homie')['main']
+                pw,ph=pc['width']/pc['scale'],pc['height']/pc['scale']
+                clamp=lambda v,limit:max(3,min(limit-4,v))
+                x=target['x']+(clamp((pos['x']-pc['x'])/pw*tw,tw) if mode=='1' else tw-4)
+                y=target['y']+(3 if mode=='1' else clamp((pos['y']-pc['y'])/ph*th,th))
+                if not current_return(STATE,token):return
+                subprocess.run(['hyprctl','-i','0','dispatch',f'hl.dsp.cursor.move({{x={round(x)},y={round(y)}}})'],check=True,stdout=subprocess.DEVNULL,timeout=1)
+                subprocess.Popen([sys.executable,str(STATE/'den-cursor.py'),'show-local'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdin=subprocess.DEVNULL)
+        except (OSError,StopIteration,ValueError,KeyError,subprocess.SubprocessError):
+            # Only this failed, still-current entry may release capture. An old
+            # helper must never stop the new session or warp its cursor.
+            if (entering and current_entry(STATE,token)) or (not entering and current_return(STATE,token)):
+                subprocess.run(['python3',str(STATE/'den-cursor.py'),'recover'],timeout=8)
+        finally:
+            if not entering:clear_return(STATE,token)
+
+if __name__=='__main__':main()

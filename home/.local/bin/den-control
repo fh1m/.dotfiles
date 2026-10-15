@@ -30,7 +30,7 @@ def unit(name):
 
 
 def peer_command(command):
-    result = run(['ssh', '-F', str(ROOT/'client.conf'), 'homie', command], timeout=5)
+    result = run(['ssh', '-n', '-F', str(ROOT/'client.conf'), 'homie', command], timeout=5)
     if result.returncode:
         raise RuntimeError('Homie is unavailable. Local input remains yours.')
     return result.stdout
@@ -132,7 +132,7 @@ def dispatch(action):
     if action == 'storage':
         subprocess.Popen(['xdg-open', str(Path.home()/'Drives')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {'ok': True}
-    result = run(['ssh', '-F', str(ROOT/'master-client.conf'), 'arete-den-control', 'den-control', action], timeout=12)
+    result = run(['ssh', '-n', '-F', str(ROOT/'master-client.conf'), 'arete-den-control', 'den-control', action], timeout=12)
     if result.returncode:
         raise RuntimeError('Arete is unavailable. Homie local input is unaffected.')
     value = json.loads(result.stdout)

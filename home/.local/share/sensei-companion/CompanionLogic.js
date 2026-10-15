@@ -15,6 +15,7 @@ function nextNote(app, recent, turn, random) {
     return {id:notes.indexOf(note),kind:note.kind,text:note.text};
 }
 function intersects(a,b) { return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y; }
+function canWalk(from,to) { return from.available && to.available && from.y===to.y && Math.abs(from.x-to.x)<=200; }
 function place(width,height,w,h,windows,variant) {
     var xs=[width-w-18,width-w-158,18,158,Math.round((width-w)/2)], ys=[height-h-62,56];
     var candidates=[];

@@ -150,7 +150,7 @@ index a2c7112..95818fa 100644
      EnableEmulation,
      /// synchronize all state
 diff --git a/src/capture.rs b/src/capture.rs
-index 8f739bd..4437c89 100644
+index 8f739bd..973d815 100644
 --- a/src/capture.rs
 +++ b/src/capture.rs
 @@ -37,6 +37,9 @@ pub(crate) enum ICaptureEvent {
@@ -163,23 +163,25 @@ index 8f739bd..4437c89 100644
  }
  
  #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-@@ -73,6 +76,7 @@ impl Capture {
+@@ -73,6 +76,8 @@ impl Capture {
          let (event_tx, event_rx) = channel();
          let cancellation_token = CancellationToken::new();
          let capture_task = CaptureTask {
 +            ctrl_taps: CtrlTaps::default(),
++            den_return_until: None,
              active_client: None,
              backend,
              cancellation_token: cancellation_token.clone(),
-@@ -157,6 +161,7 @@ macro_rules! debounce {
+@@ -157,6 +162,8 @@ macro_rules! debounce {
  }
  
  struct CaptureTask {
 +    ctrl_taps: CtrlTaps,
++    den_return_until: Option<Instant>,
      active_client: Option<CaptureHandle>,
      backend: Option<input_capture::Backend>,
      cancellation_token: CancellationToken,
-@@ -170,6 +175,7 @@ struct CaptureTask {
+@@ -170,6 +177,7 @@ struct CaptureTask {
  
  impl CaptureTask {
      fn add_capture(&mut self, handle: CaptureHandle, pos: Position, capture_type: CaptureType) {
@@ -187,7 +189,7 @@ index 8f739bd..4437c89 100644
          self.captures.push((handle, pos, capture_type));
      }
  
-@@ -281,14 +287,22 @@ impl CaptureTask {
+@@ -281,14 +289,31 @@ impl CaptureTask {
  
                      match event {
                          // connection acknowlegded => set state to Sending
@@ -207,6 +209,15 @@ index 8f739bd..4437c89 100644
 +                            // Ignore duplicate/late returns after input has already been released.
 +                            if self.active_client.is_none() { continue; }
                              log::info!("releasing capture: left remote client device region");
++                            if edge == 1 || edge == 2 {
++                                if let Ok(path) = std::env::var("DEN_CAPTURE_STATE") {
++                                    let session = std::path::Path::new(&path).with_extension("session");
++                                    if let Ok(token) = std::fs::read_to_string(session) {
++                                        let _ = std::fs::write(std::path::Path::new(&path).with_extension("returning"), token);
++                                        self.den_return_until = Some(Instant::now() + Duration::from_secs(4));
++                                    }
++                                }
++                            }
                              self.release_capture(capture).await?;
 +                            if edge == 1 || edge == 2 {
 +                                self.event_tx.send(ICaptureEvent::RemoteLeft(edge)).expect("channel closed");
@@ -214,7 +225,7 @@ index 8f739bd..4437c89 100644
                          },
                          _ => {}
                      }
-@@ -320,8 +334,26 @@ impl CaptureTask {
+@@ -320,14 +345,39 @@ impl CaptureTask {
          event: (CaptureHandle, CaptureEvent),
      ) -> Result<(), CaptureError> {
          let (handle, event) = event;
@@ -241,7 +252,20 @@ index 8f739bd..4437c89 100644
          if capture.keys_pressed(&self.release_bind.borrow()) {
              log::info!("releasing capture: release-bind pressed");
              return self.release_capture(capture).await;
-@@ -347,6 +379,7 @@ impl CaptureTask {
+         }
+ 
+         if event == CaptureEvent::Begin {
++            // Unlocking may put the local cursor on another capture edge. Do
++            // not recapture until the return helper has placed it inside a panel.
++            let guarded = self.den_return_until.is_some_and(|until| Instant::now() < until)
++                && std::env::var("DEN_CAPTURE_STATE").ok().is_some_and(|path|
++                    std::path::Path::new(&path).with_extension("returning").exists());
++            if guarded { return self.release_capture(capture).await; }
++            self.den_return_until = None;
+             self.event_tx
+                 .send(ICaptureEvent::CaptureBegin(handle))
+                 .expect("channel closed");
+@@ -347,6 +397,7 @@ impl CaptureTask {
  
          // activated a new client
          if event == CaptureEvent::Begin && Some(handle) != self.active_client {
@@ -249,7 +273,7 @@ index 8f739bd..4437c89 100644
              self.state = State::WaitingForAck;
              self.active_client.replace(handle);
              self.event_tx
-@@ -368,7 +401,7 @@ impl CaptureTask {
+@@ -368,7 +419,7 @@ impl CaptureTask {
          if let Err(e) = self.conn.send(event, handle).await {
              const DUR: Duration = Duration::from_millis(500);
              debounce!(PREV_LOG, DUR, log::warn!("releasing capture: {e}"));
@@ -258,7 +282,7 @@ index 8f739bd..4437c89 100644
          }
          Ok(())
      }
-@@ -376,6 +409,7 @@ impl CaptureTask {
+@@ -376,6 +427,7 @@ impl CaptureTask {
      async fn release_capture(&mut self, capture: &mut InputCapture) -> Result<(), CaptureError> {
          // If we have an active client, notify them we're leaving
          if let Some(handle) = self.active_client.take() {
@@ -266,7 +290,7 @@ index 8f739bd..4437c89 100644
              // Synthesize key-up events for every key still held in the
              // capture's pressed_keys set BEFORE sending Leave. Without
              // this, pressing the release-bind chord (typically all four
-@@ -469,3 +503,41 @@ impl<T> Drop for DropGuard<T> {
+@@ -469,3 +521,41 @@ impl<T> Drop for DropGuard<T> {
              .expect("channel closed");
      }
  }
@@ -309,7 +333,7 @@ index 8f739bd..4437c89 100644
 +    }
 +}
 diff --git a/src/connect.rs b/src/connect.rs
-index cc067f7..f36413e 100644
+index cc067f7..47042dd 100644
 --- a/src/connect.rs
 +++ b/src/connect.rs
 @@ -3,7 +3,7 @@ use lan_mouse_ipc::{ClientHandle, DEFAULT_PORT};
@@ -379,7 +403,15 @@ index cc067f7..f36413e 100644
          let (buf, len): ([u8; MAX_EVENT_SIZE], usize) = event.into();
          let buf = &buf[..len];
          if let Some(addr) = self.client_manager.active_addr(handle) {
-@@ -261,6 +288,9 @@ async fn receive_loop(
+@@ -140,6 +167,7 @@ impl LanMouseConnection {
+                     Err(e) => {
+                         log::warn!("client {handle} failed to send: {e}");
+                         disconnect(&self.client_manager, handle, addr, &self.conns).await;
++                        return Err(LanMouseConnectionError::NotConnected);
+                     }
+                 }
+                 log::trace!("{event} >->->->->- {addr}");
+@@ -261,6 +289,9 @@ async fn receive_loop(
                  ProtoEvent::Pong(b) => {
                      client_manager.set_active_addr(handle, Some(addr));
                      client_manager.set_alive(handle, b);
@@ -389,7 +421,25 @@ index cc067f7..f36413e 100644
                      ping_response.borrow_mut().insert(addr);
                  }
                  event => tx.send((handle, event)).expect("channel closed"),
-@@ -280,6 +310,47 @@ async fn disconnect(
+@@ -268,7 +299,10 @@ async fn receive_loop(
+         }
+     }
+     log::warn!("recv error");
+-    disconnect(&client_manager, handle, addr, &conns).await;
++    let affected = disconnect(&client_manager, handle, addr, &conns).await;
++    // Release even when the user is not moving the pointer. Connection state
++    // alone does not wake the capture loop, and one peer can own two edges.
++    for peer in affected { let _ = tx.send((peer, ProtoEvent::Leave(0))); }
+ }
+ 
+ async fn disconnect(
+@@ -276,10 +310,68 @@ async fn disconnect(
+     handle: ClientHandle,
+     addr: SocketAddr,
+     conns: &Mutex<HashMap<SocketAddr, Arc<dyn Conn + Send + Sync>>>,
+-) {
++) -> Vec<ClientHandle> {
++    let affected = disconnected_peers(client_manager, handle, addr);
      log::warn!("client ({handle}) @ {addr} connection closed");
      conns.lock().await.remove(&addr);
      client_manager.set_active_addr(handle, None);
@@ -401,11 +451,27 @@ index cc067f7..f36413e 100644
 +    }
      let active: Vec<SocketAddr> = conns.lock().await.keys().copied().collect();
      log::info!("active connections: {active:?}");
- }
++    affected
++}
++
++fn disconnected_peers(manager: &ClientManager, handle: ClientHandle, addr: SocketAddr) -> Vec<ClientHandle> {
++    manager.active_clients().into_iter().filter(|peer| *peer == handle || manager.active_addr(*peer) == Some(addr)).collect()
++}
 +
 +#[cfg(test)]
 +mod den_route_tests {
 +    use super::*;
++    #[test]
++    fn disconnect_notifies_both_edges_but_not_unrelated_peers() {
++        let manager=ClientManager::default();
++        let a=manager.add_client();let b=manager.add_client();let c=manager.add_client();
++        for h in [a,b,c] { manager.activate_client(h); }
++        let addr="127.0.0.1:4242".parse().unwrap();
++        manager.set_active_addr(a,Some(addr));manager.set_active_addr(b,Some(addr));
++        manager.set_active_addr(c,Some("127.0.0.1:4243".parse().unwrap()));
++        let peers=disconnected_peers(&manager,a,addr);
++        assert!(peers.contains(&a));assert!(peers.contains(&b));assert!(!peers.contains(&c));
++    }
 +    #[test]
 +    fn den_second_edge_reuses_live_peer_only_on_matching_address_and_port() {
 +        let manager=ClientManager::default();
@@ -436,7 +502,7 @@ index cc067f7..f36413e 100644
 +        let route=Some(second).filter(|candidate| manager.active_addr(*candidate)==manager.active_addr(first)).unwrap_or(first);
 +        assert_eq!(route,first);
 +    }
-+}
+ }
 diff --git a/src/emulation.rs b/src/emulation.rs
 index 853267c..e9f08e2 100644
 --- a/src/emulation.rs
@@ -569,10 +635,26 @@ index 853267c..e9f08e2 100644
      }
  }
 diff --git a/src/service.rs b/src/service.rs
-index d0772f6..b0b1eb7 100644
+index d0772f6..b2d4b85 100644
 --- a/src/service.rs
 +++ b/src/service.rs
-@@ -189,6 +189,26 @@ impl Service {
+@@ -70,6 +70,7 @@ pub struct Service {
+     /// map from capture handle to connection info
+     incoming_conn_info: HashMap<ClientHandle, Incoming>,
+     next_trigger_handle: u64,
++    den_entry: Option<(ClientHandle, String)>,
+ }
+ 
+ #[derive(Debug)]
+@@ -126,6 +127,7 @@ impl Service {
+             incoming_conn_info: Default::default(),
+             incoming_conns: Default::default(),
+             next_trigger_handle: 0,
++            den_entry: None,
+         };
+         Ok(service)
+     }
+@@ -189,6 +191,26 @@ impl Service {
                  self.remove_client(handle);
                  self.save_config();
              }
@@ -599,7 +681,7 @@ index d0772f6..b0b1eb7 100644
              FrontendRequest::EnableCapture => self.capture.reenable(),
              FrontendRequest::EnableEmulation => self.emulation.reenable(),
              FrontendRequest::Enumerate() => self.enumerate(),
-@@ -315,7 +335,18 @@ impl Service {
+@@ -315,7 +337,18 @@ impl Service {
                  self.emulation_status = Status::Enabled;
                  self.notify_frontend(FrontendEvent::EmulationStatus(self.emulation_status));
              }
@@ -619,7 +701,7 @@ index d0772f6..b0b1eb7 100644
              EmulationEvent::Connected { addr, fingerprint } => {
                  self.notify_frontend(FrontendEvent::DeviceConnected { addr, fingerprint });
              }
-@@ -328,7 +359,24 @@ impl Service {
+@@ -328,7 +361,29 @@ impl Service {
                  // we entered the capture zone for an incoming connection
                  // => notify it that its capture should be released
                  if let Some(incoming) = self.incoming_conn_info.get(&handle) {
@@ -639,26 +721,39 @@ index d0772f6..b0b1eb7 100644
 +            ICaptureEvent::RemoteLeft(edge) => {
 +                if let Ok(command) = std::env::var("DEN_RETURN_COMMAND") {
 +                    // Fixed local executable, bounded edge argument; never a remote shell command.
-+                    if let Err(error) = std::process::Command::new(command).arg(edge.to_string()).spawn() {
-+                        log::warn!("Den return helper: {error}");
++                    let mut helper = std::process::Command::new(command);
++                    helper.arg(edge.to_string());
++                    if let Ok(path) = std::env::var("DEN_CAPTURE_STATE") {
++                        if let Ok(token) = std::fs::read_to_string(std::path::Path::new(&path).with_extension("session")) {
++                            helper.env("DEN_RETURN_GENERATION", token);
++                        }
 +                    }
++                    if let Err(error) = helper.spawn() { log::warn!("Den return helper: {error}"); }
                  }
              }
              ICaptureEvent::CaptureDisabled => {
-@@ -341,7 +389,11 @@ impl Service {
+@@ -341,7 +396,19 @@ impl Service {
              }
              ICaptureEvent::ClientEntered(handle) => {
                  log::info!("entering client {handle} ...");
 -                self.spawn_hook_command(handle);
-+                if let Ok(path) = std::env::var("DEN_CAPTURE_STATE") { let _ = std::fs::write(path, "1"); }
++                if let Ok(path) = std::env::var("DEN_CAPTURE_STATE") {
++                    let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos();
++                    let token = format!("{}:{}:{}", handle, std::process::id(), stamp);
++                    let session = std::path::Path::new(&path).with_extension("session");
++                    let _ = std::fs::write(session, &token);
++                    self.den_entry = Some((handle, token));
++                    let _ = std::fs::write(path, "1");
++                }
 +            }
 +            ICaptureEvent::ClientReady(handle) => { self.spawn_hook_command(handle); }
 +            ICaptureEvent::CaptureReleased => {
++                self.den_entry = None;
 +                if let Ok(path) = std::env::var("DEN_CAPTURE_STATE") { let _ = std::fs::write(path, "0"); }
              }
          }
      }
-@@ -386,18 +438,17 @@ impl Service {
+@@ -386,18 +453,17 @@ impl Service {
      const ENTER_HANDLE_BEGIN: u64 = u64::MAX / 2 + 1;
  
      fn add_incoming(&mut self, addr: SocketAddr, pos: Position, fingerprint: String) {
@@ -687,7 +782,7 @@ index d0772f6..b0b1eb7 100644
      }
  
      fn update_incoming(&mut self, addr: SocketAddr, pos: Position, fingerprint: String) {
-@@ -412,7 +463,7 @@ impl Service {
+@@ -412,7 +478,7 @@ impl Service {
              incoming.fingerprint = fingerprint.clone();
              changed = true;
          }
@@ -696,7 +791,7 @@ index d0772f6..b0b1eb7 100644
              incoming.pos = pos;
              changed = true;
          }
-@@ -429,16 +480,12 @@ impl Service {
+@@ -429,16 +495,12 @@ impl Service {
      }
  
      fn remove_incoming(&mut self, addr: SocketAddr) -> Option<SocketAddr> {
@@ -718,3 +813,25 @@ index d0772f6..b0b1eb7 100644
      }
  
      fn notify_frontend(&mut self, event: FrontendEvent) {
+@@ -578,9 +640,20 @@ impl Service {
+         let Some(cmd) = self.client_manager.get_enter_cmd(handle) else {
+             return;
+         };
++        // Only the currently captured entry may place/arm the peer. Helpers
++        // revalidate this token after every blocking operation.
++        let token = if std::env::var("DEN_CAPTURE_STATE").is_ok() {
++            match &self.den_entry {
++                Some((active, token)) if *active == handle => Some(token.clone()),
++                _ => return,
++            }
++        } else { None };
+         tokio::task::spawn_local(async move {
+             log::info!("spawning command!");
+-            let mut child = match Command::new("sh").arg("-c").arg(cmd.as_str()).spawn() {
++            let mut command = Command::new("sh");
++            command.arg("-c").arg(cmd.as_str());
++            if let Some(token) = token { command.env("DEN_CAPTURE_GENERATION", token); }
++            let mut child = match command.spawn() {
+                 Ok(c) => c,
+                 Err(e) => {
+                     log::warn!("could not execute cmd: {e}");

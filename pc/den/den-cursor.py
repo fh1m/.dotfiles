@@ -38,6 +38,8 @@ def daemon():
     gui_pidfd=os.pidfd_open(gui.pid);selector.register(gui_pidfd,selectors.EVENT_READ,'gui-exit')
     ipc=None
     pool=concurrent.futures.ThreadPoolExecutor(max_workers=2)
+    owner_pool=concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    owner_version=0
     master=bool(tomllib.loads((ROOT/'input/config.toml').read_text()).get('clients'))
     peer_owned=False
     previous_owner=None
@@ -49,17 +51,19 @@ def daemon():
     selector.register(watch,selectors.EVENT_READ,'state')
     def gui_focus(name):
         subprocess.run([binary,'-p',str(ROOT/'cursor-ui'),'ipc','call','den-cursor','focus',name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=2)
-    def remote_owner(owned):
+    def remote_owner(owned,version):
+        if version!=owner_version:return
         try:remote('python3 /home/fh1m/.local/state/homie-control/den-cursor.py '+('owner-on' if owned else 'owner-off'))
         except (OSError,subprocess.SubprocessError):pass
     def refresh_focus():
-        nonlocal previous_owner, return_armed, return_monitor
+        nonlocal previous_owner, return_armed, return_monitor, owner_version
         monitors=json.loads(hypr('monitors','-j'))
         if master:
             try:owned=(ROOT/'input/active').read_text().strip()=='1'
             except OSError:owned=False
             gui_focus('' if owned else next((m['name'] for m in monitors if m.get('focused')),''))
-            if previous_owner!=owned:pool.submit(remote_owner,owned);previous_owner=owned
+            if previous_owner!=owned:
+                owner_version+=1;owner_pool.submit(remote_owner,owned,owner_version);previous_owner=owned
         else:
             gui_focus(next((m['name'] for m in monitors if m.get('focused')),'') if peer_owned else '')
             try:return_armed=(ROOT/'input/return-armed').read_text().strip()=='1'
@@ -124,7 +128,7 @@ def daemon():
                     # Recovery remains local even if the PC is offline.
                     if action=='show':pulse()
     finally:
-        gui.terminate();server.close();os.close(gui_pidfd);os.close(watch);pool.shutdown(wait=False,cancel_futures=True);SOCK.unlink(missing_ok=True)
+        gui.terminate();server.close();os.close(gui_pidfd);os.close(watch);pool.shutdown(wait=False,cancel_futures=True);owner_pool.shutdown(wait=False,cancel_futures=True);SOCK.unlink(missing_ok=True)
         try:hypr('eval','if _G.den_ctrl_subscription then _G.den_ctrl_subscription:remove(); _G.den_ctrl_subscription=nil end')
         except (OSError,subprocess.SubprocessError):pass
 

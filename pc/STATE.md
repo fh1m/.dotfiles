@@ -1,3 +1,14 @@
+# Input and bar checkpoint — 2026-10-16
+
+Arete and Homie: the proposed extra bar buttons were removed; original controls
+are retained. Workspace-only visual indicators and companion relocation fixes
+are shared. Native input now rejects stale hooks, guards return placement against
+adjacent-edge recapture, and releases stationary capture when the peer disconnects.
+The final receiver-stop recovery measured 3.479 seconds; stale-hook, cursor-service
+restart and native escape checks passed. See [handoff evidence](../docs/digital-den/INPUT-HARDENING.md).
+No disk, firmware, GPU policy or boot configuration changed in this pass. The
+unattended boot and physical suspend/unplug acceptance gates below remain open.
+
 # Current unified checkpoint — 2026-10-15
 
 Both machines now share main and profile-aware deployment; see [Digital Den operations](../docs/digital-den/README.md). Current verified hardware/storage details are in [HARDWARE.md](../docs/digital-den/HARDWARE.md). The chronological records below include superseded states (including old Ethernet speed and driver versions).

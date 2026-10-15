@@ -24,4 +24,8 @@ class CompanionPolicy(unittest.TestCase):
         self.assertFalse(self.js('place(200,150,256,208,[],0)')['available'])
     def test_humour_is_not_fake_status(self):
         self.assertTrue(self.js('notes.filter(n=>n.kind==="wit").every(n=>!n.text.toLowerCase().includes("tests passed"))'))
+    def test_walking_never_flies_to_a_different_edge(self):
+        self.assertTrue(self.js('canWalk({available:true,x:400,y:900},{available:true,x:540,y:900})'))
+        self.assertFalse(self.js('canWalk({available:true,x:400,y:900},{available:true,x:540,y:50})'))
+        self.assertFalse(self.js('canWalk({available:true,x:400,y:900},{available:true,x:1700,y:900})'))
 if __name__=='__main__':unittest.main()

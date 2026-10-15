@@ -19,6 +19,7 @@ Item {
     readonly property int itemWidth: compact?38:Appearance.metrics.workspaceWidth
     readonly property int itemSpacing: 7
     readonly property int activeIndex: monitorSlots.findIndex(s=>s.active)
+    readonly property bool ownsFocus: !Spaces.remoteCapture && (!output || Spaces.focusedMonitor?.name===output)
     property int carriageIndex: 0
     onActiveIndexChanged: if (activeIndex >= 0) carriageIndex = activeIndex
     Component.onCompleted: if (activeIndex >= 0) carriageIndex = activeIndex
@@ -32,7 +33,7 @@ Item {
         color: Theme.surfaceOne
         radius: Theme.radiusSmall
         border.width: 1
-        border.color: Theme.rule
+        border.color: root.ownsFocus ? Theme.alpha(Theme.signalRed,.45) : Theme.rule
     }
     Rectangle {
         id: carriage
@@ -79,7 +80,9 @@ Item {
                 Behavior on width { NumberAnimation { duration: Theme.motionTravel; easing.type: Easing.OutCubic } }
             }
 
-            Rectangle {anchors.top:parent.top;anchors.right:parent.right;anchors.topMargin:3;anchors.rightMargin:4;width:4;height:4;radius:2;visible:button.modelData.attention??false;color:Theme.signalRed}
+            Rectangle {anchors.top:parent.top;anchors.left:parent.left;anchors.topMargin:4;anchors.leftMargin:5;width:6;height:3;visible:button.modelData.elsewhere??false;color:Theme.widgetMuted;opacity:.7}
+            Text {anchors.top:parent.top;anchors.right:parent.right;anchors.topMargin:2;anchors.rightMargin:4;text:button.modelData.count>9?"9+":String(button.modelData.count??0);visible:!root.compact&&(button.modelData.count??0)>0;font.family:Appearance.font.data;font.pixelSize:8;color:button.active?Theme.paper:Theme.widgetMuted}
+            Rectangle {anchors.top:parent.top;anchors.right:parent.right;anchors.topMargin:3;anchors.rightMargin:17;width:4;height:4;radius:2;visible:button.modelData.attention??false;color:Theme.signalRed}
 
             // **`NrLabel`, so the number is centred on its ink.** It was a
             // bare `Text` centred as an item, which is off in both directions

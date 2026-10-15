@@ -19,6 +19,7 @@ Item {
     property int frame: 0
     property bool typingBurst: false
     property bool walkingRight: false
+    property bool deliberateTravel: false
     property int variant: 0
     property var placement: ({available:false,x:18,y:56})
     property var recent: []
@@ -36,12 +37,13 @@ Item {
     readonly property bool eligible: preferences.enabled!==false && preferences.quiet!==true && preferences.suspended!==true && !fullscreen && target!==""
     readonly property bool allowed: eligible && placement.available
     readonly property int pose: activity==="walk" ? (walkingRight?8:4)+frame%4 : activity==="wave" ? 13 : activity==="celebrate" ? 14 : activity==="think" ? 12 : activity==="sleep" ? 15 : frame%4
-    IpcHandler {target:"companion";function state():string{return JSON.stringify({allowed:root.allowed,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,placement:root.placement,activity:root.activity,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
+    IpcHandler {target:"companion";function state():string{return JSON.stringify({allowed:root.allowed,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,activity:root.activity,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
     function refresh():void {
         if(!eligible && target==="")return;
         query.restart();
     }
-    function locate():void {
+    function locate(animate):void {
+        deliberateTravel=animate===true && !reduced;
         const screen=Quickshell.screens.find(s=>s.name===target);
         if(!screen){placement={available:false,x:18,y:56};return;}
         const mon=Hyprland.monitorFor(screen), data=mon?.lastIpcObject??{};
@@ -66,11 +68,11 @@ Item {
     function walk():void {
         if(!allowed||reduced)return;
         const old=placement, oldVariant=variant;
-        variant=(variant+1)%2;locate();
-        if(!placement.available || Math.hypot(placement.x-old.x,placement.y-old.y)>240){variant=oldVariant;placement=old;return;}
+        variant=(variant+1)%2;locate(true);
+        if(!Logic.canWalk(old,placement)){variant=oldVariant;deliberateTravel=false;placement=old;return;}
         walkingRight=placement.x>old.x;activity="walk";frame=0;poseExpiry.restart();
     }
-    onTargetChanged:refresh()
+    onTargetChanged:{deliberateTravel=false;placement={available:false,x:18,y:56};refresh();}
     onEligibleChanged:if(eligible)refresh()
     FileView {path:Qt.resolvedUrl("notes.json");watchChanges:true;printErrors:false
         onFileChanged:reload();onLoaded:{try{Logic.notes=JSON.parse(text());}catch(e){}}}
@@ -103,7 +105,7 @@ Item {
     Timer {interval:18000;repeat:true;running:root.allowed&&!root.reduced;onTriggered:{root.typingBurst=true;burstExpiry.restart();}}
     Timer {id:burstExpiry;interval:1320;onTriggered:{root.typingBurst=false;root.frame=0;}}
     Timer {interval:220;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk");onTriggered:root.frame=(root.frame+1)%4}
-    Timer {id:poseExpiry;interval:2200;onTriggered:{root.activity="typing";root.frame=0;}}
+    Timer {id:poseExpiry;interval:2200;onTriggered:{root.activity="typing";root.frame=0;root.deliberateTravel=false;}}
     Timer {id:speechExpiry;interval:9500;onTriggered:{root.speaking=false;settle.restart();}}
     PanelWindow {
         id:pet
@@ -123,8 +125,8 @@ Item {
         WlrLayershell.namespace:"sensei-fh1m-companion"
         WlrLayershell.keyboardFocus:WlrKeyboardFocus.None
         mask:Region {}
-        Behavior on margins.left {enabled:!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
-        Behavior on margins.top {enabled:!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
+        Behavior on margins.left {enabled:root.deliberateTravel&&!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
+        Behavior on margins.top {enabled:root.deliberateTravel&&!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
         Rectangle {
             anchors {right:parent.right;bottom:character.top;bottomMargin:8}
             width:256;height:caption.implicitHeight+body.implicitHeight+30
