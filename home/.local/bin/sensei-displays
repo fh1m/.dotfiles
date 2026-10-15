@@ -47,7 +47,7 @@ def workspace_slots(outputs=None):
     path=STATE/'workspace-slots.json'
     if path.exists():
         saved=json.loads(path.read_text())
-        if not isinstance(saved,dict) or any(not external(k) or not isinstance(v,int) or not 1<=v<=32 for k,v in saved.items()) or len(set(saved.values()))!=len(saved):
+        if not isinstance(saved,dict) or any(not re.fullmatch(r'(?:HDMI-|DP-|DVI-|SENSEI-)[A-Za-z0-9_-]+',k) or not isinstance(v,int) or not 1<=v<=32 for k,v in saved.items()) or len(set(saved.values()))!=len(saved):
             raise ValueError('Invalid display workspace registry; existing windows preserved')
         result=saved
     changed=False

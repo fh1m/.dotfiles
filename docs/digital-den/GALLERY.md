@@ -51,6 +51,22 @@ Older portable tours and music screenshots retain their original capture dates
 and methods. They illustrate the portable setup and native music interface;
 they are not current live playback claims.
 
+## The desktop companion
+
+`companion.gif` and `companion.png` are actual captures of the running companion
+on an empty Arete workspace, with its existing wallpaper. The capture restored
+the previous workspace, focus and companion preferences. No application error,
+private note, account page or fabricated application screen is in these assets.
+
+The eight-pose transparent sheet at
+`home/.local/share/sensei-companion/fh1m-poses.png` was generated with OpenAI image
+generation on 2026-10-15. Brief: extend the README's fictional dark-haired hoodie
+engineer into typing, blink, thinking, wave, left/right walk, celebration and sleep
+poses, retaining the hot-pink circuit/headphone details. It is a 1774 × 887 RGBA
+sheet. QML crops the cells at render time. Movement is a gentle window-position
+animation; the left/right illustrations are directions, not alternating gait
+frames. There is no audio or ChatGPT pet dependency.
+
 ## Rebuild the composition
 
 ```sh

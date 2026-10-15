@@ -14,6 +14,9 @@ Item {
     property int pose: 0
     property real drift: 0
     property bool fullscreen: false
+    property string message: ""
+    property bool speaking: false
+    property real lastWalkRequest: 0
     readonly property bool standalone: presence.mode?.effective === "homie" || presence.mode?.effective === "away"
     readonly property string preferred: Quickshell.screens.some(s=>s.name===preferences.output)?preferences.output:""
     readonly property string target: ownerOutput ? (preferred || ownerOutput) : (standalone ? (preferred || Quickshell.screens[0]?.name || "") : "")
@@ -21,12 +24,26 @@ Item {
     function refreshFullscreen():void {Hyprland.refreshWorkspaces();settle.restart();}
     function choosePose():void {
         if(!allowed)return;
-        if(Date.now()/1000-(preferences.poseAt||0)<8){pose=({wave:3,celebrate:6,think:2,sleep:7})[preferences.pose]??0;return;}
+        if(Date.now()/1000-(preferences.poseAt||0)<8){
+            if(preferences.pose==="walk") {if(lastWalkRequest!==preferences.poseAt){lastWalkRequest=preferences.poseAt;walk();}return;}
+            pose=({wave:3,celebrate:6,think:2,sleep:7})[preferences.pose]??0;return;
+        }
         pose=Math.random()<.25?2:0;
-        if(Math.random()<.12){pose=4;drift=drift?0:120;walkExpiry.restart();}
+        if(Math.random()<.12)walk();
+    }
+    function walk():void {pose=drift?5:4;drift=drift?0:120;walkExpiry.restart();}
+    function say(text):void {
+        if(!allowed)return;
+        message=text;speaking=true;speechExpiry.restart();
+    }
+    function greet():void {
+        if(preferences.chatter===false||!allowed)return;
+        const lines=standalone?["Portable lab. Same engineer.","Small test. Clear prediction.","One good question is a start."]:
+            ["Arete roams. Homie holds the fort.","Two hosts. One curious engineer.","The robot still needs debugging.","Measure twice. Blame the frame once."];
+        say(lines[Math.floor(Math.random()*lines.length)]);
     }
     FileView {id:settings;path:Quickshell.env("HOME")+"/.config/sensei-den/companion.json";watchChanges:true;printErrors:false
-        onFileChanged:reload();onLoaded:{try{root.preferences=JSON.parse(text());root.choosePose();poseExpiry.restart();}catch(e){}}}
+        onFileChanged:reload();onLoaded:{try{root.preferences=JSON.parse(text());root.choosePose();poseExpiry.restart();if(Date.now()/1000-(root.preferences.messageAt||0)<8)root.say(root.preferences.message);}catch(e){}}}
     FileView {id:presenceFile;path:Quickshell.env("HOME")+"/.local/state/sensei-den/presence.json";watchChanges:true;printErrors:false
         onFileChanged:reload();onLoaded:{try{root.presence=JSON.parse(text());}catch(e){}}}
     Connections {target:Hyprland;function onRawEvent(event){if(["fullscreen","workspace","focusedmon","monitoradded","monitorremoved"].includes(event.name))root.refreshFullscreen();}}
@@ -34,16 +51,19 @@ Item {
     onTargetChanged:refreshFullscreen()
     Timer {interval:7500;repeat:true;running:root.allowed;onTriggered:{if(root.pose===0){root.pose=1;blinkExpiry.restart();}}}
     Timer {id:poseExpiry;interval:8100;onTriggered:root.choosePose()}
+    Timer {id:speechExpiry;interval:7000;onTriggered:root.speaking=false}
+    Timer {interval:180000;repeat:true;running:root.allowed&&root.preferences.chatter!==false;onTriggered:root.greet()}
+    Timer {interval:120000;repeat:true;running:root.allowed;onTriggered:root.walk()}
     Timer {id:blinkExpiry;interval:180;onTriggered:root.pose=0}
     Timer {interval:30000;repeat:true;running:root.allowed;onTriggered:root.choosePose()}
     Timer {id:walkExpiry;interval:2000;onTriggered:root.pose=0}
-    Timer {interval:250;repeat:true;running:root.allowed&&(root.pose===4||root.pose===5);onTriggered:root.pose=root.pose===4?5:4}
     PanelWindow {
         id:pet
         screen:Quickshell.screens.find(s=>s.name===root.target)??Quickshell.screens[0]
         visible:root.allowed
         color:"transparent"
-        implicitWidth:Math.max(64,Math.min(180,root.preferences.size??96));implicitHeight:implicitWidth
+        readonly property real spriteSize:Math.max(64,Math.min(180,root.preferences.size??96))
+        implicitWidth:Math.max(240,spriteSize);implicitHeight:spriteSize+70
         anchors {right:true;bottom:true}
         margins {right:20+root.drift;bottom:62}
         exclusionMode:ExclusionMode.Ignore
@@ -52,8 +72,17 @@ Item {
         WlrLayershell.keyboardFocus:WlrKeyboardFocus.None
         mask:Region {}
         Behavior on margins.right {NumberAnimation {duration:1800;easing.type:Easing.InOutSine}}
+        Rectangle {
+            anchors {right:parent.right;bottom:character.top;bottomMargin:4}
+            width:Math.min(236,bubble.implicitWidth+24);height:bubble.implicitHeight+16
+            visible:root.speaking
+            radius:7;color:"#ed131015";border.color:"#805a3547";border.width:1
+            Text {id:bubble;anchors.centerIn:parent;width:Math.min(212,implicitWidth);text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:"JetBrainsMono Nerd Font";font.pixelSize:12;color:"#e9e0df"}
+        }
         Image {
-            anchors.fill:parent
+            id:character
+            anchors {right:parent.right;bottom:parent.bottom}
+            width:pet.spriteSize;height:width
             source:Qt.resolvedUrl("fh1m-poses.png")
             readonly property real cell:1774/4
             sourceClipRect:Qt.rect((root.pose%4)*cell,Math.floor(root.pose/4)*cell,cell,cell)

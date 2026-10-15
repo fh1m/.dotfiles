@@ -51,7 +51,65 @@ The shell wrapper loads only a matching Qt build. Rebuild after Qt upgrades;
 [the source and regression tests](../../src/qt-context-guard/README.md) explain
 what is filtered and how to remove it. System libraries remain untouched.
 
-## Recovery
+## Continuity controls
+
+`den mode auto` follows LAN presence. `den mode away` leaves Arete independent;
+`den mode homie` is the explicit desktop-only context. Returning to `auto` restores
+the normal desk policy. Input sharing stays LAN-only; remote administration and
+jobs may use the pinned private Tailscale route. Triple Ctrl's manual pause must
+survive automatic presence refreshes.
+
+`den sync status` reports the personal mirror; `scan`, `pause` and `resume` are
+explicit controls. Paths and selected vaults are private configuration. Git
+histories travel through `scripts/setup-den-projects.py --apply`, never a synced
+`.git` directory. Preview first; existing repositories are not reset.
+
+`den job run --host homie --project PATH -- COMMAND` runs an owned persistent job.
+Use `den job list`, `status --id ID`, `logs --id ID` or `cancel --id ID` to inspect
+it. Remote commands are not retried after an ambiguous connection failure.
+`den workbench open` opens the paired Homie desktop privately and releases edge
+capture for the session; closing it stops Sunshine and restores prior sharing.
+
+`den backup run`, `check`, `restore-test`, `retain` and `peer-copy` operate on the
+private Restic configuration. Daily timers run the backup and peer copy; retention
+is explicit (7 daily / 4 weekly / 3 monthly). Missing targets and free-space
+reserves fail safely. Downloads, large recordings and generated data are excluded;
+review the private scope before trusting it with new work. Keep recovery passwords
+outside these two machines as well. Nothing is uploaded publicly.
+
+### The little engineer
+
+The README character now lives in the independent cursor renderer. It follows
+the active display, speaks in short **text bubbles**, occasionally moves, and
+never receives clicks. System → Digital Den provides its controls.
+
+```sh
+den companion say "One small baseline. Then the universe."
+den companion wave
+den companion walk
+den companion quiet on
+den companion chatter off
+den companion hide
+```
+
+`show`, `follow`, `here` and `size 96` restore or adjust it. Preferences are private;
+the sprite sheet and QML are shared. Quiet mode, lock and fullscreen suppress it.
+There is no speech service, model download or additional companion renderer.
+
+### Machine-local setup
+
+The `setup-den-{apps,sync,backup,projects}.py` scripts preview by default. Their
+private state is outside Git. Arete's scoped firewall provisioning is
+`sudo python3 scripts/provision-den-firewall.py`; it preserves the existing
+firewall table policy and Docker rules. Homie uses its existing UFW policy.
+Do not copy one host's firewall backend or hardware profile to the other.
+
+To undo continuity automation, stop/disable `den-watch.service` and
+`den-backup.timer`, pause Syncthing's Den folders, and use `den-control home`.
+Keep notes, mirrored files, pairing backups and encrypted snapshots until their
+recovery is independently confirmed. Installer backups allow targeted UI rollback.
+
+## Input recovery
 
 If input behaves unexpectedly, use triple Ctrl or Ctrl+Alt+Esc, then `den-control home`. On either host's own keyboard, `systemctl --user stop den-input` stops that host's service. Restart sharing with `den-control start` only after the peer is available.
 

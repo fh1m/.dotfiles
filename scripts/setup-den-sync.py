@@ -26,6 +26,17 @@ with urllib.request.urlopen(req,timeout=20) as v:
  b=v.read();print(b.decode() if b else '{}')
 '''
 
+ALIASES='''import sys,json
+from pathlib import Path
+d=json.load(sys.stdin);home=Path.home();root=home/'Den/Shared';root.mkdir(parents=True,exist_ok=True)
+for f in d['folders']:
+ name=f['alias'];p=root/name
+ if not p.exists() and not p.is_symlink():p.symlink_to(f['path'],target_is_directory=True)
+ if f['id'].startswith('den-') and not f['id'].startswith('den-vault'):
+  standard=home/f['label'];standard.mkdir(exist_ok=True);p=standard/'FromArete'
+  if not p.exists() and not p.is_symlink():p.symlink_to(f['path'],target_is_directory=True)
+'''
+
 
 def peer(args,**kw):
     return subprocess.run(['ssh','-F',str(PRIVATE/'client.conf'),'homie',shlex.join(args)],check=True,capture_output=True,**kw)
@@ -69,12 +80,18 @@ def main():
         except (OSError,ValueError,subprocess.CalledProcessError):time.sleep(.5)
     else:raise ValueError('Homie Syncthing did not start')
     local_id=api('GET','system/status')['myID'];cfgs=[api('GET','config'),api('GET','config',remote=True)]
+    private_address=None
+    try:
+        tail=json.loads(subprocess.check_output(['tailscale','status','--json']))
+        private_address=next(p['TailscaleIPs'][0] for p in tail.get('Peer',{}).values() if p.get('HostName')=='homie')
+    except (OSError,ValueError,subprocess.SubprocessError,StopIteration):pass
     # Syncthing verifies peer device certificates; transport is encrypted natively.
     for index,cfg in enumerate(cfgs):
         ident=remote_id if index==0 else local_id
         device=next((d for d in cfg['devices'] if d['deviceID']==ident),None)
         if device is None:device=dict(cfg['defaults']['device']);device['deviceID']=ident;cfg['devices'].append(device)
-        device.update(name='Homie' if index==0 else 'Arete',addresses=['tcp://homie.local:22000'] if index==0 else ['dynamic'],autoAcceptFolders=False)
+        addresses=['tcp://homie.local:22000']+(['tcp://'+private_address+':22000'] if private_address else [])
+        device.update(name='Homie' if index==0 else 'Arete',addresses=addresses if index==0 else ['dynamic'],autoAcceptFolders=False)
         for f in folders:
             target=f['path'] if index==0 else str(HOME/'Den/Mirror/arete'/f['id'])
             existing=next((x for x in cfg['folders'] if x['id']==f['id']),None)
@@ -96,9 +113,12 @@ def main():
             api('POST','db/ignores?folder='+f['id'],{'ignore':list(dict.fromkeys([*prior,*ignores]))},remote=remote)
     write(HOME/'.config/sensei-den/sync.json',{'schema':1,'folders':[dict(f,floorGiB=80) for f in folders]})
     data={'schema':1,'folders':[dict(f,path=str(HOME/'Den/Mirror/arete'/f['id']),floorGiB=60) for f in folders]}
+    for source,target in zip(folders,data['folders']):
+        target['alias']=source['label'] if sum(f['label']==source['label'] for f in folders)==1 else source['label']+' — '+Path(source['path']).parent.name
     peer(['python3','-c',"import sys,json,os;from pathlib import Path;p=Path.home()/'.config/sensei-den/sync.json';p.parent.mkdir(parents=True,exist_ok=True);p.write_text(sys.stdin.read());p.chmod(0o600)"],input=json.dumps(data),text=True)
     # Friendly entry points never replace existing folders or merge unrelated vaults.
     peer(['python3','-c',"import sys,json;from pathlib import Path;d=json.load(sys.stdin);root=Path.home()/'Den/Shared';root.mkdir(parents=True,exist_ok=True);[(root/f['id']).symlink_to(f['path'],target_is_directory=True) for f in d['folders'] if not (root/f['id']).exists() and not (root/f['id']).is_symlink()];p=Path.home()/'Work/Arete';p.parent.mkdir(exist_ok=True);t=next((f['path'] for f in d['folders'] if f['id']=='den-work'),None);p.symlink_to(t,target_is_directory=True) if t and not p.exists() and not p.is_symlink() else None"],input=json.dumps(data),text=True)
+    peer(['python3','-c',ALIASES],input=json.dumps(data),text=True)
     print(json.dumps({'paired':True,'folders':len(folders),'transport':'Syncthing native TLS with pinned device identity; LAN-only listener rule','localFreeGiB':round(shutil.disk_usage(HOME).free/2**30,1)}))
 
 

@@ -40,9 +40,16 @@ def write(path,value):
 def host():return socket.gethostname().split('.')[0]
 
 
-def remote(args,timeout=10):
+def remote(args,timeout=10,private=False):
     if host()!='arete':raise ValueError('Run cross-host administration from Arete')
-    r=run(['ssh','-F',str(PRIVATE/'client.conf'),'homie',shlex.join([str(x) for x in args])],timeout=timeout)
+    alias='homie'
+    if private:
+        access=read(CONFIG/'access.json')
+        # Another network may reuse our LAN address. Verify the pinned peer with
+        # a read-only preflight instead of trusting an open TCP port.
+        if access.get('privateAlias') and not connectivity():alias=access['privateAlias']
+    # Select a route before sending a command. Never replay a job after an SSH error.
+    r=run(['ssh','-F',str(PRIVATE/'client.conf'),alias,shlex.join([str(x) for x in args])],timeout=timeout)
     if r.returncode:raise ValueError('Homie unavailable or command failed; existing work is preserved')
     return r.stdout
 
@@ -86,7 +93,13 @@ def companion(action,value=None):
         rows=json.loads(run(['hyprctl','monitors','-j']).stdout)
         cfg['output']=next((m['name'] for m in rows if m.get('focused')),'')
     elif action=='follow':cfg['output']=''
-    elif action in ('wave','celebrate','think','sleep'):cfg.update(pose=action,poseAt=time.time())
+    elif action in ('wave','celebrate','think','sleep','walk'):
+        cfg.update(pose=action,poseAt=time.time())
+        if action=='wave':cfg.update(message='Hello, engineer. What are we building?',messageAt=time.time())
+    elif action=='say':
+        if not value or not value.strip():raise ValueError('Give the companion a short message')
+        cfg.update(message=value.strip()[:160],messageAt=time.time())
+    elif action=='chatter':cfg['chatter']=value=='on' if value else not cfg.get('chatter',True)
     elif action!='status':raise ValueError('Unsupported companion action')
     if action!='status':write(CONFIG/'companion.json',cfg)
     return cfg
@@ -184,12 +197,32 @@ def backup(action):
     if action=='status':return {'configured':True,'repository':repository,'last':read(STATE/'backup-status.json'),'scope':'local only'}
     base=[binary]+(['-o','sftp.command='+cfg['sftpCommand']] if cfg.get('sftpCommand') else [])
     if not password.exists():raise ValueError('Backup password file missing; do not initialize another repository')
+    if action=='peer-copy':
+        peer=cfg.get('peerCopy')
+        if not peer:return {'configured':False,'reason':'No peer snapshot copy configured on this host'}
+        target=Path(peer['repository']);target.parent.mkdir(parents=True,exist_ok=True)
+        guard={'repository':str(target),'minimumFreeGiB':peer.get('minimumFreeGiB',80)};backup_reserve(guard)
+        copyenv=dict(os.environ,RESTIC_REPOSITORY=str(target),RESTIC_PASSWORD_FILE=peer['passwordFile'],
+                     RESTIC_FROM_REPOSITORY=peer['fromRepository'],RESTIC_FROM_PASSWORD_FILE=peer['passwordFile'])
+        copybase=[binary,'-o','sftp.command='+cfg['sftpCommand']]
+        if not (target/'config').exists():
+            r=run([*copybase,'init','--copy-chunker-params'],timeout=90,env=copyenv)
+            if r.returncode:raise ValueError('Peer snapshot destination initialization failed')
+        r=guarded_backup([*copybase,'copy'],guard,copyenv)
+        if r.returncode:raise ValueError('Peer snapshot copy failed; existing snapshots remain')
+        result={'ok':True,'finished':time.time(),'repository':str(target),'scope':'Homie snapshots copied onto Arete'}
+        write(STATE/'peer-copy-status.json',result);return result
     if action=='run':
         paths=[str(Path(p)) for p in cfg['paths'] if Path(p).exists()]
         if not paths:raise ValueError('No backup sources exist')
         command=[*base,'backup','--json','--tag','digital-den']
         for p in cfg.get('exclude',[]):command+=['--exclude',p]
-        r=guarded_backup([*command,*paths],cfg,env)
+        try:r=guarded_backup([*command,*paths],cfg,env)
+        except (OSError,ValueError,subprocess.SubprocessError):
+            write(STATE/'backup-status.json',{'finished':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                'ok':False,'reason':'Backup interrupted, target unavailable, or reserve reached; inspect private diagnostics'})
+            run(['notify-send','-a','Digital Den','Backup needs attention','Existing snapshots remain available'],timeout=3)
+            raise
         # Exit 3 is an incomplete backup, never a successful checkpoint.
         result={'finished':datetime.datetime.now(datetime.timezone.utc).isoformat(),'ok':r.returncode==0,'exitCode':r.returncode}
         summaries=[]
@@ -231,7 +264,7 @@ def job(args):
         if args.project:command+=['--project',args.project]
         if args.id:command+=['--id',args.id]
         command+=['--',*args.command] if args.command else []
-        return json.loads(remote(command,timeout=20))
+        return json.loads(remote(command,timeout=20,private=True))
     directory=STATE/'jobs';directory.mkdir(parents=True,exist_ok=True,mode=0o700)
     if args.action=='run':
         project=Path(args.project or Path.cwd()).resolve()
@@ -268,6 +301,52 @@ def doctor():
     return {'checks':checks,'status':status(),'remaining':read(STATE/'pending.json',[])}
 
 
+def workbench(action):
+    unit='app-dev.lizardbyte.app.Sunshine'
+    if host()!='arete':raise ValueError('Open the remote workbench from Arete')
+    cfg=read(CONFIG/'workbench.json')
+    if not cfg:raise ValueError('Private Moonlight pairing has not been configured')
+    lock=None
+    if action=='open':
+        import fcntl
+        STATE.mkdir(parents=True,exist_ok=True,mode=0o700);lock=(STATE/'workbench.lock').open('a')
+        try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:raise ValueError('Homie desk is already open')
+    if action=='status':
+        text=remote(['systemctl','--user','show',unit,'--property=ActiveState','--value'],private=True)
+        return {'host':'homie','service':text.strip()}
+    if action=='stop':remote(['systemctl','--user','stop',unit],private=True);return {'stopped':True}
+    code=('import json,subprocess;'
+          'x=json.loads(subprocess.check_output(["hyprctl","instances","-j"]))[0];'
+          'subprocess.run(["systemctl","--user","set-environment","WAYLAND_DISPLAY="+x["wl_socket"],'
+          '"HYPRLAND_INSTANCE_SIGNATURE="+x["instance"],"XDG_SESSION_TYPE=wayland"],check=True);'
+          'subprocess.run(["systemctl","--user","start",'+repr(unit)+'],check=True)')
+    remote(['python3','-c',code],timeout=25,private=True)
+    if action=='start':return {'started':True,'scope':'private network; on demand'}
+    if action!='open':raise ValueError('Unsupported workbench action')
+    was_sharing=service('den-input')=='active'
+    if was_sharing:run([str(HOME/'.local/bin/den-control'),'home'],timeout=10)
+    try:
+        remote(['python3',str(PRIVATE/'den-cursor.py'),'owner-on'],private=True)
+        env=dict(os.environ)
+        env['XDG_CONFIG_HOME']=str(HOME/'.config/den-moonlight')
+        if not env.get('WAYLAND_DISPLAY'):
+            x=json.loads(run(['hyprctl','instances','-j']).stdout)[0]
+            env.update(WAYLAND_DISPLAY=x['wl_socket'],HYPRLAND_INSTANCE_SIGNATURE=x['instance'])
+        result=subprocess.run(['moonlight','stream',cfg['host'],'Desktop','--1080','--fps','60',
+            '--bitrate','25000','--display-mode','windowed','--absolute-mouse','--capture-system-keys','never',
+            '--video-codec','HEVC','--audio-on-host'],env=env)
+        if result.returncode:raise ValueError('Remote desk closed with an error; local input remains available')
+        return {'closed':True}
+    finally:
+        try:remote(['systemctl','--user','stop',unit],private=True)
+        except (ValueError,OSError,subprocess.SubprocessError):pass
+        if was_sharing and connectivity():
+            try:remote(['python3',str(PRIVATE/'den-cursor.py'),'owner-off'])
+            except (ValueError,OSError,subprocess.SubprocessError):pass
+            run([str(HOME/'.local/bin/den-control'),'start'],timeout=10)
+
+
 def watch():
     previous=None;previous_mode=None
     while True:
@@ -297,9 +376,10 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);s=p.add_subparsers(dest='command_name',required=True)
     for n in ['status','doctor','watch']:s.add_parser(n)
     q=s.add_parser('mode');q.add_argument('value',nargs='?',choices=['auto','together','away','homie'])
-    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep']);q.add_argument('value',nargs='?')
+    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','say','chatter']);q.add_argument('value',nargs='?')
     q=s.add_parser('sync');q.add_argument('action',nargs='?',default='status',choices=['status','scan','pause','resume'])
-    q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain'])
+    q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','peer-copy'])
+    q=s.add_parser('workbench');q.add_argument('action',nargs='?',default='open',choices=['open','start','stop','status'])
     q=s.add_parser('job');q.add_argument('action',choices=['run','list','status','logs','cancel']);q.add_argument('--host');q.add_argument('--project');q.add_argument('--id');
     argv=sys.argv[1:];job_command=[]
     if '--' in argv:
@@ -311,6 +391,7 @@ def main():
     if a.command_name=='mode':return mode(a.value) if a.value else current_mode()
     if a.command_name=='companion':return companion(a.action,a.value)
     if a.command_name=='backup':return backup(a.action)
+    if a.command_name=='workbench':return workbench(a.action)
     if a.command_name=='job':return job(a)
     if a.command_name=='sync':
         if a.action=='scan':sync_api('POST','db/scan')

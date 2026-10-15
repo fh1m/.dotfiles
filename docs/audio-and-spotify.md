@@ -68,9 +68,36 @@ Use the actual connection/interface names on another machine. The NetworkManager
 
 The 2026-09-28 Spotify skip test found a separate, digital gap before Bluetooth: 1.05 seconds of silence on two early skips. Preloading the next URI immediately when the local queue is accepted reduced an early Next sample to 0.15 seconds of silence. This does not prove the radio is always clear; PipeWire also logged missing AX200 packet-completion reports during a local tone test. Steady Spotify audio showed zero PipeWire graph errors in a 24-second sample.
 
-The bar now shows a loading spinner and holds the album art still while the player loads a track. Rotation resumes on the player's `Playing` event. This makes an unavoidable uncached-track wait visible instead of implying that audio has already started.
+The bar keeps album art still, with a loading indicator while a track loads and a paused indicator when appropriate.
 
-On 2026-10-03, a long-lived player lost its streaming channel after a DNS disruption. Its process and local control socket remained up, but `StartUris` returned `channel closed` and the headset monitor stayed digitally silent. Restarting only `sensei-spotify.service` rebuilt the session and a new capture confirmed nonzero PCM at the Bluetooth output. The local transport now detects this specific error, restarts the player once and retries the requested control. Other Spotify errors still surface normally; repeated session loss needs a network/account investigation, not an endless restart loop.
+On 2026-10-03, a long-lived player lost its streaming channel after a DNS disruption. Its process and local control socket remained up, but `StartUris` returned `channel closed` and the headset monitor stayed digitally silent. Restarting only `sensei-spotify.service` rebuilt the session and a new capture confirmed nonzero PCM at the Bluetooth output. The transport recovers this specific session failure once. **Next/Previous are never replayed after recovery:** their outcome is ambiguous, so check the current track before skipping again. Other failures remain visible.
+
+## Den playback and request budget — 2026-10-15
+
+Next/Previous now send exactly one native command. A following Play/Pause used
+to race Spotify Connect ownership and could revive a changed queue. The UI waits
+for a changed URI before accepting another Next acknowledgement. Device names
+come from each host's configuration; Homie does not impersonate Arete.
+
+The Rust daemon and Python catalogue helper share a locked, persistent per-host
+gate: at most ten Web API requests in a rolling 30 seconds. The observed
+`Retry-After` is preserved without a 15-minute cap. `QUOTA_EXCEEDED` stays blocked
+until explicit operator reset; the application does not invent a subscription
+reset date or switch client identities to get around a quota. Cached content and
+native playback remain separate paths. This local request budget is **not** the
+account's remaining Spotify quota, and is not a cross-host quota server.
+
+```sh
+sensei-spotify budget
+# Only after resolving the provider restriction:
+sensei-spotify budget-reset
+```
+
+The 90-minute passive observation had 1,076 status samples, zero status errors,
+zero unexpected backward position resets and two track transitions. Only 121
+samples were playing: this was not 90 minutes of uninterrupted listening. Native
+UDP regression tests verify one command per skip; a real external-device transfer
+is a separate acceptance check. [Spotify quota policy](https://developer.spotify.com/documentation/web-api/concepts/quota-modes).
 
 `pw-top` showed no graph underruns even when listening still jittered. HCI timing revealed a more specific issue: short stalls caused an outgoing L2CAP socket to hit queue pressure, and PipeWire’s sink could drop packets. A headset-only `SO_SNDBUF` interceptor increased queue headroom. A larger-buffer trace recorded 3,375 packets over 44.99 seconds with zero sequence gaps; SBC-XQ comparison recorded 20 gaps in 45 seconds. Those samples support the change, not a promise of zero radio interruptions forever.
 

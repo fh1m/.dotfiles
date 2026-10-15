@@ -43,4 +43,14 @@ class Continuity(unittest.TestCase):
         with patch.object(m,'remote',return_value='{"free":1073741824}'):
             with self.assertRaisesRegex(ValueError,'reserve reached'):
                 m.backup_reserve({'repository':'sftp:homie:/disk/repo','remoteTarget':'/disk/repo','requiredMount':'/disk','remoteMinimumFreeGiB':20})
+    def test_private_job_uses_fallback_before_sending_and_never_replays(self):
+        import subprocess
+        m.write(m.CONFIG/'access.json',{'lanAddress':'192.0.2.1','privateAlias':'homie-remote'})
+        with patch.object(m,'host',return_value='arete'),patch.object(m,'connectivity',return_value=False),patch.object(m,'run',return_value=subprocess.CompletedProcess([],255,'','')) as call:
+            with self.assertRaises(ValueError):m.remote(['job','run'],private=True)
+            self.assertEqual(call.call_count,1)
+            self.assertIn('homie-remote',call.call_args.args[0])
+    def test_companion_text_is_bounded_plain_content(self):
+        self.assertEqual(len(m.companion('say','x'*200)['message']),160)
+        m.companion('chatter','off');self.assertFalse(m.companion('status')['chatter'])
 if __name__=='__main__':unittest.main()

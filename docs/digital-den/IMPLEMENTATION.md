@@ -13,14 +13,14 @@ No disk conversion, forced Git operations, automatic purchases or off-site backu
 
 | Stage | Done when | State |
 |---|---|---|
-| P0 recovery | Private backups, baseline, outstanding-work ledger | In progress |
-| P1 music | Shared request control, quota handling, native transport regression tests | Pending |
-| P2 displays | Identity-based roles and routes, hotplug fallback, PC DP-2 accepted | Pending |
-| P3 continuity | Capacity-aware personal mirror, agent parity, verified local restore | Pending |
-| P4 remote/compute | Private connectivity, persistent job, checked artifact | Pending |
-| P5 companion/UI | Isolated click-through companion, host/role labels, quiet control | Pending |
-| P6 display handoff | Guided modes; physical switching explicitly gated | Pending |
-| P7 acceptance | Tests, clean reviewed gallery, identical revisions, idempotence | Pending |
+| P0 recovery | Private backups, baseline, outstanding-work ledger | Verified baseline; final refresh pending |
+| P1 music | Shared request control, quota handling, native transport regression tests | Native tests and budget implemented; live Connect test open |
+| P2 displays | Identity-based roles and routes, hotplug fallback, PC DP-2 accepted | Identity/role tests pass; physical handoff open |
+| P3 continuity | Capacity-aware personal mirror, agent parity, verified local restore | Sync, conflict, Git and restore proofs pass |
+| P4 remote/compute | Private connectivity, persistent job, checked artifact | Private stream, persistent jobs, both GPUs and ROS pass |
+| P5 companion/UI | Isolated click-through companion, host/role labels, quiet control | Live asset reviewed; final parity/interaction check open |
+| P6 display handoff | Guided modes; physical switching explicitly gated | Software prepared; physical gate remains |
+| P7 acceptance | Tests, clean reviewed gallery, identical revisions, idempotence | 223 Python tests and installer safety pass; final deployment pending |
 
 ## Discovered constraints
 
@@ -51,3 +51,11 @@ sources: Spotify quota/rate-limit docs; MSI MP225 datasheet; Qt AnimatedSprite a
 Quickshell PanelWindow; Syncthing syncing/versioning; Restic restore; Tailscale
 connectivity; PyTorch DDP; Docker contexts; OpenAI/Claude authentication.
 Community discussions were anecdotal inputs, not performance measurements.
+
+## Acceptance ledger
+
+See [performed checks and open gates](VALIDATION.md). Do not mark physical boot,
+travel, monitor-cable handoff or Spotify Connect acceptance passed from unit tests.
+The laptop Ethernet link is measured at 100 Mb/s; two independent GPU checks are
+not a pooled-memory or distributed-training result. Private settings and credentials
+were transferred selectively, without replacing valid existing agent accounts.

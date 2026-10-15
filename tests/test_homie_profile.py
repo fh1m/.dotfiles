@@ -18,3 +18,17 @@ class HomieProfile(unittest.TestCase):
   m=module();rows=[{"name":"HDMI-A-1","focused":True}]
   with patch.object(m,"run",return_value=json.dumps(rows)):
    self.assertEqual(m.monitors(),rows);self.assertEqual(m.PRIMARY,"HDMI-A-1");self.assertFalse(m.external("HDMI-A-1"))
+ def test_external_stack_aligns_upper_with_homie_not_above_it(self):
+  m=module();rows=[{'name':'DP-3','width':1920,'height':1080,'scale':1,'x':0,'y':0},*({'name':name,'width':1920,'height':1080,'scale':1,'x':0,'y':0,'refreshRate':100,'availableModes':['1920x1080@100Hz']} for name in ['DP-2','DP-1'])]
+  m._role_monitors=rows
+  def role(name,*args):return {'DP-3':'main','DP-2':'lower','DP-1':'upper'}[name]
+  with patch.object(m,'role_for',side_effect=role),patch.object(m,'run') as call:
+   m.configure(rows);commands=[x.args[0][-1] for x in call.call_args_list]
+   self.assertTrue(any('output="DP-1"' in x and 'position="-1920x0"' in x for x in commands))
+   self.assertTrue(any('output="DP-2"' in x and 'position="-1920x1080"' in x for x in commands))
+   self.assertEqual(m.bar_edge('DP-2'),'bottom');self.assertEqual(m.bar_edge('DP-1'),'top')
+ def test_dp2_is_a_full_workspace_participant_on_pc(self):
+  m=module();rows=[{'name':'DP-3','focused':True},{'name':'DP-2'}];m._role_monitors=rows
+  with patch.object(m,'role_for',side_effect=lambda name,*a:'main' if name=='DP-3' else 'lower'),patch.object(m,'monitors',return_value=rows),patch.object(m,'known_workspaces',return_value=[]),patch.object(m,'workspace_slots',return_value={'DP-2':1}),patch.object(m,'dispatch') as call:
+   m.workspace(2,'DP-2');command=call.call_args.args[0]
+   self.assertIn('workspace="102"',command);self.assertIn('monitor="DP-2"',command)

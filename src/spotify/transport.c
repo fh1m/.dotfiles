@@ -313,6 +313,9 @@ static J *status(J *d) {
   boolean(o, "playing", playing);
   boolean(o, "loading", loading);
   copy(o, "eventUri", get(event, "uri"));
+  long long duration = (long long)num(get(track, "duration"));
+  if (progress < 0) progress = 0;
+  if (duration > 0 && progress > duration) progress = duration;
   add(o, "track", track);
   integer(o, "progress", progress);
   copy(o, "volume", get(device, "volume_percent"));

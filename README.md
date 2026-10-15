@@ -126,6 +126,12 @@ Ubuntu-based robotics environments live in containers. The host remains the dail
 
 <div align="center"><img src="docs/assets/digital-den/fh1m-typing.gif" alt="A small illustrated hoodie engineer typing, blinking and thinking" width="210"></div>
 
+He escaped the README.
+
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/digital-den/companion.png"><img src="docs/assets/digital-den/companion.gif" alt="The actual desktop companion waves, walks gently and offers a short text bubble over Arete's wallpaper" width="750"></picture>
+
+A small fh1m companion follows the active display. Text, occasional movement, no sound. Clicks pass through; fullscreen and quiet mode give the work its space. **System → Digital Den → Say hello.** [Companion controls](docs/digital-den/README.md#the-little-engineer).
+
 Native tabs keep Alacritty and Obsidian together. The identity deck has developer tools and a Nerd Talk corner. XKCD is a right-click research break. The palette takes itself seriously enough for the rest of us.
 
 ![Native themed tab strip with Alacritty and Obsidian](docs/assets/signal-ledger/tabs-v2.webp)
@@ -143,6 +149,8 @@ Native tabs keep Alacritty and Obsidian together. The identity deck has develope
 *Workload samples, not universal benchmarks.* [Methods and limitations](docs/performance.md).
 
 For the Den baseline: **12 real cross-host cursor routes** exercised with keyboard, clicks and scrolling in an owned test window; text and PNG clipboard checked in both directions; both installers checked for a second run with no changes. [Validation record](docs/digital-den/REPOSITORY-AUDIT.md).
+
+The continuity pass adds **11 mirrored folders**, encrypted restore checks on **both hosts**, seven private Git-history handoffs, and the same small CUDA/autograd check on both GPUs. Homie's desktop streams privately on demand; its Docker engine is one explicit context away. [What was actually tested](docs/digital-den/VALIDATION.md).
 
 ## Bring your own workbench
 

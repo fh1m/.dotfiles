@@ -8,10 +8,17 @@
 | GPU | Intel display + RTX 2060 compute | GTX 1660 SUPER, 6 GiB, direct display |
 | Built-in displays | 3840 × 2160 + 3840 × 1100 ScreenPad, scale 2 | — |
 | Desk displays | Two MSI MP225, 1920 × 1080 at 100 Hz | LG 1920 × 1080 at 75 Hz |
-| Network | Wired LAN; Wi-Fi fallback | Wired gigabit negotiated during this audit |
+| Network | Wired 100 Mb/s negotiated; Wi-Fi fallback | Wired gigabit negotiated during this audit |
 | Storage role | Portable work and learning | SATA system + data disks + preserved NVMe installations |
 
 Both GPUs remain on separate hosts; this is not a pooled-memory GPU configuration. Distributed training is a future project, not a capability claimed by this deployment.
+
+The laptop's current USB Ethernet path is the measured 100 Mb/s bottleneck.
+A checked runtime transfer sustained about 11.3 MB/s. A gigabit-capable adapter
+and cable/switch path would be a hardware improvement; no purchase or forced
+link mode was applied. The external MSI displays keep digital HDMI at 100 Hz;
+their VGA input is limited to 60 Hz, so an arbitrary VGA KVM is not an equivalent
+handoff. Physical switching remains a separate acceptance step.
 
 Homie has five physical drives: Dahua 256 GB system SSD, Transcend 120 GB Datasets SSD, Revenger 256 GB Windows SSD, Toshiba 1 TB Storage HDD, and WD_BLACK SN7100 1 TB NVMe with preserved installations. Six data filesystems are exposed through UUID-based automounts. Device letters are not stable identities.
 

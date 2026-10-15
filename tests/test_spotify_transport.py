@@ -34,4 +34,16 @@ class Transport(unittest.TestCase):
                 result=subprocess.run([str(self.binary),action,'playing'],env=dict(os.environ,HOME=d),capture_output=True,text=True,timeout=3)
                 t.join();self.assertEqual(result.returncode,0,result.stdout+result.stderr)
                 self.assertEqual(seen,[{'Playback':expected}])
+    def test_stale_playback_clock_never_runs_past_track_duration(self):
+        with tempfile.TemporaryDirectory() as d, socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as server:
+            server.bind(('127.0.0.1',0));p=Path(d)/'.config/spotify-player';p.mkdir(parents=True)
+            (p/'app.toml').write_text('client_port = '+str(server.getsockname()[1])+'\n')
+            def serve():
+                raw,peer=server.recvfrom(65535)
+                response={'Ok':list(json.dumps({'is_playing':False,'progress_ms':20000000,'item':{'id':'x'*22,'duration_ms':120000}}).encode())}
+                server.sendto(json.dumps(response).encode(),peer);server.sendto(b'',peer)
+            t=threading.Thread(target=serve);t.start()
+            result=subprocess.run([str(self.binary),'status'],env=dict(os.environ,HOME=d),capture_output=True,text=True,timeout=3)
+            t.join();self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            self.assertEqual(json.loads(result.stdout)['progress'],120000)
 if __name__=='__main__':unittest.main()

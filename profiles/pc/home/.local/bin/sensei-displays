@@ -33,6 +33,9 @@ def run(command, timeout=15):
 def monitors():
     global PRIMARY
     rows=json.loads(run(['hyprctl','monitors','-j']))
+    if role_for and rows:
+        primary=display_roles(rows,profile=MACHINE.get('profile')).get('main')
+        if primary:PRIMARY=primary['name']
     if MACHINE.get('profile')=='pc' and rows and not any(m['name']==PRIMARY for m in rows):
         PRIMARY=next((m['name'] for m in rows if m.get('focused')),rows[0]['name'])
     globals()['_role_monitors']=rows
@@ -56,7 +59,7 @@ def workspace_slots(outputs=None):
     path=STATE/'workspace-slots.json'
     if path.exists():
         saved=json.loads(path.read_text())
-        if not isinstance(saved,dict) or any(not external(k) or not isinstance(v,int) or not 1<=v<=32 for k,v in saved.items()) or len(set(saved.values()))!=len(saved):
+        if not isinstance(saved,dict) or any(not re.fullmatch(r'(?:HDMI-|DP-|DVI-|SENSEI-)[A-Za-z0-9_-]+',k) or not isinstance(v,int) or not 1<=v<=32 for k,v in saved.items()) or len(set(saved.values()))!=len(saved):
             raise ValueError('Invalid display workspace registry; existing windows preserved')
         result=saved
     changed=False
@@ -78,7 +81,12 @@ def workspace_slots(outputs=None):
     return result
 
 
-def bar_edge(output):return 'top' if output==PRIMARY else 'top' if output in ('DP-1','SENSEI-UPPER-TEST') or workspace_slots().get(output,1)>1 else 'bottom'
+def bar_edge(output):
+    if output==PRIMARY:return 'top'
+    if role_for and globals().get('_role_monitors') is not None:
+        role=role_for(output,globals()['_role_monitors'])
+        if role in ('upper','lower'):return 'top' if role=='upper' else 'bottom'
+    return 'top' if output in ('DP-1','SENSEI-UPPER-TEST') or workspace_slots().get(output,1)>1 else 'bottom'
 
 def selector(name):
     if not re.fullmatch(r'[A-Za-z0-9_-]+',name):raise ValueError('Invalid output name')
@@ -145,7 +153,7 @@ def optimal_mode(monitor):
 
 
 def configure(outputs):
-    selected=sorted((m for m in outputs if external(m['name'])),key=lambda m:((role_for(m['name'],outputs)!='lower') if role_for else m['name']!='HDMI-A-1',m['name']))
+    selected=sorted((m for m in outputs if external(m['name'])),key=lambda m:((role_for(m['name'],outputs)!='upper') if role_for else m['name']!='DP-1',m['name']))
     lower=None
     for monitor in selected:
         mode,width,height,rate=optimal_mode(monitor)
@@ -154,7 +162,7 @@ def configure(outputs):
         logical_width=round((height if rotated else width)/scale)
         logical_height=round((width if rotated else height)/scale)
         if lower is None:x,y=-logical_width,0
-        else:x,y=lower[0]+round((lower[2]-logical_width)/2),lower[1]-logical_height
+        else:x,y=lower[0]+round((lower[2]-logical_width)/2),lower[1]+lower[3]
         lower=(x,y,logical_width,logical_height)
         mode_changed=(width!=monitor['width'] or height!=monitor['height'] or abs(rate-monitor.get('refreshRate',rate))>.1)
         if mode_changed or monitor.get('scale',1)!=scale or monitor.get('x')!=x or monitor.get('y')!=y:
@@ -222,7 +230,7 @@ def physical(number,output,slots=None):
 
 
 def main_display(outputs):
-    return next((m for m in outputs if m['name']==PRIMARY),next((m for m in outputs if m['name']!='DP-2' and not external(m['name'])),None))
+    return next((m for m in outputs if m['name']==PRIMARY),next((m for m in outputs if not external(m['name'])),None))
 
 
 def workspace(number,output=None):
@@ -233,7 +241,7 @@ def workspace(number,output=None):
     target=next((m for m in outputs if m['name']==name),None)
     if not target:raise ValueError('Display is not connected')
     main=main_display(outputs)
-    if number==7 or name=='DP-2':
+    if number==7:
         if number==7:
             dispatch('hl.dsp.focus({workspace="7"})');return
         name=main['name'] if main else name
@@ -260,7 +268,7 @@ def workspace(number,output=None):
 
 def reconcile():
     # Desktop workspaces are conventional, including Misc on the main screen.
-    if MACHINE.get("profile")=="pc":return
+    if MACHINE.get("profile")=="pc" and not any(external(m['name']) for m in globals().get('_role_monitors',[])):return
     outputs=monitors();main=main_display(outputs)
     if not main:return
     slots=workspace_slots(outputs)

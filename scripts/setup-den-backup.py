@@ -36,15 +36,22 @@ def main():
         remote("import sys;from pathlib import Path;p=Path.home()/'.config/sensei-den'/"+repr(name)+";data=sys.stdin.buffer.read();assert not p.exists() or p.read_bytes()==data;p.write_bytes(data);p.chmod(0o600)",key(path))
     sync=json.loads((config/'sync.json').read_text())
     paths=[f['path'] for f in sync['folders'] if Path(f['path']).name!='Downloads']
-    paths += [str(HOME/p) for p in ['Work','.config/sensei-den','.ssh','.codex/config.toml','.codex/auth.json','.claude/settings.json','.claude/.credentials.json','.local/state/homie-control/input'] if (HOME/p).exists()]
+    private_paths=['Work','.config/sensei-den','.ssh','.codex/config.toml','.codex/auth.json','.claude/settings.json','.claude/.credentials.json',
+                   '.local/state/homie-control/input','.local/state/homie-control/operator_ed25519',
+                   '.local/state/homie-control/client.conf','.local/state/homie-control/known_hosts',
+                   '.config/den-moonlight','.config/spotify-player','.cache/spotify-player/credentials.json']
+    private_paths += [str(p.relative_to(HOME)) for p in (HOME/'.cache/spotify-player').glob('*_token.json')]
+    paths += [str(HOME/p) for p in private_paths if (HOME/p).exists()]
     exclude=['**/node_modules','**/__pycache__','**/.venv','**/venv','**/.git','**/build','**/install','**/log','**/target','**/.obsidian/workspace*','**/.obsidian/cache','**/.stversions','*.iso','*.AppImage','*.crdownload','*.zip','*.tar','*.tar.gz','*.tgz','*.mkv','*.mp4','*.avi','*.webm','*.bag','*.mcap','*.npy','*.pt','*.pth','*.onnx']
     cfg={'schema':1,'repository':'sftp:homie:/mnt/homie/Datasets/Den-backups/arete','passwordFile':str(akey),
         'sftpCommand':shlex.join(['ssh','-F',str(PRIVATE/'client.conf'),'homie','-s','sftp']),
         'paths':paths,'exclude':exclude,'remoteMinimumFreeGiB':20,'remoteTarget':'/mnt/homie/Datasets/Den-backups/arete',
-        'requiredMount':'/mnt/homie/Datasets','scope':'local machines only'}
+        'requiredMount':'/mnt/homie/Datasets','scope':'local machines only',
+        'peerCopy':{'repository':str(HOME/'Den/Backups/Homie'),'fromRepository':'sftp:homie:/mnt/homie/Datasets/Den-backups/homie',
+                    'passwordFile':str(hkey),'minimumFreeGiB':80}}
     if not (config/'backup.json').exists():write(config/'backup.json',cfg)
     hcfg={'schema':1,'repository':'/mnt/homie/Datasets/Den-backups/homie','passwordFile':str(hkey),
-        'paths':[str(HOME/p) for p in ['.config/sensei-den','.ssh','.codex/config.toml','.codex/auth.json','.claude/settings.json','.claude/.credentials.json','Work','.local/state/homie-control/input']],
+        'paths':[str(HOME/p) for p in ['.config/sensei-den','.ssh','.codex/config.toml','.codex/auth.json','.claude/settings.json','.claude/.credentials.json','Work','.local/state/homie-control/input','.config/sunshine','.config/spotify-player','.cache/spotify-player']],
         'exclude':exclude,'minimumFreeGiB':20,'requiredMount':'/mnt/homie/Datasets','scope':'local machines only'}
     remote("import sys,json;from pathlib import Path;p=Path.home()/'.config/sensei-den/backup.json';data=sys.stdin.read();assert not p.exists() or json.loads(p.read_text())==json.loads(data);p.write_text(data);p.chmod(0o600)",json.dumps(hcfg).encode())
     base=[str(HOME/'.local/bin/restic'),'-o','sftp.command='+cfg['sftpCommand']]
