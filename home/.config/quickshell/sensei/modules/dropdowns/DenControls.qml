@@ -27,20 +27,21 @@ WidgetSection {
         }
         Row {
             width:parent.width;spacing:8
-            ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Companion";glyph:"\uf1b0";selected:Den.data.companion!==false;onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","companion","toggle"])}
-            ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Bring here";glyph:"\uf124";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","companion","here"])}
+            ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Companion";glyph:"\uf1b0";selected:Den.data.companion!==false;onActivated:Den.companion("toggle","")}
+            ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Bring here";glyph:"\uf124";onActivated:Den.companion("here","")}
             ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Sync files";glyph:"\uf021";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","sync","scan"])}
             ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:Den.data.mode==="away"?"Return home":"Away mode";glyph:"\uf0b1";enabled:Den.data.role!=="receiver";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","mode",Den.data.mode==="away"?"auto":"away"])}
         }
         Row {
             width:parent.width;spacing:8
-            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Say hello";glyph:"\uf075";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","companion","wave"])}
+            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Say hello";glyph:"\uf075";onActivated:Den.companion("wave","")}
             ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Homie desk";detail:"Private · on demand";glyph:"\uf108";visible:Den.data.role!=="receiver";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","workbench","open"])}
         }
         Row {
             width:parent.width;spacing:8
-            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:30;label:"Desk tip";detail:"A useful nudge";glyph:"\uf0eb";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","companion","tip"])}
-            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:30;label:"Quiet companion";glyph:"\uf186";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","companion","quiet"])}
+            ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Desk tip";detail:"A useful nudge";glyph:"\uf0eb";onActivated:Den.companion("tip","")}
+            ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Quiet";detail:Den.data.companionQuiet?"On":"Off";selected:Den.data.companionQuiet===true;glyph:"\uf186";onActivated:Den.companion("quiet","")}
+            ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Motion";detail:Den.data.companionReducedMotion?"Reduced":"Gentle";selected:Den.data.companionReducedMotion!==true;glyph:"\uf554";onActivated:Den.companion("motion",Den.data.companionReducedMotion?"on":"off")}
         }
         Text { textFormat: Text.PlainText; width: parent.width; visible: Den.error !== ""; text: Den.error; wrapMode: Text.Wrap; font.family: Appearance.font.ui; font.pixelSize: 11; color: Theme.signalRed }
     }

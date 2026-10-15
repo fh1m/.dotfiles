@@ -63,7 +63,7 @@ was about 11.3 MB/s. Software tuning cannot promise gigabit throughput on that l
 
 - 32 targeted searches plus direct technical-source checks are recorded in
   [the research ledger](POLISH-RESEARCH.md); no additional pet framework installed.
-- 230 Python tests pass. New cases exercise geometry, floating-window/bubble
+- 231 Python tests pass. New cases exercise geometry, floating-window/bubble
   avoidance, short displays, non-repetition, contextual messages and motion input.
 - Live temporary-renderer preview passed speech, movement, reduced motion and
   quiet controls. Its actual capture was visually inspected; a source-clip bug
@@ -74,3 +74,11 @@ was about 11.3 MB/s. Software tuning cannot promise gigabit throughput on that l
 - No automatic message claims a test passed. Only a newly observed backup result
   emits backup status. No assistant/model service, extra persistent renderer,
   clipboard access or source-code inspection was added.
+
+Final polish UI checks also confirmed the System companion state fields and the
+Nerd Talk artwork in the live shell. Receiver status now reports that host's own
+companion preferences. The original fallback desk line is no longer presented as
+an attributed quotation. An eight-second idle sample of the existing combined
+cursor/companion renderer observed 0.00% of one CPU core at the sampling resolution
+and 200.7 MiB RSS; this is a short whole-renderer sample, not isolated companion
+cost or a performance guarantee.

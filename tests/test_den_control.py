@@ -53,6 +53,22 @@ class DenControl(unittest.TestCase):
             self.assertEqual(open_path.call_args.args[0][0], 'xdg-open')
             run.assert_not_called()
 
+    def test_receiver_companion_status_belongs_to_its_own_desktop(self):
+        import json
+        import subprocess
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            prefs = home/'.config/sensei-den/companion.json'
+            prefs.parent.mkdir(parents=True)
+            prefs.write_text(json.dumps({'enabled':False,'quiet':True,'reducedMotion':True}))
+            response = subprocess.CompletedProcess([],0,json.dumps({'master':'arete','companion':True,'companionQuiet':False}))
+            with patch.object(den,'master',return_value=False), patch.object(den.Path,'home',return_value=home), patch.object(den,'run',return_value=response):
+                result = den.dispatch('status')
+            self.assertFalse(result['companion'])
+            self.assertTrue(result['companionQuiet'])
+            self.assertTrue(result['companionReducedMotion'])
+            self.assertEqual(result['peer']['host'],'arete')
+
 
 if __name__ == '__main__':
     unittest.main()

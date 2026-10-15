@@ -60,7 +60,9 @@ def status():
     try:
         companion=json.loads((Path.home()/'.config/sensei-den/companion.json').read_text())
     except (OSError,ValueError):companion={}
-    return {'mode':prefs.get('mode','auto'),'companion':companion.get('enabled',True),'peer': {'host': 'homie', 'authenticated': online},
+    return {'mode':prefs.get('mode','auto'),'companion':companion.get('enabled',True),
+            'companionQuiet':companion.get('quiet',False),'companionReducedMotion':companion.get('reducedMotion',False),
+            'peer': {'host': 'homie', 'authenticated': online},
             'input': 'active' if active else 'inactive', 'captured': captured,
             'state': 'Controlling Homie' if captured else ('Ready at screen edges' if active else 'Paused'),
             'clipboard': unit('den-clipboard'), 'storage': unit('den-storage'),
@@ -137,6 +139,11 @@ def dispatch(action):
     if action in ('status', 'check'):
         value['role'] = 'receiver'
         value['peer'] = {'host': value['master'], 'authenticated': True}
+        # Companion controls act on this desktop, not on the remote master's pet.
+        try:companion=json.loads((Path.home()/'.config/sensei-den/companion.json').read_text())
+        except (OSError,ValueError):companion={}
+        value.update(companion=companion.get('enabled',True),companionQuiet=companion.get('quiet',False),
+                     companionReducedMotion=companion.get('reducedMotion',False))
     return value
 
 

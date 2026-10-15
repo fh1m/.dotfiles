@@ -53,13 +53,22 @@ DropdownFrame {
     Component {
         id:nerdPage
         Column {width:parent.width;spacing:10
+            Rectangle {
+                width:parent.width;height:116;color:"#090807";radius:6;clip:true
+                Image {anchors {right:parent.right;top:parent.top;bottom:parent.bottom} width:348;source:Quickshell.env("HOME")+"/.local/share/sensei-companion/night-shift.png";fillMode:Image.PreserveAspectFit;asynchronous:true}
+                Column {x:16;y:20;width:parent.width-380;spacing:10
+                    Text {text:"AFTER HOURS / FH1M'S DIGITAL DEN";font.family:Appearance.font.ui;font.pixelSize:10;font.letterSpacing:1;color:Theme.signalRed}
+                    Text {width:parent.width;text:"The lab has a night shift.";font.family:Appearance.font.ui;font.pixelSize:18;color:Theme.paper}
+                    Text {width:parent.width;text:"Good questions. Small experiments. Occasional rubber ducks.";elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+                }
+            }
             Rectangle {width:parent.width;height:72;color:Theme.surfaceOne;radius:3
                 Column {x:12;y:10;width:parent.width-170;spacing:6
-                    Text { textFormat: Text.PlainText;width:parent.width;text:'“'+(CodeDesk.nerd.quotes?.[CodeDesk.quoteIndex]?.text||'Start small.')+'”';color:Theme.signalRed;font.family:Appearance.font.ui;font.pixelSize:16}
-                    Text { textFormat: Text.PlainText;width:parent.width;text:(CodeDesk.nerd.quotes?.[CodeDesk.quoteIndex]?.context||'')+' · Andrej Karpathy';color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:11}
+                    Text { textFormat: Text.PlainText;width:parent.width;elide:Text.ElideRight;text:CodeDesk.nerd.quotes?.[CodeDesk.quoteIndex]?.text?'“'+CodeDesk.nerd.quotes[CodeDesk.quoteIndex].text+'”':'One small experiment beats a large assumption.';color:Theme.signalRed;font.family:Appearance.font.ui;font.pixelSize:16}
+                    Text { textFormat: Text.PlainText;width:parent.width;elide:Text.ElideRight;text:CodeDesk.nerd.quotes?.[CodeDesk.quoteIndex]?.text?(CodeDesk.nerd.quotes[CodeDesk.quoteIndex].context||'')+' · Andrej Karpathy':'Den field note · Original desk wisdom';color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:11}
                 }
-                ControlTile {anchors.right:parent.right;anchors.rightMargin:12;anchors.verticalCenter:parent.verticalCenter;label:"Source";glyph:"\uf08e";implicitWidth:100;onActivated:CodeDesk.browse(CodeDesk.nerd.quoteSource)}
-                MouseArea {x:12;width:parent.width-170;height:parent.height;onClicked:CodeDesk.quoteIndex=(CodeDesk.quoteIndex+1)%3}
+                ControlTile {anchors.right:parent.right;anchors.rightMargin:12;anchors.verticalCenter:parent.verticalCenter;label:"Source";glyph:"\uf08e";implicitWidth:100;enabled:!!CodeDesk.nerd.quoteSource&&!!CodeDesk.nerd.quotes?.length;onActivated:CodeDesk.browse(CodeDesk.nerd.quoteSource)}
+                MouseArea {x:12;width:parent.width-170;height:parent.height;onClicked:CodeDesk.quoteIndex=(CodeDesk.quoteIndex+1)%Math.max(1,CodeDesk.nerd.quotes?.length||0)}
             }
             Row {spacing:8
                 Repeater {model:["New this week","Robotics / systems","GitHub changelog"]
@@ -67,7 +76,7 @@ DropdownFrame {
                 }
             }
             Text { textFormat: Text.PlainText;width:parent.width;wrapMode:Text.Wrap;text:CodeDesk.nerdLoading?"Fetching public discovery…":(CodeDesk.nerd.errors||[]).join(' · ')||'Public search sorted by stars · not GitHub’s daily trending ranking · cached for one hour';font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
-            ScrollView {width:parent.width;height:390;contentWidth:availableWidth;clip:true
+            ScrollView {width:parent.width;height:300;contentWidth:availableWidth;clip:true
                 Column {width:parent.width;spacing:6
                     Repeater {model:CodeDesk.nerdFeed===2?(CodeDesk.nerd.news||[]):CodeDesk.nerdFeed===1?(CodeDesk.nerd.lab||[]):(CodeDesk.nerd.new||[])
                         Rectangle {required property var modelData;width:parent.width;height:86;color:Theme.surfaceOne;radius:3

@@ -295,3 +295,9 @@ Private installer packages, diagnostic logs, recovery information and exported d
 - Private Tailscale desktop stream delivered actual HEVC NVENC video to Arete hardware decode. Sunshine is paired and on demand, not publicly exposed. Both GPUs passed the same small CUDA/autograd check; a remote Docker CUDA container and isolated bidirectional ROS domain-83 fixture passed. No production robot or multi-node training claim.
 - Current wired laptop link negotiates 100 Mb/s. Digital monitor transfer, unattended firmware boot and Windows round-trip remain physical acceptance gates. Earlier unattended boot failure is not superseded by these software checks.
 - See docs/digital-den/VALIDATION.md for evidence boundaries. Private account, desktop and filesystem evidence remains outside public Git.
+
+
+## Companion and interaction polish — 2026-10-16
+
+- Shared 16-frame character sheet, window-aware bottom-layer placement and optional local tips deployed. Motion/quiet/chatter remain independent; no extra persistent renderer or account access. New night-shift illustration is artwork, not a physical setup photograph.
+- Tmux chrome is quieter and identifies the host; semantic ANSI colours distinguish success/error/warnings. Neovim follows the wallpaper accent and offers an explicit DenTip field note. Existing font sizes, monitor/input policy, navigation and private accounts preserved. See docs/digital-den/POLISH-RESEARCH.md and ARTWORK.md.
