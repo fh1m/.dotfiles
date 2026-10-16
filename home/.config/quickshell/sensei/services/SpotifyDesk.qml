@@ -43,7 +43,7 @@ Singleton {
  property string fullscreenOutput:""
  readonly property bool musicVisible:fullscreen||ShellState.dropdown==='spotify'
  readonly property bool lyricsVisible:fullscreen||(lyricsOpen&&page===0&&ShellState.dropdown==='spotify')
- function expand(){const origin=ShellState.screens.find(s=>s.name===(ShellState.dropdown==='spotify'?ShellState.dropdownOriginScreen:ShellState.focusedScreenName()));fullscreenOutput=(origin&&origin.height>=650?origin:ShellState.screens.find(s=>s.name===MachineProfile.primaryOutput)||origin)?.name||'';ShellState.closeAll();fullscreen=true;dispatch('queue');if(!playlistRows.length)dispatch('library',['playlists']);lyricsDelay.restart();}
+ function expand(){const origin=ShellState.screens.find(s=>s.name===(ShellState.dropdown==='spotify'?ShellState.dropdownOriginScreen:ShellState.focusedScreenName()));fullscreenOutput=(origin&&origin.height>=650?origin:ShellState.screens.find(s=>s.name===MachineProfile.primaryOutput)||origin)?.name||'';ShellState.closeAll();fullscreen=true;dispatch('queue');dispatch('devices');if(!playlistRows.length)dispatch('library',['playlists']);lyricsDelay.restart();}
  function collapse(restore){fullscreen=false;if(restore){ShellState.dropdownOriginScreen=(ShellState.screens.find(s=>s.name===fullscreenOutput)||ShellState.screens.find(s=>s.name===MachineProfile.primaryOutput)||ShellState.screens[0])?.name||'';ShellState.dropdown='spotify';}}
  property bool lyricsOpen:false
  property var lyricsData:({lines:[],plain:'',synced:false})
@@ -105,6 +105,6 @@ Singleton {
  Timer {id:searchDelay;interval:500;onTriggered:if(root.query.trim().length>=3)root.dispatch('search',[root.query])}
  Timer {interval:1000;repeat:true;running:root.musicVisible&&root.playing;onTriggered:{root.positionClock=Date.now();root.lyricPosition=root.positionMs;}}
  Timer {interval:5000;repeat:true;running:root.musicVisible&&root.playback.localReleased===true;onTriggered:root.dispatch('status')}
- Timer {interval:15000;repeat:true;running:root.musicVisible&&(root.fullscreen||root.page===0||root.page===1)&&root.playing;onTriggered:root.dispatch('queue')}
+ Timer {interval:15000;repeat:true;running:root.musicVisible&&(root.fullscreen||root.page===0||root.page===1)&&root.playing;onTriggered:{root.dispatch('queue');if(root.fullscreen)root.dispatch('devices');}}
  Timer {interval:60000;repeat:true;running:!root.player;triggeredOnStart:true;onTriggered:root.dispatch('account')}
 }

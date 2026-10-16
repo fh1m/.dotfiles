@@ -33,7 +33,7 @@ screen instead. A disconnected destination falls back to an available display.
   Sound → **Volume sound** persists an opt-out in local
   `~/.config/sensei-den/sound-feedback.json`. Quiet mode also suppresses it.
 - Browsing requests may be discarded when superseded; playback mutations are not
-  automatically retried. Fullscreen never transfers Spotify Connect ownership.
+  automatically retried. Fullscreen never transfers Spotify Connect ownership. Its playback-device button shows the reported active Connect device and opens the existing device controls; device state refreshes alongside the visible playing queue.
 
 ## Remaining boundaries
 
@@ -81,3 +81,5 @@ local sound preference can remain or be removed separately.
 ## Validation checkpoint
 
 Arete: 291 unit/integration tests passed (41.316 s); 29 focused Spotify tests passed; installer backup/render/idempotence checks passed. Live widget acceptance selected the exact requested songs from liked and playlist rows, loaded 200 liked songs, 52 playlists, 24 search tracks and an 80-row queue. Listening-room acceptance verified queue/playlists, seek fraction and a real paired Escape restoring context. Main-display placement and ScreenPad → primary fallback were exercised, with focus restored afterward. Private screenshots were inspected locally and are not published.
+
+Homie: 29 focused Spotify tests and all four new presentation tests passed. The real paired Escape acceptance also passed on DP-3, including queue/playlists and seek fraction. Its fullscreen screenshot was inspected locally. Volume feedback returned success and the original zero-volume setting was restored. The optional evdev input-test module was supplied in a disposable temporary directory, not installed into Homie’s runtime. No credentials were copied.

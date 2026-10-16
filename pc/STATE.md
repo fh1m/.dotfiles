@@ -1,3 +1,13 @@
+# Spotify listening-room checkpoint — 2026-10-16
+
+Shared fullscreen music UI deployed through the PC profile, using Homie's own
+signed-in desktop bridge. Artwork-derived tint, lyrics and queue/playlists were
+visually inspected on DP-3. The live UI harness passed with a paired Escape key;
+29 Spotify tests plus four presentation tests passed. Volume feedback emitted a
+sample successfully, then restored Homie's original zero-volume setting.
+No input grab, GPU/display policy change, credential transfer or library write.
+See [behavior and validation](../docs/digital-den/MUSIC-LISTENING-ROOM.md).
+
 # Spotify desktop library repair — 2026-10-16
 
 The official backend now includes a local authenticated Spicetify library bridge,
