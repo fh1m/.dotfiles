@@ -55,6 +55,15 @@ After a Qt minor-version update, rerun `python3 ~/.dotfiles/scripts/build-qt-the
 
 ### Final UI acceptance note
 
-An IPC-opened music room on a different monitor did not receive Escape until it was focused. This is consistent with its OnDemand keyboard contract: opening music must not take control away from the rest of the desktop indefinitely. The live harness now clicks a known blank margin before sending one paired Escape, restores the cursor, and then verifies closure/context. That real test passed on Arete. The earlier unfocused attempt timed out safely and is not counted as a successful key test.
+An IPC-opened music room on a different monitor did not receive Escape until it was focused. This is consistent with its OnDemand keyboard contract: opening music must not take control away from the rest of the desktop indefinitely. The live harness now clicks a known blank margin before sending one paired Escape, restores the cursor, and then verifies closure/context. That real test passed on Arete and Homie (the latter used an isolated test-only evdev dependency). The earlier unfocused attempt timed out safely and is not counted as a successful key test.
 
 Sharing was restored after the 12-route input harness. Both user input services, cursor renderers and presence watchers remained active. The private Qt build was repeated successfully with no compilation work required; existing-provider backups are retained. Future physical boot/unplug testing remains a separate gate.
+
+The final cross-host music check waited for real MPRIS Playing before sampling:
+Arete’s fresh cue was present in Homie’s lease and renderer. The first attempt
+sampled too early and correctly observed false; it was not counted as a pass.
+The existing paused state was restored after testing. Repertoire sequence 18 and
+its recent IDs were observed on Homie after handoff. Music onset now explicitly
+starts the dance; subsequent music activities include guitar and stretching.
+Both hardware-profile installer previews reported no changes, both Git worktrees
+were clean, and both hosts reported no failed user units at final verification.

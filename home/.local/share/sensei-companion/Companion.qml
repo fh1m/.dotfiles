@@ -24,7 +24,7 @@ Item {
     property string activity: "read"
     property bool musicPlaying:false
     readonly property bool denMusic:musicPlaying||(leased&&journey.musicPlaying===true)
-    onDenMusicChanged:vary()
+    onDenMusicChanged:{if(denMusic){activity="dance";frame=0;poseExpiry.stop();}else vary();}
     property var telemetry:({})
     property var memory:({recent:[],turn:0})
     property bool memoryLoaded:false

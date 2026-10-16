@@ -205,6 +205,8 @@ Some nights call for a derivation. Some call for an album and a notebook. The De
 
 <img src="home/.local/share/sensei-companion/zondo-life-v2.png" alt="Zondo’s original sixteen-pose atlas: dance, books, coffee, robots, sketching, stargazing and a well-earned nap" width="580">
 
+![Actual five-second Den arrival card](docs/assets/digital-den/zondo-welcome-v1.png)
+
 Original illustrated sprites used by the live desktop. He explores exposed wallpaper across the Den, takes a bar perch when the desk is busy, and never sits on your code. “More like this” and “Retire this line” keep his repertoire yours. [Controls and privacy](docs/digital-den/ZONDO.md).
 
 </details>
