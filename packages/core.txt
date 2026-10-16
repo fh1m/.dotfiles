@@ -22,6 +22,8 @@ brightnessctl
 playerctl
 spotify-launcher
 pavucontrol
+libcanberra
+sound-theme-freedesktop
 nautilus
 zenity
 python

@@ -119,8 +119,20 @@ Item {
                 }
             }
 
+            Row {anchors.bottom:parent.bottom;anchors.bottomMargin:4;anchors.horizontalCenter:parent.horizontalCenter;spacing:2;visible:root.compact
+                Repeater {model:Math.min(4,button.modelData.count??0);Rectangle {width:3;height:2;radius:1;color:button.active?Theme.signalRed:Theme.paperMuted}}
+            }
+            Accessible.role:Accessible.Button
+            Accessible.name:modelData.label+", "+(modelData.count??0)+" windows"+(modelData.attention?", needs attention":"")
+            activeFocusOnTab:true
+            function overview(){WindowDesk.open('overview',0);if(root.output)ShellState.overlayScreenName=root.output;WindowDesk.selected=Math.max(0,WindowDesk.workspaceIds.indexOf(Number(modelData.target)));}
+            Keys.onMenuPressed:overview()
+            Keys.onReturnPressed:Spaces.activate(button.modelData,root.output)
+            Keys.onSpacePressed:Spaces.activate(button.modelData,root.output)
+            Rectangle {anchors.fill:parent;radius:Theme.radiusSmall;color:"transparent";border.width:button.activeFocus?1:0;border.color:Theme.paperMuted}
             MouseArea {
                 anchors.fill: parent
+                acceptedButtons:Qt.LeftButton|Qt.RightButton
                 enabled: !button.modelData.empty
                 cursorShape: Qt.PointingHandCursor
 
@@ -131,7 +143,7 @@ Item {
                 // read as a blink rather than as an acknowledgement. The slot
                 // taking the accent and the bar's line sliding to it are the
                 // confirmation, and they are already animated.
-                onClicked: Spaces.activate(button.modelData,root.output)
+                onClicked:mouse=>{if(mouse.button===Qt.RightButton)button.overview();else Spaces.activate(button.modelData,root.output);}
             }
         }
     }

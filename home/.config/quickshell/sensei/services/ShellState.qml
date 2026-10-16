@@ -124,12 +124,14 @@ Singleton {
     }
 
     function openDropdown(name: string): void {
+        SpotifyDesk.fullscreen=false;
         dropdownOriginScreen = focusedScreenName();
         dropdownAnchorX = anchorFor(name);
         dropdown = name;
     }
 
     function toggleDropdown(name: string): void {
+        SpotifyDesk.fullscreen=false;
         if (dropdownAnchors[name] !== undefined) dropdownAnchorX = anchorFor(name);
         dropdown = dropdown === name ? "" : name;
         dropdownStamp++;
@@ -148,7 +150,7 @@ Singleton {
     // `daemons` is a name here like any other, so the library opens through
     // the same call rather than through a flag of its own.
     function openExclusive(which: string): void {
-        if (which !== "") WindowDesk.opened=false;
+        if (which !== "") {WindowDesk.opened=false;SpotifyDesk.fullscreen=false;}
         if (which !== "") overlayScreenName = which === "picker" && Quickshell.screens.some(s=>s.name==="eDP-1") ? "eDP-1" : focusedScreenName();
         launcherOpen = which === "launcher";
         powerOpen = which === "power";
@@ -164,6 +166,7 @@ Singleton {
 
     function closeAll(): void {
         openExclusive("");
+        SpotifyDesk.fullscreen=false;
         dropdown = "";
         WindowDesk.opened=false;
     }

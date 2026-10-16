@@ -33,7 +33,7 @@ Item {
 
     readonly property int shown: Math.max(1, Math.min(Spaces.pipCount, maxPips))
 
-    implicitWidth: labelSlot.implicitWidth + (external ? 0 : labelGap + shown * (pipSize + pipGap) - pipGap)
+    implicitWidth: external ? 30 : labelSlot.implicitWidth + labelGap + shown * (pipSize + pipGap) - pipGap
     implicitHeight: 11
 
 
@@ -48,6 +48,7 @@ Item {
 
     Item {
         id: labelSlot
+        visible:!root.external
 
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
@@ -69,6 +70,21 @@ Item {
         }
     }
 
+    Rectangle {
+        visible:root.external;anchors.centerIn:parent;width:28;height:24;radius:4;color:roleHover.containsMouse?Theme.surfaceTwo:"transparent"
+        Accessible.role:Accessible.Button
+        Accessible.name:root.modeText+" display settings"
+        activeFocusOnTab:true
+        function openDisplay(){ShellState.barContext(root.output);ShellState.openDropdown("displays");}
+        Accessible.onPressAction:openDisplay()
+        Keys.onReturnPressed:openDisplay()
+        Keys.onSpacePressed:openDisplay()
+        Rectangle {x:6;y:4;width:16;height:12;radius:2;color:"transparent";border.width:1;border.color:Theme.paperMuted
+            Rectangle {x:3;width:8;height:2;y:ShellState.externalBarEdge(root.output)==="top"?2:8;color:Theme.signalRed}
+        }
+        Rectangle {x:12;y:17;width:4;height:1;color:Theme.paperMuted}
+        MouseArea {id:roleHover;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:parent.openDisplay()}
+    }
     Row {
         id: pips
         visible: !root.external

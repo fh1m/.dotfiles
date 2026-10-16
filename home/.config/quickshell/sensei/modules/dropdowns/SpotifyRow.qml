@@ -10,7 +10,7 @@ ChamferPanel {
  Behavior on fillColor {ColorAnimation {duration:140}}
  Behavior on borderColor {ColorAnimation {duration:140}}
  HoverHandler {id:hover}
- RoundedArtwork {id:cover;cornerRadius:5;x:7;y:7;width:44;height:44;source:root.entry.art||'';sourceSize:Qt.size(88,88);fillMode:Image.PreserveAspectCrop;asynchronous:true;visible:status===Image.Ready}
+ RoundedArtwork {id:cover;cornerRadius:5;x:7;y:7;width:44;height:44;source:SpotifyDesk.artworkUrl(root.entry.art);sourceSize:Qt.size(88,88);fillMode:Image.PreserveAspectCrop;asynchronous:true;visible:status===Image.Ready}
  Text { textFormat: Text.PlainText;anchors.centerIn:cover;visible:!cover.visible;text:root.entry.kind==='playlist'?'\uf03a':root.entry.kind==='artist'?'\uf007':'\uf001';color:Theme.widgetMuted;font.family:Appearance.font.icons;font.pixelSize:20}
  Column {x:62;y:10;width:parent.width-222;spacing:4
  Text { textFormat: Text.PlainText;width:parent.width;text:root.entry.title||'Untitled';elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetText}

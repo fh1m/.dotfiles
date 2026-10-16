@@ -7,6 +7,7 @@ import qs.services
 DropdownFrame {
  headerAccent:Theme.widgetAccent
  id:root;title:"\uf028 Sound studio";katakana:"ЗВУК";implicitWidth:780;fillColor:Theme.widgetGlass
+ headerRight:ControlTile {implicitWidth:118;implicitHeight:30;label:"Volume sound";glyph:"\uf028";selected:Osd.feedbackEnabled;onActivated:Osd.toggleFeedback()}
  property int page:SoundDesk.page
  onPageChanged:SoundDesk.page=page
  Connections {target:SoundDesk;function onPageChanged(){root.page=SoundDesk.page;}}

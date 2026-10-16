@@ -181,3 +181,7 @@ remain available in `:map` and `:help index`. Curated entries live in
 
 Preview backup retention with `sensei-den backup retain-preview` before choosing
 `retain`. Neither the preview nor capacity guards delete datasets.
+
+## Listening room
+
+The Spotify widget’s corner maximize keeps artwork, synced lyrics and queue/playlist browsing together, with a restrained cover-colored background. Esc/F11 restores the widget. Sound → Volume sound controls audible level feedback. [Behavior, audit and limits](MUSIC-LISTENING-ROOM.md) · [Research](MUSIC-DESKTOP-RESEARCH.md).

@@ -31,15 +31,24 @@ Variants {
         color: "transparent"
         implicitHeight: Appearance.metrics.barHeight
         WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
         WlrLayershell.namespace: "sensei-bar"
         anchors { top: bar.topEdge; bottom: !bar.topEdge; left: true; right: true }
         Rectangle { anchors.fill: parent; color: Theme.barBg }
-        Text {
+        Item {
             id:outputLabel
             visible:bar.external
             anchors.left:parent.left;anchors.leftMargin:20;anchors.verticalCenter:parent.verticalCenter
-            text:MachineProfile.host+" / "+MachineProfile.role(bar.outputName)
-            font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetMuted
+            width:34;height:30
+            InstrumentIcon {anchors.centerIn:parent;kind:MachineProfile.desktop?"system":"monitor";ink:Theme.widgetMuted}
+            Accessible.role:Accessible.Button
+            Accessible.name:MachineProfile.host+" display arrangement"
+            activeFocusOnTab:true
+            function openDisplay(){ShellState.barContext(bar.outputName);ShellState.openDropdown("displays");}
+            Accessible.onPressAction:openDisplay()
+            Keys.onReturnPressed:openDisplay()
+            Keys.onSpacePressed:openDisplay()
+            MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:outputLabel.openDisplay()}
         }
         Row {
             id: meters

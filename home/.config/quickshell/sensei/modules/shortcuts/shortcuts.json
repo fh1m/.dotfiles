@@ -364,5 +364,23 @@
     "title": "Dedicated ASUS controls",
     "group": "ZenBook",
     "detail": "Model-specific hardware keys"
+  },
+  {
+    "key": "Music corner maximize",
+    "title": "Open listening room",
+    "group": "Music",
+    "detail": "Artwork, lyrics and queue/playlists together on the initiating display; ScreenPad uses the primary display."
+  },
+  {
+    "key": "Esc / F11",
+    "title": "Restore music widget",
+    "group": "Music",
+    "detail": "Inside the listening room. Space toggles playback; Tab focuses controls. × closes without reopening."
+  },
+  {
+    "key": "Workspace right-click / Menu",
+    "title": "Inspect workspace overview",
+    "group": "Desktop",
+    "detail": "Open the existing overview at that subject, on this display. Tab then Enter/Space activates a workspace."
   }
 ]

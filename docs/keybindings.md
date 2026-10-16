@@ -82,3 +82,5 @@ Dedicated ASUS fan, swap and ScreenPad buttons use model-specific events. Standa
 Plain F1–F12 remain available to applications. Capture your own device’s special-key events before copying the UX581 map.
 
 The pointer focuses the window it enters; no click is needed. ScreenPad Utility is separate from the seven subjects. The workspace rail shows the local count, active subject and urgency, with a neutral enclosure.
+
+Music: the widget’s corner maximize opens the listening room. **Esc / F11** restores it; **Space** toggles playback when no control consumes the key; **Tab** navigates controls. Workspace slots support **Tab, Enter/Space**, and **right-click / Menu** opens the overview at that subject.
