@@ -43,6 +43,11 @@ WidgetSection {
             ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Quiet";detail:Den.data.companionQuiet?"On":"Off";selected:Den.data.companionQuiet===true;glyph:"\uf186";onActivated:Den.companion("quiet","")}
             ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Motion";detail:Den.data.companionReducedMotion?"Reduced":"Gentle";selected:Den.data.companionReducedMotion!==true;glyph:"\uf554";onActivated:Den.companion("motion",Den.data.companionReducedMotion?"on":"off")}
         }
+        Row {
+            width:parent.width;spacing:8
+            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Tour displays";glyph:"\uf072";onActivated:Den.companion("tour","")}
+            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Follow my focus";glyph:"\uf124";onActivated:Den.companion("follow","")}
+        }
         Text { textFormat: Text.PlainText; width: parent.width; visible: Den.error !== ""; text: Den.error; wrapMode: Text.Wrap; font.family: Appearance.font.ui; font.pixelSize: 11; color: Theme.signalRed }
     }
 }

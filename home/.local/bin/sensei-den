@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Digital Den continuity: explicit modes, private data, owned jobs and a quiet companion."""
 import argparse
+import base64
+import hashlib
 import datetime
 import json
 import os
@@ -84,15 +86,27 @@ def status():
 
 def companion(action,value=None):
     cfg=read(CONFIG/'companion.json',{'enabled':True,'quiet':False,'size':96})
-    if action=='toggle':cfg['enabled']=not cfg.get('enabled',True)
+    if action=='protocol':return {'schema':1,'leases':True,'enabled':cfg.get('enabled',True),'quiet':cfg.get('quiet',False),'suspended':cfg.get('suspended',False),'reducedMotion':cfg.get('reducedMotion',False)}
+    if action=='grant':
+        sys.path.insert(0,str(HOME/'.local/share/sensei'))
+        from companion_roam import grant
+        payload=json.loads(value);record=grant(read(STATE/'companion-travel.json'),payload['output'],payload['token'],payload.get('ttl',40))
+        write(STATE/'companion-travel.json',record);return record
+    if action=='roam':
+        if value not in ('on','off'):raise ValueError('Use roam on or off')
+        cfg['roaming']=value=='on';cfg['anchorManual']=value!='on'
+        if value=='on':cfg['reducedMotion']=False
+    elif action=='tour':cfg.update(tourAt=time.time(),roaming=True,reducedMotion=False,anchorManual=False)
+    elif action=='toggle':cfg['enabled']=not cfg.get('enabled',True)
     elif action in ('show','hide'):cfg['enabled']=action=='show'
     elif action=='quiet':cfg['quiet']=value=='on' if value else not cfg.get('quiet',False)
     elif action=='suspended':cfg['suspended']=value=='on'
     elif action=='size':cfg['size']=max(64,min(180,int(value)))
     elif action=='here':
+        cfg.update(roaming=False,anchorManual=True)
         rows=json.loads(run(['hyprctl','monitors','-j']).stdout)
         cfg['output']=next((m['name'] for m in rows if m.get('focused')),'')
-    elif action=='follow':cfg['output']=''
+    elif action=='follow':cfg.update(output='',roaming=False,anchorManual=True)
     elif action in ('wave','celebrate','think','sleep','walk'):
         cfg.update(pose=action,poseAt=time.time())
         if action=='wave':cfg.update(message='Hello, engineer. What are we building?',messageAt=time.time())
@@ -103,6 +117,7 @@ def companion(action,value=None):
     elif action=='motion':
         if value not in ('on','off'):raise ValueError('Use motion on or off')
         cfg['reducedMotion']=value=='off'
+        if value=='off':cfg.update(roaming=False,anchorManual=True)
     elif action=='tip':cfg['tipAt']=time.time()
     elif action!='status':raise ValueError('Unsupported companion action')
     if action!='status':write(CONFIG/'companion.json',cfg)
@@ -262,13 +277,28 @@ def backup(action):
     raise ValueError('Unsupported backup action')
 
 
+def receive_artifact(record,destination):
+    if record.get('bytes',0)>8*1024*1024 or len(record.get('data',''))>12*1024*1024:raise ValueError('Artifact exceeds the small-transfer limit')
+    data=base64.b64decode(record['data'],validate=True)
+    if hashlib.sha256(data).hexdigest()!=record['sha256']:raise ValueError('Artifact checksum mismatch')
+    p=Path(destination).expanduser()
+    descriptor=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+    with os.fdopen(descriptor,'wb') as f:f.write(data);f.flush();os.fsync(f.fileno())
+    return {'path':str(p),'bytes':len(data),'sha256':record['sha256']}
+
+
 def job(args):
     if args.host and args.host!=host():
         command=[str(HOME/'.local/bin/sensei-den'),'job',args.action]
         if args.project:command+=['--project',args.project]
         if args.id:command+=['--id',args.id]
+        for item in getattr(args,'input',[]) or []:command+=['--input',item]
+        for item in getattr(args,'artifact',[]) or []:command+=['--artifact',item]
+        if getattr(args,'file',None):command+=['--file',args.file]
         command+=['--',*args.command] if args.command else []
-        return json.loads(remote(command,timeout=20,private=True))
+        result=json.loads(remote(command,timeout=20,private=True))
+        if args.action=='fetch' and getattr(args,'output',None):return receive_artifact(result,args.output)
+        return result
     directory=STATE/'jobs';directory.mkdir(parents=True,exist_ok=True,mode=0o700)
     if args.action=='run':
         project=Path(args.project or Path.cwd()).resolve()
@@ -276,12 +306,23 @@ def job(args):
         if not project.is_dir() or not command:raise ValueError('Choose an existing project and command')
         ident=datetime.datetime.now().strftime('%Y%m%dT%H%M%S')+'-'+os.urandom(3).hex();unit='den-job-'+ident
         log=directory/(ident+'.log');meta={'id':ident,'host':host(),'unit':unit,'project':str(project),'command':command,'created':time.time(),
-            'commit':run(['git','-C',str(project),'rev-parse','HEAD']).stdout.strip(),'dirty':bool(run(['git','-C',str(project),'status','--porcelain']).stdout)}
+            'commit':run(['git','-C',str(project),'rev-parse','HEAD']).stdout.strip(),'dirty':bool(run(['git','-C',str(project),'status','--porcelain']).stdout),
+            'schema':1,'state':'queued','inputs':[],'expectedArtifacts':getattr(args,'artifact',[]) or []}
+        sys.path.insert(0,str(HOME/'.local/share/sensei'))
+        from den_job import digest
+        for name in getattr(args,'input',[]) or []:
+            source=(project/name).resolve()
+            if not source.is_file():raise ValueError('Input file is missing: '+name)
+            meta['inputs'].append({'path':str(source),'bytes':source.stat().st_size,'sha256':digest(source)})
+        for name in meta['expectedArtifacts']:
+            if not (project/name).resolve().is_relative_to(project):raise ValueError('Artifact must stay inside the project')
         write(directory/(ident+'.json'),meta)
         r=run(['systemd-run','--user','--unit',unit,'--property=WorkingDirectory='+str(project),
             '--property=UMask=0077','--property=Nice=5','--property=StandardOutput=append:'+str(log),
-            '--property=StandardError=append:'+str(log),'--',*command])
-        if r.returncode:raise ValueError('Job could not start; no command was replayed')
+            '--property=StandardError=append:'+str(log),'--',sys.executable,str(HOME/'.local/share/sensei/den_job.py'),str(directory/(ident+'.json'))])
+        if r.returncode:
+            meta.update(state='start-failed');write(directory/(ident+'.json'),meta)
+            raise ValueError('Job could not start; no command was replayed')
         return meta
     if args.action=='list':
         rows=[read(p) for p in sorted(directory.glob('*.json'))][-30:]
@@ -290,9 +331,25 @@ def job(args):
     if not args.id or not re.fullmatch(r'[A-Za-z0-9-]{1,60}',args.id):raise ValueError('Invalid job ID')
     meta=read(directory/(args.id+'.json'))
     if not meta:raise ValueError('Unknown owned job')
+    if args.action=='artifacts':return {'id':args.id,'artifacts':meta.get('artifacts',[]),'errors':meta.get('artifactErrors',[])}
+    if args.action=='fetch':
+        sys.path.insert(0,str(HOME/'.local/share/sensei'))
+        from den_job import artifact
+        name=getattr(args,'file',None)
+        record=next((x for x in meta.get('artifacts',[]) if x['path']==name),None)
+        if not record:raise ValueError('Only a recorded artifact can be fetched')
+        current=artifact(meta['project'],name)
+        if current!=record:raise ValueError('Artifact changed since this job; original checksum does not match')
+        if current['bytes']>8*1024*1024:raise ValueError('Use explicit file transfer for artifacts larger than 8 MiB')
+        result={**record,'data':base64.b64encode((Path(meta['project'])/name).read_bytes()).decode()}
+        return receive_artifact(result,args.output) if getattr(args,'output',None) else result
     if args.action=='logs':return {'id':args.id,'text':(directory/(args.id+'.log')).read_text(errors='replace')[-24000:]}
     if args.action=='cancel':
-        run(['systemctl','--user','stop',meta['unit']]);return {'id':args.id,'state':service(meta['unit'])}
+        result=run(['systemctl','--user','stop',meta['unit']])
+        if result.returncode:raise ValueError('Owned job could not be stopped')
+        meta=read(directory/(args.id+'.json'));meta.update(state='cancelled',finished=time.time())
+        write(directory/(args.id+'.json'),meta)
+        return {'id':args.id,'state':'cancelled'}
     r=run(['systemctl','--user','show',meta['unit'],'--property=ActiveState,Result,ExecMainStatus'])
     return {**meta,'status':r.stdout.strip()}
 
@@ -373,15 +430,74 @@ def workbench(action):
             run([str(HOME/'.local/bin/den-control'),'start'],timeout=10)
 
 
+def companion_tick(peer):
+    local_host=host()
+    if local_host!='arete' and peer:return
+    cfg=read(CONFIG/'companion.json')
+    if not cfg.get('roaming') or cfg.get('quiet') or cfg.get('suspended') or not cfg.get('enabled',True):return
+    state=read(STATE/'companion-route.json');now=time.time()
+    # A failed peer transfer keeps the source hidden until its last lease expires.
+    remote_until=state.get('remoteUntil',0)
+    if not peer and remote_until>now:return
+    token=max(time.time_ns(),state.get("lastToken",0)+1)
+    state["lastToken"]=token
+    local=json.loads(run(['hyprctl','monitors','-j']).stdout)
+    destinations=[(local_host,m['name']) for m in local if not m['name'].startswith('SENSEI-')]
+    if peer and local_host=='arete':
+        try:
+            capability=json.loads(remote([str(HOME/'.local/bin/sensei-den'),'companion','protocol'],timeout=4))
+            if capability.get('schema')==1 and capability.get('leases') and capability.get('enabled') and not capability.get('quiet') and not capability.get('suspended') and not capability.get('reducedMotion'):
+                destinations += [('homie',m['name']) for m in json.loads(remote(['hyprctl','-i','0','monitors','-j'],timeout=4)) if not m['name'].startswith('SENSEI-')]
+        except (ValueError,OSError,subprocess.SubprocessError):pass
+    if not destinations:return
+    advance=now>=state.get('next',0) or cfg.get('tourAt',0)>state.get('tourAt',0)
+    chosen=state.get('destination')
+    if not chosen or tuple(chosen) not in destinations or advance:
+        current=destinations.index(tuple(chosen)) if chosen and tuple(chosen) in destinations else -1
+        chosen=destinations[(current+1)%len(destinations)]
+        state.update(destination=chosen,next=now+45+int.from_bytes(os.urandom(1))%46,tourAt=cfg.get('tourAt',0))
+    target_host,output=chosen
+    if target_host!=local_host:
+        # Hide first; a lost acknowledgement cannot create a second visible character.
+        companion('grant',json.dumps({'output':'','token':token,'ttl':45}))
+        state['remoteUntil']=now+45;write(STATE/'companion-route.json',state)
+        remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':output,'token':token,'ttl':40})],timeout=4)
+    else:
+        if remote_until>now:return
+        companion('grant',json.dumps({'output':output,'token':token,'ttl':40}))
+        state['remoteUntil']=0
+    write(STATE/'companion-route.json',state)
+
+
+def topology_signature():
+    rows=json.loads(run(['hyprctl','monitors','-j']).stdout)
+    return sorted((m['name'],m.get('x'),m.get('y'),m.get('width'),m.get('height'),m.get('scale')) for m in rows)
+
+def refresh_capture_routes(previous,current,active,usable):
+    if previous is None or previous==current or not active:return False
+    # Stop the native capture first: its Wayland teardown releases keyboard/mouse.
+    # This is a topology update, not a user pause; never clear a real user pause.
+    result=run(['systemctl','--user','stop','den-input'],timeout=10)
+    if result.returncode:raise ValueError('Capture could not release for a display change')
+    if usable and not (PRIVATE/'input/user-paused').exists():
+        run([str(HOME/'.local/bin/den-control'),'start'],timeout=10)
+    return True
+
+
 def watch():
-    previous=None;previous_mode=None
+    previous=None;previous_mode=None;previous_topology=None
     while True:
         try:
             peer=connectivity();state=current_mode(peer)
+            try:companion_tick(peer and state['effective']=='together')
+            except (ValueError,OSError,subprocess.SubprocessError):pass
             write(STATE/'presence.json',{'host':host(),'peer':peer,'mode':state,'time':time.time()})
             if host()=='arete':
                 active=service('den-input')=='active';paused=(PRIVATE/'input/user-paused').exists()
                 usable=peer and state['effective']=='together'
+                topology=topology_signature()
+                if refresh_capture_routes(previous_topology,topology,active,usable):active=service('den-input')=='active'
+                previous_topology=topology
                 if (not usable or paused) and active:
                     with socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM) as s:s.sendto(b'peer-lost',str(PRIVATE/'cursor.sock'))
                 elif usable and not active and not paused:
@@ -402,11 +518,11 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);s=p.add_subparsers(dest='command_name',required=True)
     for n in ['status','doctor','watch']:s.add_parser(n)
     q=s.add_parser('mode');q.add_argument('value',nargs='?',choices=['auto','together','away','homie'])
-    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','say','chatter','motion','tip']);q.add_argument('value',nargs='?')
+    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','say','chatter','motion','tip','roam','tour','grant','protocol']);q.add_argument('value',nargs='?')
     q=s.add_parser('sync');q.add_argument('action',nargs='?',default='status',choices=['status','scan','pause','resume'])
     q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','peer-copy'])
     q=s.add_parser('workbench');q.add_argument('action',nargs='?',default='open',choices=['open','start','stop','status'])
-    q=s.add_parser('job');q.add_argument('action',choices=['run','list','status','logs','cancel']);q.add_argument('--host');q.add_argument('--project');q.add_argument('--id');
+    q=s.add_parser('job');q.add_argument('action',choices=['run','list','status','logs','cancel','artifacts','fetch']);q.add_argument('--host');q.add_argument('--project');q.add_argument('--id');q.add_argument('--input',action='append');q.add_argument('--artifact',action='append');q.add_argument('--file');q.add_argument('--output');
     argv=sys.argv[1:];job_command=[]
     if '--' in argv:
         i=argv.index('--');job_command=argv[i+1:];argv=argv[:i]

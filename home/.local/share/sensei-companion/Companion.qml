@@ -9,9 +9,14 @@ import "CompanionLogic.js" as Logic
 Item {
     id: root
     property string ownerOutput: ""
+    property var journey: ({})
+    property real journeyClock: Date.now()/1000
+    readonly property bool leased: journey.schema===1 && journey.expires>journeyClock
+    readonly property bool managed: preferences.roaming===true || (presence.host==="homie" && !preferences.anchorManual && journey.managed===true && !standalone)
     property var preferences: ({enabled:true,quiet:false,size:96})
     property var presence: ({})
     property bool fullscreen: false
+    property bool landing: false
     property string message: ""
     property string messageKind: "field note"
     property bool speaking: false
@@ -33,7 +38,7 @@ Item {
     readonly property bool reduced: preferences.reducedMotion === true
     readonly property bool standalone: presence.mode?.effective === "homie" || presence.mode?.effective === "away"
     readonly property string preferred: Quickshell.screens.some(s=>s.name===preferences.output)?preferences.output:""
-    readonly property string target: ownerOutput ? (preferred || ownerOutput) : (standalone ? (preferred || Quickshell.screens[0]?.name || "") : "")
+    readonly property string target: managed ? (leased ? journey.output : "") : ownerOutput ? (preferred || ownerOutput) : (standalone ? (preferred || Quickshell.screens[0]?.name || "") : "")
     readonly property bool eligible: preferences.enabled!==false && preferences.quiet!==true && preferences.suspended!==true && !fullscreen && target!==""
     readonly property bool allowed: eligible && placement.available
     readonly property int pose: activity==="walk" ? (walkingRight?8:4)+frame%4 : activity==="wave" ? 13 : activity==="celebrate" ? 14 : activity==="think" ? 12 : activity==="sleep" ? 15 : frame%4
@@ -72,8 +77,10 @@ Item {
         if(!Logic.canWalk(old,placement)){variant=oldVariant;deliberateTravel=false;placement=old;return;}
         walkingRight=placement.x>old.x;activity="walk";frame=0;poseExpiry.restart();
     }
-    onTargetChanged:{deliberateTravel=false;placement={available:false,x:18,y:56};refresh();}
+    onTargetChanged:{deliberateTravel=false;placement={available:false,x:18,y:56};landing=!reduced;landingExpiry.restart();refresh();}
     onEligibleChanged:if(eligible)refresh()
+    Timer {interval:1000;repeat:true;running:root.managed;onTriggered:root.journeyClock=Date.now()/1000}
+    FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-travel.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.journey=JSON.parse(text());root.journeyClock=Date.now()/1000;}catch(e){}}}
     FileView {path:Qt.resolvedUrl("notes.json");watchChanges:true;printErrors:false
         onFileChanged:reload();onLoaded:{try{Logic.notes=JSON.parse(text());}catch(e){}}}
     FileView {path:Quickshell.env("HOME")+"/.config/sensei-den/companion.json";watchChanges:true;printErrors:false
@@ -107,6 +114,7 @@ Item {
     Timer {interval:220;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk");onTriggered:root.frame=(root.frame+1)%4}
     Timer {id:poseExpiry;interval:2200;onTriggered:{root.activity="typing";root.frame=0;root.deliberateTravel=false;}}
     Timer {id:speechExpiry;interval:9500;onTriggered:{root.speaking=false;settle.restart();}}
+    Timer {id:landingExpiry;interval:700;onTriggered:root.landing=false}
     PanelWindow {
         id:pet
         screen:Quickshell.screens.find(s=>s.name===root.target)??Quickshell.screens[0]
@@ -136,7 +144,9 @@ Item {
             Text {id:body;anchors {left:parent.left;right:parent.right;top:caption.bottom;leftMargin:14;rightMargin:14;topMargin:7} text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:"JetBrainsMono Nerd Font";font.pixelSize:12;color:"#e8e2da"}
         }
         Image {
-            id:character;anchors {right:parent.right;bottom:parent.bottom}
+            id:character;opacity:root.allowed?1:0;scale:root.landing?0.72:1
+            Behavior on scale {enabled:!root.reduced;NumberAnimation {duration:650;easing.type:Easing.OutBack}}
+            anchors {right:parent.right;bottom:parent.bottom}
             width:pet.spriteSize;height:width
             source:Qt.resolvedUrl("fh1m-motion-v2.png")
             readonly property real cell:1254/4

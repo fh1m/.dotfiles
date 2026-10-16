@@ -5,6 +5,7 @@ import Quickshell.Wayland
 ShellRoot {
     id: root
     Loader {
+        id:companionLoader
         asynchronous:true
         source:Quickshell.env("HOME")+"/.local/share/sensei-companion/Companion.qml"
         onLoaded:item.ownerOutput=Qt.binding(()=>root.focusedOutput)
@@ -18,6 +19,7 @@ ShellRoot {
     IpcHandler {
         target: "den-cursor"
         function state(): string { return JSON.stringify({focusedOutput:root.focusedOutput,dimOpacity:36/255,locatorActive:root.active}) }
+        function reloadCompanion():void {companionLoader.active=false;Qt.callLater(()=>companionLoader.active=true)}
         function focus(name: string): void { root.focusedOutput=name }
         function pulse(name: string, x: real, y: real): void {
             root.output=name; root.px=x; root.py=y; root.active=true;
