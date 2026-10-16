@@ -3,6 +3,7 @@
 import argparse
 import base64
 import hashlib
+import fcntl
 import datetime
 import json
 import os
@@ -121,6 +122,8 @@ def companion(action,value=None):
     elif action=='tip':cfg['tipAt']=time.time()
     elif action!='status':raise ValueError('Unsupported companion action')
     if action!='status':write(CONFIG/'companion.json',cfg)
+    if action=='tour':
+        presence=read(STATE/'presence.json');companion_tick(bool(presence.get('peer')) and time.time()-presence.get('time',0)<30)
     return cfg
 
 
@@ -431,6 +434,12 @@ def workbench(action):
 
 
 def companion_tick(peer):
+    STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+    with (STATE/'companion-route.lock').open('a') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX)
+        return _companion_tick(peer)
+
+def _companion_tick(peer):
     local_host=host()
     if local_host!='arete' and peer:return
     cfg=read(CONFIG/'companion.json')

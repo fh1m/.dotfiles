@@ -28,7 +28,7 @@ WidgetSection {
         Row {
             width:parent.width;spacing:8
             ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Companion";glyph:"\uf1b0";selected:Den.data.companion!==false;onActivated:Den.companion("toggle","")}
-            ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Bring here";glyph:"\uf124";onActivated:Den.companion("here","")}
+            ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Bring here";enabled:Den.data.role!=="receiver"||!Den.online;glyph:"\uf124";onActivated:Den.companion("here","")}
             ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Sync files";glyph:"\uf021";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","sync","scan"])}
             ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:Den.data.mode==="away"?"Return home":"Away mode";glyph:"\uf0b1";enabled:Den.data.role!=="receiver";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","mode",Den.data.mode==="away"?"auto":"away"])}
         }
@@ -45,8 +45,8 @@ WidgetSection {
         }
         Row {
             width:parent.width;spacing:8
-            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Tour displays";glyph:"\uf072";onActivated:Den.companion("tour","")}
-            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Follow my focus";glyph:"\uf124";onActivated:Den.companion("follow","")}
+            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Tour displays";enabled:Den.data.role!=="receiver"||!Den.online;glyph:"\uf072";onActivated:Den.companion("tour","")}
+            ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Follow my focus";enabled:Den.data.role!=="receiver"||!Den.online;glyph:"\uf124";onActivated:Den.companion("follow","")}
         }
         Text { textFormat: Text.PlainText; width: parent.width; visible: Den.error !== ""; text: Den.error; wrapMode: Text.Wrap; font.family: Appearance.font.ui; font.pixelSize: 11; color: Theme.signalRed }
     }

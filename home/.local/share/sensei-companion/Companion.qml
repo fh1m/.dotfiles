@@ -12,7 +12,7 @@ Item {
     property var journey: ({})
     property real journeyClock: Date.now()/1000
     readonly property bool leased: journey.schema===1 && journey.expires>journeyClock
-    readonly property bool managed: preferences.roaming===true || (presence.host==="homie" && !preferences.anchorManual && journey.managed===true && !standalone)
+    readonly property bool managed: preferences.roaming===true || (presence.host==="homie" && !standalone)
     property var preferences: ({enabled:true,quiet:false,size:96})
     property var presence: ({})
     property bool fullscreen: false
