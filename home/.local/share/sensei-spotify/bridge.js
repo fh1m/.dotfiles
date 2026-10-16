@@ -56,6 +56,7 @@
  async function handle(op,args){
   if(op==='probe'){
    if(args[0]==='filters')return P.LibraryAPI.getStaticallyKnownFilters();
+   if(args[0]==='devices'){const d=P.ConnectAPI.getState();return {fields:Object.keys(d||{}),devices:(d.devices||[]).map(x=>({id:x.id,isLocal:x.isLocal,isActive:x.isActive})),activeDevice:d.activeDevice};}
    if(args[0]==='mutations'){const out={};for(const [api,method] of [['PlaylistAPI','add'],['RootlistAPI','createPlaylist'],['ConnectAPI','transferToRemote'],['ConnectAPI','transferPlayback'],['LibraryAPI','add']])out[api+'.'+method]=String(P[api][method]).slice(0,1200);return out;}
    return {connected:true,version:Spicetify.Config?.version,library:!!P.LibraryAPI,playlists:!!P.PlaylistAPI,queue:!!P.PlayerAPI?.getQueue,search:!!Spicetify.GraphQL?.Definitions?.searchModalResults};
   }
@@ -69,8 +70,13 @@
    for(const item of items)result[item.kind+'s']?.push(item);return result;
   }
   if(op==='devices'){
-   const d=P.ConnectAPI.getState();const devices=d.devices||d.connectState?.devices||[];
-   return {rows:(Array.isArray(devices)?devices:Object.values(devices)).map(x=>({id:x.id||x.deviceId,name:x.name||x.deviceName,type:x.type||x.deviceType,is_active:x.isActive||x.isLocal||false,volume_percent:Math.round((x.volume??0)*100)})),source:'Spotify desktop'};
+   const d=P.ConnectAPI.getState();const devices=d.devices||d.connectState?.devices||[];const activeId=d.activeDevice?.id||d.activeDevice?.deviceId||d.activeDeviceId;
+   return {rows:(Array.isArray(devices)?devices:Object.values(devices)).map(x=>({id:x.id||x.deviceId,name:x.name||x.deviceName,type:x.type||x.deviceType,is_active:!!(activeId?(x.id||x.deviceId)===activeId:x.isActive),is_local:!!x.isLocal,volume_percent:Math.round((x.volume??0)*100)})),source:'Spotify desktop'};
+  }
+  if(op==='play-track'||op==='play-context'){
+   const kind=op==='play-track'?'track':args[0],id=op==='play-track'?args[0]:args[1];
+   if(!['track','playlist','album','artist'].includes(kind)||!/^[A-Za-z0-9]{22}$/.test(id))throw new Error('Invalid music selection');
+   await P.PlayerAPI.play({uri:'spotify:'+kind+':'+id},{featureIdentifier:'your_library',featureVersion:'sensei-local'},{});return {ok:true};
   }
   if(op==='play-context-track'){
    const [kind,id,track]=args;if(!['playlist','album'].includes(kind)||!/^[A-Za-z0-9]{22}$/.test(id)||!/^spotify:track:[A-Za-z0-9]{22}$/.test(track))throw new Error('Invalid track selection');
@@ -91,13 +97,14 @@
   }
   if(op==='playlist-create'){
    const name=String(args[0]||'').trim().slice(0,100);if(!name)throw new Error('Enter a playlist name');
-   const uri=await P.RootlistAPI.createPlaylist(name,{after:'start'});if(!uri)throw new Error('Spotify did not create the playlist');return {ok:true,uri};
+   const uri=await P.RootlistAPI.createPlaylist(name,{after:'start'});if(!uri)throw new Error('Spotify did not create the playlist');
+   try{await P.RootlistAPI.setPublishedState(uri,false);}catch(e){return {error:'Playlist created, but profile privacy could not be confirmed. Check it in Spotify before trying again.',uri,created:true};}return {ok:true,uri};
   }
   if(op==='connect'){
    const id=String(args[0]||'');const state=P.ConnectAPI.getState();const devices=state.devices||[];
-   const known=(Array.isArray(devices)?devices:Object.values(devices)).some(d=>(d.id||d.deviceId)===id);
-   if(!known)throw new Error('Device is no longer available; refresh Devices');
-   await P.ConnectAPI.transferPlayback(id,{});return {ok:true};
+   const device=(Array.isArray(devices)?devices:Object.values(devices)).find(d=>(d.id||d.deviceId)===id);
+   if(!device)throw new Error('Device is no longer available; refresh Devices');
+   await P.ConnectAPI.transferPlayback(device.isLocal?'local_device':id,{});return {ok:true};
   }
   throw new Error('Open this action in Spotify; no Web API fallback was attempted.');
  }

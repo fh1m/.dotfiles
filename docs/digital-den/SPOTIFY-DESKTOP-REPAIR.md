@@ -70,6 +70,9 @@ Web API quota. Do not clear the budget to pretend the provider limit disappeared
 - This is an integration with **internal** client APIs, not a supported Spotify
   public API. Upgrades can break it. The client/Spicetify versions and live checks
   below are the compatibility evidence; they are not a future guarantee.
+- The widget launcher preserves the installed client with `--skip-update` once
+  the bridge is configured. Explicit Spotify upgrades need a compatible
+  Spicetify rebuild/repair; do not silently replace this tested pairing.
 - Spicetify 2.45.3's published Linux support range ends at 1.2.96. This machine's
   1.3.4 client was tested directly; do not claim upstream certifies that pairing.
 - Desktop-library browsing does not consume the exhausted developer Web API path.
@@ -87,7 +90,7 @@ Web API quota. Do not clear the budget to pretend the provider limit disappeared
 
 ## Live acceptance
 
-On Arete, the actual widget loaded 52 playlists; liked songs expanded from 100 to
+On both Arete and Homie, the actual widget loaded 52 playlists; liked songs expanded from 100 to
 200 through its Load more action. Selecting a liked row and a playlist's third
 row played their exact canonical track identities. Playlist contents returned 50
 tracks, search returned 26 tracks in the inspected query, and the queue contained
@@ -95,10 +98,16 @@ tracks, search returned 26 tracks in the inspected query, and the queue containe
 album/artist context browsing returned songs. Screenshots were inspected privately,
 not committed with the user's personal playlist names.
 
+The full suite passed 286 tests; 28 focused Spotify tests passed. The owned live
+workflow is reproducible with `python3 scripts/check-spotify-desktop.py --live`
+when changing playback is acceptable (reference account requires 200 liked songs).
+Setup preview reports no changes after application on each host. The bridge
+service is enabled for subsequent graphical sessions.
+
 Automated tests cover relay authentication/Host checks, operation allowlisting,
 connection loss, saved-data retention, typed pagination, zero-total pages,
-nested folders and search-wrapper normalization. Live mutation/phone/device
-handoff acceptance is distinct from successful read/playback tests.
+nested folders and search-wrapper normalization. An explicit laptop-local Connect selection also succeeded. Library-write and
+phone-handoff acceptance remain distinct from successful read/playback tests.
 
 ## Research ledger
 

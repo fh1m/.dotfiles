@@ -1,10 +1,10 @@
 [Unit]
 Description=Private Spotify desktop library bridge
-After=graphical-session.target
 PartOf=graphical-session.target
 
 [Service]
 Type=simple
+ExecCondition=/usr/bin/test -f %h/.config/sensei-den/spotify-bridge.json
 ExecStart=/usr/bin/python3 %h/.local/share/sensei/spotify_bridge.py
 Restart=on-failure
 RestartSec=3

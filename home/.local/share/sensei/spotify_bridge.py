@@ -4,7 +4,7 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from urllib.request import Request,HTTPRedirectHandler,build_opener
 CONFIG=Path.home()/'.config/sensei-den/spotify-bridge.json'
-ALLOWED={'probe','library','context','search','queue','devices','play-list','play-context-track','queue-add','like','unlike','playlist-add','playlist-create','enqueue','connect','liked-play'}
+ALLOWED={'play-track','play-context','probe','library','context','search','queue','devices','play-list','play-context-track','queue-add','like','unlike','playlist-add','playlist-create','enqueue','connect','liked-play'}
 
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs):return None

@@ -79,7 +79,7 @@ class Extension(unittest.TestCase):
  def evaluate(self,operation,args,platform,graphql=None):
   harness=r'''
 const fs=require('fs'),vm=require('vm');const f=JSON.parse(fs.readFileSync(0,'utf8'));
-const P={RootlistAPI:{getContents:async()=>f.platform.root||{items:[]}},LibraryAPI:{getTracks:async()=>f.platform.tracks||{items:[]}}};
+const P={ConnectAPI:{getState:()=>f.platform.connect||{}},RootlistAPI:{getContents:async()=>f.platform.root||{items:[]}},LibraryAPI:{getTracks:async()=>f.platform.tracks||{items:[]}}};
 const fetch=async(url,request)=>({ok:true,json:async()=>{if(url.endsWith('/poll'))return {id:'fixture',operation:f.operation,args:f.args};console.log(JSON.stringify(JSON.parse(request.body).result));process.exit(0);}});
 const context={Spicetify:{Platform:P,GraphQL:{Definitions:{searchModalResults:{}},Request:async()=>f.graphql||{}},Config:{}},fetch,setTimeout};context.globalThis=context;
 vm.runInNewContext(fs.readFileSync(f.source,'utf8').replace('__PORT__','1').replace('__SECRET__','fixture'),context);
@@ -93,6 +93,9 @@ vm.runInNewContext(fs.readFileSync(f.source,'utf8').replace('__PORT__','1').repl
  def test_nested_playlist_folder_is_flattened_without_losing_playlist(self):
   result=self.evaluate('library',['playlists'],{'root':{'items':[{'type':'folder','items':[{'type':'playlist','uri':'spotify:playlist:'+'A'*22,'name':'fixture'}]}]}})
   self.assertEqual(len(result['rows']),1)
+ def test_local_device_is_not_automatically_the_active_device(self):
+  result=self.evaluate('devices',[],{'connect':{'activeDevice':{'id':'remote'},'devices':[{'id':'local','isLocal':True},{'id':'remote','isLocal':False}]}})
+  self.assertFalse(result['rows'][0]['is_active']);self.assertTrue(result['rows'][1]['is_active'])
  def test_search_wrapper_preserves_entity_type(self):
   result=self.evaluate('search',['fixture'],{}, {'data':{'searchV2':{'topResultsV2':{'itemsV2':[{'item':{'data':{'uri':'spotify:album:'+'A'*22,'name':'fixture'}}}]}}}})
   self.assertEqual(len(result['albums']),1);self.assertEqual(result['tracks'],[])

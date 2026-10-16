@@ -1,3 +1,18 @@
+# Spotify desktop library repair — 2026-10-16
+
+The official backend now includes a local authenticated Spicetify library bridge,
+not just MPRIS transport. Homie retained its own logged-in account; no credentials
+or application profiles were transferred. Spicetify CLI 2.45.3 matched GitHub's
+published release digest. Only matching public Spotify preprocessing assets were
+bootstrapped from Arete to repair the already-patched software installation.
+
+Homie's real widget loaded 52 playlists, paged liked songs from 100 to 200,
+searched successfully, loaded playlist contents/queue, and played the exact songs
+selected from liked songs and a playlist. Arete passed the same workflow. Native
+Web API quota remains unchanged; the official path does not depend on it.
+The private relay listens only on loopback and starts with the graphical session.
+See [repair evidence and limitations](../docs/digital-den/SPOTIFY-DESKTOP-REPAIR.md).
+
 # Next-pass deployment checkpoint — 2026-10-16
 
 Homie is online and shares main with Arete. Focus-follows-mouse, workspace recovery,

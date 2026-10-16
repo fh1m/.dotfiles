@@ -51,7 +51,7 @@ class OfficialPlayer:
     def action(self, name, args):
         p=self.properties()
         if not p.get('CanControl',False):raise ValueError('Spotify is not accepting controls. Open the official client.')
-        if name in ('play-list','play-context-track'):return desktop_action(name,args)
+        if name in ('play-list','play-context-track','play-track','play-context'):return desktop_action(name,args)
         methods={'play':('Play','CanPlay'),'pause':('Pause','CanPause'),'toggle':('PlayPause','CanPause'),
                  'next':('Next','CanGoNext'),'previous':('Previous','CanGoPrevious')}
         if name in methods:
@@ -106,7 +106,7 @@ def main(args):
     if name=='autostart' and selection()!='official':return {'ok':True,'skipped':True}
     if name in ('launch','autostart'):
         installed=Path(os.environ.get('XDG_DATA_HOME',str(Path.home()/'.local/share')))/'spotify-launcher/install/usr/bin/spotify'
-        subprocess.Popen(['spotify-launcher']+(['--skip-update'] if name=='autostart' and installed.exists() else []),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+        subprocess.Popen(['spotify-launcher']+(['--skip-update'] if installed.exists() and (name=='autostart' or (Path.home()/'.config/sensei-den/spotify-bridge.json').exists()) else []),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
         return {'ok':True}
     backend=selection()
     if backend=='official':return OfficialPlayer().status() if name=='status' else OfficialPlayer().action(name,args[1:])
