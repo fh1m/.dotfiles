@@ -31,4 +31,14 @@ class BudgetTests(unittest.TestCase):
         self.assertEqual(self.b.transact('acquire')['reason'],'state_invalid')
         self.assertEqual(p.read_text(),'broken')
 
+    def test_structurally_invalid_json_cannot_bypass_or_crash_gate(self):
+        import json
+        base={'schema':1,'until':0,'quota':False,'stamps':[],'counts':{}}
+        for change in [{'stamps':['bad']},{'stamps':[float('nan')]},{'until':[]},
+                       {'counts':[]},{'counts':{'player':-1}},{'quota':'false'},{'schema':2},{'until':10**1000}]:
+            with self.subTest(change=change):
+                path=Path(self.tmp.name)/'web-api-budget.json';raw=json.dumps(dict(base,**change));path.write_text(raw)
+                self.assertEqual(self.b.transact('acquire')['reason'],'state_invalid')
+                self.assertEqual(path.read_text(),raw)
+
 if __name__=='__main__':unittest.main()

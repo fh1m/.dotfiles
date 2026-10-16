@@ -1,3 +1,8 @@
+> 2026-10-16: runtime guard repaired for the verified currently booted fallback
+> and inactive Revenger entry. Linux-first order is verified without replacing
+> the fallback. Earlier physical boot-loop acceptance remains open; no reboot
+> was performed. See [current audit](../docs/digital-den/AUDIT-2026-10-16.md).
+
 # Homie boot selector and OS switching
 
 The normal menu contains **Linux**, **Windows** and collapsed **Misc**. Linux boots the managed stock CachyOS kernel on Dahua; Windows chainloads only the verified Revenger EFI partition. Misc contains Linux LTS and preserved snapshot entries. Linux remains the default with a seven-second selection window. The Signal Ledger theme uses warm ink, prominent pink labels/selection and branding, the exact privately stored pink building wallpaper, larger built-in bitmap type and the monitor's current horizontal direction (rotation 0). Firmware setup remains available through Limine's displayed `S` shortcut.

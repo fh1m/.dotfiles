@@ -117,6 +117,28 @@ Boot0003* Homie Linux PciRoot(0)/Pci(0)/Sata(0)/HD(1,GPT,{order.LINUX_ESP},0,0)/
 '''
         self.assertEqual(order.plan(firmware)[1], ['0003', '0001', '0000'])
 
+    def test_current_fallback_requires_explicit_byte_verification(self):
+        firmware = f"""BootCurrent: 000B
+BootNext: 0009
+BootOrder: 000B,0003,000C
+Boot000B* UEFI OS HD(1,GPT,{order.LINUX_ESP},0,0)/\\EFI\\BOOT\\BOOTX64.EFI
+Boot0003  Old Windows HD(1,GPT,{order.OLD_ESP},0,0)/\\EFI\\MICROSOFT\\BOOT\\BOOTMGFW.EFI
+Boot000C  Windows Boot Manager HD(1,GPT,{order.WINDOWS_ESP},0,0)/\\EFI\\MICROSOFT\\BOOT\\BOOTMGFW.EFI
+"""
+        self.assertEqual(order.plan(firmware, True, True)[1], ['000B', '000C'])
+        recreated=firmware+f'Boot0000* Limine HD(1,GPT,{order.LINUX_ESP},0,0)/\\EFI\\LIMINE\\LIMINE_X64.EFI\n'
+        self.assertEqual(order.plan(recreated,True,True)[1][:2],['000B','000C'])
+        for text, verified, inactive in [(firmware,False,True), (firmware,True,False),
+                (firmware.replace('BootCurrent: 000B','BootCurrent: 0009'),True,True),
+                (firmware.replace(order.LINUX_ESP,'foreign'),True,True)]:
+            with self.assertRaises(ValueError):order.plan(text,verified,inactive)
+
+    def test_inactive_windows_is_only_allowed_for_explicit_repair_validation(self):
+        inactive=self.firmware.replace('Boot0005*','Boot0005 ')
+        with self.assertRaises(ValueError):windows.target([self.disk],inactive)
+        self.assertEqual(windows.target([self.disk],inactive,require_active=False),('0005','sdc1'))
+        with self.assertRaises(ValueError):windows.target([self.disk],inactive+'\n'+self.firmware,require_active=False)
+
 
 if __name__ == '__main__':
     unittest.main()

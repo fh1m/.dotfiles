@@ -1,3 +1,14 @@
+# Runtime/boot audit checkpoint — 2026-10-16
+
+Both hosts audited on main. Failed services repaired; backup checks and independent
+restore fixtures pass. Homie currently boots its active Dahua fallback; its bytes
+match Limine. Updated root guard preserved that working entry, reactivated the
+verified Revenger entry and read back Linux-first/Windows-second order. The
+boot-order service and separate check now succeed. No reboot, partition change,
+loader replacement or firmware-entry deletion occurred. Physical cold boot and
+native Windows return remain unverified. A boot-log USB enumeration error also
+remains a hardware diagnostic. [Full audit and open gates](../docs/digital-den/AUDIT-2026-10-16.md).
+
 # Input and bar checkpoint — 2026-10-16
 
 Arete and Homie: the proposed extra bar buttons were removed; original controls

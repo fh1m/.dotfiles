@@ -16,7 +16,7 @@ def run(*args):
     return subprocess.check_output(args, text=True).strip()
 
 
-def target(disks, firmware):
+def target(disks, firmware, require_active=True):
     disk = next((d for d in disks if d.get("serial") == SERIAL), None)
     if not disk or disk.get("size") != 256060514304:
         raise ValueError("Verified Revenger disk absent or identity changed")
@@ -25,12 +25,25 @@ def target(disks, firmware):
         raise ValueError("Revenger EFI identity/filesystem mismatch")
     matches = []
     for line in firmware.splitlines():
-        match = re.match(r"Boot([0-9A-Fa-f]{4})\*\s", line)
-        if match and f"gpt,{ESP}," in line.lower() and "\\efi\\microsoft\\boot\\bootmgfw.efi" in line.lower():
+        match = re.match(r"Boot([0-9A-Fa-f]{4})([ *])\s", line)
+        if match and (not require_active or match[2] == "*") and f"gpt,{ESP}," in line.lower() and "\\efi\\microsoft\\boot\\bootmgfw.efi" in line.lower():
             matches.append(match[1])
     if len(matches) != 1:
         raise ValueError("Expected exactly one active verified Revenger Windows firmware entry")
     return matches[0], part["name"]
+
+
+def verify_loader(part):
+    # Read the actual verified EFI volume without modifying its files.
+    with tempfile.TemporaryDirectory(prefix="homie-windows-", dir="/run") as directory:
+        subprocess.run(["/usr/bin/mount", "-o", "ro,nosuid,nodev,noexec", f"/dev/{part}", directory], check=True)
+        try:
+            loader = Path(directory) / "EFI/Microsoft/Boot/bootmgfw.efi"
+            with loader.open("rb") as stream:
+                if stream.read(2) != b"MZ":
+                    raise ValueError("Windows EFI loader missing or invalid PE signature")
+        finally:
+            subprocess.run(["/usr/bin/umount", directory], check=True)
 
 
 def main():
@@ -59,16 +72,7 @@ def main():
                 raise ValueError("Firmware retained BootNext after cancellation")
         print("Windows one-time boot cleared; unrelated selection preserved")
         return
-    # Read the actual verified EFI volume without modifying its files.
-    with tempfile.TemporaryDirectory(prefix="homie-windows-", dir="/run") as directory:
-        subprocess.run(["/usr/bin/mount", "-o", "ro,nosuid,nodev,noexec", f"/dev/{part}", directory], check=True)
-        try:
-            loader = Path(directory) / "EFI/Microsoft/Boot/bootmgfw.efi"
-            with loader.open("rb") as stream:
-                if stream.read(2) != b"MZ":
-                    raise ValueError("Windows EFI loader missing or invalid PE signature")
-        finally:
-            subprocess.run(["/usr/bin/umount", directory], check=True)
+    verify_loader(part)
     if args.action == "arm":
         if next_entry and next_entry[1].lower() != entry.lower():
             raise ValueError("Another one-time boot request exists; refusing to replace it")

@@ -3,6 +3,7 @@
 import argparse
 import fcntl
 import json
+import math
 import os
 from pathlib import Path
 import tempfile
@@ -23,10 +24,16 @@ class Budget:
             path = self.root/'web-api-budget.json'
             try:
                 state = json.loads(path.read_text())
-                if not isinstance(state, dict): raise ValueError('Invalid budget')
+                finite=lambda x:isinstance(x,(int,float)) and not isinstance(x,bool) and math.isfinite(x) and x>=0
+                if (not isinstance(state,dict) or state.get('schema')!=1
+                    or not finite(state.get('until')) or not isinstance(state.get('quota'),bool)
+                    or not isinstance(state.get('stamps'),list) or not all(finite(x) for x in state['stamps'])
+                    or not isinstance(state.get('counts'),dict)
+                    or not all(isinstance(v,int) and not isinstance(v,bool) and v>=0 for v in state['counts'].values())):
+                    raise ValueError('Invalid budget')
             except FileNotFoundError:
                 state = {'schema': 1, 'until': 0, 'quota': False, 'stamps': [], 'counts': {}}
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, OverflowError):
                 # Corruption is not a reason to flood the API.
                 return {'allowed': False, 'reason': 'state_invalid', 'retryAt': None}
             now = self.clock()

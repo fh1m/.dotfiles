@@ -57,4 +57,21 @@ class Continuity(unittest.TestCase):
     def test_companion_text_is_bounded_plain_content(self):
         self.assertEqual(len(m.companion('say','x'*200)['message']),160)
         m.companion('chatter','off');self.assertFalse(m.companion('status')['chatter'])
+class ServiceHealth(unittest.TestCase):
+    def test_failed_system_unit_and_restart_loop_are_reported(self):
+        import subprocess,json
+        rows=[[{'unit':'den-mailbox-ssh.service','active':'activating','sub':'auto-restart','load':'loaded'},
+               {'unit':'den-backup.service','active':'inactive','sub':'dead','load':'loaded'}],
+              [{'unit':'homie-boot-order.service','active':'failed','sub':'failed','load':'loaded'}]]
+        with patch.object(m,'run',side_effect=[subprocess.CompletedProcess([],0,json.dumps(x),'') for x in rows]):
+            health=m.service_health()
+        self.assertFalse(health['ok']);self.assertEqual(len(health['issues']),2)
+        self.assertEqual(health['issues'][0]['scope'],'user')
+        self.assertEqual(health['issues'][1]['scope'],'system')
+    def test_unavailable_query_cannot_be_reported_as_healthy(self):
+        import subprocess
+        with patch.object(m,'run',return_value=subprocess.CompletedProcess([],1,'','unavailable')):
+            health=m.service_health()
+        self.assertFalse(health['ok']);self.assertTrue(all(x['state']=='diagnostics unavailable' for x in health['issues']))
+
 if __name__=='__main__':unittest.main()

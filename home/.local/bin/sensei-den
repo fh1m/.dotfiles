@@ -297,12 +297,34 @@ def job(args):
     return {**meta,'status':r.stdout.strip()}
 
 
+def service_health():
+    """Include restart loops: --failed alone misses activating/auto-restart."""
+    issues=[]
+    for scope, options in [('user',['--user']),('system',[])]:
+        try:
+            result=run(['systemctl',*options,'list-units','--all','--output=json','--no-pager'])
+            if result.returncode:raise ValueError('Service query failed')
+            rows=json.loads(result.stdout)
+            if not isinstance(rows,list):raise ValueError('Invalid service response')
+            for row in rows:
+                if not isinstance(row,dict):raise ValueError('Invalid service entry')
+                unit=row.get('unit','')
+                if row.get('active')=='failed' or row.get('sub')=='auto-restart' or row.get('load') in ('error','bad-setting'):
+                    issues.append({'scope':scope,'unit':unit,'state':row.get('sub') or row.get('active')})
+        except (OSError,ValueError,TypeError,subprocess.SubprocessError):
+            issues.append({'scope':scope,'unit':None,'state':'diagnostics unavailable'})
+    return {'ok':not issues,'issues':issues}
+
+
 def doctor():
-    checks={'layout':(CONFIG/'layout.json').is_file(),'companionAsset':(HOME/'.local/share/sensei-companion/fh1m-poses.png').is_file(),
+    compositor=run(['hyprctl','configerrors'])
+    checks={'layout':(CONFIG/'layout.json').is_file(),'companionAsset':(HOME/'.local/share/sensei-companion/fh1m-motion-v2.png').is_file(),
         'git':shutil.which('git') is not None,'rsync':shutil.which('rsync') is not None,'ssh':shutil.which('ssh') is not None,
         'syncthing':shutil.which('syncthing') is not None,'restic':shutil.which('restic') is not None,
-        'hyprland':run(['hyprctl','configerrors']).stdout.strip()==''}
-    return {'checks':checks,'status':status(),'remaining':read(STATE/'pending.json',[])}
+        'hyprland':compositor.returncode==0 and compositor.stdout.strip()==''}
+    health=service_health();checks['services']=health['ok']
+    return {'checks':checks,'services':health,'status':status(),'remaining':read(STATE/'pending.json',[]),
+            'scope':'Runtime health; physical boot, suspend and cable handoff require separate acceptance'}
 
 
 def workbench(action):

@@ -142,3 +142,5 @@ The live edge harness requires explicit `--live`, a dedicated gesture fixture an
 [Hardware](HARDWARE.md) · [Consolidation record](REPOSITORY-AUDIT.md) · [Boot acceptance still pending](../../pc/BOOT-EXPERIENCE.md)
 
 [Input handoff hardening and minimal bars — 2026-10-16](INPUT-HARDENING.md).
+
+[Current runtime audit and remaining hardware gates](AUDIT-2026-10-16.md).

@@ -31,6 +31,7 @@ ConditionPathExists=/sys/firmware/efi
 [Service]
 Type=oneshot
 ExecStart=/usr/local/libexec/homie-boot-order repair
+TimeoutStartSec=20s
 UMask=0077
 
 [Install]
