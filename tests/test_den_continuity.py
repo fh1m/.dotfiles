@@ -68,6 +68,20 @@ class Continuity(unittest.TestCase):
     def test_companion_text_is_bounded_plain_content(self):
         self.assertEqual(len(m.companion('say','x'*200)['message']),160)
         m.companion('chatter','off');self.assertFalse(m.companion('status')['chatter'])
+    def test_music_signal_expires_instead_of_sticking(self):
+        with patch.object(m,'STATE',self.root/'state'),patch.object(m.time,'time',return_value=1000):
+            m.write(m.STATE/'zondo-context.json',{'playing':True,'at':990})
+            self.assertTrue(m.zondo_playing())
+            m.write(m.STATE/'zondo-context.json',{'playing':True,'at':900})
+            self.assertFalse(m.zondo_playing())
+            m.write(m.STATE/'zondo-context.json',{'playing':True,'at':1100})
+            self.assertFalse(m.zondo_playing())
+    def test_line_feedback_is_local_and_explicit(self):
+        with patch.object(m,'STATE',self.root/'state'):
+            m.write(m.STATE/'companion-render.json',{'lastNote':3,'noteKind':'memory'})
+            self.assertEqual(m.companion('less')['hiddenNotes'],[3])
+            self.assertEqual(m.companion('more')['favoriteKinds'],['memory'])
+            self.assertEqual(m.companion('less')['hiddenNotes'],[3])
 class ServiceHealth(unittest.TestCase):
     def test_failed_system_unit_and_restart_loop_are_reported(self):
         import subprocess,json

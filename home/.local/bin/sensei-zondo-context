@@ -37,7 +37,11 @@ def sample(home=Path.home()):
         else:
             state.parent.mkdir(parents=True,exist_ok=True)
             tmp=state.with_suffix('.tmp');tmp.write_text(json.dumps({'kind':warning.split(' ',1)[0],'text':warning,'at':now}));tmp.chmod(0o600);tmp.replace(state)
-    return dict(playing=playing,summary=summary,warning=warning,memoryPercent=round(used),freeGiB=round(free,1),temperature=temperature)
+    result=dict(playing=playing,summary=summary,warning=warning,memoryPercent=round(used),freeGiB=round(free,1),temperature=temperature,at=now)
+    state=home/'.local/state/sensei-den/zondo-context.json'
+    state.parent.mkdir(parents=True,exist_ok=True)
+    tmp=state.with_suffix('.tmp');tmp.write_text(json.dumps(result));tmp.chmod(0o600);tmp.replace(state)
+    return result
 
 if __name__=='__main__':
     try:print(json.dumps(sample()))

@@ -27,10 +27,10 @@ Item {
     Text {x:40;anchors.verticalCenter:parent.verticalCenter;width:Math.max(0,parent.width-44);visible:root.renderState.speaking===true&&parent.width>90;text:root.renderState.message||"";textFormat:Text.PlainText;maximumLineCount:2;wrapMode:Text.Wrap;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
     Image {
         width:32;height:32;anchors.left:parent.left
-        source:Quickshell.env("HOME")+"/.local/share/sensei-companion/"+(root.renderState.extraPose>=0?"zondo-life-v1.png":"fh1m-motion-v2.png")
+        source:Quickshell.env("HOME")+"/.local/share/sensei-companion/"+(root.renderState.extraPose>=0?"zondo-life-v2.png":"fh1m-motion-v2.png")
         readonly property int tile:root.renderState.activity==="dance"?root.frame:(root.renderState.extraPose>=0?root.renderState.extraPose:(root.renderState.pose??13))
         readonly property real cell:1254/4
-        sourceClipRect:Qt.rect((tile%4)*cell,Math.floor(tile/4)*cell,cell,cell)
+        sourceClipRect:{if(!(root.renderState.extraPose>=0))return Qt.rect((tile%4)*cell,Math.floor(tile/4)*cell,cell,cell);const xs=[0,313,627,945,1254],ys=[0,323,627,931,1254],c=tile%4,r=Math.floor(tile/4);return Qt.rect(xs[c],ys[r],xs[c+1]-xs[c],ys[r+1]-ys[r]);}
         fillMode:Image.PreserveAspectFit;smooth:true;asynchronous:true
     }
 }

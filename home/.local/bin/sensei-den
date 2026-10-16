@@ -85,13 +85,19 @@ def status():
         'hardwareHandoff':'Digital 100 Hz switches/cables must be physically verified'}
 
 
+def zondo_playing():
+    context=read(STATE/'zondo-context.json')
+    return context.get('playing') is True and 0<=time.time()-context.get('at',0)<60
+
+
 def companion(action,value=None):
     cfg=read(CONFIG/'companion.json',{'enabled':True,'quiet':False,'size':96})
-    if action=='protocol':return {'schema':1,'leases':True,'enabled':cfg.get('enabled',True),'quiet':cfg.get('quiet',False),'suspended':cfg.get('suspended',False),'reducedMotion':cfg.get('reducedMotion',False)}
+    if action=='protocol':return {'schema':1,'leases':True,'musicPlaying':zondo_playing(),'enabled':cfg.get('enabled',True),'quiet':cfg.get('quiet',False),'suspended':cfg.get('suspended',False),'reducedMotion':cfg.get('reducedMotion',False)}
     if action=='grant':
         sys.path.insert(0,str(HOME/'.local/share/sensei'))
         from companion_roam import grant
         payload=json.loads(value);record=grant(read(STATE/'companion-travel.json'),payload['output'],payload['token'],payload.get('ttl',40))
+        record['musicPlaying']=payload.get('musicPlaying') is True
         write(STATE/'companion-travel.json',record);return record
     if action=='roam':
         if value not in ('on','off'):raise ValueError('Use roam on or off')
@@ -398,7 +404,7 @@ def service_health():
 
 def doctor():
     compositor=run(['hyprctl','configerrors'])
-    checks={'layout':(CONFIG/'layout.json').is_file(),'companionAsset':(HOME/'.local/share/sensei-companion/fh1m-motion-v2.png').is_file(),
+    checks={'layout':(CONFIG/'layout.json').is_file(),'companionAsset':all((HOME/'.local/share/sensei-companion'/name).is_file() for name in ('fh1m-motion-v2.png','zondo-life-v2.png','den-welcome-v1.png')),
         'git':shutil.which('git') is not None,'rsync':shutil.which('rsync') is not None,'ssh':shutil.which('ssh') is not None,
         'syncthing':shutil.which('syncthing') is not None,'restic':shutil.which('restic') is not None,
         'hyprland':compositor.returncode==0 and compositor.stdout.strip()==''}
@@ -471,10 +477,12 @@ def _companion_tick(peer):
     token=max(time.time_ns(),state.get("lastToken",0)+1)
     state["lastToken"]=token
     local=json.loads(run(['hyprctl','monitors','-j']).stdout)
+    music=zondo_playing()
     destinations=[(local_host,m['name']) for m in local if not m['name'].startswith('SENSEI-')]
     if peer and local_host=='arete':
         try:
             capability=json.loads(remote([str(HOME/'.local/bin/sensei-den'),'companion','protocol'],timeout=4))
+            music=music or capability.get('musicPlaying') is True
             if capability.get('schema')==1 and capability.get('leases') and capability.get('enabled') and not capability.get('quiet') and not capability.get('suspended') and not capability.get('reducedMotion'):
                 destinations += [('homie',m['name']) for m in json.loads(remote(['hyprctl','-i','0','monitors','-j'],timeout=4)) if not m['name'].startswith('SENSEI-')]
         except (ValueError,OSError,subprocess.SubprocessError):pass
@@ -490,10 +498,10 @@ def _companion_tick(peer):
         # Hide first; a lost acknowledgement cannot create a second visible character.
         companion('grant',json.dumps({'output':'','token':token,'ttl':45}))
         state['remoteUntil']=now+45;write(STATE/'companion-route.json',state)
-        remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':output,'token':token,'ttl':40})],timeout=4)
+        remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music})],timeout=4)
     else:
         if remote_until>now:return
-        companion('grant',json.dumps({'output':output,'token':token,'ttl':40}))
+        companion('grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music}))
         state['remoteUntil']=0
     write(STATE/'companion-route.json',state)
 

@@ -37,4 +37,7 @@ class CompanionPolicy(unittest.TestCase):
         self.assertIsNone(self.js("nextNote('terminal',[],0,.5,notes.map((_,i)=>i),[])"))
     def test_personal_lines_have_provenance(self):
         self.assertTrue(self.js("notes.filter(n=>n.kind==='memory').every(n=>n.source==='https://fh1m.github.io/about/')"))
+    def test_travel_uses_a_clear_corridor(self):
+        self.assertTrue(self.js("canTravel({available:true,x:50,y:60},{available:true,x:800,y:600},96,96,[])"))
+        self.assertFalse(self.js("canTravel({available:true,x:50,y:60},{available:true,x:800,y:600},96,96,[{x:400,y:200,w:200,h:300}])"))
 if __name__=='__main__':unittest.main()

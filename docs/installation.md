@@ -114,3 +114,13 @@ The examples under `system/usr/local/libexec` and `system/etc/sudoers.d` support
 `system/etc/systemd/system/sensei-usb-audit.socket` and its service expose the optional restricted USB ownership audit. Read the Python helper and socket permissions before activating. User-space USB inventory/history works separately; privileged process visibility is an optional depth feature.
 
 On the UX581GV, `system/etc/systemd/system/disabletouchpad_second.service` detaches the unused ScreenPad touchscreen at the I²C driver. It replaces the earlier HID-only unbind that left hundreds of interrupts per second. Install and enable it only on a machine with `i2c-ELAN9009:00`, and only if ScreenPad touch/stylus input is intentionally disabled. The ScreenPad display and brightness driver remain independent. `sudo systemctl stop disabletouchpad_second.service` rebinds the touch controller when needed.
+
+### Qt theme provider on rolling releases
+
+`qt5ct` and `qt6ct` are in the desktop package lists. If a repository provider was built against a newer Qt than the machine currently has, build the small user-local provider against the installed headers:
+
+```sh
+python3 scripts/build-qt-theme.py
+```
+
+Run on each host after a Qt minor upgrade. It pins upstream, retains its ABI guard, preserves the previous provider, and installs no system libraries. Hyprland/environment.d select this path and the shared qt5ct compatibility key. [Compatibility evidence and rollback](digital-den/ZONDO.md).

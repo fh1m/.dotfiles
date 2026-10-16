@@ -64,3 +64,7 @@ trash-cli
 cliphist
 nvtop
 tesseract
+
+# Native Qt platform themes; shared qt5ct compatibility key handles Qt5 and Qt6.
+qt5ct
+qt6ct

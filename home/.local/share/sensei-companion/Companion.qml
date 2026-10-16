@@ -22,6 +22,8 @@ Item {
     property bool speaking: false
     property string activity: "read"
     property bool musicPlaying:false
+    readonly property bool denMusic:musicPlaying||(leased&&journey.musicPlaying===true)
+    onDenMusicChanged:vary()
     property var telemetry:({})
     property var memory:({recent:[],turn:0})
     property bool memoryLoaded:false
@@ -34,6 +36,7 @@ Item {
     property bool walkingRight: false
     property bool deliberateTravel: false
     property int variant: 0
+    property var occupied:[]
     property var placement: ({available:false,x:18,y:56})
     property var recent: []
     property int turn: 0
@@ -57,7 +60,7 @@ Item {
     readonly property bool allowed: eligible && placement.available
     readonly property int extraPose:Logic.extendedPose(activity,frame)
     readonly property int pose: activity==="walk" ? (walkingRight?8:4)+frame%4 : activity==="wave" ? 13 : activity==="celebrate" ? 14 : activity==="think" ? 12 : activity==="sleep" ? 15 : frame%4
-    IpcHandler {target:"companion";function state():string{return JSON.stringify({name:"Zondo",musicPlaying:root.musicPlaying,allowed:root.allowed,speaking:root.speaking,unread:root.notices.unread||0,dnd:root.notices.dnd||false,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,activity:root.activity,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
+    IpcHandler {target:"companion";function state():string{return JSON.stringify({name:"Zondo",musicPlaying:root.denMusic,allowed:root.allowed,speaking:root.speaking,unread:root.notices.unread||0,dnd:root.notices.dnd||false,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,activity:root.activity,extraPose:root.extraPose,welcome:root.welcoming,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
     property string lastPublished:""
     function publish():void {
         const data=JSON.stringify({output:target,allowed:allowed,eligible:eligible,speaking:speaking,message:message,kind:messageKind,name:"Zondo",reducedMotion:reduced,activity:activity,extraPose:extraPose,pose:pose,lastNote:lastNote,noteKind:noteKind});
@@ -68,7 +71,8 @@ Item {
     onAllowedChanged:publish()
     onSpeakingChanged:publish()
     onMessageChanged:publish()
-    onActivityChanged:publish()
+    onActivityChanged:Qt.callLater(publish)
+    onReducedChanged:Qt.callLater(publish)
     function refresh():void {
         if(!eligible && target==="")return;
         query.restart();
@@ -87,12 +91,13 @@ Item {
             if(c.hidden || c.mapped===false || !c.at || !c.size || (top.workspace?.id!==workspace && !c.pinned))continue;
             windows.push({x:c.at[0]-(data.x??0)-12,y:c.at[1]-(data.y??0)-12,w:c.size[0]+24,h:c.size[1]+24});
         }
+        occupied=windows;
         placement=Logic.place(screen.width,screen.height,pet.width,pet.height,windows,variant);
     }
     function remember():void {if(memoryLoaded)memoryFile.setText(JSON.stringify({schema:1,recent:recent.slice(-40),turn:turn}));}
-    function vary():void {activity=Logic.nextActivity(activity,musicPlaying,Math.random());frame=0;poseExpiry.stop();}
+    function vary():void {activity=Logic.nextActivity(activity,denMusic,Math.random());frame=0;poseExpiry.stop();}
     function welcome(text):void {if(preferences.welcome===false||preferences.quiet===true||preferences.enabled===false)return;welcomeText=text;welcoming=true;welcomeExpiry.restart();}
-    function say(text,kind):void {message=String(text).slice(0,160);messageKind=kind||"field note";speaking=true;speechExpiry.restart();settle.restart();}
+    function say(text,kind):void {const words=String(text);message=words.length>160?words.slice(0,156).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.restart();settle.restart();}
     function greet(manual):void {
         if(!eligible||(!manual&&preferences.chatter===false)||!Logic.notes.length)return;
         if(notices.dnd&&notices.unread>0){say(notices.unread+" notifications waiting quietly. No rush; the bell has them when you want them.","quiet desk");return;}
@@ -108,8 +113,8 @@ Item {
         if(!allowed||reduced)return;
         const old=placement, oldVariant=variant;
         variant=(variant+1)%35;locate(true);
-        if(!Logic.canWalk(old,placement)){deliberateTravel=false;return;}
-        walkingRight=placement.x>old.x;activity="walk";frame=0;poseExpiry.restart();
+        if(!Logic.canTravel(old,placement,pet.width,pet.height,occupied)){deliberateTravel=false;return;}
+        walkingRight=placement.x>old.x;activity=placement.y!==old.y?"plane":"walk";frame=0;poseExpiry.restart();
     }
     onTargetChanged:{publish();deliberateTravel=false;placement={available:false,x:18,y:56};landing=!reduced;landingExpiry.restart();refresh();arrivalHello.restart();}
     onEligibleChanged:{publish();if(eligible)refresh()}
@@ -142,20 +147,22 @@ Item {
             root.seenBackup=x.finished??"";root.backupLoaded=true;
         }catch(e){}}}
     Connections {target:Hyprland;function onRawEvent(event){
+        if(event.name==="monitoradded")dockHello.restart();
         if(["fullscreen","workspace","workspacev2","focusedmon","monitoradded","monitorremoved","activewindow","activewindowv2","openwindow","closewindow","movewindow","movewindowv2","changefloatingmode","windowtitle","configreloaded"].includes(event.name))root.refresh();
     }}
     Timer {id:query;interval:100;onTriggered:{Hyprland.refreshMonitors();Hyprland.refreshWorkspaces();Hyprland.refreshToplevels();settle.restart();}}
     Timer {id:settle;interval:180;onTriggered:root.locate()}
     Timer {interval:15000;repeat:true;running:root.eligible;onTriggered:root.refresh()}
     // Keep the clock independent of 45–90 s travel leases and available wallpaper.
-    Timer {interval:110000;repeat:true;running:root.preferences.enabled!==false&&root.preferences.chatter!==false&&root.preferences.quiet!==true;onTriggered:root.greet()}
+    Timer {interval:Math.max(45000,Math.min(600000,(root.preferences.chatterSeconds??110)*1000));repeat:true;running:root.preferences.enabled!==false&&root.preferences.chatter!==false&&root.preferences.quiet!==true;onTriggered:root.greet()}
+    Timer {id:dockHello;interval:1600;onTriggered:root.welcome("MORE ROOM TO BUILD")}
     Timer {id:arrivalHello;interval:5500;onTriggered:if(!root.speaking)root.greet()}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-notifications.json";watchChanges:true;printErrors:false
         onFileChanged:reload();onLoaded:{try{const n=JSON.parse(text());if(root.noticeLoaded&&((n.event&&n.event!==root.notices.event)||n.unread>root.seenUnread)&&!n.dnd)noticeDelay.restart();if(root.noticeLoaded&&root.notices.dnd&&!n.dnd&&n.unread>0)noticeDelay.restart();root.seenUnread=n.unread||0;root.notices=n;root.noticeLoaded=true;}catch(e){}}
     }
     Timer {id:noticeDelay;interval:1800;onTriggered:if(root.eligible&&!root.notices.dnd&&root.notices.unread>0){root.nudgedEvent=root.notices.event;root.say(root.notices.unread+' unread notification'+(root.notices.unread===1?'':'s')+(root.notices.app?' · '+root.notices.app:'')+'. The bell has the details.','desk post');}}
 
-    Timer {interval:33000;repeat:true;running:root.eligible&&!root.reduced;onTriggered:root.vary()}
+    Timer {interval:Math.max(15000,Math.min(120000,(root.preferences.activitySeconds??33)*1000));repeat:true;running:root.eligible&&!root.reduced;onTriggered:root.vary()}
     Process {id:deskSample;command:[Quickshell.env("HOME")+"/.local/bin/sensei-zondo-context"];stdout:StdioCollector {onStreamFinished:{try{const x=JSON.parse(text);root.telemetry=x;const changed=root.musicPlaying!==x.playing;root.musicPlaying=x.playing;if(changed)root.vary();if(x.warning&&root.eligible&&!root.notices.dnd)root.say(x.warning,"measured, not guessed");}catch(e){}}}}
     Timer {interval:20000;repeat:true;running:root.preferences.enabled!==false;triggeredOnStart:true;onTriggered:if(!deskSample.running)deskSample.running=true}
     Timer {interval:90000;repeat:true;running:root.allowed&&!root.reduced;onTriggered:root.walk()}
@@ -172,7 +179,7 @@ Item {
         color:"transparent"
         readonly property real spriteSize:Math.max(64,Math.min(180,root.preferences.size??96))
         implicitWidth:root.speaking?256:spriteSize
-        implicitHeight:spriteSize+(root.speaking?112:0)
+        implicitHeight:spriteSize+(root.speaking?speechBubble.height+8:0)
         onWidthChanged:settle.restart()
         onHeightChanged:settle.restart()
         anchors {left:true;top:true}
@@ -186,6 +193,7 @@ Item {
         Behavior on margins.left {enabled:root.deliberateTravel&&!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
         Behavior on margins.top {enabled:root.deliberateTravel&&!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
         Rectangle {
+            id:speechBubble
             anchors {right:parent.right;bottom:character.top;bottomMargin:8}
             width:256;height:caption.implicitHeight+body.implicitHeight+30
             visible:root.speaking
@@ -198,15 +206,15 @@ Item {
             Behavior on scale {enabled:!root.reduced;NumberAnimation {duration:650;easing.type:Easing.OutBack}}
             anchors {right:parent.right;bottom:parent.bottom}
             width:pet.spriteSize;height:width
-            source:Qt.resolvedUrl(root.extraPose>=0?"zondo-life-v1.png":"fh1m-motion-v2.png")
+            source:Qt.resolvedUrl(root.extraPose>=0?"zondo-life-v2.png":"fh1m-motion-v2.png")
             readonly property real cell:1254/4
             readonly property int tile:root.extraPose>=0?root.extraPose:root.pose
-            sourceClipRect:Qt.rect((tile%4)*cell,Math.floor(tile/4)*cell,cell,cell)
+            sourceClipRect:{if(!(root.extraPose>=0))return Qt.rect((tile%4)*cell,Math.floor(tile/4)*cell,cell,cell);const xs=[0,313,627,945,1254],ys=[0,323,627,931,1254],c=tile%4,r=Math.floor(tile/4);return Qt.rect(xs[c],ys[r],xs[c+1]-xs[c],ys[r+1]-ys[r]);}
             fillMode:Image.PreserveAspectFit;smooth:true;asynchronous:true
         }
     }
-    NumberAnimation {id:welcomeFadeOut;target:welcomeCard;property:"opacity";to:0;duration:280;onFinished:root.welcoming=false}
-    NumberAnimation {id:welcomeFadeIn;target:welcomeCard;property:"opacity";from:0;to:1;duration:400}
+    NumberAnimation {id:welcomeFadeOut;target:welcomeCard;property:"opacity";to:0;duration:root.reduced?0:280;onFinished:root.welcoming=false}
+    NumberAnimation {id:welcomeFadeIn;target:welcomeCard;property:"opacity";from:0;to:1;duration:root.reduced?0:400}
     onWelcomingChanged:if(welcoming){welcomeFadeOut.stop();welcomeFadeIn.restart()}
     Timer {id:welcomeExpiry;interval:5200;onTriggered:welcomeFadeOut.restart()}
     PanelWindow {

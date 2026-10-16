@@ -50,7 +50,7 @@ WidgetSection {
         }
         Text { textFormat: Text.PlainText; width: parent.width; visible: Den.error !== ""; text: Den.error; wrapMode: Text.Wrap; font.family: Appearance.font.ui; font.pixelSize: 11; color: Theme.signalRed }
         Row {width:parent.width;spacing:8
-            ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Surprise me";glyph:"\uf074";onActivated:Den.companion("tip","")}
+            ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Dance break";glyph:"\uf001";onActivated:Den.companion("dance","")}
             ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"More like this";glyph:"\uf164";onActivated:Den.companion("more","")}
             ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Retire this line";glyph:"\uf04e";onActivated:Den.companion("less","")}
         }

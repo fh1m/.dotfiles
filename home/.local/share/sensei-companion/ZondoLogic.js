@@ -37,3 +37,9 @@ function extendedPose(activity, frame) {
     var map={read:4,sip:5,stretch:6,stargaze:7,juggle:8,robot:9,plane:10,sketch:11,explore:12,garden:13,guitar:14,sleep:15};
     return activity==='dance'?frame%4:map[activity]===undefined?-1:map[activity];
 }
+// Animate only when the entire bounding corridor is exposed wallpaper.
+function canTravel(from,to,w,h,windows) {
+    if(!from.available||!to.available)return false;
+    var corridor={x:Math.min(from.x,to.x),y:Math.min(from.y,to.y),w:Math.abs(to.x-from.x)+w,h:Math.abs(to.y-from.y)+h};
+    return !windows.some(function(win){return intersects(corridor,win);});
+}

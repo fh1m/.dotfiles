@@ -88,6 +88,9 @@ hl.env("MOZ_ENABLE_WAYLAND", "1")
 hl.env("TERMINAL", "@HOME@/.local/bin/sensei-terminal")
 hl.env("PATH", os.getenv("HOME") .. "/.local/bin:" .. (os.getenv("PATH") or "/usr/local/bin:/usr/bin"))
 hl.env("QT_QPA_PLATFORM", "wayland")
+-- qt6ct also supports the qt5ct key: one palette for both Qt generations.
+hl.env("QT_QPA_PLATFORMTHEME", "qt5ct")
+hl.env("QT_PLUGIN_PATH", os.getenv("HOME") .. "/.local/opt/sensei-qt6ct/lib")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
 
 hl.bind(mod .. " + RETURN", hl.dsp.exec_cmd(terminal))
