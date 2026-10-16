@@ -6,11 +6,11 @@ import subprocess
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
-JS=ROOT/'home/.local/share/sensei-companion/CompanionLogic.js'
+JS=ROOT/'home/.local/share/sensei-companion/ZondoLogic.js'
 @unittest.skipUnless(shutil.which('node'),'Node needed for pure QML-JS policy checks')
 class CompanionPolicy(unittest.TestCase):
     def js(self, expression):
-        code="const vm=require('vm'),fs=require('fs');let c={};vm.createContext(c);vm.runInContext(fs.readFileSync(process.argv[1],'utf8'),c);c.notes=JSON.parse(fs.readFileSync(process.argv[1].replace('CompanionLogic.js','notes.json'),'utf8'));console.log(JSON.stringify(vm.runInContext(process.argv[2],c)));"
+        code="const vm=require('vm'),fs=require('fs');let c={};vm.createContext(c);vm.runInContext(fs.readFileSync(process.argv[1],'utf8'),c);c.notes=JSON.parse(fs.readFileSync(process.argv[1].replace('ZondoLogic.js','notes.json'),'utf8'));console.log(JSON.stringify(vm.runInContext(process.argv[2],c)));"
         return json.loads(subprocess.check_output(['node','-e',code,str(JS),expression],text=True))
     def test_full_window_has_no_safe_spot(self):
         self.assertFalse(self.js('place(1920,1080,96,96,[{x:0,y:0,w:1920,h:1080}],0)')['available'])
@@ -28,4 +28,13 @@ class CompanionPolicy(unittest.TestCase):
         self.assertTrue(self.js('canWalk({available:true,x:400,y:900},{available:true,x:540,y:900})'))
         self.assertFalse(self.js('canWalk({available:true,x:400,y:900},{available:true,x:540,y:50})'))
         self.assertFalse(self.js('canWalk({available:true,x:400,y:900},{available:true,x:1700,y:900})'))
+    def test_non_corner_positions_are_available(self):
+        self.assertTrue(self.js('(()=>{const p=place(1920,1080,96,96,[],0);return p.available&&p.x>500&&p.y>200&&p.y<800;})()'))
+    def test_activities_vary_and_music_uses_dance_family(self):
+        self.assertTrue(self.js("(()=>{let a='read',seen=new Set();for(let i=0;i<100;i++){let n=nextActivity(a,false,i/100);if(n===a)return false;seen.add(n);a=n;}return seen.size>=12;})()"))
+        self.assertTrue(self.js("Array.from({length:100},(_,i)=>nextActivity('read',true,i/100)).every(x=>['dance','guitar','stretch'].includes(x))"))
+    def test_retired_lines_never_reappear(self):
+        self.assertIsNone(self.js("nextNote('terminal',[],0,.5,notes.map((_,i)=>i),[])"))
+    def test_personal_lines_have_provenance(self):
+        self.assertTrue(self.js("notes.filter(n=>n.kind==='memory').every(n=>n.source==='https://fh1m.github.io/about/')"))
 if __name__=='__main__':unittest.main()

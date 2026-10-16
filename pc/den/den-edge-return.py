@@ -49,7 +49,6 @@ def main():
                 y=target['y']+(3 if mode=='1' else clamp((pos['y']-pc['y'])/ph*th,th))
                 if not current_return(STATE,token):return
                 subprocess.run(['hyprctl','-i','0','dispatch',f'hl.dsp.cursor.move({{x={round(x)},y={round(y)}}})'],check=True,stdout=subprocess.DEVNULL,timeout=1)
-                subprocess.Popen([sys.executable,str(STATE/'den-cursor.py'),'show-local'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdin=subprocess.DEVNULL)
         except (OSError,StopIteration,ValueError,KeyError,subprocess.SubprocessError):
             # Only this failed, still-current entry may release capture. An old
             # helper must never stop the new session or warp its cursor.

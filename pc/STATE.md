@@ -1,3 +1,19 @@
+# Zondo and development polish — 2026-10-17
+
+Both hosts use the shared tmux button rail and music Focus/Backdrop UI. Homie’s
+palette generator now supports the full shared template. Neovim 0.12.6 is retained;
+21 Mason tools and 21 parsers were provisioned with an isolated Python 3.13 only
+for Mason. Host/ROS-container Python LSP checks passed. No project dependencies,
+system Python, disks, bootloader or credentials changed.
+
+Zondo’s new sprite atlas, activity policy, public-project callbacks, local feedback
+and repetition memory, measured context and graphical welcome are documented in
+[ZONDO.md](../docs/digital-den/ZONDO.md). Terminal opacity .96, GTK/Qt styling and
+PC Hyprcursor environment now follow the shared Den. Automatic locator flashes
+on crossing are removed; explicit Ctrl locator and emergency escape remain.
+The four entry/return combinations and triple-Ctrl pause/resume passed on the
+live Den. Physical cold boot/cable handoff still requires hardware acceptance.
+
 # Spotify listening-room checkpoint — 2026-10-16
 
 Shared fullscreen music UI deployed through the PC profile, using Homie's own

@@ -3,7 +3,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
-import "CompanionLogic.js" as Logic
+import "ZondoLogic.js" as Logic
 
 // One existing cursor renderer. No network, window titles, keys or clipboard reads.
 Item {
@@ -20,7 +20,15 @@ Item {
     property string message: ""
     property string messageKind: "field note"
     property bool speaking: false
-    property string activity: "typing"
+    property string activity: "read"
+    property bool musicPlaying:false
+    property var telemetry:({})
+    property var memory:({recent:[],turn:0})
+    property bool memoryLoaded:false
+    property string lastMode:""
+    property bool presenceLoaded:false
+    property string welcomeText:""
+    property bool welcoming:false
     property int frame: 0
     property bool typingBurst: false
     property bool walkingRight: false
@@ -29,6 +37,8 @@ Item {
     property var placement: ({available:false,x:18,y:56})
     property var recent: []
     property int turn: 0
+    property int lastNote:-1
+    property string noteKind:""
     property var notices:({unread:0,dnd:false})
     property int seenUnread:0
     property bool noticeLoaded:false
@@ -45,11 +55,12 @@ Item {
     readonly property string target: managed ? (leased ? journey.output : "") : ownerOutput ? (preferred || ownerOutput) : (standalone ? (preferred || Quickshell.screens[0]?.name || "") : "")
     readonly property bool eligible: preferences.enabled!==false && preferences.quiet!==true && preferences.suspended!==true && !fullscreen && target!==""
     readonly property bool allowed: eligible && placement.available
+    readonly property int extraPose:Logic.extendedPose(activity,frame)
     readonly property int pose: activity==="walk" ? (walkingRight?8:4)+frame%4 : activity==="wave" ? 13 : activity==="celebrate" ? 14 : activity==="think" ? 12 : activity==="sleep" ? 15 : frame%4
-    IpcHandler {target:"companion";function state():string{return JSON.stringify({allowed:root.allowed,speaking:root.speaking,unread:root.notices.unread||0,dnd:root.notices.dnd||false,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,activity:root.activity,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
+    IpcHandler {target:"companion";function state():string{return JSON.stringify({name:"Zondo",musicPlaying:root.musicPlaying,allowed:root.allowed,speaking:root.speaking,unread:root.notices.unread||0,dnd:root.notices.dnd||false,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,activity:root.activity,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
     property string lastPublished:""
     function publish():void {
-        const data=JSON.stringify({output:target,allowed:allowed,eligible:eligible,speaking:speaking,message:message,kind:messageKind});
+        const data=JSON.stringify({output:target,allowed:allowed,eligible:eligible,speaking:speaking,message:message,kind:messageKind,name:"Zondo",reducedMotion:reduced,activity:activity,extraPose:extraPose,pose:pose,lastNote:lastNote,noteKind:noteKind});
         if(data!==lastPublished && renderFile){lastPublished=data;renderFile.setText(data);}
     }
     FileView {id:renderFile;path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-render.json";printErrors:false}
@@ -57,6 +68,7 @@ Item {
     onAllowedChanged:publish()
     onSpeakingChanged:publish()
     onMessageChanged:publish()
+    onActivityChanged:publish()
     function refresh():void {
         if(!eligible && target==="")return;
         query.restart();
@@ -77,26 +89,35 @@ Item {
         }
         placement=Logic.place(screen.width,screen.height,pet.width,pet.height,windows,variant);
     }
+    function remember():void {if(memoryLoaded)memoryFile.setText(JSON.stringify({schema:1,recent:recent.slice(-40),turn:turn}));}
+    function vary():void {activity=Logic.nextActivity(activity,musicPlaying,Math.random());frame=0;poseExpiry.stop();}
+    function welcome(text):void {if(preferences.welcome===false||preferences.quiet===true||preferences.enabled===false)return;welcomeText=text;welcoming=true;welcomeExpiry.restart();}
     function say(text,kind):void {message=String(text).slice(0,160);messageKind=kind||"field note";speaking=true;speechExpiry.restart();settle.restart();}
     function greet(manual):void {
         if(!eligible||(!manual&&preferences.chatter===false)||!Logic.notes.length)return;
         if(notices.dnd&&notices.unread>0){say(notices.unread+" notifications waiting quietly. No rush; the bell has them when you want them.","quiet desk");return;}
         if(notices.unread>0&&notices.event&&nudgedEvent!==notices.event){nudgedEvent=notices.event;say(notices.unread+' notifications waiting. The bell has the details whenever you are ready.','desk post');return;}
-        const note=Logic.nextNote(activeApp,recent,turn++,Math.random());
-        recent=recent.concat([note.id]).slice(-8);say(note.text,note.kind==="wit"?"off the clock":"desk tip");
-        activity=note.kind==="wit"?"wave":"think";poseExpiry.restart();
+        if(turn%5===4 && telemetry.summary){turn++;say(telemetry.summary,"live desk check");remember();return;}
+        const note=Logic.nextNote(activeApp,recent,turn++,Math.random(),preferences.hiddenNotes||[],preferences.favoriteKinds||[]);
+        if(!note)return;
+        lastNote=note.id;noteKind=note.kind;recent=recent.concat([note.id]).slice(-40);remember();
+        say(note.text,note.kind==="memory"?"from your project log":note.kind==="wit"?"Zondo, off duty":note.kind==="wonder"?"small wonder":"desk tip");
+        vary();
     }
     function walk():void {
         if(!allowed||reduced)return;
         const old=placement, oldVariant=variant;
-        variant=(variant+1)%2;locate(true);
-        if(!Logic.canWalk(old,placement)){variant=oldVariant;deliberateTravel=false;placement=old;return;}
+        variant=(variant+1)%35;locate(true);
+        if(!Logic.canWalk(old,placement)){deliberateTravel=false;return;}
         walkingRight=placement.x>old.x;activity="walk";frame=0;poseExpiry.restart();
     }
     onTargetChanged:{publish();deliberateTravel=false;placement={available:false,x:18,y:56};landing=!reduced;landingExpiry.restart();refresh();arrivalHello.restart();}
     onEligibleChanged:{publish();if(eligible)refresh()}
     Timer {interval:1000;repeat:true;running:root.managed;onTriggered:root.journeyClock=Date.now()/1000}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-travel.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.journey=JSON.parse(text());root.journeyClock=Date.now()/1000;}catch(e){}}}
+    FileView {id:memoryFile;path:Quickshell.env("HOME")+"/.local/state/sensei-den/zondo-memory.json";printErrors:false
+        onLoaded:{try{const m=JSON.parse(text());root.recent=Array.isArray(m.recent)?m.recent.slice(-40):[];root.turn=Number(m.turn)||0;}catch(e){}root.memoryLoaded=true;}}
+    Timer {interval:1500;running:true;onTriggered:root.memoryLoaded=true}
     FileView {path:Qt.resolvedUrl("notes.json");watchChanges:true;printErrors:false
         onFileChanged:reload();onLoaded:{try{Logic.notes=JSON.parse(text());}catch(e){}}}
     FileView {path:Quickshell.env("HOME")+"/.config/sensei-den/companion.json";watchChanges:true;printErrors:false
@@ -110,7 +131,10 @@ Item {
             if(root.preferences.tipAt && root.preferences.tipAt!==root.seenTip && Date.now()/1000-root.preferences.tipAt<8){root.seenTip=root.preferences.tipAt;root.greet(true);}
         }catch(e){}}}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/presence.json";watchChanges:true;printErrors:false
-        onFileChanged:reload();onLoaded:{try{root.presence=JSON.parse(text());}catch(e){}}}
+        onFileChanged:reload();onLoaded:{try{const p=JSON.parse(text()),mode=p.mode?.effective||"";
+            if(root.presenceLoaded && mode!==root.lastMode)root.welcome(mode==="together"?"THE DEN IS TOGETHER":p.host==="homie"?"HOMIE HOLDS THE FORT":"ARETE, ON THE MOVE");
+            if(!root.presenceLoaded)root.welcome("WELCOME HOME, FH1M");
+            root.presenceLoaded=true;root.lastMode=mode;root.presence=p;}catch(e){}}}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/backup-status.json";watchChanges:true;printErrors:false
         onFileChanged:reload();onLoaded:{try{const x=JSON.parse(text());
             if(root.backupLoaded && x.finished && x.finished!==root.seenBackup && root.allowed && root.preferences.chatter!==false)
@@ -131,11 +155,14 @@ Item {
     }
     Timer {id:noticeDelay;interval:1800;onTriggered:if(root.eligible&&!root.notices.dnd&&root.notices.unread>0){root.nudgedEvent=root.notices.event;root.say(root.notices.unread+' unread notification'+(root.notices.unread===1?'':'s')+(root.notices.app?' · '+root.notices.app:'')+'. The bell has the details.','desk post');}}
 
+    Timer {interval:33000;repeat:true;running:root.eligible&&!root.reduced;onTriggered:root.vary()}
+    Process {id:deskSample;command:[Quickshell.env("HOME")+"/.local/bin/sensei-zondo-context"];stdout:StdioCollector {onStreamFinished:{try{const x=JSON.parse(text);root.telemetry=x;const changed=root.musicPlaying!==x.playing;root.musicPlaying=x.playing;if(changed)root.vary();if(x.warning&&root.eligible&&!root.notices.dnd)root.say(x.warning,"measured, not guessed");}catch(e){}}}}
+    Timer {interval:20000;repeat:true;running:root.preferences.enabled!==false;triggeredOnStart:true;onTriggered:if(!deskSample.running)deskSample.running=true}
     Timer {interval:90000;repeat:true;running:root.allowed&&!root.reduced;onTriggered:root.walk()}
     Timer {interval:18000;repeat:true;running:root.allowed&&!root.reduced;onTriggered:{root.typingBurst=true;burstExpiry.restart();}}
     Timer {id:burstExpiry;interval:1320;onTriggered:{root.typingBurst=false;root.frame=0;}}
-    Timer {interval:220;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk");onTriggered:root.frame=(root.frame+1)%4}
-    Timer {id:poseExpiry;interval:2200;onTriggered:{root.activity="typing";root.frame=0;root.deliberateTravel=false;}}
+    Timer {interval:220;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk"||root.activity==="dance");onTriggered:root.frame=(root.frame+1)%4}
+    Timer {id:poseExpiry;interval:2200;onTriggered:{root.vary();root.frame=0;root.deliberateTravel=false;}}
     Timer {id:speechExpiry;interval:9500;onTriggered:{root.speaking=false;settle.restart();}}
     Timer {id:landingExpiry;interval:700;onTriggered:root.landing=false}
     PanelWindow {
@@ -163,7 +190,7 @@ Item {
             width:256;height:caption.implicitHeight+body.implicitHeight+30
             visible:root.speaking
             radius:9;color:"#f2171311";border.color:"#6244323a";border.width:1
-            Text {id:caption;anchors {left:parent.left;top:parent.top;leftMargin:14;topMargin:10} text:root.messageKind.toUpperCase();font.family:"JetBrainsMono Nerd Font";font.pixelSize:9;font.letterSpacing:1.1;color:"#f23d70"}
+            Text {id:caption;anchors {left:parent.left;top:parent.top;leftMargin:14;topMargin:10} text:"ZONDO / "+root.messageKind.toUpperCase();width:parent.width-28;elide:Text.ElideRight;font.family:"JetBrainsMono Nerd Font";font.pixelSize:9;font.letterSpacing:1.1;color:"#f23d70"}
             Text {id:body;anchors {left:parent.left;right:parent.right;top:caption.bottom;leftMargin:14;rightMargin:14;topMargin:7} text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:"JetBrainsMono Nerd Font";font.pixelSize:12;color:"#e8e2da"}
         }
         Image {
@@ -171,10 +198,37 @@ Item {
             Behavior on scale {enabled:!root.reduced;NumberAnimation {duration:650;easing.type:Easing.OutBack}}
             anchors {right:parent.right;bottom:parent.bottom}
             width:pet.spriteSize;height:width
-            source:Qt.resolvedUrl("fh1m-motion-v2.png")
+            source:Qt.resolvedUrl(root.extraPose>=0?"zondo-life-v1.png":"fh1m-motion-v2.png")
             readonly property real cell:1254/4
-            sourceClipRect:Qt.rect((root.pose%4)*cell,Math.floor(root.pose/4)*cell,cell,cell)
+            readonly property int tile:root.extraPose>=0?root.extraPose:root.pose
+            sourceClipRect:Qt.rect((tile%4)*cell,Math.floor(tile/4)*cell,cell,cell)
             fillMode:Image.PreserveAspectFit;smooth:true;asynchronous:true
         }
     }
+    NumberAnimation {id:welcomeFadeOut;target:welcomeCard;property:"opacity";to:0;duration:280;onFinished:root.welcoming=false}
+    NumberAnimation {id:welcomeFadeIn;target:welcomeCard;property:"opacity";from:0;to:1;duration:400}
+    onWelcomingChanged:if(welcoming){welcomeFadeOut.stop();welcomeFadeIn.restart()}
+    Timer {id:welcomeExpiry;interval:5200;onTriggered:welcomeFadeOut.restart()}
+    PanelWindow {
+        id:arrival
+        screen:Quickshell.screens.find(s=>s.name===(root.presence.host==="homie"?root.preferences.output:"eDP-1"))??Quickshell.screens[0]
+        visible:root.welcoming
+        implicitWidth:Math.min(540,(screen?.width??600)-48);implicitHeight:240
+        color:"transparent"
+        exclusionMode:ExclusionMode.Ignore
+        WlrLayershell.layer:WlrLayer.Overlay
+        WlrLayershell.namespace:"sensei-zondo-arrival"
+        WlrLayershell.keyboardFocus:WlrKeyboardFocus.None
+        mask:Region {}
+        Rectangle {id:welcomeCard;anchors.fill:parent;radius:16;color:"#151116";clip:true
+            Image {anchors.fill:parent;source:Qt.resolvedUrl("den-welcome-v1.png");fillMode:Image.PreserveAspectCrop;opacity:.65}
+            Rectangle {anchors.fill:parent;gradient:Gradient {orientation:Gradient.Horizontal;GradientStop {position:0;color:"#ee100e12"} GradientStop {position:1;color:"#00100e12"}}}
+            Column {anchors {left:parent.left;verticalCenter:parent.verticalCenter;leftMargin:26} spacing:14
+                Text {text:"FH1M / DIGITAL DEN";color:"#ff4297";font.family:"JetBrainsMono Nerd Font";font.pixelSize:11; font.letterSpacing:2}
+                Text {text:root.welcomeText; color:"#f4e9ee";font.family:"JetBrainsMono Nerd Font";font.pixelSize:16}
+                Text {text:"Zondo is at the desk.\nMake something that has to work.";color:"#c8b7bf";font.family:"JetBrainsMono Nerd Font";font.pixelSize:12;lineHeight:1.5}
+            }
+        }
+    }
+
 }

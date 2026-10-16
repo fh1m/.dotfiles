@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+"""Bounded, local-only desk context. No keys, titles, clipboard or network access."""
+import json, os, shutil, subprocess, time
+from pathlib import Path
+
+def sample(home=Path.home()):
+    playing=False
+    try:
+        p=subprocess.run(['playerctl','--player=spotify','status'],capture_output=True,text=True,timeout=1)
+        playing=p.returncode==0 and p.stdout.strip()=='Playing'
+    except (OSError,subprocess.SubprocessError):pass
+    mem={}
+    for line in Path('/proc/meminfo').read_text().splitlines():
+        k,v=line.split(':',1);mem[k]=int(v.split()[0])
+    used=100*(1-mem['MemAvailable']/mem['MemTotal'])
+    disk=shutil.disk_usage(home);free=disk.free/2**30
+    uptime=float(Path('/proc/uptime').read_text().split()[0])/3600
+    temps=[]
+    for p in Path('/sys/class/thermal').glob('thermal_zone*/temp'):
+        try:
+            v=int(p.read_text())/1000
+            if 0<v<130:temps.append(v)
+        except (OSError,ValueError):pass
+    temperature=max(temps,default=None)
+    summary=f'Memory {used:.0f}% in use · home volume {free:.0f} GiB free · uptime {uptime:.1f} h.'
+    warning=''
+    if free<5:warning=f'Home volume has {free:.1f} GiB free. Worth checking before a large recording.'
+    elif used>94:warning=f'Memory use is {used:.0f}%. A large job may need some breathing room.'
+    elif temperature and temperature>90:warning=f'A thermal sensor reports {temperature:.0f} °C. Check cooling and the current workload.'
+    # Warnings repeat at most once per 30 minutes, not on every telemetry sample.
+    state=home/'.local/state/sensei-den/zondo-warning.json'
+    now=time.time()
+    try:last=json.loads(state.read_text())
+    except (OSError,ValueError):last={}
+    if warning:
+        if last.get('kind')==warning.split(' ',1)[0] and now-last.get('at',0)<1800:warning=''
+        else:
+            state.parent.mkdir(parents=True,exist_ok=True)
+            tmp=state.with_suffix('.tmp');tmp.write_text(json.dumps({'kind':warning.split(' ',1)[0],'text':warning,'at':now}));tmp.chmod(0o600);tmp.replace(state)
+    return dict(playing=playing,summary=summary,warning=warning,memoryPercent=round(used),freeGiB=round(free,1),temperature=temperature)
+
+if __name__=='__main__':
+    try:print(json.dumps(sample()))
+    except (OSError,ValueError,KeyError):print(json.dumps({'playing':False,'summary':'','warning':''}))

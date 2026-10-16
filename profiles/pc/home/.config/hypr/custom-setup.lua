@@ -265,6 +265,7 @@ dofile(os.getenv("HOME") .. "/.config/hypr/workspace-apps.lua")
 -- Shared cursor theme for Wayland and XWayland clients.
 hl.env("XCURSOR_THEME", "Sensei-Signal")
 hl.env("HYPRCURSOR_THEME", "Sensei-Signal")
+hl.env("HYPRCURSOR_THEME", "Sensei-Signal")
 hl.dispatch(hl.dsp.exec_cmd("hyprctl setcursor Sensei-Signal 24"))
 
 -- Workbench tools stay out of the bar.

@@ -1,5 +1,5 @@
 # Sensei · fast daily terminal. The deck uses Alacritty too.
-# Match the live Alacritty palette, Iosevka metrics and opaque compositor profile.
+# Match the live Alacritty palette, Iosevka metrics and quiet compositor profile.
 [general]
 live_config_reload = true
 
@@ -8,7 +8,7 @@ TERM = "alacritty"
 
 [window]
 decorations = "None"
-opacity = 1.0
+opacity = 0.96
 padding = { x = 14, y = 8 }
 dynamic_padding = true
 resize_increments = true

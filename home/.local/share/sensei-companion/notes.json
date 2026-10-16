@@ -192,5 +192,111 @@
     "kind": "wit",
     "contexts": [],
     "text": "If the solution needs a diagram, the notebook is officially part of the toolchain."
+  },
+  {
+    "kind": "memory",
+    "text": "Mongla’s abort path has a place on your site. A robot that stops when asked: underrated engineering poetry.",
+    "contexts": [],
+    "topic": "mongla",
+    "source": "https://fh1m.github.io/about/"
+  },
+  {
+    "kind": "memory",
+    "text": "From rocket trajectories to underwater vehicles: your projects keep finding new ways to argue with gravity.",
+    "contexts": [],
+    "topic": "aerd",
+    "source": "https://fh1m.github.io/about/"
+  },
+  {
+    "kind": "memory",
+    "text": "Your rover work included OCR for keyboard alignment. Somewhere, a robot also had to find the right key.",
+    "contexts": [],
+    "topic": "mongol-tori",
+    "source": "https://fh1m.github.io/about/"
+  },
+  {
+    "kind": "memory",
+    "text": "You built a two-axis TVC controller. Today’s reminder: the sign on a feedback term can have a very exciting opinion.",
+    "contexts": [],
+    "topic": "tvc",
+    "source": "https://fh1m.github.io/about/"
+  },
+  {
+    "kind": "memory",
+    "text": "Your site says physics gets the final vote. I checked: my hot-pink headphones have no voting rights.",
+    "contexts": [],
+    "topic": "about",
+    "source": "https://fh1m.github.io/about/"
+  },
+  {
+    "kind": "memory",
+    "text": "RocketPy predictions against flight-test data: that is a much better plot twist than a perfect simulation.",
+    "contexts": [],
+    "topic": "aerd",
+    "source": "https://fh1m.github.io/about/"
+  },
+  {
+    "kind": "memory",
+    "text": "Underwater vision, firmware, estimators: your work keeps crossing the software–physics seam. Good place to ask questions.",
+    "contexts": [],
+    "topic": "about",
+    "source": "https://fh1m.github.io/about/"
+  },
+  {
+    "kind": "memory",
+    "text": "The Mongla e-stop photo is a good reminder: the escape path is part of the design, not an apology.",
+    "contexts": [],
+    "topic": "mongla",
+    "source": "https://fh1m.github.io/about/"
+  },
+  {
+    "kind": "wonder",
+    "text": "A small question for the desk: what result would change your mind about the thing you are building?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Tiny thought experiment: if the timestamps were wrong but every value looked plausible, how would you catch it?",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "A model can be useful and still be wrong. Finding its boundary counts as progress.",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which part of today’s system could you explain with a sketch instead of a thousand words?",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "A calm minute is allowed. Nothing on this desk needs a streak counter.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I am conducting a very serious investigation into whether this song improves code. Sample size: one tiny dancer.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "No new wisdom from me. Just keeping the desk company while you think.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "If a bug disappears when you add logging, congratulations: the observer has joined the experiment.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "My plant runs on simulated photosynthesis. Your water bottle has a more demanding API.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I brought imaginary biscuits. Zero crumbs in the keyboard. Excellent thermal design.",
+    "contexts": []
   }
 ]

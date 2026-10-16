@@ -192,10 +192,19 @@ python3 scripts/doctor.py
 Some nights call for a derivation. Some call for an album and a notebook. The Den has room for both.
 
 - **Listening room:** artwork, lyrics and queue together. Focus strips it back to the cover and song. Move it to another display, or put it behind your work with Backdrop.
-- **A small desk companion:** context-aware tips, occasional nonsense, a visit to Homie, and notification counts without reading private message bodies. Busy screen? He takes a bar perch instead of sitting on the code.
+- **Zondo, desk-sized troublemaker:** reading, stargazing, gardening, robot wrangling—and dancing when Spotify plays. Project-history callbacks, local repetition memory and notification counts without reading private message bodies. Busy screen? He takes a bar perch instead of sitting on the code.
 - **The old tmux buttons are home:** sessions, windows, panes and directory at a glance. No session needs to die for a cosmetic change.
 - **The editor has receipts:** a disposable Python fixture checks snippets, parsing, formatting, debugger configuration and real LSP hover on the host and ROS container. The field guide includes the editor’s live mappings and attached-language shortcuts.
 
 > Tiny engineer. Big coordinate-frame problem. We’ll take it one function at a time.
 
 [Music controls](docs/digital-den/MUSIC-LISTENING-ROOM.md) · [Development](docs/development.md) · [This polish pass](docs/digital-den/DEN-POLISH-V3.md)
+
+<details>
+<summary>Meet Zondo / a tiny off-duty engineer</summary>
+
+<img src="home/.local/share/sensei-companion/zondo-life-v1.png" alt="Zondo’s original sixteen-pose atlas: dance, books, coffee, robots, sketching, stargazing and a well-earned nap" width="580">
+
+Original illustrated sprites used by the live desktop. He explores exposed wallpaper across the Den, takes a bar perch when the desk is busy, and never sits on your code. “More like this” and “Retire this line” keep his repertoire yours. [Controls and privacy](docs/digital-den/ZONDO.md).
+
+</details>

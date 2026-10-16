@@ -32,7 +32,6 @@ def main():
         if not current():return
         subprocess.run([str(ROOT/'bin/lan-mouse'),'cli','arm-return'],check=True,stdout=subprocess.DEVNULL,timeout=.5)
         if (ROOT/'input/return-armed').read_text().strip()=='1':
-            subprocess.Popen([sys.executable,str(ROOT/'den-cursor.py'),'show-local'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdin=subprocess.DEVNULL)
             return
         time.sleep(.025)
     raise RuntimeError('Receiver return path did not arm')
