@@ -15,8 +15,14 @@ class Controls(unittest.TestCase):
    p=Fake();p.action(name,[]);self.assertEqual(len(p.calls),1)
  def test_unsupported_queue_never_falls_back(self):
   p=Fake()
-  with self.assertRaises(ValueError):p.action('play-list',['[]'])
+  with patch.object(m,'desktop_action',side_effect=ValueError('Bridge unavailable')) as action:
+   with self.assertRaises(ValueError):p.action('play-list',['[]'])
+   action.assert_called_once_with('play-list',['[]'])
   self.assertEqual(p.calls,[])
+ def test_official_urls_match_catalogue_identity(self):
+  ident='A'*22
+  self.assertEqual(m.canonical_uri('https://open.spotify.com/track/'+ident+'?si=private'),'spotify:track:'+ident)
+  self.assertEqual(m.canonical_uri('https://example.com/track/'+ident),'https://example.com/track/'+ident)
  def test_status_units(self):
   p=Fake().status();self.assertEqual(p['progress'],3000);self.assertEqual(p['track']['duration'],120000)
  def test_selection_rejects_corruption_without_replacing(self):

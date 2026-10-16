@@ -4,6 +4,17 @@ import os,sys
 if __name__=='__main__' and not os.environ.get('SENSEI_SPOTIFY_REMOTE') and len(sys.argv)>1 and sys.argv[1] in ('status','play','pause','toggle','next','previous','volume','seek','seek-to','shuffle','repeat','play-list','play-track','play-context','play-context-track'):
  native=os.path.expanduser('~/.local/bin/sensei-spotify-control')
  if os.path.exists(native):os.execv(native,[native]+sys.argv[1:])
+# The official desktop owns browsing too; never fall back to an exhausted app ID.
+if __name__=='__main__' and len(sys.argv)>1:
+ sys.path.insert(0,os.path.expanduser('~/.local/share/sensei'))
+ from spotify_control import selection
+ if selection()=='official' and sys.argv[1] in ('account','home','library','context','more','search','queue','devices','queue-add','like','unlike','playlist-add','playlist-create','enqueue','connect','liked-play'):
+  import json
+  try:
+   from spotify_catalog import dispatch
+   result=dispatch(sys.argv[1:])
+  except Exception as error:result={'error':str(error) if isinstance(error,ValueError) else 'Spotify desktop bridge is unavailable. Open Spotify to reconnect.'}
+  print(json.dumps(result,ensure_ascii=False));sys.exit(1 if 'error' in result else 0)
 import json,sys,os,socket,time,re,hashlib,datetime,urllib.request,urllib.parse,urllib.error,fcntl,tomllib,subprocess
 from pathlib import Path
 os.umask(0o077)

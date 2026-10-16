@@ -34,6 +34,9 @@ Scope {
     IpcHandler {
         target: "spotify"
         function search(query: string): void { SpotifyDesk.page=4;SpotifyDesk.query=query;ShellState.openDropdown("spotify"); }
+        function library(kind:string):void {if(!['liked','albums','artists','recent','top'].includes(kind))return;SpotifyDesk.page=3;SpotifyDesk.libraryKind=kind;SpotifyDesk.refresh(false);ShellState.openDropdown('spotify');}
+        function more():void {SpotifyDesk.more();}
+        function playRow(index:int):void {const row=SpotifyDesk.visibleRows[index];if(index>=0&&row)SpotifyDesk.play(row);}
         function art(): void { SpotifyDesk.artExpanded=true; }
         function browse(kind: string, id: string): void { SpotifyDesk.browse({kind:kind,id:id});ShellState.openDropdown("spotify"); }
         function open(): void { ShellState.openDropdown("spotify"); }

@@ -4,7 +4,23 @@
 
 ![Spotify studio](assets/spotify.png)
 
-## The path
+## Current default: Spotify desktop session
+
+The widget now browses playlists, liked songs, albums, artists, search and queue
+through a small local Spicetify bridge to the logged-in desktop client. MPRIS
+handles basic controls. This replaces the quota-exhausted Web API browsing path;
+selecting official transport alone did not solve it. Account → Repair desktop
+bridge restores the maintained integration without opening a terminal.
+
+[Setup, evidence, upgrade boundaries and research](digital-den/SPOTIFY-DESKTOP-REPAIR.md).
+The desktop app stays installed and signed in; its credentials remain local.
+
+## Optional native backend and its history
+
+The following describes the retained native transport and earlier investigations.
+Its Web API quota is independent from the current desktop-session backend.
+
+### Native path
 
 ```mermaid
 flowchart LR

@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""Install/repair only our local bridge; preserve themes, sessions and other extensions."""
+import argparse,configparser,datetime,json,os,secrets,shutil,signal,subprocess,sys,time
+from pathlib import Path
+h=Path.home()
+def run(args,**kw):return subprocess.run(args,check=True,**kw)
+def main():
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--apply',action='store_true');a=p.parse_args()
+ binary=shutil.which('spicetify')
+ if not binary and (h/'.spicetify/spicetify').is_file():binary=str(h/'.spicetify/spicetify')
+ if not binary:raise ValueError('Install Spicetify CLI first; the official Spotify session is preserved.')
+ cfg_path=Path(subprocess.check_output([binary,'-c'],text=True).strip());cfg=configparser.ConfigParser();cfg.read(cfg_path)
+ app=Path(cfg.get('Setting','spotify_path'));index=app/'Apps/xpui/index.html'
+ if not app.is_dir():raise ValueError('Spotify application path is missing; open spotify-launcher first.')
+ private=h/'.config/sensei-den/spotify-bridge.json'
+ secret=json.loads(private.read_text()) if private.exists() else {'port':18173,'secret':secrets.token_hex(32)}
+ template=(h/'.local/share/sensei-spotify/bridge.js').read_text();rendered=template.replace('__PORT__',str(secret['port'])).replace('__SECRET__',secret['secret'])
+ destinations=[cfg_path.parent/'Extensions/sensei-bridge.js']
+ legacy=h/'.spicetify/Extensions/sensei-bridge.js'
+ if legacy.exists():destinations.append(legacy)
+ extensions=[v.strip() for v in cfg.get('AdditionalOptions','extensions',fallback='').split('|') if v.strip()]
+ changed=not index.exists() or 'extensions/sensei-bridge.js' not in index.read_text() or 'sensei-bridge.js' not in extensions or any(not x.exists() or x.read_text()!=rendered for x in destinations)
+ if not a.apply:return {'changed':changed,'apply':False,'source':'existing Spotify desktop session'}
+ os.umask(0o077)
+ if changed:
+  backup=h/'.local/state/sensei-den/music-repair'/datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f');backup.mkdir(parents=True,mode=0o700)
+  shutil.copy2(cfg_path,backup/cfg_path.name)
+  if (app/'Apps').is_dir():shutil.copytree(app/'Apps',backup/'Apps')
+  for i,dest in enumerate(destinations):
+   if dest.exists():shutil.copy2(dest,backup/('extension-'+str(i)+'.js'))
+   dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(rendered);dest.chmod(0o600)
+  private.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
+  if not private.exists():private.write_text(json.dumps(secret));private.chmod(0o600)
+  if 'sensei-bridge.js' not in extensions:run([binary,'config','extensions','sensei-bridge.js'])
+  run([binary,'apply'])
+ run(['systemctl','--user','daemon-reload'])
+ run(['systemctl','--user','enable','sensei-spotify-bridge.service'])
+ run(['systemctl','--user','restart','sensei-spotify-bridge.service'])
+ if changed:
+  # Close only Spotify, not terminals, input sharing or any other application.
+  sys.path.insert(0,str(h/'.local/share/sensei'))
+  from spotify_control import OfficialPlayer
+  try:OfficialPlayer().call('org.mpris.MediaPlayer2','Quit')
+  except Exception:pass
+  deadline=time.monotonic()+15
+  signalled=False
+  while subprocess.run(['pgrep','-u',str(os.getuid()),'-x','spotify'],stdout=subprocess.DEVNULL).returncode==0:
+   if time.monotonic()>deadline:
+    if signalled:raise ValueError('Spotify is still closing. No forced kill was performed; open Spotify after it exits.')
+    # The client's Quit can hang during teardown. Gracefully terminate only this
+    # user's processes executing the exact configured Spotify binary.
+    for proc in Path('/proc').iterdir():
+     if not proc.name.isdigit():continue
+     try:
+      if proc.stat().st_uid==os.getuid() and (proc/'exe').resolve()==(app/'spotify').resolve():os.kill(int(proc.name),signal.SIGTERM)
+     except (ProcessLookupError,FileNotFoundError,PermissionError):pass
+    signalled=True;deadline=time.monotonic()+15
+   time.sleep(.25)
+  run(['systemd-run','--user','--unit=sensei-spotify-client-'+str(int(time.time())),'--collect','spotify-launcher','--skip-update'])
+ sys.path.insert(0,str(h/'.local/share/sensei'))
+ from spotify_control import main as control
+ control(['backend','official'])
+ run(['notify-send','-a','Spotify','Desktop library bridge ready','Playlists, liked songs, search and queue use your Spotify desktop session.'],stdout=subprocess.DEVNULL)
+ return {'ok':True,'changed':changed,'credentialsCopied':False,'listen':'loopback only'}
+if __name__=='__main__':
+ try:print(json.dumps(main()))
+ except Exception as error:
+  message=str(error) if isinstance(error,ValueError) else 'Desktop bridge setup failed; previous application backup remains in the private music-repair directory.'
+  subprocess.run(['notify-send','-a','Spotify','Bridge needs attention',message],stdout=subprocess.DEVNULL)
+  print(json.dumps({'error':message}));sys.exit(1)

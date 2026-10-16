@@ -11,3 +11,6 @@ grimblast-git
 tgpt
 # ufw is installed on the reference machine but conflicts with the nftables plan in system/etc/nftables.conf; decide before enabling.
 ufw
+
+# Optional desktop-session Spotify library bridge (AUR; signed-in official client).
+spicetify-cli

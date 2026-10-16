@@ -1,6 +1,8 @@
 """Explicit playback backend. Never retry or transfer ownership on failure."""
 import json
 import os
+import re
+from urllib.parse import urlsplit
 from pathlib import Path
 import subprocess
 import time
@@ -8,6 +10,19 @@ import time
 PLAYER = 'org.mpris.MediaPlayer2.Player'
 BUS = 'org.mpris.MediaPlayer2.spotify'
 PATH = '/org/mpris/MediaPlayer2'
+
+def desktop_action(name,args):
+    from spotify_bridge import request
+    result=request(name,args)
+    if result.get('error'):raise ValueError(result['error'])
+    return result
+
+def canonical_uri(value):
+    if re.fullmatch(r'spotify:(track|album|playlist|artist):[A-Za-z0-9]{22}',value or ''):return value
+    parsed=urlsplit(value or '')
+    match=re.fullmatch(r'/(?:intl-[^/]+/)?(track|album|playlist|artist)/([A-Za-z0-9]{22})',parsed.path)
+    if parsed.hostname=='open.spotify.com' and match:return 'spotify:'+match[1]+':'+match[2]
+    return value or ''
 
 class OfficialPlayer:
     def __init__(self):
@@ -23,19 +38,20 @@ class OfficialPlayer:
         return self.call('org.freedesktop.DBus.Properties', 'Set', '(ssv)',
                          (PLAYER, name, self.GLib.Variant(signature, value)))
     def status(self):
-        p = self.properties(); m = p.get('Metadata', {})
+        p = self.properties(); m = p.get('Metadata', {}); uri=canonical_uri(m.get('xesam:url',''))
         return {'ready':True, 'backend':'official', 'owner':'official-client', 'localReleased':False,
                 'playing':p.get('PlaybackStatus') == 'Playing', 'loading':False,
                 'volume':round(p.get('Volume',0)*100), 'progress':p.get('Position',0)//1000,
                 'shuffle':p.get('Shuffle',False), 'repeat':{'None':'off','Track':'track','Playlist':'context'}.get(p.get('LoopStatus'),'off'),
-                'eventTime':time.time()*1000, 'eventUri':m.get('xesam:url',''),
+                'eventTime':time.time()*1000, 'eventUri':uri,
                 'track':{'title':m.get('xesam:title','Spotify'), 'artist':', '.join(m.get('xesam:artist',[])),
                          'album':m.get('xesam:album',''), 'art':m.get('mpris:artUrl',''),
-                         'uri':m.get('xesam:url',''), 'duration':m.get('mpris:length',0)//1000},
+                         'uri':uri, 'id':uri.rsplit(':',1)[-1], 'duration':m.get('mpris:length',0)//1000},
                 'capabilities':{k:p.get(k,False) for k in ('CanControl','CanPlay','CanPause','CanGoNext','CanGoPrevious','CanSeek')}}
     def action(self, name, args):
         p=self.properties()
         if not p.get('CanControl',False):raise ValueError('Spotify is not accepting controls. Open the official client.')
+        if name in ('play-list','play-context-track'):return desktop_action(name,args)
         methods={'play':('Play','CanPlay'),'pause':('Pause','CanPause'),'toggle':('PlayPause','CanPause'),
                  'next':('Next','CanGoNext'),'previous':('Previous','CanGoPrevious')}
         if name in methods:
@@ -84,6 +100,8 @@ def main(args):
         if args[1]=='native':
             started=subprocess.run(['systemctl','--user','start','sensei-spotify.service'],capture_output=True,text=True,timeout=25)
             if started.returncode:result['warning']='Native backend selected; start failed. Open Account to reconnect.'
+        else:
+            subprocess.run(['systemctl','--user','stop','sensei-spotify.service'],capture_output=True,text=True,timeout=15)
         return result
     if name=='autostart' and selection()!='official':return {'ok':True,'skipped':True}
     if name in ('launch','autostart'):

@@ -1,0 +1,19 @@
+[Unit]
+Description=Private Spotify desktop library bridge
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/.local/share/sensei/spotify_bridge.py
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+RestrictAddressFamilies=AF_INET AF_UNIX
+
+[Install]
+WantedBy=graphical-session.target

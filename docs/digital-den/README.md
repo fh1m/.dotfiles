@@ -155,8 +155,9 @@ workspace IDs; ScreenPad Utility is independent at 90. Homie has its own
 compositor. Pointer movement focuses windows without clicking.
 
 Music → Account selects **native** or **official Spotify** controls. Official
-MPRIS playback is independent of catalogue quota; queue operations unsupported
-by that interface remain in the official application. No automatic ownership
+MPRIS transport and a local Spicetify bridge provide playback and actual library,
+search and queue browsing through the signed-in desktop client.
+[Repair details and verified behavior](SPOTIFY-DESKTOP-REPAIR.md). No automatic ownership
 transfer or skip retry occurs. `sensei-spotify-control backend official` changes
 the private selection without starting audio.
 

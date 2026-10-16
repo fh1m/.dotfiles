@@ -80,7 +80,7 @@ DropdownFrame {
  ScrollBar.vertical:DeskScrollBar {}
  Text { textFormat: Text.PlainText;visible:musicList.count===0;anchors.centerIn:parent;width:parent.width-40;horizontalAlignment:Text.AlignHCenter;wrapMode:Text.Wrap;text:SpotifyDesk.loading?'Sensei, loading your music…':root.page===4?'Type a song, artist, album or playlist above.':SpotifyDesk.error?SpotifyDesk.error:SpotifyDesk.contextItem.id?'This collection returned no playable songs. Choose another collection or refresh.':'Sensei, choose a playlist or liked songs to start your soundtrack.';font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetMuted}
  }
- ControlTile {id:loadMore;visible:root.page>=2&&root.page<=3&&SpotifyDesk.nextPage!=='';accentColor:Theme.widgetAccent;implicitWidth:parent.width;implicitHeight:32;label:'Load more · '+SpotifyDesk.visibleRows.length+' of '+SpotifyDesk.totalRows+' songs / collections';enabled:!SpotifyDesk.loading;onActivated:SpotifyDesk.more()}
+ ControlTile {id:loadMore;visible:root.page>=2&&root.page<=3&&SpotifyDesk.nextPage!=='';accentColor:Theme.widgetAccent;implicitWidth:parent.width;implicitHeight:32;label:'Load more · '+SpotifyDesk.visibleRows.length+(SpotifyDesk.totalRows>SpotifyDesk.visibleRows.length?' of '+SpotifyDesk.totalRows:' loaded');enabled:!SpotifyDesk.loading;onActivated:SpotifyDesk.more()}
  LyricsFollower {id:lyricsPanel;visible:root.page===0&&SpotifyDesk.lyricsOpen;width:parent.width;height:Math.max(220,playerPane.height-y)}
  ListView {id:deviceList;visible:root.page===5;width:parent.width;height:playerPane.height-deviceList.y;model:SpotifyDesk.devices;spacing:8;clip:true;ScrollBar.vertical:DeskScrollBar {}
  delegate:ChamferPanel {required property var modelData;width:deviceList.width;height:76;fillColor:Theme.surfaceOne;borderColor:(SpotifyDesk.playback.selectedDeviceId?SpotifyDesk.playback.selectedDeviceId===modelData.id:modelData.is_active)?Theme.signalRed:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
@@ -92,7 +92,7 @@ DropdownFrame {
  ChamferPanel {width:parent.width;height:176;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {anchors.fill:parent;anchors.margins:18;spacing:13
  Text { textFormat: Text.PlainText;text:'Sensei, your music lives here.';font.family:Appearance.font.ui;font.pixelSize:18;color:Theme.widgetText}
- Text { textFormat: Text.PlainText;width:parent.width;text:'Player  spotify-player '+SpotifyDesk.account.version+'\nService  '+SpotifyDesk.account.service+'\nConnect name  '+(SpotifyDesk.account.deviceName||'Sensei')+'\nLogin  '+(SpotifyDesk.account.cachedLogin?'Saved on this laptop':'Sign in once in your browser');font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted;lineHeight:1.45}
+ Text { textFormat: Text.PlainText;width:parent.width;text:(SpotifyDesk.playback.backend==='official'?'Player  Spotify desktop\nLibrary  '+SpotifyDesk.account.service+'\nBridge  Spicetify '+(SpotifyDesk.account.version||'not connected')+'\nSession  '+(SpotifyDesk.account.cachedLogin?'Desktop signed in':'Open Spotify to sign in'):'Player  spotify-player '+SpotifyDesk.account.version+'\nService  '+SpotifyDesk.account.service+'\nConnect name  '+(SpotifyDesk.account.deviceName||'Sensei')+'\nLogin  '+(SpotifyDesk.account.cachedLogin?'Saved on this laptop':'Sign in once in your browser'));font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted;lineHeight:1.45}
  }
  }
  Row {spacing:10
@@ -101,7 +101,7 @@ DropdownFrame {
  ControlTile {implicitWidth:220;label:'Open official Spotify';onActivated:SpotifyDesk.openOfficial()}
  Text {text:'Control · '+(SpotifyDesk.playback.backend||'native');font.pixelSize:12;color:Theme.widgetMuted;anchors.verticalCenter:parent.verticalCenter}
  }
- Row {spacing:10;ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Sign in / reconnect';glyph:'\uf1bc';onActivated:SpotifyDesk.login()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Restart music service';glyph:'\uf021';onActivated:SpotifyDesk.restart()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Open Spotify web';glyph:'\uf08e';onActivated:Quickshell.execDetached(['xdg-open','https://open.spotify.com/'])}}
+ Row {spacing:10;ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Sign in / reconnect';glyph:'\uf1bc';onActivated:SpotifyDesk.playback.backend==='official'?SpotifyDesk.openOfficial():SpotifyDesk.login()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:SpotifyDesk.playback.backend==='official'?'Repair desktop bridge':'Restart music service';glyph:'\uf021';onActivated:SpotifyDesk.repairBridge()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Open Spotify web';glyph:'\uf08e';onActivated:Quickshell.execDetached(['xdg-open','https://open.spotify.com/'])}}
  ChamferPanel {width:parent.width;height:250;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {anchors.fill:parent;anchors.margins:18;spacing:14
  Text { textFormat: Text.PlainText;width:parent.width;text:'Ready in the background';font.family:Appearance.font.ui;font.pixelSize:16;color:Theme.widgetText}
