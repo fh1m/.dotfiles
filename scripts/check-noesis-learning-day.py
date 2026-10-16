@@ -7,7 +7,7 @@ spec=importlib.util.spec_from_file_location('installer',repo/'scripts/install.py
 with tempfile.TemporaryDirectory(prefix='noesis-learning-day-') as temporary:
  home=Path(temporary);installer.install(home,True)
  env=dict(os.environ,HOME=str(home),XDG_CONFIG_HOME=str(home/'.config'),XDG_CACHE_HOME=str(home/'.cache'),XDG_STATE_HOME=str(home/'.local/state'),NOESIS_WINDOW_MODE='normal')
- cli=home/'.local/bin/noesis';config=home/'.config/quickshell/sensei';qs=os.environ.get('NOESIS_QS',str(Path.home()/'.local/opt/sensei-quickshell/bin/qs'))
+ cli=home/'.local/bin/noesis';config=home/'.config/quickshell/noesis';qs=os.environ.get('NOESIS_QS',str(Path.home()/'.local/opt/sensei-quickshell/bin/qs'))
  def command(*args):return json.loads(subprocess.check_output([str(cli),*args],env=env,text=True))
  roots=[]
  for name in ('CS','Mathematics'):
@@ -60,7 +60,8 @@ with tempfile.TemporaryDirectory(prefix='noesis-learning-day-') as temporary:
   command('record','--vault',str(roots[1]),'artifact',title,'--parent-id',experiment['id'],'--data',json.dumps({'location':str(file),'sha256':hashlib.sha256(file.read_bytes()).hexdigest(),'ownership':'generated acceptance fixture; no hardware claim'}))
  command('event','--vault',str(roots[1]),experiment['path'],'comparison','--evidence','Actual execution contradicts the original generated-data prediction.','--data',json.dumps({'predicted':'0 +/- 0.005','observed':format(measured['mean'],'.6f'),'units':'rad/s','uncertainty':'Synthetic sinusoidal variation; no instrument uncertainty claim','conclusion':'Zero-bias assumption contradicted in generated data','next_experiment':'Test estimated bias on held-out samples','execution':{'returncode':executed.returncode,'command':[sys.executable,str(code)]}}))
  originals={p:p.read_bytes() for root in roots for p in root.rglob('*.md')}
- (config/'shell.qml').write_text('import QtQuick\nimport Quickshell\nimport "modules/learning" as LearningUi\nimport qs.services\nShellRoot { LearningUi.NoesisWindow {} Component.onCompleted:Oasis.open() }\n')
+ # Exercise the installed independent host; give only this owned fixture a unique app ID.
+ shell=config/'shell.qml';shell.write_text(shell.read_text().replace('org.fh1m.Noesis','org.fh1m.Noesis.AuditLearningDay'))
  log=home/'qml.log';actions=[];typing=0;client=None
  with log.open('w') as stream:
   process=subprocess.Popen([qs,'-p',str(config),'--no-color'],env=env,stdout=stream,stderr=subprocess.STDOUT)
@@ -74,9 +75,17 @@ with tempfile.TemporaryDirectory(prefix='noesis-learning-day-') as temporary:
       value=state()
       if predicate(value):return value,time.monotonic()-start
      except (subprocess.CalledProcessError,ValueError):pass
-     assert time.monotonic()-start<seconds,log.read_text();time.sleep(.05)
+     assert time.monotonic()-start<seconds,{'state':value,'log':log.read_text()};time.sleep(.05)
    wait(lambda value:value['worker'] and value['watch']);time.sleep(.5)
    client=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'])) if c['pid']==process.pid and c['title'].startswith('Noesis'))
+   # The unique fixture app ID deliberately bypasses production window rules.
+   # Place only this owned test window on the main panel before visual checks.
+   monitors=json.loads(subprocess.check_output(['hyprctl','monitors','-j']))
+   main=next((m for m in monitors if m['name']=='eDP-1'),next((m for m in monitors if m.get('focused')),monitors[0]))
+   for dispatch in ['hl.dsp.window.move({window="address:'+client['address']+'",monitor='+json.dumps(main['name'])+'})',
+                    'hl.dsp.window.center({window="address:'+client['address']+'"})',
+                    'hl.dsp.focus({window="address:'+client['address']+'"})']:
+    subprocess.run(['hyprctl','dispatch',dispatch],check=True,capture_output=True)
    def key(mods,key,typed=False):
     if not typed:actions.append((mods,key))
     subprocess.run(['hyprctl','dispatch','hl.dsp.send_shortcut({mods='+json.dumps(mods)+',key='+json.dumps(key)+',window='+json.dumps('address:'+client['address'])+'})'],check=True,capture_output=True);time.sleep(.12)
@@ -85,19 +94,25 @@ with tempfile.TemporaryDirectory(prefix='noesis-learning-day-') as temporary:
     typing+=len(value)
     for letter in value:key('',{' ':'space','.':'period','-':'minus'}.get(letter,letter),True)
    def find(title):
-    key('CTRL','k');key('CTRL','a');text(title);time.sleep(.5);key('','Down');key('','Return');time.sleep(.7)
+    expected=[(str(root),r['path']) for root in roots for r in command('query','--vault',str(root),title)['records'] if r.get('title')==title]
+    assert len(expected)==1,(title,expected)
+    key('CTRL','k');key('CTRL','a');text(title)
+    wait(lambda s:s['query'].casefold()==title.casefold() and not s['loading'] and s['rows']>0)
+    key('','Down');key('','Return')
+    wait(lambda s:(s['vault'],s['selected'])==expected[0])
    def screenshot(name):
     current=next(c for c in json.loads(subprocess.check_output(['hyprctl','clients','-j'])) if c['address']==client['address']);x,y=current['at'];w,h=current['size']
     subprocess.run(['grim','-g',f'{x},{y} {w}x{h}',name],check=True)
    def choose_action(number):
-    key('CTRL','period')
+    key('CTRL','period');key('','Home')
     for _ in range(number):key('','Down')
     key('','Return');time.sleep(.4)
    def outcome(steps):
-    key('CTRL','Tab');key('','Tab');key('','Home')
+    choose_action(state()['context_actions'].index('attempt-settings'));key('','Tab');key('','Home')
     for _ in range(steps):key('','Down')
     key('','Tab');key('','Home');key('','Down')
     assert state()['declared_assistance']=='none',state()
+    key('CTRL','Return')
    # Morning: another registered owner can recover its durable unfinished attempt.
    key('CTRL','6');key('CTRL + SHIFT','k');find('Truth table reconstruction')
    assert state()['vault']==str(roots[0]) and state()['attempt']
@@ -155,7 +170,7 @@ with tempfile.TemporaryDirectory(prefix='noesis-learning-day-') as temporary:
    print('PASS: native paper/source and committed implementation contexts; actual software measurement, original prediction, configuration, local PNG and next experiment visible')
    key('CTRL','6');find('Lecture 3')
    ipc('noesis','close');wait(lambda value:not value['worker'] and not value['watch'])
-   subprocess.run([qs,'-p',str(config),'kill'],env=env,capture_output=True);process.wait(timeout=5)
+   ipc('noesis','exit');process.wait(timeout=10)
    shutil.rmtree(home/'.cache/noesis')
    process=subprocess.Popen([qs,'-p',str(config),'--no-color'],env=env,stdout=stream,stderr=subprocess.STDOUT)
    recovered,elapsed=wait(lambda value:value['selected']==lesson['path'] and len(value['learning_context'].get('assignments',[]))==2)
@@ -171,4 +186,4 @@ with tempfile.TemporaryDirectory(prefix='noesis-learning-day-') as temporary:
    try:process.wait(timeout=5)
    except subprocess.TimeoutExpired:process.kill();process.wait()
    output=log.read_text();print(output)
-  assert 'WARN' not in output and 'ERROR' not in output,output
+  assert not any(('WARN' in line and 'Could not register app ID' not in line) or 'ERROR' in line for line in output.splitlines()),output

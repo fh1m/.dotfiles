@@ -51,22 +51,36 @@ print(json.dumps(report))
 '''
 
 
+def reference_fields(index,paper_id,reference):
+    """Keep a source section distinct from a real reader annotation."""
+    if 'native_id' in reference or 'projection' in reference:
+        from noesis.sources import annotation_reference
+        if not reference.get('native_id') or not reference.get('projection'):
+            raise ValueError('Incomplete native annotation reference')
+        return {**refserence(index,paper_id,reference['native_id'],reference['projection'])}
+    paper=index.record(paper_id)
+    section=reference.get('section')
+    if not paper or paper.get('props',{}).get('type')!='resource' or not isinstance(section,str) or not section.strip():
+        raise ValueError('Expected an existing resource and explicit source section')
+    return {'citation_ref':{'resource_id':paper_id,'section':section,'source':paper['props'].get('source'),
+                            'authority':'source section; no native annotation claim'}}
+
+
 def run(vault,paper_id,annotation_ref,folder):
     folder=Path(folder);code=folder/'attention-implementation';code.mkdir()
     script=code/'verify_attention.py';script.write_text(IMPLEMENTATION)
     subprocess.run(['git','init','-q',str(code)],check=True)
     subprocess.run(['git','-C',str(code),'add','verify_attention.py'],check=True)
     subprocess.run(['git','-C',str(code),'-c','user.name=Noesis fixture','-c','user.email=fixture@example.invalid','commit','-qm','Authored attention equation verification'],check=True)
-    from noesis.sources import annotation_reference
     index=Index(vault)
     try:
-        index.reconcile(); annotation_ref=annotation_reference(index,paper_id,annotation_ref['native_id'],annotation_ref['projection'])
+        index.reconcile(); refs=reference_fields(index,paper_id,annotation_ref)
     finally:index.close()
-    question=create(vault,'question','Why scale the dot product?','Which assumptions make its variance grow with the key dimension?',parent_id=paper_id,fields={'provenance':'agent-authored disposable acceptance fixture','annotation_ref':annotation_ref})
+    question=create(vault,'question','Why scale the dot product?','Which assumptions make its variance grow with the key dimension?',parent_id=paper_id,fields={'provenance':'agent-authored disposable acceptance fixture',**refs})
     reconstruction=create(vault,'task','Reconstruct attention equation','## Problem statement\n\nDerive softmax(Q K^T / sqrt(d_k)) V and predict a two-key case.\n\n## Reconstruction\n\nFor independent, zero-mean, unit-variance components, the dot product variance is d_k. Scaling makes the variance one. These assumptions are not guaranteed for arbitrary learned keys.',parent_id=question['id'],relation='assigns',fields={'provenance':'agent-authored; not independently performed by the learner'})
     record_activity(vault,reconstruction['path'],'attempt','Agent-authored reconstruction checked against the source and an analytic two-key example.',outcome='succeeded',assistance=['agent','reference'],assessment='fixture source/formula check',scope='Eq. 1 only')
     project=create(vault,'project','Attention forward verification',parent_id=paper_id,fields={'repository':str(code)})
-    experiment=create(vault,'experiment','Scaled attention numerical check',parent_id=project['id'],fields={'hypothesis':'The scaled matrix implementation agrees with a scalar reference to 1e-12; omitting scaling changes the two-key output','configuration':{'random_seed':1706,'random_cases':100,'tolerance':1e-12,'units':'dimensionless synthetic values'},'source_scope':'Eq. 1 forward computation only','annotation_ref':annotation_ref})
+    experiment=create(vault,'experiment','Scaled attention numerical check',parent_id=project['id'],fields={'hypothesis':'The scaled matrix implementation agrees with a scalar reference to 1e-12; omitting scaling changes the two-key output','configuration':{'random_seed':1706,'random_cases':100,'tolerance':1e-12,'units':'dimensionless synthetic values'},'source_scope':'Eq. 1 forward computation only',**refs})
     report_path=folder/'attention-results.json'
     executed=subprocess.run([sys.executable,str(script),str(report_path)],capture_output=True,text=True,check=True,timeout=30)
     report=json.loads(report_path.read_text())

@@ -107,3 +107,13 @@ assistance-preserving transfer and restart. It does not close P0–P8, certify t
 owner's learning, resolve Zotero restoration, or implement YOLO/ADRC. Human
 usability and unfamiliar independent transfer remain owner-trial acceptance.
 Off-device backup configuration remains explicitly deferred by owner.
+
+## 2026-10-16 daily-driver audit
+
+The stale `check-noesis-learning-day.py` acceptance harness now uses the independent
+host and current attempt settings, waits for query completion and graceful exit,
+and distinguishes source-section citations from validated native annotations.
+A reproduced empty selection during query refresh is guarded without changing
+learning state. The connected native course/practice/paper/experiment/cache-loss
+journey passes again; this does not close human-use or physical acceptance gates.
+See [runtime audit](../digital-den/AUDIT-2026-10-16.md).
