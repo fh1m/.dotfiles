@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 import urllib.request
@@ -151,8 +152,28 @@ def backup_move(path, stamp):
     dest.parent.mkdir(parents=True, exist_ok=True)
     path.rename(dest)
 
-def nvim_run(executable, code, timeout=600):
-    env = dict(os.environ, NVIM_APPNAME='sensei-nvim', PATH=str(BIN) + ':' + str(OPT / 'node/bin') + ':' + os.environ.get('PATH', ''))
+def mason_python():
+    """CMake's current server needs <3.14; keep its installer off system Python."""
+    if sys.version_info[:2] < (3, 14): return None
+    executable = shutil.which('python3.13')
+    if not executable:
+        uv = shutil.which('uv')
+        if not uv: raise RuntimeError('Python 3.14 needs uv or python3.13 for isolated editor tool installation.')
+        directory = OPT / 'mason-python'
+        env = dict(os.environ, UV_PYTHON_INSTALL_DIR=str(directory))
+        subprocess.run([uv, 'python', 'install', '3.13', '--no-bin', '--install-dir', str(directory)], env=env, check=True)
+        executable = subprocess.check_output([uv, 'python', 'find', '--system', '3.13'], env=env, text=True).strip()
+    directory = STATE / 'mason-python-bin'
+    directory.mkdir(parents=True, exist_ok=True)
+    shim = directory / 'python3'
+    if shim.is_symlink(): shim.unlink()
+    elif shim.exists(): raise RuntimeError('Preserving unexpected file at '+str(shim))
+    shim.symlink_to(executable)
+    return directory
+
+
+def nvim_run(executable, code, timeout=600, extra_path=None):
+    env = dict(os.environ, NVIM_APPNAME='sensei-nvim', PATH=(str(extra_path)+':' if extra_path else '') + str(BIN) + ':' + str(OPT / 'node/bin') + ':' + os.environ.get('PATH', ''))
     guarded = 'local ok,err=xpcall(function() ' + code + ' end,debug.traceback); if not ok then vim.api.nvim_err_writeln(err); vim.cmd("cquit") end'
     subprocess.run([executable, '--headless', '-i', 'NONE', '-c', 'lua ' + guarded], env=env, check=True, timeout=timeout)
 
@@ -185,7 +206,7 @@ def setup(activate=False, skip_tools=False):
       if #missing>0 then error('Missing tools: '..table.concat(missing,', ')) end
       vim.cmd('qa')'''
     if not skip_tools:
-        nvim_run(executable, "require('mason').setup({PATH='append'}); " + install, timeout=700)
+        nvim_run(executable, "require('mason').setup({PATH='append'}); " + install, timeout=700, extra_path=mason_python())
         parsers = json.dumps(PARSERS).replace('[', '{').replace(']', '}')
         nvim_run(executable, "require('nvim-treesitter').install(" + parsers + "):wait(300000); "
             + "for _,p in ipairs(" + parsers + ") do assert(vim.uv.fs_stat(vim.fn.stdpath('data')..'/site/parser/'..p..'.so'),'Parser missing: '..p) end; vim.cmd('qa')", timeout=400)

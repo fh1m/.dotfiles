@@ -21,7 +21,7 @@ class Generation(unittest.TestCase):
    edge.clear_return(root,'1:2:300');self.assertFalse(guard.exists())
  def test_invalid_token_fails_closed(self):
   with self.assertRaises(ValueError):place.newer('touch anything','')
-if __name__=='__main__':unittest.main()
+
 
 
 class PaletteTemplateContract(__import__('unittest').TestCase):
@@ -35,3 +35,5 @@ class PaletteTemplateContract(__import__('unittest').TestCase):
             mappings=[n.value for n in ast.walk(tree) if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='replacements' for t in n.targets)]
             keys={k.value for d in mappings if isinstance(d,ast.Dict) for k in d.keys if isinstance(k,ast.Constant)}
             self.assertFalse(tokens-keys,source+' lacks '+str(tokens-keys))
+
+if __name__=='__main__':unittest.main()
