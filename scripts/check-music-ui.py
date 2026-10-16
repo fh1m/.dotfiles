@@ -33,7 +33,10 @@ def main():
         raise RuntimeError('Music UI acceptance timed out')
 
     saved = state()
+    preferences=state("music-fullscreen")
     try:
+        call('music-fullscreen','mode','normal')
+        call('music-fullscreen','backdrop','false')
         call('spotify', 'page', '2')
         wait(lambda s: not s['loading'] and s['playlists'] > 0)
         before = state()
@@ -62,6 +65,8 @@ def main():
     finally:
         call('spotify', 'closeFullscreen')
         call('spotify', 'page', str(saved['page']))
+        call('music-fullscreen','mode','focus' if preferences.get('zen') else 'normal')
+        call('music-fullscreen','backdrop','true' if preferences.get('backdrop') else 'false')
 
 
 if __name__ == '__main__':

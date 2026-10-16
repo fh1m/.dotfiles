@@ -17,7 +17,8 @@ def palette(source):
         image.thumbnail((48, 48))
         colors = image.convert('RGB').quantize(colors=8).convert('RGB').getcolors(2304) or []
     # Prefer a populous chromatic shade, then keep it dark enough behind UI.
-    _, rgb = max(colors, key=lambda pair: pair[0] * (.2 + colorsys.rgb_to_hsv(*(c/255 for c in pair[1]))[1]))
+    chromatic = [pair for pair in colors if pair[0] >= sum(n for n, _ in colors)*.015 and colorsys.rgb_to_hsv(*(c/255 for c in pair[1]))[1] >= .22]
+    _, rgb = max(chromatic or colors, key=lambda pair: pair[0] * (.2 + colorsys.rgb_to_hsv(*(c/255 for c in pair[1]))[1]))
     h, s, _ = colorsys.rgb_to_hsv(*(c/255 for c in rgb))
     def color(value):
         return '#'+''.join(f'{round(c*255):02x}' for c in colorsys.hsv_to_rgb(h, min(.65, s), value))

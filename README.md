@@ -185,6 +185,10 @@ python3 scripts/doctor.py
 
 <sub>A bespoke illustration, not a screenshot. The live desktop captures above show what actually runs.</sub>
 
+![The live artwork-only listening room, with cover-derived color and a display chooser](docs/assets/digital-den/music-focus-v3.png)
+
+<sub>ACTUAL UI // FOCUS · MOVE BETWEEN DISPLAYS · BACKDROP BEHIND YOUR WORK</sub>
+
 Some nights call for a derivation. Some call for an album and a notebook. The Den has room for both.
 
 - **Listening room:** artwork, lyrics and queue together. Focus strips it back to the cover and song. Move it to another display, or put it behind your work with Backdrop.

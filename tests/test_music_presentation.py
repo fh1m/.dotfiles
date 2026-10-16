@@ -25,6 +25,15 @@ class Palette(unittest.TestCase):
         self.assertEqual(result['wash'], '#451818')
         self.assertTrue(all(int(result['wash'][i:i+2], 16) <= 69 for i in (1, 3, 5)))
 
+    def test_neutral_cover_uses_its_visible_chromatic_accent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'cover.png'
+            image=Image.new('RGB',(100,100),(40,40,40))
+            image.paste((0,0,255),(0,0,35,100));image.save(path)
+            value=palette.palette(str(path))['wash']
+        channels=[int(value[i:i+2],16) for i in (1,3,5)]
+        self.assertGreater(channels[2],channels[0])
+
     def test_remote_address_cannot_trigger_network_access(self):
         with self.assertRaises(ValueError):
             palette.palette('https://attacker.invalid/cover.png')

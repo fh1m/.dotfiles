@@ -72,3 +72,19 @@ They are preferable to filling the bars with new buttons.
 Rollback: revert this pass and rerun the normal hardware profile installer. The
 companion is optional (`sensei-den companion quiet on` or `hide`). Music Focus is
 presentation-only. No drive, sudoers, GPU, firewall or credential changes.
+
+## Final integration checks
+
+Homie's PC-specific palette helper now expands every shared tmux template token;
+the generated live rail was rebuilt without restarting sessions. Homie kept its
+newer Neovim 0.12.6. Its previously absent Mason tools were provisioned: 21 tools
+and 21 parsers verified. Mason alone uses a managed Python 3.13 because the system
+Python 3.14 is outside one tool's supported range; system/project Python was not
+replaced. Actual Python LSP attach/hover passed on both hosts and in auv-ros2.
+The editor smoke now also executes Ruff formatting against a disposable buffer.
+
+Live room checks verified real Escape and movement among Arete's four outputs.
+A live companion tour reached Homie's DP-3 and showed its perch. Notification
+count announcements were observed. The public Focus capture contains public
+album metadata, no private library or account content. Palette extraction now
+retains a sufficiently represented chromatic accent in predominantly neutral art.

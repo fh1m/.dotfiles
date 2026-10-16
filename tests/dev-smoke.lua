@@ -30,6 +30,9 @@ local function run()
   -- Clipboard music shortcut must remain untouched.
   assert(vim.fn.maparg('<C-Space>', 'i') == '', 'Global music shortcut intercepted')
   assert(require('blink.cmp.config').keymap['<CR>'] == nil, 'Enter unexpectedly accepts completion')
+  vim.api.nvim_buf_set_lines(0,-1,-1,false,{'numbers=[1,2,3]'})
+  require('conform').format({async=false,lsp_format='never',timeout_ms=3000})
+  assert(table.concat(vim.api.nvim_buf_get_lines(0,0,-1,false),'\n'):find('numbers = %[%d, %d, %d%]'), 'Formatter did not format real code')
   print('PASS: theme, tutor, lazy features, snippets, parser, formatter, DAP, two Python LSPs, hover, key ownership')
   vim.cmd('qa!')
 end
