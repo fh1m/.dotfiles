@@ -5,7 +5,6 @@ import Quickshell.Wayland
 import qs.components
 import qs.config
 import qs.services
-import "shortcuts.js" as Catalog
 
 Variants {
     model: ShellState.overlayScreens
@@ -15,10 +14,25 @@ Variants {
         required property ShellScreen modelData
         property string query: ""
         property int selected: 0
+        property var discovered: []
+        property var curated: []
+        FileView {
+            path:Qt.resolvedUrl("shortcuts.json");watchChanges:true;printErrors:false
+            onFileChanged:reload()
+            onLoaded:{try{const rows=JSON.parse(text());if(Array.isArray(rows))overlay.curated=rows;}catch(e){console.warn("Field guide introductions could not be read");}}
+        }
+        property var inventoryWarnings: []
+        readonly property var entries: curated.concat(discovered)
+        IpcHandler {target:"field-guide-"+overlay.modelData.name;function state():string{return JSON.stringify({shown:overlay.shown,curated:curated.length,discovered:overlay.discovered.length,warnings:overlay.inventoryWarnings});}}
+        Process {
+            id:inventory
+            command:[Quickshell.env("HOME")+"/.local/bin/sensei-shortcuts"]
+            stdout:StdioCollector {onStreamFinished:{try{const d=JSON.parse(text);overlay.discovered=d.rows||[];overlay.inventoryWarnings=d.warnings||[];}catch(e){overlay.inventoryWarnings=["Live inventory unavailable"];}}}
+        }
         readonly property bool shown: ShellState.shortcutsOpen
         readonly property var results: {
             const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-            const ranked = Catalog.shortcuts.map((entry, index) => {
+            const ranked = entries.map((entry, index) => {
                 const hay = (entry.key + " " + entry.title + " " + entry.group + " " + entry.detail).toLowerCase();
                 let score = 0;
                 for (const term of terms) {
@@ -65,7 +79,7 @@ Variants {
             onEscaped: ShellState.shortcutsOpen = false
         }
         anchors { top: true; bottom: true; left: true; right: true }
-        onShownChanged: if (shown) { query = ""; selected = 0; searchInput.text = ""; searchInput.forceActiveFocus(); }
+        onShownChanged: if (shown) { query = ""; selected = 0; searchInput.text = ""; searchInput.forceActiveFocus(); if(!inventory.running)inventory.running=true; }
 
         Rectangle { anchors.fill: parent; color: "#000000"; opacity: 0.38 }
         MouseArea { anchors.fill: parent; onClicked: ShellState.shortcutsOpen = false }
@@ -91,7 +105,7 @@ Variants {
             Text {
                 textFormat: Text.PlainText
                 anchors.right: parent.right; anchors.rightMargin: 22; y: 24
-                text: overlay.results.length + " / " + Catalog.shortcuts.length + " BINDINGS"
+                text: overlay.results.length + " / " + overlay.entries.length + " BINDINGS"
                 color: Theme.widgetAccent; font.family: Appearance.font.data
                 font.pixelSize: 11; font.weight: Font.DemiBold; renderType: Text.NativeRendering
             }

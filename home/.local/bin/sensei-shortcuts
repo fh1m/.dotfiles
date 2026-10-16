@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""On-demand key inventory. Read configuration; never execute bound actions."""
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import subprocess
+import tomllib
+
+HOME=Path.home()
+
+def run(command,timeout=4):
+    return subprocess.check_output(command,text=True,stderr=subprocess.DEVNULL,timeout=timeout)
+
+def key_name(value):
+    aliases={'control':'Ctrl','ctrl':'Ctrl','super':'Super','shift':'Shift','alt':'Alt',
+             'return':'Return','space':'Space','left':'←','right':'→','up':'↑','down':'↓','slash':'/'}
+    return '+'.join(aliases.get(x.strip().lower(),x.strip()) for x in value.replace('|','+').split('+'))
+
+def source_bindings():
+    found={}
+    # Only inspect known active files, not backup snapshots or arbitrary Lua.
+    for name in ['hyprland.lua','hypr-sensei.lua','custom-setup.lua','oasis.lua']:
+        p=HOME/'.config/hypr'/name
+        if not p.exists():continue
+        for number,line in enumerate(p.read_text().splitlines(),1):
+            match=re.search(r'hl\.bind\(("[^"\n]+"|mod\s*\.\.\s*"[^"\n]+"),\s*(.+)',line)
+            if not match:continue
+            value=match[1]
+            key='SUPER'+value.split('"')[1] if value.startswith('mod') else value[1:-1]
+            body=match[2].strip()
+            found[key_name(key).lower()]=(body,f'{name}:{number}')
+    return found
+
+def desktop():
+    sources=source_bindings();rows=[]
+    for b in json.loads(run(['hyprctl','-i','0','binds','-j'])):
+        mods=[name for bit,name in [(64,'Super'),(4,'Ctrl'),(8,'Alt'),(1,'Shift')] if b['modmask']&bit]
+        key=key_name('+'.join([*mods,b['key'] or 'code:'+str(b['keycode'])]))
+        body,location=sources.get(key.lower(),('', 'live compositor'))
+        flags=', '.join(k for k in ['release','repeat','locked','mouse'] if b.get(k))
+        title=b.get('description') or (body.split('(',1)[0].replace('hl.dsp.','').replace('_',' ') if body else 'Desktop action')
+        detail=body or b['dispatcher']+' '+b['arg']
+        rows.append(dict(key=key,title=title,group='Desktop · live',detail=f'{location} · {flags+" · " if flags else ""}{detail}'+(' · submap '+b['submap'] if b.get('submap') else '')))
+    return rows
+
+def terminal():
+    rows=[];p=HOME/'.config/alacritty/alacritty.toml'
+    if not p.exists():return rows
+    data=tomllib.loads(p.read_text())
+    for b in data.get('keyboard',{}).get('bindings',[]):
+        action=b.get('action')
+        if not action:
+            if 'command' in b:action=shlex.join([b['command']['program'],*b['command'].get('args',[])])
+            else:action='Send '+repr(b.get('chars',''))
+        rows.append(dict(key=key_name(b.get('mods','')+'+'+b['key']).lstrip('+'),title=action,group='Alacritty · configured',detail='mode '+b.get('mode','all')+' · alacritty.toml'))
+    return rows
+
+def multiplexer():
+    rows=[]
+    for line in run(['tmux','list-keys']).splitlines():
+        # -T table is emitted for each row; keep all defaults and plugin bindings.
+        parts=shlex.split(line)
+        if '-T' not in parts:continue
+        at=parts.index('-T');table=parts[at+1];key=parts[at+2];action=' '.join(parts[at+3:])
+        label=('` then ' if table=='prefix' else '')+key
+        rows.append(dict(key=label,title=action,group='tmux · '+table,detail='Live tmux key table; copy-mode bindings apply only in scrollback'))
+    return rows
+
+NVIM_LUA=r'''local out={};local seen={};local function add(k,d,m) if not k or not d then return end;local id=tostring(m)..k..d;if seen[id] then return end;seen[id]=true;table.insert(out,{key=k,title=d,group='Neovim · '..tostring(m),detail='Leader = Space; configured map. Plugin/filetype maps may activate on demand.'}) end
+for _,mode in ipairs({'n','i','v','x','s','o','t','c'}) do for _,k in ipairs(vim.api.nvim_get_keymap(mode)) do add(k.lhs,k.desc or k.rhs,mode) end end
+local ok,c=pcall(require,'lazy.core.config');if ok then for _,p in pairs(c.plugins) do if type(p.keys)=='table' then for _,k in pairs(p.keys) do if type(k)=='table' then local mode=k.mode or 'n';add(k[1],k.desc,type(mode)=='table' and table.concat(mode,',') or mode) end end end end end
+io.stdout:write('DEN_KEYS_JSON:'..vim.json.encode(out)..'\n')'''
+
+def editor():
+    output=run(['nvim','--headless','-i','NONE','+lua '+NVIM_LUA,'+qa'],timeout=12)
+    line=next(x for x in output.splitlines() if x.startswith('DEN_KEYS_JSON:'))
+    return json.loads(line.split(':',1)[1])
+
+def main():
+    rows=[];warnings=[]
+    for name,provider in [('Desktop',desktop),('Alacritty',terminal),('tmux',multiplexer),('Neovim',editor)]:
+        try:rows.extend(provider())
+        except (OSError,ValueError,StopIteration,subprocess.SubprocessError) as error:warnings.append(name+' inventory unavailable; curated guide remains')
+    print(json.dumps({'rows':rows,'warnings':warnings,'scope':'Live desktop/tmux and configured terminal/editor keys. Application-native defaults stay in each application help.'}))
+
+if __name__=='__main__':main()
