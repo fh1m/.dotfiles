@@ -9,8 +9,8 @@ The terminal's internal tab, pane, copy and session shortcuts are in [Terminal �
 | Key | Action |
 |---|---|
 | Tap Super | Native-icon application launcher on the focused display |
-| Super+1…6 | Terminal / Web / Code / Sim / Work / Misc |
-| Super+Shift+1…6 | Move focused window to the chosen workspace |
+| Super+1…7 | Terminal / Web / Code / Study / Sim / Work / Misc |
+| Super+Shift+1…7 | Move focused window to the chosen workspace |
 | Alt+Tab / Shift+Alt+Tab | Window switcher forwards/backwards |
 | Super+Tab / Shift+Super+Tab | Workspace switcher |
 | Super+A | Workspace overview; drag windows between tiles |
@@ -80,3 +80,5 @@ Dedicated ASUS fan, swap and ScreenPad buttons use model-specific events. Standa
 | Super+F12 | Robotics controls |
 
 Plain F1–F12 remain available to applications. Capture your own device’s special-key events before copying the UX581 map.
+
+The pointer focuses the window it enters; no click is needed. ScreenPad Utility is separate from the seven subjects. The workspace rail shows the local count, active subject and urgency, with a neutral enclosure.

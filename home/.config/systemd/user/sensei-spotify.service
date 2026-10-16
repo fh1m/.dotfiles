@@ -8,6 +8,7 @@ StartLimitBurst=3
 
 [Service]
 Type=forking
+ExecCondition=@HOME@/.local/bin/sensei-spotify-control native-enabled
 ExecStart=@HOME@/.local/share/sensei-spotify-client/bin/spotify_player --daemon
 Restart=on-failure
 RestartSec=15

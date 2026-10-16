@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+"""Reconnect to the current compositor's event socket after session replacement."""
+import json
+import os
+from pathlib import Path
+import socket
+import subprocess
+import time
+EVENTS={'workspace','workspacev2','focusedmon','activespecial','activespecialv2','movewindow','movewindowv2','openwindow','closewindow','urgent','activewindowv2','monitoradded','monitoraddedv2','monitorremoved','configreloaded','moveworkspace','moveworkspacev2'}
+while True:
+    try:
+        rows=json.loads(subprocess.check_output(['hyprctl','instances','-j'],text=True,stderr=subprocess.DEVNULL,timeout=3))
+        # Prefer the inherited live session, otherwise its replacement for this user.
+        current=next((x for x in rows if x['instance']==os.environ.get('HYPRLAND_INSTANCE_SIGNATURE')),rows[0] if rows else None)
+        if not current:raise OSError('No compositor')
+        path=Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'hypr'/current['instance']/'.socket2.sock'
+        with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as s:
+            s.connect(str(path));print('connected',flush=True)
+            with s.makefile() as stream:
+                for line in stream:
+                    name=line.split('>>',1)[0]
+                    if name in EVENTS:
+                        # Only urgency/focus addresses are needed; never forward titles.
+                        data=line.split('>>',1)[1].strip() if name in ('urgent','activewindowv2','closewindow') else ''
+                        print(json.dumps({'name':name,'data':data}),flush=True)
+    except (OSError,ValueError,subprocess.SubprocessError):pass
+    time.sleep(2)

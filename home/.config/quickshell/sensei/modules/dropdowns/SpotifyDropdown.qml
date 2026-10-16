@@ -95,6 +95,12 @@ DropdownFrame {
  Text { textFormat: Text.PlainText;width:parent.width;text:'Player  spotify-player '+SpotifyDesk.account.version+'\nService  '+SpotifyDesk.account.service+'\nConnect name  '+(SpotifyDesk.account.deviceName||'Sensei')+'\nLogin  '+(SpotifyDesk.account.cachedLogin?'Saved on this laptop':'Sign in once in your browser');font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted;lineHeight:1.45}
  }
  }
+ Row {spacing:10
+ ControlTile {implicitWidth:220;label:'Use native player';onActivated:SpotifyDesk.selectBackend('native')}
+ ControlTile {implicitWidth:220;label:'Use official Spotify';onActivated:SpotifyDesk.selectBackend('official')}
+ ControlTile {implicitWidth:220;label:'Open official Spotify';onActivated:SpotifyDesk.openOfficial()}
+ Text {text:'Control · '+(SpotifyDesk.playback.backend||'native');font.pixelSize:12;color:Theme.widgetMuted;anchors.verticalCenter:parent.verticalCenter}
+ }
  Row {spacing:10;ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Sign in / reconnect';glyph:'\uf1bc';onActivated:SpotifyDesk.login()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Restart music service';glyph:'\uf021';onActivated:SpotifyDesk.restart()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Open Spotify web';glyph:'\uf08e';onActivated:Quickshell.execDetached(['xdg-open','https://open.spotify.com/'])}}
  ChamferPanel {width:parent.width;height:250;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {anchors.fill:parent;anchors.margins:18;spacing:14

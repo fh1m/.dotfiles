@@ -27,7 +27,7 @@ hl.monitor({output="DP-1",mode="preferred",position="-1920x-1080",scale=1})
 -- Keep the motion; shadows stay off for Intel render time. Blur is set in hypr-sensei.lua (special workspaces only).
 hl.config({
     animations = { enabled = true },
-    decoration = { shadow = { enabled = false } }, general = { border_size = 2 }, input = { touchpad = { natural_scroll = true }, follow_mouse = 0 },
+    decoration = { shadow = { enabled = false } }, general = { border_size = 2 }, input = { touchpad = { natural_scroll = true }, follow_mouse = 1 },
     group = {
         auto_group = false,
         drag_into_group = 1,
@@ -117,7 +117,7 @@ hl.on("hyprland.start", function()
     hl.dispatch(hl.dsp.cursor.move({ x = 960, y = 540 }))
 end)
 
-hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("qs -c sensei ipc call spotify action toggle"), { locked = true })
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("qs -c sensei ipc call spotify action next"), { locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("qs -c sensei ipc call spotify action previous"), { locked = true })
 hl.bind("SHIFT + SUPER + bracketright", hl.dsp.exec_cmd("bash -c 'cur=$(cat /sys/class/backlight/asus_screenpad/brightness); max=$(cat /sys/class/backlight/asus_screenpad/max_brightness); pct=$((cur * 100 / max + 10)); [ \"$pct\" -gt 100 ] && pct=100; asusctl backlight --screenpad-brightness \"$pct\"'"))

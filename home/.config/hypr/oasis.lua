@@ -21,8 +21,8 @@ hl.window_rule({
 -- Sequential workspaces, applied after custom-setup's earlier defaults.
 local noesis_workspace_names = { "Terminal", "Web", "Code", "Study", "Sim", "Work", "Misc" }
 for id, name in ipairs(noesis_workspace_names) do
-    hl.workspace_rule({ workspace = tostring(id), default_name = name, persistent = id == 7,
-        monitor = id == 7 and "DP-2" or "eDP-1", default = id == 7 })
+    hl.workspace_rule({ workspace = tostring(id), default_name = name, persistent = false,
+        monitor = "eDP-1" })
     hl.unbind("SUPER + " .. id)
     hl.unbind("SUPER + SHIFT + " .. id)
     hl.bind("SUPER + " .. id, hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/sensei-displays workspace " .. id))
@@ -30,13 +30,16 @@ for id, name in ipairs(noesis_workspace_names) do
 end
 
 -- Physical halves of the same logical workspaces; never expose these IDs in UI.
-for id = 1, 6 do
+for id = 1, 7 do
     hl.workspace_rule({ workspace = tostring(100 + id), default_name = noesis_workspace_names[id] .. " · Lower",
         monitor = "HDMI-A-1", persistent = false })
 end
 
--- Upper USB-C screen is the third half of the same six logical desktops.
-for id = 1, 6 do
+-- Upper USB-C screen is the third half of the same seven logical desktops.
+for id = 1, 7 do
     hl.workspace_rule({ workspace = tostring(200 + id), default_name = noesis_workspace_names[id] .. " · Upper",
         monitor = "DP-1", persistent = false })
 end
+
+-- ScreenPad is a utility surface, independent of the seven subject groups.
+hl.workspace_rule({ workspace = "90", default_name = "Utility", monitor = "DP-2", persistent = true, default = true })

@@ -18,7 +18,12 @@ except ImportError:
 
 STATE = Path(os.environ.get('XDG_CACHE_HOME', Path.home()/'.cache'))/'sensei-displays'
 DRM = Path('/sys/class/drm')
-WORKSPACE_NAMES = ('Terminal','Web','Code','Study','Sim','Work')
+CONTRACT = json.loads((Path(__file__).resolve().parents[1]/'share/sensei/workspaces.json').read_text())
+if CONTRACT.get('schema')!=1 or len(CONTRACT.get('subjects',[]))!=7 or CONTRACT.get('utility')!=90:
+    raise ValueError('Unsupported workspace contract; existing workspaces preserved')
+WORKSPACE_NAMES = tuple(s['name'] for s in CONTRACT['subjects'])
+SUBJECTS = range(1, len(WORKSPACE_NAMES)+1)
+UTILITY_WORKSPACE = CONTRACT['utility']
 
 
 def run(command, timeout=15):
@@ -207,15 +212,15 @@ def set_brightness(output,percent):
 
 # Each output owns a physical half; all halves form the same logical desktop.
 def logical(number):
-    return number%100 if 100<number<3300 and number%100 in range(1,7) else number
+    return number%100 if 100<number<3300 and number%100 in SUBJECTS else number
 
 
 def physical(number,output,slots=None):
-    return number+100*(slots or workspace_slots()).get(output,1) if external(output) and number in range(1,7) else number
+    return number+100*(slots or workspace_slots()).get(output,1) if external(output) and number in SUBJECTS else number
 
 
 def main_display(outputs):
-    return next((m for m in outputs if m['name']=='eDP-1'),next((m for m in outputs if m['name']!='DP-2' and not external(m['name'])),None))
+    return display_roles(outputs).get('main') if role_for else next((m for m in outputs if not external(m['name'])), next(iter(outputs),None))
 
 
 def workspace(number,output=None):
@@ -226,9 +231,7 @@ def workspace(number,output=None):
     target=next((m for m in outputs if m['name']==name),None)
     if not target:raise ValueError('Display is not connected')
     main=main_display(outputs)
-    if number==7 or name=='DP-2':
-        if number==7:
-            dispatch('hl.dsp.focus({workspace="7"})');return
+    if role_for and role_for(name,outputs)=='screenpad':
         name=main['name'] if main else name
     joined=[m for m in outputs if external(m['name']) or (main and m['name']==main['name'])]
     if not joined:joined=[target]
@@ -265,11 +268,11 @@ def reconcile():
     by_id={m['id']:m for m in outputs}
     previous=set(read_state().get('outputs',[]))
     frontier=logical(main.get('activeWorkspace',{}).get('id',1))
-    if frontier not in range(1,7):frontier=1
+    if frontier not in SUBJECTS:frontier=1
     for window in clients():
         wid=window.get('workspace',{}).get('id',0);subject=logical(wid)
         monitor=by_id.get(window.get('monitor'));destination=None
-        if monitor and external(monitor['name']) and subject in range(1,7):
+        if monitor and external(monitor['name']) and subject in SUBJECTS:
             expected=physical(subject,monitor['name'],slots)
             if wid!=expected:destination=expected
         elif subject!=wid and (wid//100 not in attached or (monitor and monitor['name']==main['name'])):
@@ -282,7 +285,7 @@ def reconcile():
     focused=next((m for m in outputs if m.get('focused')),main)
     origin=focused if external(focused['name']) or focused['name']==main['name'] else main
     number=logical(origin.get('activeWorkspace',{}).get('id',1))
-    if number not in range(1,7):number=frontier
+    if number not in SUBJECTS:number=frontier
     joined=[m for m in outputs if external(m['name']) or m['name']==main['name']]
     if any(m['activeWorkspace']['id']!=physical(number,m['name'],slots) for m in joined):
         workspace(number,origin['name'])

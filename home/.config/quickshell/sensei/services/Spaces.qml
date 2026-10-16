@@ -25,10 +25,13 @@ Singleton {
     function attention(address):void {const a=String(address||"").replace(/^0x/,"");if(a&&!attentionAddresses.includes(a))attentionAddresses=attentionAddresses.concat([a]);}
     function acknowledge(address):void {const a=String(address||"").replace(/^0x/,"");attentionAddresses=attentionAddresses.filter(x=>x!==a);}
     readonly property int perPage: 7
-    readonly property var workspaceIds: [1, 2, 3, 4, 5, 6, 7]
-    readonly property var workspaceNames: ["Terminal", "Web", "Code", "Study", "Sim", "Work", "Misc"]
-
-    readonly property var workspaceGlyphs: ["\uf120", "\uf0ac", "\uf121", "\uf02d", "\uf1b2", "\uf0b1", "\uf07b"]
+    property var contract: ({subjects:[]})
+    readonly property var workspaceIds: contract.subjects.map((s,i)=>i+1)
+    readonly property var workspaceNames: contract.subjects.map(s=>s.name)
+    readonly property var workspaceGlyphs: contract.subjects.map(s=>s.glyph)
+    FileView {path:Quickshell.env("HOME")+"/.local/share/sensei/workspaces.json";watchChanges:true;printErrors:false
+        onFileChanged:reload();onLoaded:{try{const c=JSON.parse(text());if(c.schema===1&&c.subjects.length===7&&c.utility===90)root.contract=c;}catch(e){console.warn("Workspace contract unavailable");}}
+    }
 
     // Special workspaces carry a name; these are the ones worth a word rather
     // than the first four letters of whatever Hyprland calls them.
@@ -43,19 +46,20 @@ Singleton {
     // The compositor snapshot is authoritative across multi-GPU hotplug and QML reloads.
     // Some Quickshell builds retain an incomplete monitor IPC cache.
     property var outputState: []
+    property var clientsState: []
     property bool outputRefreshPending: false
     function refreshOutputs():void {if(outputScan.running){outputRefreshPending=true;return;}outputScan.running=true;}
     Component.onCompleted: refreshOutputs()
     Timer {id:outputSettle;interval:35;onTriggered:root.refreshOutputs()}
-    Process {id:outputScan;command:["hyprctl","monitors","-j"]
-        stdout:StdioCollector {onStreamFinished:{try{const data=JSON.parse(text);if(Array.isArray(data))root.outputState=data;}catch(e){console.warn("Workspace monitor snapshot unavailable");}}}
+    Process {id:outputScan;command:[Quickshell.env("HOME")+"/.local/bin/sensei-workspace-state"]
+        stdout:StdioCollector {onStreamFinished:{try{const data=JSON.parse(text);if(Array.isArray(data.monitors)&&Array.isArray(data.clients)){root.clientsState=data.clients;root.outputState=data.monitors;}}catch(e){console.warn("Workspace monitor snapshot unavailable");}}}
         onExited:if(root.outputRefreshPending){root.outputRefreshPending=false;Qt.callLater(()=>root.refreshOutputs());}
     }
     readonly property var mainMonitor: outputState.find(m=>m.name===MachineProfile.primaryOutput) ?? outputState[0] ?? null
     readonly property var monitorIpc: mainMonitor
     readonly property var focusedMonitor: outputState.find(m=>m.focused) ?? mainMonitor
     function windowWorkspace(t){return t.lastIpcObject?.workspace?.id??t.workspace?.id;}
-    function logicalId(id):int {return id>100&&id<3300&&id%100>=1&&id%100<=6?id%100:id;}
+    function logicalId(id):int {return id>100&&id<3300&&id%100>=1&&id%100<=7?id%100:id;}
     readonly property int activeId: logicalId(focusedMonitor?.activeWorkspace?.id ?? 1)
     readonly property string activeSpecial: focusedMonitor?.specialWorkspace?.name ?? ""
     readonly property bool special: activeSpecial.startsWith("special:")
@@ -68,7 +72,7 @@ Singleton {
     // are not slots here: while one is up, the page label and mode glyph say so.
     readonly property var slots: {
         const out = [];
-        for (let i = 0; i < perPage; i++) {
+        for (let i = 0; i < workspaceIds.length; i++) {
             const id = workspaceIds[i];
             out.push({
                 label: workspaceNames[id - 1] ?? `${id}`.padStart(2, "0"),
@@ -77,9 +81,9 @@ Singleton {
                 special: false,
                 empty: id > workspaceNames.length,
                 active: !special && id === activeId,
-                occupied: Hyprland.toplevels.values.some(t=>logicalId(windowWorkspace(t))===id),
-                count: Hyprland.toplevels.values.filter(t=>logicalId(windowWorkspace(t))===id).length,
-                attention: Hyprland.toplevels.values.some(t=>logicalId(windowWorkspace(t))===id && attentionAddresses.includes(String(t.address||"").replace(/^0x/,"")))
+                occupied: clientsState.some(t=>logicalId(t.workspace?.id)===id),
+                count: clientsState.filter(t=>logicalId(t.workspace?.id)===id).length,
+                attention: clientsState.some(t=>logicalId(t.workspace?.id)===id && attentionAddresses.includes(String(t.address||"").replace(/^0x/,"")))
             });
         }
         return out;
@@ -128,7 +132,7 @@ Singleton {
         const active=logicalId(monitor?.activeWorkspace?.id ?? 1);
         return slots.map(s=>{
             const id=Number(s.target);
-            const local=Hyprland.toplevels.values.filter(t=>logicalId(windowWorkspace(t))===id && (t.monitor?.name===output||t.lastIpcObject?.monitor===monitor?.id));
+            const local=clientsState.filter(t=>logicalId(t.workspace?.id)===id && Number(t.monitor)===Number(monitor?.id));
             return Object.assign({},s,{active:id===active,count:local.length,occupied:local.length>0,
                 elsewhere:outputState.some(m=>m.name!==output&&logicalId(m.activeWorkspace?.id)===id)});
         });
@@ -148,6 +152,18 @@ Singleton {
             Hyprland.dispatch(`(function() local sp=hl.get_active_special_workspace(); if sp then hl.dispatch(hl.dsp.workspace.toggle_special(sp.name:gsub("^special:", ""))) end; return hl.dsp.focus({ workspace = "${slot.target}" }) end)()`);
     }
 
+    Timer { interval:3000; repeat:true; running:true; onTriggered:root.refreshOutputs() }
+    Process {id:sessionEvents;running:true;command:[Quickshell.env("HOME")+"/.local/bin/sensei-workspace-events"]
+        stdout:SplitParser {onRead: data=>{
+            outputSettle.restart();
+            try {const event=JSON.parse(data);if(event.name==="urgent")root.attention(event.data);
+                if(event.name==="activewindowv2"||event.name==="closewindow")root.acknowledge(event.data);
+                if(["workspace","workspacev2","movewindow","movewindowv2","monitoradded","monitoraddedv2","monitorremoved","configreloaded"].includes(event.name))pairSettle.restart();
+            } catch(e) {}
+        }}
+        onExited:eventRestart.restart()
+    }
+    Timer {id:eventRestart;interval:2000;onTriggered:sessionEvents.running=true}
     property bool pairRefreshPending:false
     Timer {id:pairSettle;interval:140;onTriggered:{if(pairSync.running)root.pairRefreshPending=true;else pairSync.running=true;}}
     Process {id:pairSync;command:[Quickshell.env("HOME")+"/.local/bin/sensei-displays","reconcile"]

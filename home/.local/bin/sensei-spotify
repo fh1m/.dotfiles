@@ -2,7 +2,7 @@
 """Sensei Spotify: loopback player control, cached Spotify library and album art."""
 import os,sys
 if __name__=='__main__' and not os.environ.get('SENSEI_SPOTIFY_REMOTE') and len(sys.argv)>1 and sys.argv[1] in ('status','play','pause','toggle','next','previous','volume','seek','seek-to','shuffle','repeat','play-list','play-track','play-context','play-context-track'):
- native=os.path.expanduser('~/.local/bin/sensei-spotify-transport')
+ native=os.path.expanduser('~/.local/bin/sensei-spotify-control')
  if os.path.exists(native):os.execv(native,[native]+sys.argv[1:])
 import json,sys,os,socket,time,re,hashlib,datetime,urllib.request,urllib.parse,urllib.error,fcntl,tomllib,subprocess
 from pathlib import Path

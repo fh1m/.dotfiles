@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+"""Authoritative per-output workspace state; no dependency on stale UI IPC caches."""
+import json
+import subprocess
+read=lambda name:json.loads(subprocess.check_output(['hyprctl','-i','0',name,'-j'],text=True,timeout=3))
+print(json.dumps({'monitors':read('monitors'),'clients':read('clients')}))

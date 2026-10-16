@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+"""Playback selection and single-shot control, independent of catalogue quota."""
+import json
+from pathlib import Path
+import sys
+sys.path.insert(0,str(Path.home()/'.local/share/sensei'))
+from spotify_control import main, selection
+try:
+    if sys.argv[1:]==['native-enabled']:sys.exit(0 if selection()=='native' else 1)
+    result=main(sys.argv[1:]);print(json.dumps(result));sys.exit(1 if result.get('error') else 0)
+except Exception as error:
+    print(json.dumps({'error':str(error)[:300]}));sys.exit(1)

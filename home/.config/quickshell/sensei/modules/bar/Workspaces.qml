@@ -33,7 +33,7 @@ Item {
         color: Theme.surfaceOne
         radius: Theme.radiusSmall
         border.width: 1
-        border.color: root.ownsFocus ? Theme.alpha(Theme.signalRed,.45) : Theme.rule
+        border.color: Theme.rule
     }
     Rectangle {
         id: carriage
