@@ -22,3 +22,16 @@ class Generation(unittest.TestCase):
  def test_invalid_token_fails_closed(self):
   with self.assertRaises(ValueError):place.newer('touch anything','')
 if __name__=='__main__':unittest.main()
+
+
+class PaletteTemplateContract(__import__('unittest').TestCase):
+    def test_both_host_generators_understand_every_theme_token(self):
+        import ast,re
+        from pathlib import Path
+        root=Path(__file__).resolve().parents[1]
+        tokens=set(re.findall(r'@[A-Z]+@',(root/'home/.config/tmux/sensei-theme.template.conf').read_text()))
+        for source in ['home/.local/bin/sensei-palette','profiles/pc/home/.local/bin/sensei-palette']:
+            tree=ast.parse((root/source).read_text())
+            mappings=[n.value for n in ast.walk(tree) if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='replacements' for t in n.targets)]
+            keys={k.value for d in mappings if isinstance(d,ast.Dict) for k in d.keys if isinstance(k,ast.Constant)}
+            self.assertFalse(tokens-keys,source+' lacks '+str(tokens-keys))

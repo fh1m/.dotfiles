@@ -10,6 +10,7 @@ import gzip
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -64,7 +65,8 @@ def tools():
     BIN.mkdir(parents=True, exist_ok=True); OPT.mkdir(parents=True, exist_ok=True)
     # Use a local stable runtime in containers; leave the host's current stable package alone.
     executable = shutil.which('nvim')
-    stable = executable and 'NVIM v0.12.5' in subprocess.check_output([executable, '--version'], text=True)
+    version = re.search(r'NVIM v(\d+)\.(\d+)\.(\d+)', subprocess.check_output([executable, '--version'], text=True)) if executable else None
+    stable = bool(version and tuple(map(int, version.groups())) >= (0, 12, 5))
     if not stable:
         dest = OPT / 'neovim-v0.12.5'
         if not (dest / 'bin/nvim').exists():

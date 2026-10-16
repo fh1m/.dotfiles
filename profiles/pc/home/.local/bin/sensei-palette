@@ -209,7 +209,7 @@ def main():
         if template.exists():
             original = template.read_text()
             replacements = {'@ACCENT@': palette['primary'], '@TEXT@': palette['text'],
-                            '@MUTED@': palette['muted'], '@OUTLINE@': palette['outline']}
+                            '@MUTED@': palette['muted'], '@OUTLINE@': palette['outline'], '@GROUND@': palette['ground'], '@RAISED@': palette['raised']}
             for old, new in replacements.items():
                 original = re.sub(re.escape(old), new, original, flags=re.I)
             if write_if_changed(theme, original):
