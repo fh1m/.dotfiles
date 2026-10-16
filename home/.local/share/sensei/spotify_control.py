@@ -81,7 +81,8 @@ def main(args):
     if name=='backend':return select(args[1]) if len(args)>1 else {'backend':selection()}
     if name=='autostart' and selection()!='official':return {'ok':True,'skipped':True}
     if name in ('launch','autostart'):
-        subprocess.Popen(['spotify-launcher']+(['--skip-update'] if name=='autostart' else []),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+        installed=Path(os.environ.get('XDG_DATA_HOME',str(Path.home()/'.local/share')))/'spotify-launcher/install/usr/bin/spotify'
+        subprocess.Popen(['spotify-launcher']+(['--skip-update'] if name=='autostart' and installed.exists() else []),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
         return {'ok':True}
     backend=selection()
     if backend=='official':return OfficialPlayer().status() if name=='status' else OfficialPlayer().action(name,args[1:])

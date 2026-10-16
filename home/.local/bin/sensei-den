@@ -128,15 +128,23 @@ def companion(action,value=None):
 
 
 def mode(value):
-    cfg=read(CONFIG/'continuity.json');old=cfg.get('mode','auto');cfg['mode']=value;write(CONFIG/'continuity.json',cfg)
+    cfg=read(CONFIG/'continuity.json');old=cfg.get('mode','auto');cfg['mode']=value
+    marker=PRIVATE/'input/user-paused'
+    if host()=='arete' and value in ('away','homie') and old not in ('away','homie'):
+        cfg['resumeSharing']=service('den-input')=='active' and not marker.exists()
+    write(CONFIG/'continuity.json',cfg)
     if host()=='arete' and value in ('away','homie'):
         r=run([str(HOME/'.local/bin/den-control'),'home'],timeout=10)
         if r.returncode:raise ValueError('Could not confirm capture release; use Ctrl+Alt+Esc')
+        cfg['awayPauseStamp']=marker.stat().st_mtime_ns if marker.exists() else None
+        write(CONFIG/'continuity.json',cfg)
     if host()=='arete':
         try:remote([str(HOME/'.local/bin/sensei-den'),'mode','homie' if value in ('away','homie') else 'auto'])
         except (ValueError,OSError,subprocess.SubprocessError):pass
         if value in ('auto','together') and old in ('away','homie'):
-            (PRIVATE/'input/user-paused').unlink(missing_ok=True)
+            if cfg.get('resumeSharing') and marker.exists() and marker.stat().st_mtime_ns==cfg.get('awayPauseStamp'):
+                marker.unlink()
+            cfg.pop('resumeSharing',None);cfg.pop('awayPauseStamp',None);write(CONFIG/'continuity.json',cfg)
     return {**current_mode(),'notice':'Display inputs and USB must be physically connected to their owner; software does not move cables.'}
 
 

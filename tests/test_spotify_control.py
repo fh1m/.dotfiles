@@ -25,3 +25,11 @@ class Controls(unittest.TestCase):
    m.settings_path().write_text('{bad')
    with self.assertRaises(ValueError):m.selection()
    self.assertEqual(m.settings_path().read_text(),'{bad')
+
+class Startup(unittest.TestCase):
+ def test_missing_install_bootstraps_instead_of_skip_update(self):
+  with tempfile.TemporaryDirectory() as d,patch.object(m,'selection',return_value='official'),patch.object(m.Path,'home',return_value=Path(d)),patch.object(m.subprocess,'Popen') as spawn:
+   m.main(['autostart']);self.assertEqual(spawn.call_args.args[0],['spotify-launcher'])
+ def test_native_selection_does_not_launch_official_client(self):
+  with patch.object(m,'selection',return_value='native'),patch.object(m.subprocess,'Popen') as spawn:
+   self.assertTrue(m.main(['autostart'])['skipped']);spawn.assert_not_called()

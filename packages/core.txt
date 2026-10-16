@@ -20,6 +20,7 @@ slurp
 wf-recorder
 brightnessctl
 playerctl
+spotify-launcher
 pavucontrol
 nautilus
 zenity
