@@ -109,7 +109,11 @@ def main(args):
         subprocess.Popen(['spotify-launcher']+(['--skip-update'] if installed.exists() and (name=='autostart' or (Path.home()/'.config/sensei-den/spotify-bridge.json').exists()) else []),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
         return {'ok':True}
     backend=selection()
-    if backend=='official':return OfficialPlayer().status() if name=='status' else OfficialPlayer().action(name,args[1:])
+    if backend=='official':
+        if name=='status':
+            try:return OfficialPlayer().status()
+            except Exception:return {'ready':False,'playing':False,'backend':'official','error':'Open Spotify to reconnect playback and the desktop library.'}
+        return OfficialPlayer().action(name,args[1:])
     # Exactly one native invocation, including uncertain command failures.
     result=subprocess.run([str(Path.home()/'.local/bin/sensei-spotify-transport'),*args],capture_output=True,text=True,timeout=15)
     value=json.loads(result.stdout)

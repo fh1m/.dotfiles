@@ -24,6 +24,14 @@ def main():
    if test(s):return s
    time.sleep(.15)
   raise RuntimeError('Widget acceptance timed out: '+json.dumps({k:s[k] for k in ['page','loading','error','rows','contextRows']}))
+ # Cached rows can render before a newly launched client finishes connecting.
+ deadline=time.monotonic()+45
+ while True:
+  try:connected=request('probe').get('connected')
+  except (OSError,ValueError):connected=False
+  if connected:break
+  if time.monotonic()>deadline:raise RuntimeError('Spotify desktop bridge did not connect')
+  time.sleep(.25)
  checks={}
  ipc('page','2');s=wait(lambda s:s['playlists']>0 and not s['loading']);checks['playlists']=s['playlists']
  ipc('library','liked');s=wait(lambda s:s['page']==3 and s['library']>=100 and not s['loading']);checks['likedFirstPage']=s['library']

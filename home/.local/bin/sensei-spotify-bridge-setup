@@ -64,6 +64,16 @@ def main():
  sys.path.insert(0,str(h/'.local/share/sensei'))
  from spotify_control import main as control
  control(['backend','official'])
+ if not changed and subprocess.run(['pgrep','-u',str(os.getuid()),'-x','spotify'],stdout=subprocess.DEVNULL).returncode:
+  run(['systemd-run','--user','--unit=sensei-spotify-client-'+str(int(time.time())),'--collect','spotify-launcher','--skip-update'])
+ from spotify_bridge import request
+ deadline=time.monotonic()+45
+ while True:
+  try:connected=request('probe').get('connected')
+  except (OSError,ValueError):connected=False
+  if connected:break
+  if time.monotonic()>deadline:raise ValueError('Bridge installed, but Spotify has not connected. Open Spotify and finish its sign-in dialog.')
+  time.sleep(.25)
  run(['notify-send','-a','Spotify','Desktop library bridge ready','Playlists, liked songs, search and queue use your Spotify desktop session.'],stdout=subprocess.DEVNULL)
  return {'ok':True,'changed':changed,'credentialsCopied':False,'listen':'loopback only'}
 if __name__=='__main__':

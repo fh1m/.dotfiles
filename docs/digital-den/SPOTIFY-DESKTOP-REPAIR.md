@@ -98,15 +98,24 @@ tracks, search returned 26 tracks in the inspected query, and the queue containe
 album/artist context browsing returned songs. Screenshots were inspected privately,
 not committed with the user's personal playlist names.
 
-The full suite passed 286 tests; 28 focused Spotify tests passed. The owned live
+The full suite passed 287 tests; 29 focused Spotify tests passed. The owned live
 workflow is reproducible with `python3 scripts/check-spotify-desktop.py --live`
 when changing playback is acceptable (reference account requires 200 liked songs).
-Setup preview reports no changes after application on each host. The bridge
+Setup preview reports no changes after application on each host. Setup now waits
+for a real desktop bridge handshake before announcing readiness. An initial
+immediate post-launch PC check encountered cached rows before the extension was
+connected; the readiness gate fixes that test/startup race. The repeated connected
+workflow passed. The bridge
 service is enabled for subsequent graphical sessions.
 
 Automated tests cover relay authentication/Host checks, operation allowlisting,
 connection loss, saved-data retention, typed pagination, zero-total pages,
-nested folders and search-wrapper normalization. An explicit laptop-local Connect selection also succeeded. Library-write and
+nested folders and search-wrapper normalization. An explicit laptop-local Connect selection also succeeded. Homie subsequently
+controlled the songs while the laptop remained the active device (PC local
+active=false, external active=true). The laptop Spotify stream was unmuted and
+produced nonzero PCM: 98,304 float samples, RMS 0.00797. PCM was not saved.
+A closed desktop now reports an explicit reconnect state, with a player-change
+refresh, instead of retaining a false Playing indicator. Library-write and
 phone-handoff acceptance remain distinct from successful read/playback tests.
 
 ## Research ledger

@@ -111,6 +111,6 @@ DropdownFrame {
  }
  }
  }
- Text { textFormat: Text.PlainText;width:parent.width;text:SpotifyDesk.error||SpotifyDesk.warning||(SpotifyDesk.loading?'Sensei, loading your music…':'Sensei, your soundtrack is ready.');font.family:Appearance.font.ui;font.pixelSize:11;color:SpotifyDesk.error?Theme.widgetAccent:Theme.widgetMuted;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight}
+ Text { textFormat: Text.PlainText;width:parent.width;text:SpotifyDesk.error||SpotifyDesk.statusError||SpotifyDesk.warning||(SpotifyDesk.loading?'Sensei, loading your music…':'Sensei, your soundtrack is ready.');font.family:Appearance.font.ui;font.pixelSize:11;color:(SpotifyDesk.error||SpotifyDesk.statusError)?Theme.widgetAccent:Theme.widgetMuted;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight}
  }
 }

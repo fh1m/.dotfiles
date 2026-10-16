@@ -19,6 +19,10 @@ class Controls(unittest.TestCase):
    with self.assertRaises(ValueError):p.action('play-list',['[]'])
    action.assert_called_once_with('play-list',['[]'])
   self.assertEqual(p.calls,[])
+ def test_closed_official_client_reports_disconnection(self):
+  with patch.object(m,'selection',return_value='official'),patch.object(m,'OfficialPlayer',side_effect=RuntimeError('low-level bus error')):
+   result=m.main(['status'])
+  self.assertFalse(result['ready']);self.assertFalse(result['playing']);self.assertIn('Open Spotify',result['error'])
  def test_official_urls_match_catalogue_identity(self):
   ident='A'*22
   self.assertEqual(m.canonical_uri('https://open.spotify.com/track/'+ident+'?si=private'),'spotify:track:'+ident)
