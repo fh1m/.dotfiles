@@ -107,3 +107,16 @@ on a temporary empty workspace, restored afterward. The generated night-shift
 illustration in the README is artwork, not a screenshot or claim of a physical
 desk arrangement. The live character checks free space and yields to applications.
 See [asset provenance and prompts](ARTWORK.md).
+
+## Local travel update — 2026-10-16
+
+`companion-local-travel.gif` and its PNG fallback are fresh Grim captures of the
+actual QML companion on ScreenPad Utility. They show a short landing scale
+animation and plain text over the existing wallpaper. Frames are cropped at the
+output's real scale; application contents were not repainted. The character is
+the existing exclusive artwork, not a newly generated identity. The text was
+explicitly supplied for this capture, not inferred from private work.
+
+This is a **local** capture. Homie was offline, so these assets do not demonstrate
+cross-host travel or a synchronized five-panel session. The original spatial
+gallery remains intact.

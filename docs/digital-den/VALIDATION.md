@@ -82,3 +82,17 @@ an attributed quotation. An eight-second idle sample of the existing combined
 cursor/companion renderer observed 0.00% of one CPU core at the sampling resolution
 and 200.7 MiB RSS; this is a short whole-renderer sample, not isolated companion
 cost or a performance guarantee.
+
+
+## Connected next-pass release — 2026-10-16
+
+See [the execution record](NEXT-PASS-IMPLEMENTATION.md) for the full P0–P6 coverage
+and open gates. Both hosts passed 271 regression tests; live dropdown placement
+passed 76 Arete cases and 19 Homie cases. Official Spotify pause/resume and
+single-shot Next passed on each host. Cross-host companion ownership, ROS,
+checksummed remote jobs, two-node NCCL and bidirectional checkpoint recovery were
+observed. This small workload strongly favors independent jobs on the current
+link. One exact-coordinate assertion failed during repeat input testing; cleanup
+released control and a complete subsequent run passed. Its cause remains unknown.
+Physical display transfer, unattended boot/Windows return, off-site operation and
+phone-controlled Spotify soak remain unverified. Private evidence stays local.

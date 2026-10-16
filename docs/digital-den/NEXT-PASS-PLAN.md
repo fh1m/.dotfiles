@@ -1,6 +1,11 @@
 # Digital Den: next implementation pass
 
-2026-10-16. **Proposed; implementation awaits review.** Baseline main: `3c5a53e`.
+Implementation was authorized on 2026-10-16. This document retains the original
+proposal; [the execution record](NEXT-PASS-IMPLEMENTATION.md) supersedes its
+approval boundary, music fallback, roaming and workspace-strip decisions.
+
+
+2026-10-16. **Original proposal below; implementation authorized and executed.** Planning baseline: `3c5a53e`.
 Only research, source inspection and read-only diagnostics were performed for this
 plan. The preceding repair pass is recorded in AUDIT-2026-10-16.md. Existing bars
 and valid authenticated sessions remain intact.

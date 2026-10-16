@@ -146,3 +146,37 @@ The live edge harness requires explicit `--live`, a dedicated gesture fixture an
 [Current runtime audit and remaining hardware gates](AUDIT-2026-10-16.md).
 
 [Proposed next pass](NEXT-PASS-PLAN.md) · [104-query research ledger](RESEARCH-NEXT-PASS.md).
+
+## Current routing, music and jobs
+
+The seven subjects are Terminal, Web, Code, Study, Sim, Work and Misc. Arete's
+main and external displays share the logical subject, with separate physical
+workspace IDs; ScreenPad Utility is independent at 90. Homie has its own
+compositor. Pointer movement focuses windows without clicking.
+
+Music → Account selects **native** or **official Spotify** controls. Official
+MPRIS playback is independent of catalogue quota; queue operations unsupported
+by that interface remain in the official application. No automatic ownership
+transfer or skip retry occurs. `sensei-spotify-control backend official` changes
+the private selection without starting audio.
+
+`System → Digital Den` contains Tour displays, Bring here, Follow my focus, Desk
+tip, Quiet and Motion controls. `sensei-den companion roam on` enables lively
+45–90 second travel opportunities. Unsafe/fullscreen destinations can hide the
+character; applications keep priority. A peer must advertise the compatible
+lease protocol before cross-host travel is attempted. The renderer is
+click-through and never controls the cursor. `roam off` or reduced motion stops
+automatic roaming.
+
+[Run a checksummed synthetic robotics job](../../examples/digital-den/README.md).
+[Observed results and remaining physical gates](NEXT-PASS-IMPLEMENTATION.md).
+
+The Field Guide (`Super+F2`, or `Ctrl+Shift+/`) combines readable introductions
+with an on-open inventory of actual Hyprland, tmux, Alacritty and Neovim mappings.
+Search by key, action or tool. `sensei-shortcuts` emits the same inventory as JSON;
+no bound action is executed while collecting it. Buffer-local/editor defaults
+remain available in `:map` and `:help index`. Curated entries live in
+`modules/shortcuts/shortcuts.json`; live entries need no parallel handwritten list.
+
+Preview backup retention with `sensei-den backup retain-preview` before choosing
+`retain`. Neither the preview nor capacity guards delete datasets.

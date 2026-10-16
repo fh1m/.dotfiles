@@ -1,3 +1,23 @@
+# Next-pass deployment checkpoint — 2026-10-16
+
+Homie is online and shares main with Arete. Focus-follows-mouse, workspace recovery,
+explicit Spotify backends, checksummed remote jobs and exclusive companion leases
+are deployed. The official Spotify client is installed; the user unlocked its
+keyring and signed in. MPRIS was observed Playing with transport capabilities.
+No account/profile databases were copied between hosts.
+
+Owned fixtures verified eight input entry/return combinations, emergency release,
+receiver failure recovery, cross-host companion handoff, bidirectional ROS messages,
+remote IMU calibration, two-node NCCL and checkpoint recovery in both directions.
+This does not close the physical cable-transfer, unattended firmware boot or
+Windows-return gates. See [the execution record](../docs/digital-den/NEXT-PASS-IMPLEMENTATION.md).
+All 19 existing dropdowns opened successfully; Field Guide discovers the actual
+key inventory. The storage harness now rejects bare autofs placeholders and
+verifies four protected volumes are read-only. Both hosts passed 271 tests.
+One repeated exact-coordinate input assertion failed; safe cleanup and the next
+complete run passed. Keep that transient visible in future input audits.
+No drives, boot entries, firmware or partitions were changed in this pass.
+
 # Runtime/boot audit checkpoint — 2026-10-16
 
 Both hosts audited on main. Failed services repaired; backup checks and independent

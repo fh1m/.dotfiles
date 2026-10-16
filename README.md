@@ -128,9 +128,11 @@ Ubuntu-based robotics environments live in containers. The host remains the dail
 
 He escaped the README.
 
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/digital-den/companion-v2.png"><img src="docs/assets/digital-den/companion-v2.gif" alt="The actual desktop companion waves, walks gently and offers a short text bubble over Arete's wallpaper" width="750"></picture>
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/digital-den/companion-local-travel.png"><img src="docs/assets/digital-den/companion-local-travel.gif" alt="The actual desktop companion waves, walks gently and offers a short text bubble over Arete's wallpaper" width="572"></picture>
 
-A small fh1m companion finds a free corner, types, wanders a little, and occasionally has opinions about coordinate frames. Useful tips, small jokes, no sound. Applications always win the space; quiet and reduced-motion controls are one command away. **System → Digital Den → Desk tip.** Try `:DenTip` inside Neovim. [Companion controls](docs/digital-den/README.md#the-little-engineer).
+A small fh1m companion finds a free corner, types, wanders a little, and occasionally has opinions about coordinate frames. Useful tips, small jokes, no sound. Applications always win the space; quiet and reduced-motion controls are one command away. **System → Digital Den → Tour displays / Desk tip.** Try `:DenTip` inside Neovim. [Companion controls](docs/digital-den/README.md#the-little-engineer).
+
+The capture shows local travel; separate live checks verified an exclusive handoff to Homie and return to Arete. [Current implementation and checks](docs/digital-den/NEXT-PASS-IMPLEMENTATION.md).
 
 Native tabs keep Alacritty and Obsidian together. The identity deck has developer tools and a Nerd Talk corner. XKCD is a right-click research break. The palette takes itself seriously enough for the rest of us.
 

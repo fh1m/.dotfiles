@@ -16,7 +16,9 @@ def run(command,timeout=4):
 def key_name(value):
     aliases={'control':'Ctrl','ctrl':'Ctrl','super':'Super','shift':'Shift','alt':'Alt',
              'return':'Return','space':'Space','left':'←','right':'→','up':'↑','down':'↓','slash':'/'}
-    return '+'.join(aliases.get(x.strip().lower(),x.strip()) for x in value.replace('|','+').split('+'))
+    parts=[aliases.get(x.strip().lower(),x.strip()) for x in value.replace('|','+').split('+') if x.strip()]
+    modifiers=['Super','Ctrl','Alt','Shift']
+    return '+'.join([x for x in modifiers if x in parts]+[x for x in parts if x not in modifiers])
 
 def source_bindings():
     found={}
@@ -24,13 +26,29 @@ def source_bindings():
     for name in ['hyprland.lua','hypr-sensei.lua','custom-setup.lua','oasis.lua']:
         p=HOME/'.config/hypr'/name
         if not p.exists():continue
-        for number,line in enumerate(p.read_text().splitlines(),1):
-            match=re.search(r'hl\.bind\(("[^"\n]+"|mod\s*\.\.\s*"[^"\n]+"),\s*(.+)',line)
-            if not match:continue
+        text=p.read_text()
+        for match in re.finditer(r'hl\.bind\(("[^"\n]+"|mod\s*\.\.\s*"[^"\n]+"),\s*([^\n]+)',text):
             value=match[1]
             key='SUPER'+value.split('"')[1] if value.startswith('mod') else value[1:-1]
-            body=match[2].strip()
+            body=match[2].strip();number=text.count('\n',0,match.start())+1
             found[key_name(key).lower()]=(body,f'{name}:{number}')
+        # Expand the actual installed loop tables without evaluating Lua.
+        if 'app_helper .. spec[2]' in text:
+            for key,app in re.findall(r'\{"([^"]+)", "(terminal|web|files|calculator)"\}',text):
+                for prefix,action in [('', 'focus-or-launch'),('SHIFT + ', 'new-window')]:
+                    found[key_name(prefix+key).lower()]=(f'sensei-app {app} {action}',name)
+        if 'spotify action " .. spec[2]' in text:
+            for key,action in re.findall(r'\{"(LEFT|RIGHT|UP|DOWN)", "([a-z-]+)"\}',text):
+                found[key_name('CTRL+'+key).lower()]=(f'Spotify {action}',name)
+        if 'sensei-displays workspace ' in text:
+            contract=json.loads((HOME/'.local/share/sensei/workspaces.json').read_text())
+            for i,subject in enumerate(contract['subjects'],1):
+                for modifier,action in [('', 'Open'),('SHIFT+', 'Move window to')]:
+                    found[key_name('SUPER+'+modifier+str(i)).lower()]=(action+' workspace '+subject['name'],name)
+        if 'hl.dsp.focus({monitor=side[2]})' in text:
+            for direction in ['LEFT','RIGHT']:
+                for modifier,action in [('', 'Focus'),('SHIFT+', 'Move window to')]:
+                    found[key_name('SUPER+CTRL+'+modifier+direction).lower()]=(action+' display '+direction.lower(),name)
     return found
 
 def desktop():
