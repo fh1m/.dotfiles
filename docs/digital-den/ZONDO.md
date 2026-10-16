@@ -7,7 +7,7 @@ Zondo is fh1m’s local desktop character. No microphone, window-title logging, 
 - Keep the existing renderer and cross-host leases. Add an original sixteen-pose illustrated atlas: dance sequence, reading, mug, stretch, stargazing, juggling, robot, paper plane, sketchbook, binoculars, plant, guitar and sleep.
 - Rotate activities independently from speech. Music state comes from Spotify MPRIS; the existing authenticated lease carries a fresh boolean across hosts so he can dance on Homie to music playing on Arete (and vice versa). It expires with the lease; no catalogue requests. Paused music returns to ordinary activities.
 - Explore 35 candidate positions on exposed wallpaper. Never draw over app windows; the bar perch remains the fallback. A clear bounding corridor permits walking or paper-plane travel in two dimensions; a blocked corridor uses departure/reappearance instead of flying over code.
-- Persist only the last 40 line IDs and sequence position locally. New sessions do not restart the same jokes. This is repetition memory, not a claim that Zondo understands the user. Content remains inspectable in `notes.json`.
+- Persist only the last 40 line IDs and sequence position locally, and carry the newer sequence through authenticated companion leases. New sessions do not restart the same jokes. This is repetition memory, not a claim that Zondo understands the user. Content remains inspectable in `notes.json`.
 - Personal callbacks cite the public [about page](https://fh1m.github.io/about/), read on 17 October 2026. RocketPy, rover keyboard alignment, TVC and Mongla e-stop references come from that page. No invented recollections.
 - Desk checks use real RAM, home-volume space and uptime. Thermal warnings identify a sensor, not a claimed CPU/GPU reading. Warning cooldown: 30 minutes. No fake emergency or emotional inference.
 - A five-second, click-through welcome card on session/presence changes. No bootloader, initramfs, display manager or input grab changes. This is a graphical-session welcome, not a firmware boot splash.
@@ -39,9 +39,9 @@ Built-in imagegen produced `zondo-life-v2.png` (transparent 4×4 atlas) and `den
 
 - Original atlas and workshop scene inspected; the arrival card and live paper-plane pose were captured and inspected on Arete. The second imagegen atlas and measured transparent-gutter rectangles fix the tight edges found in the first real crop; the padded reading pose was re-captured and inspected.
 - GTK3/GTK4 CSS loaded with zero parser errors. Installer preview reported no remaining changes after application.
-- 302 shared tests passed, including 15 companion checks and 17 continuity checks. Native input unit suite: 5 passed.
+- 304 shared tests passed, including 17 companion checks and 17 continuity checks. Native input unit suite: 5 passed.
 - 12 live round trips covered top→bottom, right→left, top→left and right→bottom at multiple edge positions, plus triple-Ctrl pause/resume. Sharing restored afterward. Cursor asset hashes match.
-- Real Spotify Playing state reached Zondo. The previous paused state was restored. Both hosts received the initial Zondo deployment with no input-service restart.
+- Real Spotify Playing state reached Zondo. The previous paused state was restored. Both hosts received Zondo, the padded atlas and the matching native theme with no input-service restart during deployment. The Qt6 probe passed on Homie too.
 - Neovim smoke, including actual Ruff formatting and LSP hover, passed on Arete, Homie and auv-ros2. The container emitted its existing first-password warning before the smoke succeeded; this pass did not set a container password.
 - Cold boot, physical unplug and subjective long-session cursor smoothness are not claimed as completed hardware tests.
 
@@ -52,3 +52,9 @@ Arete’s rolling repository supplied a Qt6.12-built qt6ct while the installed Q
 Both Qt5 and Qt6 offscreen QApplication probes now report the same actual dark window, pink highlight and 11pt JetBrains Mono Propo font. `QT_QPA_PLATFORMTHEME=qt5ct` is supported by both providers; the private Qt6 plugin path is shared through Hyprland and environment.d. New apps inherit it immediately through Hyprland/DBus; already-running applications may retain their cached palette until reopened.
 
 After a Qt minor-version update, rerun `python3 ~/.dotfiles/scripts/build-qt-theme.py` on that host. It preserves the previous private provider and never writes system libraries. Keep existing upstream notices; it uses the official [qt6ct source](https://www.opencode.net/trialuser/qt6ct), not a replacement widget engine. To undo, revert the appearance environment/config files from the installer backup and reopen affected apps. No reboot is required for the theme itself.
+
+### Final UI acceptance note
+
+An IPC-opened music room on a different monitor did not receive Escape until it was focused. This is consistent with its OnDemand keyboard contract: opening music must not take control away from the rest of the desktop indefinitely. The live harness now clicks a known blank margin before sending one paired Escape, restores the cursor, and then verifies closure/context. That real test passed on Arete. The earlier unfocused attempt timed out safely and is not counted as a successful key test.
+
+Sharing was restored after the 12-route input harness. Both user input services, cursor renderers and presence watchers remained active. The private Qt build was repeated successfully with no compilation work required; existing-provider backups are retained. Future physical boot/unplug testing remains a separate gate.

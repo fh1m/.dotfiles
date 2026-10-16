@@ -11,3 +11,10 @@ class Leases(unittest.TestCase):
   a=m.grant({},'DP-1',1,ttl=10,now=10);self.assertTrue(m.valid(a,19));self.assertFalse(m.valid(a,20));self.assertFalse(m.valid(m.grant(a,'',2,now=11),12))
  def test_unbounded_lease_is_rejected(self):
   with self.assertRaises(ValueError):m.grant({},'DP-1',1,ttl=10000)
+
+class RepertoireMemory(unittest.TestCase):
+    def test_only_bounded_ids_cross_the_lease(self):
+        self.assertEqual(m.memory({'turn':'unsafe','recent':['private text',True,-2,7]}),{'turn':0,'recent':[7]})
+        self.assertEqual(len(m.memory({'turn':5,'recent':list(range(100))})['recent']),40)
+    def test_newer_sequence_wins_without_private_content(self):
+        self.assertEqual(m.newer_memory({'turn':4,'recent':[1]},{'turn':5,'recent':[2],'message':'private'}),{'turn':5,'recent':[2]})

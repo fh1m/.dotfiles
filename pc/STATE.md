@@ -11,8 +11,9 @@ and repetition memory, measured context and graphical welcome are documented in
 [ZONDO.md](../docs/digital-den/ZONDO.md). Terminal opacity .96, GTK/Qt styling and
 PC Hyprcursor environment now follow the shared Den. Automatic locator flashes
 on crossing are removed; explicit Ctrl locator and emergency escape remain.
-The four entry/return combinations and triple-Ctrl pause/resume passed on the
-live Den. Physical cold boot/cable handoff still requires hardware acceptance.
+Twelve live round trips covered all four entry/return combinations; triple-Ctrl
+pause/resume also passed. Native Qt6 palette/font probes passed on Homie and
+Arete; the small provider is built privately against installed Qt, not system Qt. Physical cold boot/cable handoff still requires hardware acceptance.
 
 # Spotify listening-room checkpoint — 2026-10-16
 

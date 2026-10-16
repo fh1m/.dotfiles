@@ -10,3 +10,17 @@ def grant(record, output, token, ttl=40, now=None):
 def valid(record,now=None):
     now=time.time() if now is None else now
     return record.get('schema')==1 and record.get('expires',0)>now and bool(record.get('output'))
+
+
+def memory(record):
+    """Only repertoire IDs and a monotonic sequence cross a companion lease."""
+    if not isinstance(record,dict):return {'turn':0,'recent':[]}
+    turn=record.get('turn',0);recent=record.get('recent',[])
+    if type(turn) is not int or not 0<=turn<2**53:turn=0
+    if not isinstance(recent,list):recent=[]
+    return {'turn':turn,'recent':[x for x in recent[-40:] if type(x) is int and 0<=x<100000]}
+
+
+def newer_memory(a,b):
+    a,b=memory(a),memory(b)
+    return b if b['turn']>a['turn'] else a

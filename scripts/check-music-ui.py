@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Live listening-room acceptance. Changes music UI; never edits the library.
 
-Sends one paired Escape through a short-lived virtual keyboard (no input grab).
+Clicks a blank room margin, then sends one paired Escape through a short-lived virtual keyboard (no input grab).
 Use only while a brief music-overlay test is welcome.
 """
 import argparse
@@ -32,6 +32,7 @@ def main():
             time.sleep(.15)
         raise RuntimeError('Music UI acceptance timed out')
 
+    cursor=json.loads(subprocess.check_output(["hyprctl","-i","0","cursorpos","-j"],text=True))
     saved = state()
     preferences=state("music-fullscreen")
     try:
@@ -47,7 +48,19 @@ def main():
             assert abs(room['seek'] - room['position']/room['duration']) < .01, room
         call('music-fullscreen', 'collection', '1')
         wait(lambda s: s['collection'] == 1 and s['rows'] > 0, 'music-fullscreen')
-        # Exclusive music surface owns this bounded, modifier-free key.
+        # OnDemand surfaces need a real inside click before receiving keys.
+        # IPC may open on a monitor different from the cursor's monitor.
+        monitors=json.loads(subprocess.check_output(['hyprctl','-i','0','monitors','-j'],text=True))
+        monitor=next(m for m in monitors if m['name']==room['output'])
+        x,y=monitor['x']+12,monitor['y']+90
+        subprocess.run(['hyprctl','-i','0','dispatch',f'hl.dsp.cursor.move({{x={x},y={y}}})'],check=True,stdout=subprocess.DEVNULL)
+        with UInput({e.EV_KEY:[e.BTN_LEFT]},name='Den music blank-margin focus') as pointer:
+            time.sleep(.2)
+            pointer.write(e.EV_KEY,e.BTN_LEFT,1);pointer.syn()
+            try:time.sleep(.04)
+            finally:pointer.write(e.EV_KEY,e.BTN_LEFT,0);pointer.syn()
+            time.sleep(.2)
+        # No media action, text input, modifier or device grab.
         with UInput({e.EV_KEY: [e.KEY_ESC]}, name='Den paired Escape acceptance') as device:
             time.sleep(.2)
             try:
@@ -67,6 +80,7 @@ def main():
         call('spotify', 'page', str(saved['page']))
         call('music-fullscreen','mode','focus' if preferences.get('zen') else 'normal')
         call('music-fullscreen','backdrop','true' if preferences.get('backdrop') else 'false')
+        subprocess.run(['hyprctl','-i','0','dispatch',f'hl.dsp.cursor.move({{x={cursor["x"]},y={cursor["y"]}}})'],check=False,stdout=subprocess.DEVNULL)
 
 
 if __name__ == '__main__':

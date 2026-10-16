@@ -10,6 +10,7 @@ Item {
     id: root
     property string ownerOutput: ""
     property var journey: ({})
+    onJourneyChanged:{const m=journey.memory;if(m&&Number(m.turn)>turn&&Array.isArray(m.recent)){turn=m.turn;recent=m.recent.slice(-40);remember();}}
     property real journeyClock: Date.now()/1000
     readonly property bool leased: journey.schema===1 && journey.expires>journeyClock
     readonly property bool managed: preferences.roaming===true || (presence.host==="homie" && !standalone)
@@ -121,7 +122,7 @@ Item {
     Timer {interval:1000;repeat:true;running:root.managed;onTriggered:root.journeyClock=Date.now()/1000}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-travel.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.journey=JSON.parse(text());root.journeyClock=Date.now()/1000;}catch(e){}}}
     FileView {id:memoryFile;path:Quickshell.env("HOME")+"/.local/state/sensei-den/zondo-memory.json";printErrors:false
-        onLoaded:{try{const m=JSON.parse(text());root.recent=Array.isArray(m.recent)?m.recent.slice(-40):[];root.turn=Number(m.turn)||0;}catch(e){}root.memoryLoaded=true;}}
+        onLoaded:{try{const m=JSON.parse(text());if(Number(m.turn)>=root.turn){root.recent=Array.isArray(m.recent)?m.recent.slice(-40):[];root.turn=Number(m.turn)||0;}}catch(e){}root.memoryLoaded=true;}}
     Timer {interval:1500;running:true;onTriggered:root.memoryLoaded=true}
     FileView {path:Qt.resolvedUrl("notes.json");watchChanges:true;printErrors:false
         onFileChanged:reload();onLoaded:{try{Logic.notes=JSON.parse(text());}catch(e){}}}
