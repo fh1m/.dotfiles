@@ -43,6 +43,14 @@ Item {
     readonly property bool allowed: eligible && placement.available
     readonly property int pose: activity==="walk" ? (walkingRight?8:4)+frame%4 : activity==="wave" ? 13 : activity==="celebrate" ? 14 : activity==="think" ? 12 : activity==="sleep" ? 15 : frame%4
     IpcHandler {target:"companion";function state():string{return JSON.stringify({allowed:root.allowed,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,activity:root.activity,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
+    property string lastPublished:""
+    function publish():void {
+        const data=JSON.stringify({output:target,allowed:allowed,eligible:eligible});
+        if(data!==lastPublished && renderFile){lastPublished=data;renderFile.setText(data);}
+    }
+    FileView {id:renderFile;path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-render.json";printErrors:false}
+    Component.onCompleted:Qt.callLater(publish)
+    onAllowedChanged:publish()
     function refresh():void {
         if(!eligible && target==="")return;
         query.restart();
@@ -77,8 +85,8 @@ Item {
         if(!Logic.canWalk(old,placement)){variant=oldVariant;deliberateTravel=false;placement=old;return;}
         walkingRight=placement.x>old.x;activity="walk";frame=0;poseExpiry.restart();
     }
-    onTargetChanged:{deliberateTravel=false;placement={available:false,x:18,y:56};landing=!reduced;landingExpiry.restart();refresh();}
-    onEligibleChanged:if(eligible)refresh()
+    onTargetChanged:{publish();deliberateTravel=false;placement={available:false,x:18,y:56};landing=!reduced;landingExpiry.restart();refresh();}
+    onEligibleChanged:{publish();if(eligible)refresh()}
     Timer {interval:1000;repeat:true;running:root.managed;onTriggered:root.journeyClock=Date.now()/1000}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-travel.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.journey=JSON.parse(text());root.journeyClock=Date.now()/1000;}catch(e){}}}
     FileView {path:Qt.resolvedUrl("notes.json");watchChanges:true;printErrors:false

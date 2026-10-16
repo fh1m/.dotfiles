@@ -35,6 +35,7 @@ Variants {
         anchors { top: bar.topEdge; bottom: !bar.topEdge; left: true; right: true }
         Rectangle { anchors.fill: parent; color: Theme.barBg }
         Text {
+            id:outputLabel
             visible:bar.external
             anchors.left:parent.left;anchors.leftMargin:20;anchors.verticalCenter:parent.verticalCenter
             text:MachineProfile.host+" / "+MachineProfile.role(bar.outputName)
@@ -59,6 +60,13 @@ Variants {
             spacing: 10
             PageMarker { output:bar.external?bar.outputName:"";anchors.verticalCenter: parent.verticalCenter }
             Workspaces { id: workspaces;output:bar.external?bar.outputName:Spaces.mainMonitor?.name??bar.outputName;compact:bar.external&&bar.width<1500;anchors.verticalCenter: parent.verticalCenter }
+        }
+        CompanionPerch {
+            output:bar.outputName;edge:bar.topEdge?"top":"bottom"
+            preferred:!ShellState.barScreens.some(s=>s.name===bar.outputName)
+            freeLeft:(bar.external?outputLabel.x+outputLabel.width:meters.x+meters.width)+12
+            freeRight:navigation.x-12
+            anchors.verticalCenter:parent.verticalCenter
         }
         Row {
             id:machineControls

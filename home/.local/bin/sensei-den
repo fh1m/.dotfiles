@@ -264,12 +264,17 @@ def backup(action):
         result['summary']=summaries[-1] if summaries else {};write(STATE/'backup-status.json',result)
         if r.returncode:raise ValueError('Backup incomplete; private Restic diagnostics require review')
         return result
-    if action=='retain':
-        # Only this system's tagged snapshots; historical backup directories are unrelated.
-        r=run([*base,'forget','--tag','digital-den','--keep-daily','7','--keep-weekly','4',
-               '--keep-monthly','3','--prune'],timeout=7200,env=env)
+    if action in ('retain','retain-preview'):
+        # Preview and apply share exactly the same tagged retention policy.
+        command=[*base,'forget','--tag','digital-den','--keep-daily','7',
+                 '--keep-weekly','4','--keep-monthly','3']
+        preview=action=='retain-preview'
+        command+=['--dry-run','--json'] if preview else ['--prune']
+        r=run(command,timeout=7200,env=env)
         if r.returncode:raise ValueError('Retention did not complete; inspect private Restic diagnostics')
-        return {'ok':True,'policy':'7 daily / 4 weekly / 3 monthly; digital-den snapshots only'}
+        result={'ok':True,'preview':preview,'policy':'7 daily / 4 weekly / 3 monthly; digital-den snapshots only'}
+        if preview:result['snapshots']=json.loads(r.stdout)
+        return result
     if action=='check':
         r=run([*base,'check','--read-data-subset=10%'],timeout=3600,env=env)
         return {'ok':r.returncode==0,'scope':'repository metadata and sampled data'}
@@ -537,7 +542,7 @@ def main():
     q=s.add_parser('mode');q.add_argument('value',nargs='?',choices=['auto','together','away','homie'])
     q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','say','chatter','motion','tip','roam','tour','grant','protocol']);q.add_argument('value',nargs='?')
     q=s.add_parser('sync');q.add_argument('action',nargs='?',default='status',choices=['status','scan','pause','resume'])
-    q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','peer-copy'])
+    q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','retain-preview','peer-copy'])
     q=s.add_parser('workbench');q.add_argument('action',nargs='?',default='open',choices=['open','start','stop','status'])
     q=s.add_parser('job');q.add_argument('action',choices=['run','list','status','logs','cancel','artifacts','fetch']);q.add_argument('--host');q.add_argument('--project');q.add_argument('--id');q.add_argument('--input',action='append');q.add_argument('--artifact',action='append');q.add_argument('--file');q.add_argument('--output');
     argv=sys.argv[1:];job_command=[]

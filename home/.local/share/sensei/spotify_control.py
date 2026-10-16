@@ -78,7 +78,13 @@ def select(value):
 def main(args):
     args=args or ['status']
     name=args[0]
-    if name=='backend':return select(args[1]) if len(args)>1 else {'backend':selection()}
+    if name=='backend':
+        if len(args)<2:return {'backend':selection()}
+        result=select(args[1])
+        if args[1]=='native':
+            started=subprocess.run(['systemctl','--user','start','sensei-spotify.service'],capture_output=True,text=True,timeout=25)
+            if started.returncode:result['warning']='Native backend selected; start failed. Open Account to reconnect.'
+        return result
     if name=='autostart' and selection()!='official':return {'ok':True,'skipped':True}
     if name in ('launch','autostart'):
         installed=Path(os.environ.get('XDG_DATA_HOME',str(Path.home()/'.local/share')))/'spotify-launcher/install/usr/bin/spotify'

@@ -32,6 +32,17 @@ class Continuity(unittest.TestCase):
         p=self.root/'state';p.write_text('[')
         with self.assertRaises(ValueError):m.read(p)
         self.assertEqual(p.read_text(),'[')
+    def test_retention_preview_cannot_prune(self):
+        import subprocess
+        password=self.root/'backup-password';password.touch()
+        m.write(m.CONFIG/'backup.json',{'repository':str(self.root/'repo'),'passwordFile':str(password)})
+        with patch.object(m.shutil,'which',return_value='/usr/bin/restic'),patch.object(m,'run',return_value=subprocess.CompletedProcess([],0,'[]','')) as call:
+            result=m.backup('retain-preview')
+            command=call.call_args.args[0]
+            self.assertTrue(result['preview'])
+            self.assertIn('--dry-run',command);self.assertNotIn('--prune',command)
+            self.assertEqual(command[command.index('--tag')+1],'digital-den')
+
     def test_missing_backup_mount_never_writes_to_root(self):
         with patch.object(m.os.path,'ismount',return_value=False):
             with self.assertRaisesRegex(ValueError,'not mounted'):
