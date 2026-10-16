@@ -76,7 +76,7 @@ ShellRoot {
                     WlrLayershell.namespace: "den-focus-indicator"
                     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                     mask: Region {}
-                    property bool focusedDisplay: root.focusedOutput===screenScope.display.name
+                    property bool focusedDisplay: root.focusedOutput===(screenScope.display?.name??"")
                     Item {
                         anchors.fill: parent
                         opacity: focusedDisplay ? .85 : .23

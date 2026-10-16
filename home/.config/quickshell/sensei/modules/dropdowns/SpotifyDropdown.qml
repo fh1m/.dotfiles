@@ -8,7 +8,8 @@ import qs.components
 DropdownFrame {
  headerAccent:Theme.widgetAccent
  id:root;title:"\uf1bc Music / Spotify";katakana:"AUDIO PATH";implicitWidth:1080;fillColor:Theme.ink
- IpcHandler {target:"spotifyview-"+(root.QsWindow.window?.screen?.name||"unmapped");function state():string{return JSON.stringify({count:musicList.count,visible:musicList.visible,query:SpotifyDesk.query,contextId:SpotifyDesk.contextItem.id||"",loading:SpotifyDesk.loading,error:SpotifyDesk.error});}function filter(text:string):void{SpotifyDesk.query=text;}}
+ property string outputName:""
+ IpcHandler {enabled:root.outputName!=="";target:"spotifyview-"+root.outputName;function state():string{return JSON.stringify({count:musicList.count,visible:musicList.visible,query:SpotifyDesk.query,contextId:SpotifyDesk.contextItem.id||"",loading:SpotifyDesk.loading,error:SpotifyDesk.error});}function filter(text:string):void{SpotifyDesk.query=text;}}
  headerRight:ControlTile {implicitWidth:32;implicitHeight:30;glyph:"\uf065";Accessible.name:"Open fullscreen music";onActivated:SpotifyDesk.expand()}
  property int page:SpotifyDesk.page
  readonly property real position:SpotifyDesk.positionMs

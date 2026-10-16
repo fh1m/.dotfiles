@@ -382,5 +382,23 @@
     "title": "Inspect workspace overview",
     "group": "Desktop",
     "detail": "Open the existing overview at that subject, on this display. Tab then Enter/Space activates a workspace."
+  },
+  {
+    "key": "F / Focus",
+    "title": "Artwork-only listening mode",
+    "group": "Music",
+    "detail": "In the listening room: hide queue/lyrics, keep artwork and details. Esc returns to the normal room. Hover the top edge for controls."
+  },
+  {
+    "key": "Display chooser / Backdrop",
+    "title": "Keep music on another screen",
+    "group": "Music",
+    "detail": "Move the room without stopping music. Backdrop puts it behind applications; restore with the bar music control."
+  },
+  {
+    "key": "Alt+Shift+h/j/k/l",
+    "title": "Move code without losing selection",
+    "group": "Neovim",
+    "detail": "Move the line or visual selection. gS splits/joins arguments. Space hk searches live editor maps."
   }
 ]

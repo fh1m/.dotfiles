@@ -3,10 +3,13 @@ local function run()
   assert(vim.g.colors_name == 'sensei', 'theme missing')
   assert(vim.fn.exists(':DevInfo') == 2, 'environment commands missing')
   assert(vim.fn.exists(':Tutor') == 2, 'native tutor unavailable')
-  local names = { 'blink.cmp', 'which-key.nvim', 'fzf-lua', 'lualine.nvim', 'nvim-treesitter-textobjects',
+  local names = { 'mini.nvim', 'blink.cmp', 'which-key.nvim', 'fzf-lua', 'lualine.nvim', 'nvim-treesitter-textobjects',
     'overseer.nvim', 'nvim-dap', 'neotest', 'aerial.nvim', 'octo.nvim', 'render-markdown.nvim',
     'conform.nvim', 'trouble.nvim', 'grug-far.nvim', 'diffview.nvim', 'neogen' }
   require('lazy').load({ plugins = names })
+  assert(type(require('mini.move').move_selection)=='function', 'Selection movement missing')
+  assert(type(require('mini.splitjoin').toggle)=='function', 'Split/join missing')
+  assert(type(require('mini.hipatterns').gen_highlighter.hex_color)=='function', 'Color preview missing')
   assert(vim.fn.executable('ruff') == 1, 'Ruff unavailable')
   assert(vim.fn.executable('basedpyright-langserver') == 1, 'Python type server unavailable')
   assert(require('luasnip').get_snippets('python'), 'snippets not loaded')

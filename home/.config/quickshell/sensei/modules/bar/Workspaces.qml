@@ -10,6 +10,7 @@ import qs.services
 Item {
     id: root
     property string output:""
+    property string railOutput:""
     property bool compact:false
     readonly property bool external: ShellState.isExternalOutput(output)
     readonly property var monitorSlots:Spaces.slotsFor(output)
@@ -23,7 +24,7 @@ Item {
     property int carriageIndex: 0
     onActiveIndexChanged: if (activeIndex >= 0) carriageIndex = activeIndex
     Component.onCompleted: if (activeIndex >= 0) carriageIndex = activeIndex
-    IpcHandler {target:"workspace-rail-"+root.output;function state():string {return JSON.stringify({output:root.output,active:root.activeIndex,carriage:root.carriageIndex,x:carriage.x,slots:root.monitorSlots});}}
+    IpcHandler {target:"workspace-rail-"+(root.railOutput||root.output);function state():string {return JSON.stringify({output:root.output,active:root.activeIndex,carriage:root.carriageIndex,x:carriage.x,slots:root.monitorSlots});}}
 
     implicitWidth: slots.implicitWidth + 6
     implicitHeight: Appearance.metrics.workspaceHeight + 6

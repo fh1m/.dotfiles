@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 180" role="img" aria-label="Digital Den: connected screens and a quiet pulse">
+<style>text{font-family:monospace;fill:#e8e2da}.dim{fill:#a9a29a}.wire{stroke:#59303f;stroke-width:1.5;fill:none}.screen{stroke:#70616a;fill:#171311;stroke-width:1.5}@media(prefers-reduced-motion:reduce){.motion{display:none}}</style>
+<rect width="1200" height="180" rx="14" fill="#100c0f"/>
+<text x="32" y="49" font-size="12" letter-spacing="3" class="dim">FH1M / DIGITAL DEN</text>
+<text x="32" y="87" font-size="23">One den. Many little adventures.</text>
+<text x="32" y="124" font-size="13" class="dim">Build something. Question it. Put an album on.</text>
+<g class="screen"><rect x="720" y="24" width="135" height="52" rx="4"/><rect x="720" y="92" width="135" height="52" rx="4"/><rect x="928" y="24" width="150" height="52" rx="4"/><rect x="928" y="92" width="150" height="52" rx="4"/><rect x="928" y="153" width="150" height="10" rx="2"/></g>
+<g font-size="11" text-anchor="middle"><text x="788" y="56">DERIVE</text><text x="788" y="124">REFERENCE</text><text x="1003" y="56">HOMIE</text><text x="1003" y="124">BUILD + LISTEN</text></g>
+<path id="route" d="M855 50H890V118H928M1003 76V92M788 76V92M1003 144V153" class="wire"/>
+<g class="motion" fill="#f23d70"><circle r="3"><animateMotion dur="7s" repeatCount="indefinite" path="M855 50H890V118H928"/></circle><circle r="2.5"><animateMotion dur="4s" repeatCount="indefinite" path="M1003 76V92"/></circle><circle r="2.5"><animateMotion dur="5s" repeatCount="indefinite" path="M788 76V92"/></circle></g>
+<path d="M32 153H340" stroke="#f23d70" stroke-width="2"/><circle cx="356" cy="153" r="3" fill="#f23d70"/>
+</svg>

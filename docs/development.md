@@ -138,3 +138,7 @@ scan or subprocess is launched on each wheel tick. Isolated attached-PTY checks
 verified modified-arrow/Tab/Enter transmission and 2,500 lines of retained history.
 See [Codex configuration](https://developers.openai.com/codex/config-reference/)
 and [Claude terminal setup](https://code.claude.com/docs/en/terminal-config).
+
+## Small editing comforts
+
+`Alt+Shift+h/j/k/l` moves a line or visual selection; `gS` splits/joins arguments. Hex colors preview in place. These use the already locked mini.nvim library. Normal code buffers inherit terminal transparency, while menus and floats retain a readable surface. The desktop field guide now includes the LSP-attached maps and renders the Space leader explicitly.

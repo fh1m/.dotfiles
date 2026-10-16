@@ -39,6 +39,8 @@ Singleton {
  property var contextItem:({});property var contextRows:[];property string lyrics:"";property string error:"";property string warning:"";property bool loading:false
  property var actionQueue:[];property var requests:[];property string op:"";property var opArgs:[];property string activeQuery:""
  readonly property var visibleRows:contextItem.id?contextRows:page===0?(queueRows.length?queueRows:homeRows):page===1?queueRows:page===2?playlistRows:page===3?libraryRows:page===4?(searchResults[searchKind]||[]):[]
+ property bool zen:false
+ property bool musicBackdrop:false
  property bool fullscreen:false
  property string fullscreenOutput:""
  readonly property bool musicVisible:fullscreen||ShellState.dropdown==='spotify'

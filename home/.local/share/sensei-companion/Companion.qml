@@ -29,6 +29,10 @@ Item {
     property var placement: ({available:false,x:18,y:56})
     property var recent: []
     property int turn: 0
+    property var notices:({unread:0,dnd:false})
+    property int seenUnread:0
+    property bool noticeLoaded:false
+    property double nudgedEvent:0
     property string activeApp: ""
     property real seenPose: 0
     property real seenMessage: 0
@@ -42,15 +46,17 @@ Item {
     readonly property bool eligible: preferences.enabled!==false && preferences.quiet!==true && preferences.suspended!==true && !fullscreen && target!==""
     readonly property bool allowed: eligible && placement.available
     readonly property int pose: activity==="walk" ? (walkingRight?8:4)+frame%4 : activity==="wave" ? 13 : activity==="celebrate" ? 14 : activity==="think" ? 12 : activity==="sleep" ? 15 : frame%4
-    IpcHandler {target:"companion";function state():string{return JSON.stringify({allowed:root.allowed,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,activity:root.activity,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
+    IpcHandler {target:"companion";function state():string{return JSON.stringify({allowed:root.allowed,speaking:root.speaking,unread:root.notices.unread||0,dnd:root.notices.dnd||false,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,activity:root.activity,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
     property string lastPublished:""
     function publish():void {
-        const data=JSON.stringify({output:target,allowed:allowed,eligible:eligible});
+        const data=JSON.stringify({output:target,allowed:allowed,eligible:eligible,speaking:speaking,message:message,kind:messageKind});
         if(data!==lastPublished && renderFile){lastPublished=data;renderFile.setText(data);}
     }
     FileView {id:renderFile;path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-render.json";printErrors:false}
     Component.onCompleted:Qt.callLater(publish)
     onAllowedChanged:publish()
+    onSpeakingChanged:publish()
+    onMessageChanged:publish()
     function refresh():void {
         if(!eligible && target==="")return;
         query.restart();
@@ -73,7 +79,9 @@ Item {
     }
     function say(text,kind):void {message=String(text).slice(0,160);messageKind=kind||"field note";speaking=true;speechExpiry.restart();settle.restart();}
     function greet(manual):void {
-        if(!allowed||(!manual&&preferences.chatter===false))return;
+        if(!eligible||(!manual&&preferences.chatter===false)||!Logic.notes.length)return;
+        if(notices.dnd&&notices.unread>0){say(notices.unread+" notifications waiting quietly. No rush; the bell has them when you want them.","quiet desk");return;}
+        if(notices.unread>0&&notices.event&&nudgedEvent!==notices.event){nudgedEvent=notices.event;say(notices.unread+' notifications waiting. The bell has the details whenever you are ready.','desk post');return;}
         const note=Logic.nextNote(activeApp,recent,turn++,Math.random());
         recent=recent.concat([note.id]).slice(-8);say(note.text,note.kind==="wit"?"off the clock":"desk tip");
         activity=note.kind==="wit"?"wave":"think";poseExpiry.restart();
@@ -85,7 +93,7 @@ Item {
         if(!Logic.canWalk(old,placement)){variant=oldVariant;deliberateTravel=false;placement=old;return;}
         walkingRight=placement.x>old.x;activity="walk";frame=0;poseExpiry.restart();
     }
-    onTargetChanged:{publish();deliberateTravel=false;placement={available:false,x:18,y:56};landing=!reduced;landingExpiry.restart();refresh();}
+    onTargetChanged:{publish();deliberateTravel=false;placement={available:false,x:18,y:56};landing=!reduced;landingExpiry.restart();refresh();arrivalHello.restart();}
     onEligibleChanged:{publish();if(eligible)refresh()}
     Timer {interval:1000;repeat:true;running:root.managed;onTriggered:root.journeyClock=Date.now()/1000}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-travel.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.journey=JSON.parse(text());root.journeyClock=Date.now()/1000;}catch(e){}}}
@@ -115,7 +123,14 @@ Item {
     Timer {id:query;interval:100;onTriggered:{Hyprland.refreshMonitors();Hyprland.refreshWorkspaces();Hyprland.refreshToplevels();settle.restart();}}
     Timer {id:settle;interval:180;onTriggered:root.locate()}
     Timer {interval:15000;repeat:true;running:root.eligible;onTriggered:root.refresh()}
-    Timer {interval:360000;repeat:true;running:root.allowed&&root.preferences.chatter!==false;onTriggered:root.greet()}
+    // Keep the clock independent of 45–90 s travel leases and available wallpaper.
+    Timer {interval:110000;repeat:true;running:root.preferences.enabled!==false&&root.preferences.chatter!==false&&root.preferences.quiet!==true;onTriggered:root.greet()}
+    Timer {id:arrivalHello;interval:5500;onTriggered:if(!root.speaking)root.greet()}
+    FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-notifications.json";watchChanges:true;printErrors:false
+        onFileChanged:reload();onLoaded:{try{const n=JSON.parse(text());if(root.noticeLoaded&&((n.event&&n.event!==root.notices.event)||n.unread>root.seenUnread)&&!n.dnd)noticeDelay.restart();if(root.noticeLoaded&&root.notices.dnd&&!n.dnd&&n.unread>0)noticeDelay.restart();root.seenUnread=n.unread||0;root.notices=n;root.noticeLoaded=true;}catch(e){}}
+    }
+    Timer {id:noticeDelay;interval:1800;onTriggered:if(root.eligible&&!root.notices.dnd&&root.notices.unread>0){root.nudgedEvent=root.notices.event;root.say(root.notices.unread+' unread notification'+(root.notices.unread===1?'':'s')+(root.notices.app?' · '+root.notices.app:'')+'. The bell has the details.','desk post');}}
+
     Timer {interval:90000;repeat:true;running:root.allowed&&!root.reduced;onTriggered:root.walk()}
     Timer {interval:18000;repeat:true;running:root.allowed&&!root.reduced;onTriggered:{root.typingBurst=true;burstExpiry.restart();}}
     Timer {id:burstExpiry;interval:1320;onTriggered:{root.typingBurst=false;root.frame=0;}}

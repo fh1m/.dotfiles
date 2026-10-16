@@ -94,7 +94,15 @@ io.stdout:write('DEN_KEYS_JSON:'..vim.json.encode(out)..'\n')'''
 def editor():
     output=run(['nvim','--headless','-i','NONE','+lua '+NVIM_LUA,'+qa'],timeout=12)
     line=next(x for x in output.splitlines() if x.startswith('DEN_KEYS_JSON:'))
-    return json.loads(line.split(':',1)[1])
+    rows=json.loads(line.split(':',1)[1])
+    path=HOME/'.config/nvim/lua/sensei/lsp.lua'
+    if path.exists():
+        for key,desc in re.findall(r"key\('([^']+)',[^\n]*,\s*'([^']+)'\)",path.read_text()):
+            rows.append(dict(key=key,title=desc,group='Neovim · LSP',detail='Available after a language server attaches; Space is the leader.'))
+    for row in rows:
+        row['key']=row['key'].replace('<leader>','Space ').replace('<Leader>','Space ')
+        if row['key'].startswith(' '):row['key']='Space '+row['key'][1:]
+    return rows
 
 def main():
     rows=[];warnings=[]

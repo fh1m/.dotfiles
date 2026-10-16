@@ -7,6 +7,10 @@ return {
     require('mini.surround').setup({ mappings = { add = 'gsa', delete = 'gsd', replace = 'gsr',
       find = 'gsf', find_left = 'gsF', highlight = 'gsh', update_n_lines = 'gsn' } })
     require('mini.pairs').setup()
+    require('mini.move').setup({ mappings = { left = '<M-S-h>', right = '<M-S-l>', down = '<M-S-j>', up = '<M-S-k>', line_left = '<M-S-h>', line_right = '<M-S-l>', line_down = '<M-S-j>', line_up = '<M-S-k>' } })
+    local hipatterns = require('mini.hipatterns')
+    hipatterns.setup({ highlighters = { hex_color = hipatterns.gen_highlighter.hex_color() } })
+    require('mini.splitjoin').setup({ mappings = { toggle = 'gS', split = '', join = '' } })
     require('mini.icons').setup()
     require('mini.icons').mock_nvim_web_devicons()
   end },

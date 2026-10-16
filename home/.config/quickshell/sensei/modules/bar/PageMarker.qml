@@ -21,7 +21,7 @@ Item {
 
     property string output: ""
     readonly property bool external: ShellState.isExternalOutput(output || Spaces.focusedMonitor?.name || "")
-    readonly property string modeText: external ? (ShellState.externalBarEdge(output||Spaces.focusedMonitor?.name||"")==="top"?"Upper":"Lower") : Spaces.modeGlyph + " " + Spaces.pageLabel
+    readonly property string modeText: external ? (ShellState.externalBarEdge(output||Spaces.focusedMonitor?.name||"")==="top"?"Upper":"Lower") : MachineProfile.role(output)==="screenpad" ? "Utility" : Spaces.modeGlyph + " " + Spaces.pageLabel
 
     // Five normal pages covers workspaces 1 to 25, and one more for the
     // special page. Beyond that the pips stop being countable at a glance
@@ -33,7 +33,7 @@ Item {
 
     readonly property int shown: Math.max(1, Math.min(Spaces.pipCount, maxPips))
 
-    implicitWidth: external ? 30 : labelSlot.implicitWidth + labelGap + shown * (pipSize + pipGap) - pipGap
+    implicitWidth: external ? 78 : labelSlot.implicitWidth + labelGap + shown * (pipSize + pipGap) - pipGap
     implicitHeight: 11
 
 
@@ -71,7 +71,8 @@ Item {
     }
 
     Rectangle {
-        visible:root.external;anchors.centerIn:parent;width:28;height:24;radius:4;color:roleHover.containsMouse?Theme.surfaceTwo:"transparent"
+        visible:root.external;anchors.centerIn:parent;width:78;height:24;radius:4;color:roleHover.containsMouse?Theme.surfaceTwo:"transparent"
+        Text {x:30;anchors.verticalCenter:parent.verticalCenter;text:root.modeText;font.family:Appearance.font.barUi;font.pixelSize:11;color:Theme.widgetMuted}
         Accessible.role:Accessible.Button
         Accessible.name:root.modeText+" display settings"
         activeFocusOnTab:true

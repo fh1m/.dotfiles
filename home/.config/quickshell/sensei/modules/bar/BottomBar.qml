@@ -67,8 +67,8 @@ Variants {
             id: navigation
             anchors.centerIn: parent
             spacing: 10
-            PageMarker { output:bar.external?bar.outputName:"";anchors.verticalCenter: parent.verticalCenter }
-            Workspaces { id: workspaces;output:bar.external?bar.outputName:Spaces.mainMonitor?.name??bar.outputName;compact:bar.external&&bar.width<1500;anchors.verticalCenter: parent.verticalCenter }
+            PageMarker { output:bar.outputName;anchors.verticalCenter: parent.verticalCenter }
+            Workspaces { id: workspaces;railOutput:bar.outputName;output:bar.external?bar.outputName:Spaces.mainMonitor?.name??bar.outputName;compact:bar.external&&bar.width<1500;anchors.verticalCenter: parent.verticalCenter }
         }
         CompanionPerch {
             output:bar.outputName;edge:bar.topEdge?"top":"bottom"

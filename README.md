@@ -176,3 +176,22 @@ python3 scripts/doctor.py
 <sub>The shell started with <a href="https://github.com/bowenbride/wrayth">Wrayth by bowenbride</a>. Original notices are preserved. <a href="THIRD_PARTY.md">Credits</a> · <a href="docs/digital-den/GALLERY.md">Capture notes and illustration provenance</a></sub>
 
 </div>
+
+## After hours / still building
+
+<img src="docs/assets/digital-den/den-signal-v3.svg" alt="Slow animated pink signals connecting the five panels of the Den" width="100%">
+
+![An illustrated night in fh1m’s robotics den, with a waving miniature engineer, underwater robot and connected workstations](docs/assets/digital-den/den-night-shift-v3.png)
+
+<sub>A bespoke illustration, not a screenshot. The live desktop captures above show what actually runs.</sub>
+
+Some nights call for a derivation. Some call for an album and a notebook. The Den has room for both.
+
+- **Listening room:** artwork, lyrics and queue together. Focus strips it back to the cover and song. Move it to another display, or put it behind your work with Backdrop.
+- **A small desk companion:** context-aware tips, occasional nonsense, a visit to Homie, and notification counts without reading private message bodies. Busy screen? He takes a bar perch instead of sitting on the code.
+- **The old tmux buttons are home:** sessions, windows, panes and directory at a glance. No session needs to die for a cosmetic change.
+- **The editor has receipts:** a disposable Python fixture checks snippets, parsing, formatting, debugger configuration and real LSP hover on the host and ROS container. The field guide includes the editor’s live mappings and attached-language shortcuts.
+
+> Tiny engineer. Big coordinate-frame problem. We’ll take it one function at a time.
+
+[Music controls](docs/digital-den/MUSIC-LISTENING-ROOM.md) · [Development](docs/development.md) · [This polish pass](docs/digital-den/DEN-POLISH-V3.md)

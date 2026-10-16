@@ -15,7 +15,7 @@ Item {
         spacing:2
     Image {
         anchors.horizontalCenter:parent.horizontalCenter
-        width: 23; height: 23
+        width: 24; height: 24
         source: Qt.resolvedUrl("../../assets/fh1m-autonomy.svg")
         opacity: badgeHover.containsMouse || ShellState.dropdown === "code" ? 1 : .86
         Behavior on opacity {NumberAnimation {duration:100}}
@@ -23,7 +23,7 @@ Item {
     Text {
         anchors.horizontalCenter:parent.horizontalCenter
         text:(MachineProfile.host||"fh1m").toUpperCase()
-        font.family:Appearance.font.data;font.pixelSize:9;font.letterSpacing:.6
+        font.family:Appearance.font.ui;font.pixelSize:10;font.weight:Font.Medium;font.letterSpacing:.4
         color:Theme.widgetMuted
     }
     }

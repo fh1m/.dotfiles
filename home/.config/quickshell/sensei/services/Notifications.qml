@@ -21,6 +21,12 @@ Singleton {
     property var history: []
     property int unreadCount: 0
     property bool doNotDisturb: false
+    property string companionApp:""
+    property double companionEvent:0
+    FileView {id:companionNotice;path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-notifications.json";printErrors:false}
+    function publishCompanion(){companionNotice.setText(JSON.stringify({unread:unreadCount,dnd:doNotDisturb,app:companionApp,event:companionEvent})+"\n");}
+    onUnreadCountChanged:publishCompanion()
+    onDoNotDisturbChanged:publishCompanion()
 
     function markRead(): void { unreadCount = 0; }
     function clearHistory(): void { history = []; unreadCount = 0; }
@@ -163,8 +169,10 @@ Singleton {
                 id: notification.id,
                 critical: notification.urgency === NotificationUrgency.Critical
             };
+            root.companionApp=entry.app;root.companionEvent=Date.now();
             root.history = [entry].concat(root.history.filter(item => item.id !== entry.id)).slice(0, 100);
             root.unreadCount = Math.min(100, root.unreadCount + 1);
+            root.publishCompanion();
             if (root.doNotDisturb && !entry.critical) {
                 notification.dismiss();
                 return;

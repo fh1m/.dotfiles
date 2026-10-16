@@ -43,11 +43,27 @@ def dispatch(args):
     ttl=2 if name in ('queue','devices') else 300
     force=args[-1:] == ['refresh']
     if cached and not force and time.time()-cached.get('at',0)<ttl:return {**cached['data'],**extra}
+    backoff=STORE/'read-backoff.json'
+    try:pause=json.loads(backoff.read_text())
+    except (OSError,ValueError):pause={}
+    try:remaining=max(0,min(3600,int(pause.get('until',0)-time.time()))) if isinstance(pause,dict) else 0
+    except (TypeError,ValueError,OverflowError):remaining=0
+    if remaining:
+        message=f'Spotify is temporarily busy. Retry in {remaining} seconds.'
+        if cached:return {**cached['data'],**extra,'warning':message+' Showing saved desktop data.','stale':True,'retryAfter':remaining}
+        return {'error':message,'retryAfter':remaining}
     try:
         result=request(op,values)
         if 'error' in result:raise ValueError(result['error'])
     except Exception as error:
         message=str(error) if isinstance(error,ValueError) else 'Spotify desktop is unavailable. Open Spotify and reconnect the local bridge.'
+        if '429' in message or 'quota' in message.lower() or ('rate' in message.lower() and 'limit' in message.lower()):
+            STORE.mkdir(parents=True,exist_ok=True,mode=0o700)
+            temporary=backoff.with_name(backoff.name+'.'+str(os.getpid())+'.tmp')
+            with temporary.open('w') as file:
+                os.chmod(temporary,0o600);json.dump({'until':time.time()+60},file)
+            temporary.replace(backoff)
+            message='Spotify asked for a pause. Reads will cool down for 60 seconds; playback controls remain available.'
         if cached:return {**cached['data'],**extra,'warning':message+' Showing saved desktop data.','stale':True}
         return {'error':message}
     STORE.mkdir(parents=True,exist_ok=True,mode=0o700)

@@ -12,7 +12,7 @@ if ok and type(live) == 'table' then
   end
 end
 local function h(name, opts) vim.api.nvim_set_hl(0, name, opts) end
-h('Normal', { fg = p.text, bg = p.bg })
+h('Normal', { fg = p.text, bg = 'NONE' })
 h('NormalFloat', { fg = p.text, bg = p.surface })
 h('FloatBorder', { fg = p.dim, bg = p.surface })
 h('FloatTitle', { fg = p.pink, bg = p.surface, bold = true })

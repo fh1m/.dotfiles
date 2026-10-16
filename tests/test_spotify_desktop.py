@@ -65,6 +65,15 @@ class Catalogue(unittest.TestCase):
   with patch.object(catalog,'request',side_effect=OSError('offline')):
    result=catalog.dispatch(['library','liked','refresh'])
   self.assertTrue(result['stale']);self.assertEqual(result['rows'][0]['id'],'one')
+ def test_rate_limit_cools_all_reads_without_replaying_actions(self):
+  with patch.object(catalog,'request',return_value={'error':'429 Too Many Requests'}) as request:
+   first=catalog.dispatch(['library','liked','refresh'])
+   second=catalog.dispatch(['search','different query'])
+  self.assertEqual(request.call_count,1);self.assertIn('pause',first['error']);self.assertGreater(second['retryAfter'],0)
+ def test_cooldown_preserves_cached_library(self):
+  with patch.object(catalog,'request',return_value={'rows':[{'id':'kept'}]}):catalog.dispatch(['library','liked'])
+  with patch.object(catalog,'request',return_value={'error':'QUOTA_EXCEEDED'}):result=catalog.dispatch(['library','liked','refresh'])
+  self.assertTrue(result['stale']);self.assertEqual(result['rows'][0]['id'],'kept')
  def test_more_never_follows_a_web_api_url(self):
   with patch.object(catalog,'request') as request:
    with self.assertRaises(ValueError):catalog.dispatch(['more','https://api.spotify.com/v1/me/tracks'])

@@ -394,7 +394,7 @@ Variants {
             Component { id: usbPanel; UsbDropdown { width: holder.width } }
             Component { id: phonePanel; PhoneDropdown { width: holder.width } }
             Component { id: comicPanel; ComicDropdown { width: holder.width } }
-            Component { id: spotifyPanel; SpotifyDropdown { width: holder.width } }
+            Component { id: spotifyPanel; SpotifyDropdown { width: holder.width;outputName:popup.modelData?.name||"" } }
             Component { id: soundPanel; SoundDropdown { width: holder.width } }
             Component { id: notificationsPanel; NotificationCenter { width: holder.width } }
             Component { id: weatherPanel; WeatherDropdown { width: holder.width } }
