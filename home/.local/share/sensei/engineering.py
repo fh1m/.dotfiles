@@ -140,6 +140,8 @@ def task(p, name):
 ACTIONS={
  'project.open':dict(title='Open project tmux',effect='session',required=['project']),
  'project.preflight':dict(title='Check project environment',effect='read',required=['project']),
+ 'evidence.capture':dict(title='Capture project evidence',effect='session',required=['project'],optional=['job','lab']),
+ 'lab.inspect':dict(title='Inspect an owned experiment',effect='read',required=['id']),
  'jobs.list':dict(title='Inspect local jobs',effect='read',required=[]),
  'job.logs':dict(title='Read owned job log',effect='read',required=['id']),
  'job.artifacts':dict(title='Read owned job artifacts',effect='read',required=['id']),
@@ -167,8 +169,19 @@ def validate(action, params):
     p=project(params['project']) if 'project' in params else None
     root=checkout(p) if p and action!="hardware.register" else None
     t=task(p,params['task']) if 'task' in params else None
-    return dict(action=action,params=params,host=machine(),effect=spec['effect'],
+    result=dict(action=action,params=params,host=machine(),effect=spec['effect'],
                 checkout=str(root) if root else None,task=t)
+    if action=='evidence.capture':
+        if 'job' in params and 'lab' in params:raise ValueError('Select one evidence receipt')
+        path=None
+        if 'job' in params:path=home()/'.local/state/sensei-den/jobs'/(params['job']+'.json')
+        if 'lab' in params:path=home()/'.local/state/sensei-lab'/params['lab']/'run.json'
+        if path:
+            row=read(path)
+            if not row or Path(row.get('project','')).resolve()!=root:raise ValueError('Receipt does not belong to this project')
+            result['receipt']=str(path)
+            result['receipt_sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
 
 
 def prepare(action, params):
@@ -177,6 +190,19 @@ def prepare(action, params):
     token=uuid.uuid4().hex
     save(state()/'confirmations'/f'{token}.json',dict(plan=plan,expires=time.time()+120))
     return dict(plan=plan,confirmation=token,expires_in_seconds=120)
+
+
+def session_environment():
+    # SSH callers do not inherit the compositor environment. Import only the
+    # graphical-session transport keys already owned by the user service manager.
+    env=dict(os.environ)
+    result=subprocess.run(['systemctl','--user','show-environment'],capture_output=True,text=True,timeout=3)
+    allowed={'WAYLAND_DISPLAY','DISPLAY','XDG_RUNTIME_DIR','DBUS_SESSION_BUS_ADDRESS','HYPRLAND_INSTANCE_SIGNATURE'}
+    for line in result.stdout.splitlines():
+        key,sep,value=line.partition('=')
+        if sep and key in allowed:env[key]=value
+    if not env.get('WAYLAND_DISPLAY'):raise ValueError('No running graphical session on this host')
+    return env
 
 
 def invoke(action, params, confirmation=None):
@@ -191,6 +217,11 @@ def invoke(action, params, confirmation=None):
                 raise ValueError('Confirmation expired or operation changed')
             path.unlink()
     binary=home()/'.local/bin'
+    if action=='evidence.capture':
+        argv=[str(binary/'sensei-workbench'),'capture','--project',plan['checkout']]
+        if plan.get('receipt'):argv+=['--run',plan['receipt']]
+        subprocess.Popen(argv,env=session_environment(),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+        return dict(state='selection-opened',host=machine(),project=params['project'])
     if action in ('job.logs','job.artifacts','job.cancel'):
         return command([str(binary/'sensei-den'),'job',action.split('.')[1],'--id',params['id']])
     if action=='environment.preflight':return environment_preflight(project(params['project']),params['environment'])
@@ -204,11 +235,16 @@ def invoke(action, params, confirmation=None):
         for key,flag in [('project','--project'),('baud','--baud'),('firmware','--firmware'),('test_task','--test-task')]:
             if key in params:argv+=[flag,str(params[key])]
         return command(argv)
+    if action=='lab.inspect':
+        folder=home()/'.local/state/sensei-lab'/identifier(params['id'])
+        result=read(folder/'run.json')
+        if not result:raise ValueError('Owned experiment unavailable')
+        return result
     if action=='jobs.list':
         return command([str(binary/'sensei-den'),'job','list'])
     if action=='project.open':
         subprocess.Popen([str(binary/'sensei-terminal'),'--working-directory',plan['checkout'],'-e',str(binary/'sensei-lab'),'open','--project',plan['checkout'],'--name',params['project']],
-                         stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+                         env=session_environment(),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
         return receipt('project.launch',{'action':action},project=params['project'])
     t=plan['task'];argv=[str(binary/'sensei-den'),'job','run','--project',plan['checkout']]
     if t.get('resources',{}).get('memoryMiB'):argv+=['--memory-mib',str(t['resources']['memoryMiB'])]

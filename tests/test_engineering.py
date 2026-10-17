@@ -42,3 +42,20 @@ class Engineering(unittest.TestCase):
  def test_duplicate_project_identity_rejected(self):
   e.save(e.config()/'projects.json',{'version':1,'projects':[self.p,self.p]})
   with self.assertRaises(ValueError):e.projects()
+
+ def test_evidence_receipt_must_belong_to_project_and_stay_unchanged(self):
+  params={'project':'test','job':'owned-1'}
+  path=self.h/'.local/state/sensei-den/jobs/owned-1.json'
+  e.save(path,{'project':str(self.root),'state':'running'})
+  token=e.prepare('evidence.capture',params)['confirmation']
+  e.save(path,{'project':str(self.root),'state':'succeeded'})
+  with self.assertRaises(ValueError):e.invoke('evidence.capture',params,token)
+  e.save(path,{'project':'/other'})
+  with self.assertRaises(ValueError):e.prepare('evidence.capture',params)
+ def test_evidence_requires_exactly_one_run_kind(self):
+  with self.assertRaises(ValueError):e.prepare('evidence.capture',{'project':'test','job':'one','lab':'two'})
+ def test_session_import_does_not_import_unrelated_environment(self):
+  import subprocess
+  response=subprocess.CompletedProcess([],0,'WAYLAND_DISPLAY=wayland-1\nSECRET_SHOULD_NOT_IMPORT=private\n')
+  with patch.object(e.subprocess,'run',return_value=response):result=e.session_environment()
+  self.assertEqual(result['WAYLAND_DISPLAY'],'wayland-1');self.assertNotIn('SECRET_SHOULD_NOT_IMPORT',result)

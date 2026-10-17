@@ -30,7 +30,7 @@ def engineering_events(events,now=None):
     """Cross-host curated receipts only: no logs, titles, code, commands or arbitrary actions."""
     import re,time
     now=time.time() if now is None else now
-    kinds={'project.launch','job.completed','experiment.completed','hardware.disconnected','hardware.returned'}
+    kinds={'project.launch','job.completed','experiment.completed','hardware.disconnected','hardware.returned','hardware.ambiguous'}
     out=[]
     for event in events[-16:] if isinstance(events,list) else []:
         if not isinstance(event,dict) or event.get('kind') not in kinds:continue
@@ -41,6 +41,8 @@ def engineering_events(events,now=None):
         if not 0<=now-at<120 or event.get('host') not in ('arete','homie'):continue
         raw=event.get('data',{});data={}
         if not isinstance(raw,dict):continue
+        if isinstance(raw.get('failureKey'),str) and re.fullmatch('[a-f0-9]{64}',raw['failureKey']):data['failureKey']=raw['failureKey']
+        if type(raw.get('repeatFailures')) is int and 0<=raw['repeatFailures']<=128:data['repeatFailures']=raw['repeatFailures']
         if raw.get('outcome') in ('passed','succeeded','failed','interrupted'):data['outcome']=raw['outcome']
         if isinstance(raw.get('job'),str) and re.fullmatch(r'[A-Za-z0-9-]{1,60}',raw['job']):data['job']=raw['job']
         if event['kind'].startswith('hardware.') and isinstance(raw.get('label'),str):data['label']=raw['label'][:60]

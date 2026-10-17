@@ -18,3 +18,17 @@ class RepertoireMemory(unittest.TestCase):
         self.assertEqual(len(m.memory({'turn':5,'recent':list(range(100))})['recent']),40)
     def test_newer_sequence_wins_without_private_content(self):
         self.assertEqual(m.newer_memory({'turn':4,'recent':[1]},{'turn':5,'recent':[2],'message':'private'}),{'turn':5,'recent':[2]})
+
+class EngineeringReceipts(unittest.TestCase):
+ def test_projection_strips_private_data_and_rejects_stale_or_unknown_hosts(self):
+  import uuid
+  row={'id':str(uuid.uuid4()),'at':95,'host':'arete','kind':'job.completed','data':{'job':'run-1','outcome':'failed','command':'private','log':'private','repeatFailures':3,'failureKey':'a'*64}}
+  result=m.engineering_events([row],now=100)[0]
+  self.assertNotIn('private',str(result));self.assertEqual(result['data']['repeatFailures'],3)
+  self.assertEqual(m.engineering_events([dict(row,host='untrusted')],now=100),[])
+  self.assertEqual(m.engineering_events([row],now=300),[])
+ def test_ack_ids_are_deduplicated_and_bounded(self):
+  import uuid
+  ids=[str(uuid.uuid4()) for _ in range(150)]
+  self.assertEqual(len(m.engineering_acks(ids)),128)
+  self.assertEqual(m.engineering_acks([ids[0],ids[0],'not-a-uuid']),[ids[0]])

@@ -126,6 +126,7 @@ Singleton {
 
     property string engineeringSelectedAction:""
     property string engineeringSelectedJob:""
+    property string engineeringSelectedHost:""
     property int instrumentPage:0
     property string instrumentProject:""
     property string instrumentHost:""

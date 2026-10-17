@@ -234,7 +234,7 @@ Scope {
         function state(): string { return JSON.stringify({events:CalendarDesk.events.length,error:CalendarDesk.error,clocks:CalendarDesk.clocks.length}); }
     }
     readonly property bool codeOpen: CodeDesk.opened
-    IpcHandler {target:"engineering-receipts";function open(id:string):void{ShellState.engineeringSelectedJob=id;ShellState.openDropdown("engineering");}}
+    IpcHandler {target:"engineering-receipts";function open(host:string,id:string):void{if(!["arete","homie"].includes(host))return;ShellState.engineeringSelectedHost=host;ShellState.engineeringSelectedJob=id;ShellState.openDropdown("engineering");}}
     readonly property var dropdownNames: ["engineering", "ethernet", "camera", "code", "docker", "spotify", "usb", "phone", "weather", "comic", "ident", "wifi", "bluetooth", "power", "system", "monitor", "clipboard", "external-display", "displays", "sound", "calendar", "notifications"]
 
     // Shared by `demo drag` and `demo dragFile`; see the note on them.

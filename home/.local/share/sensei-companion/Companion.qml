@@ -103,6 +103,7 @@ Item {
         placement=roof||Logic.place(screen.width,screen.height,pet.width,pet.height,windows,variant);
     }
     property string eventJob:""
+    property string eventHost:""
     property var localEngineeringEvents:[]
     readonly property var engineeringEvents:localEngineeringEvents.concat(journey.engineeringEvents||[])
     property var engineeringSeen:[]
@@ -119,24 +120,25 @@ Item {
         onTriggered:{
             if(!root.engineeringMemoryLoaded||root.notices.dnd||root.preferences.quiet||root.speaking||Date.now()-root.engineeringLastShown<60000)return;
             const now=Date.now()/1000;
-            const event=root.engineeringEvents.find(e=>now-e.at<120&&now-e.at>=0&&!root.engineeringSeen.includes(e.id)&&["project.launch","job.completed","experiment.completed","hardware.disconnected","hardware.returned"].includes(e.kind));
+            const event=root.engineeringEvents.filter(e=>now-e.at<120&&now-e.at>=0&&!root.engineeringSeen.includes(e.id)&&["project.launch","job.completed","experiment.completed","hardware.disconnected","hardware.returned","hardware.ambiguous"].includes(e.kind)).sort((a,b)=>(b.data?.repeatFailures||0)-(a.data?.repeatFailures||0)||b.at-a.at)[0];
             if(!event)return;
-            root.engineeringSeen=root.engineeringSeen.concat([event.id]).slice(-128);engineeringMemory.setText(JSON.stringify({ids:root.engineeringSeen}));
+            root.engineeringSeen=root.engineeringSeen.concat([event.id]).concat(root.engineeringEvents.filter(e=>event.data?.failureKey&&e.host===event.host&&e.data?.failureKey===event.data.failureKey&&e.at<=event.at).map(e=>e.id)).slice(-128);engineeringMemory.setText(JSON.stringify({ids:root.engineeringSeen}));
             root.engineeringLastShown=Date.now();
             const d=event.data||{};
             if(event.kind==="project.launch"){root.activity="robot";root.say("Project opened. One small baseline before the magnificent machine?","project receipt");}
             else if(event.kind==="hardware.disconnected"){root.activity="think";root.say((d.label||"Known device")+" disconnected. Its hardware passport keeps the stable identity.","hardware receipt");}
+            else if(event.kind==="hardware.ambiguous"){root.activity="inspect";root.say("More than one node matches this hardware passport. Check identity before choosing a port.","hardware receipt");}
             else if(event.kind==="hardware.returned"){root.activity="wave";root.say((d.label||"Known device")+" is back. The node may change; the identity should not.","hardware receipt");}
-            else {const good=["passed","succeeded"].includes(d.outcome);root.activity=good?"celebrate":"think";root.say(good?"Run complete. The receipt is saved; a successful process is still only the start of checking the claim.":"Run failed, and the evidence is kept. The job receipt has the exit code and artifacts.","verified run receipt");root.eventJob=d.job||"";}
+            else {const good=["passed","succeeded"].includes(d.outcome);root.activity=good?"celebrate":"think";root.say(d.repeatFailures>=3?"The same command failed "+d.repeatFailures+" times recently. The receipt keeps the first error; inspect it before another retry.":good?"Run complete. The receipt is saved; a successful process is still only the start of checking the claim.":"Run failed, and the evidence is kept. The job receipt has the exit code and artifacts.","verified run receipt");root.eventJob=d.job||"";root.eventHost=event.host||"";}
         }
     }
     FileView {path:Qt.resolvedUrl("activity-atlases.json");onLoaded:{try{Logic.activityAtlases=JSON.parse(text());root.vary();}catch(e){}}}
     function remember():void {if(memoryLoaded)memoryFile.setText(JSON.stringify({schema:1,recent:recent.slice(-40),turn:turn}));}
     function vary():void {activityTicks=0;activity=Logic.nextActivity(activity,denMusic,Math.random(),preferences.hiddenActivities||[],preferences.favoriteActivities||[]);frame=0;poseExpiry.stop();}
     function welcome(text):void {if(Date.now()-lastWelcome<60000)return;if(preferences.welcome===false||preferences.quiet===true||preferences.enabled===false)return;lastWelcome=Date.now();welcomeText=text;welcoming=true;welcomeExpiry.restart();}
-    function say(text,kind):void {eventJob="";const words=String(text);message=words.length>160?words.slice(0,156).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.restart();settle.restart();}
+    function say(text,kind):void {eventJob="";eventHost="";const words=String(text);message=words.length>160?words.slice(0,156).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.restart();settle.restart();}
     function greet(manual):void {
-        if(!eligible||(!manual&&preferences.chatter===false)||!Logic.notes.length)return;
+        if(!eligible||(!manual&&(preferences.chatter===false||notices.dnd))||!Logic.notes.length)return;
         if(notices.dnd&&notices.unread>0){say(notices.unread+" notifications waiting quietly. No rush; the bell has them when you want them.","quiet desk");return;}
         if(notices.unread>0&&notices.event&&nudgedEvent!==notices.event){nudgedEvent=notices.event;say(notices.unread+' notifications waiting. The bell has the details whenever you are ready.','desk post');return;}
         if(turn%6===5&&personal.length){turn++;const text=personal[Math.floor(Math.random()*personal.length)];say("You kept this: "+text,"your words");remember();vary();return;}
@@ -229,12 +231,12 @@ Item {
         WlrLayershell.layer:WlrLayer.Bottom
         WlrLayershell.namespace:"sensei-fh1m-companion"
         WlrLayershell.keyboardFocus:WlrKeyboardFocus.None
-        mask:Region {item:pet}
+        mask:Region {item:pet.contentItem}
         Behavior on margins.left {enabled:root.deliberateTravel&&!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
         Behavior on margins.top {enabled:root.deliberateTravel&&!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
         Rectangle {
             id:speechBubble
-            TapHandler {onTapped:{if(root.eventJob)Quickshell.execDetached(["qs","-c","sensei","ipc","call","engineering-receipts","open",root.eventJob]);else Quickshell.execDetached(["qs","-c","sensei","ipc","call","dropdown","open","engineering"]);}}
+            TapHandler {onTapped:{if(root.eventJob)Quickshell.execDetached(["qs","-c","sensei","ipc","call","engineering-receipts","open",root.eventHost,root.eventJob]);else Quickshell.execDetached(["qs","-c","sensei","ipc","call","dropdown","open","engineering"]);}}
             anchors {right:parent.right;bottom:character.top;bottomMargin:8}
             width:256;height:caption.implicitHeight+body.implicitHeight+30
             visible:root.speaking

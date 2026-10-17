@@ -39,7 +39,7 @@ def watch():
     for identity,row in lookup.items():
      old=previous.get(identity)
      if old and old['connected']!=row['connected']:
-      e.receipt('hardware.returned' if row['connected'] else 'hardware.disconnected',{'device':identity,'label':row.get('label',identity),'ambiguous':row['ambiguous']},project=row.get('project'))
+      e.receipt('hardware.ambiguous' if row['ambiguous'] else 'hardware.returned' if row['connected'] else 'hardware.disconnected',{'device':identity,'label':row.get('label',identity),'ambiguous':row['ambiguous']},project=row.get('project'))
    print(json.dumps(current),flush=True);previous=lookup;first=False
    # Wait for a completed event then debounce a burst. No periodic collection.
    while True:

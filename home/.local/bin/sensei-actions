@@ -16,20 +16,30 @@ def main():
  a=p.parse_args()
  if a.host and a.host!=e.machine():
   remote_args=sys.argv[1:];index=remote_args.index('--host');del remote_args[index:index+2]
-  cfg=Path.home()/'.local/state/homie-control/client.conf'
-  if e.machine()!='arete' or a.host!='homie':raise ValueError('This remote route is not configured; run the action on its owning host')
-  den=runpy.run_path(str(Path.home()/'.local/bin/sensei-den'))
-  alias='homie'
-  access=den['read'](Path.home()/'.config/sensei-den/access.json')
-  if access.get('privateAlias') and not den['connectivity']():alias=access['privateAlias']
-  r=subprocess.run(['ssh','-n','-F',str(cfg),alias,shlex.join([str(Path.home()/'.local/bin/sensei-actions'),*remote_args])],capture_output=True,text=True,timeout=25)
+  if e.machine()=='arete' and a.host=='homie':
+   cfg=Path.home()/'.local/state/homie-control/client.conf'
+   den=runpy.run_path(str(Path.home()/'.local/bin/sensei-den'))
+   alias='homie';access=den['read'](Path.home()/'.config/sensei-den/access.json')
+   if access.get('privateAlias') and not den['connectivity']():alias=access['privateAlias']
+   executable=str(Path.home()/'.local/bin/sensei-actions')
+  elif e.machine()=='homie' and a.host=='arete':
+   cfg=Path.home()/'.local/state/homie-control/master-client.conf';alias='arete-den-control';executable='sensei-actions'
+   if a.verb in ('register','trust','trust-environment'):raise ValueError('Edit and trust project definitions on their owning host')
+  else:raise ValueError('This remote route is not configured')
+  r=subprocess.run(['ssh','-n','-F',str(cfg),alias,shlex.join([executable,*remote_args])],capture_output=True,text=True,timeout=25)
   if r.returncode:raise ValueError('Remote operation unavailable or rejected; no local fallback or automatic retry')
   return json.loads(r.stdout)
  if a.verb=='overview':
   try:jobs=e.command([str(e.home()/'.local/bin/sensei-den'),'job','list'])
   except (ValueError,OSError,subprocess.SubprocessError):jobs=[]
   inventory=e.hardware_inventory()
-  return {'host':e.machine(),'projects':e.projects(),'jobs':jobs,'hardware':inventory['devices'],'availableHardware':inventory.get('available',[]),'capacity':{'cpuCount':__import__('os').cpu_count(),'load':__import__('os').getloadavg()[0]}}
+  experiments=[]
+  for folder in sorted((e.home()/'.local/state/sensei-lab').glob('*'),reverse=True)[:30]:
+   path=folder/'run.json'
+   try:
+    if path.is_file() and path.stat().st_size<1048576:experiments.append(dict(e.read(path),id=folder.name))
+   except (OSError,ValueError,TypeError):pass
+  return {'experiments':experiments,'host':e.machine(),'projects':e.projects(),'jobs':jobs,'hardware':inventory['devices'],'availableHardware':inventory.get('available',[]),'capacity':{'cpuCount':__import__('os').cpu_count(),'load':__import__('os').getloadavg()[0]}}
  if a.verb=='list':return {'version':1,'actions':e.ACTIONS}
  if a.verb=='projects':return e.projects()
  if a.verb=='receipts':return e.read(e.state()/'receipts.json',{'version':1,'sequence':0,'events':[]})

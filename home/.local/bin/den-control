@@ -155,6 +155,14 @@ def main():
     args = parser.parse_args()
     if args.serve:
         words = shlex.split(os.environ.get('SSH_ORIGINAL_COMMAND', ''))
+        if len(words)>=2 and words[0]=='sensei-actions':
+            # Exact executable, no shell, no catalog/trust editing or forwarding.
+            # The engineering CLI validates every action and consumes host-bound confirmations.
+            if words[1] not in {'list','overview','doctor','projects','receipts','inspect','prepare','run'} or any(x.startswith('--host') for x in words) or len(words)>12:
+                raise ValueError('Restricted engineering request rejected')
+            result=run([str(Path.home()/'.local/bin/sensei-actions'),*words[1:]],timeout=24)
+            if result.returncode:raise ValueError('Engineering action unavailable or rejected')
+            print(json.dumps(json.loads(result.stdout)));return
         if len(words) != 2 or words[0] != 'den-control' or words[1] not in ACTIONS - {'storage'}:
             raise ValueError('Restricted Den control request rejected')
         # Forced commands cannot use the remote shell or inherit caller arguments.

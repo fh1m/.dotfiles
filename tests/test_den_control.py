@@ -70,5 +70,17 @@ class DenControl(unittest.TestCase):
             self.assertEqual(result['peer']['host'],'arete')
 
 
+class EngineeringGateway(unittest.TestCase):
+    def test_catalog_edits_and_forwarding_are_not_remote_capabilities(self):
+        for command in ('sensei-actions trust p task','sensei-actions register p /tmp','sensei-actions --host homie overview','sensei-actions overview --host=homie'):
+            with patch.object(den.sys,'argv',['den-control','--serve']), patch.dict(den.os.environ,{'SSH_ORIGINAL_COMMAND':command}), patch.object(den,'run') as run:
+                with self.assertRaises(ValueError):den.main()
+                run.assert_not_called()
+    def test_gateway_uses_exact_executable_without_shell(self):
+        import subprocess
+        with patch.object(den.sys,'argv',['den-control','--serve']), patch.dict(den.os.environ,{'SSH_ORIGINAL_COMMAND':'sensei-actions overview'}), patch.object(den,'run',return_value=subprocess.CompletedProcess([],0,'{}')) as run, patch('builtins.print'):
+            den.main()
+            self.assertEqual(run.call_args.args[0],[str(Path.home()/'.local/bin/sensei-actions'),'overview'])
+
 if __name__ == '__main__':
     unittest.main()

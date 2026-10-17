@@ -23,21 +23,42 @@ DropdownFrame {
  property var deferred:[]
  readonly property var origin:ShellState.screens.find(s=>s.name===root.outputName)||ShellState.screens[0]
  function request(args,verb){if(worker.running)return;operation=verb;worker.command=[Quickshell.env("HOME")+"/.local/bin/sensei-actions","--host",targetHost].concat(args);worker.running=true;}
- function refresh(){request(["overview"],"overview");}
+ function refresh(){if(ShellState.engineeringSelectedHost){targetHost=ShellState.engineeringSelectedHost;ShellState.engineeringSelectedHost="";}request(["overview"],"overview");}
+ function projectFor(path){return (snapshot.projects||[]).find(p=>p.locations?.[targetHost]===path)?.id||"";}
  function action(name,params){prepared={};request(["prepare",name,"--params",JSON.stringify(params)],"prepare");}
  Connections {target:Den;function onOnlineChanged(){if(root.active)root.refresh();}}
  Component.onCompleted:{if(ShellState.engineeringSelectedAction){report="Selected action: "+ShellState.engineeringSelectedAction+". Choose the project and confirm its exact parameters below.";ShellState.engineeringSelectedAction="";}refresh();}
  readonly property bool active:root.instrument?ShellState.instrumentPinned&&ShellState.instrumentKind==="engineering":ShellState.dropdown==="engineering"&&ShellState.dropdownOriginScreen===root.outputName
  onActiveChanged:if(active)refresh()
  Timer {interval:3000;repeat:true;running:root.active&&root.healthy&&(root.snapshot.jobs||[]).some(j=>["queued","running"].includes(j.state));onTriggered:root.refresh()}
- Process {id:worker;onExited:if(root.deferred.length){const next=root.deferred;root.deferred=[];root.request(next,"run");}else if(root.needsRefresh){root.needsRefresh=false;root.refresh();}stdout:StdioCollector {onStreamFinished:{try{const row=JSON.parse(text);if(row.error){root.healthy=false;root.report=row.error;root.prepared={};return;}if(root.operation==="overview"){root.healthy=true;root.updatedAt=Date.now();root.snapshot=row;if(root.instrument&&ShellState.instrumentProject)root.projectIndex=Math.max(0,row.projects.findIndex(p=>p.id===ShellState.instrumentProject));root.projectIndex=Math.min(root.projectIndex,Math.max(0,row.projects.length-1));if(ShellState.engineeringSelectedJob){root.deferred=["run","job.logs","--params",JSON.stringify({id:ShellState.engineeringSelectedJob})];ShellState.engineeringSelectedJob="";}}else if(root.operation==="prepare"){if(row.confirmation){root.prepared=row;root.report="Review: "+JSON.stringify(row.plan);}else root.deferred=["run",row.plan.action,"--params",JSON.stringify(row.plan.params)];}else{root.report=JSON.stringify(row);root.prepared={};root.needsRefresh=true;}}catch(e){root.report="Invalid or unavailable backend response";}}}}
+ Process {id:worker;onExited:if(root.deferred.length){const next=root.deferred;root.deferred=[];root.request(next,"run");}else if(root.needsRefresh){root.needsRefresh=false;root.refresh();}stdout:StdioCollector {onStreamFinished:{try{const row=JSON.parse(text);if(row.error){root.healthy=false;root.report=row.error;root.prepared={};return;}if(root.operation==="overview"){root.healthy=true;root.updatedAt=Date.now();root.snapshot=row;if(root.instrument&&ShellState.instrumentProject)root.projectIndex=Math.max(0,row.projects.findIndex(p=>p.id===ShellState.instrumentProject));root.projectIndex=Math.min(root.projectIndex,Math.max(0,row.projects.length-1));if(ShellState.engineeringSelectedJob){root.deferred=["run","job.logs","--params",JSON.stringify({id:ShellState.engineeringSelectedJob})];ShellState.engineeringSelectedJob="";}}else if(root.operation==="prepare"){if(row.confirmation){root.prepared=row;root.report="Review the exact operation:\n"+JSON.stringify(row.plan,null,2);}else root.deferred=["run",row.plan.action,"--params",JSON.stringify(row.plan.params)];}else{root.report=JSON.stringify(row,null,2);root.prepared={};root.needsRefresh=true;}}catch(e){root.report="Invalid or unavailable backend response";}}}}
  ScrollView {id:engineeringScroll;width:parent.width;height:Math.max(200,Math.min(680,(root.origin?.height??1080)-170));contentWidth:availableWidth;contentHeight:engineeringBody.implicitHeight;clip:true
  Column {id:engineeringBody;width:engineeringScroll.availableWidth;spacing:10
   Row {width:parent.width;spacing:8
-   ControlTile {implicitWidth:(parent.width-24)/4;label:ShellState.instrumentPinned?"Return from instrument":"Pin on ScreenPad";onActivated:{if(ShellState.instrumentPinned)ShellState.releaseInstrument();else{ShellState.instrumentPage=root.page;ShellState.instrumentProject=root.project.id||"";ShellState.instrumentHost=root.targetHost;ShellState.pinInstrument("engineering");}}}
-   ControlTile {implicitWidth:(parent.width-24)/4;label:"Projects / queue";selected:root.page===0;onActivated:root.page=0}
-   ControlTile {implicitWidth:(parent.width-24)/4;label:"Zondo";selected:root.page===2;onActivated:root.page=2}
-   ControlTile {implicitWidth:(parent.width-24)/4;label:"Hardware";selected:root.page===1;onActivated:root.page=1}
+   ControlTile {implicitWidth:(parent.width-32)/5;label:ShellState.instrumentPinned?"Return":"Pin ScreenPad";onActivated:{if(ShellState.instrumentPinned)ShellState.releaseInstrument();else{ShellState.instrumentPage=root.page;ShellState.instrumentProject=root.project.id||"";ShellState.instrumentHost=root.targetHost;ShellState.pinInstrument("engineering");}}}
+   ControlTile {implicitWidth:(parent.width-32)/5;label:"Projects";selected:root.page===0;onActivated:root.page=0}
+   ControlTile {implicitWidth:(parent.width-32)/5;label:"Experiments";selected:root.page===3;onActivated:root.page=3}
+   ControlTile {implicitWidth:(parent.width-32)/5;label:"Zondo";selected:root.page===2;onActivated:root.page=2}
+   ControlTile {implicitWidth:(parent.width-32)/5;label:"Hardware";selected:root.page===1;onActivated:root.page=1}
+  }
+  Column {width:parent.width;visible:root.page===3;spacing:10
+   Repeater {model:root.snapshot.experiments||[]
+    Rectangle {id:experimentCard;required property var modelData;width:parent.width;implicitHeight:experimentBody.implicitHeight+20;radius:6;color:Theme.surfaceOne;border.color:Theme.rule
+     Column {id:experimentBody;x:10;y:10;width:parent.width-20;spacing:6
+      Text {width:parent.width;text:(experimentCard.modelData.name||experimentCard.modelData.id)+" · process "+(experimentCard.modelData.status||"unknown");textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paper}
+      Text {width:parent.width;text:"Exit "+(experimentCard.modelData.exit_code??"pending")+" · "+(experimentCard.modelData.elapsed_seconds??"?")+" s · "+(experimentCard.modelData.git_commit||"no Git revision").slice(0,12);font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+      Repeater {model:(experimentCard.modelData.measurements||[]).slice(0,8)
+       Text {required property var modelData;width:parent.width;text:modelData.name+": "+modelData.value+" "+modelData.unit;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper}
+      }
+      Text {visible:!!experimentCard.modelData.comparison;width:parent.width;text:"Baseline: "+(experimentCard.modelData.comparison||[]).map(c=>c.name+" "+(c.state==="comparable"?"Δ "+Number(c.delta).toPrecision(4)+" "+c.unit:c.state)).join(" · ");wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+      Text {visible:!!experimentCard.modelData.baseline_context;width:parent.width;text:"Changed baseline conditions: "+Object.keys(experimentCard.modelData.baseline_context||{}).filter(k=>experimentCard.modelData.baseline_context[k]).join(", ");wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+      Text {visible:!!experimentCard.modelData.measurementError;width:parent.width;text:experimentCard.modelData.measurementError||"";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.signalRed}
+      ControlTile {label:"Capture evidence…";enabled:!!root.projectFor(experimentCard.modelData.project);onActivated:root.action("evidence.capture",{project:root.projectFor(experimentCard.modelData.project),lab:experimentCard.modelData.id})}
+      ControlTile {label:"Inspect receipt";onActivated:root.action("lab.inspect",{id:experimentCard.modelData.id})}
+     }
+    }
+   }
+   Text {visible:!(root.snapshot.experiments||[]).length;width:parent.width;text:"No recorded experiments on this host yet. A reviewed project task can invoke sensei-lab with explicit metrics and baseline.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
   }
   ZondoPlayground {width:parent.width;visible:root.page===2}
   Column {width:parent.width;visible:root.page===1;spacing:8
@@ -65,6 +86,7 @@ DropdownFrame {
   DeskComboBox {width:parent.width;model:root.snapshot.projects||[];textRole:"title";onActivated:index=>{root.projectIndex=index;root.prepared={};}}
   Row {spacing:8
    ControlTile {label:"Preflight";enabled:!!root.project.id&&!worker.running;onActivated:root.action("project.preflight",{project:root.project.id})}
+   ControlTile {label:"Capture evidence…";enabled:!!root.project.id&&!worker.running;onActivated:root.action("evidence.capture",{project:root.project.id})}
    ControlTile {label:"Open project";enabled:!!root.project.id&&!worker.running;onActivated:root.action("project.open",{project:root.project.id})}
   }
   Text {width:parent.width;visible:!root.project.id;text:"No registered projects on this host. Register an existing checkout with sensei-actions register PROJECT DIRECTORY; add named task definitions and review them with sensei-actions trust.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
@@ -86,7 +108,9 @@ DropdownFrame {
    DeskTextField {id:taskDate;width:parent.width*.24;placeholderText:"YYYY-MM-DD";text:Qt.formatDateTime(new Date(),"yyyy-MM-dd")}
    ControlTile {implicitWidth:120;label:"Add task…";enabled:taskTitle.text.trim()!==""&&!worker.running;onActivated:root.action("planner.task",{project:root.project.id,title:taskTitle.text.trim(),date:taskDate.text})}
   }
-  Text {width:parent.width;text:root.report;textFormat:Text.PlainText;wrapMode:Text.Wrap;maximumLineCount:5;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper}
+  ScrollView {id:reportScroll;width:parent.width;height:128;visible:root.page!==2;contentWidth:availableWidth;clip:true
+   TextArea {width:reportScroll.availableWidth;text:root.report;textFormat:TextEdit.PlainText;readOnly:true;selectByMouse:true;wrapMode:TextEdit.Wrap;color:Theme.paper;selectionColor:Theme.signalRed;selectedTextColor:Theme.ink;font.family:Appearance.font.ui;font.pixelSize:12;background:Rectangle {color:Theme.surfaceOne;border.color:Theme.rule;radius:6}}
+  }
   Row {visible:!!root.prepared.confirmation;spacing:8
    ControlTile {label:"Confirm on "+root.targetHost;selected:true;enabled:!worker.running;onActivated:root.request(["run",root.prepared.plan.action,"--params",JSON.stringify(root.prepared.plan.params),"--confirmation",root.prepared.confirmation],"run")}
    ControlTile {label:"Cancel";onActivated:root.prepared={}}
@@ -102,6 +126,7 @@ DropdownFrame {
        Text {text:"Inputs "+(modelData.inputs||[]).length+" · Artifacts "+(modelData.artifacts||[]).length+" · Unit "+(modelData.unitState||"unknown");font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
        Row {spacing:6
         ControlTile {implicitHeight:24;label:"Log";onActivated:root.action("job.logs",{id:modelData.id})}
+        ControlTile {implicitHeight:24;label:"Evidence…";enabled:!!root.projectFor(modelData.project);onActivated:root.action("evidence.capture",{project:root.projectFor(modelData.project),job:modelData.id})}
         ControlTile {implicitHeight:24;label:"Artifacts";onActivated:root.action("job.artifacts",{id:modelData.id})}
         ControlTile {implicitHeight:24;visible:["queued","running"].includes(modelData.state);label:"Cancel…";onActivated:root.action("job.cancel",{id:modelData.id})}
        }
