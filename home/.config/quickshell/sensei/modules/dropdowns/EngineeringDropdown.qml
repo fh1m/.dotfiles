@@ -7,7 +7,7 @@ import qs.config
 import qs.services
 DropdownFrame {
  id:root;property string outputName:"";property bool instrument:false;title:"Engineering / projects & jobs";implicitWidth:740
- IpcHandler {target:"engineering-"+root.outputName+(root.instrument?"-instrument":"");function state():string{return JSON.stringify({host:root.targetHost,projects:root.snapshot.projects.length,jobs:root.snapshot.jobs.length,busy:worker.running,prepared:!!root.prepared.confirmation,report:root.report});}function openOn(output:string):void{if(ShellState.screens.some(s=>s.name===output)){ShellState.openDropdownOn("engineering",output);}}}
+ IpcHandler {target:"engineering-"+root.outputName+(root.instrument?"-instrument":"");function state():string{return JSON.stringify({host:root.targetHost,projects:root.snapshot.projects.length,jobs:root.snapshot.jobs.length,busy:worker.running,prepared:!!root.prepared.confirmation,report:root.report});}function selectHost(name:string):void{if(!["arete","homie"].includes(name)||worker.running)return;root.targetHost=name;root.prepared={};root.snapshot={projects:[],jobs:[],hardware:[]};root.refresh();}function view(name:string):void{const pages={projects:0,hardware:1,zondo:2,experiments:3};if(pages[name]!==undefined)root.page=pages[name];}function pin():void{ShellState.instrumentPage=root.page;ShellState.instrumentProject=root.project.id||"";ShellState.instrumentHost=root.targetHost;ShellState.pinInstrument("engineering");}function openOn(output:string):void{if(ShellState.screens.some(s=>s.name===output)){ShellState.openDropdownOn("engineering",output);}}}
  property string targetHost:root.instrument&&ShellState.instrumentHost?ShellState.instrumentHost:MachineProfile.desktop?"homie":"arete"
  property var snapshot:({projects:[],jobs:[],hardware:[]})
  property int projectIndex:0
@@ -20,9 +20,10 @@ DropdownFrame {
  property string report:"Choose a project and a reviewed task. Host choice is always explicit."
  property int page:root.instrument?ShellState.instrumentPage:0
  property string operation:""
+ property string operationHost:""
  property var deferred:[]
  readonly property var origin:ShellState.screens.find(s=>s.name===root.outputName)||ShellState.screens[0]
- function request(args,verb){if(worker.running)return;operation=verb;worker.command=[Quickshell.env("HOME")+"/.local/bin/sensei-actions","--host",targetHost].concat(args);worker.running=true;}
+ function request(args,verb){if(worker.running)return;operation=verb;operationHost=targetHost;worker.command=[Quickshell.env("HOME")+"/.local/bin/sensei-actions","--host",targetHost].concat(args);worker.running=true;}
  function refresh(){if(ShellState.engineeringSelectedHost){targetHost=ShellState.engineeringSelectedHost;ShellState.engineeringSelectedHost="";}request(["overview"],"overview");}
  function projectFor(path){return (snapshot.projects||[]).find(p=>p.locations?.[targetHost]===path)?.id||"";}
  function action(name,params){prepared={};request(["prepare",name,"--params",JSON.stringify(params)],"prepare");}
@@ -31,11 +32,11 @@ DropdownFrame {
  readonly property bool active:root.instrument?ShellState.instrumentPinned&&ShellState.instrumentKind==="engineering":ShellState.dropdown==="engineering"&&ShellState.dropdownOriginScreen===root.outputName
  onActiveChanged:if(active)refresh()
  Timer {interval:3000;repeat:true;running:root.active&&root.healthy&&(root.snapshot.jobs||[]).some(j=>["queued","running"].includes(j.state));onTriggered:root.refresh()}
- Process {id:worker;onExited:if(root.deferred.length){const next=root.deferred;root.deferred=[];root.request(next,"run");}else if(root.needsRefresh){root.needsRefresh=false;root.refresh();}stdout:StdioCollector {onStreamFinished:{try{const row=JSON.parse(text);if(row.error){root.healthy=false;root.report=row.error;root.prepared={};return;}if(root.operation==="overview"){root.healthy=true;root.updatedAt=Date.now();root.snapshot=row;if(root.instrument&&ShellState.instrumentProject)root.projectIndex=Math.max(0,row.projects.findIndex(p=>p.id===ShellState.instrumentProject));root.projectIndex=Math.min(root.projectIndex,Math.max(0,row.projects.length-1));if(ShellState.engineeringSelectedJob){root.deferred=["run","job.logs","--params",JSON.stringify({id:ShellState.engineeringSelectedJob})];ShellState.engineeringSelectedJob="";}}else if(root.operation==="prepare"){if(row.confirmation){root.prepared=row;root.report="Review the exact operation:\n"+JSON.stringify(row.plan,null,2);}else root.deferred=["run",row.plan.action,"--params",JSON.stringify(row.plan.params)];}else{root.report=JSON.stringify(row,null,2);root.prepared={};root.needsRefresh=true;}}catch(e){root.report="Invalid or unavailable backend response";}}}}
- ScrollView {id:engineeringScroll;width:parent.width;height:Math.max(200,Math.min(680,(root.origin?.height??1080)-170));contentWidth:availableWidth;contentHeight:engineeringBody.implicitHeight;clip:true
+ Process {id:worker;onExited:if(root.deferred.length){const next=root.deferred;root.deferred=[];root.request(next,"run");}else if(root.needsRefresh){root.needsRefresh=false;root.refresh();}stdout:StdioCollector {onStreamFinished:{try{if(root.operationHost!==root.targetHost){root.deferred=[];root.prepared={};root.needsRefresh=true;return;}const row=JSON.parse(text);if(row.error){root.healthy=false;root.report=row.error;root.prepared={};return;}if(root.operation==="overview"){root.healthy=true;root.updatedAt=Date.now();root.snapshot=row;if(root.instrument&&ShellState.instrumentProject)root.projectIndex=Math.max(0,row.projects.findIndex(p=>p.id===ShellState.instrumentProject));root.projectIndex=Math.min(root.projectIndex,Math.max(0,row.projects.length-1));if(ShellState.engineeringSelectedJob){root.deferred=["run","job.logs","--params",JSON.stringify({id:ShellState.engineeringSelectedJob})];ShellState.engineeringSelectedJob="";}}else if(root.operation==="prepare"){if(row.confirmation){root.prepared=row;root.report="Review the exact operation:\n"+JSON.stringify(row.plan,null,2);}else root.deferred=["run",row.plan.action,"--params",JSON.stringify(row.plan.params)];}else{root.report=JSON.stringify(row,null,2);root.prepared={};root.needsRefresh=true;}}catch(e){root.report="Invalid or unavailable backend response";}}}}
+ ScrollView {id:engineeringScroll;width:parent.width;height:Math.max(200,Math.min(engineeringBody.implicitHeight,680,(root.origin?.height??1080)-170));contentWidth:availableWidth;contentHeight:engineeringBody.implicitHeight;clip:true
  Column {id:engineeringBody;width:engineeringScroll.availableWidth;spacing:10
   Row {width:parent.width;spacing:8
-   ControlTile {implicitWidth:(parent.width-32)/5;label:ShellState.instrumentPinned?"Return":"Pin ScreenPad";onActivated:{if(ShellState.instrumentPinned)ShellState.releaseInstrument();else{ShellState.instrumentPage=root.page;ShellState.instrumentProject=root.project.id||"";ShellState.instrumentHost=root.targetHost;ShellState.pinInstrument("engineering");}}}
+   ControlTile {implicitWidth:(parent.width-32)/5;label:ShellState.instrumentPinned?"Return":"Pin";onActivated:{if(ShellState.instrumentPinned)ShellState.releaseInstrument();else{ShellState.instrumentPage=root.page;ShellState.instrumentProject=root.project.id||"";ShellState.instrumentHost=root.targetHost;ShellState.pinInstrument("engineering");}}}
    ControlTile {implicitWidth:(parent.width-32)/5;label:"Projects";selected:root.page===0;onActivated:root.page=0}
    ControlTile {implicitWidth:(parent.width-32)/5;label:"Experiments";selected:root.page===3;onActivated:root.page=3}
    ControlTile {implicitWidth:(parent.width-32)/5;label:"Zondo";selected:root.page===2;onActivated:root.page=2}
@@ -75,27 +76,27 @@ DropdownFrame {
    ControlTile {label:"Register passport…";enabled:hardwareId.text.trim()!==""&&hardwareLabel.text.trim()!==""&&hardwareNode.currentIndex>=0&&!worker.running;onActivated:{let data={id:hardwareId.text.trim(),label:hardwareLabel.text.trim(),node:root.snapshot.availableHardware[hardwareNode.currentIndex].node};if(hardwareBaud.text)data.baud=Number(hardwareBaud.text);if(hardwareFirmware.text.trim())data.firmware=hardwareFirmware.text.trim();if(root.linkHardwareProject)data.project=root.project.id;root.action("hardware.register",data)}}
 
    Repeater {model:root.snapshot.hardware||[]
-    Text {required property var modelData;width:parent.width;text:(modelData.label||modelData.id)+" · "+(modelData.ambiguous?"Ambiguous identity":modelData.connected?"Connected":"Disconnected")+" · "+(modelData.project||"No project")+"\n"+(modelData.nodes||[]).map(n=>n.node).join(", ");wrapMode:Text.Wrap;textFormat:Text.PlainText;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper}
+    Text {required property var modelData;width:parent.width;text:(modelData.label||modelData.id)+" · "+(modelData.ambiguous?"Ambiguous identity":modelData.connected?"Connected":"Disconnected")+" · "+(modelData.project||"No project")+"\n"+(modelData.nodes||[]).map(n=>n.node).join(", ")+"\n"+[modelData.expected_baud?modelData.expected_baud+" baud":"",modelData.firmware?"Firmware "+modelData.firmware:"",modelData.diagnostic_task?"Diagnostic: "+modelData.diagnostic_task:""].filter(Boolean).join(" · ");wrapMode:Text.Wrap;textFormat:Text.PlainText;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper}
    }
    Text {width:parent.width;visible:!root.snapshot.hardware?.length;text:"Register a connected device with sensei-hardware register ID --node /dev/… --label NAME. No board is opened or flashed.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
   }
-  Row {width:parent.width;spacing:8
-   DeskComboBox {width:180;model:["arete","homie"];currentIndex:root.targetHost==="homie"?1:0;onActivated:{root.targetHost=currentIndex===1?"homie":"arete";root.prepared={};root.snapshot={projects:[],jobs:[],hardware:[]};root.refresh();}}
+  Row {width:parent.width;spacing:8;visible:root.page!==2
+   DeskComboBox {width:180;enabled:!worker.running;model:["arete","homie"];currentIndex:root.targetHost==="homie"?1:0;onActivated:{root.targetHost=currentIndex===1?"homie":"arete";root.prepared={};root.snapshot={projects:[],jobs:[],hardware:[]};root.refresh();}}
    ControlTile {label:"Refresh";glyph:"\uf021";enabled:!worker.running;onActivated:root.refresh()}
   }
-  DeskComboBox {width:parent.width;model:root.snapshot.projects||[];textRole:"title";onActivated:index=>{root.projectIndex=index;root.prepared={};}}
-  Row {spacing:8
+  DeskComboBox {visible:root.page!==2;width:parent.width;model:root.snapshot.projects||[];textRole:"title";currentIndex:root.projectIndex;onActivated:index=>{root.projectIndex=index;root.prepared={};}}
+  Row {spacing:8;visible:root.page===0
    ControlTile {label:"Preflight";enabled:!!root.project.id&&!worker.running;onActivated:root.action("project.preflight",{project:root.project.id})}
    ControlTile {label:"Capture evidence…";enabled:!!root.project.id&&!worker.running;onActivated:root.action("evidence.capture",{project:root.project.id})}
    ControlTile {label:"Open project";enabled:!!root.project.id&&!worker.running;onActivated:root.action("project.open",{project:root.project.id})}
   }
-  Text {width:parent.width;visible:!root.project.id;text:"No registered projects on this host. Register an existing checkout with sensei-actions register PROJECT DIRECTORY; add named task definitions and review them with sensei-actions trust.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
-  Flow {width:parent.width;spacing:8
+  Text {width:parent.width;visible:root.page!==2&&!root.project.id;text:"No registered projects on this host. Register an existing checkout with sensei-actions register PROJECT DIRECTORY; add named task definitions and review them with sensei-actions trust.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
+  Flow {width:parent.width;spacing:8;visible:root.page===0
    Repeater {model:Object.keys(root.project.tasks||{})
     ControlTile {required property string modelData;label:modelData;enabled:!worker.running;onActivated:root.action("job.launch",{project:root.project.id,task:modelData})}
    }
   }
-  Flow {width:parent.width;spacing:8
+  Flow {width:parent.width;spacing:8;visible:root.page===0
    Repeater {model:Object.keys(root.project.environments||{})
     Row {required property string modelData;spacing:6
      ControlTile {label:modelData+" preflight";enabled:!worker.running;onActivated:root.action("environment.preflight",{project:root.project.id,environment:modelData})}
@@ -115,7 +116,7 @@ DropdownFrame {
    ControlTile {label:"Confirm on "+root.targetHost;selected:true;enabled:!worker.running;onActivated:root.request(["run",root.prepared.plan.action,"--params",JSON.stringify(root.prepared.plan.params),"--confirmation",root.prepared.confirmation],"run")}
    ControlTile {label:"Cancel";onActivated:root.prepared={}}
   }
-  Text {text:"JOB RECEIPTS / "+root.targetHost+(root.healthy?"":" · STALE / UNAVAILABLE");font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.signalRed}
+  Text {visible:root.page===0;text:"JOB RECEIPTS / "+root.targetHost+(root.healthy?"":" · STALE / UNAVAILABLE");font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.signalRed}
   ScrollView {id:jobScroll;visible:root.page===0;width:parent.width;height:Math.max(100,Math.min(320,(root.origin?.height??1080)-420));contentWidth:availableWidth;contentHeight:jobRows.implicitHeight;clip:true
    Column {id:jobRows;width:jobScroll.availableWidth;spacing:8
     Repeater {model:(root.snapshot.jobs||[]).slice().reverse()
@@ -125,10 +126,10 @@ DropdownFrame {
        Text {width:parent.width;text:(modelData.command||[]).join(" ");textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
        Text {text:"Inputs "+(modelData.inputs||[]).length+" · Artifacts "+(modelData.artifacts||[]).length+" · Unit "+(modelData.unitState||"unknown");font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
        Row {spacing:6
-        ControlTile {implicitHeight:24;label:"Log";onActivated:root.action("job.logs",{id:modelData.id})}
-        ControlTile {implicitHeight:24;label:"Evidence…";enabled:!!root.projectFor(modelData.project);onActivated:root.action("evidence.capture",{project:root.projectFor(modelData.project),job:modelData.id})}
-        ControlTile {implicitHeight:24;label:"Artifacts";onActivated:root.action("job.artifacts",{id:modelData.id})}
-        ControlTile {implicitHeight:24;visible:["queued","running"].includes(modelData.state);label:"Cancel…";onActivated:root.action("job.cancel",{id:modelData.id})}
+        ControlTile {implicitWidth:(jobRows.width-34)/4;implicitHeight:24;label:"Log";onActivated:root.action("job.logs",{id:modelData.id})}
+        ControlTile {implicitWidth:(jobRows.width-34)/4;implicitHeight:24;label:"Evidence…";enabled:!!root.projectFor(modelData.project);onActivated:root.action("evidence.capture",{project:root.projectFor(modelData.project),job:modelData.id})}
+        ControlTile {implicitWidth:(jobRows.width-34)/4;implicitHeight:24;label:"Artifacts";onActivated:root.action("job.artifacts",{id:modelData.id})}
+        ControlTile {implicitWidth:(jobRows.width-34)/4;implicitHeight:24;visible:["queued","running"].includes(modelData.state);label:"Cancel…";onActivated:root.action("job.cancel",{id:modelData.id})}
        }
       }
      }

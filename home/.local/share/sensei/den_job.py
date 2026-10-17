@@ -1,5 +1,6 @@
 """Owned job execution and recoverable, versioned provenance receipts."""
 import fcntl
+import contextlib
 import resource
 import hashlib
 import json
@@ -9,6 +10,20 @@ import platform
 import subprocess
 import sys
 import time
+
+@contextlib.contextmanager
+def submission(directory, limit=16):
+    """Bound queued worker count under a host-local admission lock."""
+    directory=Path(directory)
+    with (directory/'.submission.lock').open('a') as stream:
+        os.chmod(stream.name,0o600);fcntl.flock(stream,fcntl.LOCK_EX)
+        pending=0
+        for path in directory.glob('*.json'):
+            try:
+                if json.loads(path.read_text()).get('state') in ('queued','running'):pending+=1
+            except (OSError,ValueError,TypeError):continue
+        if pending>=limit:raise ValueError('Host queue is full (16 pending/running jobs); inspect or cancel owned jobs first')
+        yield
 
 def digest(path):
     h=hashlib.sha256()

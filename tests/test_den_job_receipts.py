@@ -27,3 +27,12 @@ class Receipts(unittest.TestCase):
    root=Path(d);source=root/'input';source.write_text('original');expected=m.digest(source);source.write_text('changed')
    receipt=root/'receipt.json';receipt.write_text(json.dumps({'project':d,'command':[sys.executable,'-c','from pathlib import Path;Path("ran").touch()'],'inputs':[{'path':str(source),'sha256':expected}]}))
    self.assertNotEqual(m.execute(receipt),0);self.assertFalse((root/'ran').exists());self.assertEqual(json.loads(receipt.read_text())['state'],'failed')
+
+ def test_full_queue_rejected_without_starting_another_worker(self):
+  with tempfile.TemporaryDirectory() as d:
+   root=Path(d)
+   for i in range(16):(root/(str(i)+'.json')).write_text(json.dumps({'state':'queued'}))
+   with self.assertRaises(ValueError):
+    with m.submission(root):self.fail('admission must reject a full queue')
+   (root/'0.json').write_text(json.dumps({'state':'succeeded'}))
+   with m.submission(root):pass

@@ -21,10 +21,10 @@ Column {
   Repeater {model:root.puzzles[root.puzzle].answers
    ControlTile {required property string modelData;required property int index;implicitWidth:120;label:modelData;onActivated:root.feedback=(index===root.puzzles[root.puzzle].correct?"Yes. ":"Try the mechanism: ")+root.puzzles[root.puzzle].why}
   }
-  ControlTile {implicitWidth:112;label:"Next puzzle";onActivated:{root.puzzle=(root.puzzle+1)%root.puzzles.length;root.feedback="Make a prediction before choosing."}}
+  ControlTile {implicitWidth:150;label:"Next puzzle";onActivated:{root.puzzle=(root.puzzle+1)%root.puzzles.length;root.feedback="Make a prediction before choosing."}}
  }
  Row {spacing:8
-  ControlTile {label:root.playing?"Stop rhythm":"Start silent rhythm";selected:root.playing;onActivated:{root.playing=!root.playing;root.pulses=0;root.beat=Date.now();}}
+  ControlTile {label:root.playing?"Stop rhythm":"Silent rhythm";selected:root.playing;onActivated:{root.playing=!root.playing;root.pulses=0;root.beat=Date.now();}}
   ControlTile {label:"Tap on the pulse";enabled:root.playing;selected:root.pulses%2===1;onActivated:{const delta=Math.abs(Date.now()-root.beat);root.feedback=delta<140?"Together. Tiny drummer approves.":"No penalty. Aim for the next visual pulse.";Den.companion("activity","drums");}}
  }
  Timer {interval:700;repeat:true;running:root.playing;onTriggered:{root.beat=Date.now();root.pulses++;if(root.pulses>=24)root.playing=false;}}

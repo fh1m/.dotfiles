@@ -10,3 +10,8 @@ class Measurements(unittest.TestCase):
    with self.assertRaises(ValueError):m.validate([dict(name='a',value=value,unit='m')])
  def test_duplicates_rejected(self):
   with self.assertRaises(ValueError):m.validate([dict(name='a',value=1,unit='m')]*2)
+
+ def test_unitless_values_must_be_explicit(self):
+  for unit in ('',' '):
+   with self.assertRaises(ValueError):m.validate([dict(name='gain',value=1,unit=unit)])
+  self.assertEqual(m.validate([dict(name='gain',value=1,unit='dimensionless')])[0]['unit'],'dimensionless')

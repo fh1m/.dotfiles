@@ -7,10 +7,10 @@ def learning(home=Path.home()):
  from noesis.scopes import locations
  from noesis.persistence import manifest_path
  from noesis.activities import review_heads
- result=[]
+ result=[];identities_seen={}
  for root in locations():
   try:
-   manifest=json.loads(manifest_path(root).read_text());vault=manifest['vault_id']
+   manifest=json.loads(manifest_path(root).read_text());vault=manifest['vault_id'];identities_seen[vault]=identities_seen.get(vault,0)+1
    cache=home/'.cache/noesis'/(hashlib.sha256(str(root.resolve()).encode()).hexdigest()+'.sqlite')
    if not cache.exists():continue
    db=sqlite3.connect(cache.as_uri()+'?mode=ro',uri=True,timeout=1)
@@ -29,5 +29,5 @@ def learning(home=Path.home()):
     date=datetime.datetime.fromisoformat(plan['due'].replace('Z','+00:00')).astimezone()
     record=identities[target]
     result.append(dict(uid='noesis:'+vault+':'+plan['id'],source='noesis',title=record['title'],date=date.date().isoformat(),time=date.strftime('%H:%M'),due=date.timestamp(),vault=str(root),vault_id=vault,record_id=target,read_only=True,category='Learning review'))
-  except (OSError,ValueError,KeyError,sqlite3.Error):continue
- return result
+  except (OSError,ValueError,TypeError,KeyError,sqlite3.Error):continue
+ return [row for row in result if identities_seen[row['vault_id']]==1]

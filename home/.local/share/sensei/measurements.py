@@ -9,7 +9,7 @@ def validate(rows):
   name=row.get('name');value=row.get('value');unit=row.get('unit');step=row.get('step')
   if not isinstance(name,str) or not name.strip() or len(name)>120:raise ValueError('Measurement needs a name')
   if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value):raise ValueError('Measurement must be a finite number')
-  if not isinstance(unit,str) or len(unit)>40:raise ValueError('Measurement needs a unit (use dimensionless when appropriate)')
+  if not isinstance(unit,str) or not unit.strip() or len(unit)>40:raise ValueError('Measurement needs a unit (use dimensionless when appropriate)')
   if step is not None and (isinstance(step,bool) or not isinstance(step,int) or step<0):raise ValueError('Invalid measurement step')
   key=(name,step)
   if key in seen:raise ValueError('Duplicate measurement and step')

@@ -365,34 +365,37 @@ def job(args):
         return result
     directory=STATE/'jobs';directory.mkdir(parents=True,exist_ok=True,mode=0o700)
     if args.action=='run':
-        if getattr(args,'memory_mib',None) is not None and not 32<=args.memory_mib<=1048576:raise ValueError('Memory limit must be 32–1048576 MiB')
-        if getattr(args,'cpu_percent',None) is not None and not 1<=args.cpu_percent<=10000:raise ValueError('Invalid CPU quota')
-        project=Path(args.project or Path.cwd()).resolve()
-        command=args.command[1:] if args.command[:1]==['--'] else args.command
-        if not project.is_dir() or not command:raise ValueError('Choose an existing project and command')
-        ident=datetime.datetime.now().strftime('%Y%m%dT%H%M%S')+'-'+os.urandom(3).hex();unit='den-job-'+ident
-        log=directory/(ident+'.log');meta={'id':ident,'host':host(),'unit':unit,'project':str(project),'command':command,'created':time.time(),
-            'commit':run(['git','-C',str(project),'rev-parse','HEAD']).stdout.strip(),'dirty':bool(run(['git','-C',str(project),'status','--porcelain']).stdout),
-            'schema':1,'state':'queued','requestedResources':{'memoryMiB':getattr(args,'memory_mib',None),'cpuPercent':getattr(args,'cpu_percent',None)},'inputs':[],'expectedArtifacts':getattr(args,'artifact',[]) or []}
         sys.path.insert(0,str(HOME/'.local/share/sensei'))
-        from den_job import digest
-        for name in getattr(args,'input',[]) or []:
-            source=(project/name).resolve()
-            if not source.is_file():raise ValueError('Input file is missing: '+name)
-            meta['inputs'].append({'path':str(source),'bytes':source.stat().st_size,'sha256':digest(source)})
-        for name in meta['expectedArtifacts']:
-            if not (project/name).resolve().is_relative_to(project):raise ValueError('Artifact must stay inside the project')
-        write(directory/(ident+'.json'),meta)
-        limits=[]
-        if getattr(args,'memory_mib',None):limits+=['--property=MemoryMax='+str(args.memory_mib)+'M']
-        if getattr(args,'cpu_percent',None):limits+=['--property=CPUQuota='+str(args.cpu_percent)+'%']
-        r=run(['systemd-run','--user',*limits,'--unit',unit,'--property=WorkingDirectory='+str(project),
-            '--property=UMask=0077','--property=Nice=5','--property=StandardOutput=append:'+str(log),
-            '--property=StandardError=append:'+str(log),'--',sys.executable,str(HOME/'.local/share/sensei/den_job.py'),str(directory/(ident+'.json'))])
-        if r.returncode:
-            meta.update(state='start-failed');write(directory/(ident+'.json'),meta)
-            raise ValueError('Job could not start; no command was replayed')
-        return meta
+        from den_job import submission
+        with submission(directory):
+            if getattr(args,'memory_mib',None) is not None and not 32<=args.memory_mib<=1048576:raise ValueError('Memory limit must be 32–1048576 MiB')
+            if getattr(args,'cpu_percent',None) is not None and not 1<=args.cpu_percent<=10000:raise ValueError('Invalid CPU quota')
+            project=Path(args.project or Path.cwd()).resolve()
+            command=args.command[1:] if args.command[:1]==['--'] else args.command
+            if not project.is_dir() or not command:raise ValueError('Choose an existing project and command')
+            ident=datetime.datetime.now().strftime('%Y%m%dT%H%M%S')+'-'+os.urandom(3).hex();unit='den-job-'+ident
+            log=directory/(ident+'.log');meta={'id':ident,'host':host(),'unit':unit,'project':str(project),'command':command,'created':time.time(),
+                'commit':run(['git','-C',str(project),'rev-parse','HEAD']).stdout.strip(),'dirty':bool(run(['git','-C',str(project),'status','--porcelain']).stdout),
+                'schema':1,'state':'queued','requestedResources':{'memoryMiB':getattr(args,'memory_mib',None),'cpuPercent':getattr(args,'cpu_percent',None)},'inputs':[],'expectedArtifacts':getattr(args,'artifact',[]) or []}
+            sys.path.insert(0,str(HOME/'.local/share/sensei'))
+            from den_job import digest
+            for name in getattr(args,'input',[]) or []:
+                source=(project/name).resolve()
+                if not source.is_file():raise ValueError('Input file is missing: '+name)
+                meta['inputs'].append({'path':str(source),'bytes':source.stat().st_size,'sha256':digest(source)})
+            for name in meta['expectedArtifacts']:
+                if not (project/name).resolve().is_relative_to(project):raise ValueError('Artifact must stay inside the project')
+            write(directory/(ident+'.json'),meta)
+            limits=[]
+            if getattr(args,'memory_mib',None):limits+=['--property=MemoryMax='+str(args.memory_mib)+'M']
+            if getattr(args,'cpu_percent',None):limits+=['--property=CPUQuota='+str(args.cpu_percent)+'%']
+            r=run(['systemd-run','--user',*limits,'--unit',unit,'--property=WorkingDirectory='+str(project),
+                '--property=UMask=0077','--property=Nice=5','--property=StandardOutput=append:'+str(log),
+                '--property=StandardError=append:'+str(log),'--',sys.executable,str(HOME/'.local/share/sensei/den_job.py'),str(directory/(ident+'.json'))])
+            if r.returncode:
+                meta.update(state='start-failed');write(directory/(ident+'.json'),meta)
+                raise ValueError('Job could not start; no command was replayed')
+            return meta
     if args.action=='list':
         rows=[read(p) for p in sorted(directory.glob('*.json'))][-30:]
         for row in rows:
