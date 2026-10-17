@@ -6,9 +6,12 @@ import qs.components
 import qs.config
 import qs.services
 DropdownFrame {
- id:root;title:"Meeting check / camera & sound";implicitWidth:740
+ id:root;property string outputName:"";property bool instrument:false;title:"Meeting check / camera & sound";implicitWidth:740
+ readonly property var origin:ShellState.screens.find(s=>s.name===root.outputName)||ShellState.screens[0]
+ readonly property real viewportHeight:Math.max(180,Math.min(680,(origin?.height??1080)-170))
+ headerRight:ControlTile {implicitWidth:112;implicitHeight:28;label:root.instrument?"Return":"Pin preview";onActivated:root.instrument?ShellState.releaseInstrument():ShellState.pinInstrument("camera")}
  property int frames:0
- IpcHandler {target:"camera-check";function state():string{return JSON.stringify({opened:root.opened,preview:root.preview,active:cam.active,listening:root.listen,frames:root.frames,error:cam.errorString,cameras:devices.videoInputs.length,microphones:devices.audioInputs.length,speakers:devices.audioOutputs.length});}function preview(enabled:bool):void{root.preview=enabled;}function listen(enabled:bool):void{root.listen=enabled;}}
+ IpcHandler {target:"camera-check-"+root.outputName+(root.instrument?"-instrument":"");function state():string{return JSON.stringify({opened:root.opened,preview:root.preview,active:cam.active,listening:root.listen,frames:root.frames,error:cam.errorString,cameras:devices.videoInputs.length,microphones:devices.audioInputs.length,speakers:devices.audioOutputs.length});}function openOn(output:string):void{if(ShellState.screens.some(s=>s.name===output)){ShellState.openDropdownOn("camera",output);}}function preview(enabled:bool):void{root.preview=enabled;}function listen(enabled:bool):void{root.listen=enabled;}}
  Connections {target:video.videoSink;function onVideoFrameChanged(){root.frames++;}}
  Connections {target:devices;function onVideoInputsChanged(){root.preview=false;root.cameraIndex=0;}function onAudioInputsChanged(){root.listen=false;}function onAudioOutputsChanged(){root.listen=false;}}
  property bool preview:false
@@ -17,7 +20,7 @@ DropdownFrame {
  property int cameraIndex:0
  property int micIndex:0
  property int speakerIndex:0
- readonly property bool opened:ShellState.dropdown==="camera"
+ readonly property bool opened:root.instrument?(ShellState.instrumentPinned&&ShellState.instrumentKind==="camera"):ShellState.dropdown==="camera"&&ShellState.dropdownOriginScreen===root.outputName
  onOpenedChanged:if(!opened){preview=false;listen=false;video.clearOutput();}
  Component.onDestruction:{preview=false;listen=false;}
  MediaDevices {id:devices}
@@ -26,9 +29,10 @@ DropdownFrame {
  AudioOutput {id:speaker;device:devices.audioOutputs[root.speakerIndex]??devices.defaultAudioOutput;volume:.12;muted:!root.listen}
  CaptureSession {camera:cam;videoOutput:video;audioInput:root.opened&&root.listen?mic:null;audioOutput:root.opened&&root.listen?speaker:null}
  Timer {interval:15000;running:root.listen;onTriggered:root.listen=false}
- Column {width:parent.width;spacing:12
+ ScrollView {id:cameraScroll;width:parent.width;height:root.viewportHeight;contentWidth:availableWidth;contentHeight:cameraBody.implicitHeight;clip:true
+ Column {id:cameraBody;width:cameraScroll.availableWidth;spacing:12
   DeskComboBox {width:parent.width;model:devices.videoInputs;textRole:"description";onActivated:index=>root.cameraIndex=index}
-  Rectangle {width:parent.width;height:Math.min(360,width*9/16);radius:8;color:Theme.surfaceOne;clip:true
+  Rectangle {width:parent.width;height:Math.min(240,root.viewportHeight*.42,width*9/16);radius:8;color:Theme.surfaceOne;clip:true
    VideoOutput {id:video;anchors.fill:parent;fillMode:VideoOutput.PreserveAspectFit;mirrored:root.mirrored;endOfStreamPolicy:VideoOutput.ClearOutput}
    Text {anchors.centerIn:parent;visible:!root.preview;text:"Camera stays off until you start preview";font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.paperMuted}
   }
@@ -44,5 +48,6 @@ DropdownFrame {
    ControlTile {label:"Sound controls";glyph:"\uf028";onActivated:ShellState.toggleDropdown("sound")}
   }
   Text {width:parent.width;text:"Use headphones for mic return. Starts at 12% monitor volume; actual meeting-app settings remain separate.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+ }
  }
 }

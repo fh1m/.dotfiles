@@ -39,9 +39,9 @@ def dispatch(expression):run(['hyprctl','dispatch',expression])
 def external(name):
     current=globals().get('_role_monitors')
     if role_for and current is not None:
-        return role_for(name,current) not in ('main','screenpad') and (name.startswith(('HDMI-','DP-','DVI-')) or name.startswith('SENSEI-'))
+        return role_for(name,current) not in ('main','screenpad') and (name.startswith(('HDMI-','DP-','eDP-','DVI-')) or name.startswith('SENSEI-'))
     desktop=globals().get('MACHINE',{}).get('profile')=='pc'
-    return name != globals().get('PRIMARY','eDP-1') and (desktop or name!='DP-2') and (name.startswith(('HDMI-','DP-','DVI-')) or name.startswith('SENSEI-'))
+    return name != globals().get('PRIMARY','eDP-1') and (desktop or name!='DP-2') and (name.startswith(('HDMI-','DP-','eDP-','DVI-')) or name.startswith('SENSEI-'))
 
 
 
@@ -144,7 +144,11 @@ def optimal_mode(monitor):
 
 def configure(outputs):
     # The graphical arrangement is authoritative once explicitly saved.
-    if (Path.home()/".config/hypr/monitors-user.lua").is_file():return
+    if (Path.home()/".local/state/sensei-engineering/display-pending.json").is_file():return
+    if (Path.home()/".config/hypr/monitors-user.lua").is_file():
+        sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+        from display_layout import profile_matches
+        if profile_matches(outputs):return
     selected=sorted((m for m in outputs if external(m['name'])),key=lambda m:((role_for(m['name'],outputs)!='lower') if role_for else m['name']!='HDMI-A-1',m['name']))
     lower=None
     for monitor in selected:

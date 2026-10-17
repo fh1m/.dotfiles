@@ -6,7 +6,9 @@ import qs.services
 
 Singleton {
     id: root
+    property var passports:[]
     property var data: ({boards: [], boardCount: 0, simulators: [], simCount: 0, brightness: 100, gpu: {state: "unavailable", usage: null, temperature: null}})
+    Component.onCompleted: refresh()
     function refresh(): void { if (!poll.running) poll.running = true; }
     Process {
         id: poll
@@ -17,12 +19,12 @@ Singleton {
             }
         }
     }
-    Process {running:true;command:["udevadm","monitor","--udev","--subsystem-match=tty"];stdout:SplitParser{onRead:line=>{if(line.indexOf("UDEV")>=0)deviceEvent.restart();}}}
+    Process {running:true;command:[Quickshell.env("HOME")+"/.local/bin/sensei-hardware","watch"];stdout:SplitParser{onRead:line=>{try{root.passports=JSON.parse(line).devices||[];deviceEvent.restart();}catch(e){}}}}
     Timer {id:deviceEvent;interval:180;onTriggered:root.refresh()}
     Timer {
-        interval: ShellState.dropdown === "monitor" ? 1000 : ShellState.dropdown === "system" ? 2000 : 10000
+        interval: ShellState.dropdown === "monitor" ? 1000 : 2000
         repeat: true
-        running: true
+        running: ShellState.dropdown === "monitor" || ShellState.dropdown === "system"
         triggeredOnStart: true
         onTriggered: if (!poll.running) poll.running = true
     }

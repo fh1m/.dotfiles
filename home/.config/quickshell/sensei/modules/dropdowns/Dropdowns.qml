@@ -81,13 +81,13 @@ Variants {
         // is still behind the bar at the start of the slide.
         readonly property real slide: Theme.reducedMotion ? 0 : 6
 
-        IpcHandler {target:"popupmotion-"+popup.modelData?.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,ready:popup.surfaceReady,width:popup.width,height:popup.height,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
+        IpcHandler {target:"popupmotion-"+popup.modelData?.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,ready:popup.surfaceReady,width:popup.width,height:popup.height,panelHeight:popup.panelHeight,requestedHeight:popup.implicitHeight,measuredHeight:popup.measuredHeight,stableFrames:popup.stableFrames,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
         screen: modelData
         color: "transparent"
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }
         visible: current !== "" && surfaceReady && !ShellState.externalDialogOpen
 
-        implicitWidth: Math.min((modelData?.width ?? 1920) - 2 * edge, 2 * surfaceInset + ((current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis") ? 1040 : current === "external-display" ? 440 : current === "code" ? 1100 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : (current === "displays" || current === "camera") ? 740 : current === "ethernet" ? 596 : current === "power" ? 500 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
+        implicitWidth: Math.min((modelData?.width ?? 1920) - 2 * edge, 2 * surfaceInset + ((current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis") ? 1040 : current === "external-display" ? 440 : current === "code" ? 1100 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : (current === "displays" || current === "camera" || current === "engineering") ? 740 : current === "ethernet" ? 596 : current === "power" ? 500 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.
@@ -189,7 +189,9 @@ Variants {
         Connections {
             target: ShellState
 
-            function onDropdownChanged(): void {
+            function onDropdownChanged():void {routeDropdown();}
+            function onDropdownOriginScreenChanged():void {routeDropdown();}
+            function routeDropdown(): void {
                 const requested = ShellState.dropdown;
                 const bottom = requested === "monitor" || requested === "clipboard" || requested === "usb" || requested === "phone" || requested === "oasis";
                 const origin=ShellState.screens.find(s=>s.name===ShellState.dropdownOriginScreen);
@@ -253,9 +255,9 @@ Variants {
         // A click anywhere outside closes. The bar is in the list so clicking
         // another readout reaches it and switches dropdowns in one go.
         HyprlandFocusGrab {
-            active: popup.grabArmed && popup.reveal > 0.99 && !openAnim.running && !swapAnim.running && !presentTimer.running && ShellState.dropdown === popup.current && !ShellState.externalDialogOpen
+            active: !(ShellState.instrumentPinned&&popup.current==="engineering") && popup.grabArmed && popup.reveal > 0.99 && !openAnim.running && !swapAnim.running && !presentTimer.running && ShellState.dropdown === popup.current && !ShellState.externalDialogOpen
             windows: [popup].concat(Object.values(ShellState.barWindows)).filter(w => w !== null)
-            onCleared: if (popup.current !== "" && ShellState.dropdown === popup.current && popup.grabArmed && !ShellState.externalDialogOpen && popup.reveal > 0.99 && !openAnim.running && !swapAnim.running && !presentTimer.running && !focusReturn.running) outsideClose.restart()
+            onCleared: if (popup.current !== "" && ShellState.dropdown === popup.current && popup.grabArmed && !(ShellState.instrumentPinned&&popup.current==="engineering") && !ShellState.externalDialogOpen && popup.reveal > 0.99 && !openAnim.running && !swapAnim.running && !presentTimer.running && !focusReturn.running) outsideClose.restart()
         }
 
         Timer { id: focusReturn; interval: 260; onTriggered: if(popup.current!==""&&!ShellState.externalDialogOpen) popup.grabArmed=true }
@@ -348,6 +350,7 @@ Variants {
                     case "external-display": return externalDisplayPanel;
                     case "ethernet":return ethernetPanel;
                     case "camera":return cameraPanel;
+                    case "engineering":return engineeringPanel;
                     case "displays": return displaysPanel;
                     case "monitor": return monitorPanel;
                     case "clipboard": return clipboardPanel;
@@ -403,7 +406,8 @@ Variants {
             Component { id: calendarPanel; CalendarDropdown { width: holder.width } }
             Component {id:externalDisplayPanel;ExternalDisplayDropdown {width:holder.width}}
             Component {id:ethernetPanel;EthernetDropdown {width:holder.width}}
-            Component {id:cameraPanel;CameraDropdown {width:holder.width}}
+            Component {id:engineeringPanel;EngineeringDropdown {width:holder.width;outputName:popup.modelData.name}}
+            Component {id:cameraPanel;CameraDropdown {width:holder.width;outputName:popup.modelData.name}}
             Component { id: displaysPanel; DisplayWallpapers { width: holder.width } }
             Component { id: monitorPanel; MonitorDropdown { width: holder.width } }
             Component { id: clipboardPanel; ClipboardDropdown { width: holder.width } }

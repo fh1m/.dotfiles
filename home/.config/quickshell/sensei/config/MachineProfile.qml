@@ -12,6 +12,7 @@ Singleton {
     readonly property string host: facts.host ?? (desktop ? "homie" : "arete")
     readonly property var displayRoles: facts.displayRoles ?? ({})
     function role(output:string):string {return displayRoles[output] ?? "external";}
+    FileView {path:Quickshell.env("HOME")+"/.config/hypr/monitors-user.json";watchChanges:true;printErrors:false;onFileChanged:{reload();settle.restart();}}
     property string outputNames: Quickshell.screens.map(s=>s.name).join(",")
     onOutputNamesChanged: settle.restart()
     Timer {id:settle;interval:700;onTriggered:if(!probe.running)probe.running=true}

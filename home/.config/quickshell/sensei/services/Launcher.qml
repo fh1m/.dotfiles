@@ -14,6 +14,8 @@ Singleton {
 
     readonly property int maxResults: 6
 
+    property var engineeringActions:({})
+    Process {id:engineeringCatalog;command:[Quickshell.env("HOME")+"/.local/bin/sensei-actions","list"];stdout:StdioCollector {onStreamFinished:{try{root.engineeringActions=JSON.parse(text).actions||{};}catch(e){}}}}
     property string query: ""
     property int selected: 0
 
@@ -99,6 +101,7 @@ Singleton {
         // Profiles join the list when the query looks like one, or like the
         // word itself -- an empty query leaves them out so apps get the room.
         if (needle) {
+            for(const id of Object.keys(engineeringActions)){const item=engineeringActions[id];const points=Math.max(score(item.title,needle),score(id,needle));if(points>=0)found.push({kind:"engineering",name:item.title,tag:"ENGINEERING",points:points+2,uses:0,action:id});}
             for (const name of Profiles.names) {
                 const points = Math.max(score(name, needle), score("profile", needle));
                 if (points < 0)
@@ -135,6 +138,7 @@ Singleton {
         const chosen = results[selected];
         if (!chosen)
             return;
+        if(chosen.kind==="engineering"){close();ShellState.engineeringSelectedAction=chosen.action;ShellState.openDropdown("engineering");return;}
         if (chosen.kind === "profile") {
             Theme.apply(chosen.profile);
         } else {
@@ -180,6 +184,7 @@ Singleton {
     }
 
     function open(): void {
+        if(!engineeringCatalog.running)engineeringCatalog.running=true;
         query = "";
         selected = 0;
         ShellState.openExclusive("launcher");

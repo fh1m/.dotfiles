@@ -297,3 +297,6 @@ hl.bind("XF86PowerOff", hl.dsp.exec_cmd("qs -c sensei ipc call power open"))
 local user_monitors = os.getenv("HOME") .. "/.config/hypr/monitors-user.lua"
 local user_file = io.open(user_monitors,"r")
 if user_file then user_file:close(); dofile(user_monitors) end
+
+-- Engineering actions: same reviewed backend as launcher and ScreenPad.
+hl.bind("SUPER + CTRL + E", hl.dsp.exec_cmd("qs -c sensei ipc call dropdown open engineering"))

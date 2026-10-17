@@ -1,5 +1,6 @@
 import QtQuick
 import QtQml.Models
+import qs.modules.dropdowns
 import qs.components
 import qs.config
 import qs.services
@@ -10,6 +11,7 @@ import qs.services
 // written straight back to the same hand-editable planner file.
 ChamferPanel {
     id: root
+    ControlTile {anchors.right:parent.right;anchors.top:parent.top;anchors.margins:10;implicitWidth:142;implicitHeight:24;label:"Agenda · "+(CalendarDesk.linked.length+CalendarDesk.tasks.filter(t=>!t.done&&!t.archived).length);onActivated:ShellState.toggleDropdown("calendar")}
 
     readonly property real padding: 14
 

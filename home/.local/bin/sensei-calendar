@@ -80,7 +80,12 @@ try:
    if e['category']=='Pomodoro':continue
    for stamp in occurrences(e,now-86400,now+86400*7):
     if stamp>=now:upcoming.append(dict(e,occurrence=stamp,time=D.datetime.fromtimestamp(stamp).strftime('%H:%M'),date=D.datetime.fromtimestamp(stamp).strftime('%Y-%m-%d')))
-  print(json.dumps({'clocks':clocks,'events':sorted(rows,key=lambda e:e['occurrence']),'total':c.execute('select count(*) from events where done=0').fetchone()[0],'tasks':[dict(t) for t in c.execute('select * from tasks order by archived,done,priority desc,date,id desc')],'focus':focus_state(),'upcoming':sorted(upcoming,key=lambda e:e['occurrence'])[:32]}))
+  sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+  try:
+   from agenda import learning
+   linked=learning()
+  except (ImportError,OSError,ValueError):linked=[]
+  print(json.dumps({'linked':linked,'clocks':clocks,'events':sorted(rows,key=lambda e:e['occurrence']),'total':c.execute('select count(*) from events where done=0').fetchone()[0],'tasks':[dict(t) for t in c.execute('select * from tasks order by archived,done,priority desc,date,id desc')],'focus':focus_state(),'upcoming':sorted(upcoming,key=lambda e:e['occurrence'])[:32]}))
  elif cmd=='save':
   d=json.loads(a[1]);start=D.datetime.fromisoformat(d['date']+'T'+d.get('time','09:00')).timestamp();values=(d['title'].strip(),start,int(d.get('duration',30)),int(d.get('lead',10)),d.get('repeat','none'),d.get('location',''),d.get('notes',''),d.get('category','Personal'),int(d.get('all_day',False)))
   if not values[0]:raise SystemExit('Sensei, give your event a title.')

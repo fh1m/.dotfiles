@@ -40,6 +40,15 @@ def roles(monitors, host=None, profile=None):
     remaining=sorted((m for m in monitors if m['name'] not in used),key=lambda m:(m['name']!='HDMI-A-1',m['name']))
     for role in ('lower','upper'):
         if role not in result and remaining:result[role]=remaining.pop(0)
+    try:
+        profile_state=json.loads((Path.home()/'.config/hypr/monitors-user.json').read_text())
+        preferred=profile_state.get('primary')
+        if preferred and preferred!=result.get('screenpad',{}).get('name'):
+            from display_layout import profile_matches
+            if profile_matches(monitors):
+                old_role=next((r for r,m in result.items() if m['name']==preferred),None)
+                if old_role and old_role!='main':result['main'],result[old_role]=result[old_role],result['main']
+    except (OSError,ValueError,ImportError,KeyError):pass
     return result
 
 

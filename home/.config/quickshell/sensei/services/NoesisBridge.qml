@@ -12,7 +12,7 @@ Singleton {
  readonly property var currentContext:publisherLive?(projection.context||{}):({})
  readonly property string activeVault:currentContext.vault||""
  readonly property bool windowOpen:publisherLive&&projection.visible===true
- // False until the external Noesis UI (~/.local/share/sensei-learning/ui, linked in as noesis-ui) is found; the companion is only loaded then.
+ // The repository-managed Noesis UI is deployed under .local/share and linked as noesis-ui. Probe it before loading the companion.
  property bool uiPresent:false
  function startLearning(){Quickshell.execDetached(["@HOME@/.local/bin/noesis","window","--start"]);}
  function open(){Quickshell.execDetached(["@HOME@/.local/bin/noesis","window"]);}

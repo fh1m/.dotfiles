@@ -57,6 +57,7 @@ WidgetSection {
             ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Retire this line";glyph:"\uf04e";onActivated:Den.companion("less","")}
         }
 
+        ControlTile {width:parent.width;label:"Engineering / projects & job queue";glyph:"\uf085";onActivated:ShellState.toggleDropdown("engineering")}
         DeskTextField {id:zondoThought;width:parent.width;placeholderText:"Tell Zondo a thought, or keep a personal memory";maximumLength:240;onAccepted:if(text.trim()){Den.companion("talk",text);text="";}}
         Text {width:parent.width;visible:Den.reply!=="";text:Den.reply;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paper}
         Row {width:parent.width;spacing:8

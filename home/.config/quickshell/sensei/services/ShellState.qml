@@ -34,14 +34,15 @@ Singleton {
     // made by hand, to rehearse an HDMI screen and a top-bar external screen
     // without the hardware. Nothing in the repo creates them; they are seams
     // for the same reason as the names in sensei-displays.
-    function isExternalOutput(name:string):bool {return name!==(barScreens[0]?.name??MachineProfile.primaryOutput)&&(MachineProfile.role(name)!=="screenpad")&&(name.startsWith("HDMI-")||name.startsWith("DP-")||name.startsWith("DVI-")||name==="SENSEI-HDMI-TEST"||name==="SENSEI-UPPER-TEST");}
+    function isExternalOutput(name:string):bool {return name!==(barScreens[0]?.name??MachineProfile.primaryOutput)&&(MachineProfile.role(name)!=="screenpad")&&(name.startsWith("HDMI-")||name.startsWith("DP-")||name.startsWith("eDP-")||name.startsWith("DVI-")||name==="SENSEI-HDMI-TEST"||name==="SENSEI-UPPER-TEST");}
     function externalBarEdge(name:string):string {return MachineProfile.role(name)==="upper"?"top":ExternalDisplays.display(name)?.barEdge??((name==="DP-1"||name==="SENSEI-UPPER-TEST")?"top":"bottom");}
     readonly property var externalScreens: screens.filter(s => isExternalOutput(s.name))
     readonly property var bottomBarScreens: MachineProfile.desktop ? barScreens.concat(externalScreens) : screens.filter(s => s.name === "DP-2" || externalScreens.some(e=>e.name===s.name))
     property string dropdownOriginScreen: ""
     property var barWindows: ({})
     function registerBar(output:string,window:var):void {const next=Object.assign({},barWindows);if(window)next[output]=window;else delete next[output];barWindows=next;}
-    function barContext(output:string):void {dropdownOriginScreen=output;}
+    property string hoveredBarOutput:""
+    function barContext(output:string):void {hoveredBarOutput=output;if(dropdown==="")dropdownOriginScreen=output;}
 
     function focusedScreenName(): string {
         return Spaces.focusedMonitor?.name ?? Hyprland.focusedMonitor?.name ?? barScreens[0]?.name ?? "";
@@ -123,6 +124,23 @@ Singleton {
         return dropdownAnchors[name] ?? 0;
     }
 
+    property string engineeringSelectedAction:""
+    property string engineeringSelectedJob:""
+    property int instrumentPage:0
+    property string instrumentProject:""
+    property string instrumentHost:""
+    property string instrumentKind:"engineering"
+    property bool instrumentPinned:false
+    property var instrumentPrevious:({name:"",output:""})
+    function openDropdownOn(name:string,output:string):void {
+        if(!screens.some(s=>s.name===output))return;
+        SpotifyDesk.fullscreen=false;dropdownOriginScreen=output;dropdownAnchorX=anchorFor(name);dropdown=name;dropdownStamp++;
+    }
+    function pinInstrument(kind:string):void {
+        const pad=screens.find(s=>MachineProfile.role(s.name)==="screenpad");if(!pad)return;
+        instrumentPrevious={name:dropdown,output:dropdownOriginScreen};instrumentKind=kind||"engineering";instrumentPinned=true;dropdown="";
+    }
+    function releaseInstrument():void {instrumentPinned=false;if(dropdown===""&&instrumentPrevious.name)openDropdownOn(instrumentPrevious.name,instrumentPrevious.output);}
     function openDropdown(name: string): void {
         SpotifyDesk.fullscreen=false;
         dropdownOriginScreen = focusedScreenName();
@@ -133,7 +151,10 @@ Singleton {
     function toggleDropdown(name: string): void {
         SpotifyDesk.fullscreen=false;
         if (dropdownAnchors[name] !== undefined) dropdownAnchorX = anchorFor(name);
-        dropdown = dropdown === name ? "" : name;
+        const origin=hoveredBarOutput||focusedScreenName();
+        const closing=dropdown===name&&dropdownOriginScreen===origin;
+        if(!closing)dropdownOriginScreen=origin;
+        dropdown=closing?"":name;
         dropdownStamp++;
     }
 

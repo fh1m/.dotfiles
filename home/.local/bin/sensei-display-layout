@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+import argparse,json,sys,time
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+import display_layout as d
+p=argparse.ArgumentParser();s=p.add_subparsers(dest='verb',required=True);s.add_parser('list')
+q=s.add_parser('apply');q.add_argument('layout')
+for verb in ('confirm','rollback','watchdog'):s.add_parser(verb).add_argument('token')
+a=p.parse_args()
+try:
+ if a.verb=='list':result={'outputs':d.outputs(),'pending':d.read(d.state()/'display-pending.json')}
+ elif a.verb=='apply':result=d.begin(json.loads(a.layout),Path(__file__).resolve())
+ elif a.verb=='confirm':result=d.confirm(a.token)
+ else:
+  if a.verb=='watchdog':time.sleep(20)
+  result=d.rollback(a.token)
+ print(json.dumps(result))
+except (ValueError,OSError,KeyError,TypeError) as error:print(json.dumps({'error':str(error)}));sys.exit(1)
