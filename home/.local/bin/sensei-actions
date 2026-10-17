@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Validated local engineering actions; JSON in/out, no generic command execution."""
-import argparse,json,sys,subprocess,socket,shlex
+import argparse,json,sys,subprocess,socket,shlex,runpy
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
 import engineering as e
@@ -18,7 +18,11 @@ def main():
   remote_args=sys.argv[1:];index=remote_args.index('--host');del remote_args[index:index+2]
   cfg=Path.home()/'.local/state/homie-control/client.conf'
   if e.machine()!='arete' or a.host!='homie':raise ValueError('This remote route is not configured; run the action on its owning host')
-  r=subprocess.run(['ssh','-n','-F',str(cfg),'homie',shlex.join([str(Path.home()/'.local/bin/sensei-actions'),*remote_args])],capture_output=True,text=True,timeout=25)
+  den=runpy.run_path(str(Path.home()/'.local/bin/sensei-den'))
+  alias='homie'
+  access=den['read'](Path.home()/'.config/sensei-den/access.json')
+  if access.get('privateAlias') and not den['connectivity']():alias=access['privateAlias']
+  r=subprocess.run(['ssh','-n','-F',str(cfg),alias,shlex.join([str(Path.home()/'.local/bin/sensei-actions'),*remote_args])],capture_output=True,text=True,timeout=25)
   if r.returncode:raise ValueError('Remote operation unavailable or rejected; no local fallback or automatic retry')
   return json.loads(r.stdout)
  if a.verb=='overview':
