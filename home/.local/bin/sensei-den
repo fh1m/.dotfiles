@@ -98,12 +98,15 @@ def companion_memory():
 
 def companion(action,value=None):
     cfg=read(CONFIG/'companion.json',{'enabled':True,'quiet':False,'size':96})
-    if action=='protocol':return {'schema':1,'leases':True,'musicPlaying':zondo_playing(),'memory':companion_memory(),'enabled':cfg.get('enabled',True),'quiet':cfg.get('quiet',False),'suspended':cfg.get('suspended',False),'reducedMotion':cfg.get('reducedMotion',False)}
+    sys.path.insert(0,str(HOME/'.local/share/sensei'))
+    from companion_roam import engineering_events
+    if action=='protocol':return {'schema':1,'leases':True,'musicPlaying':zondo_playing(),'memory':companion_memory(),'engineeringEvents':engineering_events(read(HOME/'.local/state/sensei-engineering/receipts.json',{'events':[]}).get('events',[])),'enabled':cfg.get('enabled',True),'quiet':cfg.get('quiet',False),'suspended':cfg.get('suspended',False),'reducedMotion':cfg.get('reducedMotion',False)}
     if action=='grant':
         sys.path.insert(0,str(HOME/'.local/share/sensei'))
         from companion_roam import grant
         payload=json.loads(value);record=grant(read(STATE/'companion-travel.json'),payload['output'],payload['token'],payload.get('ttl',40))
         record['musicPlaying']=payload.get('musicPlaying') is True
+        record['engineeringEvents']=engineering_events(payload.get('engineeringEvents',[]))
         from companion_roam import memory
         record['memory']=memory(payload.get('memory',{}))
         write(STATE/'companion-travel.json',record);return record
@@ -121,7 +124,14 @@ def companion(action,value=None):
             write(CONFIG/'zondo-personal.json',notes)
             cfg.update(message='Kept in this desk’s private memory. I will bring it back as your words, not an invented memory.',messageAt=time.time(),pose='read',poseAt=time.time())
         write(CONFIG/'companion.json',cfg);return cfg
-    if action=='roam':
+    if action in ('activity','activity-hide','activity-favorite'):
+        atlas=read(HOME/'.local/share/sensei-companion/activity-atlases.json')
+        if value not in atlas:raise ValueError('Unknown Zondo activity')
+        if action=='activity':cfg.update(pose=value,poseAt=time.time())
+        else:
+            key='hiddenActivities' if action=='activity-hide' else 'favoriteActivities'
+            cfg[key]=list(dict.fromkeys(cfg.get(key,[])+[value]))[-100:]
+    elif action=='roam':
         if value not in ('on','off'):raise ValueError('Use roam on or off')
         cfg['roaming']=value=='on';cfg['anchorManual']=value!='on'
         if value=='on':cfg['reducedMotion']=False
@@ -342,6 +352,8 @@ def job(args):
     if args.host and args.host!=host():
         command=[str(HOME/'.local/bin/sensei-den'),'job',args.action]
         if args.project:command+=['--project',args.project]
+        if getattr(args,'memory_mib',None):command+=['--memory-mib',str(args.memory_mib)]
+        if getattr(args,'cpu_percent',None):command+=['--cpu-percent',str(args.cpu_percent)]
         if args.id:command+=['--id',args.id]
         for item in getattr(args,'input',[]) or []:command+=['--input',item]
         for item in getattr(args,'artifact',[]) or []:command+=['--artifact',item]
@@ -352,13 +364,15 @@ def job(args):
         return result
     directory=STATE/'jobs';directory.mkdir(parents=True,exist_ok=True,mode=0o700)
     if args.action=='run':
+        if getattr(args,'memory_mib',None) is not None and not 32<=args.memory_mib<=1048576:raise ValueError('Memory limit must be 32–1048576 MiB')
+        if getattr(args,'cpu_percent',None) is not None and not 1<=args.cpu_percent<=10000:raise ValueError('Invalid CPU quota')
         project=Path(args.project or Path.cwd()).resolve()
         command=args.command[1:] if args.command[:1]==['--'] else args.command
         if not project.is_dir() or not command:raise ValueError('Choose an existing project and command')
         ident=datetime.datetime.now().strftime('%Y%m%dT%H%M%S')+'-'+os.urandom(3).hex();unit='den-job-'+ident
         log=directory/(ident+'.log');meta={'id':ident,'host':host(),'unit':unit,'project':str(project),'command':command,'created':time.time(),
             'commit':run(['git','-C',str(project),'rev-parse','HEAD']).stdout.strip(),'dirty':bool(run(['git','-C',str(project),'status','--porcelain']).stdout),
-            'schema':1,'state':'queued','inputs':[],'expectedArtifacts':getattr(args,'artifact',[]) or []}
+            'schema':1,'state':'queued','requestedResources':{'memoryMiB':getattr(args,'memory_mib',None),'cpuPercent':getattr(args,'cpu_percent',None)},'inputs':[],'expectedArtifacts':getattr(args,'artifact',[]) or []}
         sys.path.insert(0,str(HOME/'.local/share/sensei'))
         from den_job import digest
         for name in getattr(args,'input',[]) or []:
@@ -368,7 +382,10 @@ def job(args):
         for name in meta['expectedArtifacts']:
             if not (project/name).resolve().is_relative_to(project):raise ValueError('Artifact must stay inside the project')
         write(directory/(ident+'.json'),meta)
-        r=run(['systemd-run','--user','--unit',unit,'--property=WorkingDirectory='+str(project),
+        limits=[]
+        if getattr(args,'memory_mib',None):limits+=['--property=MemoryMax='+str(args.memory_mib)+'M']
+        if getattr(args,'cpu_percent',None):limits+=['--property=CPUQuota='+str(args.cpu_percent)+'%']
+        r=run(['systemd-run','--user',*limits,'--unit',unit,'--property=WorkingDirectory='+str(project),
             '--property=UMask=0077','--property=Nice=5','--property=StandardOutput=append:'+str(log),
             '--property=StandardError=append:'+str(log),'--',sys.executable,str(HOME/'.local/share/sensei/den_job.py'),str(directory/(ident+'.json'))])
         if r.returncode:
@@ -377,7 +394,11 @@ def job(args):
         return meta
     if args.action=='list':
         rows=[read(p) for p in sorted(directory.glob('*.json'))][-30:]
-        for row in rows:row['state']=service(row['unit'])
+        for row in rows:
+            row['unitState']=service(row['unit'])
+            if row.get('state') in ('queued','running') and row['unitState'] in ('failed','inactive') and time.time()-row.get('created',time.time())>5:
+                row.update(state='interrupted',finished=time.time(),reason='Owned unit stopped before its final receipt')
+                write(directory/(row['id']+'.json'),row)
         return rows
     if not args.id or not re.fullmatch(r'[A-Za-z0-9-]{1,60}',args.id):raise ValueError('Invalid job ID')
     meta=read(directory/(args.id+'.json'))
@@ -500,11 +521,14 @@ def _companion_tick(peer):
     state["lastToken"]=token
     local=json.loads(run(['hyprctl','monitors','-j']).stdout)
     music=zondo_playing();repertoire=companion_memory()
+    from companion_roam import engineering_events
+    events=engineering_events(read(HOME/'.local/state/sensei-engineering/receipts.json',{'events':[]}).get('events',[]))
     destinations=[(local_host,m['name']) for m in local if not m['name'].startswith('SENSEI-')]
     if peer and local_host=='arete':
         try:
             capability=json.loads(remote([str(HOME/'.local/bin/sensei-den'),'companion','protocol'],timeout=4))
             music=music or capability.get('musicPlaying') is True
+            events=engineering_events(events+capability.get('engineeringEvents',[]))
             sys.path.insert(0,str(HOME/'.local/share/sensei'))
             from companion_roam import newer_memory
             repertoire=newer_memory(repertoire,capability.get('memory',{}))
@@ -523,10 +547,10 @@ def _companion_tick(peer):
         # Hide first; a lost acknowledgement cannot create a second visible character.
         companion('grant',json.dumps({'output':'','token':token,'ttl':45}))
         state['remoteUntil']=now+45;write(STATE/'companion-route.json',state)
-        remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire})],timeout=4)
+        remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire,'engineeringEvents':events})],timeout=4)
     else:
         if remote_until>now:return
-        companion('grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire}))
+        companion('grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire,'engineeringEvents':events}))
         state['remoteUntil']=0
     write(STATE/'companion-route.json',state)
 
@@ -580,11 +604,11 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);s=p.add_subparsers(dest='command_name',required=True)
     for n in ['status','doctor','watch']:s.add_parser(n)
     q=s.add_parser('mode');q.add_argument('value',nargs='?',choices=['auto','together','away','homie'])
-    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','talk','remember','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','grant','protocol']);q.add_argument('value',nargs='?')
+    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','activity','activity-hide','activity-favorite','talk','remember','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','grant','protocol']);q.add_argument('value',nargs='?')
     q=s.add_parser('sync');q.add_argument('action',nargs='?',default='status',choices=['status','scan','pause','resume'])
     q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','retain-preview','peer-copy'])
     q=s.add_parser('workbench');q.add_argument('action',nargs='?',default='open',choices=['open','start','stop','status'])
-    q=s.add_parser('job');q.add_argument('action',choices=['run','list','status','logs','cancel','artifacts','fetch']);q.add_argument('--host');q.add_argument('--project');q.add_argument('--id');q.add_argument('--input',action='append');q.add_argument('--artifact',action='append');q.add_argument('--file');q.add_argument('--output');
+    q=s.add_parser('job');q.add_argument('action',choices=['run','list','status','logs','cancel','artifacts','fetch']);q.add_argument('--host');q.add_argument('--project');q.add_argument('--id');q.add_argument('--input',action='append');q.add_argument('--artifact',action='append');q.add_argument('--file');q.add_argument('--output');q.add_argument('--memory-mib',type=int);q.add_argument('--cpu-percent',type=int);
     argv=sys.argv[1:];job_command=[]
     if '--' in argv:
         i=argv.index('--');job_command=argv[i+1:];argv=argv[:i]

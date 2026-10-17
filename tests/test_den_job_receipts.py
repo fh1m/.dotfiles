@@ -21,3 +21,9 @@ class Receipts(unittest.TestCase):
    p=Path(d);(p/'project').mkdir();(p/'private').write_text('secret');(p/'project/link').symlink_to(p/'private')
    for name in ('../private','link'):
     with self.assertRaises(ValueError):m.artifact(p/'project',name)
+
+ def test_changed_queued_input_is_not_executed(self):
+  with tempfile.TemporaryDirectory() as d:
+   root=Path(d);source=root/'input';source.write_text('original');expected=m.digest(source);source.write_text('changed')
+   receipt=root/'receipt.json';receipt.write_text(json.dumps({'project':d,'command':[sys.executable,'-c','from pathlib import Path;Path("ran").touch()'],'inputs':[{'path':str(source),'sha256':expected}]}))
+   self.assertNotEqual(m.execute(receipt),0);self.assertFalse((root/'ran').exists());self.assertEqual(json.loads(receipt.read_text())['state'],'failed')

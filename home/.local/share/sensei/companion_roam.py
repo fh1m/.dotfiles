@@ -24,3 +24,25 @@ def memory(record):
 def newer_memory(a,b):
     a,b=memory(a),memory(b)
     return b if b['turn']>a['turn'] else a
+
+
+def engineering_events(events,now=None):
+    """Cross-host curated receipts only: no logs, titles, code, commands or arbitrary actions."""
+    import re,time
+    now=time.time() if now is None else now
+    kinds={'project.launch','job.completed','experiment.completed','hardware.disconnected','hardware.returned'}
+    out=[]
+    for event in events[-16:] if isinstance(events,list) else []:
+        if not isinstance(event,dict) or event.get('kind') not in kinds:continue
+        try:
+            import uuid
+            identity=str(uuid.UUID(event['id']));at=float(event['at'])
+        except (KeyError,ValueError,TypeError):continue
+        if not 0<=now-at<120 or event.get('host') not in ('arete','homie'):continue
+        raw=event.get('data',{});data={}
+        if not isinstance(raw,dict):continue
+        if raw.get('outcome') in ('passed','succeeded','failed','interrupted'):data['outcome']=raw['outcome']
+        if isinstance(raw.get('job'),str) and re.fullmatch(r'[A-Za-z0-9-]{1,60}',raw['job']):data['job']=raw['job']
+        if event['kind'].startswith('hardware.') and isinstance(raw.get('label'),str):data['label']=raw['label'][:60]
+        out.append(dict(id=identity,at=at,host=event['host'],kind=event['kind'],data=data))
+    return out[-8:]

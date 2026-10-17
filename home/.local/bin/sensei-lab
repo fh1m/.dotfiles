@@ -28,6 +28,9 @@ def main():
     run.add_argument("--name", default="experiment")
     run.add_argument("--command-line", default="", help="command line split like a terminal, without a shell")
     run.add_argument("command", nargs=argparse.REMAINDER)
+    run.add_argument('--parameters', type=Path, help='JSON parameter object; values are recorded, not executed')
+    run.add_argument('--metrics', type=Path, help='Project-relative JSON measurements produced by the experiment')
+    run.add_argument('--baseline', type=Path, help='Explicit earlier run.json to compare compatible measurements')
     open_project = sub.add_parser("open", help="attach to a persistent project tmux session")
     open_project.add_argument("--project", type=Path, required=True)
     open_project.add_argument("--name", default="robotics")
@@ -61,6 +64,13 @@ def main():
         "git_dirty": bool(git_value(project, "status", "--porcelain")),
         "started_at": time.time(), "status": "running", "pid": os.getpid(),
     }
+    if args.parameters:
+        meta['parameters']=json.loads(args.parameters.read_text())
+        if not isinstance(meta['parameters'],dict):parser.error('Parameters must be a JSON object')
+    metrics_path=None
+    if args.metrics:
+        metrics_path=(project/args.metrics).resolve()
+        if not metrics_path.is_relative_to(project):parser.error('Measurements must stay within the project')
     record = folder / "run.json"
     record.write_text(json.dumps(meta, indent=2) + "\n")
     print(f"Sensei, experiment {args.name} → {folder}", flush=True)
@@ -85,6 +95,22 @@ def main():
             print(error, file=log)
     meta.update(finished_at=time.time(), elapsed_seconds=round(time.time() - meta["started_at"], 2), exit_code=code, status="passed" if code == 0 else "failed")
     record.write_text(json.dumps(meta, indent=2) + "\n")
+    if metrics_path:
+        try:
+            from importlib.machinery import SourceFileLoader
+            api=SourceFileLoader('sensei_measurements',str(Path(__file__).resolve().parents[1]/'share/sensei/measurements.py')).load_module()
+            meta['measurements']=api.validate(json.loads(metrics_path.read_text()))
+            if args.baseline:
+                baseline=json.loads(args.baseline.read_text())
+                meta['comparison']=api.compare(meta['measurements'],baseline.get('measurements',[]))
+                meta['baseline']=str(args.baseline.resolve())
+        except (OSError,ValueError,TypeError) as error:meta['measurementError']=str(error)
+        record.write_text(json.dumps(meta,indent=2)+'\n')
+    try:
+        sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+        from engineering import receipt
+        receipt('experiment.completed',{'run':folder.name,'outcome':meta['status'],'exitCode':code,'measurementError':meta.get('measurementError'),'measurements':len(meta.get('measurements',[]))})
+    except (OSError,ValueError):pass
     print(f"\n{meta['status']} · {meta['elapsed_seconds']}s · {folder}", flush=True)
     raise SystemExit(code)
 
