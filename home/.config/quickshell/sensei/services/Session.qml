@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Io
 import qs.services
 
 // The power menu's tiles and what they do. Reboot and power off are armed by a
@@ -48,6 +49,23 @@ Singleton {
         }
     ]
 
+    // The inhibitor lives in its direct child process and releases on shell exit.
+    Process {id:powerKey;running:true;command:[Quickshell.env("HOME")+"/.local/bin/sensei-power-key"]}
+    Connections {target:ShellState;function onPowerOpenChanged(){if(!ShellState.powerOpen){root.pending="";root.armed="";}}}
+    property string pending:""
+    readonly property var openApps:Hyprland.toplevels.values.filter(t=>t.lastIpcObject?.mapped!==false)
+    function requestQuit():void {
+        for(const t of openApps){const a=t.lastIpcObject?.address;if(a)Hyprland.dispatch("hl.dsp.window.close({window="+JSON.stringify("address:"+a)+"})");}
+        status="Waiting for applications to close or save";
+    }
+    function continueSession(force:bool):void {
+        const action=pending;if(!action)return;
+        if(!force&&openApps.length){status="Applications still need attention";return;}
+        pending="";
+        if(action==="logout")Hyprland.dispatch("hl.dsp.exit()");
+        else Quickshell.execDetached(["systemctl"].concat(force?["--ignore-inhibitors"]:[]).concat([action]));
+    }
+    Timer {interval:1000;repeat:true;running:root.pending!=="";onTriggered:if(root.openApps.length===0)root.status="Applications closed · ready to continue"}
     property int selected: 0
     // The tile id waiting on a second press, cleared when the countdown runs out.
     property string armed: ""
@@ -105,6 +123,9 @@ Singleton {
 
     function run(id: string): void {
         running = id;
+        if(["logout","reboot","poweroff"].includes(id)){
+            pending=id;status="Save work, then request a graceful close";return;
+        }
         switch (id) {
         case "lock":
             close();
@@ -135,7 +156,7 @@ Singleton {
     }
 
     function open(): void {
-        running = "";
+        pending="";running = "";
         selected = 0;
         armed = "";
         status = "READY";
@@ -144,6 +165,7 @@ Singleton {
     }
 
     function close(): void {
+        pending="";
         armed = "";
         countdown.stop();
         ShellState.closeAll();

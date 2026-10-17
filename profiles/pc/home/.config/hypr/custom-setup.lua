@@ -289,3 +289,11 @@ end
 
 -- Homie: preserve validated native NVIDIA display mode.
 hl.monitor({output="DP-3",mode="1920x1080@74.97",position="0x0",scale=1})
+
+-- A short physical power press opens choices; Session holds logind inhibition.
+hl.bind("XF86PowerOff", hl.dsp.exec_cmd("qs -c sensei ipc call power open"))
+
+-- User-saved graphical display arrangements override only the hardware defaults.
+local user_monitors = os.getenv("HOME") .. "/.config/hypr/monitors-user.lua"
+local user_file = io.open(user_monitors,"r")
+if user_file then user_file:close(); dofile(user_monitors) end

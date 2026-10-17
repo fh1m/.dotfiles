@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""Hold the seat's short power-key inhibitor; no shutdown authority or polling."""
+import signal
+import threading
+import dbus
+bus=dbus.SystemBus()
+manager=dbus.Interface(bus.get_object('org.freedesktop.login1','/org/freedesktop/login1'),'org.freedesktop.login1.Manager')
+fd=manager.Inhibit('handle-power-key','Sensei','Physical power key opens session choices','block').take()
+stop=threading.Event()
+for sig in (signal.SIGTERM,signal.SIGINT):signal.signal(sig,lambda *_:stop.set())
+try:stop.wait()
+finally:
+ import os
+ os.close(fd)

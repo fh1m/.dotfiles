@@ -48,13 +48,7 @@ Singleton {
 
     // A wired link lights every bar: the readout is "how good is the link",
     // and a cable is as good as it gets.
-    readonly property bool wired: {
-        for (const candidate of Networking.devices?.values ?? []) {
-            if (candidate.type === DeviceType.Wired && candidate.connected)
-                return true;
-        }
-        return false;
-    }
+    readonly property bool wired: Ethernet.connected
 
     // The one thing Quickshell's model is reliable for.
     readonly property string activeSsid: {

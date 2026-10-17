@@ -143,6 +143,8 @@ def optimal_mode(monitor):
 
 
 def configure(outputs):
+    # The graphical arrangement is authoritative once explicitly saved.
+    if (Path.home()/".config/hypr/monitors-user.lua").is_file():return
     selected=sorted((m for m in outputs if external(m['name'])),key=lambda m:((role_for(m['name'],outputs)!='lower') if role_for else m['name']!='HDMI-A-1',m['name']))
     lower=None
     for monitor in selected:

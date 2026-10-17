@@ -25,6 +25,9 @@ PanelWindow {
     property color edge: "#171019"
     property string sampledArt: ""
     property int collection: 0
+    property bool collectionOpen:false
+    property bool queuePinned:false
+    Timer {interval:12000;running:window.visible&&window.collectionOpen&&!window.queuePinned&&!listHover.hovered;onTriggered:window.collectionOpen=false}
     property bool showTools:true
     property bool focusArmed:false
     HyprlandFocusGrab {active:window.visible&&window.focusArmed&&!SpotifyDesk.musicBackdrop;windows:[window];onCleared:window.focusArmed=false}
@@ -36,7 +39,7 @@ PanelWindow {
     onVisibleChanged: if(visible){focusArmed=true;showTools=true;stage.forceActiveFocus();sample();}else focusArmed=false;
     Connections {target:SpotifyDesk;function onAlbumArtChanged(){if(!SpotifyDesk.albumArt){window.wash='#402131';window.edge='#171019';}window.sample();}}
     Process {id:palette;stdout:StdioCollector {onStreamFinished:{if(window.sampledArt!==SpotifyDesk.albumArt)return;try{const p=JSON.parse(text);window.wash=p.wash;window.edge=p.edge;}catch(e){}}}onExited:if(window.sampledArt!==SpotifyDesk.albumArt)window.sample()}
-    IpcHandler {target:"music-fullscreen";function state():string{return JSON.stringify({visible:window.visible,output:window.screen?.name,width:window.width,height:window.height,rows:window.rows.length,collection:window.collection,zen:SpotifyDesk.zen,backdrop:SpotifyDesk.musicBackdrop,focusArmed:window.focusArmed,seek:seek.value,duration:SpotifyDesk.playback.track?.duration,position:SpotifyDesk.positionMs,lyrics:SpotifyDesk.lyricsData.lines?.length||0,wash:String(window.wash)});}function mode(name:string):void {SpotifyDesk.zen=name==='focus';}function backdrop(enabled:bool):void {SpotifyDesk.musicBackdrop=enabled;}function display(name:string):void {if(ShellState.screens.some(s=>s.name===name))SpotifyDesk.fullscreenOutput=name;}function collection(index:int):void{window.collection=Math.max(0,Math.min(1,index));}}
+    IpcHandler {target:"music-fullscreen";function state():string{return JSON.stringify({visible:window.visible,output:window.screen?.name,width:window.width,height:window.height,rows:window.rows.length,collection:window.collection,collectionOpen:window.collectionOpen,zen:SpotifyDesk.zen,backdrop:SpotifyDesk.musicBackdrop,focusArmed:window.focusArmed,seek:seek.value,duration:SpotifyDesk.playback.track?.duration,position:SpotifyDesk.positionMs,lyrics:SpotifyDesk.lyricsData.lines?.length||0,wash:String(window.wash)});}function mode(name:string):void {SpotifyDesk.zen=name==='focus';}function backdrop(enabled:bool):void {SpotifyDesk.musicBackdrop=enabled;}function display(name:string):void {if(ShellState.screens.some(s=>s.name===name))SpotifyDesk.fullscreenOutput=name;}function collection(index:int):void{window.collectionOpen=true;window.collection=Math.max(0,Math.min(1,index));}}
     Rectangle {anchors.fill:parent;gradient:Gradient {orientation:Gradient.Horizontal;GradientStop {position:0;color:window.wash}GradientStop {position:.65;color:window.edge}GradientStop {position:1;color:Theme.ink}}}
     FocusScope {
         id:stage
@@ -50,16 +53,18 @@ PanelWindow {
         readonly property real bodyTop: 88
         readonly property real bodyHeight:height-bodyTop-54
         readonly property real cardWidth:Math.min(390,width*.28)
-        readonly property real listWidth:Math.min(590,width*.36)
-        readonly property real lyricWidth:width-2*gutter-cardWidth-listWidth-40
+        readonly property real listWidth:window.collectionOpen?Math.min(590,width*.36):0
+        readonly property real lyricWidth:width-2*gutter-cardWidth-listWidth-(window.collectionOpen?40:20)
         Rectangle {visible:!SpotifyDesk.zen;x:stage.gutter;y:26;width:3;height:28;color:Theme.signalRed;radius:1}
         Text {visible:!SpotifyDesk.zen;x:stage.gutter+16;y:23;text:'LISTENING ROOM';font.family:Appearance.font.heading;font.pixelSize:20;font.weight:Font.DemiBold;color:Theme.paper}
         Text {visible:!SpotifyDesk.zen;x:stage.gutter+16;y:51;text:SpotifyDesk.playing?'Your soundtrack. Room to breathe.':'Paused · the room is yours.';font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
         Row {anchors.right:parent.right;anchors.rightMargin:stage.gutter; y:27;spacing:8
-            opacity:!SpotifyDesk.zen||toolbarHover.hovered||window.showTools?1:0
+            opacity:1 // Exit and display controls must never disappear during pointer travel.
             enabled:opacity>.5
             Behavior on opacity {NumberAnimation {duration:200}}
             DeskComboBox {width:180;height:38;model:ShellState.screens.map(s=>s.name+' · '+MachineProfile.role(s.name));currentIndex:ShellState.screens.findIndex(s=>s.name===window.screen?.name);onActivated:SpotifyDesk.fullscreenOutput=ShellState.screens[currentIndex].name;Accessible.name:'Move listening room to display'}
+            MusicButton {implicitWidth:116;label:window.collectionOpen?'Hide queue':'Queue / lists';glyph:'\uf03a';selected:window.collectionOpen;onActivated:window.collectionOpen=!window.collectionOpen}
+            MusicButton {visible:window.collectionOpen;implicitWidth:38;glyph:'\uf08d';selected:window.queuePinned;Accessible.name:'Pin queue open';onActivated:window.queuePinned=!window.queuePinned}
             MusicButton {implicitWidth:116;label:'Focus';glyph:'\uf186';selected:SpotifyDesk.zen;onActivated:SpotifyDesk.zen=!SpotifyDesk.zen}
             MusicButton {implicitWidth:116;label:'Backdrop';glyph:'\uf24d';selected:SpotifyDesk.musicBackdrop;onActivated:SpotifyDesk.musicBackdrop=!SpotifyDesk.musicBackdrop}
             MusicButton {visible:!SpotifyDesk.playback.ready;implicitWidth:136;implicitHeight:34;label:'Open Spotify';glyph:'\uf1bc';onActivated:SpotifyDesk.openOfficial()}
@@ -94,10 +99,11 @@ PanelWindow {
                 ControlSlider {width:parent.width;title:'Spotify volume';level:SpotifyDesk.volume;onEdited:v=>SpotifyDesk.action('volume',[String(Math.round(v))])}
             }
         }
-        Rectangle {id:lyricCard;visible:!SpotifyDesk.zen;x:player.x+player.width+20;y:stage.bodyTop;width:stage.lyricWidth;height:stage.bodyHeight;radius:12;color:Theme.alpha(Theme.ink,.82);border.color:Theme.rule
-            LyricsFollower {anchors.fill:parent;anchors.margins:16}
+        Rectangle {id:lyricCard;visible:!SpotifyDesk.zen;x:player.x+player.width+20;y:stage.bodyTop;width:stage.lyricWidth;height:stage.bodyHeight;radius:12;color:"transparent";border.color:"transparent"
+            LyricsFollower {anchors.fill:parent;anchors.margins:16;immersive:true}
         }
-        Rectangle {id:listCard;visible:!SpotifyDesk.zen;x:lyricCard.x+lyricCard.width+20;y:stage.bodyTop;width:stage.listWidth;height:stage.bodyHeight;radius:12;color:Theme.alpha(Theme.ink,.9);border.color:Theme.rule
+        Rectangle {id:listCard;visible:!SpotifyDesk.zen&&window.collectionOpen;x:lyricCard.x+lyricCard.width+20;y:stage.bodyTop;width:stage.listWidth;height:stage.bodyHeight;radius:12;color:Theme.alpha(Theme.ink,.9);border.color:Theme.rule
+            HoverHandler {id:listHover}
             Row {id:tabs;x:14;y:14;spacing:8
                 MusicButton {implicitWidth:106;implicitHeight:32;label:'Queue';glyph:'\uf03a';selected:window.collection===0;onActivated:window.collection=0}
                 MusicButton {implicitWidth:130;implicitHeight:32;label:'Playlists';glyph:'\uf001';selected:window.collection===1;onActivated:{window.collection=1;if(!SpotifyDesk.playlistRows.length)SpotifyDesk.dispatch('library',['playlists']);}}

@@ -68,3 +68,7 @@ tesseract
 # Native Qt platform themes; shared qt5ct compatibility key handles Qt5 and Qt6.
 qt5ct
 qt6ct
+
+# Graphical display/network editors used by native desktop panels.
+nwg-displays
+nm-connection-editor

@@ -6,13 +6,15 @@ import Quickshell.Hyprland
 import qs.services
 Singleton {
     id: root
+    property var layout:[]
+    Process {id:layoutScan;command:["hyprctl","-i","0","monitors","-j"];stdout:StdioCollector {onStreamFinished:{try{root.layout=JSON.parse(text);}catch(e){}}}}
     property var data: ({displays:[],outputs:[]})
     readonly property var displays: data.displays ?? []
     property string error: ""
     property bool refreshPending:false
     property var pending:({})
     function display(output:string):var {return displays.find(d=>d.output===output)??null;}
-    function refresh():void {if(scan.running){refreshPending=true;return;}scan.running=true;}
+    function refresh():void {if(!layoutScan.running)layoutScan.running=true;if(scan.running){refreshPending=true;return;}scan.running=true;}
     function setLevel(output:string,level:real):void {
         if(!display(output)?.ready)return;
         const next=Object.assign({},pending);next[output]=Math.max(0,Math.min(100,Math.round(level)));pending=next;debounce.restart();
@@ -34,5 +36,5 @@ Singleton {
     Connections {target:Hyprland;function onRawEvent(event){if(["monitoradded","monitoraddedv2","monitorremoved","configreloaded"].includes(event.name))settle.restart();}}
     Connections {target:ShellState;function onDropdownChanged(){if(["system","external-display"].includes(ShellState.dropdown))root.refresh();}}
     Timer {id:settle;interval:700;onTriggered:root.refresh()}
-    IpcHandler {target:"displays";function refresh():void {root.refresh();}function state():string {return JSON.stringify({data:root.data,error:root.error,externalScreens:ShellState.externalScreens.map(s=>s.name),bottomBars:ShellState.bottomBarScreens.map(s=>s.name)});}function workspace(number:int,output:string):void {Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-displays","workspace",String(number),output]);}function panel(output:string):void {ShellState.dropdownOriginScreen=output;ShellState.dropdownAnchorX=12;ShellState.dropdown="external-display";}}
+    IpcHandler {target:"displays";function refresh():void {if(!layoutScan.running)layoutScan.running=true;root.refresh();}function state():string {return JSON.stringify({data:root.data,error:root.error,externalScreens:ShellState.externalScreens.map(s=>s.name),bottomBars:ShellState.bottomBarScreens.map(s=>s.name)});}function workspace(number:int,output:string):void {Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-displays","workspace",String(number),output]);}function panel(output:string):void {ShellState.dropdownOriginScreen=output;ShellState.dropdownAnchorX=12;ShellState.dropdown="external-display";}}
 }

@@ -302,3 +302,11 @@ for _, side in ipairs({{"LEFT","l"},{"RIGHT","r"}}) do
     hl.bind("SUPER + CTRL + "..side[1],hl.dsp.focus({monitor=side[2]}))
     hl.bind("SUPER + CTRL + SHIFT + "..side[1],hl.dsp.window.move({monitor=side[2]}))
 end
+
+-- A short physical power press opens choices; Session holds logind inhibition.
+hl.bind("XF86PowerOff", hl.dsp.exec_cmd("qs -c sensei ipc call power open"))
+
+-- User-saved graphical display arrangements override only the hardware defaults.
+local user_monitors = os.getenv("HOME") .. "/.config/hypr/monitors-user.lua"
+local user_file = io.open(user_monitors,"r")
+if user_file then user_file:close(); dofile(user_monitors) end

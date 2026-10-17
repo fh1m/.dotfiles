@@ -6,6 +6,8 @@ import qs.services
 Singleton {
     id: root
     property var data: ({peer:{host:"Homie",authenticated:false},input:"unknown",storage:"unavailable",clipboard:"unavailable"})
+    property string reply:""
+    property string companionActionName:""
     property string error: ""
     readonly property bool working: action.running || companionAction.running
     readonly property bool online: data.peer?.authenticated === true
@@ -17,7 +19,7 @@ Singleton {
     function openStorage():void {execute(["storage"]);}
     function companion(name:string,value:string):void {
         if(companionAction.running)return;
-        error="";
+        error="";companionActionName=name;
         companionAction.command=[Quickshell.env("HOME")+"/.local/bin/sensei-den","companion",name].concat(value?[value]:[]);
         companionAction.running=true;
     }
@@ -31,7 +33,7 @@ Singleton {
         stderr:StdioCollector {onStreamFinished:if(text.trim())root.error=text.trim().split("\n").filter(s=>s.startsWith("Den:")).join("\n")||"Den action unavailable";}
         onExited:root.refresh()
     }
-    Process {id:companionAction;stdout:StdioCollector {}
+    Process {id:companionAction;stdout:StdioCollector {onStreamFinished:if(["talk","remember","chat"].includes(root.companionActionName)){try{root.reply=JSON.parse(text).message||"";}catch(e){root.reply="Reply unavailable";}}}
         onExited:(code,status)=>{if(code!==0)root.error="Companion action unavailable";root.refresh();}}
     Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==="system")root.refresh();}function onSystemPageChanged(){if(ShellState.dropdown==="system")root.refresh();}}
     Timer {interval:15000;repeat:true;running:ShellState.dropdown==="system"&&ShellState.systemPage===0;onTriggered:root.refresh()}

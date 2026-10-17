@@ -234,7 +234,7 @@ Scope {
         function state(): string { return JSON.stringify({events:CalendarDesk.events.length,error:CalendarDesk.error,clocks:CalendarDesk.clocks.length}); }
     }
     readonly property bool codeOpen: CodeDesk.opened
-    readonly property var dropdownNames: ["code", "docker", "spotify", "usb", "phone", "weather", "comic", "ident", "wifi", "bluetooth", "power", "system", "monitor", "clipboard", "external-display", "displays", "sound", "calendar", "notifications"]
+    readonly property var dropdownNames: ["ethernet", "camera", "code", "docker", "spotify", "usb", "phone", "weather", "comic", "ident", "wifi", "bluetooth", "power", "system", "monitor", "clipboard", "external-display", "displays", "sound", "calendar", "notifications"]
 
     // Shared by `demo drag` and `demo dragFile`; see the note on them.
     function runDemoDrag(profile: string, file: string): string {

@@ -82,6 +82,17 @@ Variants {
                 anchors.centerIn: parent
                 spacing: 26
 
+                Column {width:Math.min(800,overlay.width-80);spacing:12;visible:Session.pending!==""
+                    Text {width:parent.width;text:"Before "+Session.pending+" · "+Session.openApps.length+" application windows";font.family:Appearance.font.ui;font.pixelSize:18;color:Theme.paper}
+                    Text {width:parent.width;text:"Request close lets applications ask you to save. Background services stop through normal session shutdown.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
+                    Text {width:parent.width;maximumLineCount:4;elide:Text.ElideRight;wrapMode:Text.Wrap;text:Session.openApps.map(t=>t.lastIpcObject?.title||t.lastIpcObject?.class||"Application").join(" · ");font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
+                    Row {spacing:12
+                        Rectangle {width:180;height:42;radius:6;color:Theme.surfaceTwo;Text {anchors.centerIn:parent;text:"Request close";color:Theme.paper;font.family:Appearance.font.ui} TapHandler {onTapped:Session.requestQuit()}}
+                        Rectangle {width:180;height:42;radius:6;color:Theme.surfaceTwo;Text {anchors.centerIn:parent;text:"Continue";color:Theme.paper;font.family:Appearance.font.ui} TapHandler {onTapped:Session.continueSession(false)}}
+                        Rectangle {id:overrideButton;width:220;height:42;radius:6;color:Theme.surfaceTwo;property bool armed:false;Connections {target:Session;function onPendingChanged(){overrideButton.armed=false;}} Text {anchors.centerIn:parent;text:parent.armed?"Confirm override":"End session anyway";color:Theme.signalRed;font.family:Appearance.font.ui} TapHandler {onTapped:{if(parent.armed)Session.continueSession(true);else parent.armed=true;}}}
+                    }
+                    Text {width:parent.width;text:"Override may discard unsaved work. It still uses normal systemd shutdown, never a kernel force-off.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+                }
                 // --- Header ------------------------------------------------
                 Column {
                     anchors.horizontalCenter: parent.horizontalCenter

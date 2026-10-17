@@ -43,3 +43,13 @@ function canTravel(from,to,w,h,windows) {
     var corridor={x:Math.min(from.x,to.x),y:Math.min(from.y,to.y),w:Math.abs(to.x-from.x)+w,h:Math.abs(to.y-from.y)+h};
     return !windows.some(function(win){return intersects(corridor,win);});
 }
+
+// Curated after inspecting this actual wallpaper; no always-on vision inference.
+function roofPlace(file,width,height,w,h,windows,variant) {
+    if(!String(file).endsWith('/wallhaven-1q2p3v.png')||Math.abs(width/height-16/9)>.06)return null;
+    var ledges=[[.15,.46],[.32,.55],[.46,.46],[.58,.65]];
+    var q=ledges[Math.floor(variant/3)%ledges.length];
+    var p={available:true,scene:'roof',x:Math.round(width*q[0]-w/2),y:Math.round(height*q[1]-h),w:w,h:h};
+    if(p.x<0||p.y<56||p.x+w>width||p.y+h>height-50||windows.some(function(win){return intersects(p,win);}))return null;
+    return p;
+}

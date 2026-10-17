@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""Read-only Ethernet details; NetworkManager remains the source of truth."""
+import json,subprocess,re
+from pathlib import Path
+
+def query(device):
+ if not device or not re.fullmatch(r'[a-zA-Z0-9_-][a-zA-Z0-9_.:-]{0,63}',device):raise ValueError('Invalid network interface')
+ p=Path('/sys/class/net')/device
+ def read(name):
+  try:return (p/name).read_text().strip()
+  except OSError:return None
+ fields=['GENERAL.CONNECTION','GENERAL.HWADDR','GENERAL.MTU','IP4.ADDRESS','IP4.GATEWAY','IP4.DNS','IP6.ADDRESS','IP6.GATEWAY']
+ r=subprocess.run(['nmcli','-f',','.join(fields),'device','show',device],text=True,capture_output=True,timeout=3)
+ return {'device':device,'speedMbps':read('speed'),'duplex':read('duplex'),'mtu':read('mtu'),'carrier':read('carrier'),'mac':read('address'),'details':'\n'.join(line for line in r.stdout.strip().splitlines() if line),'error':r.stderr.strip() if r.returncode else ''}
+def watch():
+ import signal,select,time
+ process=subprocess.Popen(['stdbuf','-oL','nmcli','monitor'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True,env={**__import__('os').environ,'LC_ALL':'C'})
+ def emit():
+  out=subprocess.check_output(['nmcli','-t','-f','DEVICE,TYPE,STATE','device','status'],text=True,timeout=3,env={**__import__('os').environ,'LC_ALL':'C'})
+  links=[{'name':x.split(':')[0]} for x in out.splitlines() if ':ethernet:connected' in x]
+  print(json.dumps({'links':links}),flush=True)
+ def stop(*_):raise SystemExit(0)
+ signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop)
+ try:
+  emit()
+  while process.poll() is None:
+   line=process.stdout.readline()
+   if not line:break
+   emit()
+ finally:
+  process.terminate()
+  try:process.wait(timeout=2)
+  except subprocess.TimeoutExpired:process.kill();process.wait()
+
+if __name__=='__main__':
+ import sys
+ try:
+  if sys.argv[1]=='watch':watch()
+  else:print(json.dumps(query(sys.argv[1])))
+ except (ValueError,OSError,IndexError,subprocess.SubprocessError) as e:print(json.dumps({'error':str(e)}))

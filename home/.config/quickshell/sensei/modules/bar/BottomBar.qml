@@ -82,6 +82,7 @@ Variants {
             spacing: 3
             RailFold { visible:!bar.external; expanded: bar.machineOpen; opensRight: false; onToggled: bar.machineOpen = !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
             ArchiveButton { visible:!bar.external; condensed: !bar.machineOpen; target: "oasis"; label: "Noesis"; detail:LearningBridge.NoesisBridge.activeVault?"Build · understand":"Choose a vault"; glyph: "\uf02d"; anchors.verticalCenter: parent.verticalCenter }
+            CameraButton {visible:!bar.external&&Cameras.available;anchors.verticalCenter:parent.verticalCenter}
             UsbBadge { visible:!bar.external; condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
             SimLaunchpad { visible:!bar.external; condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
             DisplayBadge { output: MachineProfile.desktop ? bar.outputName : bar.external?bar.outputName:bar.outputName==="DP-2"?"screenpad":"main"; condensed: !bar.external && !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }

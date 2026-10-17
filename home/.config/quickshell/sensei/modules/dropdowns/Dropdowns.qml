@@ -87,7 +87,7 @@ Variants {
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }
         visible: current !== "" && surfaceReady && !ShellState.externalDialogOpen
 
-        implicitWidth: Math.min((modelData?.width ?? 1920) - 2 * edge, 2 * surfaceInset + ((current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis") ? 1040 : current === "external-display" ? 440 : current === "code" ? 1100 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : current === "displays" ? 740 : current === "power" ? 500 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
+        implicitWidth: Math.min((modelData?.width ?? 1920) - 2 * edge, 2 * surfaceInset + ((current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis") ? 1040 : current === "external-display" ? 440 : current === "code" ? 1100 : current === "docker" || current === "spotify" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : (current === "displays" || current === "camera") ? 740 : current === "ethernet" ? 596 : current === "power" ? 500 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.
@@ -346,6 +346,8 @@ Variants {
                     case "weather": return weatherPanel;
                     case "calendar": return calendarPanel;
                     case "external-display": return externalDisplayPanel;
+                    case "ethernet":return ethernetPanel;
+                    case "camera":return cameraPanel;
                     case "displays": return displaysPanel;
                     case "monitor": return monitorPanel;
                     case "clipboard": return clipboardPanel;
@@ -400,6 +402,8 @@ Variants {
             Component { id: weatherPanel; WeatherDropdown { width: holder.width } }
             Component { id: calendarPanel; CalendarDropdown { width: holder.width } }
             Component {id:externalDisplayPanel;ExternalDisplayDropdown {width:holder.width}}
+            Component {id:ethernetPanel;EthernetDropdown {width:holder.width}}
+            Component {id:cameraPanel;CameraDropdown {width:holder.width}}
             Component { id: displaysPanel; DisplayWallpapers { width: holder.width } }
             Component { id: monitorPanel; MonitorDropdown { width: holder.width } }
             Component { id: clipboardPanel; ClipboardDropdown { width: holder.width } }

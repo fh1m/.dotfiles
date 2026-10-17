@@ -65,6 +65,7 @@ Variants {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 3
             RailFold { opensRight:false; expanded: bar.readoutsOpen; onToggled: bar.readoutsOpen = !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
+            EthernetButton {condensed:!bar.readoutsOpen;anchors.verticalCenter:parent.verticalCenter}
             BtReadout { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             DisplayBadge { output: "main"; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             SoundButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }

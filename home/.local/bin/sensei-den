@@ -107,6 +107,20 @@ def companion(action,value=None):
         from companion_roam import memory
         record['memory']=memory(payload.get('memory',{}))
         write(STATE/'companion-travel.json',record);return record
+    if action in ('talk','remember'):
+        if not value or not value.strip():raise ValueError('Write a short thought first')
+        if action=='talk':
+            sys.path.insert(0,str(HOME/'.local/share/sensei'))
+            from zondo_dialog import respond
+            dialogue=read(STATE/'zondo-dialog.json');reply,pose=respond(value,dialogue);write(STATE/'zondo-dialog.json',dialogue)
+            cfg.update(message=reply[:240],messageAt=time.time(),pose=pose,poseAt=time.time())
+        else:
+            notes=read(CONFIG/'zondo-personal.json',{'notes':[]})
+            text=value.strip()[:240]
+            if text not in notes['notes']:notes['notes']=(notes['notes']+[text])[-100:]
+            write(CONFIG/'zondo-personal.json',notes)
+            cfg.update(message='Kept in this desk’s private memory. I will bring it back as your words, not an invented memory.',messageAt=time.time(),pose='read',poseAt=time.time())
+        write(CONFIG/'companion.json',cfg);return cfg
     if action=='roam':
         if value not in ('on','off'):raise ValueError('Use roam on or off')
         cfg['roaming']=value=='on';cfg['anchorManual']=value!='on'
@@ -566,7 +580,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);s=p.add_subparsers(dest='command_name',required=True)
     for n in ['status','doctor','watch']:s.add_parser(n)
     q=s.add_parser('mode');q.add_argument('value',nargs='?',choices=['auto','together','away','homie'])
-    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','grant','protocol']);q.add_argument('value',nargs='?')
+    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','talk','remember','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','grant','protocol']);q.add_argument('value',nargs='?')
     q=s.add_parser('sync');q.add_argument('action',nargs='?',default='status',choices=['status','scan','pause','resume'])
     q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','retain-preview','peer-copy'])
     q=s.add_parser('workbench');q.add_argument('action',nargs='?',default='open',choices=['open','start','stop','status'])
