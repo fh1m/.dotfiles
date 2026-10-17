@@ -15,6 +15,7 @@ Variants {
 
         screen: modelData
         readonly property bool story:StoryWallpapers.outputs.includes(modelData.name)
+        visible:!story||!StoryWallpapers.nativePlayback
         color: story?"transparent":Theme.deep
 
         WlrLayershell.layer: WlrLayer.Background
@@ -40,7 +41,7 @@ Variants {
             dim: 0.2
         }
 
-        Repeater {model:wallpaperWindow.story&&!StoryWallpapers.reduced?3:0
+        Repeater {model:wallpaperWindow.story&&!StoryWallpapers.panorama&&!StoryWallpapers.reduced?3:0
             Rectangle {required property int index;width:2;height:2;x:parent.width*(.24+index*.27);y:parent.height*(.16+index*.08);color:"#f23d70";opacity:.15
                 SequentialAnimation on opacity {loops:Animation.Infinite;running:visible
                     NumberAnimation {to:.4;duration:1800+index*450}

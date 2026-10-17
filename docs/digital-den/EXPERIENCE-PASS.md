@@ -5,17 +5,17 @@ Approved request: implement, preserve active work and input recovery. Zondo is t
 | Milestone | Done when | State |
 |---|---|---|
 | Voice first | USB mic preferred, unmuted, bounded capture measured; per-app routing and explicit pre-meeting checks available | Active: wrong muted default found and corrected |
-| Physical Den | Homie global position above/right from laptop centre; editable drag map; directional keyboard handoff follows physical neighbours only when docked | Implemented; native partial-edge build compiled, live rollout pending |
+| Physical Den | Homie global position above/right from laptop centre; editable drag map; directional keyboard handoff follows physical neighbours only when docked | Matching partial-edge builds deployed; 8 crossings and release/resume passed; directional Upper→Homie and return verified |
 | Surface polish | Shared header/action spacing, source-labelled camera, correct popup origin, display editor accessible from each brightness button | Deployed on Arete; visual corrections in progress |
-| Den / ScreenPad | Dedicated System Den tab; user-selected Normal/Simulation/Coding/Hardware instruments with real context, no forced takeover | Pending |
-| Network workbench | Read-only route/DNS/link/client inventory; reviewed explicit bounded LAN discovery and diagnostic tool launches; no unattended scanning | Pending |
-| Developer tools | Local-only Atuin integration preserving arrows, lnav log actions/MIME, nvitop GPU tools on both hosts | Pending |
-| Speech tools | Distinguish mic-monitor Whisper from STT; local-only opt-in bounded transcription with visible capture; no automatic model downloads or typing into other apps | Pending |
-| OLED theme | GTK3/4 background black, coherent pink selections/actions, Qt compatibility preserved and visually inspected | Pending |
-| Zondo | Pet/drag/toss, intentional games/hide-seek, receipts with contextual poses, bounded cross-host courier; quiet/reduced-motion honored | Pending |
-| Wallpaper story | Original linked pixel-art scenes, awww integration with static/reduced-motion fallback and preserved per-output overrides | Pending |
-| README | Remove requested workstation/Zondo artwork, correct identity wording, retain genuine desktop screenshots | Pending |
-| Release | Focused/full tests, actual both-host checks, private backup, clean commits/push; clearly distinguish unperformed physical/voice acceptance | Pending |
+| Den / ScreenPad | Dedicated System Den tab; user-selected Normal/Simulation/Coding/Hardware instruments with real context, no forced takeover | Implemented; acceptance details below |
+| Network workbench | Read-only route/DNS/link/client inventory; reviewed explicit bounded LAN discovery and diagnostic tool launches; no unattended scanning | Implemented; acceptance details below |
+| Developer tools | Local-only Atuin integration preserving arrows, lnav log actions/MIME, nvitop GPU tools on both hosts | Implemented; acceptance details below |
+| Speech tools | Distinguish mic-monitor Whisper from STT; local-only opt-in bounded transcription with visible capture; no automatic model downloads or typing into other apps | Implemented; acceptance details below |
+| OLED theme | GTK3/4 background black, coherent pink selections/actions, Qt compatibility preserved and visually inspected | Implemented; acceptance details below |
+| Zondo | Pet/drag/toss, intentional games/hide-seek, receipts with contextual poses, bounded cross-host courier; quiet/reduced-motion honored | Implemented; acceptance details below |
+| Wallpaper story | Original linked pixel-art scenes, awww integration with static/reduced-motion fallback and preserved per-output overrides | Implemented; acceptance details below |
+| README | Remove requested workstation/Zondo artwork, correct identity wording, retain genuine desktop screenshots | Implemented; acceptance details below |
+| Release | Focused/full tests, actual both-host checks, private backup, clean commits/push; clearly distinguish unperformed physical/voice acceptance | Implemented; acceptance details below |
 
 No physical vehicle controls, password collection, automatic offensive scans or changes to data drives. Mic measurements cannot certify remote call intelligibility without a real listener. Whisper transcription is not noise suppression. Keep recordings private and delete disposable samples. NetworkManager remains connection owner; diagnostics complement it rather than race it. Existing desktop bars remain unchanged except the specifically requested entry points.
 
@@ -43,3 +43,13 @@ Acoustic acceptance remains open: two finite test recordings yielded blank trans
 - Native partial-edge build compiled successfully. Activation requires matching binaries/helpers and a supervised recovery timer on both hosts.
 - Physical map, context modes, games, courier and wallpaper ownership code are present; live acceptance is tracked below, not implied by this list.
 - Visual inspection caught overlapping ScreenPad controls and an incorrect wallpaper parent binding; both were corrected before release.
+
+## Native story and live checks / 17 October, evening
+
+- Both hosts passed the 366-test suite at f355044. Arete subsequently passed 368 tests including native GIF dimensions, frame count, concurrent rendering and cache reuse. Final exact-revision deployment follows this checkpoint.
+- Native input remained separate from UI reloads. Four edge routes passed twice, emergency pause/resume passed, and Super+Right from Upper reached Homie with a verified downward return. One earlier exact-coordinate side-return assertion failed; later bounded reruns passed, so this is not a claim that every future crossing is infallible.
+- Atuin, lnav, nmap and on-demand nvitop are installed on both hosts. Whisper.cpp and a checksum-verified base model are available on demand. No online speech service or automatic typing was added.
+- Real ScreenPad modes, bounded network diagnostics, camera source labels, games and a separate Den tab are implemented. Actual hardware/voice acceptance is distinct from code coverage.
+- Native 4K/ScreenPad GIFs replace independent scene images. Quickshell's wallpaper surface unmaps during awww ownership. The high-CPU QML scene prototype was removed. Homie's lighthouse and away chapter belong to the shared timeline; see STORY.md.
+- A malformed focus-beacon QML separator was caught in the live cursor-renderer log and repaired. Native input did not restart; the renderer loaded successfully afterward. Stronger four-corner marks and a top beacon replace default full-screen dimming.
+- Acoustic speaker→USB-mic tests still yielded silence/blank transcription despite sample delivery without clipping. A known speech file transcribes correctly; Discord/remote-listener intelligibility is NOT certified. No reboot, physical unplug or unattended boot test is claimed.

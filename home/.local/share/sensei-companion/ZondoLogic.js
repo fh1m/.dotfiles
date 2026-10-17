@@ -60,3 +60,15 @@ function roofPlace(file,width,height,w,h,windows,variant) {
     if(p.x<0||p.y<56||p.x+w>width||p.y+h>height-50||windows.some(function(win){return intersects(p,win);}))return null;
     return p;
 }
+
+// Authored world perches, projected through the same viewport as the wallpaper.
+function worldPlace(view,world,width,height,w,h,windows,variant) {
+ if(!view||!world||!world.perches)return null;
+ var points=world.perches[view.role]||[];
+ for(var n=0;n<points.length;n++){
+  var q=points[(n+variant)%points.length];
+  var p={available:true,scene:view.role,x:Math.round((q[0]-view.x)/view.width*width-w/2),y:Math.round((q[1]-view.y)/view.height*height-h),w:w,h:h};
+  if(p.x>=8&&p.y>=52&&p.x+w<=width-8&&p.y+h<=height-48&&!windows.some(function(win){return intersects(p,win);}))return p;
+ }
+ return null;
+}

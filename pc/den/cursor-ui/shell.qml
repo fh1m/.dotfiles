@@ -12,6 +12,8 @@ ShellRoot {
         source:Quickshell.env("HOME")+"/.local/share/sensei-companion/Companion.qml?v="+root.companionRevision
         onLoaded:item.ownerOutput=Qt.binding(()=>root.focusedOutput)
     }
+    property bool focusDimming:false
+    FileView {path:Quickshell.env("HOME")+"/.config/sensei-den/companion.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.focusDimming=JSON.parse(text()).focusDimming===true;}catch(e){}}}
     property string output: ""
     property string focusedOutput: ""
     property real px: 0
@@ -20,7 +22,7 @@ ShellRoot {
     property real phase: 0
     IpcHandler {
         target: "den-cursor"
-        function state(): string { return JSON.stringify({focusedOutput:root.focusedOutput,dimOpacity:36/255,locatorActive:root.active}) }
+        function state(): string { return JSON.stringify({focusedOutput:root.focusedOutput,dimOpacity:root.focusDimming?36/255:0,locatorActive:root.active}) }
         function reloadCompanion():void {root.companionRevision=Date.now()}
         function focus(name: string): void { root.focusedOutput=name }
         function pulse(name: string, x: real, y: real): void {
@@ -63,15 +65,16 @@ ShellRoot {
             required property var modelData
             id: screenScope
             property var display: modelData
+            PanelWindow {screen:screenScope.display;visible:root.focusedOutput===(screenScope.display?.name??"");anchors {top:true} implicitWidth:150;implicitHeight:4;color:"#f23d70";exclusionMode:ExclusionMode.Ignore;WlrLayershell.layer:WlrLayer.Overlay;WlrLayershell.namespace:"den-focus-beacon";WlrLayershell.keyboardFocus:WlrKeyboardFocus.None;mask:Region {}}
             Variants {
-                model: ["top", "bottom"]
+                model: ["top-right", "bottom-right", "top-left", "bottom-left"]
                 PanelWindow {
                     required property var modelData
                     screen: screenScope.display
                     visible: true
                     color: "transparent"
-                    implicitWidth: 22; implicitHeight: 22
-                    anchors { right:true; top:modelData==="top"; bottom:modelData==="bottom" }
+                    implicitWidth: 44; implicitHeight: 44
+                    anchors { right:modelData.endsWith("right");left:modelData.endsWith("left");top:modelData.startsWith("top");bottom:modelData.startsWith("bottom") }
                     exclusionMode: ExclusionMode.Ignore
                     WlrLayershell.layer: WlrLayer.Overlay
                     WlrLayershell.namespace: "den-focus-indicator"
@@ -80,10 +83,10 @@ ShellRoot {
                     property bool focusedDisplay: root.focusedOutput===(screenScope.display?.name??"")
                     Item {
                         anchors.fill: parent
-                        opacity: focusedDisplay ? .85 : .23
+                        opacity: focusedDisplay ? 1 : .16
                         Behavior on opacity { NumberAnimation { duration: 160 } }
-                        Rectangle { x:4; y:modelData==="top"?3:17; width:15; height:2; color:focusedDisplay?"#f91b84":"#82777c" }
-                        Rectangle { x:17; y:3; width:2; height:16; color:focusedDisplay?"#f91b84":"#82777c" }
+                        Rectangle { x:5; y:modelData.startsWith("top")?4:36; width:35; height:focusedDisplay?4:2; color:focusedDisplay?"#f23d70":"#82777c" }
+                        Rectangle { x:modelData.endsWith("right")?36:5; y:4; width:focusedDisplay?4:2; height:36; color:focusedDisplay?"#f23d70":"#82777c" }
                     }
                 }
             }
@@ -96,7 +99,7 @@ ShellRoot {
         PanelWindow {
             required property var modelData
             screen: modelData
-            visible: root.focusedOutput !== modelData.name
+            visible: root.focusDimming && root.focusedOutput !== modelData.name
             color: "#24000000"
             anchors { top: true; bottom: true; left: true; right: true }
             exclusionMode: ExclusionMode.Ignore

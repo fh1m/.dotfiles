@@ -6,9 +6,9 @@ import qs.config
 import qs.services
 DropdownFrame {
  id:root;title:"ScreenPad / one useful context";implicitWidth:752
- property var snapshot:({cards:[],projects:[]});property string error:""
- function refresh(){if(worker.running)return;worker.command=[Quickshell.env("HOME")+"/.local/bin/sensei-instrument",ShellState.instrumentMode].concat(ShellState.instrumentProject?["--project",ShellState.instrumentProject]:[]);worker.running=true;}
- function act(name){if(name==="den"){ShellState.systemPage=5;ShellState.openDropdown("system");}else if(name==="calendar")ShellState.openDropdown("calendar");else if(name==="terminal")Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-terminal"]);else {ShellState.engineeringSelectedAction=name==="preflight"?"project.preflight":name==="capture"?"evidence.capture":"";ShellState.openDropdown("engineering");}}
+ property var snapshot:({cards:[],projects:[]});property string error:"";property string operation:"snapshot"
+ function refresh(){if(worker.running)return;operation="snapshot";worker.command=[Quickshell.env("HOME")+"/.local/bin/sensei-instrument",ShellState.instrumentMode].concat(ShellState.instrumentProject?["--project",ShellState.instrumentProject]:[]);worker.running=true;}
+ function act(name){if(name==="preflight"&&ShellState.instrumentProject){if(worker.running)return;operation="preflight";worker.command=[Quickshell.env("HOME")+"/.local/bin/sensei-actions","run","project.preflight","--params",JSON.stringify({project:ShellState.instrumentProject})];worker.running=true;return;}if(name==="den"){ShellState.systemPage=5;ShellState.openDropdown("system");}else if(name==="calendar")ShellState.openDropdown("calendar");else if(name==="terminal")Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-terminal"]);else {ShellState.engineeringSelectedAction=name==="preflight"?"project.preflight":name==="capture"?"evidence.capture":"";ShellState.openDropdown("engineering");}}
  Component.onCompleted:refresh()
  Connections {target:ShellState;function onInstrumentModeChanged(){root.refresh();}function onInstrumentProjectChanged(){root.refresh();}}
  Column {width:parent.width;spacing:8
@@ -33,6 +33,6 @@ DropdownFrame {
  Row {spacing:8;ControlTile {implicitWidth:120;label:"Refresh";enabled:!worker.running;onActivated:root.refresh()}ControlTile {implicitWidth:120;label:"Return";onActivated:ShellState.releaseInstrument()}}
  Text {width:parent.width;text:root.error||root.snapshot.note||"";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.widgetMuted}
  }
- Process {id:worker;stdout:StdioCollector {onStreamFinished:{try{const d=JSON.parse(text);if(d.error)root.error=d.error;else{root.snapshot=d;root.error="";}}catch(e){root.error="Context unavailable; your project is unchanged.";}}}}
+ Process {id:worker;stdout:StdioCollector {onStreamFinished:{try{const d=JSON.parse(text);if(d.error)root.error=d.error;else if(root.operation==="preflight"){root.error=(d.ok?"Preflight passed: ":"Preflight needs attention: ")+(d.checks||[]).map(c=>c.name+" · "+c.detail).join("; ");}else{root.snapshot=d;root.error="";}}catch(e){root.error="Context unavailable; your project is unchanged.";}}}}
  Timer {interval:15000;repeat:true;running:root.visible&&ShellState.instrumentPinned;onTriggered:root.refresh()}
 }

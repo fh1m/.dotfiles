@@ -82,3 +82,7 @@ lnav
 
 # Explicit bounded LAN inspection (never scanned on refresh).
 nmap
+
+# Native animated wallpapers and local voice-note/video processing.
+awww
+librsvg

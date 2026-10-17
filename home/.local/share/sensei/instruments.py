@@ -1,5 +1,5 @@
 """Small, on-demand ScreenPad projections. Existing tools remain authoritative."""
-import json,subprocess
+import json,subprocess,os,sqlite3,time
 from pathlib import Path
 import engineering as e
 
@@ -19,13 +19,21 @@ def snapshot(mode,project=None):
  latest=next((r for r in reversed(receipts) if r.get('kind')=='job.completed' and (not project or r.get('project')==project)),None)
  if mode=='coding':
   sessions=output(['tmux','list-sessions','-F','#{session_name}']).splitlines()
-  card('SESSIONS',len(sessions),' · '.join(sessions[:3]),'terminal')
+  agents=[]
+  for proc in Path('/proc').iterdir():
+   if not proc.name.isdigit():continue
+   try:
+    if proc.stat().st_uid!=os.getuid():continue
+    name=(proc/'comm').read_text().strip()
+    if name in ('codex','claude','opencode'):agents.append(name)
+   except OSError:pass
+  card('AGENTS',str(len(agents))+' active processes',' · '.join(sorted(set(agents))) or 'No CLI agent process detected','terminal')
   branch=output(['git','branch','--show-current'],root) if root else ''
   changes=output(['git','status','--porcelain'],root).splitlines() if root else []
   card('GIT',branch or 'Choose a project',str(len(changes))+' changed paths' if root else 'Registered projects only','project')
   card('LAST RUN',latest.get('data',{}).get('outcome','No receipt') if latest else 'No recorded run',latest.get('data',{}).get('job','') if latest else 'No success inferred','engineering')
   trees=output(['git','worktree','list','--porcelain'],root) if root else ''
-  card('WORKTREES',sum(l.startswith('worktree ') for l in trees.splitlines()) if root else '—',p.get('title',project) if p else 'Choose a project','project')
+  card('WORKTREES',sum(l.startswith('worktree ') for l in trees.splitlines()) if root else '—',str(len(sessions))+' tmux sessions · '+(p.get('title',project) if p else 'Choose a project'),'project')
  elif mode=='hardware':
   inventory=e.hardware_inventory();devices=inventory['devices']
   card('KNOWN DEVICES',len(devices),'Hardware passports','hardware')
@@ -41,6 +49,12 @@ def snapshot(mode,project=None):
   presence=e.read(e.home()/'.local/state/sensei-den/presence.json',{})
   card('DEN',presence.get('mode',{}).get('effective','Unknown'),'Explicit input controls in System → Den','den')
   card('CURRENT PROJECT',p.get('title',project) if p else 'Choose a project','Keep one useful context nearby','project')
-  card('AGENDA','Tasks & reviews','Open the source-owned calendar','calendar')
+  count=None
+  db=e.home()/'.local/share/sensei-calendar/calendar.sqlite'
+  if db.exists():
+   try:
+    with sqlite3.connect(db.as_uri()+'?mode=ro',uri=True,timeout=1) as conn:count=conn.execute('select count(*) from tasks where done=0 and archived=0').fetchone()[0]
+   except sqlite3.Error:pass
+  card('AGENDA',str(count)+' open tasks' if count is not None else 'Tasks & reviews','Source-owned calendar; no duplicate task records','calendar')
   card('CAPTURE','Keep an observation','Screenshot, revision and run evidence','capture')
  return {'version':1,'mode':mode,'host':e.machine(),'project':project,'projects':[{'id':p['id'],'title':p.get('title',p['id'])} for p in e.projects()],'cards':cards,'note':'On-demand state; missing evidence is not success.'}

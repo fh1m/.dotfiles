@@ -51,6 +51,10 @@ WidgetSection {
             ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Follow my focus";enabled:Den.data.role!=="receiver"||!Den.online;glyph:"\uf124";onActivated:Den.companion("follow","")}
         }
         Row {width:parent.width;spacing:8
+            ControlTile {implicitWidth:(parent.width-8)/2;label:"Focus corners only";onActivated:Den.companion("dim","off")}
+            ControlTile {implicitWidth:(parent.width-8)/2;label:"Dim inactive screens";onActivated:Den.companion("dim","on")}
+        }
+        Row {width:parent.width;spacing:8
             ControlTile {implicitWidth:(parent.width-8)/2;label:"Den wallpaper story";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-wallpaper-story","enable"])}
             ControlTile {implicitWidth:(parent.width-8)/2;label:"Restore my wallpapers";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-wallpaper-story","disable"])}
         }

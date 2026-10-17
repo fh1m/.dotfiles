@@ -10,8 +10,10 @@ print('Pinned CPU-only whisper.cpp, 2 build threads; base multilingual model (~1
 if not a.apply:raise SystemExit(0)
 def run(*args):subprocess.run(args,check=True)
 if not src.exists():
- run('git','clone','--no-checkout','https://github.com/ggml-org/whisper.cpp',str(src))
- run('git','-C',str(src),'checkout','--detach',REV)
+ src.mkdir(parents=True)
+ run('git','-C',str(src),'init')
+ run('git','-C',str(src),'fetch','--depth=1','https://github.com/ggml-org/whisper.cpp',REV)
+ run('git','-C',str(src),'checkout','--detach','FETCH_HEAD')
 current=subprocess.check_output(['git','-C',str(src),'rev-parse','HEAD'],text=True).strip()
 if current!=REV:raise SystemExit('Existing source revision differs; preserve it and review explicitly before changing the checkout.')
 run('cmake','-S',str(src),'-B',str(src/'build-den'),'-DCMAKE_BUILD_TYPE=Release','-DGGML_CUDA=OFF','-DWHISPER_BUILD_TESTS=OFF')

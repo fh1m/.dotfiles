@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+"""Render a verified native-resolution Den animation; playback is owned by awww."""
+import argparse,json,sys,subprocess
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+from story_render import render
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('--role',choices=['main','upper','lower','screenpad','homie'],required=True);p.add_argument('--width',type=int,required=True);p.add_argument('--height',type=int,required=True);p.add_argument('--away',action='store_true');p.add_argument('--seconds',type=int,default=16,choices=[2,16]);a=p.parse_args()
+try:
+ path=render(a.role,a.width,a.height,Path.home()/'.local/share/sensei-den/story',Path.home()/'.cache/sensei-den-story',a.away,a.seconds)
+ print(json.dumps({'path':str(path),'role':a.role,'width':a.width,'height':a.height,'seconds':a.seconds}))
+except (OSError,ValueError,subprocess.SubprocessError) as error:
+ detail=error.stderr.decode(errors='replace')[-1800:] if isinstance(getattr(error,'stderr',None),bytes) else str(error)
+ print(json.dumps({'error':detail}));sys.exit(1)

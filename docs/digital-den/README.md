@@ -26,7 +26,7 @@ Arete is the master. Main panel top → Homie bottom; upper external right → H
 - **Ctrl+Alt+Esc:** immediate native release.
 - **System → Digital Den:** sharing toggle, locator, bring home, storage and connection status. Both hosts control the same source state.
 
-The receiver does not grab local input. A separate cursor service survives sharing being stopped. Inactive panels dim slightly; the focused display retains normal brightness. No blur animation runs continuously for this marker.
+The receiver does not grab local input. A separate cursor service survives sharing being stopped. Four bright corner brackets and a short top-edge beacon identify the focused display. Full-screen dimming is optional in System → Den; corners are the lighter default.
 
 ```sh
 den-control status
@@ -81,7 +81,7 @@ outside these two machines as well. Nothing is uploaded publicly.
 
 The README character now lives in the independent cursor renderer. It follows
 the active display, checks for a free corner, speaks in short **text bubbles**,
-and occasionally walks using the new 16-frame sheet. It never receives clicks.
+and occasionally walks using the new 16-frame sheet. It supports petting and bounded dragging on exposed wallpaper.
 If application windows fill the display, it hides; it is below applications even
 while geometry refreshes. It does not read window titles, code, clipboard or keys. System → Digital Den provides its controls.
 
@@ -101,8 +101,8 @@ the sprite sheet and QML are shared. Quiet mode, lock and fullscreen suppress it
 There is no speech service, model download or additional companion renderer.
 
 The shared local catalogue mixes context-relevant tips with occasional original
-humour; recent lines do not repeat. Automatic chatter is limited to once per six
-minutes while visible. A new backup completion can produce a factual message;
+humour; recent lines do not repeat. The lively profile varies activities and uses short text roughly every 1–2
+minutes while eligible; quiet/DND/fullscreen rules still apply. A new backup completion can produce a factual message;
 startup does not replay old completions. No test or learning success is inferred.
 `:DenTip` opens an explicit field note inside Neovim; q/Esc/Enter closes it.
 [Research and decisions](POLISH-RESEARCH.md) · [Artwork provenance](ARTWORK.md).
@@ -185,3 +185,11 @@ Preview backup retention with `sensei-den backup retain-preview` before choosing
 ## Listening room
 
 The Spotify widget’s corner maximize keeps artwork, synced lyrics and queue/playlist browsing together, with a restrained cover-colored background. Esc/F11 restores the widget. Sound → Volume sound controls audible level feedback. [Behavior, audit and limits](MUSIC-LISTENING-ROOM.md) · [Research](MUSIC-DESKTOP-RESEARCH.md).
+
+### Current experience pass
+
+System → Den contains the physical map, input recovery, companion controls and optional ScreenPad instruments. Brightness buttons open local display layout, scale/rotation and wallpaper controls on the invoking output. Normal / Simulation / Coding / Hardware are user-selected contexts, not permanent dashboards.
+
+[The Field Trip wallpaper story](STORY.md) documents native-pixel exports, original art, awww playback, Homie's away variant, Zondo's authored perches and recovery. [Experience evidence](EXPERIENCE-PASS.md) distinguishes verified checks from physical audio/next-login acceptance.
+
+For local speech: `sensei-voice doctor`, `sensei-voice probe`, or `sensei-voice transcribe --seconds 10`. Camera/Meeting check has explicit short input metering and transcript preview/copy. No audio is sent online, typed into another app or recorded in the background. `scripts/setup-den-voice.py --apply` reproduces the pinned on-demand model. `scripts/setup-den-tools.py --apply` installs the optional nvitop inspector; OS tools use the normal package manifest.

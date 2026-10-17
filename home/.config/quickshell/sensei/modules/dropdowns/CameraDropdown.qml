@@ -9,7 +9,7 @@ DropdownFrame {
  id:root;property string outputName:"";property bool instrument:false;title:"Meeting check / camera & sound";implicitWidth:740
  readonly property var origin:ShellState.screens.find(s=>s.name===root.outputName)||ShellState.screens[0]
  readonly property real viewportHeight:Math.max(180,Math.min(680,(origin?.height??1080)-170))
- headerRight:ControlTile {implicitWidth:112;implicitHeight:28;label:root.instrument?"Return":"Pin preview";onActivated:root.instrument?ShellState.releaseInstrument():ShellState.pinInstrument("camera")}
+ headerRight:ControlTile {implicitWidth:140;implicitHeight:30;label:root.instrument?"Return":"Pin preview";onActivated:root.instrument?ShellState.releaseInstrument():ShellState.pinInstrument("camera")}
  property int frames:0
  IpcHandler {target:"camera-check-"+root.outputName+(root.instrument?"-instrument":"");function state():string{return JSON.stringify({opened:root.opened,preview:root.preview,active:cam.active,listening:root.listen,frames:root.frames,error:cam.errorString,cameras:devices.videoInputs.length,microphones:devices.audioInputs.length,speakers:devices.audioOutputs.length});}function openOn(output:string):void{if(ShellState.screens.some(s=>s.name===output)){ShellState.openDropdownOn("camera",output);}}function preview(enabled:bool):void{root.preview=enabled;}function listen(enabled:bool):void{root.listen=enabled;}}
  Connections {target:video.videoSink;function onVideoFrameChanged(){root.frames++;}}
@@ -32,7 +32,7 @@ DropdownFrame {
  ScrollView {id:cameraScroll;width:parent.width;height:root.viewportHeight;contentWidth:availableWidth;contentHeight:cameraBody.implicitHeight;clip:true
  Column {id:cameraBody;width:cameraScroll.availableWidth;spacing:12
   Text {text:"CAMERA SOURCE";font.family:Appearance.font.ui;font.pixelSize:11;font.letterSpacing:1;color:Theme.widgetMuted}
-  DeskComboBox {width:parent.width;currentIndex:root.cameraIndex<0?Math.max(0,devices.videoInputs.findIndex(d=>d.id===devices.defaultVideoInput.id)):root.cameraIndex;model:devices.videoInputs;textRole:"description";onActivated:index=>root.cameraIndex=index}
+  DeskComboBox {width:parent.width;currentIndex:root.cameraIndex<0?Math.max(0,devices.videoInputs.findIndex(d=>String(d.id)===String(devices.defaultVideoInput.id))):root.cameraIndex;model:devices.videoInputs;textRole:"description";onActivated:index=>root.cameraIndex=index}
   Rectangle {width:parent.width;height:Math.min(240,root.viewportHeight*.42,width*9/16);radius:8;color:Theme.surfaceOne;clip:true
    VideoOutput {id:video;anchors.fill:parent;fillMode:VideoOutput.PreserveAspectFit;mirrored:root.mirrored;endOfStreamPolicy:VideoOutput.ClearOutput}
    Text {anchors.centerIn:parent;visible:!root.preview;text:"Camera stays off until you start preview";font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.paperMuted}
@@ -49,7 +49,7 @@ DropdownFrame {
   DeskComboBox {width:parent.width;currentIndex:root.speakerIndex<0?Math.max(0,devices.audioOutputs.findIndex(d=>String(d.id)===String(devices.defaultAudioOutput.id))):root.speakerIndex;model:devices.audioOutputs;textRole:"description";onActivated:index=>root.speakerIndex=index}
   Row {spacing:8
    ControlTile {implicitWidth:(parent.width-8)/2;label:root.listen?"Stop mic return":"Hear mic · 15s";selected:root.listen;glyph:"\uf130";onActivated:root.listen=!root.listen}
-   ControlTile {implicitWidth:(parent.width-8)/2;label:"Sound controls";glyph:"\uf028";onActivated:ShellState.toggleDropdown("sound")}
+   ControlTile {implicitWidth:(parent.width-8)/2;label:"Sound controls";glyph:"\uf028";onActivated:ShellState.openDropdownOn("sound",root.outputName)}
   }
   Text {width:parent.width;text:"Use headphones for mic return. Starts at 12% monitor volume; actual meeting-app settings remain separate.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
  }

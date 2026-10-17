@@ -234,6 +234,7 @@ Scope {
         function state(): string { return JSON.stringify({events:CalendarDesk.events.length,error:CalendarDesk.error,clocks:CalendarDesk.clocks.length}); }
     }
     readonly property bool codeOpen: CodeDesk.opened
+    IpcHandler {target:"story-view";function state():string{return JSON.stringify({native:StoryWallpapers.nativePlayback,outputs:StoryWallpapers.outputs,views:StoryWallpapers.views,reduced:StoryWallpapers.reduced});}}
     IpcHandler {target:"instrument";
         function open(mode:string):void{if(["normal","simulation","coding","hardware"].includes(mode)){ShellState.instrumentMode=mode;ShellState.pinInstrument("context");}}
         function close():void{ShellState.releaseInstrument();}

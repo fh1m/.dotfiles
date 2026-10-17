@@ -1,41 +1,80 @@
 #!/usr/bin/env python3
-"""One wallpaper owner: awww scenes with live QML fallback and private preferences."""
-import argparse,json,os,socket,subprocess,sys,time
+"""Native awww animation playback, private preferences and original-wallpaper fallback."""
+import argparse,json,os,socket,subprocess,sys,time,concurrent.futures,math,shlex,fcntl
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
 import engineering as e
 from den_layout import roles
-home=Path.home();config=home/'.config/sensei-den/story.json';state=home/'.local/state/sensei-den/story-ready.json';assets=home/'.local/share/sensei-den/story'
-def command(argv):return subprocess.check_output(argv,text=True,stderr=subprocess.DEVNULL,timeout=8)
-def ready(outputs):e.save(state,{'version':1,'outputs':outputs,'at':time.time()})
-def apply():
- rows=json.loads(command(['hyprctl','-i','0','monitors','-j']));mapped=roles(rows);command(['awww','query'])
- cfg=e.read(config,{});reduced=e.read(home/'.config/sensei-den/companion.json',{}).get('reducedMotion',False)
- previous=e.read(state,{}).get('outputs',[]);applied=[]
+from den_geometry import load as geometry
+from story_render import render,PLACEMENTS
+home=Path.home();config=home/'.config/sensei-den/story.json';state=home/'.local/state/sensei-den/story-ready.json';assets=home/'.local/share/sensei-den/story';cache=home/'.cache/sensei-den-story'
+def command(argv,timeout=8):return subprocess.check_output(argv,text=True,stderr=subprocess.DEVNULL,timeout=timeout,env=dict(os.environ,RAYON_NUM_THREADS='2'))
+def ready(outputs,views=None,clips=None,epoch=None):e.save(state,{'version':3,'outputs':outputs,'views':views or {},'clips':clips or {},'nativePlayback':bool(outputs),'panorama':False,'epoch':epoch,'at':time.time()})
+def settings():
+ cfg=e.read(config,{});prefs=e.read(home/'.config/sensei-den/companion.json',{});presence=e.read(home/'.local/state/sensei-den/presence.json',{})
+ return cfg,bool(prefs.get('reducedMotion') or prefs.get('quiet')),presence.get('mode',{}).get('effective')!='together'
+def play(output,path):command(['nice','-n','10','awww','img','--outputs',output,'--no-resize','--transition-type','none',str(path)],timeout=120)
+def apply_unlocked(start_at=None,warm_only=False):
+ rows=json.loads(command(['hyprctl','-i','0','monitors','-j']));mapped=roles(rows);command(['awww','query']);cfg,reduced,away=settings();views={};clips={}
  for m in rows:
+  if m['name'].startswith('SENSEI-'):continue
   role=next((r for r,v in mapped.items() if v['name']==m['name']),'main')
-  scene=('homie' if socket.gethostname().split('.')[0]=='homie' else 'arete') if role=='main' else role
-  path=assets/(scene+'-v1.png')
+  scene='homie' if role=='main' and socket.gethostname().split('.')[0]=='homie' else role
+  if scene not in PLACEMENTS:scene='main'
+  x,y=PLACEMENTS[scene]
+  if scene=='homie':peer=geometry()['homie'];x,y=peer['x'],peer['y']
+  views[m['name']]={'x':x,'y':y,'width':m['width']/m['scale'],'height':m['height']/m['scale'],'role':scene}
   override=cfg.get('overrides',{}).get(m['name'])
-  if override:path=Path(override).expanduser()
-  if not path.is_file():continue
-  command(['awww','img','--outputs',m['name'],'--filter','Nearest','--transition-type','none' if reduced or m['name'] not in previous else 'fade','--transition-duration','0.7',str(path)])
-  applied.append(m['name'])
- ready(applied)
+  if override:
+   path=Path(override).expanduser()
+   if not path.is_file():raise ValueError('Saved wallpaper override is unavailable')
+   views.pop(m['name'],None)
+  else:
+   path=render(scene,m['width'],m['height'],assets,cache,away=away and scene=='homie')
+   if reduced:path=path.parent/'still.png'
+  clips[m['name']]=str(path)
+ # Warm the native cache once. The second dispatch starts all local clips together.
+ for output,path in clips.items():play(output,path)
+ if warm_only:return rows
+ if start_at is None:start_at=math.ceil((time.time()+1)/16.01)*16.01
+ if not time.time()-1<=start_at<=time.time()+30:raise ValueError('Start boundary expired or too far ahead')
+ time.sleep(max(0,start_at-time.time()))
+ with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:list(pool.map(lambda pair:play(*pair),clips.items()))
+ ready(list(clips),views,clips,start_at)
  return rows
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=['enable','disable','apply','watch','status']);a=p.parse_args()
+def apply(start_at=None,warm_only=False):
+ state.parent.mkdir(parents=True,exist_ok=True)
+ with (state.parent/'story-apply.lock').open('a') as lock:
+  fcntl.flock(lock,fcntl.LOCK_EX)
+  return apply_unlocked(start_at,warm_only)
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=['enable','disable','apply','prepare','watch','status','sync']);p.add_argument('--start-at',type=float);a=p.parse_args()
 try:
  if a.action=='enable':
-  e.save(config,dict(e.read(config,{}),enabled=True));command(['systemctl','--user','daemon-reload']);command(['systemctl','--user','enable','--now','sensei-story.service']);print(json.dumps({'enabled':True}))
+  e.save(config,dict(e.read(config,{}),enabled=True));command(['systemctl','--user','daemon-reload']);command(['systemctl','--user','enable','--now','sensei-story.service']);print(json.dumps({'enabled':True,'note':'Native clips render at low priority on first use; previous wallpaper stays visible until ready.'}))
  elif a.action=='disable':
   ready([]);e.save(config,dict(e.read(config,{}),enabled=False));command(['systemctl','--user','disable','--now','sensei-story.service']);subprocess.run(['systemctl','--user','stop','sensei-awww.service'],check=False);print(json.dumps({'enabled':False,'note':'Original QML wallpaper choices restored'}))
  elif a.action=='status':print(json.dumps(e.read(state,{'outputs':[]})))
- elif a.action=='apply':apply();print(json.dumps(e.read(state)))
+ elif a.action in ('apply','prepare','sync'):
+  if a.action=='sync' and e.machine()=='arete':
+   peer=['ssh','-n','-F',str(home/'.local/state/homie-control/client.conf'),'homie']
+   executable=str(home/'.local/bin/sensei-wallpaper-story')
+   # Finish expensive first-use processing on BOTH hosts before choosing an epoch.
+   with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+    local=pool.submit(apply,None,True)
+    remote=pool.submit(command,peer+[shlex.join([executable,'prepare'])],1200)
+    local.result();remote.result()
+   boundary=math.ceil((time.time()+6)/16.01)*16.01
+   with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+    local=pool.submit(apply,boundary)
+    remote=pool.submit(command,peer+[shlex.join([executable,'apply','--start-at',str(boundary)])],120)
+    local.result();remote.result() # A peer failure must be visible, never fire-and-forget.
+  else:apply(a.start_at,a.action=='prepare')
+  print(json.dumps(e.read(state)))
  else:
   signature=None;healthy=False
   while e.read(config,{}).get('enabled',False):
    try:
-    rows=json.loads(command(['hyprctl','-i','0','monitors','-j']));current=[(m['name'],m['width'],m['height'],m['scale']) for m in rows]
+    rows=json.loads(command(['hyprctl','-i','0','monitors','-j']));cfg,reduced,away=settings();current=[[(m['name'],m['width'],m['height'],m['scale']) for m in rows],reduced,away,cfg.get('overrides',{})]
     command(['awww','query'])
     if current!=signature or not healthy:apply();signature=current;healthy=True
    except (OSError,ValueError,subprocess.SubprocessError):

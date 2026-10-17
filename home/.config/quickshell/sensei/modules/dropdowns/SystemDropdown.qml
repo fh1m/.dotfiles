@@ -142,7 +142,7 @@ DropdownFrame {
                 spacing: 8
                 ControlTile { label: "Training mode"; enabled:!MachineProfile.desktop||MachineProfile.facts.hasPowerProfiles===true; glyph: "\uf135"; selected: RobotBench.data.trainingMode ?? false; onActivated: root.action("training", (RobotBench.data.trainingMode ?? false) ? "off" : "on") }
                 ControlTile { label: "NVIDIA terminal"; glyph: "\uf120"; onActivated: root.launch(["@HOME@/.local/bin/sim-console"]) }
-                ControlTile { label: "GPU monitor"; glyph: "\uf201"; onActivated: root.launch(["@HOME@/.local/bin/sensei-terminal", "--title", "GPU-Monitor", "nvitop"]) }
+                ControlTile { label: "GPU monitor"; glyph: "\uf201"; onActivated: root.launch(["@HOME@/.local/bin/sensei-terminal", "--title", "GPU-Monitor", "@HOME@/.local/bin/nvitop"]) }
             }
             Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: "Training mode enables the desktop performance policy and keeps the session awake. Display and compute share the GTX GPU; VRAM is not pooled with the laptop."; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
             NrLabel { pixelSize: 13; color: Theme.widgetAccent; text: MachineProfile.gpuName+" · "+(RobotBench.data.gpu.state==="active"?`${Math.round(RobotBench.data.gpu.usage)}% · ${Math.round(RobotBench.data.gpu.temperature)}°C`:"Telemetry unavailable") }

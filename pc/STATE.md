@@ -393,3 +393,8 @@ Homie login shell is `/bin/zsh` (fresh SSH readback). Shared engineering registr
 The input corner-storm repair uses matching backed-up headless builds on both hosts. Four routes and emergency release/resume passed on Arete's new build; no user app received text. See the shared execution ledger for physical-test limitations. Restored bar layout and GPU/display hardware policy are preserved.
 
 Final acceptance: all 354 repository tests passed on Homie after installing its missing Restic dependency. The actual private project catalog restored from an encrypted checkpoint with a matching checksum. Installer preview is idempotent. Shared input/cursor/watch remain active; no failed user units observed. The Engineering panel was visually inspected on DP-3 while browsing Arete's registered projects and job receipts through the restricted reverse gateway.
+
+
+## Den native story / 17 October 2026, evening
+
+Homie remained on main at f355044 and passed 366 repository tests. Matching partial-edge sharing builds were deployed with recoverable backups; Arete's repeated bounded crossing tests and directional handoff verified actual input return. No disks, firmware or GPU policy changed. New native-resolution wallpaper source, shared lighthouse story, stronger focus markers and tool refinements are being deployed from the next main commit. Acoustic call intelligibility and physical unattended boot acceptance remain open; successful local file transcription is not a passed microphone call.

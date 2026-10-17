@@ -140,6 +140,7 @@ def companion(action,value=None):
     elif action=='hide-seek':cfg.update(seeking=True,tourAt=time.time(),roaming=True,reducedMotion=False,anchorManual=False,message='Find me on an available patch of wallpaper. Follow the pink engineering trail across the Den.',messageAt=time.time())
     elif action=='found':cfg.update(seeking=False,message='Found! Your reward is a tiny engineer with excellent hiding intentions.',messageAt=time.time(),pose='wave',poseAt=time.time())
     elif action=='tour':cfg.update(tourAt=time.time(),roaming=True,reducedMotion=False,anchorManual=False)
+    elif action=='dim':cfg['focusDimming']=value=='on' if value else not cfg.get('focusDimming',False)
     elif action=='toggle':cfg['enabled']=not cfg.get('enabled',True)
     elif action in ('show','hide'):cfg['enabled']=action=='show'
     elif action=='quiet':cfg['quiet']=value=='on' if value else not cfg.get('quiet',False)
@@ -632,7 +633,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);s=p.add_subparsers(dest='command_name',required=True)
     for n in ['status','doctor','watch']:s.add_parser(n)
     q=s.add_parser('mode');q.add_argument('value',nargs='?',choices=['auto','together','away','homie'])
-    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','activity','activity-hide','activity-favorite','talk','remember','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','grant','protocol']);q.add_argument('value',nargs='?')
+    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','activity','activity-hide','activity-favorite','talk','remember','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','hide-seek','found','dim','grant','protocol']);q.add_argument('value',nargs='?')
     q=s.add_parser('sync');q.add_argument('action',nargs='?',default='status',choices=['status','scan','pause','resume'])
     q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','retain-preview','peer-copy'])
     q=s.add_parser('workbench');q.add_argument('action',nargs='?',default='open',choices=['open','start','stop','status'])

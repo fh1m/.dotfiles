@@ -35,6 +35,10 @@ Item {
     property bool welcoming:false
     property real lastWelcome:0
     property var wallpaperState:({})
+    property var storyViews:({})
+    property var storyWorld:({})
+    FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/story-ready.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.storyViews=JSON.parse(text()).views||{};}catch(e){root.storyViews={};}}}
+    FileView {path:Quickshell.env("HOME")+"/.local/share/sensei-den/story/world-v3.json";printErrors:false;onLoaded:{try{root.storyWorld=JSON.parse(text());}catch(e){}}}
     property int frame: 0
     property bool typingBurst: false
     property bool dragging:false
@@ -103,7 +107,7 @@ Item {
         occupied=windows;
         const file=wallpaperState.displays?.[target]?.file||wallpaperState.lockedFile||"";
         const roof=!speaking&&variant%3===1?Logic.roofPlace(file,screen.width,screen.height,pet.width,pet.height,windows,variant):null;
-        placement=roof||Logic.place(screen.width,screen.height,pet.width,pet.height,windows,variant);
+        placement=Logic.worldPlace(storyViews[target],storyWorld,screen.width,screen.height,pet.width,pet.height,windows,variant)||roof||Logic.place(screen.width,screen.height,pet.width,pet.height,windows,variant);
     }
     property string eventJob:""
     property string eventHost:""
@@ -138,7 +142,7 @@ Item {
     }
     FileView {path:Qt.resolvedUrl("activity-atlases.json");onLoaded:{try{Logic.activityAtlases=JSON.parse(text());root.vary();}catch(e){}}}
     function remember():void {if(memoryLoaded)memoryFile.setText(JSON.stringify({schema:1,recent:recent.slice(-40),turn:turn}));}
-    function vary():void {activityTicks=0;activity=Logic.nextActivity(activity,denMusic,Math.random(),preferences.hiddenActivities||[],preferences.favoriteActivities||[]);frame=0;poseExpiry.stop();}
+    function vary():void {activityTicks=0;activity=Logic.nextActivity(activity,denMusic,Math.random(),preferences.hiddenActivities||[],preferences.favoriteActivities||[]);if(placement.scene&&Math.random()<.4&&!denMusic){const moods={upper:"stargaze",main:"garden",lower:"calibrate",screenpad:"aquarium",homie:"robot"};activity=moods[placement.scene]||activity;}frame=0;poseExpiry.stop();}
     function welcome(text):void {if(Date.now()-lastWelcome<60000)return;if(preferences.welcome===false||preferences.quiet===true||preferences.enabled===false)return;lastWelcome=Date.now();welcomeText=text;welcoming=true;welcomeExpiry.restart();}
     function say(text,kind):void {eventJob="";eventHost="";const words=String(text);message=words.length>160?words.slice(0,156).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.restart();settle.restart();}
     function greet(manual):void {
