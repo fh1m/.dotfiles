@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import qs.components
 import qs.config
+import qs.services
 Column {
  id:root;width:parent.width;spacing:10
  property var actual:[]
@@ -36,6 +37,7 @@ Column {
    }
   }
  }
+ ControlSlider {width:parent.width;title:"Brightness · "+(root.current.name||"display");glyph:"\uf185";level:root.current.name===MachineProfile.primaryOutput&&!MachineProfile.desktop?Brightness.value*100:MachineProfile.role(root.current.name)==="screenpad"?(RobotBench.data.brightness||0):(ExternalDisplays.display(root.current.name)?.level||0);onEdited:percent=>DisplayControls.setLevel(root.current.name===MachineProfile.primaryOutput?"main":MachineProfile.role(root.current.name)==="screenpad"?"screenpad":root.current.name,percent)}
  DeskComboBox {width:parent.width;model:root.draft;textRole:"name";currentIndex:root.selected;onActivated:index=>root.selected=index;enabled:root.token===""}
  Row {width:parent.width;spacing:8;enabled:root.token===""
   DeskComboBox {width:parent.width*.52;model:(root.actual[root.selected]?.availableModes||[]).map(s=>({value:s.replace("Hz",""),label:s.replace("x"," × ").replace("@"," · ")}));textRole:"label";currentIndex:Math.max(0,model.findIndex(m=>m.value===root.current.mode));onActivated:root.change({mode:model[currentIndex].value})}

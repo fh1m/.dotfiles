@@ -1,11 +1,13 @@
 import QtQuick
+import QtQuick.Controls
 import Quickshell
 import qs.components
 import qs.config
 import qs.services
 DropdownFrame {
  title:"Wired / Ethernet";implicitWidth:596
- Column {width:parent.width;spacing:14
+ ScrollView {id:viewport;width:parent.width;height:Math.min(body.implicitHeight,(ShellState.screens.find(s=>s.name===ShellState.dropdownOriginScreen)?.height||1080)-190);contentWidth:availableWidth;contentHeight:body.implicitHeight;clip:true
+ Column {id:body;width:viewport.availableWidth;spacing:14
   Text {text:Ethernet.device+" · "+(Ethernet.details.speedMbps||"?")+" Mb/s · "+(Ethernet.details.duplex||"unknown duplex");font.family:Appearance.font.ui;font.pixelSize:17;color:Theme.paper}
   Text {text:"↓ "+Ethernet.rate(SysInfo.netRxRate)+"   ↑ "+Ethernet.rate(SysInfo.netTxRate);font.family:Appearance.font.telemetry;font.pixelSize:14;color:Theme.signalRed}
   Rectangle {width:parent.width;height:96;radius:6;color:Theme.surfaceOne
@@ -18,5 +20,7 @@ DropdownFrame {
    ControlTile {label:"Connections";glyph:"\uf1e6";onActivated:Quickshell.execDetached(["nm-connection-editor"])}
    ControlTile {label:"Diagnostics";glyph:"\uf201";onActivated:{DesktopExtras.networkPage=2;ShellState.systemPage=3;ShellState.toggleDropdown("system");}}
   }
+  NetworkWorkbench {width:parent.width}
+ }
  }
 }

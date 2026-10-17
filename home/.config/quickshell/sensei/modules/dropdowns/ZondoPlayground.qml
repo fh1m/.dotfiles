@@ -1,9 +1,16 @@
 import QtQuick
+import "ZondoGames.js" as Games
 import qs.config
 import qs.services
 Column {
  id:root;width:parent.width;spacing:10
- onVisibleChanged:if(!visible)playing=false
+ onVisibleChanged:if(!visible){playing=false;reactionStart=0;}
+ property var board:["","","","","","","","",""]
+ property string game:"rps"
+ property double reactionStart:0
+ property double reactionReady:0
+ property int reactionTaps:0
+ property int reactionMs:0
  property int puzzle:0
  property string feedback:"No scores, no streaks. Just a small detour."
  property double beat:0
@@ -16,6 +23,21 @@ Column {
   ControlTile {label:"Make a boat";onActivated:{Den.companion("activity","paperboat");root.feedback="A research vessel with a wonderfully small budget."}}
   ControlTile {label:"Tea break";onActivated:{Den.companion("activity","tea");root.feedback="The tea is imaginary. The permission to pause is not."}}
  }
+ Row {width:parent.width;spacing:8
+  ControlTile {implicitWidth:(parent.width-16)/3;label:"Rock / paper / scissors";onActivated:root.game="rps"}
+  ControlTile {implicitWidth:(parent.width-16)/3;label:"Tic-tac-toe";onActivated:root.game="ttt"}
+  ControlTile {implicitWidth:(parent.width-16)/3;label:"Reaction · 30s";onActivated:{root.game="reaction";root.reactionStart=Date.now();root.reactionReady=Date.now()+600+Math.random()*1600;root.reactionTaps=0;root.reactionMs=0;}}
+ }
+ Row {visible:root.game==="rps";spacing:8
+  Repeater {model:["rock","paper","scissors"];ControlTile {required property string modelData;implicitWidth:140;label:modelData;onActivated:{const other=["rock","paper","scissors"][Math.floor(Math.random()*3)];root.feedback="Zondo: "+other+". "+Games.rps(modelData,other)+". Best of absolutely no pressure.";Den.companion("activity","highfive");}}}
+ }
+ Column {visible:root.game==="ttt";spacing:8
+  Grid {columns:3;spacing:6;Repeater {model:9;ControlTile {required property int index;implicitWidth:54;label:root.board[index]||"·";enabled:!root.board[index]&&!Games.winner(root.board);onActivated:{let b=root.board.slice();b[index]="X";root.board=Games.reply(b);const result=Games.winner(root.board);root.feedback=result?(result==="draw"?"A peaceful stalemate.":result+" wins. Rematch whenever you like."):"Your move, engineer.";}}}}
+  ControlTile {implicitWidth:170;label:"Fresh board";onActivated:root.board=["","","","","","","","",""]}
+ }
+ ControlTile {visible:root.game==="reaction";width:parent.width;label:root.reactionStart===0?"Start another 30-second round":root.beat>=root.reactionReady?"NOW · tap":"Wait for the cue";selected:root.reactionStart>0&&root.reactionReady<=root.beat;onActivated:{const now=Date.now();if(root.reactionStart===0){root.reactionStart=now;root.reactionReady=now+600+Math.random()*1600;}else if(now>=root.reactionReady){root.reactionTaps++;root.reactionMs+=now-root.reactionReady;root.feedback=root.reactionTaps+" taps · average "+Math.round(root.reactionMs/root.reactionTaps)+" ms";root.reactionReady=now+600+Math.random()*1600;}else root.feedback="Early! No penalty. Watch for the cue.";}}
+ Timer {interval:100;repeat:true;running:root.visible&&root.game==="reaction"&&root.reactionStart>0;onTriggered:{root.beat=Date.now();if(root.beat-root.reactionStart>=30000){root.reactionStart=0;root.feedback="Break complete. "+root.reactionTaps+" taps; no leaderboard required.";}}}
+ ControlTile {width:parent.width;label:"Hide-and-seek across the Den";onActivated:{Den.companion("hide-seek","");root.feedback="Find Zondo on the available wallpaper, then tap him. Quiet/fullscreen rules still apply.";}}
  Text {width:parent.width;text:root.puzzles[root.puzzle].question;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paper}
  Row {spacing:8
   Repeater {model:root.puzzles[root.puzzle].answers

@@ -30,7 +30,7 @@ def engineering_events(events,now=None):
     """Cross-host curated receipts only: no logs, titles, code, commands or arbitrary actions."""
     import re,time
     now=time.time() if now is None else now
-    kinds={'project.launch','job.completed','experiment.completed','hardware.disconnected','hardware.returned','hardware.ambiguous'}
+    kinds={'project.launch','job.submitted','job.completed','experiment.completed','hardware.disconnected','hardware.returned','hardware.ambiguous'}
     out=[]
     for event in events[-16:] if isinstance(events,list) else []:
         if not isinstance(event,dict) or event.get('kind') not in kinds:continue

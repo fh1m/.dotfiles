@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+"""Open local log files or an owned unit journal in lnav."""
+import argparse,os,subprocess
+from pathlib import Path
+p=argparse.ArgumentParser();p.add_argument('files',nargs='*',type=Path);p.add_argument('--unit');a=p.parse_args()
+if a.unit:
+ import re
+ if not re.fullmatch(r'[a-zA-Z0-9_.@-]{1,100}',a.unit):p.error('Invalid user unit')
+ # lnav's supported pipe capture; fixed executable argv, no evaluated shell input.
+ journal=subprocess.Popen(['journalctl','--user','-u',a.unit,'-o','json','-n','1000','--no-pager'],stdout=subprocess.PIPE)
+ try:
+  result=subprocess.call(['lnav'],stdin=journal.stdout)
+ finally:
+  journal.stdout.close()
+  if journal.poll() is None:journal.terminate()
+  try:journal.wait(timeout=2)
+  except subprocess.TimeoutExpired:journal.kill();journal.wait()
+ raise SystemExit(result)
+for f in a.files:
+ if not f.expanduser().is_file():p.error('Choose an existing local log file')
+os.execvp('lnav',['lnav',*[str(f.expanduser().resolve()) for f in a.files]])

@@ -10,7 +10,7 @@ Item {
     id: root
     property string ownerOutput: ""
     property var journey: ({})
-    onJourneyChanged:{const m=journey.memory;if(m&&Number(m.turn)>turn&&Array.isArray(m.recent)){turn=m.turn;recent=m.recent.slice(-40);remember();}}
+    onJourneyChanged:{if(["courier","parcel","detective","wrench"].includes(journey.scene)){activity=journey.scene;frame=0;poseExpiry.restart();}const m=journey.memory;if(m&&Number(m.turn)>turn&&Array.isArray(m.recent)){turn=m.turn;recent=m.recent.slice(-40);remember();}}
     property real journeyClock: Date.now()/1000
     readonly property bool leased: journey.schema===1 && journey.expires>journeyClock
     readonly property bool managed: preferences.roaming===true || (presence.host==="homie" && !standalone)
@@ -37,6 +37,8 @@ Item {
     property var wallpaperState:({})
     property int frame: 0
     property bool typingBurst: false
+    property bool dragging:false
+    property var dragStart:({x:0,y:0})
     property bool walkingRight: false
     property bool deliberateTravel: false
     property int variant: 0
@@ -86,6 +88,7 @@ Item {
     function locate(animate):void {
         deliberateTravel=animate===true && !reduced;
         const screen=Quickshell.screens.find(s=>s.name===target);
+        if(dragging)return;
         if(!screen){placement={available:false,x:18,y:56};return;}
         const mon=Hyprland.monitorFor(screen), data=mon?.lastIpcObject??{};
         fullscreen=mon?.activeWorkspace?.lastIpcObject?.hasfullscreen===true;
@@ -120,16 +123,17 @@ Item {
         onTriggered:{
             if(!root.engineeringMemoryLoaded||root.notices.dnd||root.preferences.quiet||root.speaking||Date.now()-root.engineeringLastShown<60000)return;
             const now=Date.now()/1000;
-            const event=root.engineeringEvents.filter(e=>now-e.at<120&&now-e.at>=0&&!root.engineeringSeen.includes(e.id)&&["project.launch","job.completed","experiment.completed","hardware.disconnected","hardware.returned","hardware.ambiguous"].includes(e.kind)).sort((a,b)=>(b.data?.repeatFailures||0)-(a.data?.repeatFailures||0)||b.at-a.at)[0];
+            const event=root.engineeringEvents.filter(e=>now-e.at<120&&now-e.at>=0&&!root.engineeringSeen.includes(e.id)&&["project.launch","job.submitted","job.completed","experiment.completed","hardware.disconnected","hardware.returned","hardware.ambiguous"].includes(e.kind)).sort((a,b)=>(b.data?.repeatFailures||0)-(a.data?.repeatFailures||0)||b.at-a.at)[0];
             if(!event)return;
             root.engineeringSeen=root.engineeringSeen.concat([event.id]).concat(root.engineeringEvents.filter(e=>event.data?.failureKey&&e.host===event.host&&e.data?.failureKey===event.data.failureKey&&e.at<=event.at).map(e=>e.id)).slice(-128);engineeringMemory.setText(JSON.stringify({ids:root.engineeringSeen}));
             root.engineeringLastShown=Date.now();
             const d=event.data||{};
             if(event.kind==="project.launch"){root.activity="robot";root.say("Project opened. One small baseline before the magnificent machine?","project receipt");}
-            else if(event.kind==="hardware.disconnected"){root.activity="think";root.say((d.label||"Known device")+" disconnected. Its hardware passport keeps the stable identity.","hardware receipt");}
+            else if(event.kind==="job.submitted"){root.activity="courier";root.say("A reviewed job is queued. Packing the tiny laptop; the real receipt will tell us what happened.","job receipt");}
+            else if(event.kind==="hardware.disconnected"){root.activity="wrench";root.say((d.label||"Known device")+" disconnected. Its hardware passport keeps the stable identity.","hardware receipt");}
             else if(event.kind==="hardware.ambiguous"){root.activity="inspect";root.say("More than one node matches this hardware passport. Check identity before choosing a port.","hardware receipt");}
             else if(event.kind==="hardware.returned"){root.activity="wave";root.say((d.label||"Known device")+" is back. The node may change; the identity should not.","hardware receipt");}
-            else {const good=["passed","succeeded"].includes(d.outcome);root.activity=good?"celebrate":"think";root.say(d.repeatFailures>=3?"This command has failed repeatedly. Its receipt keeps a failure excerpt; inspect the log before another retry.":good?"Run complete. The receipt is saved; a successful process is still only the start of checking the claim.":"Run failed, and the evidence is kept. The job receipt has the exit code and artifacts.","verified run receipt");root.eventJob=d.job||"";root.eventHost=event.host||"";}
+            else {const good=["passed","succeeded"].includes(d.outcome);root.activity=good?"parcel":"detective";root.say(d.repeatFailures>=3?"This command has failed repeatedly. Its receipt keeps a failure excerpt; inspect the log before another retry.":good?"Run complete. The receipt is saved; a successful process is still only the start of checking the claim.":"Run failed, and the evidence is kept. The job receipt has the exit code and artifacts.","verified run receipt");root.eventJob=d.job||"";root.eventHost=event.host||"";}
         }
     }
     FileView {path:Qt.resolvedUrl("activity-atlases.json");onLoaded:{try{Logic.activityAtlases=JSON.parse(text());root.vary();}catch(e){}}}
@@ -196,7 +200,7 @@ Item {
     Timer {id:settle;interval:180;onTriggered:root.locate()}
     Timer {interval:15000;repeat:true;running:root.eligible;onTriggered:root.refresh()}
     // Keep the clock independent of 45–90 s travel leases and available wallpaper.
-    Timer {interval:Math.max(45000,Math.min(600000,(root.preferences.chatterSeconds??110)*1000));repeat:true;running:root.preferences.enabled!==false&&root.preferences.chatter!==false&&root.preferences.quiet!==true;onTriggered:root.greet()}
+    Timer {interval:Math.max(45000,Math.min(600000,(root.preferences.chatterSeconds??90)*1000));repeat:true;running:root.preferences.enabled!==false&&root.preferences.chatter!==false&&root.preferences.quiet!==true;onTriggered:root.greet()}
     Timer {id:dockHello;interval:1600;onTriggered:root.welcome("MORE ROOM TO BUILD")}
     Timer {id:arrivalHello;interval:5500;onTriggered:if(!root.speaking)root.greet()}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-notifications.json";watchChanges:true;printErrors:false
@@ -204,10 +208,10 @@ Item {
     }
     Timer {id:noticeDelay;interval:1800;onTriggered:if(root.eligible&&!root.notices.dnd&&root.notices.unread>0){root.nudgedEvent=root.notices.event;root.say(root.notices.unread+' unread notification'+(root.notices.unread===1?'':'s')+(root.notices.app?' · '+root.notices.app:'')+'. The bell has the details.','desk post');}}
 
-    Timer {interval:Math.max(15000,Math.min(120000,(root.preferences.activitySeconds??33)*1000));repeat:true;running:root.eligible&&!root.reduced;onTriggered:root.vary()}
+    Timer {interval:Math.max(15000,Math.min(120000,(root.preferences.activitySeconds??27)*1000));repeat:true;running:root.eligible&&!root.reduced;onTriggered:root.vary()}
     Process {id:deskSample;command:[Quickshell.env("HOME")+"/.local/bin/sensei-zondo-context"];stdout:StdioCollector {onStreamFinished:{try{const x=JSON.parse(text);root.telemetry=x;const changed=root.musicPlaying!==x.playing;root.musicPlaying=x.playing;if(changed)root.vary();if(x.warning&&root.eligible&&!root.notices.dnd)root.say(x.warning,"measured, not guessed");}catch(e){}}}}
     Timer {interval:20000;repeat:true;running:root.preferences.enabled!==false;triggeredOnStart:true;onTriggered:if(!deskSample.running)deskSample.running=true}
-    Timer {interval:90000;repeat:true;running:root.allowed&&!root.reduced;onTriggered:root.walk()}
+    Timer {interval:35000;repeat:true;running:root.allowed&&!root.reduced;onTriggered:root.walk()}
     Timer {interval:18000;repeat:true;running:root.allowed&&!root.reduced;onTriggered:{root.typingBurst=true;burstExpiry.restart();}}
     Timer {id:burstExpiry;interval:1320;onTriggered:{root.typingBurst=false;root.frame=0;}}
     Timer {interval:220;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk"||root.activity==="climb"||root.activity==="dance"||(root.activitySprite&&root.activityTicks<12));onTriggered:{root.frame=(root.frame+1)%4;root.activityTicks++;}}
@@ -231,9 +235,10 @@ Item {
         WlrLayershell.layer:WlrLayer.Bottom
         WlrLayershell.namespace:"sensei-fh1m-companion"
         WlrLayershell.keyboardFocus:WlrKeyboardFocus.None
-        mask:Region {item:pet.contentItem}
-        Behavior on margins.left {enabled:root.deliberateTravel&&!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
-        Behavior on margins.top {enabled:root.deliberateTravel&&!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
+        mask:Region {item:petContents}
+        Behavior on margins.left {enabled:root.deliberateTravel&&!root.reduced&&!root.dragging;NumberAnimation {duration:1100;easing.type:Easing.InOutSine}}
+        Behavior on margins.top {enabled:root.deliberateTravel&&!root.reduced&&!root.dragging;NumberAnimation {duration:1100;easing.type:Easing.InOutSine}}
+        Item {id:petContents;anchors.fill:parent
         Rectangle {
             id:speechBubble
             TapHandler {onTapped:{if(root.eventJob)Quickshell.execDetached(["qs","-c","sensei","ipc","call","engineering-receipts","open",root.eventHost,root.eventJob]);else Quickshell.execDetached(["qs","-c","sensei","ipc","call","dropdown","open","engineering"]);}}
@@ -245,7 +250,25 @@ Item {
             Text {id:body;anchors {left:parent.left;right:parent.right;top:caption.bottom;leftMargin:14;rightMargin:14;topMargin:7} text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:"JetBrainsMono Nerd Font";font.pixelSize:12;color:"#e8e2da"}
         }
         Image {
-            TapHandler {acceptedButtons:Qt.LeftButton;onTapped:{root.activity="highfive";root.activityTicks=0;root.say("High five, engineer. What is taking shape today?","off duty");}}
+            DragHandler {
+                target:null
+                onActiveChanged:{
+                    if(active){root.dragStart={x:root.placement.x,y:root.placement.y};root.dragging=true;root.deliberateTravel=false;}
+                    else if(root.dragging){
+                        root.dragging=false;
+                        const screen=Quickshell.screens.find(s=>s.name===root.target);
+                        if(!screen)return;
+                        const x=Math.max(8,Math.min(screen.width-pet.width-8,root.placement.x+centroid.velocity.x*.12));
+                        const y=Math.max(52,Math.min(screen.height-pet.height-52,root.placement.y+centroid.velocity.y*.12));
+                        const candidate={x:x,y:y,w:pet.width,h:pet.height};
+                        root.deliberateTravel=!root.reduced;root.activity="plane";
+                        root.placement=root.occupied.some(w=>Logic.intersects(candidate,w))?Logic.place(screen.width,screen.height,pet.width,pet.height,root.occupied,++root.variant):{available:true,x:x,y:y};
+                        poseExpiry.restart();
+                    }
+                }
+                onTranslationChanged:{if(root.dragging){const s=Quickshell.screens.find(s=>s.name===root.target);if(s)root.placement={available:true,x:Math.max(8,Math.min(s.width-pet.width-8,root.dragStart.x+translation.x)),y:Math.max(52,Math.min(s.height-pet.height-52,root.dragStart.y+translation.y))};}}
+            }
+            TapHandler {acceptedButtons:Qt.LeftButton;onTapped:{root.activity="highfive";root.activityTicks=0;root.say(root.preferences.seeking?"You found me! Excellent fieldwork. I was conducting a very small expedition.":"High five, engineer. What is taking shape today?","off duty");if(root.preferences.seeking)Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","companion","found"]);}}
             TapHandler {acceptedButtons:Qt.RightButton;onTapped:Quickshell.execDetached(["qs","-c","sensei","ipc","call","dropdown","open","engineering"])}
             id:character;cache:!root.activitySprite;opacity:root.allowed?1:0;scale:root.landing?0.72:1
             Behavior on scale {enabled:!root.reduced;NumberAnimation {duration:650;easing.type:Easing.OutBack}}
@@ -257,6 +280,7 @@ Item {
             sourceClipRect:{if(root.activitySprite){const a=root.activitySprite,c=root.frame%4,r=a.row;return Qt.rect(a.xs[c],a.ys[r],a.xs[c+1]-a.xs[c],a.ys[r+1]-a.ys[r]);}if(root.activity==="climb"){const xs=[0,543,1086,1629,2172],c=root.frame%4;return Qt.rect(xs[c],0,xs[c+1]-xs[c],724);}if(!(root.extraPose>=0))return Qt.rect((tile%4)*cell,Math.floor(tile/4)*cell,cell,cell);const xs=[0,313,627,945,1254],ys=[0,323,627,931,1254],c=tile%4,r=Math.floor(tile/4);return Qt.rect(xs[c],ys[r],xs[c+1]-xs[c],ys[r+1]-ys[r]);}
             fillMode:Image.PreserveAspectFit;smooth:true;asynchronous:true
         }
+    }
     }
     NumberAnimation {id:welcomeFadeOut;target:welcomeCard;property:"opacity";to:0;duration:root.reduced?0:280;onFinished:root.welcoming=false}
     NumberAnimation {id:welcomeFadeIn;target:welcomeCard;property:"opacity";from:0;to:1;duration:root.reduced?0:400}

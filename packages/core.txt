@@ -75,3 +75,10 @@ nm-connection-editor
 
 # Encrypted Den / Noesis backup and tested restore workflows.
 restic
+
+# Local shell history and structured log navigation.
+atuin
+lnav
+
+# Explicit bounded LAN inspection (never scanned on refresh).
+nmap

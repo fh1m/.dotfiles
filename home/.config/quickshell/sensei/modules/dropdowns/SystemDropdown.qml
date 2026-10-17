@@ -30,13 +30,16 @@ DropdownFrame {
         width: systemScroll.availableWidth
         spacing: 10
         Row {
+            width:parent.width
             spacing: 8
-            ControlTile { implicitWidth: 106; label: "Quick"; navigation:true;selected: ShellState.systemPage === 0; onActivated: ShellState.systemPage = 0 }
-            ControlTile { implicitWidth: 106; label: "Hardware"; navigation:true;selected: ShellState.systemPage === 1; onActivated: ShellState.systemPage = 1 }
-            ControlTile { implicitWidth: 106; label: "Robotics"; navigation:true;selected: ShellState.systemPage === 2; onActivated: ShellState.systemPage = 2 }
-            ControlTile {implicitWidth: 106;label:"Network";navigation:true;selected:ShellState.systemPage===3;onActivated:ShellState.systemPage=3}
-            ControlTile {implicitWidth: 106;label:"Packages";navigation:true;selected:ShellState.systemPage===4;onActivated:ShellState.systemPage=4}
+            ControlTile { implicitWidth:(parent.width-40)/6;glyph:""; label: "Quick"; navigation:true;selected: ShellState.systemPage === 0; onActivated: ShellState.systemPage = 0 }
+            ControlTile { implicitWidth:(parent.width-40)/6;glyph:""; label: "Hardware"; navigation:true;selected: ShellState.systemPage === 1; onActivated: ShellState.systemPage = 1 }
+            ControlTile { implicitWidth:(parent.width-40)/6;glyph:""; label: "Robotics"; navigation:true;selected: ShellState.systemPage === 2; onActivated: ShellState.systemPage = 2 }
+            ControlTile {implicitWidth:(parent.width-40)/6;glyph:"";label:"Network";navigation:true;selected:ShellState.systemPage===3;onActivated:ShellState.systemPage=3}
+            ControlTile {implicitWidth:(parent.width-40)/6;glyph:"";label:"Packages";navigation:true;selected:ShellState.systemPage===4;onActivated:ShellState.systemPage=4}
+            ControlTile {implicitWidth:(parent.width-40)/6;glyph:"";label:"Den";navigation:true;selected:ShellState.systemPage===5;onActivated:ShellState.systemPage=5}
         }
+        Loader {width:parent.width;active:ShellState.systemPage===5;visible:active;height:active?(item?.implicitHeight??0):0;sourceComponent:Component {DenControls {width:parent.width}}}
         Rectangle { width: parent.width; height: 1; color: Theme.widgetBorder }
         Loader {width:parent.width;active:ShellState.systemPage===3;visible:active;height:active?(item?.implicitHeight??0):0;sourceComponent:Component {NetworkSection {width:parent.width}}}
         Loader {width:parent.width;active:ShellState.systemPage===4;visible:active;height:active?(item?.implicitHeight??0):0;sourceComponent:Component {PackagesSection {width:parent.width}}}
@@ -73,7 +76,7 @@ DropdownFrame {
                     ControlTile { implicitWidth: 176; label: "Performance"; glyph: "\uf135"; enabled: Power.hasPerformance; selected: Power.profile === PowerProfile.Performance; onActivated: Power.setProfile("performance") }
                 }
             }
-            DenControls { width: parent.width }
+
             WidgetSection { width: parent.width; title: "Tools"; glyph: "\uf0b1"
                 Grid { columns: 2; spacing: 8
                     ActionRow { implicitWidth: 268; label: "Bluetooth devices"; detail: "Pair and connect"; glyph: "\uf293"; onActivated: { ShellState.dropdownAnchorX = ShellState.anchorFor("bluetooth"); ShellState.dropdown = "bluetooth"; } }
@@ -139,7 +142,7 @@ DropdownFrame {
                 spacing: 8
                 ControlTile { label: "Training mode"; enabled:!MachineProfile.desktop||MachineProfile.facts.hasPowerProfiles===true; glyph: "\uf135"; selected: RobotBench.data.trainingMode ?? false; onActivated: root.action("training", (RobotBench.data.trainingMode ?? false) ? "off" : "on") }
                 ControlTile { label: "NVIDIA terminal"; glyph: "\uf120"; onActivated: root.launch(["@HOME@/.local/bin/sim-console"]) }
-                ControlTile { label: "GPU monitor"; glyph: "\uf201"; onActivated: root.launch(["@HOME@/.local/bin/sensei-terminal", "--title", "GPU-Monitor", "nvtop"]) }
+                ControlTile { label: "GPU monitor"; glyph: "\uf201"; onActivated: root.launch(["@HOME@/.local/bin/sensei-terminal", "--title", "GPU-Monitor", "nvitop"]) }
             }
             Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: "Training mode enables the desktop performance policy and keeps the session awake. Display and compute share the GTX GPU; VRAM is not pooled with the laptop."; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
             NrLabel { pixelSize: 13; color: Theme.widgetAccent; text: MachineProfile.gpuName+" · "+(RobotBench.data.gpu.state==="active"?`${Math.round(RobotBench.data.gpu.usage)}% · ${Math.round(RobotBench.data.gpu.temperature)}°C`:"Telemetry unavailable") }

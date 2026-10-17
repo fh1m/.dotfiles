@@ -15,8 +15,9 @@ Variants {
   WlrLayershell.layer:WlrLayer.Top
   WlrLayershell.namespace:"sensei-engineering-instrument"
   WlrLayershell.keyboardFocus:WlrKeyboardFocus.OnDemand
-  Loader {id:content;anchors.fill:parent;sourceComponent:ShellState.instrumentKind==="camera"?camera:engineering}
-  Component {id:camera;CameraDropdown {width:window.width;outputName:window.modelData.name;instrument:true}}
+  Loader {id:content;anchors.fill:parent;sourceComponent:ShellState.instrumentKind==="camera"?camera:ShellState.instrumentKind==="context"?context:engineering}
+  Component {id:context;ContextInstrument {width:window.width}}
+ Component {id:camera;CameraDropdown {width:window.width;outputName:window.modelData.name;instrument:true}}
   Component {id:engineering;EngineeringDropdown {width:window.width;outputName:window.modelData.name;instrument:true}}
  }
 }

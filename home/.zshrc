@@ -74,6 +74,10 @@ _sensei_plugin /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlig
 unset -f _sensei_plugin
 
 bindkey '^[r' fzf-history-widget
+# Local history search; keep arrows for shell/editor/agent navigation.
+if command -v atuin >/dev/null 2>&1; then
+  eval "$(atuin init zsh --disable-up-arrow)"
+fi
 eval "$(zoxide init zsh)"
 
 # nvm loads on first use, not at shell start (it was most of the startup cost).

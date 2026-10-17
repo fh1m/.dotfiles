@@ -36,5 +36,5 @@ Singleton {
     Process {id:companionAction;stdout:StdioCollector {onStreamFinished:if(["talk","remember","chat"].includes(root.companionActionName)){try{root.reply=JSON.parse(text).message||"";}catch(e){root.reply="Reply unavailable";}}}
         onExited:(code,status)=>{if(code!==0)root.error="Companion action unavailable";root.refresh();}}
     Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==="system")root.refresh();}function onSystemPageChanged(){if(ShellState.dropdown==="system")root.refresh();}}
-    Timer {interval:15000;repeat:true;running:ShellState.dropdown==="system"&&ShellState.systemPage===0;onTriggered:root.refresh()}
+    Timer {interval:15000;repeat:true;running:ShellState.dropdown==="system"&&ShellState.systemPage===5;onTriggered:root.refresh()}
 }

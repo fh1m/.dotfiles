@@ -1,0 +1,38 @@
+import QtQuick
+import Quickshell
+import Quickshell.Io
+import qs.components
+import qs.config
+import qs.services
+DropdownFrame {
+ id:root;title:"ScreenPad / one useful context";implicitWidth:752
+ property var snapshot:({cards:[],projects:[]});property string error:""
+ function refresh(){if(worker.running)return;worker.command=[Quickshell.env("HOME")+"/.local/bin/sensei-instrument",ShellState.instrumentMode].concat(ShellState.instrumentProject?["--project",ShellState.instrumentProject]:[]);worker.running=true;}
+ function act(name){if(name==="den"){ShellState.systemPage=5;ShellState.openDropdown("system");}else if(name==="calendar")ShellState.openDropdown("calendar");else if(name==="terminal")Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-terminal"]);else {ShellState.engineeringSelectedAction=name==="preflight"?"project.preflight":name==="capture"?"evidence.capture":"";ShellState.openDropdown("engineering");}}
+ Component.onCompleted:refresh()
+ Connections {target:ShellState;function onInstrumentModeChanged(){root.refresh();}function onInstrumentProjectChanged(){root.refresh();}}
+ Column {width:parent.width;spacing:8
+ Row {width:parent.width;spacing:8
+  Repeater {model:["normal","simulation","coding","hardware"]
+   ControlTile {required property string modelData;implicitWidth:(parent.width-24)/4;label:modelData.charAt(0).toUpperCase()+modelData.slice(1);selected:ShellState.instrumentMode===modelData;onActivated:ShellState.instrumentMode=modelData}
+  }
+ }
+ DeskComboBox {width:parent.width;model:[{id:"",title:"Choose a registered project"}].concat(root.snapshot.projects);textRole:"title";currentIndex:Math.max(0,model.findIndex(p=>p.id===ShellState.instrumentProject));onActivated:ShellState.instrumentProject=model[currentIndex].id}
+ Grid {width:parent.width;columns:2;spacing:8
+  Repeater {model:root.snapshot.cards
+   Rectangle {required property var modelData;width:(parent.width-8)/2;height:94;color:Theme.surfaceOne;border.color:Theme.rule;radius:5
+    Column {anchors.fill:parent;anchors.margins:12;spacing:6
+     Text {text:modelData.title;font.family:Appearance.font.ui;font.pixelSize:10;font.letterSpacing:1;color:Theme.widgetAccent}
+     Text {width:parent.width;text:modelData.value;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:15;color:Theme.widgetText}
+     Text {width:parent.width;text:modelData.detail;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}
+    }
+    MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:root.act(parent.modelData.action)}
+   }
+  }
+ }
+ Row {spacing:8;ControlTile {implicitWidth:120;label:"Refresh";enabled:!worker.running;onActivated:root.refresh()}ControlTile {implicitWidth:120;label:"Return";onActivated:ShellState.releaseInstrument()}}
+ Text {width:parent.width;text:root.error||root.snapshot.note||"";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.widgetMuted}
+ }
+ Process {id:worker;stdout:StdioCollector {onStreamFinished:{try{const d=JSON.parse(text);if(d.error)root.error=d.error;else{root.snapshot=d;root.error="";}}catch(e){root.error="Context unavailable; your project is unchanged.";}}}}
+ Timer {interval:15000;repeat:true;running:root.visible&&ShellState.instrumentPinned;onTriggered:root.refresh()}
+}

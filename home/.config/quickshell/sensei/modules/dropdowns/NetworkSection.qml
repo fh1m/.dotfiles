@@ -43,4 +43,5 @@ Column {
  ScrollView {width:parent.width;height:550;clip:true;visible:DesktopExtras.networkPage===2
   TextArea {readOnly:true;wrapMode:Text.Wrap;textFormat:TextEdit.PlainText;text:'Routes\n'+(DesktopExtras.network.routes||'')+'\n\nDNS\n'+(DesktopExtras.network.dns||'')+'\n\nListening ports\n'+(DesktopExtras.network.listeners||'');font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetText;background:ChamferPanel {fillColor:Theme.widgetSurface;chamfer:6;scanlines:false}}
  }
+ Loader {width:parent.width;active:DesktopExtras.networkPage===2;visible:active;sourceComponent:Component {NetworkWorkbench {width:parent.width}}}
 }

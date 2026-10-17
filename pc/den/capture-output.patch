@@ -1,8 +1,58 @@
 diff --git a/input-capture/src/layer_shell.rs b/input-capture/src/layer_shell.rs
-index 698c584..b8d355a 100644
+index 698c584..1b95dba 100644
 --- a/input-capture/src/layer_shell.rs
 +++ b/input-capture/src/layer_shell.rs
-@@ -241,6 +241,14 @@ fn get_edges(outputs: &[Output], pos: Position) -> Vec<(Output, i32)> {
+@@ -162,9 +162,24 @@ impl Window {
+         log::debug!("creating window output: {output:?}, size: {size:?}");
+         let g = &state.globals;
+ 
++        // A physical neighbour may share only part of an output edge.
++        let edge = match pos { Position::Left => "left", Position::Right => "right", Position::Top => "top", Position::Bottom => "bottom" };
++        let configured = std::env::var("DEN_CAPTURE_RANGES").unwrap_or_default();
++        let range = configured.split(',').find_map(|item| {
++            let (key, value) = item.split_once('=')?;
++            if key != edge { return None; }
++            let (a, b) = value.split_once(':')?;
++            let a: f64 = a.parse().ok()?;
++            let b: f64 = b.parse().ok()?;
++            if !a.is_finite() || !b.is_finite() || a < 0.0 || b > 1.0 || a >= b { return None; }
++            Some((a, b))
++        }).unwrap_or((0.0, 1.0));
++        let length = match pos { Position::Left | Position::Right => size.1, _ => size.0 };
++        let offset = (range.0 * length as f64).round() as i32;
++        let span = ((range.1 - range.0) * length as f64).round().max(1.0) as u32;
+         let (width, height) = match pos {
+-            Position::Left | Position::Right => (1, size.1 as u32),
+-            Position::Top | Position::Bottom => (size.0 as u32, 1),
++            Position::Left | Position::Right => (1, span),
++            Position::Top | Position::Bottom => (span, 1),
+         };
+         let mut file = tempfile::tempfile().unwrap();
+         draw(&mut file, (width, height));
+@@ -191,16 +206,17 @@ impl Window {
+             (),
+         );
+         let anchor = match pos {
+-            Position::Left => Anchor::Left,
+-            Position::Right => Anchor::Right,
+-            Position::Top => Anchor::Top,
+-            Position::Bottom => Anchor::Bottom,
++            Position::Left => Anchor::Left | Anchor::Top,
++            Position::Right => Anchor::Right | Anchor::Top,
++            Position::Top => Anchor::Top | Anchor::Left,
++            Position::Bottom => Anchor::Bottom | Anchor::Left,
+         };
+ 
+         layer_surface.set_anchor(anchor);
+         layer_surface.set_size(width, height);
+         layer_surface.set_exclusive_zone(-1);
+-        layer_surface.set_margin(0, 0, 0, 0);
++        let (top, left) = match pos { Position::Left | Position::Right => (offset, 0), _ => (0, offset) };
++        layer_surface.set_margin(top, 0, 0, left);
+         surface.set_input_region(None);
+         surface.commit();
+         Window {
+@@ -241,6 +257,14 @@ fn get_edges(outputs: &[Output], pos: Position) -> Vec<(Output, i32)> {
  }
  
  fn get_output_configuration(state: &State, pos: Position) -> Vec<Output> {
@@ -17,7 +67,7 @@ index 698c584..b8d355a 100644
      // get all output edges corresponding to the position
      let edges = get_edges(&state.outputs, pos);
      let opposite_edges = get_edges(&state.outputs, pos.opposite());
-@@ -369,6 +377,7 @@ impl LayerShellInputCapture {
+@@ -369,6 +393,7 @@ impl LayerShellInputCapture {
      fn delete_client(&mut self, pos: Position) {
          let inner = self.0.get_mut();
          inner.state.active_positions.remove(&pos);
@@ -25,7 +75,7 @@ index 698c584..b8d355a 100644
          // remove all windows corresponding to this client
          while let Some(i) = inner.state.active_windows.iter().position(|w| w.pos == pos) {
              inner.state.active_windows.remove(i);
-@@ -478,16 +487,11 @@ impl State {
+@@ -478,16 +503,11 @@ impl State {
  
      fn ungrab(&mut self) {
          // get focused client

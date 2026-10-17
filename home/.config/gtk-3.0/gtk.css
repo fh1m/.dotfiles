@@ -1,17 +1,17 @@
 /* Digital Den: stable controls, quiet surfaces, raspberry focus. */
-@define-color accent_bg_color #d92b70;
+@define-color accent_bg_color #f23d70;
 @define-color accent_fg_color #ffffff;
 @define-color accent_color #ff6da7;
-@define-color window_bg_color #141116;
+@define-color window_bg_color #000000;
 @define-color window_fg_color #eee7ed;
-@define-color view_bg_color #100e12;
+@define-color view_bg_color #000000;
 @define-color view_fg_color #eee7ed;
-@define-color headerbar_bg_color #1c171f;
+@define-color headerbar_bg_color #000000;
 @define-color headerbar_fg_color #eee7ed;
-@define-color card_bg_color #231c26;
-@define-color popover_bg_color #231c26;
-@define-color dialog_bg_color #1c171f;
-@define-color selected_bg_color #b82460;
+@define-color card_bg_color #080608;
+@define-color popover_bg_color #080608;
+@define-color dialog_bg_color #000000;
+@define-color selected_bg_color #b82052;
 @define-color selected_fg_color #ffffff;
 window, dialog { background-color: @window_bg_color; color: @window_fg_color; }
 headerbar { background: @headerbar_bg_color; color: @headerbar_fg_color; box-shadow: none; }

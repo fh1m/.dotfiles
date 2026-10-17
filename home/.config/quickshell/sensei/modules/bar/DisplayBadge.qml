@@ -31,6 +31,6 @@ Item {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onWheel: event => { DisplayControls.adjustLevel(root.output, event.angleDelta.y > 0 ? 5 : -5); event.accepted = true; }
-        onClicked: { if(root.external){ShellState.dropdownAnchorX=mapToItem(null,0,0).x;ShellState.toggleDropdown("external-display");}else{ShellState.dropdownAnchorX = ShellState.anchorFor("system"); ShellState.toggleDropdown("system");} }
+        onClicked: {const name=root.external?root.output:root.output==="main"?MachineProfile.primaryOutput:ShellState.screens.find(s=>MachineProfile.role(s.name)==="screenpad")?.name||MachineProfile.primaryOutput;ShellState.barContext(name);ShellState.openDropdownOn("displays",name);}
     }
 }

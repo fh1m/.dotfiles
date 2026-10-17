@@ -106,6 +106,7 @@ def companion(action,value=None):
         from companion_roam import grant
         payload=json.loads(value);record=grant(read(STATE/'companion-travel.json'),payload['output'],payload['token'],payload.get('ttl',40))
         record['musicPlaying']=payload.get('musicPlaying') is True
+        record['scene']=payload.get('scene') if payload.get('scene') in ('courier','parcel','detective','wrench') else ''
         record['engineeringEvents']=engineering_events(payload.get('engineeringEvents',[]))
         record['engineeringAcks']=engineering_acks(payload.get('engineeringAcks',[]))
         from companion_roam import memory
@@ -136,6 +137,8 @@ def companion(action,value=None):
         if value not in ('on','off'):raise ValueError('Use roam on or off')
         cfg['roaming']=value=='on';cfg['anchorManual']=value!='on'
         if value=='on':cfg['reducedMotion']=False
+    elif action=='hide-seek':cfg.update(seeking=True,tourAt=time.time(),roaming=True,reducedMotion=False,anchorManual=False,message='Find me on an available patch of wallpaper. Follow the pink engineering trail across the Den.',messageAt=time.time())
+    elif action=='found':cfg.update(seeking=False,message='Found! Your reward is a tiny engineer with excellent hiding intentions.',messageAt=time.time(),pose='wave',poseAt=time.time())
     elif action=='tour':cfg.update(tourAt=time.time(),roaming=True,reducedMotion=False,anchorManual=False)
     elif action=='toggle':cfg['enabled']=not cfg.get('enabled',True)
     elif action in ('show','hide'):cfg['enabled']=action=='show'
@@ -546,15 +549,36 @@ def _companion_tick(peer):
         current=destinations.index(tuple(chosen)) if chosen and tuple(chosen) in destinations else -1
         chosen=destinations[(current+1)%len(destinations)]
         state.update(destination=chosen,next=now+45+int.from_bytes(os.urandom(1))%46,tourAt=cfg.get('tourAt',0))
+    # Receipts drive a bounded courier story; never infer a finished job.
+    scene=''
+    submitted=sorted((e for e in events if e['kind']=='job.submitted' and e['host']=='homie' and e.get('data',{}).get('job')),key=lambda e:e['at'])
+    finished={e.get('data',{}).get('job'):e for e in events if e['kind']=='job.completed' and e['host']=='homie'}
+    courier=state.get('courier',{})
+    done=state.get('delivered',[])[-32:]
+    if not courier and submitted:
+        first=next((e for e in submitted if e['data']['job'] not in done),None)
+        if first:courier={'job':first['data']['job'],'stage':'pack','at':now}
+    if courier and now-courier.get('at',0)<1800:
+        if courier['job'] in finished:
+            chosen=(local_host,next((m['name'] for m in local if m.get('focused')),local[0]['name']));scene='parcel'
+            if remote_until<=now:done.append(courier['job']);courier={}
+        elif courier.get('stage')=='pack':
+            chosen=(local_host,next((m['name'] for m in local if m.get('focused')),local[0]['name']));scene='courier'
+            courier['stage']='travel'
+        else:
+            peer_dest=next((d for d in destinations if d[0]=='homie'),None)
+            if peer_dest:chosen=peer_dest;scene='courier'
+    elif courier:courier={}
+    state.update(courier=courier,delivered=done[-32:])
     target_host,output=chosen
     if target_host!=local_host:
         # Hide first; a lost acknowledgement cannot create a second visible character.
         companion('grant',json.dumps({'output':'','token':token,'ttl':45}))
         state['remoteUntil']=now+45;write(STATE/'companion-route.json',state)
-        remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire,'engineeringEvents':events,'engineeringAcks':acks})],timeout=4)
+        remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire,'engineeringEvents':events,'engineeringAcks':acks,'scene':scene})],timeout=4)
     else:
         if remote_until>now:return
-        companion('grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire,'engineeringEvents':events,'engineeringAcks':acks}))
+        companion('grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire,'engineeringEvents':events,'engineeringAcks':acks,'scene':scene}))
         state['remoteUntil']=0
     write(STATE/'companion-route.json',state)
 

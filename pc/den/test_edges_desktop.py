@@ -16,7 +16,7 @@ def main(cycles=3,with_input=False):
      subprocess.run([str(Path.home()/".local/bin/den-control"),"start"],check=True)
      time.sleep(.5)
      for trial,(entry,exit) in enumerate([("top","bottom"),("right","left"),("top","left"),("right","bottom")]*cycles):
-      entry_x=[120,960,1800][trial%3];entry_y=[-960,-540,-120][trial%3]
+      entry_x=[1080,1440,1800][trial%3];entry_y=[-960,-540,-120][trial%3]
       inst=json.loads(hypr("instances","-j"))[0]
       import os
       env=dict(os.environ,WAYLAND_DISPLAY=inst['wl_socket'],HYPRLAND_INSTANCE_SIGNATURE=inst['instance'])
@@ -46,7 +46,7 @@ def main(cycles=3,with_input=False):
        assert after['buttons']>before['buttons'] and after['scrolls']>before['scrolls'],after
        assert not after['held'],after
        print('Owned keyboard/chord/click/scroll check: passed',flush=True)
-      dispatch="hl.dsp.cursor.move({x=960,y=1077})" if exit=="bottom" else "hl.dsp.cursor.move({x=2,y=540})"
+      dispatch="hl.dsp.cursor.move({x=480,y=1077})" if exit=="bottom" else "hl.dsp.cursor.move({x=2,y=540})"
       remote("hyprctl -i 0 dispatch "+shlex.quote(dispatch))
       subprocess.run([str(root/"input-test/test"),"motion","0" if exit=="bottom" else "-12","12" if exit=="bottom" else "0"],env=env,check=True)
       for n in range(24):
@@ -56,7 +56,7 @@ def main(cycles=3,with_input=False):
       print(entry,"→ Homie →",exit,"passed",pos,flush=True)
       time.sleep(.1)
      # Verify the real recovery gesture without typing text/clicking any application.
-     warp(960,40);warp(960,0);time.sleep(.4)
+     warp(1440,40);warp(1440,0);time.sleep(.4)
      inst=json.loads(hypr("instances","-j"))[0]
      import os
      env=dict(os.environ,WAYLAND_DISPLAY=inst['wl_socket'],HYPRLAND_INSTANCE_SIGNATURE=inst['instance'])

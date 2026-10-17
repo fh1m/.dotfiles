@@ -50,6 +50,11 @@ WidgetSection {
             ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Tour displays";enabled:Den.data.role!=="receiver"||!Den.online;glyph:"\uf072";onActivated:Den.companion("tour","")}
             ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Follow my focus";enabled:Den.data.role!=="receiver"||!Den.online;glyph:"\uf124";onActivated:Den.companion("follow","")}
         }
+        Row {width:parent.width;spacing:8
+            ControlTile {implicitWidth:(parent.width-8)/2;label:"Den wallpaper story";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-wallpaper-story","enable"])}
+            ControlTile {implicitWidth:(parent.width-8)/2;label:"Restore my wallpapers";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-wallpaper-story","disable"])}
+        }
+        DenMap {width:parent.width;visible:!MachineProfile.desktop}
         Text { textFormat: Text.PlainText; width: parent.width; visible: Den.error !== ""; text: Den.error; wrapMode: Text.Wrap; font.family: Appearance.font.ui; font.pixelSize: 11; color: Theme.signalRed }
         Row {width:parent.width;spacing:8
             ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Dance break";glyph:"\uf001";onActivated:Den.companion("dance","")}
@@ -57,6 +62,7 @@ WidgetSection {
             ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Retire this line";glyph:"\uf04e";onActivated:Den.companion("less","")}
         }
 
+        ControlTile {width:parent.width;label:"ScreenPad / Normal · Simulation · Coding · Hardware";glyph:"\uf108";visible:!MachineProfile.desktop;onActivated:ShellState.pinInstrument("context")}
         ControlTile {width:parent.width;label:"Engineering / projects & job queue";glyph:"\uf085";onActivated:ShellState.toggleDropdown("engineering")}
         DeskTextField {id:zondoThought;width:parent.width;placeholderText:"Tell Zondo a thought, or keep a personal memory";maximumLength:240;onAccepted:if(text.trim()){Den.companion("talk",text);text="";}}
         Text {width:parent.width;visible:Den.reply!=="";text:Den.reply;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paper}

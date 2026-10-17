@@ -138,6 +138,9 @@ def task(p, name):
 
 
 ACTIONS={
+ 'network.inspect':dict(title='Inspect routes, clients and sockets',effect='read',required=[]),
+ 'network.discover':dict(title='Discover this private LAN segment',effect='execution',required=['interface']),
+ 'network.ports':dict(title='Inspect 50 TCP ports on a LAN host',effect='execution',required=['interface','target']),
  'project.open':dict(title='Open project tmux',effect='session',required=['project']),
  'project.preflight':dict(title='Check project environment',effect='read',required=['project']),
  'evidence.capture':dict(title='Capture project evidence',effect='session',required=['project'],optional=['job','lab']),
@@ -171,6 +174,10 @@ def validate(action, params):
     t=task(p,params['task']) if 'task' in params else None
     result=dict(action=action,params=params,host=machine(),effect=spec['effect'],
                 checkout=str(root) if root else None,task=t)
+    if action.startswith('network.') and action!='network.inspect':
+        from network_audit import scope,target
+        result['private_scope']=scope(params['interface'])
+        if action=='network.ports':result['target']=target(params['interface'],params['target'])
     if action=='evidence.capture':
         if 'job' in params and 'lab' in params:raise ValueError('Select one evidence receipt')
         path=None
@@ -217,6 +224,12 @@ def invoke(action, params, confirmation=None):
                 raise ValueError('Confirmation expired or operation changed')
             path.unlink()
     binary=home()/'.local/bin'
+    if action.startswith('network.'):
+        verb={'network.inspect':'inventory','network.discover':'discover','network.ports':'ports'}[action]
+        argv=[str(binary/'sensei-network'),verb]
+        if 'interface' in params:argv+=['--interface',params['interface'],'--confirmed']
+        if 'target' in params:argv+=['--target',params['target']]
+        return command(argv,timeout=20)
     if action=='evidence.capture':
         argv=[str(binary/'sensei-workbench'),'capture','--project',plan['checkout']]
         if plan.get('receipt'):argv+=['--run',plan['receipt']]

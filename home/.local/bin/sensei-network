@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+import argparse,json,subprocess,sys
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+import network_audit as n
+p=argparse.ArgumentParser();p.add_argument('action',choices=['inventory','scope','discover','ports']);p.add_argument('--interface');p.add_argument('--target');p.add_argument('--confirmed',action='store_true');a=p.parse_args()
+try:
+ if a.action in ('discover','ports') and not a.confirmed:raise ValueError('Prepare and confirm this probe through sensei-actions first')
+ result=n.inventory() if a.action=='inventory' else {'scope':n.scope(a.interface)} if a.action=='scope' else n.scan(a.interface,a.target if a.action=='ports' else None)
+ print(json.dumps(result))
+except (ValueError,OSError,subprocess.SubprocessError) as error:print(json.dumps({'error':str(error)}));sys.exit(1)

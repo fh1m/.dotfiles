@@ -1,6 +1,8 @@
 pragma Singleton
 
+import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Hyprland
 import qs.services
 import qs.config
@@ -130,6 +132,15 @@ Singleton {
     property int instrumentPage:0
     property string instrumentProject:""
     property string instrumentHost:""
+    property bool instrumentLoaded:false
+    FileView {id:instrumentSettings;path:Quickshell.env("HOME")+"/.config/sensei-den/instrument.json";printErrors:false
+        onLoaded:{try{const d=JSON.parse(text());if(["normal","coding","simulation","hardware"].includes(d.mode))root.instrumentMode=d.mode;if(typeof d.project==="string")root.instrumentProject=d.project;}catch(e){}root.instrumentLoaded=true;}
+        onLoadFailed:root.instrumentLoaded=true
+    }
+    function saveInstrument():void{if(instrumentLoaded)instrumentSettings.setText(JSON.stringify({version:1,mode:instrumentMode,project:instrumentProject}));}
+    onInstrumentModeChanged:saveInstrument()
+    onInstrumentProjectChanged:saveInstrument()
+    property string instrumentMode:"normal"
     property string instrumentKind:"engineering"
     property bool instrumentPinned:false
     property var instrumentPrevious:({name:"",output:""})

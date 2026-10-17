@@ -16,7 +16,7 @@ ChamferPanel {
     default property alias body: content.data
     property alias headerRight: right.data
 
-    readonly property real padding: 14
+    readonly property real padding: 18
 
     implicitWidth: 380
     chamfer: Theme.radiusPanel
@@ -31,15 +31,15 @@ ChamferPanel {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: root.padding
-        height: root.greeting === "" ? 38 : 50
-        ChamferPanel {anchors.fill:parent;chamfer:Theme.radiusSmall;scanlines:false;fillColor:Theme.surfaceOne;borderColor:Theme.rule;borderWidth:1}
+        height: root.greeting === "" ? 44 : 60
+
         Rectangle {anchors.left:parent.left;anchors.top:parent.top;anchors.topMargin:-8;width:30;height:2;color:root.headerAccent}
 
         Row {
             anchors.left: parent.left
             anchors.leftMargin: 8
             anchors.top: parent.top
-            anchors.topMargin: 4
+            anchors.topMargin: 8
             spacing: 8
 
             ChamferPanel {visible:root.hasTitleGlyph;chamfer:Theme.radiusSmall;scanlines:false;width:27;height:27;fillColor:Theme.ink;borderColor:Theme.rule;borderWidth:1
@@ -48,12 +48,14 @@ ChamferPanel {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                pixelSize: 15
+                pixelSize: 16
                 font.family: Appearance.font.heading
                 font.capitalization: Font.MixedCase
                 font.letterSpacing: 0
-                font.weight: Font.DemiBold
+                font.weight: Font.Medium
                 color: Theme.widgetText
+                width:Math.max(80,header.width-right.width-36-(root.hasTitleGlyph?36:0)-(root.katakana!==""?100:0))
+                elide:Text.ElideRight
                 text: root.titleText
             }
 

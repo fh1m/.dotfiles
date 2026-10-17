@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+"""One wallpaper owner: awww scenes with live QML fallback and private preferences."""
+import argparse,json,os,socket,subprocess,sys,time
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+import engineering as e
+from den_layout import roles
+home=Path.home();config=home/'.config/sensei-den/story.json';state=home/'.local/state/sensei-den/story-ready.json';assets=home/'.local/share/sensei-den/story'
+def command(argv):return subprocess.check_output(argv,text=True,stderr=subprocess.DEVNULL,timeout=8)
+def ready(outputs):e.save(state,{'version':1,'outputs':outputs,'at':time.time()})
+def apply():
+ rows=json.loads(command(['hyprctl','-i','0','monitors','-j']));mapped=roles(rows);command(['awww','query'])
+ cfg=e.read(config,{});reduced=e.read(home/'.config/sensei-den/companion.json',{}).get('reducedMotion',False)
+ previous=e.read(state,{}).get('outputs',[]);applied=[]
+ for m in rows:
+  role=next((r for r,v in mapped.items() if v['name']==m['name']),'main')
+  scene=('homie' if socket.gethostname().split('.')[0]=='homie' else 'arete') if role=='main' else role
+  path=assets/(scene+'-v1.png')
+  override=cfg.get('overrides',{}).get(m['name'])
+  if override:path=Path(override).expanduser()
+  if not path.is_file():continue
+  command(['awww','img','--outputs',m['name'],'--filter','Nearest','--transition-type','none' if reduced or m['name'] not in previous else 'fade','--transition-duration','0.7',str(path)])
+  applied.append(m['name'])
+ ready(applied)
+ return rows
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=['enable','disable','apply','watch','status']);a=p.parse_args()
+try:
+ if a.action=='enable':
+  e.save(config,dict(e.read(config,{}),enabled=True));command(['systemctl','--user','daemon-reload']);command(['systemctl','--user','enable','--now','sensei-story.service']);print(json.dumps({'enabled':True}))
+ elif a.action=='disable':
+  ready([]);e.save(config,dict(e.read(config,{}),enabled=False));command(['systemctl','--user','disable','--now','sensei-story.service']);subprocess.run(['systemctl','--user','stop','sensei-awww.service'],check=False);print(json.dumps({'enabled':False,'note':'Original QML wallpaper choices restored'}))
+ elif a.action=='status':print(json.dumps(e.read(state,{'outputs':[]})))
+ elif a.action=='apply':apply();print(json.dumps(e.read(state)))
+ else:
+  signature=None;healthy=False
+  while e.read(config,{}).get('enabled',False):
+   try:
+    rows=json.loads(command(['hyprctl','-i','0','monitors','-j']));current=[(m['name'],m['width'],m['height'],m['scale']) for m in rows]
+    command(['awww','query'])
+    if current!=signature or not healthy:apply();signature=current;healthy=True
+   except (OSError,ValueError,subprocess.SubprocessError):
+    if healthy or e.read(state,{}).get('outputs'):ready([])
+    healthy=False
+   time.sleep(5)
+except (OSError,ValueError,subprocess.SubprocessError) as error:
+ ready([]);print(json.dumps({'error':str(error)}));sys.exit(1)

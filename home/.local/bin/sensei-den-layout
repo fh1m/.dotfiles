@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""Private cross-host physical map with fail-open input reconfiguration."""
+import argparse,json,sys,subprocess,shlex,time
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+import den_geometry as g
+import engineering as e
+p=argparse.ArgumentParser();p.add_argument('verb',choices=['list','save','receive']);p.add_argument('--x',type=int);p.add_argument('--y',type=int);p.add_argument('--geometry');a=p.parse_args()
+home=Path.home();path=home/'.config/sensei-den/geometry.json';private=home/'.local/state/homie-control'
+def run(argv):return subprocess.check_output(argv,text=True,stderr=subprocess.PIPE,timeout=10)
+def peer(argv):return run(['ssh','-n','-F',str(private/'client.conf'),'homie',shlex.join(argv)])
+try:
+ value=g.load()
+ if a.verb=='receive':
+  if e.machine()!='homie':raise ValueError('Only the receiver accepts geometry replication')
+  value=g.validate(json.loads(a.geometry or '{}'));e.save(path,value);print(json.dumps({'geometry':value}));raise SystemExit(0)
+ if a.verb=='save':
+  if e.machine()!='arete':raise ValueError('Edit the physical Den map on Arete')
+  if a.x is None or a.y is None:raise ValueError('Both coordinates are required')
+  if not (private/'input/range-version').is_file():raise ValueError('Partial-edge input support has not been deployed; existing settings preserved')
+  old=value;value=g.validate(dict(version=1,homie=dict(value['homie'],x=a.x,y=a.y)))
+  peer(['test','-f',str(private/'input/range-version')])
+  was_running=subprocess.run(['systemctl','--user','is-active','--quiet','den-input']).returncode==0
+  e.save(home/'.local/state/sensei-den/geometry-before.json',old)
+  unit='den-layout-guard-'+str(int(time.time()))
+  run(['systemd-run','--user','--unit='+unit,'--on-active=20s','--collect',str(home/'.local/bin/den-control'),'home'])
+  try:
+   run([str(home/'.local/bin/den-control'),'home']);peer(['systemctl','--user','stop','den-input'])
+   peer([str(home/'.local/bin/sensei-den-layout'),'receive','--geometry',json.dumps(value)])
+   e.save(path,value)
+   peer(['systemctl','--user','start','den-input'])
+   if was_running:run([str(home/'.local/bin/den-control'),'start'])
+   run(['systemctl','--user','stop',unit+'.timer'])
+  except (OSError,ValueError,subprocess.SubprocessError):
+   e.save(path,old)
+   try:peer([str(home/'.local/bin/sensei-den-layout'),'receive','--geometry',json.dumps(old)])
+   except (OSError,subprocess.SubprocessError):pass
+   raise ValueError('Input update failed; Arete remains released. Previous geometry restored locally; check Homie before resuming.')
+  print(json.dumps(dict(geometry=value,note='Physical map and input links applied. Emergency release remains Ctrl+Alt+Esc; triple Ctrl pauses/resumes.')))
+ else:
+  rows=json.loads(run(['hyprctl','-i','0','monitors','-j']))
+  print(json.dumps(dict(geometry=value,outputs=rows,host=e.machine())))
+except (ValueError,OSError,StopIteration,subprocess.SubprocessError) as error:print(json.dumps({'error':str(error)}));sys.exit(1)

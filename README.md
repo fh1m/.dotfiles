@@ -22,7 +22,7 @@ I'm **fh1m**. I build underwater robots and work through the software, sensors, 
 
 **Arete** is the laptop that comes along. **Homie** is the home PC with the storage and a dedicated display GPU. Docked, they become one place to read, derive, code, test, and occasionally remember to eat.
 
-The little hoodie engineer is an illustrated stand-in. The desktops are real.
+Zondo is my illustrated deskbuddy, with a little life of his own. The desktops are real.
 
 ## 01 / Open the code. Keep the context.
 
@@ -124,7 +124,6 @@ Ubuntu-based robotics environments live in containers. The host remains the dail
 
 ## 08 / A little less solemn
 
-<img src="home/.local/share/sensei-companion/night-shift.png" alt="An original illustrated night shift: fh1m tinkers with a small underwater robot while a pink cable connects the Den" width="100%">
 
 He escaped the README.
 
@@ -181,7 +180,6 @@ python3 scripts/doctor.py
 
 <img src="docs/assets/digital-den/den-signal-v3.svg" alt="Slow animated pink signals connecting the five panels of the Den" width="100%">
 
-![An illustrated night in fh1m’s robotics den, with a waving miniature engineer, underwater robot and connected workstations](docs/assets/digital-den/den-night-shift-v3.png)
 
 <sub>A bespoke illustration, not a screenshot. The live desktop captures above show what actually runs.</sub>
 
@@ -204,17 +202,12 @@ Some nights call for a derivation. Some call for an album and a notebook. The De
 <details>
 <summary>Meet Zondo / a tiny off-duty engineer</summary>
 
-<img src="home/.local/share/sensei-companion/zondo-play-v1.png" alt="Zondo’s original paper-plane, gear-balancing, high-five and confetti animation atlas" width="580">
 
 Twenty-four new activities. Tiny engineering receipts. A tea break that never files a timesheet.
 
-<img src="docs/assets/digital-den/engineering/zondo-play.png" alt="The live Zondo play corner: high five, paper boat, tea, logic puzzle and silent rhythm" width="740">
 
-<img src="home/.local/share/sensei-companion/zondo-life-v2.png" alt="Zondo’s original sixteen-pose atlas: dance, books, coffee, robots, sketching, stargazing and a well-earned nap" width="580">
 
-<img src="home/.local/share/sensei-companion/den-welcome-v2.png" alt="Original nighttime robotics workbench artwork used behind the fullscreen Den arrival typography" width="100%">
 
-<sub>THE DEN AFTER HOURS // ORIGINAL ARRIVAL ART · LIVE TEXT IS RENDERED BY THE DESKTOP</sub>
 
 Original illustrated sprites used by the live desktop. He climbs familiar rooftops, explores exposed wallpaper across Arete and Homie, takes a bar perch when the desk is busy, and never sits on your code. Talk offers lightweight offline replies; Remember keeps only the words you explicitly save. No online model is running. “More like this” and “Retire this line” keep his repertoire yours. [Controls and privacy](docs/digital-den/ZONDO.md).
 

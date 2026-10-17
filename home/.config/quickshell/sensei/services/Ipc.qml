@@ -60,7 +60,7 @@ Scope {
         function state():string {return JSON.stringify({page:ShellState.systemPage,networkPage:DesktopExtras.networkPage,packages:DesktopExtras.packages.total||0,updates:(DesktopExtras.packages.updates||[]).length,checked:DesktopExtras.packages.checked||0,loading:DesktopExtras.packagesLoading,error:DesktopExtras.packagesError});}
         function page(index: string): string {
             const value = Number(index);
-            if (value < 0 || value > 4 || !Number.isInteger(value)) return "page: 0 Quick, 1 Hardware, 2 Robotics, 3 Network, 4 Packages";
+            if (value < 0 || value > 5 || !Number.isInteger(value)) return "page: 0 Quick, 1 Hardware, 2 Robotics, 3 Network, 4 Packages, 5 Den";
             ShellState.systemPage = value;
             ShellState.dropdownAnchorX = ShellState.anchorFor("system");
             ShellState.openDropdown("system");
@@ -234,6 +234,11 @@ Scope {
         function state(): string { return JSON.stringify({events:CalendarDesk.events.length,error:CalendarDesk.error,clocks:CalendarDesk.clocks.length}); }
     }
     readonly property bool codeOpen: CodeDesk.opened
+    IpcHandler {target:"instrument";
+        function open(mode:string):void{if(["normal","simulation","coding","hardware"].includes(mode)){ShellState.instrumentMode=mode;ShellState.pinInstrument("context");}}
+        function close():void{ShellState.releaseInstrument();}
+        function state():string{return JSON.stringify({pinned:ShellState.instrumentPinned,mode:ShellState.instrumentMode,project:ShellState.instrumentProject});}
+    }
     IpcHandler {target:"engineering-receipts";function open(host:string,id:string):void{if(!["arete","homie"].includes(host))return;ShellState.engineeringSelectedHost=host;ShellState.engineeringSelectedJob=id;ShellState.openDropdown("engineering");}}
     readonly property var dropdownNames: ["engineering", "ethernet", "camera", "code", "docker", "spotify", "usb", "phone", "weather", "comic", "ident", "wifi", "bluetooth", "power", "system", "monitor", "clipboard", "external-display", "displays", "sound", "calendar", "notifications"]
 
