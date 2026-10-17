@@ -67,3 +67,11 @@ its recent IDs were observed on Homie after handoff. Music onset now explicitly
 starts the dance; subsequent music activities include guitar and stretching.
 Both hardware-profile installer previews reported no changes, both Git worktrees
 were clean, and both hosts reported no failed user units at final verification.
+
+## Talk, memory and the whole Den
+
+Zondo lives across Arete and Homie. `sensei-den companion tour` advances his exclusive travel lease; the shared repertoire counter follows him. Offline dialogue does not confine him to one machine.
+
+**System → Digital Den** offers Talk and Remember locally. Talk is deliberately a small cue-based offline interaction, not a language model or a claim of human understanding. Ordinary messages are not retained. Remember stores the exact words you explicitly save in a private host-local file (`~/.config/sensei-den/zondo-personal.json`); it does not publish or automatically synchronize those personal words. Recent curated-line IDs do travel between machines to avoid restarting the same sequence.
+
+The fullscreen arrival now uses original `den-welcome-v2.png` artwork with native scalable typography. `zondo-climb-v1.png` supplies four climbing poses. Roof locations are curated for the familiar building wallpaper, checked against current windows; other wallpaper keeps the safe placement policy. No screen-analysis model runs in the background.

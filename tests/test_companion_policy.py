@@ -12,6 +12,11 @@ class CompanionPolicy(unittest.TestCase):
     def js(self, expression):
         code="const vm=require('vm'),fs=require('fs');let c={};vm.createContext(c);vm.runInContext(fs.readFileSync(process.argv[1],'utf8'),c);c.notes=JSON.parse(fs.readFileSync(process.argv[1].replace('ZondoLogic.js','notes.json'),'utf8'));console.log(JSON.stringify(vm.runInContext(process.argv[2],c)));"
         return json.loads(subprocess.check_output(['node','-e',code,str(JS),expression],text=True))
+    def test_rooftops_require_known_wallpaper_and_clear_space(self):
+        self.assertIsNone(self.js("roofPlace('/unknown.png',1920,1080,256,208,[],1)"))
+        self.assertIsNone(self.js("roofPlace('/wallhaven-1q2p3v.png',1920,550,256,208,[],1)"))
+        self.assertIsNone(self.js("roofPlace('/wallhaven-1q2p3v.png',1920,1080,256,208,[{x:0,y:0,w:1920,h:1080}],1)"))
+        self.assertEqual(self.js("roofPlace('/wallhaven-1q2p3v.png',1920,1080,256,208,[],1)")['scene'],'roof')
     def test_full_window_has_no_safe_spot(self):
         self.assertFalse(self.js('place(1920,1080,96,96,[{x:0,y:0,w:1920,h:1080}],0)')['available'])
     def test_window_occlusion_avoided_on_scaled_and_small_displays(self):

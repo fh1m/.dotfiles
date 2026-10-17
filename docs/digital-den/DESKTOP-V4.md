@@ -34,3 +34,9 @@ Both assets were generated with built-in imagegen and visually inspected. No una
 - `zondo-climb-v1.png`: 2172×724 transparent four-pose horizontal strip, based on the existing Zondo sprite. Prompt: black-haired chibi engineer, black hoodie and raspberry headphones/sneakers; reach, grip/pull, knee raised, seated dangling legs; invisible ledge, consistent scale, transparent generous padding, no labels/scenery. Used by a lightweight four-frame climbing animation.
 
 Roof placement is curated for the existing building wallpaper, with aspect and window-occlusion checks. Unknown wallpaper uses the established safe placement policy; no continuous screen vision runs.
+
+## Cross-host deployment / remaining boundary
+
+Shared revision `7478a8d` deployed on both hosts. A desktop-shell-only restart was necessary to discover newly added singleton types; native input was not restarted. Both main shells report Configuration Loaded. Homie correctly reports its 1 Gb/s wired link; Arete reports its 100 Mb/s link. The full shared suite passed 308 tests. Arete's live music test passed again after the restart.
+
+Homie's optional `nwg-displays` installation is blocked by sudo rejecting the previously supplied password; the user has been asked to install that package locally. Its existing monitor routing is preserved. Audio-loopback subjective listening, actual shutdown, and physical display unplugging were not performed as destructive/disruptive acceptance tests.
