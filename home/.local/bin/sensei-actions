@@ -29,7 +29,7 @@ def main():
   try:jobs=e.command([str(e.home()/'.local/bin/sensei-den'),'job','list'])
   except (ValueError,OSError,subprocess.SubprocessError):jobs=[]
   inventory=e.hardware_inventory()
-  return {'host':e.machine(),'projects':e.projects(),'jobs':jobs,'hardware':inventory['devices'],'availableHardware':inventory.get('available',[])}
+  return {'host':e.machine(),'projects':e.projects(),'jobs':jobs,'hardware':inventory['devices'],'availableHardware':inventory.get('available',[]),'capacity':{'cpuCount':__import__('os').cpu_count(),'load':__import__('os').getloadavg()[0]}}
  if a.verb=='list':return {'version':1,'actions':e.ACTIONS}
  if a.verb=='projects':return e.projects()
  if a.verb=='receipts':return e.read(e.state()/'receipts.json',{'version':1,'sequence':0,'events':[]})

@@ -19,9 +19,9 @@ Column {
  Text {width:parent.width;text:root.puzzles[root.puzzle].question;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paper}
  Row {spacing:8
   Repeater {model:root.puzzles[root.puzzle].answers
-   ControlTile {required property string modelData;required property int index;label:modelData;onActivated:root.feedback=(index===root.puzzles[root.puzzle].correct?"Yes. ":"Try the mechanism: ")+root.puzzles[root.puzzle].why}
+   ControlTile {required property string modelData;required property int index;implicitWidth:120;label:modelData;onActivated:root.feedback=(index===root.puzzles[root.puzzle].correct?"Yes. ":"Try the mechanism: ")+root.puzzles[root.puzzle].why}
   }
-  ControlTile {label:"Next puzzle";onActivated:{root.puzzle=(root.puzzle+1)%root.puzzles.length;root.feedback="Make a prediction before choosing."}}
+  ControlTile {implicitWidth:112;label:"Next puzzle";onActivated:{root.puzzle=(root.puzzle+1)%root.puzzles.length;root.feedback="Make a prediction before choosing."}}
  }
  Row {spacing:8
   ControlTile {label:root.playing?"Stop rhythm":"Start silent rhythm";selected:root.playing;onActivated:{root.playing=!root.playing;root.pulses=0;root.beat=Date.now();}}

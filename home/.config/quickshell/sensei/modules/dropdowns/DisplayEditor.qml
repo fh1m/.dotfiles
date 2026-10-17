@@ -39,7 +39,7 @@ Column {
  DeskComboBox {width:parent.width;model:root.draft;textRole:"name";currentIndex:root.selected;onActivated:index=>root.selected=index;enabled:root.token===""}
  Row {width:parent.width;spacing:8;enabled:root.token===""
   DeskComboBox {width:parent.width*.52;model:(root.actual[root.selected]?.availableModes||[]).map(s=>({value:s.replace("Hz",""),label:s.replace("x"," × ").replace("@"," · ")}));textRole:"label";currentIndex:Math.max(0,model.findIndex(m=>m.value===root.current.mode));onActivated:root.change({mode:model[currentIndex].value})}
-  DeskComboBox {width:parent.width*.22;model:[1,1.25,1.5,1.75,2,2.5,3];currentIndex:Math.max(0,model.indexOf(root.current.scale));onActivated:root.change({scale:model[currentIndex]})}
+  DeskComboBox {width:parent.width*.22;model:[1,1.25,1.5,1.75,2,2.5,3].map(v=>({value:v,label:Math.round(v*100)+"%"}));textRole:"label";currentIndex:Math.max(0,model.findIndex(m=>m.value===root.current.scale));onActivated:root.change({scale:model[currentIndex].value})}
   DeskComboBox {width:parent.width*.22-16;model:["Normal","90°","180°","270°"];currentIndex:Math.min(3,root.current.transform||0);onActivated:root.change({transform:currentIndex})}
  }
  Row {spacing:8;enabled:root.token===""

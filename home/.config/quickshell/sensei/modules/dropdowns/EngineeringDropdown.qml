@@ -13,6 +13,8 @@ DropdownFrame {
  property int projectIndex:0
  readonly property var project:snapshot.projects?.[projectIndex]||({})
  property var prepared:({})
+ property bool needsRefresh:false
+ property bool linkHardwareProject:false
  property bool healthy:true
  property double updatedAt:0
  property string report:"Choose a project and a reviewed task. Host choice is always explicit."
@@ -28,14 +30,14 @@ DropdownFrame {
  readonly property bool active:root.instrument?ShellState.instrumentPinned&&ShellState.instrumentKind==="engineering":ShellState.dropdown==="engineering"&&ShellState.dropdownOriginScreen===root.outputName
  onActiveChanged:if(active)refresh()
  Timer {interval:3000;repeat:true;running:root.active&&root.healthy&&(root.snapshot.jobs||[]).some(j=>["queued","running"].includes(j.state));onTriggered:root.refresh()}
- Process {id:worker;onExited:if(root.deferred.length){const next=root.deferred;root.deferred=[];root.request(next,"run");}stdout:StdioCollector {onStreamFinished:{try{const row=JSON.parse(text);if(row.error){root.healthy=false;root.report=row.error;root.prepared={};return;}if(root.operation==="overview"){root.healthy=true;root.updatedAt=Date.now();root.snapshot=row;if(root.instrument&&ShellState.instrumentProject)root.projectIndex=Math.max(0,row.projects.findIndex(p=>p.id===ShellState.instrumentProject));root.projectIndex=Math.min(root.projectIndex,Math.max(0,row.projects.length-1));if(ShellState.engineeringSelectedJob){root.deferred=["run","job.logs","--params",JSON.stringify({id:ShellState.engineeringSelectedJob})];ShellState.engineeringSelectedJob="";}}else if(root.operation==="prepare"){if(row.confirmation){root.prepared=row;root.report="Review: "+JSON.stringify(row.plan);}else root.deferred=["run",row.plan.action,"--params",JSON.stringify(row.plan.params)];}else{root.report=JSON.stringify(row);root.prepared={};}}catch(e){root.report="Invalid or unavailable backend response";}}}}
+ Process {id:worker;onExited:if(root.deferred.length){const next=root.deferred;root.deferred=[];root.request(next,"run");}else if(root.needsRefresh){root.needsRefresh=false;root.refresh();}stdout:StdioCollector {onStreamFinished:{try{const row=JSON.parse(text);if(row.error){root.healthy=false;root.report=row.error;root.prepared={};return;}if(root.operation==="overview"){root.healthy=true;root.updatedAt=Date.now();root.snapshot=row;if(root.instrument&&ShellState.instrumentProject)root.projectIndex=Math.max(0,row.projects.findIndex(p=>p.id===ShellState.instrumentProject));root.projectIndex=Math.min(root.projectIndex,Math.max(0,row.projects.length-1));if(ShellState.engineeringSelectedJob){root.deferred=["run","job.logs","--params",JSON.stringify({id:ShellState.engineeringSelectedJob})];ShellState.engineeringSelectedJob="";}}else if(root.operation==="prepare"){if(row.confirmation){root.prepared=row;root.report="Review: "+JSON.stringify(row.plan);}else root.deferred=["run",row.plan.action,"--params",JSON.stringify(row.plan.params)];}else{root.report=JSON.stringify(row);root.prepared={};root.needsRefresh=true;}}catch(e){root.report="Invalid or unavailable backend response";}}}}
  ScrollView {id:engineeringScroll;width:parent.width;height:Math.max(200,Math.min(680,(root.origin?.height??1080)-170));contentWidth:availableWidth;contentHeight:engineeringBody.implicitHeight;clip:true
  Column {id:engineeringBody;width:engineeringScroll.availableWidth;spacing:10
-  Row {spacing:8
-   ControlTile {label:ShellState.instrumentPinned?"Return from instrument":"Pin on ScreenPad";onActivated:{if(ShellState.instrumentPinned)ShellState.releaseInstrument();else{ShellState.instrumentPage=root.page;ShellState.instrumentProject=root.project.id||"";ShellState.instrumentHost=root.targetHost;ShellState.pinInstrument("engineering");}}}
-   ControlTile {label:"Projects / queue";selected:root.page===0;onActivated:root.page=0}
-   ControlTile {label:"Zondo";selected:root.page===2;onActivated:root.page=2}
-   ControlTile {label:"Hardware";selected:root.page===1;onActivated:root.page=1}
+  Row {width:parent.width;spacing:8
+   ControlTile {implicitWidth:(parent.width-24)/4;label:ShellState.instrumentPinned?"Return from instrument":"Pin on ScreenPad";onActivated:{if(ShellState.instrumentPinned)ShellState.releaseInstrument();else{ShellState.instrumentPage=root.page;ShellState.instrumentProject=root.project.id||"";ShellState.instrumentHost=root.targetHost;ShellState.pinInstrument("engineering");}}}
+   ControlTile {implicitWidth:(parent.width-24)/4;label:"Projects / queue";selected:root.page===0;onActivated:root.page=0}
+   ControlTile {implicitWidth:(parent.width-24)/4;label:"Zondo";selected:root.page===2;onActivated:root.page=2}
+   ControlTile {implicitWidth:(parent.width-24)/4;label:"Hardware";selected:root.page===1;onActivated:root.page=1}
   }
   ZondoPlayground {width:parent.width;visible:root.page===2}
   Column {width:parent.width;visible:root.page===1;spacing:8
@@ -44,7 +46,12 @@ DropdownFrame {
     DeskTextField {id:hardwareId;width:(parent.width-8)/2;placeholderText:"Stable ID, e.g. imu-adapter";maximumLength:80}
     DeskTextField {id:hardwareLabel;width:(parent.width-8)/2;placeholderText:"Friendly device name";maximumLength:120}
    }
-   ControlTile {label:"Register passport…";enabled:hardwareId.text.trim()!==""&&hardwareLabel.text.trim()!==""&&hardwareNode.currentIndex>=0&&!worker.running;onActivated:root.action("hardware.register",{id:hardwareId.text.trim(),label:hardwareLabel.text.trim(),node:root.snapshot.availableHardware[hardwareNode.currentIndex].node})}
+   Row {width:parent.width;spacing:8
+    DeskTextField {id:hardwareBaud;width:(parent.width-8)/2;placeholderText:"Expected baud (optional)"}
+    DeskTextField {id:hardwareFirmware;width:(parent.width-8)/2;placeholderText:"Known firmware version (optional)";maximumLength:160}
+   }
+   ControlTile {label:"Link selected project";selected:root.linkHardwareProject;enabled:!!root.project.id;onActivated:root.linkHardwareProject=!root.linkHardwareProject}
+   ControlTile {label:"Register passport…";enabled:hardwareId.text.trim()!==""&&hardwareLabel.text.trim()!==""&&hardwareNode.currentIndex>=0&&!worker.running;onActivated:{let data={id:hardwareId.text.trim(),label:hardwareLabel.text.trim(),node:root.snapshot.availableHardware[hardwareNode.currentIndex].node};if(hardwareBaud.text)data.baud=Number(hardwareBaud.text);if(hardwareFirmware.text.trim())data.firmware=hardwareFirmware.text.trim();if(root.linkHardwareProject)data.project=root.project.id;root.action("hardware.register",data)}}
 
    Repeater {model:root.snapshot.hardware||[]
     Text {required property var modelData;width:parent.width;text:(modelData.label||modelData.id)+" · "+(modelData.ambiguous?"Ambiguous identity":modelData.connected?"Connected":"Disconnected")+" · "+(modelData.project||"No project")+"\n"+(modelData.nodes||[]).map(n=>n.node).join(", ");wrapMode:Text.Wrap;textFormat:Text.PlainText;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper}
@@ -74,6 +81,11 @@ DropdownFrame {
     }
    }
   }
+  Row {width:parent.width;spacing:8;visible:root.page===0&&!!root.project.id
+   DeskTextField {id:taskTitle;width:parent.width*.52;placeholderText:"Next project task";maximumLength:160}
+   DeskTextField {id:taskDate;width:parent.width*.24;placeholderText:"YYYY-MM-DD";text:Qt.formatDateTime(new Date(),"yyyy-MM-dd")}
+   ControlTile {implicitWidth:120;label:"Add task…";enabled:taskTitle.text.trim()!==""&&!worker.running;onActivated:root.action("planner.task",{project:root.project.id,title:taskTitle.text.trim(),date:taskDate.text})}
+  }
   Text {width:parent.width;text:root.report;textFormat:Text.PlainText;wrapMode:Text.Wrap;maximumLineCount:5;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper}
   Row {visible:!!root.prepared.confirmation;spacing:8
    ControlTile {label:"Confirm on "+root.targetHost;selected:true;enabled:!worker.running;onActivated:root.request(["run",root.prepared.plan.action,"--params",JSON.stringify(root.prepared.plan.params),"--confirmation",root.prepared.confirmation],"run")}
@@ -85,7 +97,7 @@ DropdownFrame {
     Repeater {model:(root.snapshot.jobs||[]).slice().reverse()
      Rectangle {required property var modelData;width:jobRows.width;height:100;radius:6;color:Theme.surfaceOne;border.color:Theme.rule
       Column {anchors.fill:parent;anchors.margins:8;spacing:4
-       Text {width:parent.width;text:modelData.id+" · "+modelData.state;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:modelData.state==="failed"?Theme.signalRed:Theme.paper}
+       Text {width:parent.width;text:modelData.id+" · "+({succeeded:"passed",queued:"pending"}[modelData.state]||modelData.state);textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:modelData.state==="failed"?Theme.signalRed:Theme.paper}
        Text {width:parent.width;text:(modelData.command||[]).join(" ");textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
        Text {text:"Inputs "+(modelData.inputs||[]).length+" · Artifacts "+(modelData.artifacts||[]).length+" · Unit "+(modelData.unitState||"unknown");font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
        Row {spacing:6

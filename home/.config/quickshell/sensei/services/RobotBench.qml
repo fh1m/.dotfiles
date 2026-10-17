@@ -19,7 +19,9 @@ Singleton {
             }
         }
     }
-    Process {running:true;command:[Quickshell.env("HOME")+"/.local/bin/sensei-hardware","watch"];stdout:SplitParser{onRead:line=>{try{root.passports=JSON.parse(line).devices||[];deviceEvent.restart();}catch(e){}}}}
+    FileView {path:Quickshell.env("HOME")+"/.config/sensei-engineering/hardware.json";watchChanges:true;printErrors:false;onFileChanged:{reload();hardwareWatch.running=false;hardwareRestart.restart();}}
+    Timer {id:hardwareRestart;interval:250;onTriggered:hardwareWatch.running=true}
+    Process {id:hardwareWatch;running:true;command:[Quickshell.env("HOME")+"/.local/bin/sensei-hardware","watch"];stdout:SplitParser{onRead:line=>{try{root.passports=JSON.parse(line).devices||[];deviceEvent.restart();}catch(e){}}}}
     Timer {id:deviceEvent;interval:180;onTriggered:root.refresh()}
     Timer {
         interval: ShellState.dropdown === "monitor" ? 1000 : 2000

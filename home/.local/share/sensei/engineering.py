@@ -145,7 +145,8 @@ ACTIONS={
  'job.artifacts':dict(title='Read owned job artifacts',effect='read',required=['id']),
  'job.cancel':dict(title='Cancel owned job',effect='execution',required=['id']),
  'job.launch':dict(title='Run reviewed project task',effect='execution',required=['project','task']),
- 'hardware.register':dict(title='Register a hardware passport',effect='write',required=['id','node','label']),
+ 'planner.task':dict(title='Add a dated project task',effect='write',required=['project','title','date']),
+ 'hardware.register':dict(title='Register a hardware passport',effect='write',required=['id','node','label'],optional=['project','baud','firmware','test_task']),
  'hardware.list':dict(title='Inspect registered hardware',effect='read',required=[]),
 }
 
@@ -154,13 +155,17 @@ def validate(action, params):
     if action not in ACTIONS:raise ValueError('Unknown action')
     if not isinstance(params,dict):raise ValueError('Parameters must be an object')
     spec=ACTIONS[action]
-    if set(params)!=set(spec['required']):raise ValueError('Missing or unexpected action parameters')
-    for key in spec['required']:
-        if key in ('node','label'):
+    if not set(spec['required']).issubset(params) or set(params)-set(spec['required']+spec.get('optional',[])):raise ValueError('Missing or unexpected action parameters')
+    for key in params:
+        if key=='baud':
+            if type(params[key]) is not int or not 1<=params[key]<=12000000:raise ValueError('Invalid expected baud rate')
+            continue
+        if key in ('node','label','title','date','firmware'):
             if not isinstance(params[key],str) or not params[key].strip() or len(params[key])>200:raise ValueError('Invalid hardware field')
         else:identifier(params[key])
+    if 'date' in params:datetime.date.fromisoformat(params['date'])
     p=project(params['project']) if 'project' in params else None
-    root=checkout(p) if p else None
+    root=checkout(p) if p and action!="hardware.register" else None
     t=task(p,params['task']) if 'task' in params else None
     return dict(action=action,params=params,host=machine(),effect=spec['effect'],
                 checkout=str(root) if root else None,task=t)
@@ -190,9 +195,15 @@ def invoke(action, params, confirmation=None):
         return command([str(binary/'sensei-den'),'job',action.split('.')[1],'--id',params['id']])
     if action=='environment.preflight':return environment_preflight(project(params['project']),params['environment'])
     if action=='ros.health':return ros_health(project(params['project']),params['environment'])
+    if action=='planner.task':
+        return command([str(binary/'sensei-calendar'),'task-save',json.dumps({'title':params['title'],'date':params['date'],'project':params['project']})])
     if action=='project.preflight':return preflight(project(params['project']))
     if action=='hardware.list':return hardware_inventory()
-    if action=='hardware.register':return command([str(binary/'sensei-hardware'),'register',params['id'],'--node',params['node'],'--label',params['label']])
+    if action=='hardware.register':
+        argv=[str(binary/'sensei-hardware'),'register',params['id'],'--node',params['node'],'--label',params['label']]
+        for key,flag in [('project','--project'),('baud','--baud'),('firmware','--firmware'),('test_task','--test-task')]:
+            if key in params:argv+=[flag,str(params[key])]
+        return command(argv)
     if action=='jobs.list':
         return command([str(binary/'sensei-den'),'job','list'])
     if action=='project.open':
