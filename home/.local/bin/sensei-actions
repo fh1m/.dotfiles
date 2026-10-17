@@ -45,7 +45,7 @@ def main():
  if a.verb=='receipts':return e.read(e.state()/'receipts.json',{'version':1,'sequence':0,'events':[]})
  if a.verb=='doctor':
   import shutil
-  return {'version':1,'host':e.machine(),'projects':len(e.projects()),'tools':{x:bool(shutil.which(x)) for x in ('git','tmux','docker','hyprctl','udevadm')},'noesis_ui':all((e.home()/'.local/share/sensei-learning/ui'/name).is_file() for name in ('NoesisStyle.qml','NoesisController.qml')),'noesis_ui_link':(e.home()/'.config/quickshell/sensei/noesis-ui').resolve()==(e.home()/'.local/share/sensei-learning/ui').resolve()}
+  return {'version':1,'host':e.machine(),'projects':len(e.projects()),'tools':{x:bool(shutil.which(x)) for x in ('git','tmux','docker','hyprctl','udevadm','restic')},'noesis_ui':all((e.home()/'.local/share/sensei-learning/ui'/name).is_file() for name in ('NoesisStyle.qml','NoesisController.qml')),'noesis_ui_link':(e.home()/'.config/quickshell/sensei/noesis-ui').resolve()==(e.home()/'.local/share/sensei-learning/ui').resolve()}
  if a.verb=='register':
   e.identifier(a.id);directory=a.directory.expanduser().resolve()
   if not directory.is_dir():raise ValueError('Choose an existing project directory')

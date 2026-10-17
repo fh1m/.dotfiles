@@ -16,7 +16,7 @@ def digest(path):
 
 def command(state, *args, cwd=None):
     executable = shutil.which('restic')
-    if not executable:raise ValueError('Restic unavailable; install packages/learning.txt requirement')
+    if not executable:raise ValueError('Restic unavailable; install the restic requirement in packages/core.txt')
     return subprocess.run([executable, '-r', str(state / 'repository'), '--password-file', str(state / 'password'), *args],
                           cwd=cwd, text=True, capture_output=True, check=True).stdout
 

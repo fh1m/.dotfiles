@@ -72,3 +72,6 @@ qt6ct
 # Graphical display/network editors used by native desktop panels.
 nwg-displays
 nm-connection-editor
+
+# Encrypted Den / Noesis backup and tested restore workflows.
+restic
