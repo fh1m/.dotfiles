@@ -8,6 +8,18 @@ from den_layout import roles
 from den_geometry import load as geometry
 from story_render import render,PLACEMENTS
 home=Path.home();config=home/'.config/sensei-den/story.json';state=home/'.local/state/sensei-den/story-ready.json';assets=home/'.local/share/sensei-den/story';cache=home/'.cache/sensei-den-story'
+def session_environment():
+ # SSH does not inherit graphical-session variables. Read only named variables;
+ # never evaluate shell text or import the rest of the session environment.
+ os.environ.setdefault('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}')
+ if not os.environ.get('WAYLAND_DISPLAY'):
+  try:
+   values=subprocess.check_output(['systemctl','--user','show-environment'],text=True,timeout=3)
+   for line in values.splitlines():
+    key,_,value=line.partition('=')
+    if key=='WAYLAND_DISPLAY' and value and '/' not in value:os.environ[key]=value
+  except (OSError,subprocess.SubprocessError):pass
+session_environment()
 def command(argv,timeout=8):return subprocess.check_output(argv,text=True,stderr=subprocess.DEVNULL,timeout=timeout,env=dict(os.environ,RAYON_NUM_THREADS='2'))
 def ready(outputs,views=None,clips=None,epoch=None):e.save(state,{'version':3,'outputs':outputs,'views':views or {},'clips':clips or {},'nativePlayback':bool(outputs),'panorama':False,'epoch':epoch,'at':time.time()})
 def settings():
