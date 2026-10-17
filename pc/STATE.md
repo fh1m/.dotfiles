@@ -398,3 +398,6 @@ Final acceptance: all 354 repository tests passed on Homie after installing its 
 ## Den native story / 17 October 2026, evening
 
 Homie remained on main at f355044 and passed 366 repository tests. Matching partial-edge sharing builds were deployed with recoverable backups; Arete's repeated bounded crossing tests and directional handoff verified actual input return. No disks, firmware or GPU policy changed. New native-resolution wallpaper source, shared lighthouse story, stronger focus markers and tool refinements are being deployed from the next main commit. Acoustic call intelligibility and physical unattended boot acceptance remain open; successful local file transcription is not a passed microphone call.
+
+
+Native story acceptance: main advanced through 2528cef and 42b5624 on both hosts, installed with the existing hardware-specific installer. Homie passed all 368 tests, plays a 1920×1080 / 128-frame / 16.01-second lighthouse chapter in awww, and has a pre-rendered away variant. Cross-host start epochs match; QML background is unmapped during native playback. Four stronger focus corners are deployed, cursor/watch services remain active, and no failed user units were observed. No storage/firmware changes or reboot occurred.
