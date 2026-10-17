@@ -150,7 +150,7 @@ index a2c7112..95818fa 100644
      EnableEmulation,
      /// synchronize all state
 diff --git a/src/capture.rs b/src/capture.rs
-index 8f739bd..973d815 100644
+index 8f739bd..aa56754 100644
 --- a/src/capture.rs
 +++ b/src/capture.rs
 @@ -37,6 +37,9 @@ pub(crate) enum ICaptureEvent {
@@ -163,25 +163,27 @@ index 8f739bd..973d815 100644
  }
  
  #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-@@ -73,6 +76,8 @@ impl Capture {
+@@ -73,6 +76,9 @@ impl Capture {
          let (event_tx, event_rx) = channel();
          let cancellation_token = CancellationToken::new();
          let capture_task = CaptureTask {
 +            ctrl_taps: CtrlTaps::default(),
 +            den_return_until: None,
++            den_retry_after: None,
              active_client: None,
              backend,
              cancellation_token: cancellation_token.clone(),
-@@ -157,6 +162,8 @@ macro_rules! debounce {
+@@ -157,6 +163,9 @@ macro_rules! debounce {
  }
  
  struct CaptureTask {
 +    ctrl_taps: CtrlTaps,
 +    den_return_until: Option<Instant>,
++    den_retry_after: Option<Instant>,
      active_client: Option<CaptureHandle>,
      backend: Option<input_capture::Backend>,
      cancellation_token: CancellationToken,
-@@ -170,6 +177,7 @@ struct CaptureTask {
+@@ -170,6 +179,7 @@ struct CaptureTask {
  
  impl CaptureTask {
      fn add_capture(&mut self, handle: CaptureHandle, pos: Position, capture_type: CaptureType) {
@@ -189,7 +191,7 @@ index 8f739bd..973d815 100644
          self.captures.push((handle, pos, capture_type));
      }
  
-@@ -281,14 +289,31 @@ impl CaptureTask {
+@@ -281,14 +291,31 @@ impl CaptureTask {
  
                      match event {
                          // connection acknowlegded => set state to Sending
@@ -225,7 +227,7 @@ index 8f739bd..973d815 100644
                          },
                          _ => {}
                      }
-@@ -320,14 +345,39 @@ impl CaptureTask {
+@@ -320,14 +347,42 @@ impl CaptureTask {
          event: (CaptureHandle, CaptureEvent),
      ) -> Result<(), CaptureError> {
          let (handle, event) = event;
@@ -255,6 +257,9 @@ index 8f739bd..973d815 100644
          }
  
          if event == CaptureEvent::Begin {
++            if self.den_retry_after.is_some_and(|until| Instant::now() < until) {
++                return self.release_capture(capture).await;
++            }
 +            // Unlocking may put the local cursor on another capture edge. Do
 +            // not recapture until the return helper has placed it inside a panel.
 +            let guarded = self.den_return_until.is_some_and(|until| Instant::now() < until)
@@ -265,15 +270,24 @@ index 8f739bd..973d815 100644
              self.event_tx
                  .send(ICaptureEvent::CaptureBegin(handle))
                  .expect("channel closed");
-@@ -347,6 +397,7 @@ impl CaptureTask {
+@@ -345,8 +400,16 @@ impl CaptureTask {
+             return Ok(());
+         }
  
++        // Adjacent barriers can both begin at a shared monitor corner. Once
++        // captured, another outgoing handle must not replace its generation.
++        // Only an explicit release may select a different route.
++        if self.active_client.is_some() && self.active_client != Some(handle) {
++            return Ok(());
++        }
++
          // activated a new client
          if event == CaptureEvent::Begin && Some(handle) != self.active_client {
 +            self.ctrl_taps=CtrlTaps::default();
              self.state = State::WaitingForAck;
              self.active_client.replace(handle);
              self.event_tx
-@@ -368,7 +419,7 @@ impl CaptureTask {
+@@ -368,7 +431,7 @@ impl CaptureTask {
          if let Err(e) = self.conn.send(event, handle).await {
              const DUR: Duration = Duration::from_millis(500);
              debounce!(PREV_LOG, DUR, log::warn!("releasing capture: {e}"));
@@ -282,15 +296,16 @@ index 8f739bd..973d815 100644
          }
          Ok(())
      }
-@@ -376,6 +427,7 @@ impl CaptureTask {
+@@ -376,6 +439,8 @@ impl CaptureTask {
      async fn release_capture(&mut self, capture: &mut InputCapture) -> Result<(), CaptureError> {
          // If we have an active client, notify them we're leaving
          if let Some(handle) = self.active_client.take() {
++            self.den_retry_after = Some(Instant::now() + Duration::from_millis(250));
 +            self.event_tx.send(ICaptureEvent::CaptureReleased).expect("channel closed");
              // Synthesize key-up events for every key still held in the
              // capture's pressed_keys set BEFORE sending Leave. Without
              // this, pressing the release-bind chord (typically all four
-@@ -469,3 +521,41 @@ impl<T> Drop for DropGuard<T> {
+@@ -469,3 +534,41 @@ impl<T> Drop for DropGuard<T> {
              .expect("channel closed");
      }
  }

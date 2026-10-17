@@ -20,7 +20,7 @@ def main(cycles=3,with_input=False):
       inst=json.loads(hypr("instances","-j"))[0]
       import os
       env=dict(os.environ,WAYLAND_DISPLAY=inst['wl_socket'],HYPRLAND_INSTANCE_SIGNATURE=inst['instance'])
-      for n in range(10):
+      for n in range(24):
        if entry=="top":warp(entry_x,40);warp(entry_x,0)
        else:warp(-40,entry_y);warp(-1,entry_y)
        # A compositor warp is not device motion. Exercise the real capture stream

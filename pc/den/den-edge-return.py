@@ -25,8 +25,16 @@ def main():
     entering=mode.startswith('enter-');token=os.environ.get('DEN_CAPTURE_GENERATION' if entering else 'DEN_RETURN_GENERATION','')
     ssh=['ssh','-n','-F',str(STATE/'client.conf'),'homie']
     def query(args):return json.loads(subprocess.check_output(['hyprctl','-i','0',*args],timeout=1))
+    # Drop stale entries before contending for placement; never queue an old
+    # generation behind a slow SSH operation. Native capture holds one route.
+    if entering and not current_entry(STATE,token):return
     with (STATE/'input/edge-placement.lock').open('a') as lock:
-        fcntl.flock(lock,fcntl.LOCK_EX)
+        try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:
+            if not entering:
+                clear_return(STATE,token)
+                if current_return(STATE,token):subprocess.run(['python3',str(STATE/'den-cursor.py'),'recover'],timeout=8)
+            return
         if entering and not current_entry(STATE,token):return
         if not entering and not current_return(STATE,token):clear_return(STATE,token);return
         try:

@@ -19,6 +19,15 @@ class Generation(unittest.TestCase):
    root=Path(d);(root/'input').mkdir();guard=root/'input/active.returning';guard.write_text('1:2:300')
    edge.clear_return(root,'1:2:200');self.assertTrue(guard.exists())
    edge.clear_return(root,'1:2:300');self.assertFalse(guard.exists())
+ def test_busy_entry_does_not_queue_or_query_desktop(self):
+  import os,fcntl
+  from unittest.mock import patch
+  with tempfile.TemporaryDirectory() as d:
+   root=Path(d);(root/'input').mkdir();(root/'input/active').write_text('1');(root/'input/active.session').write_text('0:2:100')
+   with (root/'input/edge-placement.lock').open('a') as lock:
+    fcntl.flock(lock,fcntl.LOCK_EX)
+    with patch.object(edge,'STATE',root),patch.object(edge.sys,'argv',['edge','enter-top']),patch.dict(os.environ,{'DEN_CAPTURE_GENERATION':'0:2:100'}),patch.object(edge.subprocess,'check_output') as query:
+     edge.main();query.assert_not_called()
  def test_invalid_token_fails_closed(self):
   with self.assertRaises(ValueError):place.newer('touch anything','')
 

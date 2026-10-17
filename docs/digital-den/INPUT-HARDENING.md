@@ -71,3 +71,9 @@ not reliability evidence.
 To roll back, pause with `den-control home` first. Restore the previous private
 binary/helper backup as a matching set; restore only intended UI paths from the
 installer backup. Do not reset the repository or touch pairing credentials.
+
+### 2026-10-17: shared-corner handoff storm
+
+Live integration caught overlapping enter hooks and sharply rising CPU pressure. The source capture state now refuses a second outgoing handle while a route is active, until explicit release; a 250 ms re-entry guard prevents immediate recapture. Entry helpers check their generation before locking and use a nonblocking placement lock, so stale hooks cannot queue behind SSH. A busy return recovers local input rather than waiting indefinitely.
+
+The headless upstream-pinned build completed. A first cold fixture attempt did not arm the receiver within its short startup budget; the harness now permits a bounded longer initial handshake. A subsequent live run passed all four routes (top→bottom, right→left, top→left, right→bottom), triple-Ctrl release to the main centre, and triple-Ctrl resume. No user application received typed text. The owned watchdog always survived the test process. Old binaries/helpers are retained privately for recovery. This is evidence for those tested routes, not a claim that every physical device or network failure has been exhausted.
