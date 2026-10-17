@@ -62,6 +62,8 @@ Item {
     readonly property string target: managed ? (leased ? journey.output : "") : ownerOutput ? (preferred || ownerOutput) : (standalone ? (preferred || Quickshell.screens[0]?.name || "") : "")
     readonly property bool eligible: preferences.enabled!==false && preferences.quiet!==true && preferences.suspended!==true && !fullscreen && target!==""
     readonly property bool allowed: eligible && placement.available
+    readonly property var activitySprite:Logic.activitySprite(activity)
+    property int activityTicks:0
     readonly property int extraPose:Logic.extendedPose(activity,frame)
     readonly property int pose: activity==="walk" ? (walkingRight?8:4)+frame%4 : activity==="wave" ? 13 : activity==="celebrate" ? 14 : activity==="think" ? 12 : activity==="sleep" ? 15 : frame%4
     IpcHandler {target:"companion";function state():string{return JSON.stringify({name:"Zondo",musicPlaying:root.denMusic,allowed:root.allowed,speaking:root.speaking,unread:root.notices.unread||0,dnd:root.notices.dnd||false,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,activity:root.activity,extraPose:root.extraPose,welcome:root.welcoming,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
@@ -75,7 +77,7 @@ Item {
     onAllowedChanged:publish()
     onSpeakingChanged:publish()
     onMessageChanged:publish()
-    onActivityChanged:Qt.callLater(publish)
+    onActivityChanged:{activityTicks=0;Qt.callLater(publish);}
     onReducedChanged:Qt.callLater(publish)
     function refresh():void {
         if(!eligible && target==="")return;
@@ -100,10 +102,39 @@ Item {
         const roof=!speaking&&variant%3===1?Logic.roofPlace(file,screen.width,screen.height,pet.width,pet.height,windows,variant):null;
         placement=roof||Logic.place(screen.width,screen.height,pet.width,pet.height,windows,variant);
     }
+    property string eventJob:""
+    property var localEngineeringEvents:[]
+    readonly property var engineeringEvents:localEngineeringEvents.concat(journey.engineeringEvents||[])
+    property var engineeringSeen:[]
+    property bool engineeringMemoryLoaded:false
+    property double engineeringLastShown:0
+    FileView {id:engineeringMemory;path:Quickshell.env("HOME")+"/.local/state/sensei-den/zondo-engineering-seen.json";printErrors:false
+        onLoaded:{try{root.engineeringSeen=Array.from(new Set(root.engineeringSeen.concat(JSON.parse(text()).ids||[],root.journey.engineeringAcks||[]))).slice(-128);}catch(e){}root.engineeringMemoryLoaded=true;}
+        onLoadFailed:root.engineeringMemoryLoaded=true
+    }
+    FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-engineering/receipts.json";watchChanges:true;printErrors:false;onFileChanged:reload()
+        onLoaded:{try{root.localEngineeringEvents=(JSON.parse(text()).events||[]).slice(-32);}catch(e){}}
+    }
+    Timer {interval:2000;repeat:true;running:root.eligible&&root.engineeringEvents.length>0
+        onTriggered:{
+            if(!root.engineeringMemoryLoaded||root.notices.dnd||root.preferences.quiet||root.speaking||Date.now()-root.engineeringLastShown<60000)return;
+            const now=Date.now()/1000;
+            const event=root.engineeringEvents.find(e=>now-e.at<120&&now-e.at>=0&&!root.engineeringSeen.includes(e.id)&&["project.launch","job.completed","experiment.completed","hardware.disconnected","hardware.returned"].includes(e.kind));
+            if(!event)return;
+            root.engineeringSeen=root.engineeringSeen.concat([event.id]).slice(-128);engineeringMemory.setText(JSON.stringify({ids:root.engineeringSeen}));
+            root.engineeringLastShown=Date.now();
+            const d=event.data||{};
+            if(event.kind==="project.launch"){root.activity="robot";root.say("Project opened. One small baseline before the magnificent machine?","project receipt");}
+            else if(event.kind==="hardware.disconnected"){root.activity="think";root.say((d.label||"Known device")+" disconnected. Its hardware passport keeps the stable identity.","hardware receipt");}
+            else if(event.kind==="hardware.returned"){root.activity="wave";root.say((d.label||"Known device")+" is back. The node may change; the identity should not.","hardware receipt");}
+            else {const good=["passed","succeeded"].includes(d.outcome);root.activity=good?"celebrate":"think";root.say(good?"Run complete. The receipt is saved; a successful process is still only the start of checking the claim.":"Run failed, and the evidence is kept. The job receipt has the exit code and artifacts.","verified run receipt");root.eventJob=d.job||"";}
+        }
+    }
+    FileView {path:Qt.resolvedUrl("activity-atlases.json");onLoaded:{try{Logic.activityAtlases=JSON.parse(text());root.vary();}catch(e){}}}
     function remember():void {if(memoryLoaded)memoryFile.setText(JSON.stringify({schema:1,recent:recent.slice(-40),turn:turn}));}
-    function vary():void {activity=Logic.nextActivity(activity,denMusic,Math.random());frame=0;poseExpiry.stop();}
+    function vary():void {activityTicks=0;activity=Logic.nextActivity(activity,denMusic,Math.random(),preferences.hiddenActivities||[],preferences.favoriteActivities||[]);frame=0;poseExpiry.stop();}
     function welcome(text):void {if(Date.now()-lastWelcome<60000)return;if(preferences.welcome===false||preferences.quiet===true||preferences.enabled===false)return;lastWelcome=Date.now();welcomeText=text;welcoming=true;welcomeExpiry.restart();}
-    function say(text,kind):void {const words=String(text);message=words.length>160?words.slice(0,156).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.restart();settle.restart();}
+    function say(text,kind):void {eventJob="";const words=String(text);message=words.length>160?words.slice(0,156).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.restart();settle.restart();}
     function greet(manual):void {
         if(!eligible||(!manual&&preferences.chatter===false)||!Logic.notes.length)return;
         if(notices.dnd&&notices.unread>0){say(notices.unread+" notifications waiting quietly. No rush; the bell has them when you want them.","quiet desk");return;}
@@ -126,7 +157,7 @@ Item {
     onTargetChanged:{publish();deliberateTravel=false;placement={available:false,x:18,y:56};landing=!reduced;landingExpiry.restart();refresh();arrivalHello.restart();}
     onEligibleChanged:{publish();if(eligible)refresh()}
     Timer {interval:1000;repeat:true;running:root.managed;onTriggered:root.journeyClock=Date.now()/1000}
-    FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-travel.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.journey=JSON.parse(text());root.journeyClock=Date.now()/1000;}catch(e){}}}
+    FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-travel.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.journey=JSON.parse(text());root.engineeringSeen=Array.from(new Set(root.engineeringSeen.concat(root.journey.engineeringAcks||[]))).slice(-128);root.journeyClock=Date.now()/1000;}catch(e){}}}
     FileView {path:Quickshell.env("HOME")+"/.config/sensei-den/zondo-personal.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.personal=JSON.parse(text()).notes||[];}catch(e){}}}
     FileView {id:memoryFile;path:Quickshell.env("HOME")+"/.local/state/sensei-den/zondo-memory.json";printErrors:false
         onLoaded:{try{const m=JSON.parse(text());if(Number(m.turn)>=root.turn){root.recent=Array.isArray(m.recent)?m.recent.slice(-40):[];root.turn=Number(m.turn)||0;}}catch(e){}root.memoryLoaded=true;}}
@@ -177,7 +208,7 @@ Item {
     Timer {interval:90000;repeat:true;running:root.allowed&&!root.reduced;onTriggered:root.walk()}
     Timer {interval:18000;repeat:true;running:root.allowed&&!root.reduced;onTriggered:{root.typingBurst=true;burstExpiry.restart();}}
     Timer {id:burstExpiry;interval:1320;onTriggered:{root.typingBurst=false;root.frame=0;}}
-    Timer {interval:220;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk"||root.activity==="climb"||root.activity==="dance");onTriggered:root.frame=(root.frame+1)%4}
+    Timer {interval:220;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk"||root.activity==="climb"||root.activity==="dance"||(root.activitySprite&&root.activityTicks<12));onTriggered:{root.frame=(root.frame+1)%4;root.activityTicks++;}}
     Timer {id:poseExpiry;interval:2200;onTriggered:{root.vary();root.frame=0;root.deliberateTravel=false;}}
     Timer {id:speechExpiry;interval:9500;onTriggered:{root.speaking=false;settle.restart();}}
     Timer {id:landingExpiry;interval:700;onTriggered:root.landing=false}
@@ -198,11 +229,12 @@ Item {
         WlrLayershell.layer:WlrLayer.Bottom
         WlrLayershell.namespace:"sensei-fh1m-companion"
         WlrLayershell.keyboardFocus:WlrKeyboardFocus.None
-        mask:Region {}
+        mask:Region {item:pet}
         Behavior on margins.left {enabled:root.deliberateTravel&&!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
         Behavior on margins.top {enabled:root.deliberateTravel&&!root.reduced;NumberAnimation {duration:2000;easing.type:Easing.InOutSine}}
         Rectangle {
             id:speechBubble
+            TapHandler {onTapped:{if(root.eventJob)Quickshell.execDetached(["qs","-c","sensei","ipc","call","engineering-receipts","open",root.eventJob]);else Quickshell.execDetached(["qs","-c","sensei","ipc","call","dropdown","open","engineering"]);}}
             anchors {right:parent.right;bottom:character.top;bottomMargin:8}
             width:256;height:caption.implicitHeight+body.implicitHeight+30
             visible:root.speaking
@@ -211,14 +243,16 @@ Item {
             Text {id:body;anchors {left:parent.left;right:parent.right;top:caption.bottom;leftMargin:14;rightMargin:14;topMargin:7} text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:"JetBrainsMono Nerd Font";font.pixelSize:12;color:"#e8e2da"}
         }
         Image {
-            id:character;opacity:root.allowed?1:0;scale:root.landing?0.72:1
+            TapHandler {acceptedButtons:Qt.LeftButton;onTapped:{root.activity="highfive";root.activityTicks=0;root.say("High five, engineer. What is taking shape today?","off duty");}}
+            TapHandler {acceptedButtons:Qt.RightButton;onTapped:Quickshell.execDetached(["qs","-c","sensei","ipc","call","dropdown","open","engineering"])}
+            id:character;cache:!root.activitySprite;opacity:root.allowed?1:0;scale:root.landing?0.72:1
             Behavior on scale {enabled:!root.reduced;NumberAnimation {duration:650;easing.type:Easing.OutBack}}
             anchors {right:parent.right;bottom:parent.bottom}
             width:pet.spriteSize;height:width
-            source:Qt.resolvedUrl(root.activity==="climb"?"zondo-climb-v1.png":root.extraPose>=0?"zondo-life-v2.png":"fh1m-motion-v2.png")
+            source:Qt.resolvedUrl(root.activitySprite?root.activitySprite.file:root.activity==="climb"?"zondo-climb-v1.png":root.extraPose>=0?"zondo-life-v2.png":"fh1m-motion-v2.png")
             readonly property real cell:1254/4
             readonly property int tile:root.extraPose>=0?root.extraPose:root.pose
-            sourceClipRect:{if(root.activity==="climb"){const xs=[0,543,1086,1629,2172],c=root.frame%4;return Qt.rect(xs[c],0,xs[c+1]-xs[c],724);}if(!(root.extraPose>=0))return Qt.rect((tile%4)*cell,Math.floor(tile/4)*cell,cell,cell);const xs=[0,313,627,945,1254],ys=[0,323,627,931,1254],c=tile%4,r=Math.floor(tile/4);return Qt.rect(xs[c],ys[r],xs[c+1]-xs[c],ys[r+1]-ys[r]);}
+            sourceClipRect:{if(root.activitySprite){const a=root.activitySprite,c=root.frame%4,r=a.row;return Qt.rect(a.xs[c],a.ys[r],a.xs[c+1]-a.xs[c],a.ys[r+1]-a.ys[r]);}if(root.activity==="climb"){const xs=[0,543,1086,1629,2172],c=root.frame%4;return Qt.rect(xs[c],0,xs[c+1]-xs[c],724);}if(!(root.extraPose>=0))return Qt.rect((tile%4)*cell,Math.floor(tile/4)*cell,cell,cell);const xs=[0,313,627,945,1254],ys=[0,323,627,931,1254],c=tile%4,r=Math.floor(tile/4);return Qt.rect(xs[c],ys[r],xs[c+1]-xs[c],ys[r+1]-ys[r]);}
             fillMode:Image.PreserveAspectFit;smooth:true;asynchronous:true
         }
     }

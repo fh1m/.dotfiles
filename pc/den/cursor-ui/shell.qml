@@ -4,7 +4,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 ShellRoot {
     id: root
-    // Zondo policy v4: reload this root when the shared JS policy changes.
+    // Zondo policy v6: reload this root when the shared JS policy changes.
     property real companionRevision:Date.now()
     Loader {
         id:companionLoader

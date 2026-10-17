@@ -48,3 +48,11 @@ Research basis: Docker Compose readiness and daemon security; systemd resource c
 Six original transparent 4×4 imagegen sheets: workshop, play, quiet, music, curiosity, rest. Each row has four poses for one of 24 activities. Returned dimensions are 1254×1254, not the requested 1024. `activity-atlases.json` records inspected gutter boundaries; Python/Pillow was used only to inspect alpha boundaries, never edit the artwork. The renderer loads the selected sheet only, disables persistent image caching for these sheets and pauses after a short cycle. 108 authored lines extend the curated pool to 160 without invented biography or simulated test results.
 
 Prompts used the existing `zondo-life-v2.png` as reference: black-haired chibi engineer, black hoodie, raspberry headphones/sneakers, full-body transparent padded 4×4 grid, four successive frames per row, consistent scale, no text/borders. Activities: solder/IMU calibration/robot repair/sensor inspection; paper plane/gear balance/high five/confetti; rain/hammock/geometry/stones; drums/bass/headphones/conducting; telescope/paper boat/gyroscope/geometric model; yoga/tea/aquarium robot/welcome flag. Actual sprite variants were visually inspected before integration.
+
+## Additional acceptance evidence
+
+A real five-second MCAP capture in auv-ros2, UID 1000, domain 101, localhost-only Fast DDS recorded and verified the unique synthetic String topic: one 5090-byte MCAP. Original Cyclone DDS loopback fixtures produced empty recordings and are not counted as passed; the installed middleware preference was not changed. The publisher and all disposable recordings were removed after bounded tests.
+
+Confirmed-profile generated Lua byte-compiles successfully without executing monitor calls. A real same-geometry four-output transaction automatically rolled back after its independent watchdog; source configuration and input PID remained unchanged. Camera panel was visually inspected on ScreenPad with preview off; all selectors and actions are reachable in its bounded scroll view.
+
+Source milestones: d04e549 backend/actions/evidence; 669a241 desktop instruments, linked agenda and display editor. Homie deployment, final resource sample and desktop journey checks remain the release gate. No reboot, physical board disconnect, vehicle control or microphone listening was performed.

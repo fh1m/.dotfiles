@@ -298,5 +298,545 @@
     "kind": "wit",
     "text": "I brought imaginary biscuits. Zero crumbs in the keyboard. Excellent thermal design.",
     "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The robot requested a snack break. I am its legal representative.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "My tiny wrench is calibrated in units of optimism.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The imaginary plant has excellent uptime.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "No meeting could have been an email at this scale. I cannot reach Send.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I brought a paper boat to an underwater robotics lab. Ambitious procurement.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The desk is a habitat. Please respect the miniature engineer.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I checked the coffee protocol. Still deliciously undocumented.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "Today's side quest: keep the shoulder muscles out of production mode.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I have four animation frames and a surprisingly large tool budget.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "My dramatic entrance was delayed by a coordinate transform.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "No benchmark for this dance. Peer review would be unkind.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The little robot and I disagree about which of us is the peripheral.",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What would your current idea look like if you had to explain it with three boxes?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which observation would make you abandon your favorite explanation?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What is the smallest experiment that could surprise you today?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Where does the clean mathematical model stop matching the real sensor?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which hidden state would you most like to see directly?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "If one assumption disappeared, which part of the design would fail first?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What would this algorithm do on an empty input?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which number in the result deserves a unit beside it?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Can a tiny example expose the same failure as the full system?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What changed between the last good run and this one?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which part is evidence, and which part is still a promising guess?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What would a stranger need to reproduce this result next month?",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "A tiny victory is still full-size evidence that something moved forward.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I refuse to put a streak counter on drinking water.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The hammock is a valid engineering instrument. For the engineer.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "My debugging duck subcontracted this conversation to a tiny robot.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The tea is simulated. The invitation to pause is real.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "Current mission: make absolutely no change to your unsaved buffer.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I can carry one gear or one very large opinion about timestamps.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "If you see me staring at a circuit, I may simply admire the routing.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The imaginary aquarium has a strict no-real-electronics policy.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I made a boat. Its displacement model remains suspiciously optimistic.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I could juggle the tasks. Better to juggle these harmless gears.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The welcome flag is small. The welcome is not.",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which prerequisite keeps appearing in several unrelated problems?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Could you reconstruct yesterday's idea before opening the notes?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What would happen if the measurement arrived one sample late?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "How would the system know that its sensor had become stale?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which two coordinate conventions are easiest to confuse here?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Would the sign still be correct if the vehicle pointed the other way?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What is conserved through this state transition?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Where does uncertainty enter the calculation?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which part could you explain from memory to a curious teammate?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What would be a useful counterexample to the claim?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Is the baseline simple enough to understand completely?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What would a successful independent retry look like?",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A run that exits successfully has not automatically verified its hypothesis.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Keep the original prediction beside the measured result, even when they disagree.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A stable device identity matters more than its temporary tty number.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Before comparing two measurements, check that their units and conditions match.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Record the data version as carefully as the code revision.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A changed default parameter can explain a changed result. Record the actual setting.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A graph can be fresh while one important topic is stale. Check timestamps.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "For a small baseline, inspect a few actual samples rather than only an aggregate score.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A failed run can still contain a useful artifact. Keep its receipt.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Separate the observed error from your current theory of its cause.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A plot becomes easier to challenge when its axes have names and units.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Save the first useful error before the later cascade hides it.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I leave the result claims to the receipts. The dance is mine.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "My job title is Assistant to the Assistant Coordinate Frame.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The desk tour has strict baggage limits: one notebook, six impossible hobbies.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I am not stuck. I am evaluating this patch of wallpaper.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "No cloud required for this extremely local little wave.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "An elegant solution and a working chair are both underrated infrastructure.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I found a corner with excellent signal-to-coffee ratio.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The miniature drum kit is mercifully text-only acoustics.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "Your desktop has a tiny engineer. His paperwork is mostly doodles.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The robot says hello. I translated from a very polite LED.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I have retired the phrase just one more feature for the afternoon.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "A fresh sheet of paper is a remarkably fast user interface.",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Could the result depend on the order in which the inputs arrived?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which failure would the current test suite never notice?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What happens at zero, infinity, or the edge of the valid range?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Can you predict one output before running the code?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which intermediate value would be most useful to log?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What would you keep if this prototype had to fit on a much smaller computer?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which part of the explanation is a definition rather than a mechanism?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Where does the implementation approximate the mathematical idea?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What is the simplest deliberately wrong baseline worth comparing?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Could a time offset masquerade as a calibration error?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "What evidence would convince you the fix survives a different input?",
+    "contexts": []
+  },
+  {
+    "kind": "wonder",
+    "text": "Which piece of this work could become a reusable tool?",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Git diff shows the actual change; the story in your head may have skipped a line.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A relative path is portable only when its owning project is unambiguous.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "When a result changes, compare the inputs before tuning more parameters.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A tiny overfitting test can separate a broken training loop from a hard dataset.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Numerical checks complement derivations; they do not replace the assumptions.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Keep the unassisted attempt separate from the version completed with a hint.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Write down the stopping point before switching projects. Future you gets a ramp back in.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A screenshot becomes stronger evidence when linked to a run and a revision.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A restarted process is not the same thing as a repaired fault.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Name coordinate frames explicitly at system boundaries.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "Choose the host explicitly before sending a heavy job across the Den.",
+    "contexts": []
+  },
+  {
+    "kind": "tip",
+    "text": "A container being up does not prove the service inside it is ready.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The telescope found a distant galaxy of unfinished TODOs. We are visiting one star at a time.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The notebook is open. You may use it for equations or a truly excellent boat.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I can applaud a careful measurement as enthusiastically as a flashy demo.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "The tea ceremony has no dependency graph. A rare luxury.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "That tiny rover is practicing its three-point turn. We all have fundamentals.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I am conducting the orchestra of fans. They did not ask for a conductor.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "I put the confetti in a bounded queue. Responsible celebration.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "Sometimes the most useful output is a well-posed question.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "A good friend can also sit quietly. Quiet mode is always allowed.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "Today's house rule: curiosity does not need a productivity justification.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "Welcome back to the Den. The small robot kept your imaginary seat warm.",
+    "contexts": []
+  },
+  {
+    "kind": "wit",
+    "text": "One desk, two hosts, and an unreasonable number of tiny instruments.",
+    "contexts": []
   }
 ]

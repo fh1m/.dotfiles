@@ -1,5 +1,7 @@
 // Pure policy: no compositor, filesystem, network or user text access.
 var notes = [];
+var activityAtlases = {};
+function activitySprite(activity){return activityAtlases[activity]||null;}
 function context(app) {
     app=String(app||'').toLowerCase();
     if (/nvim|neovim|code|cursor/.test(app)) return 'editor';
@@ -28,9 +30,14 @@ function place(width,height,w,h,windows,variant) {
 }
 
 // Weighted variety without consecutive repeats; no emotional inference or activity logging.
-function nextActivity(previous, music, random) {
+function nextActivity(previous, music, random, hidden, favorites) {
+    hidden=hidden||[];favorites=favorites||[];
+    var extra=Object.keys(activityAtlases);
     var pool=music?['dance','dance','guitar','dance','stretch']:['read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','sleep','think','wave','typing'];
-    pool=pool.filter(function(x){return x!==previous;});
+    pool=pool.concat(music?extra.filter(function(x){return ['drums','bass','headphones','conduct'].indexOf(x)>=0;}):extra);
+    pool=pool.concat(favorites.filter(function(x){return pool.indexOf(x)>=0;}));
+    pool=pool.filter(function(x){return x!==previous&&hidden.indexOf(x)<0;});
+    if(!pool.length)return "think";
     return pool[Math.min(pool.length-1,Math.floor(random*pool.length))];
 }
 function extendedPose(activity, frame) {

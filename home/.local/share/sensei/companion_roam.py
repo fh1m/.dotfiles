@@ -46,3 +46,13 @@ def engineering_events(events,now=None):
         if event['kind'].startswith('hardware.') and isinstance(raw.get('label'),str):data['label']=raw['label'][:60]
         out.append(dict(id=identity,at=at,host=event['host'],kind=event['kind'],data=data))
     return out[-8:]
+
+
+def engineering_acks(values):
+    import uuid
+    out=[]
+    for value in values[-256:] if isinstance(values,list) else []:
+        try:identity=str(uuid.UUID(str(value)))
+        except (ValueError,TypeError):continue
+        if identity not in out:out.append(identity)
+    return out[-128:]
