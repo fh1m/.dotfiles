@@ -192,6 +192,7 @@ python3 scripts/doctor.py
 Some nights call for a derivation. Some call for an album and a notebook. The Den has room for both.
 
 - **Listening room:** artwork, lyrics and queue together. Focus strips it back to the cover and song. Move it to another display, or put it behind your work with Backdrop.
+- **Engineering within reach:** reviewed project actions, explicit Arete/Homie jobs, unitful experiment comparisons and stable hardware passports. Pin the useful bit to ScreenPad. [Open the workbench](docs/digital-den/ENGINEERING.md).
 - **Zondo, desk-sized troublemaker:** reading, stargazing, gardening, robot wrangling—and dancing when Spotify plays. Project-history callbacks, local repetition memory and notification counts without reading private message bodies. Busy screen? He takes a bar perch instead of sitting on the code.
 - **The old tmux buttons are home:** sessions, windows, panes and directory at a glance. No session needs to die for a cosmetic change.
 - **The editor has receipts:** a disposable Python fixture checks snippets, parsing, formatting, debugger configuration and real LSP hover on the host and ROS container. The field guide includes the editor’s live mappings and attached-language shortcuts.
@@ -202,6 +203,12 @@ Some nights call for a derivation. Some call for an album and a notebook. The De
 
 <details>
 <summary>Meet Zondo / a tiny off-duty engineer</summary>
+
+<img src="home/.local/share/sensei-companion/zondo-play-v1.png" alt="Zondo’s original paper-plane, gear-balancing, high-five and confetti animation atlas" width="580">
+
+Twenty-four new activities. Tiny engineering receipts. A tea break that never files a timesheet.
+
+<img src="docs/assets/digital-den/engineering/zondo-play.png" alt="The live Zondo play corner: high five, paper boat, tea, logic puzzle and silent rhythm" width="740">
 
 <img src="home/.local/share/sensei-companion/zondo-life-v2.png" alt="Zondo’s original sixteen-pose atlas: dance, books, coffee, robots, sketching, stargazing and a well-earned nap" width="580">
 

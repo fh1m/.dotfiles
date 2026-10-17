@@ -385,3 +385,11 @@ Private installer packages, diagnostic logs, recovery information and exported d
 
 - Shared 16-frame character sheet, window-aware bottom-layer placement and optional local tips deployed. Motion/quiet/chatter remain independent; no extra persistent renderer or account access. New night-shift illustration is artwork, not a physical setup photograph.
 - Tmux chrome is quieter and identifies the host; semantic ANSI colours distinguish success/error/warnings. Neovim follows the wallpaper accent and offers an explicit DenTip field note. Existing font sizes, monitor/input policy, navigation and private accounts preserved. See docs/digital-den/POLISH-RESEARCH.md and ARTWORK.md.
+
+## 2026-10-17 Engineering Den integration
+
+Homie login shell is `/bin/zsh` (fresh SSH readback). Shared engineering registry, independent ScreenPad instruments, integrated display editor, source-owned agenda and original Zondo activities deploy from main. A private dotfiles project and exact reviewed contract task are registered locally; the confirmed remote job passed. Noesis shared UI and link doctor checks pass. Existing encrypted backup scope includes new receipts/config; private definitions and data are not committed.
+
+The input corner-storm repair uses matching backed-up headless builds on both hosts. Four routes and emergency release/resume passed on Arete's new build; no user app received text. See the shared execution ledger for physical-test limitations. Restored bar layout and GPU/display hardware policy are preserved.
+
+Final acceptance: all 354 repository tests passed on Homie after installing its missing Restic dependency. The actual private project catalog restored from an encrypted checkpoint with a matching checksum. Installer preview is idempotent. Shared input/cursor/watch remain active; no failed user units observed. The Engineering panel was visually inspected on DP-3 while browsing Arete's registered projects and job receipts through the restricted reverse gateway.

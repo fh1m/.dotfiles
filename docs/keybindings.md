@@ -37,6 +37,7 @@ The terminal's internal tab, pane, copy and session shortcuts are in [Terminal â
 | Super+E | sensei deck (Super+Shift+E restarts its terminal) |
 | Super+L | Manual lock |
 | Super+Ctrl+P | Power menu |
+| Super+Ctrl+E | Engineering: projects, jobs, experiments, hardware and Zondo |
 | Ctrl+Space | Spotify play/pause |
 | Ctrl+Left/Right | Previous/next Spotify track |
 | Ctrl+Up/Down | Spotify volume up/down |

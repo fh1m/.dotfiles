@@ -132,6 +132,26 @@ These are real screenshots of fh1m’s desktop. A temporary privacy mode suppres
 ![XKCD in the shell](assets/comic.png)
 The [switcher implementation](../home/.config/quickshell/sensei/modules/navigation/NavigationOverlay.qml) combines app/window cards with a six-space drag overview. On the reference hybrid-GPU session, `grim` stalled while the live toplevel previews were active, so these two surfaces are deliberately absent from the gallery. They remain available with Alt+Tab and Super+A in the actual session.
 
+## Engineering, then a small detour
+
+### Choose the host. Keep the receipt.
+
+![Live Engineering workspace showing the confirmed Homie contract job and preserved earlier robotics runs](assets/digital-den/engineering/jobs.png)
+
+[Projects, passports and evidence](digital-den/ENGINEERING.md). Real job results; a process passing does not certify a scientific claim.
+
+### Arrange the screens, with a way back
+
+![Live integrated display editor with the actual four Arete outputs, scale, orientation and timed confirmation controls](assets/digital-den/engineering/displays.png)
+
+The map is this laptop’s attached outputs. Homie keeps its own display settings.
+
+### Zondo is off duty
+
+![Live local play corner: high five, boat, tea, a logic problem and silent rhythm](assets/digital-den/engineering/zondo-play.png)
+
+Original sprites, short animation bursts and no online conversation model. Arete and Homie remain his shared home.
+
 ## Re-capture on your machine
 
 `scripts/capture-gallery.py` takes the stills. `scripts/capture-showcase.py` records the main/ScreenPad tours; `scripts/capture-workflows.py` records the robotics/tmux tours. `scripts/build-duo-hero.sh` pairs them into the two-screen scenes. Capture scripts use the live desktop, restore focus and close only their showcase windows. Review frames before publishing; new widgets may need additional privacy treatment.
