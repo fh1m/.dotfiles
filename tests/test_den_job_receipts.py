@@ -36,3 +36,10 @@ class Receipts(unittest.TestCase):
     with m.submission(root):self.fail('admission must reject a full queue')
    (root/'0.json').write_text(json.dumps({'state':'succeeded'}))
    with m.submission(root):pass
+
+ def test_queued_inputs_cannot_escape_checkout_through_symlink(self):
+  with tempfile.TemporaryDirectory() as d:
+   root=Path(d);project=root/'project';project.mkdir();(root/'private').write_text('not an input');(project/'link').symlink_to(root/'private')
+   with self.assertRaises(ValueError):m.checked_input(project,'link')
+   (project/'input').write_text('measurement');row=m.checked_input(project,'input')
+   self.assertEqual(row['path'],str(project/'input'));self.assertEqual(row['sha256'],m.digest(project/'input'))

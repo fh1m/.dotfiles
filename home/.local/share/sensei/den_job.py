@@ -39,6 +39,10 @@ def artifact(project,name):
     base=Path(project).resolve();p=(base/name).resolve()
     if not p.is_relative_to(base) or not p.is_file():raise ValueError('Artifact must be an existing file inside the project')
     return {'path':str(p.relative_to(base)),'bytes':p.stat().st_size,'sha256':digest(p)}
+def checked_input(project,name):
+    row=artifact(project,name)
+    return dict(row,path=str(Path(project).resolve()/row['path']))
+
 def _execute(path):
     p=Path(path);data=json.loads(p.read_text());data.update(schema=1,started=time.time(),state='running',environment={'python':sys.version.split()[0],'platform':platform.platform()});save(p,data)
     try:

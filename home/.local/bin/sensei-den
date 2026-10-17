@@ -378,11 +378,9 @@ def job(args):
                 'commit':run(['git','-C',str(project),'rev-parse','HEAD']).stdout.strip(),'dirty':bool(run(['git','-C',str(project),'status','--porcelain']).stdout),
                 'schema':1,'state':'queued','requestedResources':{'memoryMiB':getattr(args,'memory_mib',None),'cpuPercent':getattr(args,'cpu_percent',None)},'inputs':[],'expectedArtifacts':getattr(args,'artifact',[]) or []}
             sys.path.insert(0,str(HOME/'.local/share/sensei'))
-            from den_job import digest
+            from den_job import checked_input
             for name in getattr(args,'input',[]) or []:
-                source=(project/name).resolve()
-                if not source.is_file():raise ValueError('Input file is missing: '+name)
-                meta['inputs'].append({'path':str(source),'bytes':source.stat().st_size,'sha256':digest(source)})
+                meta['inputs'].append(checked_input(project,name))
             for name in meta['expectedArtifacts']:
                 if not (project/name).resolve().is_relative_to(project):raise ValueError('Artifact must stay inside the project')
             write(directory/(ident+'.json'),meta)
