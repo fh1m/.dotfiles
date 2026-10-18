@@ -45,4 +45,10 @@ class CompanionPolicy(unittest.TestCase):
     def test_travel_uses_a_clear_corridor(self):
         self.assertTrue(self.js("canTravel({available:true,x:50,y:60},{available:true,x:800,y:600},96,96,[])"))
         self.assertFalse(self.js("canTravel({available:true,x:50,y:60},{available:true,x:800,y:600},96,96,[{x:400,y:200,w:200,h:300}])"))
+class SpeechLayout(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('node'),'Node needed for pure speech geometry checks')
+    def test_bubble_never_covers_character_or_windows(self):
+        source=ROOT/'home/.local/share/sensei-companion/SpeechLayout.js'
+        code="const vm=require('vm'),fs=require('fs');let c={};vm.createContext(c);vm.runInContext(fs.readFileSync(process.argv[1],'utf8'),c);for(let x of [12,300,1750])for(let y of [55,400,900])for(let h of [64,90,130]){let p={x,y},a=c.place(1920,1080,256,h,p,96,96,[]);if(a.available&&(c.intersects({...a,w:256,h},{...p,w:96,h:96})||a.x<0||a.y<0||a.x+256>1920||a.y+h>1080))process.exit(1);}let a=c.place(1920,1080,256,120,{x:400,y:400},96,96,[{x:0,y:0,w:1920,h:1080}]);if(a.available)process.exit(2);"
+        subprocess.check_call(['node','-e',code,str(source)])
 if __name__=='__main__':unittest.main()

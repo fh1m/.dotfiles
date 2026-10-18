@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.components
 import qs.config
 import qs.services
@@ -20,8 +21,8 @@ BarSurface {
             Text { textFormat: Text.PlainText;text:"Controls";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.widgetMuted}
         }
     }
-    function publish(): void { ShellState.publishAnchor("system", root.mapToItem(null, 0, 0).x); }
+    function publish(): void { ShellState.publishAnchor("system", root.mapToItem(null, 0, 0).x,root.QsWindow.window?.screen?.name??""); }
     onXChanged: publish()
     Component.onCompleted: Qt.callLater(publish)
-    MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x; ShellState.toggleDropdown("system"); } }
+    MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x; ShellState.toggleDropdownOn("system",root.QsWindow.window?.screen?.name??""); } }
 }

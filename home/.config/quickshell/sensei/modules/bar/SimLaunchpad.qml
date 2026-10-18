@@ -34,6 +34,6 @@ BarSurface {
     }
     MouseArea {
         id: pointer; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: event => { if (event.button === Qt.RightButton) Quickshell.execDetached(["@HOME@/.local/bin/sim-console"]); else { ShellState.monitorPage = 2; ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x; ShellState.toggleDropdown("monitor"); } }
+        onClicked: event => { if (event.button === Qt.RightButton) Quickshell.execDetached(["@HOME@/.local/bin/sim-console"]); else { ShellState.monitorPage = 2; ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x; ShellState.toggleDropdownOn("monitor",root.QsWindow.window?.screen?.name??""); } }
     }
 }

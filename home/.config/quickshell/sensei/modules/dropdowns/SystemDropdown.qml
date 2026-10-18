@@ -29,16 +29,18 @@ DropdownFrame {
         id: systemContent
         width: systemScroll.availableWidth
         spacing: 10
-        Row {
-            width:parent.width
-            spacing: 8
-            ControlTile { implicitWidth:(parent.width-40)/6;glyph:""; label: "Quick"; navigation:true;selected: ShellState.systemPage === 0; onActivated: ShellState.systemPage = 0 }
-            ControlTile { implicitWidth:(parent.width-40)/6;glyph:""; label: "Hardware"; navigation:true;selected: ShellState.systemPage === 1; onActivated: ShellState.systemPage = 1 }
-            ControlTile { implicitWidth:(parent.width-40)/6;glyph:""; label: "Robotics"; navigation:true;selected: ShellState.systemPage === 2; onActivated: ShellState.systemPage = 2 }
-            ControlTile {implicitWidth:(parent.width-40)/6;glyph:"";label:"Network";navigation:true;selected:ShellState.systemPage===3;onActivated:ShellState.systemPage=3}
-            ControlTile {implicitWidth:(parent.width-40)/6;glyph:"";label:"Packages";navigation:true;selected:ShellState.systemPage===4;onActivated:ShellState.systemPage=4}
-            ControlTile {implicitWidth:(parent.width-40)/6;glyph:"";label:"Den";navigation:true;selected:ShellState.systemPage===5;onActivated:ShellState.systemPage=5}
+        Flow {
+            width: parent.width
+            spacing: 10
+            ControlTile { implicitWidth:(parent.width-20)/3; implicitHeight:40; glyph:"\uf0e7"; label:"Quick"; navigation:true; selected:ShellState.systemPage===0; onActivated:ShellState.systemPage=0 }
+            ControlTile { implicitWidth:(parent.width-20)/3; implicitHeight:40; glyph:"\uf2db"; label:"Hardware"; navigation:true; selected:ShellState.systemPage===1; onActivated:ShellState.systemPage=1 }
+            ControlTile { implicitWidth:(parent.width-20)/3; implicitHeight:40; glyph:"\uf085"; label:"Robotics"; navigation:true; selected:ShellState.systemPage===2; onActivated:ShellState.systemPage=2 }
+            ControlTile { implicitWidth:(parent.width-20)/3; implicitHeight:40; glyph:"\uf1eb"; label:"Network"; navigation:true; selected:ShellState.systemPage===3; onActivated:ShellState.systemPage=3 }
+            ControlTile { implicitWidth:(parent.width-20)/3; implicitHeight:40; glyph:"\uf1c6"; label:"Packages"; navigation:true; selected:ShellState.systemPage===4; onActivated:ShellState.systemPage=4 }
+            ControlTile { implicitWidth:(parent.width-20)/3; implicitHeight:40; glyph:"\uf015"; label:"Den"; navigation:true; selected:ShellState.systemPage===5; onActivated:ShellState.systemPage=5 }
+            ControlTile { implicitWidth:(parent.width-20)/3; implicitHeight:40; glyph:"\uf040"; label:"Pen"; navigation:true; selected:ShellState.systemPage===6; onActivated:ShellState.systemPage=6 }
         }
+        Loader {width:parent.width;active:ShellState.systemPage===6;visible:active;height:active?(item?.implicitHeight??0):0;sourceComponent:Component {DrawingControls {width:parent.width}}}
         Loader {width:parent.width;active:ShellState.systemPage===5;visible:active;height:active?(item?.implicitHeight??0):0;sourceComponent:Component {DenControls {width:parent.width}}}
         Rectangle { width: parent.width; height: 1; color: Theme.widgetBorder }
         Loader {width:parent.width;active:ShellState.systemPage===3;visible:active;height:active?(item?.implicitHeight??0):0;sourceComponent:Component {NetworkSection {width:parent.width}}}
@@ -47,7 +49,7 @@ DropdownFrame {
             width: parent.width; spacing: 10; visible: ShellState.systemPage === 0
             WidgetSection { width: parent.width; title: "Connections"; subtitle: MachineProfile.facts.hasWireless ? (Networking.wifiEnabled ? "Wi-Fi on" : "Wi-Fi off") : "Wired network"; glyph: "\uf1eb"
                 Grid { columns: 3; spacing: 8
-                    ControlTile { implicitWidth: 176; label: MachineProfile.facts.hasWireless ? "Wi-Fi" : "Ethernet"; glyph: MachineProfile.facts.hasWireless ? "\uf1eb" : "\uf6ff"; selected: MachineProfile.facts.hasWireless && Networking.wifiEnabled; onActivated: { if (MachineProfile.facts.hasWireless) Networking.wifiEnabled = !Networking.wifiEnabled; else Quickshell.execDetached(["nm-connection-editor"]) } }
+                    ControlTile { implicitWidth: 176; label: MachineProfile.facts.hasWireless ? "Wi-Fi" : "Ethernet"; glyph: MachineProfile.facts.hasWireless ? "\uf1eb" : "\uf1eb"; selected: MachineProfile.facts.hasWireless && Networking.wifiEnabled; onActivated: { if (MachineProfile.facts.hasWireless) Networking.wifiEnabled = !Networking.wifiEnabled; else Quickshell.execDetached(["nm-connection-editor"]) } }
                     ControlTile { implicitWidth: 176; label: "Bluetooth"; glyph: "\uf293"; enabled: Bluetooth.defaultAdapter !== null; selected: Bluetooth.defaultAdapter?.enabled ?? false; onActivated: Bluetooth.defaultAdapter.enabled = !Bluetooth.defaultAdapter.enabled }
                     ControlTile { visible: MachineProfile.facts.hasWireless; implicitWidth: 176; label: "Airplane"; glyph: "\uf072"; selected: RobotBench.data.airplaneMode ?? false; onActivated: root.action("airplane") }
                     ControlTile { implicitWidth: 176; label: Audio.muted ? "Unmute" : "Mute"; glyph: Audio.muted ? "\uf026" : "\uf028"; selected: !Audio.muted; onActivated: Quickshell.execDetached(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"]) }

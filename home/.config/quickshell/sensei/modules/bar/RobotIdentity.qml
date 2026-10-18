@@ -27,7 +27,7 @@ Item {
         color:Theme.widgetMuted
     }
     }
-    function publish():void {const x=root.mapToItem(null,0,0).x;for(let name of ["code","ident","comic"])ShellState.publishAnchor(name,x);}
+    function publish():void {const x=root.mapToItem(null,0,0).x;for(let name of ["code","ident","comic"])ShellState.publishAnchor(name,x,root.QsWindow.window?.screen?.name??"");}
     Component.onCompleted:Qt.callLater(publish)
     onXChanged:publish()
     MouseArea {
@@ -39,13 +39,13 @@ Item {
         onClicked: event => {
             if (event.button === Qt.RightButton) {
                 root.publish();
-                ShellState.toggleDropdown("comic");
+                ShellState.toggleDropdownOn("comic",root.QsWindow.window?.screen?.name??"");
             } else if (event.button === Qt.MiddleButton || (event.modifiers & Qt.ShiftModifier)) {
                 root.publish();
-                ShellState.toggleDropdown("ident");
+                ShellState.toggleDropdownOn("ident",root.QsWindow.window?.screen?.name??"");
             } else {
                 root.publish();
-                ShellState.toggleDropdown("code");
+                ShellState.toggleDropdownOn("code",root.QsWindow.window?.screen?.name??"");
             }
         }
     }

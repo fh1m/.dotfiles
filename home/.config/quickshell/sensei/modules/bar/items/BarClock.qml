@@ -6,7 +6,7 @@ import qs.components
 
 Item {
     id: root
-    function publish(){const center=root.mapToItem(null,0,0).x+root.width/2;ShellState.publishAnchor("calendar",center);ShellState.publishAnchor("weather",center);}
+    function publish(){const center=root.mapToItem(null,0,0).x+root.width/2;ShellState.publishAnchor("calendar",center,root.QsWindow.window?.screen?.name??"");ShellState.publishAnchor("weather",center,root.QsWindow.window?.screen?.name??"");}
     Component.onCompleted: Qt.callLater(publish)
     onWidthChanged: Qt.callLater(publish)
     implicitWidth: 400
@@ -19,7 +19,7 @@ Item {
         Text { textFormat: Text.PlainText; renderType: Text.QtRendering; renderTypeQuality: 104; text: Qt.formatDateTime(clock.date, "hh:mm AP"); font.family: Appearance.font.display; font.pixelSize: 18; font.weight: 600; color: Theme.bright }
         Text { textFormat: Text.PlainText; renderType: Text.QtRendering; renderTypeQuality: 104; text: Qt.formatDateTime(clock.date, "dddd, dd MMMM"); font.family: Appearance.font.barUi; font.pixelSize: 13; color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
     }
-    MouseArea { id: clockPointer; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: event => { ShellState.dropdownAnchorX=parent.mapToItem(null,0,0).x + parent.width/2; ShellState.toggleDropdown(event.button===Qt.RightButton?"weather":"calendar"); } }
+    MouseArea { id: clockPointer; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: event => { ShellState.dropdownAnchorX=parent.mapToItem(null,0,0).x + parent.width/2; ShellState.toggleDropdownOn(event.button===Qt.RightButton?"weather":"calendar",root.QsWindow.window?.screen?.name??""); } }
     Row {
         anchors.horizontalCenter:parent.horizontalCenter
         anchors.bottom:parent.bottom

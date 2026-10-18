@@ -138,6 +138,10 @@ def task(p, name):
 
 
 ACTIONS={
+ 'drawing.status':dict(title='Inspect pen and mapping',effect='read',required=[]),
+ 'drawing.quick':dict(title='Open native scratchpad',effect='session',required=[]),
+ 'drawing.learn':dict(title='Draw about current learning',effect='session',required=[]),
+ 'drawing.typed':dict(title='Capture a typed note',effect='session',required=[]),
  'network.inspect':dict(title='Inspect routes, clients and sockets',effect='read',required=[]),
  'network.discover':dict(title='Discover this private LAN segment',effect='execution',required=['interface']),
  'network.ports':dict(title='Inspect 50 TCP ports on a LAN host',effect='execution',required=['interface','target']),
@@ -224,6 +228,8 @@ def invoke(action, params, confirmation=None):
                 raise ValueError('Confirmation expired or operation changed')
             path.unlink()
     binary=home()/'.local/bin'
+    if action.startswith('drawing.'):
+        return command([str(binary/'sensei-draw'),action.split('.')[1]])
     if action.startswith('network.'):
         verb={'network.inspect':'inventory','network.discover':'discover','network.ports':'ports'}[action]
         argv=[str(binary/'sensei-network'),verb]

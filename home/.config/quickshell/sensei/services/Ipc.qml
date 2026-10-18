@@ -60,7 +60,7 @@ Scope {
         function state():string {return JSON.stringify({page:ShellState.systemPage,networkPage:DesktopExtras.networkPage,packages:DesktopExtras.packages.total||0,updates:(DesktopExtras.packages.updates||[]).length,checked:DesktopExtras.packages.checked||0,loading:DesktopExtras.packagesLoading,error:DesktopExtras.packagesError});}
         function page(index: string): string {
             const value = Number(index);
-            if (value < 0 || value > 5 || !Number.isInteger(value)) return "page: 0 Quick, 1 Hardware, 2 Robotics, 3 Network, 4 Packages, 5 Den";
+            if (value < 0 || value > 6 || !Number.isInteger(value)) return "page: 0 Quick, 1 Hardware, 2 Robotics, 3 Network, 4 Packages, 5 Den, 6 Drawing";
             ShellState.systemPage = value;
             ShellState.dropdownAnchorX = ShellState.anchorFor("system");
             ShellState.openDropdown("system");
@@ -236,7 +236,7 @@ Scope {
     readonly property bool codeOpen: CodeDesk.opened
     IpcHandler {target:"story-view";function state():string{return JSON.stringify({native:StoryWallpapers.nativePlayback,outputs:StoryWallpapers.outputs,views:StoryWallpapers.views,reduced:StoryWallpapers.reduced});}}
     IpcHandler {target:"instrument";
-        function open(mode:string):void{if(["normal","simulation","coding","hardware"].includes(mode)){ShellState.instrumentMode=mode;ShellState.pinInstrument("context");}}
+        function open(mode:string):void{if(["normal","simulation","coding","hardware","drawing"].includes(mode)){ShellState.instrumentMode=mode;ShellState.pinInstrument("context");}}
         function close():void{ShellState.releaseInstrument();}
         function state():string{return JSON.stringify({pinned:ShellState.instrumentPinned,mode:ShellState.instrumentMode,project:ShellState.instrumentProject});}
     }

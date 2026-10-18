@@ -44,7 +44,8 @@ Singleton {
     property var barWindows: ({})
     function registerBar(output:string,window:var):void {const next=Object.assign({},barWindows);if(window)next[output]=window;else delete next[output];barWindows=next;}
     property string hoveredBarOutput:""
-    function barContext(output:string):void {hoveredBarOutput=output;if(dropdown==="")dropdownOriginScreen=output;}
+    property double barContextAt:0
+    function barContext(output:string):void {hoveredBarOutput=output;barContextAt=Date.now();if(dropdown==="")dropdownOriginScreen=output;}
 
     function focusedScreenName(): string {
         return Spaces.focusedMonitor?.name ?? Hyprland.focusedMonitor?.name ?? barScreens[0]?.name ?? "";
@@ -114,7 +115,8 @@ Singleton {
     // A readout knows its own position; nothing else does.
     property var dropdownAnchors: ({})
 
-    function publishAnchor(name: string, x: real): void {
+    function publishAnchor(name, x, output) {
+        if(output)name=output+":"+name;
         if (dropdownAnchors[name] === x)
             return;
         const next = Object.assign({}, dropdownAnchors);
@@ -123,7 +125,7 @@ Singleton {
     }
 
     function anchorFor(name: string): real {
-        return dropdownAnchors[name] ?? 0;
+        return dropdownAnchors[dropdownOriginScreen+":"+name] ?? dropdownAnchors[name] ?? 0;
     }
 
     property string engineeringSelectedAction:""
@@ -134,7 +136,7 @@ Singleton {
     property string instrumentHost:""
     property bool instrumentLoaded:false
     FileView {id:instrumentSettings;path:Quickshell.env("HOME")+"/.config/sensei-den/instrument.json";printErrors:false
-        onLoaded:{try{const d=JSON.parse(text());if(["normal","coding","simulation","hardware"].includes(d.mode))root.instrumentMode=d.mode;if(typeof d.project==="string")root.instrumentProject=d.project;}catch(e){}root.instrumentLoaded=true;}
+        onLoaded:{try{const d=JSON.parse(text());if(["normal","coding","simulation","hardware","drawing"].includes(d.mode))root.instrumentMode=d.mode;if(typeof d.project==="string")root.instrumentProject=d.project;}catch(e){}root.instrumentLoaded=true;}
         onLoadFailed:root.instrumentLoaded=true
     }
     function saveInstrument():void{if(instrumentLoaded)instrumentSettings.setText(JSON.stringify({version:1,mode:instrumentMode,project:instrumentProject}));}
@@ -148,6 +150,12 @@ Singleton {
         if(!screens.some(s=>s.name===output))return;
         SpotifyDesk.fullscreen=false;dropdownOriginScreen=output;dropdownAnchorX=anchorFor(name);dropdown=name;dropdownStamp++;
     }
+    function toggleDropdownOn(name:string,output:string):void {
+        if(!screens.some(s=>s.name===output)){toggleDropdown(name);return;}
+        const close=dropdown===name&&dropdownOriginScreen===output;
+        if(close){dropdown="";dropdownStamp++;return;}
+        openDropdownOn(name,output);
+    }
     function pinInstrument(kind:string):void {
         const pad=screens.find(s=>MachineProfile.role(s.name)==="screenpad");if(!pad)return;
         instrumentPrevious={name:dropdown,output:dropdownOriginScreen};instrumentKind=kind||"engineering";instrumentPinned=true;dropdown="";
@@ -155,7 +163,7 @@ Singleton {
     function releaseInstrument():void {instrumentPinned=false;if(dropdown===""&&instrumentPrevious.name)openDropdownOn(instrumentPrevious.name,instrumentPrevious.output);}
     function openDropdown(name: string): void {
         SpotifyDesk.fullscreen=false;
-        dropdownOriginScreen = focusedScreenName();
+        dropdownOriginScreen = barHovered && hoveredBarOutput ? hoveredBarOutput : focusedScreenName();
         dropdownAnchorX = anchorFor(name);
         dropdown = name;
     }
@@ -163,7 +171,7 @@ Singleton {
     function toggleDropdown(name: string): void {
         SpotifyDesk.fullscreen=false;
         if (dropdownAnchors[name] !== undefined) dropdownAnchorX = anchorFor(name);
-        const origin=hoveredBarOutput||focusedScreenName();
+        const origin=barHovered && hoveredBarOutput ? hoveredBarOutput : focusedScreenName();
         const closing=dropdown===name&&dropdownOriginScreen===origin;
         if(!closing)dropdownOriginScreen=origin;
         dropdown=closing?"":name;

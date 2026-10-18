@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.components
 import qs.config
 import qs.services
@@ -23,6 +24,6 @@ Item {
   Text {text:Ethernet.details.speedMbps?Ethernet.details.speedMbps+" Mb/s":"Connected";font.family:Appearance.font.barUi;font.pixelSize:10;color:Theme.paperMuted}
  }
  HoverHandler {id:hover;cursorShape:Qt.PointingHandCursor}
- TapHandler {id:tap;onTapped:{ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdown("ethernet");}}
- Component.onCompleted:Qt.callLater(()=>ShellState.publishAnchor("ethernet",root.mapToItem(null,0,0).x))
+ TapHandler {id:tap;onTapped:{ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdownOn("ethernet",root.QsWindow.window?.screen?.name??"");}}
+ Component.onCompleted:Qt.callLater(()=>ShellState.publishAnchor("ethernet",root.mapToItem(null,0,0).x,root.QsWindow.window?.screen?.name??""))
 }

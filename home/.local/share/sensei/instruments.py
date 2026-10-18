@@ -10,7 +10,7 @@ def output(argv,cwd=None):
  except (OSError,subprocess.SubprocessError):return ''
 
 def snapshot(mode,project=None):
- if mode not in ('normal','coding','simulation','hardware'):raise ValueError('Unknown instrument')
+ if mode not in ('normal','coding','simulation','hardware','drawing'):raise ValueError('Unknown instrument')
  p=e.project(project) if project else None
  root=e.checkout(p) if p else None
  cards=[]
@@ -34,6 +34,9 @@ def snapshot(mode,project=None):
   card('LAST RUN',latest.get('data',{}).get('outcome','No receipt') if latest else 'No recorded run',latest.get('data',{}).get('job','') if latest else 'No success inferred','engineering')
   trees=output(['git','worktree','list','--porcelain'],root) if root else ''
   card('WORKTREES',sum(l.startswith('worktree ') for l in trees.splitlines()) if root else '—',str(len(sessions))+' tmux sessions · '+(p.get('title',project) if p else 'Choose a project'),'project')
+ elif mode=='drawing':
+  from drawing import status
+  pen=status();card('PEN',pen['model'] if pen['connected'] else 'Disconnected',pen['mappedOutput'],'drawing');card('SCRATCH','Native ink','Resume or start a sheet','drawing');card('LEARNING','Linked diagram','Obsidian editable drawing','drawing');card('PRESSURE','Explicit test','No background stroke collection','drawing')
  elif mode=='hardware':
   inventory=e.hardware_inventory();devices=inventory['devices']
   card('KNOWN DEVICES',len(devices),'Hardware passports','hardware')

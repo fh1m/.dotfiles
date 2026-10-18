@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Bluetooth
 import qs.components
 import qs.config
@@ -63,7 +64,7 @@ Item {
     // handler rather than bound -- a binding through it captures whatever it
     // returned the first time and never runs again.
     function _publish(): void {
-        ShellState.publishAnchor("bluetooth", root.mapToItem(null, 0, 0).x);
+        ShellState.publishAnchor("bluetooth", root.mapToItem(null, 0, 0).x,root.QsWindow.window?.screen?.name??"");
     }
 
     onXChanged: root._publish()
@@ -72,7 +73,7 @@ Item {
     TapHandler { id: btTap
         onTapped: {
             ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x;
-            ShellState.toggleDropdown("bluetooth");
+            ShellState.toggleDropdownOn("bluetooth",root.QsWindow.window?.screen?.name??"");
         }
     }
 

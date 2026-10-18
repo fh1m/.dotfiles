@@ -300,3 +300,7 @@ if user_file then user_file:close(); dofile(user_monitors) end
 
 -- Engineering actions: same reviewed backend as launcher and ScreenPad.
 hl.bind("SUPER + CTRL + E", hl.dsp.exec_cmd("qs -c sensei ipc call dropdown open engineering"))
+
+-- Pen-first capture; native scratch and typed learning capture remain distinct.
+hl.bind("SUPER + CTRL + N", hl.dsp.exec_cmd("@HOME@/.local/bin/sensei-draw quick"))
+hl.bind("SUPER + CTRL + SHIFT + N", hl.dsp.exec_cmd("@HOME@/.local/bin/sensei-draw typed"))

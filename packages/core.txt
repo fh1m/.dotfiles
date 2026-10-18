@@ -86,3 +86,8 @@ nmap
 # Native animated wallpapers and local voice-note/video processing.
 awww
 librsvg
+
+# Pen-first writing: headless Artist Mode and native art diagnostics
+opentabletdriver
+krita
+xournalpp

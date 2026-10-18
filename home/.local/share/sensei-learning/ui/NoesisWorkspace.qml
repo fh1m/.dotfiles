@@ -796,6 +796,7 @@ function onFinished(ok){if(readinessDialog.submitting){readinessDialog.submittin
    }
   }
   footer:Flow {spacing:NoesisStyle.sm
+   NoesisButton {text:"Native scratchpad";visible:explorationDialog.kind==="drawing";onClicked:Quickshell.execDetached(["@HOME@/.local/bin/sensei-draw","quick"])}
    NoesisButton {text:"Cancel";enabled:!NoesisController.working;onClicked:explorationDialog.close()}
    NoesisButton {text:"Recover created file";visible:NoesisController.uncertainReceipt&&["drawing-create","scratch-create","exploration-recover"].includes(NoesisController.pendingOperation.kind);enabled:!NoesisController.working;onClicked:NoesisController.recoverExploration()}
    NoesisButton {text:explorationDialog.kind==="artifact-reconnect"?"Save artifact link":explorationDialog.kind==="drawing"?"Create linked drawing":"Create scratch experiment";primary:true;enabled:!!explorationTitle.text.trim()&&!NoesisController.working&&!NoesisController.uncertainReceipt&&explorationDialog.owner===NoesisController.activeVault;onClicked:{if(explorationDialog.kind==="artifact-reconnect")NoesisController.run(["artifact-reconnect",explorationDialog.origin,"--title",explorationTitle.text,"--location",artifactLocation.text]);else NoesisController.run([explorationDialog.kind==="drawing"?"drawing-create":"scratch-create",explorationDialog.origin,"--title",explorationTitle.text,"--mode",drawingMode.currentIndex===1?"freehand":"canvas","--prediction",explorationPrediction.text,"--code-file",explorationCode.text]);explorationDialog.pending=NoesisController.operationId;}}

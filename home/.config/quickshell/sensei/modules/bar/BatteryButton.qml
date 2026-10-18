@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.components
 import qs.config
 import qs.services
@@ -23,8 +24,8 @@ Item {
   NumberAnimation {target:mark;property:"opacity";from:.55;to:1;duration:1300}
  }
  Rectangle {anchors.right:parent.right;anchors.top:parent.top;anchors.rightMargin:5;anchors.topMargin:4;width:4;height:4;radius:2;color:Theme.signalRed;visible:Power.peripheralBatteries.some(d=>d.percent<15)}
- function publish():void {ShellState.publishAnchor("power",root.mapToItem(null,0,0).x);}
+ function publish():void {ShellState.publishAnchor("power",root.mapToItem(null,0,0).x,root.QsWindow.window?.screen?.name??"");}
  onXChanged:publish()
  Component.onCompleted:Qt.callLater(publish)
- MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{root.publish();ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdown("power");}}
+ MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{root.publish();ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdownOn("power",root.QsWindow.window?.screen?.name??"");}}
 }

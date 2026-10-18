@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+"""One pen workspace: native ink, learning diagrams and headless tablet profiles."""
+import argparse,json,sys,time,subprocess
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+import drawing as d
+p=argparse.ArgumentParser(description=__doc__);s=p.add_subparsers(dest='action',required=True)
+for name in ('status','apply','watch','recent','learn','attach','typed','focus'):s.add_parser(name)
+q=s.add_parser('quick');q.add_argument('--new',action='store_true')
+q=s.add_parser('set');q.add_argument('json')
+q=s.add_parser('export');q.add_argument('path')
+a=p.parse_args()
+try:
+ if a.action=='watch':
+  signature=None
+  while True:
+   try:
+    rows=d.monitors();app=json.loads(d.call(['hyprctl','-i','0','activewindow','-j'])).get('class','')
+    now=json.dumps([d.connected(),d.prefs(),[(m['name'],m['width'],m['height'],m['scale']) for m in rows],app,d.canvas_view() if d.connected() and 'xournal' in app.lower() else None])
+    if signature!=now and d.connected():d.reconcile();signature=now
+   except (ValueError,OSError,subprocess.SubprocessError):signature=None
+   time.sleep(3)
+ elif a.action=='set':print(json.dumps(d.update(json.loads(a.json))))
+ elif a.action=='quick':print(json.dumps(d.quick(a.new)))
+ elif a.action=='export':print(json.dumps(d.export(a.path)))
+ elif a.action=='typed':print(d.call([str(d.e.home()/'.local/bin/noesis'),'window','--capture']))
+ else:print(json.dumps({'status':d.status,'apply':d.reconcile,'recent':d.recent,'learn':d.learning,'attach':d.attach,'focus':d.focus_ink}[a.action]()))
+except (ValueError,OSError,KeyError,TypeError,subprocess.SubprocessError) as ex:print(json.dumps({'error':str(ex)}));sys.exit(1)

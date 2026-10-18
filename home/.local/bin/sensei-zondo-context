@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded, local-only desk context. No keys, titles, clipboard or network access."""
+"""Bounded, local-only desk context. No keys, clipboard, document contents or network access. Explicit Noesis/project selection only."""
 import json, os, shutil, subprocess, time
 from pathlib import Path
 
@@ -37,7 +37,26 @@ def sample(home=Path.home()):
         else:
             state.parent.mkdir(parents=True,exist_ok=True)
             tmp=state.with_suffix('.tmp');tmp.write_text(json.dumps({'kind':warning.split(' ',1)[0],'text':warning,'at':now}));tmp.chmod(0o600);tmp.replace(state)
-    result=dict(playing=playing,summary=summary,warning=warning,memoryPercent=round(used),freeGiB=round(free,1),temperature=temperature,at=now)
+    suggestions=[]
+    try:
+        projection=json.loads((home/'.local/state/sensei-learning/companion.json').read_text())
+        ctx=projection.get('context',{})
+        if 0<=now-projection.get('updated_at',0)<900 and ctx.get('title'):
+            title=str(ctx['title'])[:75]
+            suggestions.extend(["Working on “"+title+"”? We could sketch the mechanism before writing another paragraph.","For “"+title+"”, what would a tiny counterexample look like? I can keep the drawing tools nearby."])
+    except (OSError,ValueError,TypeError):pass
+    try:
+        pen=json.loads((home/'.local/state/sensei-drawing/mapped.json').read_text())
+        if now-pen.get('at',0)<600:suggestions.append("Your pen is mapped to "+pen['output']+". Super+Ctrl+N is our scratch paper; the rear of the pen is the eraser.")
+    except (OSError,ValueError,KeyError):pass
+    try:
+        selected=json.loads((home/'.config/sensei-engineering/instrument.json').read_text()).get('project')
+        if selected:
+            projects=json.loads((home/'.config/sensei-engineering/projects.json').read_text()).get('projects',[])
+            title=next((p.get('title',p['id']) for p in projects if p['id']==selected),'')
+            if title:suggestions.append("“"+title[:70]+"” is our selected project. Small baseline, inspect the evidence, then the magnificent machine.")
+    except (OSError,ValueError,KeyError):pass
+    result=dict(suggestions=suggestions,playing=playing,summary=summary,warning=warning,memoryPercent=round(used),freeGiB=round(free,1),temperature=temperature,at=now)
     state=home/'.local/state/sensei-den/zondo-context.json'
     state.parent.mkdir(parents=True,exist_ok=True)
     tmp=state.with_suffix('.tmp');tmp.write_text(json.dumps(result));tmp.chmod(0o600);tmp.replace(state)

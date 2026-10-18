@@ -96,11 +96,32 @@ def companion_memory():
     return memory(read(STATE/'zondo-memory.json'))
 
 
+def companion_available():
+    """Only output names leave this geometry query; no titles or application text."""
+    monitors=json.loads(run(['hyprctl','-i','0','monitors','-j']).stdout)
+    clients=json.loads(run(['hyprctl','-i','0','clients','-j']).stdout)
+    out=[]
+    for m in monitors:
+        if m['name'].startswith('SENSEI-'):continue
+        windows=[c for c in clients if c.get('mapped') and not c.get('hidden') and (c.get('workspace',{}).get('id')==m.get('activeWorkspace',{}).get('id') or c.get('pinned'))]
+        if any(c.get('fullscreen') for c in windows):continue
+        w,h=m['width']/m['scale'],m['height']/m['scale']
+        def fits(cw,ch):
+            for px in (.05,.25,.5,.75,.95):
+                for py in (.05,.25,.5,.75,.95):
+                    x=8+px*(w-cw-16);y=54+py*(h-ch-108)
+                    if y<52:continue
+                    if not any(x<c['at'][0]-m['x']+c['size'][0]+12 and x+cw>c['at'][0]-m['x']-12 and y<c['at'][1]-m['y']+c['size'][1]+12 and y+ch>c['at'][1]-m['y']-12 for c in windows):return True
+            return False
+        if fits(96,96) and fits(256,156):out.append(m['name'])
+    return out
+
+
 def companion(action,value=None):
     cfg=read(CONFIG/'companion.json',{'enabled':True,'quiet':False,'size':96})
     sys.path.insert(0,str(HOME/'.local/share/sensei'))
     from companion_roam import engineering_events,engineering_acks
-    if action=='protocol':return {'schema':1,'leases':True,'musicPlaying':zondo_playing(),'memory':companion_memory(),'engineeringAcks':engineering_acks(read(STATE/'zondo-engineering-seen.json',{'ids':[]}).get('ids',[])),'engineeringEvents':engineering_events(read(HOME/'.local/state/sensei-engineering/receipts.json',{'events':[]}).get('events',[])),'enabled':cfg.get('enabled',True),'quiet':cfg.get('quiet',False),'suspended':cfg.get('suspended',False),'reducedMotion':cfg.get('reducedMotion',False)}
+    if action=='protocol':return {'schema':1,'leases':True,'availableOutputs':companion_available(),'render':read(STATE/'companion-render.json'),'musicPlaying':zondo_playing(),'memory':companion_memory(),'engineeringAcks':engineering_acks(read(STATE/'zondo-engineering-seen.json',{'ids':[]}).get('ids',[])),'engineeringEvents':engineering_events(read(HOME/'.local/state/sensei-engineering/receipts.json',{'events':[]}).get('events',[])),'enabled':cfg.get('enabled',True),'quiet':cfg.get('quiet',False),'suspended':cfg.get('suspended',False),'reducedMotion':cfg.get('reducedMotion',False)}
     if action=='grant':
         sys.path.insert(0,str(HOME/'.local/share/sensei'))
         from companion_roam import grant
@@ -140,6 +161,7 @@ def companion(action,value=None):
     elif action=='hide-seek':cfg.update(seeking=True,tourAt=time.time(),roaming=True,reducedMotion=False,anchorManual=False,message='Find me on an available patch of wallpaper. Follow the pink engineering trail across the Den.',messageAt=time.time())
     elif action=='found':cfg.update(seeking=False,message='Found! Your reward is a tiny engineer with excellent hiding intentions.',messageAt=time.time(),pose='wave',poseAt=time.time())
     elif action=='tour':cfg.update(tourAt=time.time(),roaming=True,reducedMotion=False,anchorManual=False)
+    elif action=='pulse':cfg['focusPulse']=value=='on' if value else not cfg.get('focusPulse',True)
     elif action=='dim':cfg['focusDimming']=value=='on' if value else not cfg.get('focusDimming',False)
     elif action=='toggle':cfg['enabled']=not cfg.get('enabled',True)
     elif action in ('show','hide'):cfg['enabled']=action=='show'
@@ -530,7 +552,8 @@ def _companion_tick(peer):
     from companion_roam import engineering_events,engineering_acks
     acks=engineering_acks(read(STATE/'zondo-engineering-seen.json',{'ids':[]}).get('ids',[]))
     events=engineering_events(read(HOME/'.local/state/sensei-engineering/receipts.json',{'events':[]}).get('events',[]))
-    destinations=[(local_host,m['name']) for m in local if not m['name'].startswith('SENSEI-')]
+    available=companion_available()
+    destinations=[(local_host,m['name']) for m in local if m['name'] in available]
     if peer and local_host=='arete':
         try:
             capability=json.loads(remote([str(HOME/'.local/bin/sensei-den'),'companion','protocol'],timeout=4))
@@ -541,15 +564,18 @@ def _companion_tick(peer):
             from companion_roam import newer_memory
             repertoire=newer_memory(repertoire,capability.get('memory',{}))
             if capability.get('schema')==1 and capability.get('leases') and capability.get('enabled') and not capability.get('quiet') and not capability.get('suspended') and not capability.get('reducedMotion'):
-                destinations += [('homie',m['name']) for m in json.loads(remote(['hyprctl','-i','0','monitors','-j'],timeout=4)) if not m['name'].startswith('SENSEI-')]
+                destinations += [('homie',m['name']) for m in json.loads(remote(['hyprctl','-i','0','monitors','-j'],timeout=4)) if m['name'] in capability.get('availableOutputs',[])]
         except (ValueError,OSError,subprocess.SubprocessError):pass
     if not destinations:return
-    advance=now>=state.get('next',0) or cfg.get('tourAt',0)>state.get('tourAt',0)
+    capability=locals().get('capability',{})
+    rendered=read(STATE/'companion-render.json')
+    talking=(rendered.get('speaking') and rendered.get('speechVisible')) or (peer and capability.get('render',{}).get('speaking') and capability.get('render',{}).get('speechVisible'))
+    advance=(now>=state.get('next',0) and not talking) or cfg.get('tourAt',0)>state.get('tourAt',0)
     chosen=state.get('destination')
     if not chosen or tuple(chosen) not in destinations or advance:
         current=destinations.index(tuple(chosen)) if chosen and tuple(chosen) in destinations else -1
         chosen=destinations[(current+1)%len(destinations)]
-        state.update(destination=chosen,next=now+45+int.from_bytes(os.urandom(1))%46,tourAt=cfg.get('tourAt',0))
+        state.update(destination=chosen,next=now+25+int.from_bytes(os.urandom(1))%21,tourAt=cfg.get('tourAt',0))
     # Receipts drive a bounded courier story; never infer a finished job.
     scene=''
     submitted=sorted((e for e in events if e['kind']=='job.submitted' and e['host']=='homie' and e.get('data',{}).get('job')),key=lambda e:e['at'])
@@ -578,7 +604,11 @@ def _companion_tick(peer):
         state['remoteUntil']=now+45;write(STATE/'companion-route.json',state)
         remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire,'engineeringEvents':events,'engineeringAcks':acks,'scene':scene})],timeout=4)
     else:
-        if remote_until>now:return
+        if remote_until>now:
+            try:
+                remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':'','token':token,'ttl':0})],timeout=4)
+                state['remoteUntil']=0
+            except (ValueError,OSError,subprocess.SubprocessError):return
         companion('grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire,'engineeringEvents':events,'engineeringAcks':acks,'scene':scene}))
         state['remoteUntil']=0
     write(STATE/'companion-route.json',state)
@@ -633,7 +663,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);s=p.add_subparsers(dest='command_name',required=True)
     for n in ['status','doctor','watch']:s.add_parser(n)
     q=s.add_parser('mode');q.add_argument('value',nargs='?',choices=['auto','together','away','homie'])
-    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','activity','activity-hide','activity-favorite','talk','remember','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','hide-seek','found','dim','grant','protocol']);q.add_argument('value',nargs='?')
+    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','activity','activity-hide','activity-favorite','talk','remember','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','hide-seek','found','pulse','dim','grant','protocol']);q.add_argument('value',nargs='?')
     q=s.add_parser('sync');q.add_argument('action',nargs='?',default='status',choices=['status','scan','pause','resume'])
     q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','retain-preview','peer-copy'])
     q=s.add_parser('workbench');q.add_argument('action',nargs='?',default='open',choices=['open','start','stop','status'])

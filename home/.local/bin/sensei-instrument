@@ -4,6 +4,6 @@ import argparse,json,sys,subprocess
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
 from instruments import snapshot
-p=argparse.ArgumentParser();p.add_argument('mode',choices=['normal','coding','simulation','hardware']);p.add_argument('--project');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('mode',choices=['normal','coding','simulation','hardware','drawing']);p.add_argument('--project');a=p.parse_args()
 try:print(json.dumps(snapshot(a.mode,a.project)))
 except (ValueError,OSError,KeyError,subprocess.SubprocessError) as error:print(json.dumps({'error':str(error)}));sys.exit(1)

@@ -1,0 +1,12 @@
+[Unit]
+Description=Tablet mapping and pen-only writing profiles
+After=graphical-session.target opentabletdriver.service
+Wants=opentabletdriver.service
+PartOf=graphical-session.target
+[Service]
+ExecStart=%h/.local/bin/sensei-draw watch
+Restart=on-failure
+RestartSec=5
+UMask=0077
+[Install]
+WantedBy=graphical-session.target

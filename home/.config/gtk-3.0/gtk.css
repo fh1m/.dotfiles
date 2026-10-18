@@ -8,8 +8,8 @@
 @define-color view_fg_color #eee7ed;
 @define-color headerbar_bg_color #000000;
 @define-color headerbar_fg_color #eee7ed;
-@define-color card_bg_color #080608;
-@define-color popover_bg_color #080608;
+@define-color card_bg_color #000000;
+@define-color popover_bg_color #000000;
 @define-color dialog_bg_color #000000;
 @define-color selected_bg_color #b82052;
 @define-color selected_fg_color #ffffff;
@@ -30,3 +30,28 @@ scrollbar slider { min-width: 5px; min-height: 5px; border-radius: 8px; backgrou
 scrollbar slider:hover { background-color: @accent_color; }
 progressbar progress { background-color: @accent_bg_color; border-radius: 5px; }
 tooltip { border-radius: 6px; }
+
+/* OLED structural surfaces; preserve document paper, images and semantic controls. */
+@define-color sidebar_bg_color #000000;
+@define-color sidebar_backdrop_color #000000;
+@define-color secondary_sidebar_bg_color #000000;
+@define-color thumbnail_bg_color #000000;
+@define-color card_bg_color #000000;
+@define-color popover_bg_color #000000;
+@define-color headerbar_backdrop_color #000000;
+@define-color headerbar_shade_color transparent;
+:root { --sidebar-bg-color:#000000; --sidebar-backdrop-color:#000000; --secondary-sidebar-bg-color:#000000; --card-bg-color:#000000; --popover-bg-color:#000000; --headerbar-backdrop-color:#000000; --headerbar-shade-color:transparent; --shade-color:transparent; }
+.navigation-sidebar, .sidebar, .background, .view, toolbarview, .top-bar, .bottom-bar,
+headerbar, headerbar:backdrop, .toolbar, .toolbar:backdrop, tabbar, .path-bar, .location-bar,
+.nautilus-window .top-bar, .nautilus-window .view, popover > contents {
+ background-color:#000000; background-image:none;
+}
+
+toolbar, menubar, statusbar, notebook > header, .path-bar-box,
+headerbar button:not(:hover):not(:checked), .path-bar button:not(:hover):not(:checked),
+.navigation-sidebar row:not(:selected):not(:hover) {
+ background-color:#000000; background-image:none;
+}
+
+.path-bar button label, headerbar .title, headerbar .subtitle { color:@window_fg_color; }
+headerbar button:disabled, headerbar button:disabled label { color:#807b80; }

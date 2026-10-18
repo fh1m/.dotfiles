@@ -63,7 +63,7 @@ function roofPlace(file,width,height,w,h,windows,variant) {
 
 // Authored world perches, projected through the same viewport as the wallpaper.
 function worldPlace(view,world,width,height,w,h,windows,variant) {
- if(!view||!world||!world.perches)return null;
+ if(!view||view.storyVersion===4||!world||!world.perches)return null;
  var points=world.perches[view.role]||[];
  for(var n=0;n<points.length;n++){
   var q=points[(n+variant)%points.length];
