@@ -79,6 +79,7 @@ def canvas_view():
   import gi
   gi.require_version('Atspi','2.0')
   from gi.repository import Atspi
+  Atspi.set_timeout(300,500)
   desktop=Atspi.get_desktop(0);views=[];zooms=[]
   def walk(n,depth=0):
    if depth>12:return
@@ -94,9 +95,9 @@ def canvas_view():
     except Exception:pass
   for i in range(desktop.get_child_count()):
    app=desktop.get_child_at_index(i)
-   if app.get_name()=='com.github.xournalpp.xournalpp':walk(app)
+   if app.get_name()=='com.github.xournalpp.xournalpp' and app.get_process_id()==active.get('pid'):walk(app)
   if not views:return None
-  return {'viewport':max(views,key=lambda r:r[2]*r[3]),'at':active['at'],'size':active['size'],'address':active['address'],'zoom':zooms}
+  return {'viewport':max(views,key=lambda r:r[2]*r[3]),'at':active['at'],'size':active['size'],'address':active['address'],'monitor':active.get('monitor'),'zoom':zooms}
  except (ImportError,ValueError,OSError,subprocess.SubprocessError):return None
 
 def paper_bounds(image):
@@ -119,16 +120,17 @@ def paper_bounds(image):
 
 def drawable_region(m):
  view=canvas_view()
- if not view:return None
+ if not view or view.get('monitor')!=m.get('id'):return None
  import io
  from PIL import Image
  x,y,w,h=view['viewport'];ax,ay=view['at']
  # GTK Wayland accessibility coordinates are window-local on this installation.
  capture=subprocess.run(['grim','-g',f'{ax+x},{ay+y} {w}x{h}','-'],capture_output=True,timeout=5,env=e.session_environment())
  if capture.returncode:return None
- with Image.open(io.BytesIO(capture.stdout)) as image:paper=paper_bounds(image)
+ with Image.open(io.BytesIO(capture.stdout)) as image:
+  paper=paper_bounds(image);sx=image.width/w;sy=image.height/h
  if not paper:return None
- px,py,pw,ph=paper
+ px,py,pw,ph=[round(v/(sx if i%2==0 else sy)) for i,v in enumerate(paper)]
  return {'x':ax+x+px-m['x'],'y':ay+y+py-m['y'],'width':pw,'height':ph,'kind':'scratch-paper'}
 
 def reconcile():
@@ -172,11 +174,11 @@ def recent():
  for p in sorted(folder.glob('*.xopp'),key=lambda p:p.stat().st_mtime,reverse=True)[:20]:rows.append({'path':str(p),'name':p.stem,'modified':p.stat().st_mtime})
  return {'version':1,'drawings':rows}
 
-def place(app):
+def place(app,filename=None):
  # Match only the launched specialist, never move an unrelated active window.
  for _ in range(40):
   clients=json.loads(call(['hyprctl','-i','0','clients','-j']))
-  matches=[x for x in clients if app in x.get('class','').lower()]
+  matches=[x for x in clients if app in x.get('class','').lower() and (not filename or filename in x.get('title',''))]
   if matches:
    rows=monitors();m,_=target(prefs(),rows);address=matches[-1]['address']
    call(['hyprctl','-i','0','dispatch','hl.dsp.window.move({window='+json.dumps('address:'+address)+',workspace='+json.dumps(str(m['activeWorkspace']['id']))+',follow=false})']);call(['hyprctl','-i','0','dispatch','hl.dsp.focus({window='+json.dumps('address:'+address)+'})']);return
@@ -205,8 +207,8 @@ def _quick(new=False):
   path.chmod(0o600);e.save(e.home()/'.local/state/sensei-drawing/current.json',{'path':str(path)})
  clients=json.loads(call(['hyprctl','-i','0','clients','-j']))
  if any('xournal' in x.get('class','').lower() and path.name in x.get('title','') for x in clients):
-  place('xournal');return {'path':str(path),'editable':True,'resumed':True}
- subprocess.Popen(['xournalpp',str(path)],env=e.session_environment(),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True);place('xournal');return {'path':str(path),'editable':True}
+  place('xournal',path.name);return {'path':str(path),'editable':True,'resumed':True}
+ subprocess.Popen(['xournalpp',str(path)],env=e.session_environment(),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True);place('xournal',path.name);return {'path':str(path),'editable':True}
 
 def learning():
  projection=e.read(e.home()/'.local/state/sensei-learning/companion.json',{});ctx=projection.get('context',{})
