@@ -7,8 +7,9 @@ import qs.services
 import qs.components
 DropdownFrame {
  headerAccent:Theme.widgetAccent
- id:root;title:"\uf1bc Music / Spotify";katakana:"AUDIO PATH";implicitWidth:1080;fillColor:Theme.ink
+ id:root;title:"\uf001 Media center / Den";katakana:root.page>=7?"WATCH / LISTEN / EXPLORE":"YOUR SOUNDTRACK";implicitWidth:root.page>=7?1840:1080;fillColor:Theme.ink
  property string outputName:""
+ property var hostWindow:null
  IpcHandler {enabled:root.outputName!=="";target:"spotifyview-"+root.outputName;function state():string{return JSON.stringify({count:musicList.count,visible:musicList.visible,query:SpotifyDesk.query,contextId:SpotifyDesk.contextItem.id||"",loading:SpotifyDesk.loading,error:SpotifyDesk.error});}function filter(text:string):void{SpotifyDesk.query=text;}}
  headerRight:ControlTile {implicitWidth:32;implicitHeight:30;glyph:"\uf065";Accessible.name:"Open fullscreen music";onActivated:SpotifyDesk.expand()}
  MusicVideos {parent:root.Overlay.overlay||root}
@@ -26,20 +27,20 @@ DropdownFrame {
  }
  }
  Column {width:parent.width;spacing:12
- Row {spacing:0;Repeater {model:['Now playing','Queue','Playlists','Library','Search','Devices','Account'];Item {required property string modelData;required property int index;width:Math.floor((root.width-28)/7);height:34
+ Row {spacing:0;Repeater {model:['Now playing','Queue','Playlists','Library','Search','Devices','Account','YouTube','Twitch'];Item {required property string modelData;required property int index;width:Math.floor((root.width-28)/9);height:34
  Rectangle {anchors.fill:parent;color:SpotifyDesk.page===index?Theme.surfaceTwo:Theme.ink;opacity:pointer.containsMouse||SpotifyDesk.page===index?1:.85}
  Text { textFormat: Text.PlainText;anchors.centerIn:parent;text:modelData;font.family:Appearance.font.ui;font.pixelSize:11;font.weight:SpotifyDesk.page===index?Font.DemiBold:Font.Normal;color:SpotifyDesk.page===index?Theme.paper:Theme.paperMuted}
  Rectangle {anchors.bottom:parent.bottom;anchors.horizontalCenter:parent.horizontalCenter;width:SpotifyDesk.page===index?parent.width-20:0;height:2;color:Theme.signalRed;Behavior on width {NumberAnimation {duration:Theme.motionTravel;easing.type:Easing.OutCubic}}}
  MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:SpotifyDesk.page=index}
  }}}
  Row {width:parent.width;spacing:16
- ChamferPanel {id:playerPane;width:342;height:Math.max(670,playerContents.implicitHeight+28);fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
+ ChamferPanel {id:playerPane;visible:root.page<7;width:342;height:root.page>=7?Math.max(320,(ShellState.screens.find(s=>s.name===root.outputName)?.height||1080)-240):Math.max(670,playerContents.implicitHeight+28);fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {id:playerContents;anchors.fill:parent;anchors.margins:14;spacing:12
  ChamferPanel {width:312;height:312;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  RoundedArtwork {cornerRadius:10;anchors.fill:parent;anchors.margins:1;source:SpotifyDesk.albumArt;sourceSize:Qt.size(640,640);fillMode:Image.PreserveAspectCrop;asynchronous:true}
  MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:SpotifyDesk.artExpanded=true}
  Text { textFormat: Text.PlainText;anchors.centerIn:parent;visible:SpotifyDesk.albumArt==='';text:'\uf1bc';font.family:Appearance.font.icons;font.pixelSize:88;color:Theme.widgetMuted}
- Rectangle {anchors.bottom:parent.bottom;anchors.right:parent.right;anchors.margins:7;width:24;height:24;radius:Theme.radiusSmall;color:Theme.surfaceOne;Text { textFormat: Text.PlainText;anchors.centerIn:parent;text:'\uf1bc';font.family:Appearance.font.icons;font.pixelSize:17;color:SpotifyDesk.playing?Theme.signalRed:Theme.widgetMuted}}
+ Rectangle {anchors.bottom:parent.bottom;anchors.right:parent.right;anchors.margins:7;width:24;height:24;radius:Theme.radiusSmall;color:Theme.surfaceOne;Text { textFormat: Text.PlainText;anchors.centerIn:parent;text:YouTubeDesk.ownsAudio?(YouTubeDesk.platform==='Twitch'?'\uf1e8':'\uf16a'):'\uf1bc';font.family:Appearance.font.icons;font.pixelSize:17;color:SpotifyDesk.playing?Theme.signalRed:Theme.widgetMuted}}
  }
  Text { textFormat: Text.PlainText;width:312;text:SpotifyDesk.title;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:17;font.weight:600;color:Theme.widgetText}
  Text { textFormat: Text.PlainText;width:312;text:SpotifyDesk.artist;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted}
@@ -49,15 +50,17 @@ DropdownFrame {
  Row {spacing:8;Repeater {model:[{glyph:'\uf048',action:'previous'},{glyph:SpotifyDesk.playing?'\uf04c':'\uf04b',action:'toggle'},{glyph:'\uf051',action:'next'}];ControlTile {accentColor:Theme.widgetAccent;required property var modelData;implicitWidth:98;implicitHeight:38;glyph:modelData.glyph;selected:modelData.action==='toggle'?SpotifyDesk.playing:SpotifyDesk.skipPending===modelData.action;enabled:modelData.action==='toggle'||!SpotifyDesk.trackLoading;onActivated:SpotifyDesk.action(modelData.action)}}}
  Row {spacing:7;ControlTile {accentColor:Theme.widgetAccent;implicitWidth:152;implicitHeight:30;label:'Shuffle';glyph:'\uf074';selected:SpotifyDesk.playback.shuffle;onActivated:SpotifyDesk.action('shuffle')}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:152;implicitHeight:30;label:'Repeat '+(SpotifyDesk.playback.repeat||'off');onActivated:SpotifyDesk.action('repeat')}}
  MusicSpectrum {width:312;height:32;visible:SpotifyDesk.spectrumEnabled}
- ControlSlider {accentColor:Theme.widgetAccent;width:312;title:'Spotify volume';level:SpotifyDesk.volume;onEdited:v=>SpotifyDesk.action('volume',[String(Math.round(v))])}
+ ControlSlider {accentColor:Theme.widgetAccent;width:312;title:YouTubeDesk.ownsAudio?YouTubeDesk.platform+' volume':'Spotify volume';level:SpotifyDesk.volume;onEdited:v=>SpotifyDesk.action('volume',[String(Math.round(v))])}
  }
  }
- Column {width:parent.width-358;spacing:10
- Item {width:parent.width;height:34
+ Column {width:root.page>=7?parent.width:parent.width-358;spacing:10
+ TwitchPanel {hostWindow:root.hostWindow;visible:root.page===8;width:parent.width;height:playerPane.height}
+ YouTubePanel {hostWindow:root.hostWindow;visible:root.page===7;width:parent.width;height:playerPane.height}
+ Item {visible:root.page<7;width:parent.width;height:34
  Text { textFormat: Text.PlainText;anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter;text:SpotifyDesk.contextItem.id?(SpotifyDesk.contextItem.title||'Loading collection…'):root.page===0?(SpotifyDesk.queueRows.length?'Up next · '+SpotifyDesk.queueRows.length+' songs':'Your liked rotation'):root.page===1?'Up next · '+SpotifyDesk.queueRows.length+' songs':root.page===2?'Your playlists':root.page===3?'Your music library':root.page===4?'Discover your next favourite':root.page===5?'Spotify Connect devices':'Your music account';font.family:Appearance.font.ui;font.pixelSize:16;color:Theme.widgetText;elide:Text.ElideRight;width:parent.width-120}
  ControlTile {accentColor:Theme.widgetAccent;anchors.right:parent.right;implicitWidth:100;implicitHeight:30;label:SpotifyDesk.contextItem.id?'Back':'Refresh';glyph:SpotifyDesk.contextItem.id?'\uf060':'\uf021';onActivated:SpotifyDesk.refresh(true)}
  }
- Row {visible:root.page===0;spacing:8
+ Row {visible:root.page===0&&!YouTubeDesk.ownsAudio;spacing:8
  ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf004';label:'Save song';enabled:!!SpotifyDesk.playback.track?.id;onActivated:SpotifyDesk.action('like')}
  ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;label:'Remove liked';enabled:!!SpotifyDesk.playback.track?.id;onActivated:SpotifyDesk.action('unlike')}
  ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf025';label:'Liked songs';onActivated:SpotifyDesk.action('liked-play')}
@@ -70,14 +73,14 @@ DropdownFrame {
  ControlTile {implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf16a';label:'Videos';onActivated:SpotifyDesk.openVideos(false)}
  }
  ChamferPanel {visible:root.page===0;width:parent.width;height:68;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
- Column {anchors.fill:parent;anchors.margins:10;spacing:7;Text { textFormat: Text.PlainText;width:parent.width;text:(SpotifyDesk.skipPending?'Switching track…':SpotifyDesk.playing?'Playing':'Paused')+' · '+(SpotifyDesk.playback.device||SpotifyDesk.account.deviceName||'Sensei')+' · Spotify Connect';font.family:Appearance.font.ui;font.pixelSize:12;color:SpotifyDesk.playing?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}Text { textFormat: Text.PlainText;width:parent.width;text:'Ctrl + Space  play / pause     •     right-click music badge to toggle';font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted;elide:Text.ElideRight}}
+ Column {anchors.fill:parent;anchors.margins:10;spacing:7;Text { textFormat: Text.PlainText;width:parent.width;text:(SpotifyDesk.skipPending?'Switching track…':SpotifyDesk.playing?'Playing':'Paused')+' · '+(SpotifyDesk.playback.device||SpotifyDesk.account.deviceName||'Sensei')+(YouTubeDesk.ownsAudio?' · '+YouTubeDesk.platform+' audio':' · Spotify Connect');font.family:Appearance.font.ui;font.pixelSize:12;color:SpotifyDesk.playing?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}Text { textFormat: Text.PlainText;width:parent.width;text:'Ctrl + Space  play / pause     •     right-click music badge to toggle';font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted;elide:Text.ElideRight}}
  }
- Row {visible:root.page===3;spacing:6;Repeater {model:SpotifyDesk.playback.backend==='headless'?[{key:'liked',label:'Liked'},{key:'albums',label:'Albums'},{key:'artists',label:'Artists'}]:[{key:'liked',label:'Liked'},{key:'albums',label:'Albums'},{key:'artists',label:'Artists'},{key:'recent',label:'Recent'},{key:'top',label:'Top tracks'}];ControlTile {accentColor:Theme.widgetAccent;required property var modelData;implicitWidth:(parent.parent.width-24)/5;implicitHeight:30;label:modelData.label;selected:SpotifyDesk.libraryKind===modelData.key;onActivated:SpotifyDesk.libraryKind=modelData.key}}}
+ Row {visible:root.page===3;spacing:6;Repeater {model:SpotifyDesk.spotifyState.backend==='headless'?[{key:'liked',label:'Liked'},{key:'albums',label:'Albums'},{key:'artists',label:'Artists'}]:[{key:'liked',label:'Liked'},{key:'albums',label:'Albums'},{key:'artists',label:'Artists'},{key:'recent',label:'Recent'},{key:'top',label:'Top tracks'}];ControlTile {accentColor:Theme.widgetAccent;required property var modelData;implicitWidth:(parent.parent.width-24)/5;implicitHeight:30;label:modelData.label;selected:SpotifyDesk.libraryKind===modelData.key;onActivated:SpotifyDesk.libraryKind=modelData.key}}}
  DeskTextField {visible:root.page===2||root.page===3||root.page===4;width:parent.width;height:36;placeholderText:root.page===4?(SpotifyDesk.playback.backend==='headless'?'Search Spotify…':'Search songs, artists, albums and playlists…'):'Filter your music…';text:SpotifyDesk.query;onTextEdited:SpotifyDesk.query=text}
  Row {visible:root.page===4;spacing:7;Repeater {model:['tracks','albums','artists','playlists'];ControlTile {accentColor:Theme.widgetAccent;required property string modelData;implicitWidth:(parent.parent.width-21)/4;implicitHeight:30;label:modelData[0].toUpperCase()+modelData.slice(1);selected:SpotifyDesk.searchKind===modelData;onActivated:SpotifyDesk.searchKind=modelData}}}
  Row {visible:root.page===2;spacing:8
- DeskTextField {id:playlistName;visible:SpotifyDesk.playback.backend!=='headless';width:parent.parent.width-354;height:32;placeholderText:'New private playlist name'}
- ControlTile {accentColor:Theme.widgetAccent;implicitWidth:140;implicitHeight:32;label:'Create playlist';visible:SpotifyDesk.playback.backend!=='headless';enabled:playlistName.text.trim()!=='';onActivated:{SpotifyDesk.action('playlist-create',[playlistName.text.trim()]);playlistName.text='';}}
+ DeskTextField {id:playlistName;visible:SpotifyDesk.spotifyState.backend!=='headless';width:parent.parent.width-354;height:32;placeholderText:'New private playlist name'}
+ ControlTile {accentColor:Theme.widgetAccent;implicitWidth:140;implicitHeight:32;label:'Create playlist';visible:SpotifyDesk.spotifyState.backend!=='headless';enabled:playlistName.text.trim()!=='';onActivated:{SpotifyDesk.action('playlist-create',[playlistName.text.trim()]);playlistName.text='';}}
  ControlTile {accentColor:Theme.widgetAccent;implicitWidth:198;implicitHeight:32;label:'Add current to selected';enabled:root.playlistToAdd!==''&&!!SpotifyDesk.playback.track?.uri;onActivated:SpotifyDesk.action('playlist-add',[root.playlistToAdd,SpotifyDesk.playback.track.uri])}
  }
  Row {visible:!!SpotifyDesk.contextItem.id;spacing:8
@@ -86,7 +89,7 @@ DropdownFrame {
  }
  ListView {id:musicList;visible:root.page<5&&!(root.page===0&&SpotifyDesk.lyricsOpen);width:parent.width;height:Math.max(100,playerPane.height-musicList.y-0-(loadMore.visible?42:0));clip:true;spacing:6;reuseItems:true;cacheBuffer:120
  model:SpotifyDesk.visibleRows.filter(e=>root.page===4||!SpotifyDesk.query||((e.title||'')+' '+(e.artist||'')+' '+(e.album||'')).toLowerCase().includes(SpotifyDesk.query.toLowerCase()))
- delegate:SpotifyRow {required property var modelData;required property int index;width:musicList.width;entry:modelData;number:index+1;onPlayRequested:SpotifyDesk.play(modelData);onBrowseRequested:{if(modelData.kind==='playlist')root.playlistToAdd=modelData.id;SpotifyDesk.browse(modelData);}onQueueRequested:SpotifyDesk.action('enqueue',[modelData.uri])}
+ delegate:SpotifyRow {required property var modelData;required property int index;width:musicList.width;entry:modelData;number:index+1;onPlayRequested:SpotifyDesk.play(modelData);onBrowseRequested:{if(modelData.kind==='playlist')root.playlistToAdd=modelData.id;SpotifyDesk.browse(modelData);}onQueueRequested:{if(['youtube','twitch'].includes(modelData.kind))YouTubeDesk.enqueue(modelData);else SpotifyDesk.action('enqueue',[modelData.uri]);}}
  ScrollBar.vertical:DeskScrollBar {}
  Text { textFormat: Text.PlainText;visible:musicList.count===0;anchors.centerIn:parent;width:parent.width-40;horizontalAlignment:Text.AlignHCenter;wrapMode:Text.Wrap;text:SpotifyDesk.loading?'Sensei, loading your music…':root.page===4?'Type a song, artist, album or playlist above.':SpotifyDesk.error?SpotifyDesk.error:SpotifyDesk.contextItem.id?'This collection returned no playable songs. Choose another collection or refresh.':'Sensei, choose a playlist or liked songs to start your soundtrack.';font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetMuted}
  }
@@ -121,6 +124,6 @@ DropdownFrame {
  }
  }
  }
- Text { textFormat: Text.PlainText;width:parent.width;text:SpotifyDesk.error||SpotifyDesk.statusError||SpotifyDesk.warning||(SpotifyDesk.loading?'Sensei, loading your music…':'Sensei, your soundtrack is ready.');font.family:Appearance.font.ui;font.pixelSize:11;color:(SpotifyDesk.error||SpotifyDesk.statusError)?Theme.widgetAccent:Theme.widgetMuted;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight}
+ Text { visible:root.page<7;textFormat: Text.PlainText;width:parent.width;text:SpotifyDesk.error||SpotifyDesk.statusError||SpotifyDesk.warning||(SpotifyDesk.loading?'Sensei, loading your music…':'Sensei, your soundtrack is ready.');font.family:Appearance.font.ui;font.pixelSize:11;color:(SpotifyDesk.error||SpotifyDesk.statusError)?Theme.widgetAccent:Theme.widgetMuted;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight}
  }
 }

@@ -30,6 +30,7 @@ ShellRoot {
     Dropdowns {}
     EngineeringInstrument {}
     SpotifyFullscreen {}
+    MusicVideoWindow {}
     Loader {active:Quickshell.env("NOESIS_HOST")==="embedded";sourceComponent:Component {LearningUi.NoesisWindow {}}}
     // Loaded only when the external Noesis UI is present, so a missing UI cannot take the shell down.
     Loader {active:NoesisBridge.uiPresent;source:"modules/learning/NoesisCompanion.qml"}

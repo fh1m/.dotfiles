@@ -1,9 +1,20 @@
 #!/usr/bin/python3
 """Sensei Spotify: loopback player control, cached Spotify library and album art."""
 import os,sys
+# Optional isolated tools for machines whose distro mirrors are mid-update.
+# Normal package-managed installations continue using the system interpreter.
+if __name__=='__main__' and len(sys.argv)>1 and (sys.argv[1].startswith(('youtube-','twitch-')) or sys.argv[1] in ('music-videos','video-resolve','video-play')):
+ media_python=os.path.expanduser('~/.local/opt/sensei-media-tools/bin/python')
+ if os.path.isfile(media_python) and not os.environ.get('SENSEI_MEDIA_ENV'):
+  os.environ['SENSEI_MEDIA_ENV']='1';os.environ['PATH']=os.path.dirname(media_python)+os.pathsep+os.environ.get('PATH','')
+  os.execv(media_python,[media_python,__file__]+sys.argv[1:])
 if __name__=='__main__' and not os.environ.get('SENSEI_SPOTIFY_REMOTE') and len(sys.argv)>1 and sys.argv[1] in ('status','play','pause','toggle','next','previous','volume','seek','seek-to','shuffle','repeat','play-list','play-track','play-context','play-context-track'):
  native=os.path.expanduser('~/.local/bin/sensei-spotify-control')
  if os.path.exists(native):os.execv(native,[native]+sys.argv[1:])
+# Fail before any ownership handoff if the optional native QML engine is absent.
+if __name__=='__main__' and len(sys.argv)>1 and sys.argv[1] in ('youtube-audio','youtube-watch','twitch-watch') and not os.path.isfile(os.path.expanduser('~/.local/lib/qt6/qml/Sensei/Media/qmldir')):
+ import json
+ print(json.dumps({'error':'Native media module is not built. Run scripts/build-media-qml.sh, then restart the shell.'}));sys.exit(1)
 # The official desktop owns browsing too; never fall back to an exhausted app ID.
 if __name__=='__main__' and len(sys.argv)>1:
  sys.path.insert(0,os.path.expanduser('~/.local/share/sensei'))
@@ -18,6 +29,18 @@ if __name__=='__main__' and len(sys.argv)>1:
    result=dispatch(sys.argv[1:])
   except Exception as error:result={'error':str(error) if isinstance(error,ValueError) else 'Spotify desktop bridge is unavailable. Open Spotify to reconnect.'}
   print(json.dumps(result,ensure_ascii=False));sys.exit(1 if 'error' in result else 0)
+if __name__=='__main__' and len(sys.argv)>1 and sys.argv[1].startswith('twitch-'):
+ import json
+ from twitch_media import dispatch
+ try:result=dispatch(sys.argv[1:])
+ except (ValueError,OSError,IndexError) as error:result={'error':str(error),'rows':[]}
+ print(json.dumps(result,ensure_ascii=False));sys.exit(1 if 'error' in result else 0)
+if __name__=='__main__' and len(sys.argv)>1 and sys.argv[1] in ('youtube-search','youtube-audio','youtube-watch','youtube-transcript','youtube-account','youtube-library','youtube-save','youtube-remove'):
+ import json
+ from youtube_music import dispatch
+ try:result=dispatch(sys.argv[1:])
+ except (ValueError,OSError,IndexError) as error:result={'error':str(error),'rows':[]}
+ print(json.dumps(result,ensure_ascii=False));sys.exit(1 if 'error' in result else 0)
 if __name__=='__main__' and len(sys.argv)>1 and sys.argv[1] in ('music-videos','video-play','video-resolve','video-browser'):
  import json
  from spotify_video import candidates,launch,resolve,browser

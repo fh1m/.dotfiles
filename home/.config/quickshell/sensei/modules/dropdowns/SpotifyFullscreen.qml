@@ -100,7 +100,7 @@ PanelWindow {
                     MusicButton {implicitWidth:(parent.width-8)/2;implicitHeight:32;label:'Repeat '+(SpotifyDesk.playback.repeat||'off');glyph:'\uf01e';onActivated:SpotifyDesk.action('repeat')}
                 }
                 MusicSpectrum {width:parent.width;height:44;visible:SpotifyDesk.spectrumEnabled}
-                ControlSlider {width:parent.width;title:'Spotify volume';level:SpotifyDesk.volume;onEdited:v=>SpotifyDesk.action('volume',[String(Math.round(v))])}
+                ControlSlider {width:parent.width;title:YouTubeDesk.ownsAudio?'YouTube volume':'Spotify volume';level:SpotifyDesk.volume;onEdited:v=>SpotifyDesk.action('volume',[String(Math.round(v))])}
             }
         }
         Rectangle {id:lyricCard;visible:!SpotifyDesk.zen;x:player.x+player.width+20;y:stage.bodyTop;width:stage.lyricWidth;height:stage.bodyHeight;radius:12;color:"transparent";border.color:"transparent"
@@ -118,7 +118,7 @@ PanelWindow {
                 MusicButton {id:back;anchors.right:parent.right;visible:window.collection===1&&!!SpotifyDesk.contextItem.id;implicitWidth:76;implicitHeight:30;label:'Back';glyph:'\uf060';onActivated:SpotifyDesk.contextItem={}}
             }
             ListView {id:tracks;x:14;y:104;width:parent.width-28;height:parent.height-y-48;clip:true;spacing:6;model:window.rows;ScrollBar.vertical:ScrollBar {}
-                delegate:SpotifyRow {required property var modelData;width:tracks.width;entry:modelData;onBrowseRequested:{window.collection=1;SpotifyDesk.browse(entry);}onPlayRequested:{if(window.collection===0)SpotifyDesk.play(entry,SpotifyDesk.queueRows);else SpotifyDesk.play(entry);}onQueueRequested:SpotifyDesk.action('queue-add',[entry.uri||entry.id])}
+                delegate:SpotifyRow {required property var modelData;width:tracks.width;entry:modelData;onBrowseRequested:{window.collection=1;SpotifyDesk.browse(entry);}onPlayRequested:{if(window.collection===0)SpotifyDesk.play(entry,SpotifyDesk.queueRows);else SpotifyDesk.play(entry);}onQueueRequested:{if(['youtube','twitch'].includes(entry.kind))YouTubeDesk.enqueue(entry);else SpotifyDesk.action('queue-add',[entry.uri||entry.id]);}}
                 Text {anchors.centerIn:parent;visible:tracks.count===0;width:parent.width-24;text:SpotifyDesk.loading?'Loading your music…':window.collection===0?'The queue is quiet. Choose a playlist to begin.':'No playlists loaded. Refresh or open Spotify to reconnect.';wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetMuted}
             }
             MusicButton {anchors.bottom:parent.bottom;anchors.bottomMargin:10;anchors.horizontalCenter:parent.horizontalCenter;visible:window.collection===1&&!!SpotifyDesk.contextItem.id&&!!SpotifyDesk.nextPage;implicitWidth:140;implicitHeight:30;label:'Load more tracks';enabled:!SpotifyDesk.loading;onActivated:SpotifyDesk.more()}

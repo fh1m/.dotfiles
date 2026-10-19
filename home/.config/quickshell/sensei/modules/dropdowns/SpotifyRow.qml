@@ -5,7 +5,8 @@ import qs.components
 ChamferPanel {
  id:root;required property var entry;property int number:0
  signal playRequested();signal browseRequested();signal queueRequested()
- readonly property bool currentTrack:entry.kind==='track'&&entry.id===SpotifyDesk.playback.track?.id
+ readonly property bool playable:['track','youtube','twitch'].includes(entry.kind)
+ readonly property bool currentTrack:playable&&entry.id===SpotifyDesk.playback.track?.id
  width:parent?.width??680;height:58;chamfer:6;scanlines:false;fillColor:currentTrack?Theme.blend(Theme.widgetSurface,Theme.widgetAccent,.12):hover.hovered?Theme.widgetRaised:Theme.widgetSurface;borderColor:currentTrack?Theme.alpha(Theme.widgetAccent,.6):Theme.widgetBorder
  Behavior on fillColor {ColorAnimation {duration:140}}
  Behavior on borderColor {ColorAnimation {duration:140}}
@@ -18,10 +19,10 @@ ChamferPanel {
  }
  Text { textFormat: Text.PlainText;anchors.right:buttons.left;anchors.rightMargin:10;anchors.verticalCenter:parent.verticalCenter;text:root.entry.duration?SpotifyDesk.fmt(root.entry.duration):root.entry.count?root.entry.count+' songs':'';font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}
  Row {id:buttons;anchors.right:parent.right;anchors.rightMargin:8;anchors.verticalCenter:parent.verticalCenter;spacing:6
- ControlTile {implicitWidth:28;implicitHeight:28;accentColor:Theme.widgetAccent;glyph:root.entry.kind==='track'?'\uf067':'\uf03a';Accessible.name:root.entry.kind==='track'?'Add to queue':'Open collection';onActivated:root.entry.kind==='track'?root.queueRequested():root.browseRequested()}
+ ControlTile {implicitWidth:28;implicitHeight:28;accentColor:Theme.widgetAccent;glyph:root.playable?'\uf067':'\uf03a';Accessible.name:root.playable?'Add to queue':'Open collection';onActivated:root.playable?root.queueRequested():root.browseRequested()}
  ControlTile {implicitWidth:28;implicitHeight:28;accentColor:Theme.widgetAccent;glyph:'\uf04b';Accessible.name:'Play '+root.entry.title;onActivated:root.playRequested()}
 
  }
- MouseArea {x:0;y:0;width:parent.width-170;height:parent.height;cursorShape:Qt.PointingHandCursor;onClicked:root.entry.kind==='track'?root.playRequested():root.browseRequested()}
- TapHandler {acceptedButtons:Qt.RightButton;onTapped:root.entry.kind==='track'?root.queueRequested():root.browseRequested()}
+ MouseArea {x:0;y:0;width:parent.width-170;height:parent.height;cursorShape:Qt.PointingHandCursor;onClicked:root.playable?root.playRequested():root.browseRequested()}
+ TapHandler {acceptedButtons:Qt.RightButton;onTapped:root.playable?root.queueRequested():root.browseRequested()}
 }

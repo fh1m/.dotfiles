@@ -95,3 +95,9 @@ xournalpp
 # Inline music video and camera previews
 qt6-multimedia
 yt-dlp
+
+# Browser session integration uses the login keyring, never plaintext cookie exports
+python-secretstorage
+
+# Single synchronized native A/V engine (tiny public Qt Quick wrapper)
+mpvqt

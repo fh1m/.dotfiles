@@ -28,6 +28,15 @@ set -u
 # Display-manager sessions have a minimal PATH. Widget actions and launchers
 # must resolve the same user tools that an interactive shell can see.
 export PATH="$HOME/.local/bin:$PATH"
+export QSG_RHI_BACKEND="${QSG_RHI_BACKEND:-opengl}"
+export QML_IMPORT_PATH="$HOME/.local/lib/qt6/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
+
+# Native video must not import decoder-owned DMA-BUF textures into the shell's
+# multi-output EGL contexts. A Mesa dri2_query_image crash was observed during
+# cross-output playback. Keep hardware decoding available, upload mapped frames.
+# Qt documents this diagnostic switch; leave an explicit opt-out for validation.
+export QT_DISABLE_HW_TEXTURES_CONVERSION="${QT_DISABLE_HW_TEXTURES_CONVERSION:-1}"
+
 
 read -r -a QS_ARGS <<< "${SENSEI_QS_ARGS:--c sensei}"
 

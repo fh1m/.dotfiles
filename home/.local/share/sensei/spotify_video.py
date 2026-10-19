@@ -12,9 +12,8 @@ def candidates(track,refresh=False):
  if old and not refresh and time.time()-path.stat().st_mtime<86400:return old
  if not shutil.which('yt-dlp'):return {'rows':[],'warning':'Install yt-dlp, or use Open YouTube search.','query':q}
  try:
-  r=subprocess.run(['yt-dlp','--ignore-config','--flat-playlist','--dump-single-json','--no-warnings','--socket-timeout','6','--retries','0','--playlist-end','5','ytsearch5:'+q],capture_output=True,text=True,timeout=30)
-  if r.returncode:raise ValueError('Search unavailable')
-  d=json.loads(r.stdout);rows=[]
+  from youtube_music import run
+  d=run(['--flat-playlist','--dump-single-json','--playlist-end','5','ytsearch5:'+q]);rows=[]
   for item in d.get('entries',[])[:5]:
    vid=item.get('id','')
    if not re.fullmatch(r'[A-Za-z0-9_-]{11}',vid):continue
@@ -30,8 +29,9 @@ def candidates(track,refresh=False):
 def resolve(vid):
  if not re.fullmatch(r'[A-Za-z0-9_-]{11}',vid):raise ValueError('Invalid video identity')
  try:
-  resolved=subprocess.run(['yt-dlp','--ignore-config','--no-warnings','--socket-timeout','6','--retries','0','--no-playlist','-g','-f','best[ext=mp4][vcodec^=avc1][height<=720]/bestvideo[ext=mp4][vcodec^=avc1][height<=720]','https://www.youtube.com/watch?v='+vid],capture_output=True,text=True,timeout=30)
-  stream=resolved.stdout.strip().splitlines()[0] if resolved.returncode==0 and resolved.stdout.strip() else ''
+  from youtube_music import run
+  resolved=run(['--no-playlist','--dump-single-json','--skip-download','-f','best[ext=mp4][vcodec^=avc1][height<=720]/bestvideo[ext=mp4][vcodec^=avc1][height<=720]','https://www.youtube.com/watch?v='+vid])
+  stream=resolved.get('url','')
   host=urllib.parse.urlsplit(stream).hostname or ''
   if not stream.startswith('https://') or not (host.endswith('.googlevideo.com') or host in ('youtube.com','www.youtube.com')):raise ValueError('Video unavailable')
  except (OSError,ValueError,subprocess.TimeoutExpired):return {'ok':False,'warning':'Video streaming is unavailable. Use YouTube search; Spotify keeps playing.'}

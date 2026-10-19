@@ -112,3 +112,9 @@ Pop out uses mpv; YouTube search is available when extraction fails. No cookies,
 permanent downloads, automatic next video or unrelated audio takeover are used.
 
 [Additional 32-query research and decisions](MUSIC-EXPERIENCE-RESEARCH.md).
+
+## Native video and additional sources
+
+See [Media center](MEDIA-CENTER.md) for YouTube account collections, native video
+with sound, captions, mini/fullscreen display routing and the Twitch integration.
+Silent Spotify video candidates remain a separate explicit preview action.

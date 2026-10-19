@@ -9,14 +9,16 @@ import qs.services
 Popup {
     id:root
     IpcHandler {enabled:root.visible;target:root.fullscreenHost?'music-video-fullscreen':'music-video-widget';function state():string{return JSON.stringify({playing:player.playing,position:player.position,duration:player.duration,mediaStatus:player.mediaStatus,buffer:player.bufferProgress,seekable:player.seekable,videoSize:String(video.videoSink.videoSize),hasVideo:player.hasVideo,error:SpotifyDesk.videoPreviewError,sourceActive:SpotifyDesk.videoSource!=="",width:root.width,height:root.height});}}
+    readonly property var player:SpotifyDesk.videoPlayer
     property bool fullscreenHost:false
     property bool showVideo:SpotifyDesk.videoSource!==""||SpotifyDesk.videoPreviewLoading||SpotifyDesk.videoPreviewError!==""
     width:Math.min(720,parent?.width-32||720)
     height:Math.min(showVideo?730:510,parent?.height-32||730)
     x:(parent.width-width)/2
     y:(parent.height-height)/2
-    visible:SpotifyDesk.videosOpen&&fullscreenHost===SpotifyDesk.fullscreen
-    onClosed:if(fullscreenHost===SpotifyDesk.fullscreen)SpotifyDesk.videosOpen=false
+    visible:SpotifyDesk.videosOpen&&fullscreenHost===SpotifyDesk.fullscreen&&SpotifyDesk.videoMode==='inline'
+    onOpened:SpotifyDesk.attachVideo(video)
+    onClosed:{if(SpotifyDesk.videoOutput===video)SpotifyDesk.videoOutput=null;if(SpotifyDesk.videoMode==='inline'&&fullscreenHost===SpotifyDesk.fullscreen)SpotifyDesk.videosOpen=false;}
     modal:true;focus:true;padding:18
     closePolicy:Popup.CloseOnEscape|Popup.CloseOnPressOutside
     background:ChamferPanel {fillColor:Theme.ink;borderColor:Theme.rule;borderWidth:1;chamfer:Theme.radiusPanel;scanlines:false}
@@ -35,15 +37,12 @@ Popup {
             visible:root.showVideo;width:parent.width;height:visible?Math.min(300,root.height*.4):0;color:Theme.ink;radius:8
             VideoOutput {id:video;anchors.fill:parent;fillMode:VideoOutput.PreserveAspectFit}
             Text {anchors.top:parent.top;anchors.left:parent.left;anchors.margins:8;width:parent.width-16;text:SpotifyDesk.videoTitle;textFormat:Text.PlainText;elide:Text.ElideRight;color:Theme.paper;font.family:Appearance.font.ui;font.pixelSize:11;visible:SpotifyDesk.videoSource!=="";style:Text.Outline;styleColor:Theme.ink}
-            Timer {interval:15000;running:root.visible&&SpotifyDesk.videoSource!==""&&player.position===0;onTriggered:{SpotifyDesk.videoSource="";SpotifyDesk.videoPreviewError='Video did not start. Try another candidate or YouTube.';}}
-            MediaPlayer {id:player;source:root.visible?SpotifyDesk.videoSource:"";autoPlay:true;videoOutput:video;audioOutput:AudioOutput {muted:true}
-                onErrorOccurred:(error,message)=>{SpotifyDesk.videoPreviewError='Video could not play. Try another candidate or YouTube.';SpotifyDesk.videoSource="";}
-            }
             Text {anchors.centerIn:parent;width:parent.width-30;text:SpotifyDesk.videoPreviewLoading?'Preparing silent preview…':SpotifyDesk.videoPreviewError;textFormat:Text.PlainText;wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:12;visible:!SpotifyDesk.videoSource}
             Row {anchors.right:parent.right;anchors.bottom:parent.bottom;anchors.margins:8;spacing:6;visible:SpotifyDesk.videoSource!==""
                 MusicButton {implicitWidth:36;implicitHeight:28;glyph:player.playing?'\uf04c':'\uf04b';Accessible.name:'Pause or resume silent video';onActivated:player.playing?player.pause():player.play()}
-                MusicButton {implicitWidth:36;implicitHeight:28;glyph:'\uf08e';Accessible.name:'Pop out silent video';onActivated:SpotifyDesk.action('video-play',[SpotifyDesk.videoId])}
-                MusicButton {implicitWidth:36;implicitHeight:28;glyph:'\uf00d';Accessible.name:'Close video preview';onActivated:SpotifyDesk.videoSource=""}
+                MusicButton {implicitWidth:36;implicitHeight:28;glyph:'\uf24d';Accessible.name:'Always-on-top video mini-player';onActivated:SpotifyDesk.showVideo('mini')}
+                MusicButton {implicitWidth:36;implicitHeight:28;glyph:'\uf065';Accessible.name:'Fullscreen video on a display';onActivated:SpotifyDesk.showVideo('fullscreen')}
+                MusicButton {implicitWidth:36;implicitHeight:28;glyph:'\uf00d';Accessible.name:'Close video preview';onActivated:SpotifyDesk.closeVideo()}
             }
         }
         ListView {

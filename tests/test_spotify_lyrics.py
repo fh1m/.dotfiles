@@ -47,10 +47,10 @@ class Videos(unittest.TestCase):
    result=v.candidates(TRACK);self.assertEqual(result['rows'],[]);self.assertIn('unavailable',result['warning'])
  def test_resolver_rejects_non_video_host(self):
   from subprocess import CompletedProcess
-  with patch.object(v.subprocess,'run',return_value=CompletedProcess([],0,'https://attacker.invalid/video','')):
+  with patch.object(v.subprocess,'run',return_value=CompletedProcess([],0,json.dumps({'url':'https://attacker.invalid/video'}),'')):
    self.assertFalse(v.resolve('a'*11)['ok'])
  def test_resolver_accepts_only_validated_video_stream(self):
   from subprocess import CompletedProcess
-  with patch.object(v.subprocess,'run',return_value=CompletedProcess([],0,'https://test.googlevideo.com/video','')):
+  with patch.object(v.subprocess,'run',return_value=CompletedProcess([],0,json.dumps({'url':'https://test.googlevideo.com/video'}),'')):
    self.assertTrue(v.resolve('a'*11)['ok'])
 if __name__=='__main__':unittest.main()

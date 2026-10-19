@@ -67,6 +67,8 @@ ROS docs stay open. Calendar and weather slide into the day without replacing it
 
 Music gets album art and proper controls. The queue is allowed to have a personality. So is the desk.
 
+[One badge, three rabbit holes](docs/digital-den/MEDIA-CENTER.md): Spotify, YouTube and Twitch, with native video, transcripts and a roaming mini-player. The browser gets a night off.
+
 ## 04 / Big brother holds the fort
 
 ![Homie with real code and NVIDIA documentation, moving between live Monitor, System and the unobstructed desktop](docs/assets/digital-den/homie-live.gif)

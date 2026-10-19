@@ -51,7 +51,7 @@ class MusicService(unittest.TestCase):
                               if line.strip().startswith(('function accept(', 'function uniqueRows(', 'function play(', 'function artworkUrl(')))
         script = r'''
 const vm=require('vm'),assert=require('assert');
-const c={playback:{backend:'native'},page:3,libraryKind:'albums',contextItem:{},contextRows:[],libraryRows:[{id:'saved'}],nextPage:'keep',error:'',warning:'',same:(a,b)=>JSON.stringify(a)===JSON.stringify(b)};
+const c={YouTubeDesk:{ownsAudio:false,loading:false},playback:{backend:'native'},page:3,libraryKind:'albums',contextItem:{},contextRows:[],libraryRows:[{id:'saved'}],nextPage:'keep',error:'',warning:'',same:(a,b)=>JSON.stringify(a)===JSON.stringify(b)};
 vm.createContext(c);vm.runInContext(FUNCTIONS,c);
 c.accept('more',{target:'library',kind:'liked',rows:[{id:'wrong'}],next:'wrong'});
 assert.equal(c.libraryRows[0].id,'saved');assert.equal(c.nextPage,'keep');
@@ -65,6 +65,39 @@ assert.equal(c.artworkUrl('spotify:mosaic:unsupported'),'');assert.equal(c.artwo
 '''.replace('FUNCTIONS', json.dumps(functions))
         subprocess.run(['node', '-e', script], check=True, capture_output=True, text=True)
 
+
+
+class NativeQueue(unittest.TestCase):
+    def test_reordering_and_removal_preserve_the_current_item_identity(self):
+        source=(ROOT/'home/.config/quickshell/sensei/services/YouTubeDesk.qml').read_text()
+        functions='\n'.join(line.strip() for line in source.splitlines() if line.strip().startswith(('function removeQueued(', 'function moveQueued(', 'function enqueue(')))
+        script=r'''
+const vm=require('vm'),assert=require('assert');
+const c={queue:[{id:'a'},{id:'b'},{id:'c'}],track:{id:'b'},index:1};vm.createContext(c);vm.runInContext(FUNCTIONS,c);
+c.moveQueued({id:'b'},1);assert.deepEqual(c.queue.map(r=>r.id),['a','c','b']);assert.equal(c.index,2);
+c.removeQueued({id:'a'});assert.equal(c.index,1);assert.equal(c.queue[c.index].id,'b');
+c.enqueue({id:'b'});assert.equal(c.queue.length,2);c.enqueue({id:'d'});assert.equal(c.queue.length,3);
+c.moveQueued({id:'c'},-1);assert.equal(c.queue[0].id,'c');
+'''.replace('FUNCTIONS',json.dumps(functions))
+        subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)
+
+
+class NativeHandoff(unittest.TestCase):
+    def test_destination_starts_only_after_source_stops_and_preserves_position(self):
+        source=(ROOT/'home/.config/quickshell/sensei/services/YouTubeDesk.qml').read_text()
+        functions='\n'.join(line.strip() for line in source.splitlines() if line.strip().startswith(('function registerEngine(', 'function loadCurrent(', 'function selectEngine(')))
+        script=r'''
+const vm=require('vm'),assert=require('assert'),events=[];
+const old={volume:82,stop:()=>events.push('old stopped')};
+const next={load:(v,a,visual,start,paused)=>events.push({v,a,visual,start,paused})};
+const c={engines:{old},engineOutput:'old',usedDisplays:['old'],currentMedia:{stream:'https://audio.invalid',video:'https://video.invalid'},pendingSeek:0,desiredVolume:65,speed:1.25};
+Object.defineProperty(c,'audioPlayer',{get(){return c.engines[c.engineOutput]}});
+vm.createContext(c);vm.runInContext(FUNCTIONS,c);
+c.selectEngine('destination',12345,true);assert.equal(events[0],'old stopped');assert.equal(events.length,1);
+assert.equal(c.pendingSeek,12345);assert.equal(c.desiredVolume,82);assert.equal(c.engineOutput,'destination');
+c.registerEngine('destination',next);assert.equal(events.length,2);assert.equal(events[1].a,'https://audio.invalid');assert.equal(events[1].visual,true);assert.equal(next.volume,82);assert.equal(next.playbackRate,1.25);assert.equal(events[1].start,12345);assert.equal(c.pendingSeek,0);assert.equal(events[1].paused,true);
+'''.replace('FUNCTIONS',json.dumps(functions))
+        subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)
 
 if __name__ == '__main__':
     unittest.main()
