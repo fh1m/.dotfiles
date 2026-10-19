@@ -91,3 +91,7 @@ librsvg
 opentabletdriver
 krita
 xournalpp
+
+# Inline music video and camera previews
+qt6-multimedia
+yt-dlp

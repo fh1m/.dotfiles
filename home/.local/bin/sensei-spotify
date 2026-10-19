@@ -18,6 +18,27 @@ if __name__=='__main__' and len(sys.argv)>1:
    result=dispatch(sys.argv[1:])
   except Exception as error:result={'error':str(error) if isinstance(error,ValueError) else 'Spotify desktop bridge is unavailable. Open Spotify to reconnect.'}
   print(json.dumps(result,ensure_ascii=False));sys.exit(1 if 'error' in result else 0)
+if __name__=='__main__' and len(sys.argv)>1 and sys.argv[1] in ('music-videos','video-play','video-resolve','video-browser'):
+ import json
+ from spotify_video import candidates,launch,resolve,browser
+ try:
+  name=sys.argv[1]
+  result=resolve(sys.argv[2]) if name=='video-resolve' else launch(sys.argv[2]) if name=='video-play' else browser(json.loads(sys.argv[2])) if name=='video-browser' else candidates(json.loads(sys.argv[2]),'refresh' in sys.argv[3:])
+ except (ValueError,OSError,IndexError):result={'rows':[],'warning':'Video is unavailable; music playback is unchanged.'}
+ print(json.dumps(result,ensure_ascii=False));sys.exit(0)
+# Lyrics are backend-independent and must not require legacy developer configuration.
+if __name__=='__main__' and len(sys.argv)>1 and sys.argv[1] in ('synced-lyrics','lyric-offset','lyrics-folder'):
+ import json,subprocess
+ from spotify_lyrics import lookup,save_offset,local_folder
+ try:
+  track=json.loads(sys.argv[2]);name=sys.argv[1]
+  if name=='synced-lyrics':result=lookup(track,'refresh' in sys.argv[3:])
+  elif name=='lyric-offset':result=save_offset(track,sys.argv[3])
+  else:
+   result=local_folder(track);subprocess.Popen(['xdg-open',result['folder']],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+  print(json.dumps(result,ensure_ascii=False))
+ except (ValueError,OSError,IndexError):print(json.dumps({'lines':[],'plain':'','synced':False,'notice':'Lyrics could not be loaded. Please retry.'}))
+ sys.exit(0)
 import json,sys,os,socket,time,re,hashlib,datetime,urllib.request,urllib.parse,urllib.error,fcntl,tomllib,subprocess
 from pathlib import Path
 os.umask(0o077)
@@ -205,29 +226,8 @@ def status():
  except (OSError,ValueError,KeyError):pass
  return {'ready':True,'playing':d.get('is_playing',False),'track':track,'progress':d.get('progress_ms',0) or 0,'volume':device.get('volume_percent',0),'device':device.get('name',LOCAL_DEVICE),'deviceId':device.get('id',''),'shuffle':d.get('shuffle_state',False),'repeat':d.get('repeat_state','off'),'context':d.get('context') or {}}
 def synced_lyrics(track):
- title=str(track.get('title','')).strip();artist=str(track.get('artist','')).split(',')[0].strip()
- if not title or not artist:return {'lines':[],'plain':'','synced':False,'notice':'Start a song to follow its lyrics.'}
- key='lyrics-'+hashlib.sha256((title+'|'+artist+'|'+str(track.get('duration',0))).encode()).hexdigest()
- path=STORE/(key+'.json')
- if path.exists():
-  saved=json.loads(path.read_text());ttl=30*86400 if saved.get('synced') else 86400
-  if time.time()-path.stat().st_mtime<ttl:return saved
- # Title, artist and duration only: the album name is not needed to match a song, and LRCLIB is a third party.
- query=urllib.parse.urlencode({'track_name':title,'artist_name':artist,'duration':round(float(track.get('duration',0))/1000)})
- req=urllib.request.Request('https://lrclib.net/api/get?'+query,headers={'User-Agent':'SenseiDesktop/1.0 (personal desktop lyrics follower)'})
- try:
-  with urllib.request.urlopen(req,timeout=10) as response:data=json.load(response)
- except urllib.error.HTTPError as e:
-  if e.code!=404:raise MusicError('Sensei, the lyrics provider is temporarily unavailable.')
-  result={'lines':[],'plain':'','synced':False,'notice':'No lyrics matched this song and duration.','provider':'LRCLIB'};put(path,result);return result
- lines=[];raw=data.get('syncedLyrics') or '';offset=re.search(r'\[offset:([+-]?\d+)\]',raw);shift=int(offset.group(1)) if offset else 0
- for line in raw.splitlines():
-  stamps=re.findall(r'\[(\d+):(\d+(?:\.\d+)?)\]',line)
-  words=re.sub(r'\[[^]]*\]','',line).strip()
-  for minute,second in stamps:lines.append({'time':max(0,round((int(minute)*60+float(second))*1000)+shift),'text':words})
- lines.sort(key=lambda v:v['time'])
- result={'lines':lines,'plain':data.get('plainLyrics') or '', 'synced':bool(lines),'instrumental':bool(data.get('instrumental')),'provider':'LRCLIB','notice':'Instrumental track' if data.get('instrumental') else ''}
- put(path,result);return result
+ from spotify_lyrics import lookup
+ return lookup(track)
 def recover_local_device():
  raise MusicError('Sensei, choose your playback device in Spotify → Devices. Automatic transfers are disabled.')
 def action(name,args):

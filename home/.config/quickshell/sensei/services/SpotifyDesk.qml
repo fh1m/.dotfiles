@@ -46,7 +46,23 @@ Singleton {
  readonly property bool musicVisible:fullscreen||ShellState.dropdown==='spotify'
  readonly property bool lyricsVisible:fullscreen||(lyricsOpen&&page===0&&ShellState.dropdown==='spotify')
  function expand(){const origin=ShellState.screens.find(s=>s.name===(ShellState.dropdown==='spotify'?ShellState.dropdownOriginScreen:ShellState.focusedScreenName()));fullscreenOutput=(origin&&origin.height>=650?origin:ShellState.screens.find(s=>s.name===MachineProfile.primaryOutput)||origin)?.name||'';ShellState.closeAll();fullscreen=true;dispatch('queue');dispatch('devices');if(!playlistRows.length)dispatch('library',['playlists']);lyricsDelay.restart();}
- function collapse(restore){fullscreen=false;if(restore){ShellState.dropdownOriginScreen=(ShellState.screens.find(s=>s.name===fullscreenOutput)||ShellState.screens.find(s=>s.name===MachineProfile.primaryOutput)||ShellState.screens[0])?.name||'';ShellState.dropdown='spotify';}}
+ function collapse(restore){videosOpen=false;videoSource="";fullscreen=false;if(restore){ShellState.dropdownOriginScreen=(ShellState.screens.find(s=>s.name===fullscreenOutput)||ShellState.screens.find(s=>s.name===MachineProfile.primaryOutput)||ShellState.screens[0])?.name||'';ShellState.dropdown='spotify';}}
+ property bool spectrumEnabled:true
+ property string videoSource:""
+ property string videoId:""
+ property string videoTitle:""
+ property bool videoPreviewLoading:false
+ property string videoPreviewError:""
+ property string videoPreviewTrack:""
+ function previewVideo(id){if(videoResolve.running)return;videoId=id;videoTitle=(videoData.rows||[]).find(r=>r.id===id)?.title||'Music video';videoPreviewTrack=lyricsKey;videoSource="";videoPreviewError="";videoPreviewLoading=true;videoResolve.command=['@HOME@/.local/bin/sensei-spotify','video-resolve',id];videoResolve.running=true;}
+ Process {id:videoResolve;stdout:StdioCollector {onStreamFinished:{if(root.videoPreviewTrack!==root.lyricsKey||!root.videosOpen)return;try{const d=JSON.parse(text);root.videoSource=d.stream||'';root.videoPreviewError=d.warning||'';}catch(e){root.videoPreviewError='Preview unavailable. Use YouTube search.';}}}onExited:root.videoPreviewLoading=false}
+ onVideosOpenChanged:if(!videosOpen){videoSource="";videoPreviewError="";}
+ property bool videosOpen:false
+ property bool videosLoading:false
+ property var videoData:({rows:[]})
+ property string videoTrackKey:""
+ function openVideos(refresh){videosOpen=true;if(videoFetch.running)return;videoTrackKey=lyricsKey;videosLoading=true;videoFetch.command=['@HOME@/.local/bin/sensei-spotify','music-videos',JSON.stringify(lyricTrack())].concat(refresh?['refresh']:[]);videoFetch.running=true;}
+ Process {id:videoFetch;stdout:StdioCollector {onStreamFinished:{if(root.videoTrackKey!==root.lyricsKey)return;try{root.videoData=JSON.parse(text);}catch(e){root.videoData={rows:[],warning:'Video search unavailable; music keeps playing.'};}}}onExited:root.videosLoading=false}
  property bool lyricsOpen:false
  property var lyricsData:({lines:[],plain:'',synced:false})
  property bool lyricsLoading:false
@@ -56,11 +72,13 @@ Singleton {
  property real lyricPosition:0
  property int lyricOffset:0
  readonly property int lyricIndex:{let index=-1;const position=lyricPosition+lyricOffset;for(let i=0;i<(lyricsData.lines||[]).length;i++){if(lyricsData.lines[i].time>position)break;index=i;}return index;}
- function loadLyrics(){if(!lyricsVisible||lyricsFetch.running||title==='Spotify')return;activeLyricsKey=lyricsKey;lyricPosition=positionMs;lyricsLoading=true;lyricsError='';const track={title:title,artist:artist,album:album,duration:playback.track?.duration||player?.length*1000||0};lyricsFetch.command=['@HOME@/.local/bin/sensei-spotify','synced-lyrics',JSON.stringify(track)];lyricsFetch.running=true;}
+ function lyricTrack(){return {title:title,artist:artist,album:album,duration:playback.track?.duration||player?.length*1000||0};}
+ function adjustLyrics(delta){lyricOffset=Math.max(-60000,Math.min(60000,lyricOffset+delta));action('lyric-offset',[JSON.stringify(lyricTrack()),String(lyricOffset)]);}
+ function loadLyrics(refresh){if(!lyricsVisible||lyricsFetch.running||title==='Spotify')return;activeLyricsKey=lyricsKey;lyricPosition=positionMs;lyricsLoading=true;lyricsError='';const track={title:title,artist:artist,album:album,duration:playback.track?.duration||player?.length*1000||0};lyricsFetch.command=['@HOME@/.local/bin/sensei-spotify','synced-lyrics',JSON.stringify(track)].concat(refresh?['refresh']:[]);lyricsFetch.running=true;}
  onLyricsOpenChanged:if(lyricsOpen){lyricsData={lines:[],plain:'',synced:false};lyricsDelay.restart();}
- onLyricsKeyChanged:{lyricsData={lines:[],plain:'',synced:false};lyricOffset=0;if(lyricsVisible)lyricsDelay.restart();}
+ onLyricsKeyChanged:{videoData={rows:[]};videosOpen=false;lyricsData={lines:[],plain:'',synced:false};lyricOffset=0;if(lyricsVisible)lyricsDelay.restart();}
  Timer {id:lyricsDelay;interval:250;onTriggered:root.loadLyrics()}
- Process {id:lyricsFetch;stdout:StdioCollector {onStreamFinished:{if(root.activeLyricsKey!==root.lyricsKey)return;try{const d=JSON.parse(text);root.lyricsError=d.error||'';if(!d.error)root.lyricsData=d;}catch(e){root.lyricsError='Sensei, lyrics could not be loaded.';}}}onExited:{root.lyricsLoading=false;if(root.lyricsVisible&&root.activeLyricsKey!==root.lyricsKey)lyricsDelay.restart();}}
+ Process {id:lyricsFetch;stdout:StdioCollector {onStreamFinished:{if(root.activeLyricsKey!==root.lyricsKey)return;try{const d=JSON.parse(text);root.lyricsError=d.error||'';if(!d.error){root.lyricsData=d;root.lyricOffset=d.offset||0;}}catch(e){root.lyricsError='Sensei, lyrics could not be loaded.';}}}onExited:{root.lyricsLoading=false;if(root.lyricsVisible&&root.activeLyricsKey!==root.lyricsKey)lyricsDelay.restart();}}
  Timer {interval:250;repeat:true;running:root.lyricsVisible&&root.playing;triggeredOnStart:true;onTriggered:{root.positionClock=Date.now();root.lyricPosition=root.positionMs;}}
  function artworkUrl(value){const url=String(value||'');if(/^spotify:image:[a-f0-9]{40}$/i.test(url))return 'https://i.scdn.co/image/'+url.slice(14);return /^(https:\/\/|file:\/\/)/.test(url)?url:'';}
  function fmt(ms){let s=Math.floor(Math.max(0,ms)/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,'0');}
@@ -93,7 +111,7 @@ Singleton {
  function loadArt(){if(!artSource||art.running)return;activeArtSource=artSource;art.command=["@HOME@/.local/bin/sensei-spotify-transport","art",artSource];art.running=true;}
  onArtSourceChanged:{if(artSource)loadArt();}
  Connections {target:root.player;ignoreUnknownSignals:true;function onVolumeChanged(){root.dispatch("status");}function onPositionChanged(){root.lyricPosition=root.positionMs;}function onTrackTitleChanged(){root.dispatch('status');if(root.musicVisible&&(root.fullscreen||root.page===0||root.page===1))root.dispatch('queue');}function onIsPlayingChanged(){if(root.pendingPlaying===(root.actualPlaying?1:0))root.pendingPlaying=-1;root.dispatch('status');}}
- Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==='spotify'){root.dispatch('status');if(!root.contextItem.id)root.refresh(false);else if(!root.contextRows.length)root.dispatch('context',[root.contextItem.kind,root.contextItem.id]);if(root.lyricsOpen)lyricsDelay.restart();}}}
+ Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==='spotify'){root.dispatch('status');if(!root.contextItem.id)root.refresh(false);else if(!root.contextRows.length)root.dispatch('context',[root.contextItem.kind,root.contextItem.id]);if(root.lyricsOpen)lyricsDelay.restart();}else if(!root.fullscreen){root.videosOpen=false;root.videoSource='';}}}
  Process {id:queueProc;command:["@HOME@/.local/bin/sensei-spotify","queue"];stdout:StdioCollector {onStreamFinished:{try{root.accept("queue",JSON.parse(text));}catch(e){}}}}
  Process {id:statusProc;command:["@HOME@/.local/bin/sensei-spotify-control","status"];stdout:StdioCollector {onStreamFinished:{try{let d=JSON.parse(text);root.statusError=d.error||'';if(d.error)root.playback=Object.assign({},root.playback,{ready:false,playing:false,loading:false});if(!d.error){if((d.backend!==root.playback.backend)||(d.localReleased&&!root.playback.localReleased)){root.transportQueue=[];root.pendingPlaying=-1;root.pendingVolume=-1;root.sliderAction=[];sliderDelay.stop();volumeDelay.stop();root.skipPending='';skipTimeout.stop();}root.playback=d;root.statusAt=Date.now();root.positionClock=root.statusAt;if(root.skipPending&&!transport.running&&!d.loading&&d.eventTime>root.skipEventTime&&(d.eventUri!==root.skipUri||(root.skipPending==="previous"&&d.progress<1000))){root.skipPending="";skipTimeout.stop();}if(root.pendingVolume>=0&&Math.abs(d.volume-root.pendingVolume)<=1)root.pendingVolume=-1;if(root.pendingPlaying===(root.actualPlaying?1:0))root.pendingPlaying=-1;}}catch(e){}}}}
  Timer {id:reconcile;interval:2200;onTriggered:{root.pendingPlaying=-1;root.dispatch('status');}}

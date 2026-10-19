@@ -21,6 +21,7 @@ PanelWindow {
     WlrLayershell.namespace: "sensei-music-fullscreen"
     WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     color: Theme.ink
+    MusicVideos {parent:window.contentItem;fullscreenHost:true}
     property color wash: "#402131"
     property color edge: "#171019"
     property string sampledArt: ""
@@ -63,8 +64,10 @@ PanelWindow {
             enabled:opacity>.5
             Behavior on opacity {NumberAnimation {duration:200}}
             DeskComboBox {width:180;height:38;model:ShellState.screens.map(s=>s.name+' · '+MachineProfile.role(s.name));currentIndex:ShellState.screens.findIndex(s=>s.name===window.screen?.name);onActivated:SpotifyDesk.fullscreenOutput=ShellState.screens[currentIndex].name;Accessible.name:'Move listening room to display'}
-            MusicButton {implicitWidth:116;label:window.collectionOpen?'Hide queue':'Queue / lists';glyph:'\uf03a';selected:window.collectionOpen;onActivated:window.collectionOpen=!window.collectionOpen}
+            MusicButton {implicitWidth:116;label:window.collectionOpen?'Hide queue':'Queue';glyph:'\uf03a';selected:window.collectionOpen;onActivated:window.collectionOpen=!window.collectionOpen}
             MusicButton {visible:window.collectionOpen;implicitWidth:38;glyph:'\uf08d';selected:window.queuePinned;Accessible.name:'Pin queue open';onActivated:window.queuePinned=!window.queuePinned}
+            MusicButton {implicitWidth:36;glyph:'\uf16a';Accessible.name:'Find music videos';onActivated:SpotifyDesk.openVideos(false)}
+            MusicButton {implicitWidth:36;glyph:'\uf080';Accessible.name:'Toggle audio spectrum';selected:SpotifyDesk.spectrumEnabled;onActivated:SpotifyDesk.spectrumEnabled=!SpotifyDesk.spectrumEnabled}
             MusicButton {implicitWidth:116;label:'Focus';glyph:'\uf186';selected:SpotifyDesk.zen;onActivated:SpotifyDesk.zen=!SpotifyDesk.zen}
             MusicButton {implicitWidth:116;label:'Backdrop';glyph:'\uf24d';selected:SpotifyDesk.musicBackdrop;onActivated:SpotifyDesk.musicBackdrop=!SpotifyDesk.musicBackdrop}
             MusicButton {visible:!SpotifyDesk.playback.ready;implicitWidth:136;implicitHeight:34;label:'Open Spotify';glyph:'\uf1bc';onActivated:SpotifyDesk.openOfficial()}
@@ -96,6 +99,7 @@ PanelWindow {
                     MusicButton {implicitWidth:(parent.width-8)/2;implicitHeight:32;label:'Shuffle';glyph:'\uf074';selected:SpotifyDesk.playback.shuffle??false;onActivated:SpotifyDesk.action('shuffle')}
                     MusicButton {implicitWidth:(parent.width-8)/2;implicitHeight:32;label:'Repeat '+(SpotifyDesk.playback.repeat||'off');glyph:'\uf01e';onActivated:SpotifyDesk.action('repeat')}
                 }
+                MusicSpectrum {width:parent.width;height:44;visible:SpotifyDesk.spectrumEnabled}
                 ControlSlider {width:parent.width;title:'Spotify volume';level:SpotifyDesk.volume;onEdited:v=>SpotifyDesk.action('volume',[String(Math.round(v))])}
             }
         }
@@ -131,6 +135,7 @@ PanelWindow {
                 Text {width:parent.width;text:SpotifyDesk.artist;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:22;color:Theme.paperMuted}
                 Text {width:parent.width;text:SpotifyDesk.album;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.widgetMuted}
                 Rectangle {width:parent.width;height:2;color:Theme.alpha(Theme.paper,.12);Rectangle {height:2;width:parent.width*Math.min(1,SpotifyDesk.positionMs/Math.max(1,SpotifyDesk.playback.track?.duration||1));color:Theme.alpha(Theme.paper,.65)}}
+                MusicSpectrum {width:parent.width;height:50;visible:SpotifyDesk.spectrumEnabled;accent:Theme.paperMuted}
                 Text {text:SpotifyDesk.fmt(SpotifyDesk.positionMs)+' / '+SpotifyDesk.fmt(SpotifyDesk.playback.track?.duration||0);font.family:Appearance.font.data;font.pixelSize:12;color:Theme.paperMuted}
             }
         }

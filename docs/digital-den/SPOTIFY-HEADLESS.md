@@ -87,3 +87,28 @@ Tests cover validated URIs, single-send skips, context preservation, stale-cache
 recovery, failed writes, transition acknowledgements, pagination and offline search.
 The initial process sample was approximately 58 MiB RSS; this is a short sample,
 not an idle benchmark. Larger caches and metadata workloads can increase memory.
+
+## Listening-room additions
+
+Lyrics are independent of Spotify's developer quota. Exact LRCLIB lookup falls
+back to cleaned-title lookup, conservative duration-qualified search and lyrics.ovh
+plain text. Positive cache lasts thirty days; negative matches expire after fifteen
+minutes. Provider outages preserve saved lyrics and are not cached as permanent
+misses. Instrumentals are explicitly labeled. No universal coverage is claimed.
+
+Retry bypasses the online cache. Local file opens the private override directory:
+`Artist - Title.lrc` for timed lyrics, or `.txt` for plain text; its HOW-TO file
+names the current song. Per-recording ±0.25s corrections persist across restarts.
+
+The pink spectrum consumes the existing shared CAVA output, not another analyzer.
+Its view stops updating when hidden. The listening-room spectrum button toggles it.
+
+Videos opens five on-demand YouTube search candidates. Preview plays silently
+inside the widget; Spotify remains the soundtrack. It deliberately favors H.264
+MP4 up to 720p: the initial selected codec stalled Qt playback, while the H.264
+route was visually verified with advancing time and 1280×720 frames. Preview is
+not synchronized with the Spotify recording. Closing clears the video source.
+Pop out uses mpv; YouTube search is available when extraction fails. No cookies,
+permanent downloads, automatic next video or unrelated audio takeover are used.
+
+[Additional 32-query research and decisions](MUSIC-EXPERIENCE-RESEARCH.md).

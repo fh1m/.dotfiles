@@ -11,6 +11,7 @@ DropdownFrame {
  property string outputName:""
  IpcHandler {enabled:root.outputName!=="";target:"spotifyview-"+root.outputName;function state():string{return JSON.stringify({count:musicList.count,visible:musicList.visible,query:SpotifyDesk.query,contextId:SpotifyDesk.contextItem.id||"",loading:SpotifyDesk.loading,error:SpotifyDesk.error});}function filter(text:string):void{SpotifyDesk.query=text;}}
  headerRight:ControlTile {implicitWidth:32;implicitHeight:30;glyph:"\uf065";Accessible.name:"Open fullscreen music";onActivated:SpotifyDesk.expand()}
+ MusicVideos {parent:root.Overlay.overlay||root}
  property int page:SpotifyDesk.page
  readonly property real position:SpotifyDesk.positionMs
  readonly property real duration:SpotifyDesk.playback.track?.duration||SpotifyDesk.player?.length*1000||1
@@ -47,6 +48,7 @@ DropdownFrame {
  Row {width:312;Text { textFormat: Text.PlainText;width:156;text:SpotifyDesk.fmt(root.position);font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}Text { textFormat: Text.PlainText;width:156;horizontalAlignment:Text.AlignRight;text:SpotifyDesk.fmt(root.duration);font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}}
  Row {spacing:8;Repeater {model:[{glyph:'\uf048',action:'previous'},{glyph:SpotifyDesk.playing?'\uf04c':'\uf04b',action:'toggle'},{glyph:'\uf051',action:'next'}];ControlTile {accentColor:Theme.widgetAccent;required property var modelData;implicitWidth:98;implicitHeight:38;glyph:modelData.glyph;selected:modelData.action==='toggle'?SpotifyDesk.playing:SpotifyDesk.skipPending===modelData.action;enabled:modelData.action==='toggle'||!SpotifyDesk.trackLoading;onActivated:SpotifyDesk.action(modelData.action)}}}
  Row {spacing:7;ControlTile {accentColor:Theme.widgetAccent;implicitWidth:152;implicitHeight:30;label:'Shuffle';glyph:'\uf074';selected:SpotifyDesk.playback.shuffle;onActivated:SpotifyDesk.action('shuffle')}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:152;implicitHeight:30;label:'Repeat '+(SpotifyDesk.playback.repeat||'off');onActivated:SpotifyDesk.action('repeat')}}
+ MusicSpectrum {width:312;height:32;visible:SpotifyDesk.spectrumEnabled}
  ControlSlider {accentColor:Theme.widgetAccent;width:312;title:'Spotify volume';level:SpotifyDesk.volume;onEdited:v=>SpotifyDesk.action('volume',[String(Math.round(v))])}
  }
  }
@@ -62,9 +64,10 @@ DropdownFrame {
  ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf15c';label:'Lyrics';selected:SpotifyDesk.lyricsOpen;onActivated:SpotifyDesk.lyricsOpen=!SpotifyDesk.lyricsOpen}
  }
  Row {visible:root.page===0&&SpotifyDesk.playback.backend==='headless';spacing:8
- ControlTile {implicitWidth:(parent.parent.width-16)/3;implicitHeight:30;glyph:'\uf02e';label:'Save moment';onActivated:SpotifyDesk.action('moment-save')}
- ControlTile {implicitWidth:(parent.parent.width-16)/3;implicitHeight:30;glyph:'\uf01e';label:'Resume moment';onActivated:SpotifyDesk.action('moment-resume')}
- ControlTile {implicitWidth:(parent.parent.width-16)/3;implicitHeight:30;glyph:'\uf074';label:'Surprise me';onActivated:SpotifyDesk.action('surprise')}
+ ControlTile {implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf02e';label:'Save moment';onActivated:SpotifyDesk.action('moment-save')}
+ ControlTile {implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf01e';label:'Resume moment';onActivated:SpotifyDesk.action('moment-resume')}
+ ControlTile {implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf074';label:'Surprise me';onActivated:SpotifyDesk.action('surprise')}
+ ControlTile {implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf16a';label:'Videos';onActivated:SpotifyDesk.openVideos(false)}
  }
  ChamferPanel {visible:root.page===0;width:parent.width;height:68;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {anchors.fill:parent;anchors.margins:10;spacing:7;Text { textFormat: Text.PlainText;width:parent.width;text:(SpotifyDesk.skipPending?'Switching track…':SpotifyDesk.playing?'Playing':'Paused')+' · '+(SpotifyDesk.playback.device||SpotifyDesk.account.deviceName||'Sensei')+' · Spotify Connect';font.family:Appearance.font.ui;font.pixelSize:12;color:SpotifyDesk.playing?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}Text { textFormat: Text.PlainText;width:parent.width;text:'Ctrl + Space  play / pause     •     right-click music badge to toggle';font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted;elide:Text.ElideRight}}

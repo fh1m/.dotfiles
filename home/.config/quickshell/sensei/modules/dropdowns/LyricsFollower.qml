@@ -11,12 +11,17 @@ Column {
  function followLine(){if(follow&&SpotifyDesk.lyricIndex>=0)lines.positionViewAtIndex(SpotifyDesk.lyricIndex,ListView.Center);}
  Row {width:parent.width;spacing:8
  Text { textFormat: Text.PlainText;width:parent.width-286;anchors.verticalCenter:parent.verticalCenter;text:SpotifyDesk.lyricsLoading?'Loading lyrics…':SpotifyDesk.lyricsData.synced?'Live lyrics · '+(SpotifyDesk.lyricsData.provider||''):'Lyrics · '+(SpotifyDesk.lyricsData.provider||'');font.family:Appearance.font.data;font.pixelSize:13;color:Theme.widgetMuted;elide:Text.ElideRight}
- ControlTile {accentColor:Theme.widgetAccent;implicitWidth:92;implicitHeight:30;label:'Follow';selected:root.follow;onActivated:{root.follow=true;root.followLine();}}
- ControlTile {accentColor:Theme.widgetAccent;implicitWidth:82;implicitHeight:30;label:'− 0.25s';onActivated:SpotifyDesk.lyricOffset-=250}
- ControlTile {accentColor:Theme.widgetAccent;implicitWidth:88;implicitHeight:30;label:'+ 0.25s';onActivated:SpotifyDesk.lyricOffset+=250}
+ MusicButton {accentColor:Theme.widgetAccent;implicitWidth:92;implicitHeight:30;label:'Follow';selected:root.follow;onActivated:{root.follow=true;root.followLine();}}
+ MusicButton {accentColor:Theme.widgetAccent;implicitWidth:82;implicitHeight:30;label:'− 0.25s';onActivated:SpotifyDesk.adjustLyrics(-250)}
+ MusicButton {accentColor:Theme.widgetAccent;implicitWidth:88;implicitHeight:30;label:'+ 0.25s';onActivated:SpotifyDesk.adjustLyrics(250)}
  }
  Text { textFormat: Text.PlainText;width:parent.width;height:18;text:SpotifyDesk.lyricsError||SpotifyDesk.lyricsData.notice||(SpotifyDesk.lyricsData.synced?'Click a line to seek · timing offset '+(SpotifyDesk.lyricOffset>=0?'+':'')+SpotifyDesk.lyricOffset+' ms':SpotifyDesk.lyricsLoading?'Sensei, finding this song…':'Timing is unavailable for this song.');font.family:Appearance.font.data;font.pixelSize:11;color:SpotifyDesk.lyricsError?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}
- ChamferPanel {width:parent.width;height:Math.max(140,root.height-68);fillColor:root.immersive?"transparent":Theme.widgetSurface;borderColor:root.immersive?"transparent":Theme.widgetBorder;chamfer:6;scanlines:false
+ Row {width:parent.width;spacing:8
+ MusicButton {implicitWidth:82;implicitHeight:30;glyph:'\uf021';label:'Retry';enabled:!SpotifyDesk.lyricsLoading;onActivated:SpotifyDesk.loadLyrics(true)}
+ MusicButton {implicitWidth:128;implicitHeight:30;glyph:'\uf07c';label:'Local file';onActivated:SpotifyDesk.action('lyrics-folder',[JSON.stringify(SpotifyDesk.lyricTrack())])}
+ Text {anchors.verticalCenter:parent.verticalCenter;width:parent.width-226;text:SpotifyDesk.lyricsData.instrumental?'INSTRUMENTAL':SpotifyDesk.lyricsData.synced?'TIMED':SpotifyDesk.lyricsData.plain?'PLAIN TEXT':'NO MATCH';font.family:Appearance.font.data;font.pixelSize:10;color:Theme.widgetMuted;elide:Text.ElideRight}
+ }
+ ChamferPanel {width:parent.width;height:Math.max(140,root.height-106);fillColor:root.immersive?"transparent":Theme.widgetSurface;borderColor:root.immersive?"transparent":Theme.widgetBorder;chamfer:6;scanlines:false
  ListView {id:lines;anchors.fill:parent;anchors.margins:12;clip:true;spacing:8;visible:SpotifyDesk.lyricsData.synced;model:SpotifyDesk.lyricsData.lines||[];topMargin:height*.35;bottomMargin:height*.35
  Behavior on contentY {enabled:root.follow;NumberAnimation {duration:240;easing.type:Easing.OutCubic}}
  onDraggingChanged:if(dragging)root.follow=false
@@ -29,7 +34,7 @@ Column {
  }
  }
  ScrollView {anchors.fill:parent;anchors.margins:14;visible:!SpotifyDesk.lyricsData.synced
- Text { textFormat: Text.PlainText;width:parent.width;text:SpotifyDesk.lyricsData.plain||SpotifyDesk.lyricsError||SpotifyDesk.lyricsData.notice||(SpotifyDesk.lyricsLoading?'Sensei, finding your lyrics…':'No timed lyrics are available for this track.');wrapMode:Text.Wrap;font.family:Appearance.font.data;font.pixelSize:16;color:Theme.widgetText}
+ Text { textFormat: Text.PlainText;width:parent.width;text:SpotifyDesk.lyricsData.plain||SpotifyDesk.lyricsError||SpotifyDesk.lyricsData.notice||(SpotifyDesk.lyricsLoading?'Sensei, finding your lyrics…':'No timed lyrics are available for this track.');wrapMode:Text.Wrap;font.family:Appearance.font.data;font.pixelSize:root.immersive?Math.max(24,Math.min(32,root.width*.025)):16;font.weight:root.immersive?Font.Medium:Font.Normal;lineHeight:1.35;color:root.immersive?'#fff6fb':Theme.widgetText}
  }
  }
  Connections {target:SpotifyDesk;function onLyricIndexChanged(){Qt.callLater(root.followLine);}function onLyricsDataChanged(){root.follow=true;Qt.callLater(root.followLine);}}
