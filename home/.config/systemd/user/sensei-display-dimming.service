@@ -1,0 +1,11 @@
+[Unit]
+Description=Per-output gamma dimming fallback for adapters without DDC
+After=graphical-session.target
+PartOf=graphical-session.target
+ConditionPathExists=%h/.local/bin/wl-gammarelay-rs
+[Service]
+ExecStart=%h/.local/bin/wl-gammarelay-rs run
+Restart=on-failure
+RestartSec=10
+[Install]
+WantedBy=graphical-session.target

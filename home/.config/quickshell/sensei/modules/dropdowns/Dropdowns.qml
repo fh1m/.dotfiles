@@ -87,7 +87,7 @@ Variants {
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }
         visible: current !== "" && surfaceReady && !ShellState.externalDialogOpen
 
-        implicitWidth: Math.min((modelData?.width ?? 1920) - 2 * edge, 2 * surfaceInset + ((current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis") ? 1040 : current === "external-display" ? 440 : current === "code" ? 1100 : current === "spotify" ? (SpotifyDesk.page>=7?1840:1080) : current === "docker" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : (current === "displays" || current === "camera" || current === "engineering") ? 740 : current === "ethernet" ? 596 : current === "power" ? 500 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
+        implicitWidth: Math.min((modelData?.width ?? 1920) - 2 * edge, 2 * surfaceInset + ((current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis") ? 1040 : current === "external-display" ? 440 : current === "code" ? 1100 : current === "spotify" ? (SpotifyDesk.page>=7?1840:1080) : current === "docker" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : (current === "displays" || current === "camera" || current === "engineering") ? 740 : current === "radio" ? 740 : current === "ethernet" ? 596 : current === "power" ? 500 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.
@@ -109,7 +109,7 @@ Variants {
             left: true
         }
 
-        margins.top: current === "spotify" ? gap : (current === "calendar" || current === "weather" || (ShellState.isExternalOutput(modelData?.name??"") && !bottomPanel)) ? Appearance.metrics.barHeight + gap - surfaceInset : (popup.bottomPanel) ? 0 : gap
+        margins.top: current === "spotify" ? gap : (current === "calendar" || current === "weather") ? Appearance.metrics.barHeight + gap - surfaceInset : (popup.bottomPanel) ? 0 : gap
         margins.bottom: (popup.bottomPanel) ? gap : 0
         // Under the readout that opened it, pulled back in if that would hang
         // the panel off the right edge. Both windows share an origin, so the
@@ -351,6 +351,7 @@ Variants {
                     case "ethernet":return ethernetPanel;
                     case "camera":return cameraPanel;
                     case "engineering":return engineeringPanel;
+                    case "radio":return radioPanel;
                     case "displays": return displaysPanel;
                     case "monitor": return monitorPanel;
                     case "clipboard": return clipboardPanel;
@@ -399,6 +400,7 @@ Variants {
             Component { id: usbPanel; UsbDropdown { width: holder.width } }
             Component { id: phonePanel; PhoneDropdown { width: holder.width } }
             Component { id: comicPanel; ComicDropdown { width: holder.width } }
+            Component { id: radioPanel; RadioDropdown { width:holder.width;hostWindow:popup } }
             Component { id: spotifyPanel; SpotifyDropdown { width: holder.width;hostWindow:popup;outputName:popup.modelData?.name||"" } }
             Component { id: soundPanel; SoundDropdown { width: holder.width } }
             Component { id: notificationsPanel; NotificationCenter { width: holder.width } }

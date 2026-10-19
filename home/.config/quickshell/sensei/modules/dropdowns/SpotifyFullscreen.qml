@@ -30,17 +30,20 @@ PanelWindow {
     property bool queuePinned:false
     Timer {interval:12000;running:window.visible&&window.collectionOpen&&!window.queuePinned&&!listHover.hovered;onTriggered:window.collectionOpen=false}
     property bool showTools:true
+    property bool lyricsView:false
+    readonly property bool controlsShown:showTools||toolbarHover.hovered||!SpotifyDesk.playing||window.collectionOpen
+    HoverHandler {onPointChanged:{window.showTools=true;toolsIdle.restart()}}
     property bool focusArmed:false
     HyprlandFocusGrab {active:window.visible&&window.focusArmed&&!SpotifyDesk.musicBackdrop;windows:[window];onCleared:window.focusArmed=false}
     TapHandler {onTapped:{if(!SpotifyDesk.musicBackdrop)window.focusArmed=true;}}
     Item {width:parent.width;height:84;HoverHandler {id:toolbarHover}}
-    Timer {interval:3500;running:window.visible;onTriggered:window.showTools=false}
+    Timer {id:toolsIdle;interval:3500;running:window.visible;onTriggered:if(!toolbarHover.hovered)window.showTools=false;else restart()}
     readonly property var rows: collection===0 ? SpotifyDesk.queueRows : SpotifyDesk.contextItem.id ? SpotifyDesk.contextRows : SpotifyDesk.playlistRows
     function sample(){if(!visible||palette.running||!SpotifyDesk.albumArt)return;sampledArt=SpotifyDesk.albumArt;palette.command=[Quickshell.env('HOME')+'/.local/bin/sensei-music-palette',sampledArt];palette.running=true;}
-    onVisibleChanged: if(visible){focusArmed=true;showTools=true;stage.forceActiveFocus();sample();}else focusArmed=false;
+    onVisibleChanged: if(visible){focusArmed=true;showTools=true;toolsIdle.restart();stage.forceActiveFocus();sample();}else focusArmed=false;
     Connections {target:SpotifyDesk;function onAlbumArtChanged(){if(!SpotifyDesk.albumArt){window.wash='#402131';window.edge='#171019';}window.sample();}}
     Process {id:palette;stdout:StdioCollector {onStreamFinished:{if(window.sampledArt!==SpotifyDesk.albumArt)return;try{const p=JSON.parse(text);window.wash=p.wash;window.edge=p.edge;}catch(e){}}}onExited:if(window.sampledArt!==SpotifyDesk.albumArt)window.sample()}
-    IpcHandler {target:"music-fullscreen";function state():string{return JSON.stringify({visible:window.visible,output:window.screen?.name,width:window.width,height:window.height,rows:window.rows.length,collection:window.collection,collectionOpen:window.collectionOpen,zen:SpotifyDesk.zen,backdrop:SpotifyDesk.musicBackdrop,focusArmed:window.focusArmed,seek:seek.value,duration:SpotifyDesk.playback.track?.duration,position:SpotifyDesk.positionMs,lyrics:SpotifyDesk.lyricsData.lines?.length||0,wash:String(window.wash)});}function mode(name:string):void {SpotifyDesk.zen=name==='focus';}function backdrop(enabled:bool):void {SpotifyDesk.musicBackdrop=enabled;}function display(name:string):void {if(ShellState.screens.some(s=>s.name===name))SpotifyDesk.fullscreenOutput=name;}function collection(index:int):void{window.collectionOpen=true;window.collection=Math.max(0,Math.min(1,index));}}
+    IpcHandler {target:"music-fullscreen";function state():string{return JSON.stringify({visible:window.visible,output:window.screen?.name,width:window.width,height:window.height,rows:window.rows.length,collection:window.collection,collectionOpen:window.collectionOpen,zen:SpotifyDesk.zen,lyricsView:window.lyricsView,controlsShown:window.controlsShown,backdrop:SpotifyDesk.musicBackdrop,focusArmed:window.focusArmed,seek:seek.value,duration:SpotifyDesk.playback.track?.duration,position:SpotifyDesk.positionMs,lyrics:SpotifyDesk.lyricsData.lines?.length||0,wash:String(window.wash)});}function mode(name:string):void {SpotifyDesk.zen=name==='focus';}function lyrics(enabled:bool):void {window.lyricsView=enabled;if(enabled){SpotifyDesk.zen=false;SpotifyDesk.loadLyrics(false);}}function backdrop(enabled:bool):void {SpotifyDesk.musicBackdrop=enabled;}function display(name:string):void {if(ShellState.screens.some(s=>s.name===name))SpotifyDesk.fullscreenOutput=name;}function collection(index:int):void{window.collectionOpen=true;window.collection=Math.max(0,Math.min(1,index));}}
     Rectangle {anchors.fill:parent;gradient:Gradient {orientation:Gradient.Horizontal;GradientStop {position:0;color:window.wash}GradientStop {position:.65;color:window.edge}GradientStop {position:1;color:Theme.ink}}}
     FocusScope {
         id:stage
@@ -60,7 +63,7 @@ PanelWindow {
         Text {visible:!SpotifyDesk.zen;x:stage.gutter+16;y:23;text:'LISTENING ROOM';font.family:Appearance.font.heading;font.pixelSize:20;font.weight:Font.DemiBold;color:Theme.paper}
         Text {visible:!SpotifyDesk.zen;x:stage.gutter+16;y:51;text:SpotifyDesk.playing?'Your soundtrack. Room to breathe.':'Paused · the room is yours.';font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
         Row {anchors.right:parent.right;anchors.rightMargin:stage.gutter; y:27;spacing:8
-            opacity:1 // Exit and display controls must never disappear during pointer travel.
+            opacity:window.controlsShown?1:0 // Movement or the full toolbar hit area reveals controls before reaching a button.
             enabled:opacity>.5
             Behavior on opacity {NumberAnimation {duration:200}}
             DeskComboBox {width:180;height:38;model:ShellState.screens.map(s=>s.name+' · '+MachineProfile.role(s.name));currentIndex:ShellState.screens.findIndex(s=>s.name===window.screen?.name);onActivated:SpotifyDesk.fullscreenOutput=ShellState.screens[currentIndex].name;Accessible.name:'Move listening room to display'}
@@ -68,6 +71,7 @@ PanelWindow {
             MusicButton {visible:window.collectionOpen;implicitWidth:38;glyph:'\uf08d';selected:window.queuePinned;Accessible.name:'Pin queue open';onActivated:window.queuePinned=!window.queuePinned}
             MusicButton {implicitWidth:36;glyph:'\uf16a';Accessible.name:'Find music videos';onActivated:SpotifyDesk.openVideos(false)}
             MusicButton {implicitWidth:36;glyph:'\uf080';Accessible.name:'Toggle audio spectrum';selected:SpotifyDesk.spectrumEnabled;onActivated:SpotifyDesk.spectrumEnabled=!SpotifyDesk.spectrumEnabled}
+            MusicButton {implicitWidth:142;label:'Lyrics view';glyph:'\uf130';selected:window.lyricsView;onActivated:{window.lyricsView=!window.lyricsView;if(window.lyricsView){SpotifyDesk.zen=false;window.collectionOpen=false;}SpotifyDesk.loadLyrics(false);}}
             MusicButton {implicitWidth:116;label:'Focus';glyph:'\uf186';selected:SpotifyDesk.zen;onActivated:SpotifyDesk.zen=!SpotifyDesk.zen}
             MusicButton {implicitWidth:116;label:'Backdrop';glyph:'\uf24d';selected:SpotifyDesk.musicBackdrop;onActivated:SpotifyDesk.musicBackdrop=!SpotifyDesk.musicBackdrop}
             MusicButton {visible:!SpotifyDesk.playback.ready;implicitWidth:136;implicitHeight:34;label:'Open Spotify';glyph:'\uf1bc';onActivated:SpotifyDesk.openOfficial()}
@@ -75,7 +79,7 @@ PanelWindow {
             MusicButton {implicitWidth:36;implicitHeight:34;glyph:'\uf00d';Accessible.name:'Close listening room';onActivated:SpotifyDesk.collapse(false)}
         }
         // Short displays can scroll the player without hiding its controls.
-        ScrollView {id:player;visible:!SpotifyDesk.zen;x:stage.gutter;y:stage.bodyTop;width:stage.cardWidth;height:stage.bodyHeight;clip:true;contentWidth:availableWidth
+        ScrollView {id:player;visible:!SpotifyDesk.zen&&!window.lyricsView;x:stage.gutter;y:stage.bodyTop;width:stage.cardWidth;height:stage.bodyHeight;clip:true;contentWidth:availableWidth
             Column {width:player.availableWidth;spacing:16
                 RoundedArtwork {width:parent.width;height:width;cornerRadius:14;source:SpotifyDesk.albumArt;sourceSize:Qt.size(800,800);fillMode:Image.PreserveAspectCrop;asynchronous:true
                     Rectangle {anchors.fill:parent;visible:SpotifyDesk.albumArt==='';color:Theme.surfaceOne;radius:14;Text {anchors.centerIn:parent;text:'\uf001';font.family:Appearance.font.icons;font.pixelSize:64;color:Theme.widgetMuted}}
@@ -103,8 +107,8 @@ PanelWindow {
                 ControlSlider {width:parent.width;title:YouTubeDesk.ownsAudio?'YouTube volume':'Spotify volume';level:SpotifyDesk.volume;onEdited:v=>SpotifyDesk.action('volume',[String(Math.round(v))])}
             }
         }
-        Rectangle {id:lyricCard;visible:!SpotifyDesk.zen;x:player.x+player.width+20;y:stage.bodyTop;width:stage.lyricWidth;height:stage.bodyHeight;radius:12;color:"transparent";border.color:"transparent"
-            LyricsFollower {anchors.fill:parent;anchors.margins:16;immersive:true}
+        Rectangle {id:lyricCard;visible:!SpotifyDesk.zen;x:window.lyricsView?stage.gutter+Math.max(0,(stage.width-1200)/2):player.x+player.width+20;y:stage.bodyTop;width:window.lyricsView?Math.min(1200,stage.width-2*stage.gutter):stage.lyricWidth;height:stage.bodyHeight;radius:12;color:"transparent";border.color:"transparent"
+            LyricsFollower {anchors.fill:parent;anchors.margins:16;immersive:true;controlsVisible:window.controlsShown}
         }
         Rectangle {id:listCard;visible:!SpotifyDesk.zen&&window.collectionOpen;x:lyricCard.x+lyricCard.width+20;y:stage.bodyTop;width:stage.listWidth;height:stage.bodyHeight;radius:12;color:Theme.alpha(Theme.ink,.9);border.color:Theme.rule
             HoverHandler {id:listHover}

@@ -70,13 +70,7 @@ Variants {
             PageMarker { output:bar.outputName;anchors.verticalCenter: parent.verticalCenter }
             Workspaces { id: workspaces;railOutput:bar.outputName;output:bar.external?bar.outputName:Spaces.mainMonitor?.name??bar.outputName;compact:bar.external&&bar.width<1500;anchors.verticalCenter: parent.verticalCenter }
         }
-        CompanionPerch {
-            output:bar.outputName;edge:bar.topEdge?"top":"bottom"
-            preferred:!ShellState.barScreens.some(s=>s.name===bar.outputName)
-            freeLeft:(bar.external?outputLabel.x+outputLabel.width:meters.x+meters.width)+12
-            freeRight:navigation.x-12
-            anchors.verticalCenter:parent.verticalCenter
-        }
+
         Row {
             id:machineControls
             spacing: 3

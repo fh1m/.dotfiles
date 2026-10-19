@@ -24,8 +24,8 @@ PanelWindow {
     visible:window.output?.name===(SpotifyDesk.videoAudioLinked?YouTubeDesk.engineOutput:SpotifyDesk.videoWindowOutput)&&SpotifyDesk.videoSource!==''&&!ShellState.locked&&!!output&&(window.inlineVideo?(ShellState.dropdown==='spotify'&&SpotifyDesk.page===(YouTubeDesk.platform==='Twitch'?8:7)&&window.slot.track===YouTubeDesk.track.id&&window.slot.width>1):['mini','fullscreen'].includes(SpotifyDesk.videoMode))
     anchors {left:true;top:true;right:window.full;bottom:window.full}
     margins {left:window.inlineVideo?(window.slot.x||0):window.full?0:Math.max(0,Math.min(SpotifyDesk.videoX,(window.output?.width||1920)-window.width));top:window.inlineVideo?(window.slot.y||0):window.full?0:Math.max(0,Math.min(SpotifyDesk.videoY,(window.output?.height||1080)-window.height))}
-    implicitWidth:window.inlineVideo?(window.slot.width||1):Math.min(680,(output?.width||1920)-32)
-    implicitHeight:window.inlineVideo?(window.slot.height||1):Math.min(430,(output?.height||1080)-80)
+    implicitWidth:window.inlineVideo?(window.slot.width||1):Math.min(680,(output?.width||1920)-32,Math.max(240,((output?.height||1080)-186)*16/9))
+    implicitHeight:window.inlineVideo?(window.slot.height||1):window.implicitWidth*9/16+106
     exclusionMode:ExclusionMode.Ignore
     WlrLayershell.layer:WlrLayer.Overlay
     WlrLayershell.namespace:'sensei-music-video'
@@ -38,7 +38,7 @@ PanelWindow {
     function describe(){return JSON.stringify({visible:window.visible,mode:SpotifyDesk.videoMode,display:window.screen?.name,position:SpotifyDesk.videoPlayer.position,playing:SpotifyDesk.videoPlayer.playing,inline:window.inlineVideo,geometry:{x:window.margins.left,y:window.margins.top,width:window.width,height:window.height},size:String(SpotifyDesk.videoAudioLinked?YouTubeDesk.nativePlayer.videoSize:'preview'),renderUpdates:YouTubeDesk.nativePlayer.frameNumber||0,avsync:YouTubeDesk.nativePlayer.avsync||0,playingOutputs:Object.entries(YouTubeDesk.engines).filter(e=>e[1]?.playing).map(e=>e[0])});}
     Shortcut {sequence:'Escape';enabled:window.visible;onActivated:SpotifyDesk.showVideo('inline')}
     Rectangle {anchors.fill:parent;color:Theme.ink;border.width:window.full?0:1;border.color:Theme.rule;radius:window.full?0:8}
-    Item {id:video;anchors.fill:parent;anchors.margins:window.full?0:1;anchors.topMargin:window.inlineVideo?0:54;anchors.bottomMargin:window.inlineVideo?0:52;VideoOutput {id:preview;anchors.fill:parent;visible:!SpotifyDesk.videoAudioLinked;fillMode:VideoOutput.PreserveAspectFit}
+    Item {id:video;z:0;anchors.fill:parent;anchors.margins:window.full?0:1;anchors.topMargin:window.inlineVideo?0:54;anchors.bottomMargin:window.inlineVideo?0:52;VideoOutput {id:preview;anchors.fill:parent;visible:!SpotifyDesk.videoAudioLinked;fillMode:VideoOutput.PreserveAspectFit}
         MediaCaptions {z:10}}
     Item {anchors.fill:parent;focus:window.visible&&!window.inlineVideo
         Keys.onPressed:event=>{
@@ -48,12 +48,15 @@ PanelWindow {
             else if(SpotifyDesk.videoAudioLinked&&(event.key===Qt.Key_Left||event.key===Qt.Key_Right)){YouTubeDesk.action('seek-to',[String(YouTubeDesk.position+(event.key===Qt.Key_Right?10000:-10000))]);event.accepted=true;}
         }
     }
-    Row {visible:!window.inlineVideo;x:12;anchors.bottom:parent.bottom;anchors.bottomMargin:8;width:parent.width-24;height:34;spacing:10
-        Text {width:82;anchors.verticalCenter:parent.verticalCenter;text:YouTubeDesk.track.live?'LIVE':SpotifyDesk.fmt(SpotifyDesk.videoPlayer.position);font.family:Appearance.font.data;font.pixelSize:12;color:Theme.paperMuted}
-        Slider {width:Math.max(80,parent.width-300);height:34;enabled:!YouTubeDesk.track.live;from:0;to:Math.max(1,SpotifyDesk.videoPlayer.duration);value:SpotifyDesk.videoPlayer.position;onMoved:{if(SpotifyDesk.videoAudioLinked)YouTubeDesk.action('seek-to',[String(Math.round(value))]);else SpotifyDesk.videoPlayer.position=Math.round(value);}}
-        ControlSlider {width:180;title:SpotifyDesk.videoAudioLinked?'Volume':'Silent preview';level:SpotifyDesk.videoAudioLinked?YouTubeDesk.volume:0;enabled:SpotifyDesk.videoAudioLinked;onEdited:v=>YouTubeDesk.action('volume',[String(Math.round(v))])}
+    Row {z:100;visible:!window.inlineVideo;x:12;anchors.bottom:parent.bottom;anchors.bottomMargin:8;width:parent.width-24;height:34;spacing:10
+        MusicButton {implicitWidth:28;implicitHeight:32;glyph:"\uf048";Accessible.name:"Previous video";enabled:SpotifyDesk.videoAudioLinked;onActivated:YouTubeDesk.action("previous")}
+        MusicButton {implicitWidth:32;implicitHeight:32;glyph:SpotifyDesk.videoPlayer.playing?"\uf04c":"\uf04b";Accessible.name:"Play or pause";onActivated:SpotifyDesk.toggleVideo()}
+        MusicButton {implicitWidth:28;implicitHeight:32;glyph:"\uf051";Accessible.name:"Next video";enabled:SpotifyDesk.videoAudioLinked&&YouTubeDesk.index+1<YouTubeDesk.queue.length;onActivated:YouTubeDesk.action("next")}
+        Text {width:50;anchors.verticalCenter:parent.verticalCenter;text:YouTubeDesk.track.live?'LIVE':SpotifyDesk.fmt(SpotifyDesk.videoPlayer.position);font.family:Appearance.font.data;font.pixelSize:12;color:Theme.paperMuted}
+        Slider {width:Math.max(70,parent.width-424);height:34;enabled:!YouTubeDesk.track.live;from:0;to:Math.max(1,SpotifyDesk.videoPlayer.duration);value:SpotifyDesk.videoPlayer.position;onMoved:{if(SpotifyDesk.videoAudioLinked)YouTubeDesk.action('seek-to',[String(Math.round(value))]);else SpotifyDesk.videoPlayer.position=Math.round(value);}}
+        ControlSlider {width:150;title:SpotifyDesk.videoAudioLinked?'Volume':'Silent preview';level:SpotifyDesk.videoAudioLinked?YouTubeDesk.volume:0;enabled:SpotifyDesk.videoAudioLinked;onEdited:v=>YouTubeDesk.action('volume',[String(Math.round(v))])}
     }
-    Item {id:header;visible:!window.inlineVideo;x:12;y:8;width:parent.width-24;height:38
+    Item {id:header;z:100;visible:!window.inlineVideo;x:12;y:8;width:parent.width-24;height:38
         property real startX:0
         property real startY:0
         Text {id:heading;width:parent.width-330;anchors.verticalCenter:parent.verticalCenter;text:SpotifyDesk.videoTitle;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper

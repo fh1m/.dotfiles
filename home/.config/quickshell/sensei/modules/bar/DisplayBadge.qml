@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.components
 import qs.config
 import qs.services
@@ -31,6 +32,6 @@ Item {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onWheel: event => { DisplayControls.adjustLevel(root.output, event.angleDelta.y > 0 ? 5 : -5); event.accepted = true; }
-        onClicked: {const name=root.external?root.output:root.output==="main"?MachineProfile.primaryOutput:ShellState.screens.find(s=>MachineProfile.role(s.name)==="screenpad")?.name||MachineProfile.primaryOutput;ShellState.barContext(name);ShellState.openDropdownOn("displays",name);}
+        onClicked: {const name=root.QsWindow.window?.screen?.name||MachineProfile.primaryOutput;ShellState.barContext(name);ShellState.openDropdownOn("displays",name);}
     }
 }

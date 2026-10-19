@@ -46,9 +46,10 @@ Singleton {
             : ["brightnessctl", "-d", panel, "set", `${request[1]}%`];
         control.running = true;
     }
+    Timer {id:screenpadRefresh;interval:400;onTriggered:RobotBench.refresh()}
     Process {
         id: control
         stderr: StdioCollector { onStreamFinished: root.error = text.trim() }
-        onExited: (code, status) => { if (code === 0) root.error = ""; RobotBench.refresh(); root.next(); }
+        onExited: (code, status) => { if (code === 0) root.error = ""; screenpadRefresh.restart(); root.next(); }
     }
 }

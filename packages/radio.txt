@@ -1,0 +1,7 @@
+# Optional receiver workstation, installed on Homie when RTL-SDR is present.
+rtl-sdr
+rtl_433
+gqrx
+# XP-Pen driver/native scratchpad are shared drawing dependencies.
+opentabletdriver
+xournalpp

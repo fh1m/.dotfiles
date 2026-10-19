@@ -112,6 +112,16 @@ def ddc_devices(text):
     return devices
 
 
+def gamma_brightness(output,percent=None):
+    selector(output)
+    path='/outputs/'+re.sub(r'[^A-Za-z0-9_]','_',output)
+    if percent is not None:
+        level=max(10,min(100,round(percent)))
+        run(['busctl','--user','set-property','rs.wl-gammarelay',path,'rs.wl.gammarelay','Brightness','d',str(level/100)],timeout=3)
+    text=run(['busctl','--user','get-property','rs.wl-gammarelay',path,'rs.wl.gammarelay','Brightness'],timeout=3)
+    value=float(text.split()[1]);return {'raw':round(value*100),'maximum':100,'level':round(value*100),'control':'software','note':'Software dimming · adapter does not pass DDC; backlight unchanged'}
+
+
 def brightness(bus):
     text=run(['ddcutil','--bus',str(bus),'getvcp','10','--terse'],timeout=12)
     match=re.search(r'^VCP 10 C (\d+) (\d+)',text,re.M)
@@ -175,7 +185,7 @@ def sync(layout=True,notify=True):
             reconcile()
         outputs=monitors()
     old={d['output']:d for d in previous.get('displays',[])}
-    changed=any(name not in old or old[name].get('id')!=record['id'] or old[name].get('bus') is None for name,record in physical.items())
+    changed=any(name not in old or old[name].get('id')!=record['id'] or (old[name].get('bus') is None and old[name].get('control')!='software') for name,record in physical.items())
     buses={name:d.get('bus') for name,d in old.items() if d.get('bus') is not None}
     if physical and changed:
         try:buses=ddc_devices(run(['ddcutil','detect','--brief'],timeout=20))
@@ -190,6 +200,10 @@ def sync(layout=True,notify=True):
             try:record.update(brightness(record['bus']),ready=True)
             except (OSError,ValueError,subprocess.SubprocessError):record['error']='DDC brightness unavailable; use the monitor controls'
         else:record['error']='DDC brightness unavailable; use the monitor controls'
+        if not record['ready'] and (Path.home()/'.local/bin/wl-gammarelay-rs').is_file():
+            try:record.update(gamma_brightness(name),ready=True);record.pop('error',None)
+            except (OSError,ValueError,subprocess.SubprocessError):pass
+        if record['ready'] and 'control' not in record:record['control']='hardware'
         data['displays'].append(record)
     if notify:
         before=set(previous.get('outputs',[])) if previous.get('session')==data['session'] else set()
@@ -210,9 +224,11 @@ def set_brightness(output,percent):
     if not record or not record.get('ready') or not actual or actual['id']!=record.get('id'):
         data=sync(layout=False,notify=False);record=next((d for d in data['displays'] if d['output']==output),None)
     if not record or not record.get('ready'):raise ValueError('Monitor brightness is unavailable')
+    if record.get('control')=='software':
+        record.update(gamma_brightness(output,percent));write_state(data);return data
     raw=round(percent*record['maximum']/100)
     run(['ddcutil','--bus',str(record['bus']),'setvcp','10',str(raw)],timeout=12)
-    record.update(brightness(record['bus']))
+    record.update(raw=raw,level=round(100*raw/record['maximum']))
     write_state(data);return data
 
 

@@ -7,21 +7,23 @@ Column {
  id:root
  property bool follow:true
  property bool immersive:false
+ property bool controlsVisible:true
+ onControlsVisibleChanged:Qt.callLater(root.followLine)
  spacing:10
  function followLine(){if(follow&&SpotifyDesk.lyricIndex>=0)lines.positionViewAtIndex(SpotifyDesk.lyricIndex,ListView.Center);}
- Row {width:parent.width;spacing:8
+ Row {visible:root.controlsVisible;width:parent.width;spacing:8
  Text { textFormat: Text.PlainText;width:parent.width-286;anchors.verticalCenter:parent.verticalCenter;text:SpotifyDesk.lyricsLoading?'Loading lyrics…':SpotifyDesk.lyricsData.synced?'Live lyrics · '+(SpotifyDesk.lyricsData.provider||''):'Lyrics · '+(SpotifyDesk.lyricsData.provider||'');font.family:Appearance.font.data;font.pixelSize:13;color:Theme.widgetMuted;elide:Text.ElideRight}
  MusicButton {accentColor:Theme.widgetAccent;implicitWidth:92;implicitHeight:30;label:'Follow';selected:root.follow;onActivated:{root.follow=true;root.followLine();}}
  MusicButton {accentColor:Theme.widgetAccent;implicitWidth:82;implicitHeight:30;label:'− 0.25s';onActivated:SpotifyDesk.adjustLyrics(-250)}
  MusicButton {accentColor:Theme.widgetAccent;implicitWidth:88;implicitHeight:30;label:'+ 0.25s';onActivated:SpotifyDesk.adjustLyrics(250)}
  }
- Text { textFormat: Text.PlainText;width:parent.width;height:18;text:SpotifyDesk.lyricsError||SpotifyDesk.lyricsData.notice||(SpotifyDesk.lyricsData.synced?'Click a line to seek · timing offset '+(SpotifyDesk.lyricOffset>=0?'+':'')+SpotifyDesk.lyricOffset+' ms':SpotifyDesk.lyricsLoading?'Sensei, finding this song…':'Timing is unavailable for this song.');font.family:Appearance.font.data;font.pixelSize:11;color:SpotifyDesk.lyricsError?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}
- Row {width:parent.width;spacing:8
+ Text {visible:root.controlsVisible; textFormat: Text.PlainText;width:parent.width;height:18;text:SpotifyDesk.lyricsError||SpotifyDesk.lyricsData.notice||(SpotifyDesk.lyricsData.synced?'Click a line to seek · timing offset '+(SpotifyDesk.lyricOffset>=0?'+':'')+SpotifyDesk.lyricOffset+' ms':SpotifyDesk.lyricsLoading?'Sensei, finding this song…':'Timing is unavailable for this song.');font.family:Appearance.font.data;font.pixelSize:11;color:SpotifyDesk.lyricsError?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}
+ Row {visible:root.controlsVisible;width:parent.width;spacing:8
  MusicButton {implicitWidth:82;implicitHeight:30;glyph:'\uf021';label:'Retry';enabled:!SpotifyDesk.lyricsLoading;onActivated:SpotifyDesk.loadLyrics(true)}
  MusicButton {implicitWidth:128;implicitHeight:30;glyph:'\uf07c';label:'Local file';onActivated:SpotifyDesk.action('lyrics-folder',[JSON.stringify(SpotifyDesk.lyricTrack())])}
  Text {anchors.verticalCenter:parent.verticalCenter;width:parent.width-226;text:SpotifyDesk.lyricsData.instrumental?'INSTRUMENTAL':SpotifyDesk.lyricsData.synced?'TIMED':SpotifyDesk.lyricsData.plain?'PLAIN TEXT':'NO MATCH';font.family:Appearance.font.data;font.pixelSize:10;color:Theme.widgetMuted;elide:Text.ElideRight}
  }
- ChamferPanel {width:parent.width;height:Math.max(140,root.height-106);fillColor:root.immersive?"transparent":Theme.widgetSurface;borderColor:root.immersive?"transparent":Theme.widgetBorder;chamfer:6;scanlines:false
+ ChamferPanel {width:parent.width;height:Math.max(140,root.height-(root.controlsVisible?106:0));fillColor:root.immersive?"transparent":Theme.widgetSurface;borderColor:root.immersive?"transparent":Theme.widgetBorder;chamfer:6;scanlines:false
  ListView {id:lines;anchors.fill:parent;anchors.margins:12;clip:true;spacing:8;visible:SpotifyDesk.lyricsData.synced;model:SpotifyDesk.lyricsData.lines||[];topMargin:height*.35;bottomMargin:height*.35
  Behavior on contentY {enabled:root.follow;NumberAnimation {duration:240;easing.type:Easing.OutCubic}}
  onDraggingChanged:if(dragging)root.follow=false
@@ -29,7 +31,7 @@ Column {
  ScrollBar.vertical:ScrollBar {onPressedChanged:if(pressed)root.follow=false}
  delegate:Rectangle {id:line;required property var modelData;required property int index;width:lines.width;height:Math.max(root.immersive?72:48,words.implicitHeight+22);radius:6;color:!root.immersive&&index===SpotifyDesk.lyricIndex?Theme.alpha(Theme.widgetAccent,.12):'transparent'
  Rectangle {visible:!root.immersive&&line.index===SpotifyDesk.lyricIndex;width:3;height:parent.height;color:Theme.widgetAccent;radius:1}
- Text { textFormat: Text.PlainText;id:words;x:16;y:11;width:parent.width-30;text:line.modelData.text||'♪';wrapMode:Text.Wrap;font.family:/[\u0980-\u09ff]/.test(text)?'Noto Sans Bengali':Appearance.font.data;font.pixelSize:root.immersive?Math.max(24,Math.min(42,root.width*.055)):18;font.weight:root.immersive?Font.DemiBold:500;color:root.immersive?(line.index===SpotifyDesk.lyricIndex?"#fff6fb":line.index<SpotifyDesk.lyricIndex?Theme.alpha("#fff6fb",.36):Theme.alpha("#fff6fb",.6)):(line.index===SpotifyDesk.lyricIndex?Theme.widgetAccent:line.index<SpotifyDesk.lyricIndex?Theme.widgetMuted:Theme.widgetText);renderType:Text.QtRendering;Behavior on color {ColorAnimation {duration:180}}}
+ Text { textFormat: Text.PlainText;id:words;x:16;y:11;width:parent.width-30;text:line.modelData.text||'♪';wrapMode:Text.Wrap;font.family:/[\u0980-\u09ff]/.test(text)?'Noto Sans Bengali':root.immersive?'Noto Sans':Appearance.font.ui;font.pixelSize:root.immersive?Math.max(24,Math.min(42,root.width*.055)):18;font.weight:root.immersive?Font.DemiBold:500;color:root.immersive?(line.index===SpotifyDesk.lyricIndex?"#fff6fb":line.index<SpotifyDesk.lyricIndex?Theme.alpha("#fff6fb",.36):Theme.alpha("#fff6fb",.6)):(line.index===SpotifyDesk.lyricIndex?Theme.widgetAccent:line.index<SpotifyDesk.lyricIndex?Theme.widgetMuted:Theme.widgetText);renderType:Text.QtRendering;Behavior on color {ColorAnimation {duration:180}}}
  MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:{root.follow=true;SpotifyDesk.action('seek-to',[String(line.modelData.time)]);}}
  }
  }

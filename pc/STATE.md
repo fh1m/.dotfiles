@@ -1,3 +1,23 @@
+# Radio, pen and media polish — 2026-10-20
+
+Homie detects XP-Pen Star G960S Plus (28bd:0918) and RTL2838 (0bda:2838),
+Rafael Micro R820T tuner, through the USB hub. OpenTabletDriver Artist Mode,
+pressure/tilt/eraser and DP-3 mapping are active. The user confirmed stroke
+position and pressure. Xournal++ is the native white-paper scratchpad; no GUI
+settings application is required. OTD and mapping services are enabled.
+
+Receiver tools: signed distro rtl-sdr, rtl_433, Gqrx and dependencies. A stale
+mirror failure changed no packages; the successful retry used signed cached
+.NET runtime files and the official Arch castxml target. No partial system
+upgrade or signature bypass. USB sampling: 2.048 MS/s for seven seconds, zero
+reported lost samples. FM survey: 257 bins; actual PipeWire FM audio was measured.
+The receiver remains idle unless explicitly opened/tuned/scanned. No EEPROM,
+bias tee, network radio listener, disks or bootloader changed.
+
+Shared source includes gentler focus indication, CPU-backed cursor texture,
+single-character sprite presentation, native media controls and immersive lyrics.
+Physical uninterrupted boot remains a separate unresolved acceptance item below.
+
 # Zondo and development polish — 2026-10-17
 
 Both hosts use the shared tmux button rail and music Focus/Backdrop UI. Homie’s

@@ -62,6 +62,11 @@ class AuthenticationFallback(unittest.TestCase):
   with tempfile.TemporaryDirectory() as d,patch.object(y,'CACHE',Path(d)),patch.object(y,'account',return_value={'profile':'Default'}),patch.object(y.subprocess,'run',return_value=CompletedProcess([],1,'','secret-cookie')) as r:
    with self.assertRaises(ValueError) as error:y.run([],True)
    self.assertNotIn('secret-cookie',str(error.exception));self.assertEqual(r.call_count,1)
+ def test_translated_subtitle_expansion_is_disabled_before_response_limit(self):
+  from subprocess import CompletedProcess
+  with tempfile.TemporaryDirectory() as d,patch.object(y,'CACHE',Path(d)),patch.object(y.subprocess,'run',return_value=CompletedProcess([],0,'{}','')) as r:
+   y.run(['--dump-single-json','example'])
+   self.assertIn('youtube:skip=translated_subs',r.call_args.args[0])
  def test_unrelated_public_failure_does_not_read_browser_credentials(self):
   from subprocess import CompletedProcess
   with tempfile.TemporaryDirectory() as d,patch.object(y,'CACHE',Path(d)),patch.object(y,'account') as account,patch.object(y.subprocess,'run',return_value=CompletedProcess([],1,'','HTTP Error 429')) as r:

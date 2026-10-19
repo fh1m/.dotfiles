@@ -147,6 +147,8 @@ Singleton {
     property bool instrumentPinned:false
     property var instrumentPrevious:({name:"",output:""})
     function openDropdownOn(name:string,output:string):void {
+        if(!screens.some(s=>s.name===output))output=focusedScreenName();
+        if(!screens.some(s=>s.name===output))output=MachineProfile.primaryOutput;
         if(!screens.some(s=>s.name===output))return;
         SpotifyDesk.fullscreen=false;dropdownOriginScreen=output;dropdownAnchorX=anchorFor(name);dropdown=name;dropdownStamp++;
     }

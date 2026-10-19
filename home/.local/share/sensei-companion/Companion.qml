@@ -246,7 +246,7 @@ Item {
     Timer {interval:24000;repeat:true;running:root.allowed&&!root.reduced&&!root.speaking;onTriggered:root.walk()}
     Timer {interval:18000;repeat:true;running:root.allowed&&!root.reduced&&root.activity==="typing";onTriggered:{root.typingBurst=true;burstExpiry.restart();}}
     Timer {id:burstExpiry;interval:1320;onTriggered:{root.typingBurst=false;if(root.activity==="typing")root.frame=0;}}
-    Timer {interval:root.activitySprite?.frames>4?140:180;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk"||root.activity==="climb"||root.activity==="dance"||(root.activitySprite&&(root.activitySprite.frames>4||root.activityTicks<12)));onTriggered:{root.frame=(root.frame+1)%(root.activitySprite?.frames||4);root.activityTicks++;}}
+    Timer {interval:root.activitySprite?.frames>4?110:160;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk"||root.activity==="climb"||root.activity==="dance"||(root.activitySprite&&(root.activitySprite.frames>4||root.activityTicks<12)));onTriggered:{root.frame=(root.frame+1)%(root.activitySprite?.frames||4);root.activityTicks++;}}
     Timer {id:poseExpiry;interval:2200;onTriggered:{root.vary();root.frame=0;root.deliberateTravel=false;}}
     Timer {id:speechExpiry;interval:12000;onTriggered:{root.speaking=false;}}
     Timer {id:landingExpiry;interval:700;onTriggered:root.landing=false}
@@ -328,12 +328,8 @@ Item {
             readonly property size sourceSize:Qt.size(atlas.implicitWidth,atlas.implicitHeight)
             readonly property rect sourceClipRect:frameRect
             readonly property real renderScale:Math.min(width/frameRect.width,height/frameRect.height)
-            Image {id:atlas;source:character.atlasSource;cache:true;asynchronous:false;retainWhileLoading:true;smooth:true
-                width:implicitWidth*character.renderScale
-                height:implicitHeight*character.renderScale
-                x:(character.width-character.frameRect.width*character.renderScale)/2-character.frameRect.x*character.renderScale
-                y:character.height-character.frameRect.height*character.renderScale-character.frameRect.y*character.renderScale
-            }
+            Image {id:atlas;anchors.fill:parent;source:character.atlasSource;sourceClipRect:character.frameRect;fillMode:Image.PreserveAspectFit;cache:true;asynchronous:false;retainWhileLoading:true;smooth:true}
+
         }
     }
     }

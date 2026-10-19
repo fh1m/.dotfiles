@@ -25,7 +25,7 @@ def run(args,authenticated=False):
   except (OSError,ValueError,TypeError):authenticated=False
  runtime=['--js-runtimes','node'] if not shutil.which('deno') and shutil.which('node') else []
  options=['--cookies-from-browser','chrome+gnomekeyring:'+account()['profile']] if authenticated else []
- try:r=subprocess.run(['yt-dlp','--ignore-config','--no-warnings','--socket-timeout','6','--retries','0']+runtime+options+args,capture_output=True,text=True,timeout=35)
+ try:r=subprocess.run(['yt-dlp','--ignore-config','--no-warnings','--extractor-args','youtube:skip=translated_subs','--socket-timeout','6','--retries','0']+runtime+options+args,capture_output=True,text=True,timeout=35)
  except (OSError,subprocess.TimeoutExpired):raise ValueError('YouTube is temporarily unavailable. Saved items remain available.') from None
  if r.returncode:
   challenge=any(marker in r.stderr.lower() for marker in ("sign in to confirm","sign in to verify","confirm you’re not a bot","confirm you're not a bot"))

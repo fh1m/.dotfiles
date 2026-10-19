@@ -26,7 +26,7 @@ ShellRoot {
         target: "den-cursor"
         function state(): string { return JSON.stringify({focusedOutput:root.focusedOutput,dimOpacity:root.focusDimming?36/255:0,locatorActive:root.active}) }
         function reloadCompanion():void {root.companionRevision=Date.now()}
-        function focus(name: string): void {if(name===root.focusedOutput)return;root.focusedOutput=name;if(root.focusPulse&&!root.reducedMotion)focusFlash.restart();}
+        function focus(name: string): void {if(name===root.focusedOutput)return;root.focusedOutput=name;if(name&&root.focusPulse&&!root.reducedMotion)focusSettle.restart();}
         function pulse(name: string, x: real, y: real): void {
             root.output=name; root.px=x; root.py=y; root.active=true;
             motion.restart(); expiry.restart();
@@ -62,9 +62,10 @@ ShellRoot {
         }
     }
     property real focusPulseOpacity:0
+    Timer {id:focusSettle;interval:100;onTriggered:focusFlash.restart()}
     SequentialAnimation {id:focusFlash
-        NumberAnimation {target:root;property:"focusPulseOpacity";from:0;to:.10;duration:50}
-        NumberAnimation {target:root;property:"focusPulseOpacity";to:0;duration:190;easing.type:Easing.OutCubic}
+        NumberAnimation {target:root;property:"focusPulseOpacity";to:.055;duration:180;easing.type:Easing.InOutSine}
+        NumberAnimation {target:root;property:"focusPulseOpacity";to:0;duration:520;easing.type:Easing.OutCubic}
     }
     Variants {
         model:Quickshell.screens.filter(s=>!s.name.startsWith("SENSEI-"))

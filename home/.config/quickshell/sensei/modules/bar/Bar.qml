@@ -53,11 +53,7 @@ Variants {
             width: Math.min(implicitWidth,clock.x-identity.x-identity.width-32)
             anchors.verticalCenter: parent.verticalCenter
         }
-        CompanionPerch {
-            output:bar.modelData.name;edge:"top"
-            freeLeft:clock.x+clock.width+12;freeRight:controls.x-12
-            anchors.verticalCenter:parent.verticalCenter
-        }
+
         Row {
             id: controls
             anchors.right: parent.right
@@ -65,6 +61,7 @@ Variants {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 3
             RailFold { opensRight:false; expanded: bar.readoutsOpen; onToggled: bar.readoutsOpen = !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
+            RadioButton {anchors.verticalCenter:parent.verticalCenter}
             EthernetButton {condensed:!bar.readoutsOpen;anchors.verticalCenter:parent.verticalCenter}
             BtReadout { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             DisplayBadge { output: "main"; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
