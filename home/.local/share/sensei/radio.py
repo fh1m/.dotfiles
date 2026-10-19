@@ -95,6 +95,9 @@ def fm(frequency,gain=20):
  subprocess.run(['systemctl','--user','stop','sensei-radio-fm.service'],capture_output=True)
  r=subprocess.run(['systemd-run','--user','--unit=sensei-radio-fm','--collect','--quiet',str(Path.home()/'.local/bin/sensei-radio'),'fm-worker',str(frequency),str(gain)],capture_output=True,text=True)
  if r.returncode:raise ValueError('Could not start the owned FM player.')
+ time.sleep(.6)
+ active=subprocess.run(['systemctl','--user','is-active','sensei-radio-fm.service'],capture_output=True,text=True)
+ if active.returncode:raise ValueError('FM could not open the receiver/audio output. Close other SDR tools and retry.')
  return {'kind':'fm','frequencyMHz':frequency,'gainDb':gain,'note':'FM audio starts through PipeWire. Stop it before scanning or opening Gqrx.'}
 
 def fm_worker(frequency,gain):
@@ -116,10 +119,21 @@ def fm_worker(frequency,gain):
 
 def stop():
  subprocess.run(['systemctl','--user','stop','sensei-radio-fm.service'],capture_output=True,check=False);return {'stopped':True}
+def gqrx_config():
+ # A separate, seed-only profile: never rewrite the user's Gqrx configuration.
+ path=Path.home()/'.config/gqrx/sensei-rtl.conf';path.parent.mkdir(parents=True,exist_ok=True)
+ try:
+  with path.open('x') as f:
+   f.write('[General]\nconfigversion=4\n\n[input]\ndevice=rtl=0\nsample_rate=2048000\nfrequency=94400000\n\n[receiver]\ndemod=WFM (mono)\n')
+ except FileExistsError:pass
+ return path
+
 def open_receiver():
  if not devices():raise ValueError('Connect the receiver first.')
  if not shutil.which('gqrx'):raise ValueError('Install Gqrx on this machine.')
- stop();subprocess.Popen(['gqrx'],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True);return {'opened':'Gqrx'}
+ env=dict(os.environ)
+ if shutil.which('qt6ct'):env['QT_QPA_PLATFORMTHEME']='qt6ct'
+ stop();subprocess.Popen(['gqrx','-c',str(gqrx_config())],env=env,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True);return {'opened':'Gqrx'}
 def watch():
  print(json.dumps(status()),flush=True)
  p=subprocess.Popen(['udevadm','monitor','--udev','--subsystem-match=usb'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)

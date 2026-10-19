@@ -11,13 +11,15 @@ DropdownFrame {
  property int section:0
  property bool live:false
  property var liveBins:[]
+ property var liveFrame:({})
  property var waterfall:[]
  property real frequency:98.4
  property real gain:20
  readonly property var samples:liveBins.length?liveBins:Radio.receipt.bins||[]
  IpcHandler {enabled:!!root.hostWindow?.visible;target:'radio-panel';function state():string{return JSON.stringify({available:Radio.available,busy:Radio.busy,live:root.live,bins:root.samples.length,rows:root.waterfall.length,section:root.section,history:Radio.history.length,error:Radio.error});}function scope(enabled:bool):void{root.live=enabled;}function section(index:int):void{root.section=Math.max(0,Math.min(2,index));}function action(name:string):void{Radio.run(name);}}
+ Connections {target:Radio;function onReceiptChanged(){if(!root.live){root.liveBins=[];root.liveFrame=({});root.waterfall=[];}}}
  Connections {target:root.hostWindow;function onVisibleChanged(){if(!root.hostWindow.visible)root.live=false;}}
- Process {id:scope;running:root.live&&!!root.hostWindow?.visible;command:[Quickshell.env('HOME')+'/.local/bin/sensei-radio','stream',Radio.data.bands[band.currentIndex]?.id||'fm'];stdout:SplitParser {onRead:line=>{try{const d=JSON.parse(line);if(d.error){Radio.error=d.error;root.live=false;return;}root.liveBins=d.bins||[];if(root.liveBins.length){const points=root.liveBins.filter((_,i)=>i%Math.max(1,Math.ceil(root.liveBins.length/256))===0).map(b=>b.db);root.waterfall=[points].concat(root.waterfall).slice(0,64);spectrum.requestPaint();}}catch(e){}}}onExited:root.live=false}
+ Process {id:scope;running:root.live&&!!root.hostWindow?.visible;command:[Quickshell.env('HOME')+'/.local/bin/sensei-radio','stream',Radio.data.bands[band.currentIndex]?.id||'fm'];stdout:SplitParser {onRead:line=>{try{const d=JSON.parse(line);if(d.error){Radio.error=d.error;root.live=false;return;}root.liveFrame=d;root.liveBins=d.bins||[];if(root.liveBins.length){const points=root.liveBins.filter((_,i)=>i%Math.max(1,Math.ceil(root.liveBins.length/256))===0).map(b=>b.db);root.waterfall=[points].concat(root.waterfall).slice(0,64);spectrum.requestPaint();}}catch(e){}}}onExited:root.live=false}
  Column {width:parent.width;spacing:16
   Row {width:parent.width;spacing:12
    Text {width:parent.width-130;text:Radio.available?(Radio.data.devices[0].name+' · receive only'):'Connect the RTL-SDR to Homie';font.family:Appearance.font.ui;font.pixelSize:17;color:Theme.paper;wrapMode:Text.Wrap}
@@ -38,7 +40,7 @@ DropdownFrame {
     Row {width:parent.width;spacing:12
      DeskTextField {id:tuning;width:150;height:36;placeholderText:'87.5–108 MHz';text:root.frequency.toFixed(1);onEditingFinished:{const value=Number(text);if(Number.isFinite(value)&&value>=87.5&&value<=108)root.frequency=value;else text=root.frequency.toFixed(1);}}
      MusicButton {implicitWidth:132;implicitHeight:36;label:'Listen';glyph:'\uf025';enabled:!root.live&&!Radio.busy&&Radio.available;onActivated:Radio.run('fm',[String(root.frequency),String(root.gain)])}
-     ControlSlider {width:parent.width-306;title:'RF gain · dB';level:root.gain*100/49.6;onEdited:v=>root.gain=Math.round(v*49.6)/100}
+     ControlSlider {width:parent.width-306;title:'RF gain';valueText:root.gain.toFixed(1)+' dB';level:root.gain*100/49.6;onEdited:v=>root.gain=Math.round(v*49.6)/100}
     }
     Text {text:'PipeWire audio · '+root.gain.toFixed(1)+' dB RF gain · stop before opening another SDR app';font.family:Appearance.font.data;font.pixelSize:10;color:Theme.paperMuted}
    }
@@ -48,7 +50,7 @@ DropdownFrame {
    MusicButton {implicitWidth:180;implicitHeight:36;label:'5s spectrum';glyph:'\uf201';enabled:!root.live&&!Radio.busy&&Radio.available&&band.currentIndex>=0;onActivated:Radio.run('scan',[Radio.data.bands[band.currentIndex].id])}
   }
   Row {visible:root.section===0;width:parent.width;spacing:10
-   MusicButton {implicitWidth:180;implicitHeight:34;label:root.live?'Stop live survey':'Live waterfall';glyph:root.live?'\uf04d':'\uf201';enabled:!Radio.busy;selected:root.live;onActivated:{root.live=!root.live;if(root.live){root.waterfall=[];root.liveBins=[];}}}
+   MusicButton {implicitWidth:180;implicitHeight:34;label:root.live?'Stop live survey':'Live waterfall';glyph:root.live?'\uf04d':'\uf201';enabled:Radio.available&&!Radio.busy;selected:root.live;onActivated:{root.live=!root.live;if(root.live){root.waterfall=[];root.liveBins=[];}}}
    Text {anchors.verticalCenter:parent.verticalCenter;text:'Real sweeps · 1 s integration · auto-stops on close or after 10 min';font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
   }
   ChamferPanel {visible:root.section===0;width:parent.width;height:222;fillColor:Theme.ink;borderColor:Theme.rule;scanlines:false
@@ -60,9 +62,9 @@ DropdownFrame {
     if(root.waterfall.length){const rows=root.waterfall,cell=(height-h-30)/64;for(let y=0;y<rows.length;y++){const row=rows[y];for(let x=0;x<row.length;x++){const v=Math.max(0,Math.min(1,(row[x]-low)/Math.max(6,high-low)));c.fillStyle=Qt.rgba(.08+v*.85,.015+v*.08,.08+v*.4,.25+v*.75);c.fillRect(x*w/row.length,h+6+y*cell,Math.ceil(w/row.length),Math.ceil(cell));}}}
     c.fillStyle=Theme.paperMuted;c.font='11px monospace';c.fillText((bins[0].hz/1e6).toFixed(2)+' MHz',0,height-3);c.fillText((bins[bins.length-1].hz/1e6).toFixed(2)+' MHz',Math.max(0,w-94),height-3);
    }}
-   Text {anchors.centerIn:parent;visible:!root.samples.length;width:parent.width-40;text:'A real spectrum appears after a bounded capture.\nThe waterfall and demodulation live in Gqrx.';horizontalAlignment:Text.AlignHCenter;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paperMuted}
+   Text {anchors.centerIn:parent;visible:!root.samples.length;width:parent.width-40;text:'A real spectrum appears after a bounded capture.\nStart Live waterfall for real sweeps; Gqrx adds full demodulation.';horizontalAlignment:Text.AlignHCenter;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paperMuted}
   }
-  Text {visible:root.section===0;width:parent.width;text:Radio.receipt.kind==='usb-test'?'2.048 MS/s · '+Radio.receipt.seconds+' s · reported sample loss: '+Radio.receipt.lostSamplesReported+' · '+Radio.receipt.tuner:root.samples.length?(Radio.receipt.label+' · '+root.samples.length+' bins · '+Radio.receipt.units+' · peak '+Radio.receipt.peakMHz+' MHz'):'No capture yet';font.family:Appearance.font.data;font.pixelSize:11;wrapMode:Text.Wrap;color:Theme.paperMuted}
+  Text {visible:root.section===0;width:parent.width;text:Radio.receipt.kind==='usb-test'?'2.048 MS/s · '+Radio.receipt.seconds+' s · reported sample loss: '+Radio.receipt.lostSamplesReported+' · '+Radio.receipt.tuner:root.samples.length?((root.liveFrame.label||Radio.receipt.label||'Spectrum')+' · '+root.samples.length+' bins · relative dB · uncalibrated'+(root.live?' · LIVE':Radio.receipt.peakMHz?' · peak '+Radio.receipt.peakMHz+' MHz':'')):'No capture yet';font.family:Appearance.font.data;font.pixelSize:11;wrapMode:Text.Wrap;color:Theme.paperMuted}
   Text {visible:root.section===1;width:parent.width;text:'TRY / Find FM stations. Compare antenna positions. Observe ISM-band energy. Use rtl_433 for your own weather sensors. Explore public beacon spectrum; cellular here is power only. Aircraft/satellite decoding needs suitable antennas and separate tools.';font.family:Appearance.font.ui;font.pixelSize:12;wrapMode:Text.Wrap;color:Theme.paperMuted}
   Column {visible:root.section===1;width:parent.width;spacing:16
    Text {width:parent.width;text:'RADIO LAB / reproducible curiosity';font.family:Appearance.font.heading;font.pixelSize:19;color:Theme.paper}

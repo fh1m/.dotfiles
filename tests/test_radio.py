@@ -24,6 +24,14 @@ class Receiver(unittest.TestCase):
   with patch.object(radio,'devices',return_value=[]),patch.object(radio.subprocess,'run') as run:
    with self.assertRaises(ValueError):radio.fm(98.4)
    run.assert_not_called()
+ def test_gqrx_profile_is_seed_only_and_selects_real_receiver(self):
+  with tempfile.TemporaryDirectory() as d,patch.object(radio.Path,'home',return_value=Path(d)):
+   p=radio.gqrx_config();self.assertIn('device=rtl=0',p.read_text());self.assertIn('sample_rate=2048000',p.read_text())
+   p.write_text('personal settings');self.assertEqual(radio.gqrx_config().read_text(),'personal settings')
+ def test_fm_start_reports_early_receiver_failure(self):
+  from types import SimpleNamespace
+  with patch.object(radio,'devices',return_value=[{}]),patch.object(radio.time,'sleep'),patch.object(radio.subprocess,'run',side_effect=[SimpleNamespace(returncode=0),SimpleNamespace(returncode=0),SimpleNamespace(returncode=3)]):
+   with self.assertRaisesRegex(ValueError,'FM could not open'):radio.fm(98.4)
  def test_partial_iq_is_removed_and_not_awarded_a_receipt(self):
   def short_capture(argv,seconds):Path(argv[-1]).write_bytes(b'partial');return '', ''
   with tempfile.TemporaryDirectory() as d,patch.object(radio,'ROOT',Path(d)),patch.object(radio,'devices',return_value=[{}]),patch.object(radio,'bounded',side_effect=short_capture):
