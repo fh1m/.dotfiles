@@ -67,6 +67,8 @@ ROS docs stay open. Calendar and weather slide into the day without replacing it
 
 Music gets album art and proper controls. The queue is allowed to have a personality. So is the desk.
 
+![The Den media center: native 16:9 lecture playback beside public video search results](docs/assets/digital-den/media-center.png)
+
 [One badge, three rabbit holes](docs/digital-den/MEDIA-CENTER.md): Spotify, YouTube and Twitch, with native video, transcripts and a roaming mini-player. The browser gets a night off.
 
 ## 04 / Big brother holds the fort

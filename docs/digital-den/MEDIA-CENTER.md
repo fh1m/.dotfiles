@@ -146,3 +146,19 @@ A ticking clock alone is deliberately insufficient.
 The Spotify service retries failed startup every 30 seconds without exhausting a
 short systemd start limit. This repairs recovery after a temporary network/token
 timeout; it does not bypass Spotify account or service restrictions.
+
+## Verified on the deployed build
+
+- 423 automated tests passed, plus Python compilation, ShellCheck and diff checks.
+- Arete: four attached outputs passed rendered-video/clock/sync/transport checks.
+- Paused display transfer preserved the exact position; only one engine played.
+- YouTube: actual sink-monitor audio, 4,180 caption lines, selected-profile
+  collections, paginated Watch Later and public search were exercised.
+- Twitch: real live HLS video rendered; public discovery returned live channels.
+- Homie: native build, 1080p picture, advancing playback and actual sink-monitor
+  audio were verified. Its private Google views depend on its own login keyring.
+- Spotify: the headless service recovered, loaded 52 playlists and resumed a real
+  liked track after releasing native video. Homie was left paused.
+
+Public screenshots use a public lecture and public search, never private account
+collections. The test receipts omit stream URLs and account identifiers.

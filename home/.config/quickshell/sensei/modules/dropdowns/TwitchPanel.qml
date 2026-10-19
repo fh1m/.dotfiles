@@ -56,8 +56,8 @@ Column {
             Text {width:parent.width;text:YouTubeDesk.track.title||'';textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.paper}
             Row {width:parent.width;spacing:8
                 MusicButton {implicitWidth:42;implicitHeight:34;glyph:YouTubeDesk.playing?'\uf04c':'\uf04b';Accessible.name:'Play or pause Twitch';onActivated:YouTubeDesk.action('toggle')}
-                MusicButton {implicitWidth:124;implicitHeight:34;label:'Fullscreen';glyph:'\uf065';onActivated:SpotifyDesk.showVideo('fullscreen')}
-                MusicButton {implicitWidth:124;implicitHeight:34;label:'Restore here';glyph:'\uf066';onActivated:SpotifyDesk.showVideo('youtube',root.hostWindow?.screen?.name)}
+                MusicButton {implicitWidth:156;implicitHeight:34;label:'Fullscreen';glyph:'\uf065';onActivated:SpotifyDesk.showVideo('fullscreen')}
+                MusicButton {implicitWidth:156;implicitHeight:34;label:'Restore here';glyph:'\uf066';onActivated:SpotifyDesk.showVideo('youtube',root.hostWindow?.screen?.name)}
                 ControlSlider {width:180;title:'Volume';level:YouTubeDesk.volume;onEdited:v=>YouTubeDesk.action('volume',[String(Math.round(v))])}
                 MusicButton {implicitWidth:34;implicitHeight:34;glyph:'\uf00d';Accessible.name:'Stop Twitch';onActivated:YouTubeDesk.release()}
             }
