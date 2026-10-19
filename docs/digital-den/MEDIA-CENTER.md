@@ -1,6 +1,7 @@
 # The Den media center
 
-Open the music badge. Spotify, YouTube and Twitch share the transport controls;
+Open the music badge. The three primary sections are Spotify, YouTube and Twitch;
+Spotify’s library views live beneath its own section. All share transport controls;
 Ctrl+Space and the media keys control the source you chose. Browse another tab
 without losing play/pause, skip, seek or volume. Choosing Spotify music releases
 native YouTube/Twitch audio; resolving a failed video never stops existing music.

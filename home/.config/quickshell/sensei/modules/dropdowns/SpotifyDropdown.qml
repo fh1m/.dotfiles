@@ -7,13 +7,15 @@ import qs.services
 import qs.components
 DropdownFrame {
  headerAccent:Theme.widgetAccent
- id:root;title:"\uf001 Media center / Den";katakana:root.page>=7?"WATCH / LISTEN / EXPLORE":"YOUR SOUNDTRACK";implicitWidth:root.page>=7?1840:1080;fillColor:Theme.ink
+ id:root;title:"\uf008 Media center / Den";katakana:root.page>=7?"WATCH / LISTEN / EXPLORE":"YOUR SOUNDTRACK";implicitWidth:root.page>=7?1840:1080;fillColor:Theme.ink
  property string outputName:""
  property var hostWindow:null
  IpcHandler {enabled:root.outputName!=="";target:"spotifyview-"+root.outputName;function state():string{return JSON.stringify({count:musicList.count,visible:musicList.visible,query:SpotifyDesk.query,contextId:SpotifyDesk.contextItem.id||"",loading:SpotifyDesk.loading,error:SpotifyDesk.error});}function filter(text:string):void{SpotifyDesk.query=text;}}
- headerRight:ControlTile {implicitWidth:32;implicitHeight:30;glyph:"\uf065";Accessible.name:"Open fullscreen music";onActivated:SpotifyDesk.expand()}
+ headerRight:ControlTile {implicitWidth:32;implicitHeight:30;glyph:"\uf065";Accessible.name:root.page>=7&&YouTubeDesk.nativeVideo?"Fullscreen video":"Open listening room";onActivated:root.page>=7&&YouTubeDesk.nativeVideo?SpotifyDesk.showVideo('fullscreen',root.outputName):SpotifyDesk.expand()}
  MusicVideos {parent:root.Overlay.overlay||root}
  property int page:SpotifyDesk.page
+ property int musicPage:0
+ onPageChanged:if(page<7)musicPage=page
  readonly property real position:SpotifyDesk.positionMs
  readonly property real duration:SpotifyDesk.playback.track?.duration||SpotifyDesk.player?.length*1000||1
  property string playlistToAdd:""
@@ -27,10 +29,13 @@ DropdownFrame {
  }
  }
  Column {width:parent.width;spacing:12
- Row {spacing:0;Repeater {model:['Now playing','Queue','Playlists','Library','Search','Devices','Account','YouTube','Twitch'];Item {required property string modelData;required property int index;width:Math.floor((root.width-28)/9);height:34
+ Row {width:parent.width;spacing:8
+ Repeater {model:[{label:'Spotify',glyph:'\uf1bc',page:root.musicPage},{label:'YouTube',glyph:'\uf16a',page:7},{label:'Twitch',glyph:'\uf1e8',page:8}];MusicButton {required property var modelData;required property int index;implicitWidth:(parent.width-16)/3;implicitHeight:38;label:modelData.label;glyph:modelData.glyph;textSize:13;selected:index===0?root.page<7:root.page===modelData.page;onActivated:SpotifyDesk.page=modelData.page}}
+ }
+ Row {visible:root.page<7;spacing:0;Repeater {model:['Now playing','Queue','Playlists','Library','Search','Devices','Account'];Item {required property string modelData;required property int index;width:Math.floor((root.width-36)/7);height:32
  Rectangle {anchors.fill:parent;color:SpotifyDesk.page===index?Theme.surfaceTwo:Theme.ink;opacity:pointer.containsMouse||SpotifyDesk.page===index?1:.85}
- Text { textFormat: Text.PlainText;anchors.centerIn:parent;text:modelData;font.family:Appearance.font.ui;font.pixelSize:11;font.weight:SpotifyDesk.page===index?Font.DemiBold:Font.Normal;color:SpotifyDesk.page===index?Theme.paper:Theme.paperMuted}
- Rectangle {anchors.bottom:parent.bottom;anchors.horizontalCenter:parent.horizontalCenter;width:SpotifyDesk.page===index?parent.width-20:0;height:2;color:Theme.signalRed;Behavior on width {NumberAnimation {duration:Theme.motionTravel;easing.type:Easing.OutCubic}}}
+ Text {textFormat:Text.PlainText;anchors.centerIn:parent;text:modelData;font.family:Appearance.font.ui;font.pixelSize:12;font.weight:SpotifyDesk.page===index?Font.DemiBold:Font.Normal;color:SpotifyDesk.page===index?Theme.paper:Theme.paperMuted}
+ Rectangle {anchors.bottom:parent.bottom;anchors.horizontalCenter:parent.horizontalCenter;width:SpotifyDesk.page===index?parent.width-20:0;height:2;color:Theme.signalRed}
  MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:SpotifyDesk.page=index}
  }}}
  Row {width:parent.width;spacing:16
