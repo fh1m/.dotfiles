@@ -6,20 +6,24 @@ import qs.config
 import qs.services
 DropdownFrame {
  id:root
- title:'\uf519 Radio / Homie';katakana:'THE INVISIBLE NEIGHBOURHOOD';implicitWidth:740
+ title:'\uf519 Radio / '+(MachineProfile.desktop?'Homie':'Arete');katakana:'THE INVISIBLE NEIGHBOURHOOD';implicitWidth:740
  property var hostWindow:null
  property int section:0
  property bool live:false
  property var liveBins:[]
  property var liveFrame:({})
+ property var scopeCanvas:null
  property var waterfall:[]
  property real frequency:98.4
  property real gain:20
+ property string selectedBand:"fm"
  readonly property var samples:liveBins.length?liveBins:Radio.receipt.bins||[]
  IpcHandler {enabled:!!root.hostWindow?.visible;target:'radio-panel';function state():string{return JSON.stringify({available:Radio.available,busy:Radio.busy,live:root.live,bins:root.samples.length,rows:root.waterfall.length,section:root.section,history:Radio.history.length,error:Radio.error});}function scope(enabled:bool):void{root.live=enabled;}function section(index:int):void{root.section=Math.max(0,Math.min(2,index));}function action(name:string):void{Radio.run(name);}}
  Connections {target:Radio;function onReceiptChanged(){if(!root.live){root.liveBins=[];root.liveFrame=({});root.waterfall=[];}}}
  Connections {target:root.hostWindow;function onVisibleChanged(){if(!root.hostWindow.visible)root.live=false;}}
- Process {id:scope;running:root.live&&!!root.hostWindow?.visible;command:[Quickshell.env('HOME')+'/.local/bin/sensei-radio','stream',Radio.data.bands[band.currentIndex]?.id||'fm'];stdout:SplitParser {onRead:line=>{try{const d=JSON.parse(line);if(d.error){Radio.error=d.error;root.live=false;return;}root.liveFrame=d;root.liveBins=d.bins||[];if(root.liveBins.length){const points=root.liveBins.filter((_,i)=>i%Math.max(1,Math.ceil(root.liveBins.length/256))===0).map(b=>b.db);root.waterfall=[points].concat(root.waterfall).slice(0,64);spectrum.requestPaint();}}catch(e){}}}onExited:root.live=false}
+ Process {id:scope;running:root.live&&!!root.hostWindow?.visible;command:[Quickshell.env('HOME')+'/.local/bin/sensei-radio','stream',root.selectedBand];stdout:SplitParser {onRead:line=>{try{const d=JSON.parse(line);if(d.error){Radio.error=d.error;root.live=false;return;}root.liveFrame=d;root.liveBins=d.bins||[];if(root.liveBins.length){const points=root.liveBins.filter((_,i)=>i%Math.max(1,Math.ceil(root.liveBins.length/256))===0).map(b=>b.db);root.waterfall=[points].concat(root.waterfall).slice(0,64);if(root.scopeCanvas)root.scopeCanvas.requestPaint();}}catch(e){}}}onExited:root.live=false}
+ Text {visible:!Radio.available;width:parent.width;height:visible?implicitHeight:0;text:'Connect an RTL-SDR receiver to this machine. The radio controls appear when USB is detected.';wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.paperMuted}
+ Loader {width:parent.width;active:Radio.available;sourceComponent:Component {
  Column {width:parent.width;spacing:16
   Row {width:parent.width;spacing:12
    Text {width:parent.width-130;text:Radio.available?(Radio.data.devices[0].name+' · receive only'):'Connect the RTL-SDR to Homie';font.family:Appearance.font.ui;font.pixelSize:17;color:Theme.paper;wrapMode:Text.Wrap}
@@ -46,7 +50,7 @@ DropdownFrame {
    }
   }
   Row {visible:root.section===0;width:parent.width;spacing:10
-   DeskComboBox {id:band;width:parent.width-190;height:36;model:(Radio.data.bands||[]).map(b=>b.label+' · '+b.lowMHz+'–'+b.highMHz+' MHz');Accessible.name:'Receive spectrum band'}
+   DeskComboBox {id:band;onCurrentIndexChanged:root.selectedBand=Radio.data.bands[currentIndex]?.id||'fm';width:parent.width-190;height:36;model:(Radio.data.bands||[]).map(b=>b.label+' · '+b.lowMHz+'–'+b.highMHz+' MHz');Accessible.name:'Receive spectrum band'}
    MusicButton {implicitWidth:180;implicitHeight:36;label:'5s spectrum';glyph:'\uf201';enabled:!root.live&&!Radio.busy&&Radio.available&&band.currentIndex>=0;onActivated:Radio.run('scan',[Radio.data.bands[band.currentIndex].id])}
   }
   Row {visible:root.section===0;width:parent.width;spacing:10
@@ -54,7 +58,7 @@ DropdownFrame {
    Text {anchors.verticalCenter:parent.verticalCenter;text:'Real sweeps · 1 s integration · auto-stops on close or after 10 min';font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
   }
   ChamferPanel {visible:root.section===0;width:parent.width;height:222;fillColor:Theme.ink;borderColor:Theme.rule;scanlines:false
-   Canvas {id:spectrum;anchors.fill:parent;anchors.margins:14;onPaint:{
+   Canvas {id:spectrum;Component.onCompleted:root.scopeCanvas=spectrum;Component.onDestruction:root.scopeCanvas=null;anchors.fill:parent;anchors.margins:14;onPaint:{
     const c=getContext('2d'),w=width,h=root.waterfall.length?90:height-26;c.clearRect(0,0,width,height);c.strokeStyle=Theme.alpha(Theme.paper,.12);c.lineWidth=1;
     for(let j=1;j<5;j++){c.beginPath();c.moveTo(0,j*h/5);c.lineTo(w,j*h/5);c.stroke();}
     const bins=root.samples;if(!bins.length)return;let low=Math.min(...bins.map(b=>b.db)),high=Math.max(...bins.map(b=>b.db));if(high-low<6)high=low+6;
@@ -97,5 +101,6 @@ DropdownFrame {
   }
 
  }
- onSamplesChanged:spectrum.requestPaint()
+ }}
+ onSamplesChanged:if(root.scopeCanvas)root.scopeCanvas.requestPaint()
 }
