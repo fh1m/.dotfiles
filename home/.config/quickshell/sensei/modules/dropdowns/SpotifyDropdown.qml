@@ -52,7 +52,7 @@ DropdownFrame {
  }
  Column {width:parent.width-358;spacing:10
  Item {width:parent.width;height:34
- Text { textFormat: Text.PlainText;anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter;text:SpotifyDesk.contextItem.id?(SpotifyDesk.contextItem.title||'Loading collection…'):root.page===0?(SpotifyDesk.queueRows.length?'Up next · '+SpotifyDesk.queueRows.length+' songs':'Your recent rotation'):root.page===1?'Up next · '+SpotifyDesk.queueRows.length+' songs':root.page===2?'Your playlists':root.page===3?'Your music library':root.page===4?'Discover your next favourite':root.page===5?'Spotify Connect devices':'Your music account';font.family:Appearance.font.ui;font.pixelSize:16;color:Theme.widgetText;elide:Text.ElideRight;width:parent.width-120}
+ Text { textFormat: Text.PlainText;anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter;text:SpotifyDesk.contextItem.id?(SpotifyDesk.contextItem.title||'Loading collection…'):root.page===0?(SpotifyDesk.queueRows.length?'Up next · '+SpotifyDesk.queueRows.length+' songs':'Your liked rotation'):root.page===1?'Up next · '+SpotifyDesk.queueRows.length+' songs':root.page===2?'Your playlists':root.page===3?'Your music library':root.page===4?'Discover your next favourite':root.page===5?'Spotify Connect devices':'Your music account';font.family:Appearance.font.ui;font.pixelSize:16;color:Theme.widgetText;elide:Text.ElideRight;width:parent.width-120}
  ControlTile {accentColor:Theme.widgetAccent;anchors.right:parent.right;implicitWidth:100;implicitHeight:30;label:SpotifyDesk.contextItem.id?'Back':'Refresh';glyph:SpotifyDesk.contextItem.id?'\uf060':'\uf021';onActivated:SpotifyDesk.refresh(true)}
  }
  Row {visible:root.page===0;spacing:8
@@ -61,15 +61,20 @@ DropdownFrame {
  ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf025';label:'Liked songs';onActivated:SpotifyDesk.action('liked-play')}
  ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-24)/4;implicitHeight:30;glyph:'\uf15c';label:'Lyrics';selected:SpotifyDesk.lyricsOpen;onActivated:SpotifyDesk.lyricsOpen=!SpotifyDesk.lyricsOpen}
  }
+ Row {visible:root.page===0&&SpotifyDesk.playback.backend==='headless';spacing:8
+ ControlTile {implicitWidth:(parent.parent.width-16)/3;implicitHeight:30;glyph:'\uf02e';label:'Save moment';onActivated:SpotifyDesk.action('moment-save')}
+ ControlTile {implicitWidth:(parent.parent.width-16)/3;implicitHeight:30;glyph:'\uf01e';label:'Resume moment';onActivated:SpotifyDesk.action('moment-resume')}
+ ControlTile {implicitWidth:(parent.parent.width-16)/3;implicitHeight:30;glyph:'\uf074';label:'Surprise me';onActivated:SpotifyDesk.action('surprise')}
+ }
  ChamferPanel {visible:root.page===0;width:parent.width;height:68;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {anchors.fill:parent;anchors.margins:10;spacing:7;Text { textFormat: Text.PlainText;width:parent.width;text:(SpotifyDesk.skipPending?'Switching track…':SpotifyDesk.playing?'Playing':'Paused')+' · '+(SpotifyDesk.playback.device||SpotifyDesk.account.deviceName||'Sensei')+' · Spotify Connect';font.family:Appearance.font.ui;font.pixelSize:12;color:SpotifyDesk.playing?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}Text { textFormat: Text.PlainText;width:parent.width;text:'Ctrl + Space  play / pause     •     right-click music badge to toggle';font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted;elide:Text.ElideRight}}
  }
- Row {visible:root.page===3;spacing:6;Repeater {model:[{key:'liked',label:'Liked'},{key:'albums',label:'Albums'},{key:'artists',label:'Artists'},{key:'recent',label:'Recent'},{key:'top',label:'Top tracks'}];ControlTile {accentColor:Theme.widgetAccent;required property var modelData;implicitWidth:(parent.parent.width-24)/5;implicitHeight:30;label:modelData.label;selected:SpotifyDesk.libraryKind===modelData.key;onActivated:SpotifyDesk.libraryKind=modelData.key}}}
- DeskTextField {visible:root.page===2||root.page===3||root.page===4;width:parent.width;height:36;placeholderText:root.page===4?'Search songs, artists, albums and playlists…':'Filter your music…';text:SpotifyDesk.query;onTextEdited:SpotifyDesk.query=text}
+ Row {visible:root.page===3;spacing:6;Repeater {model:SpotifyDesk.playback.backend==='headless'?[{key:'liked',label:'Liked'},{key:'albums',label:'Albums'},{key:'artists',label:'Artists'}]:[{key:'liked',label:'Liked'},{key:'albums',label:'Albums'},{key:'artists',label:'Artists'},{key:'recent',label:'Recent'},{key:'top',label:'Top tracks'}];ControlTile {accentColor:Theme.widgetAccent;required property var modelData;implicitWidth:(parent.parent.width-24)/5;implicitHeight:30;label:modelData.label;selected:SpotifyDesk.libraryKind===modelData.key;onActivated:SpotifyDesk.libraryKind=modelData.key}}}
+ DeskTextField {visible:root.page===2||root.page===3||root.page===4;width:parent.width;height:36;placeholderText:root.page===4?(SpotifyDesk.playback.backend==='headless'?'Search Spotify…':'Search songs, artists, albums and playlists…'):'Filter your music…';text:SpotifyDesk.query;onTextEdited:SpotifyDesk.query=text}
  Row {visible:root.page===4;spacing:7;Repeater {model:['tracks','albums','artists','playlists'];ControlTile {accentColor:Theme.widgetAccent;required property string modelData;implicitWidth:(parent.parent.width-21)/4;implicitHeight:30;label:modelData[0].toUpperCase()+modelData.slice(1);selected:SpotifyDesk.searchKind===modelData;onActivated:SpotifyDesk.searchKind=modelData}}}
  Row {visible:root.page===2;spacing:8
- DeskTextField {id:playlistName;width:parent.parent.width-354;height:32;placeholderText:'New private playlist name'}
- ControlTile {accentColor:Theme.widgetAccent;implicitWidth:140;implicitHeight:32;label:'Create playlist';enabled:playlistName.text.trim()!=='';onActivated:{SpotifyDesk.action('playlist-create',[playlistName.text.trim()]);playlistName.text='';}}
+ DeskTextField {id:playlistName;visible:SpotifyDesk.playback.backend!=='headless';width:parent.parent.width-354;height:32;placeholderText:'New private playlist name'}
+ ControlTile {accentColor:Theme.widgetAccent;implicitWidth:140;implicitHeight:32;label:'Create playlist';visible:SpotifyDesk.playback.backend!=='headless';enabled:playlistName.text.trim()!=='';onActivated:{SpotifyDesk.action('playlist-create',[playlistName.text.trim()]);playlistName.text='';}}
  ControlTile {accentColor:Theme.widgetAccent;implicitWidth:198;implicitHeight:32;label:'Add current to selected';enabled:root.playlistToAdd!==''&&!!SpotifyDesk.playback.track?.uri;onActivated:SpotifyDesk.action('playlist-add',[root.playlistToAdd,SpotifyDesk.playback.track.uri])}
  }
  Row {visible:!!SpotifyDesk.contextItem.id;spacing:8
@@ -94,11 +99,11 @@ DropdownFrame {
  ChamferPanel {width:parent.width;height:176;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {anchors.fill:parent;anchors.margins:18;spacing:13
  Text { textFormat: Text.PlainText;text:'Sensei, your music lives here.';font.family:Appearance.font.ui;font.pixelSize:18;color:Theme.widgetText}
- Text { textFormat: Text.PlainText;width:parent.width;text:(SpotifyDesk.playback.backend==='official'?'Player  Spotify desktop\nLibrary  '+SpotifyDesk.account.service+'\nBridge  Spicetify '+(SpotifyDesk.account.version||'not connected')+'\nSession  '+(SpotifyDesk.account.cachedLogin?'Desktop signed in':'Open Spotify to sign in'):'Player  spotify-player '+SpotifyDesk.account.version+'\nService  '+SpotifyDesk.account.service+'\nConnect name  '+(SpotifyDesk.account.deviceName||'Sensei')+'\nLogin  '+(SpotifyDesk.account.cachedLogin?'Saved on this laptop':'Sign in once in your browser'));font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted;lineHeight:1.45}
+ Text { textFormat: Text.PlainText;width:parent.width;text:(SpotifyDesk.playback.backend==='official'?'Player  Spotify desktop\nLibrary  '+SpotifyDesk.account.service+'\nBridge  Spicetify '+(SpotifyDesk.account.version||'not connected')+'\nSession  '+(SpotifyDesk.account.cachedLogin?'Desktop signed in':'Open Spotify to sign in'):'Player  '+SpotifyDesk.account.version+'\nService  '+SpotifyDesk.account.service+'\nConnect name  '+(SpotifyDesk.account.deviceName||'Sensei')+'\nLogin  '+(SpotifyDesk.account.cachedLogin?'Saved locally':'Sign in once in your browser')+(SpotifyDesk.account.quality?'\nAudio  '+SpotifyDesk.account.quality:''));font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted;lineHeight:1.45}
  }
  }
  Row {spacing:10
- ControlTile {implicitWidth:220;label:'Use native player';onActivated:SpotifyDesk.selectBackend('native')}
+ ControlTile {implicitWidth:220;label:'Use lightweight player';onActivated:SpotifyDesk.selectBackend('headless')}
  ControlTile {implicitWidth:220;label:'Use official Spotify';onActivated:SpotifyDesk.selectBackend('official')}
  ControlTile {implicitWidth:220;label:'Open official Spotify';onActivated:SpotifyDesk.openOfficial()}
  Text {text:'Control · '+(SpotifyDesk.playback.backend||'native');font.pixelSize:12;color:Theme.widgetMuted;anchors.verticalCenter:parent.verticalCenter}

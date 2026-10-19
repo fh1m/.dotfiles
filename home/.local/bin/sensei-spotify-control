@@ -7,6 +7,7 @@ sys.path.insert(0,str(Path.home()/'.local/share/sensei'))
 from spotify_control import main, selection
 try:
     if sys.argv[1:]==['native-enabled']:sys.exit(0 if selection()=='native' else 1)
+    if sys.argv[1:]==['headless-enabled']:sys.exit(0 if selection()=='headless' else 1)
     result=main(sys.argv[1:]);print(json.dumps(result));sys.exit(1 if result.get('error') else 0)
 except Exception as error:
     print(json.dumps({'error':str(error)[:300]}));sys.exit(1)

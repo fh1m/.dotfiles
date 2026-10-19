@@ -51,12 +51,12 @@ class MusicService(unittest.TestCase):
                               if line.strip().startswith(('function accept(', 'function uniqueRows(', 'function play(', 'function artworkUrl(')))
         script = r'''
 const vm=require('vm'),assert=require('assert');
-const c={page:3,libraryKind:'albums',contextItem:{},contextRows:[],libraryRows:[{id:'saved'}],nextPage:'keep',error:'',warning:'',same:(a,b)=>JSON.stringify(a)===JSON.stringify(b)};
+const c={playback:{backend:'native'},page:3,libraryKind:'albums',contextItem:{},contextRows:[],libraryRows:[{id:'saved'}],nextPage:'keep',error:'',warning:'',same:(a,b)=>JSON.stringify(a)===JSON.stringify(b)};
 vm.createContext(c);vm.runInContext(FUNCTIONS,c);
 c.accept('more',{target:'library',kind:'liked',rows:[{id:'wrong'}],next:'wrong'});
 assert.equal(c.libraryRows[0].id,'saved');assert.equal(c.nextPage,'keep');
 c.contextItem={id:'context',kind:'playlist'};c.contextRows=[{id:'same'}];
-c.accept('more',{target:'context',contextId:'context',rows:[{id:'same'},{id:'new'}]});assert.equal(c.contextRows.length,2);
+c.accept('more',{target:'context',contextId:'context',rows:[{id:'same'},{id:'new'}]});assert.equal(c.contextRows.length,3); // repeated playlist entries are intentional
 c.action=(...args)=>c.last=args;c.visibleRows=[];
 c.play({kind:'track',id:'a',uri:'spotify:track:a'},[{kind:'track',id:'a',uri:'spotify:track:a'},{kind:'track',id:'b',uri:'spotify:track:b'}]);
 assert.equal(c.last[0],'play-list');assert.equal(JSON.parse(c.last[1][0]).uris.length,2);

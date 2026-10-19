@@ -4,16 +4,18 @@
 
 ![Spotify studio](assets/spotify.png)
 
-## Current default: Spotify desktop session
+## Current default: lightweight Connect player
 
-The widget now browses playlists, liked songs, albums, artists, search and queue
-through a small local Spicetify bridge to the logged-in desktop client. MPRIS
-handles basic controls. This replaces the quota-exhausted Web API browsing path;
-selecting official transport alone did not solve it. Account → Repair desktop
-bridge restores the maintained integration without opening a terminal.
+Playback and library browsing now use a pinned, patched **go-librespot** service.
+Global search uses Spotatui on demand, with its streaming disabled. Neither needs
+the official Spotify desktop client running. Artwork, timed lyrics, fullscreen
+listening and media keys retain the existing widget interface.
 
-[Setup, evidence, upgrade boundaries and research](digital-den/SPOTIFY-DESKTOP-REPAIR.md).
-The desktop app stays installed and signed in; its credentials remain local.
+[Setup, capabilities, recovery and measured checks](digital-den/SPOTIFY-HEADLESS.md) ·
+[24-query research ledger](digital-den/SPOTIFY-RESEARCH-2026-10-19.md).
+
+Account → Use official Spotify remains an explicit fallback. The earlier desktop
+bridge is preserved; it is not silently started after headless failures.
 
 ## Optional native backend and its history
 

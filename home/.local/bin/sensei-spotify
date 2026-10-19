@@ -8,10 +8,13 @@ if __name__=='__main__' and not os.environ.get('SENSEI_SPOTIFY_REMOTE') and len(
 if __name__=='__main__' and len(sys.argv)>1:
  sys.path.insert(0,os.path.expanduser('~/.local/share/sensei'))
  from spotify_control import selection
- if selection()=='official' and sys.argv[1] in ('account','home','library','context','more','search','queue','devices','queue-add','like','unlike','playlist-add','playlist-create','enqueue','connect','liked-play'):
+ if selection() in ('official','headless') and sys.argv[1] in ('moment-save','moment-resume','surprise','account','home','library','context','more','search','queue','devices','queue-add','like','unlike','playlist-add','playlist-create','enqueue','connect','liked-play'):
   import json
   try:
-   from spotify_catalog import dispatch
+   if selection()=='headless':
+    from spotify_headless import dispatch
+   else:
+    from spotify_catalog import dispatch
    result=dispatch(sys.argv[1:])
   except Exception as error:result={'error':str(error) if isinstance(error,ValueError) else 'Spotify desktop bridge is unavailable. Open Spotify to reconnect.'}
   print(json.dumps(result,ensure_ascii=False));sys.exit(1 if 'error' in result else 0)

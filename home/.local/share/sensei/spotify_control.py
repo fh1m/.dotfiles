@@ -80,11 +80,11 @@ def settings_path():return Path.home()/'.config/sensei-den/music.json'
 def selection():
     try:
         value=json.loads(settings_path().read_text()).get('backend','native')
-        if value not in ('native','official'):raise ValueError('Invalid music backend; configuration preserved')
+        if value not in ('native','official','headless'):raise ValueError('Invalid music backend; configuration preserved')
         return value
     except FileNotFoundError:return 'native'
 def select(value):
-    if value not in ('native','official'):raise ValueError('Choose native or official')
+    if value not in ('native','official','headless'):raise ValueError('Choose headless, native or official')
     p=settings_path();p.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
     temp=p.with_name(p.name+'.'+str(os.getpid())+'.tmp')
     with temp.open('w') as f:
@@ -96,11 +96,23 @@ def main(args):
     name=args[0]
     if name=='backend':
         if len(args)<2:return {'backend':selection()}
+        previous=selection()
+        if args[1]=='headless' and not ((Path.home()/'.local/opt/go-librespot/go-librespot').is_file() and (Path.home()/'.config/sensei-go-spotify/config.yml').is_file()):
+            raise ValueError('The lightweight player needs setup first; the existing backend was preserved.')
         result=select(args[1])
-        if args[1]=='native':
+        if args[1]=='headless':
+            subprocess.run(['systemctl','--user','stop','sensei-spotify.service'],capture_output=True,text=True,timeout=15)
+            started=subprocess.run(['systemctl','--user','start','sensei-go-spotify.service'],capture_output=True,text=True,timeout=25)
+            if started.returncode:
+                select(previous)
+                if previous=='native':subprocess.run(['systemctl','--user','start','sensei-spotify.service'],capture_output=True,text=True,timeout=25)
+                raise ValueError('Headless music could not start. The previous backend was restored.')
+        elif args[1]=='native':
+            subprocess.run(['systemctl','--user','stop','sensei-go-spotify.service'],capture_output=True,text=True,timeout=15)
             started=subprocess.run(['systemctl','--user','start','sensei-spotify.service'],capture_output=True,text=True,timeout=25)
             if started.returncode:result['warning']='Native backend selected; start failed. Open Account to reconnect.'
         else:
+            subprocess.run(['systemctl','--user','stop','sensei-go-spotify.service'],capture_output=True,text=True,timeout=15)
             subprocess.run(['systemctl','--user','stop','sensei-spotify.service'],capture_output=True,text=True,timeout=15)
         return result
     if name=='autostart' and selection()!='official':return {'ok':True,'skipped':True}
@@ -109,6 +121,9 @@ def main(args):
         subprocess.Popen(['spotify-launcher']+(['--skip-update'] if installed.exists() and (name=='autostart' or (Path.home()/'.config/sensei-den/spotify-bridge.json').exists()) else []),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
         return {'ok':True}
     backend=selection()
+    if backend=='headless':
+        from spotify_headless import dispatch
+        return dispatch(args)
     if backend=='official':
         if name=='status':
             try:return OfficialPlayer().status()

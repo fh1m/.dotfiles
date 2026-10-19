@@ -6,7 +6,10 @@ from pathlib import Path
 def sample(home=Path.home()):
     playing=False
     try:
-        p=subprocess.run(['playerctl','--player=spotify','status'],capture_output=True,text=True,timeout=1)
+        try:backend=json.loads((home/'.config/sensei-den/music.json').read_text()).get('backend','native')
+        except (OSError,ValueError):backend='native'
+        player={'headless':'go-librespot','native':'spotify_player','official':'spotify'}.get(backend,'spotify')
+        p=subprocess.run(['playerctl','--player='+player,'status'],capture_output=True,text=True,timeout=1)
         playing=p.returncode==0 and p.stdout.strip()=='Playing'
     except (OSError,subprocess.SubprocessError):pass
     mem={}

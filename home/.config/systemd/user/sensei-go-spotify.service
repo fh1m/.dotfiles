@@ -1,0 +1,15 @@
+[Unit]
+Description=Den headless Spotify Connect player
+After=graphical-session.target pipewire-pulse.service network-online.target
+Wants=network-online.target
+PartOf=graphical-session.target
+StartLimitIntervalSec=180
+StartLimitBurst=3
+[Service]
+ExecCondition=%h/.local/bin/sensei-spotify-control headless-enabled
+ExecStart=%h/.local/opt/go-librespot/go-librespot --config_dir %h/.config/sensei-go-spotify
+Restart=on-failure
+RestartSec=15
+UMask=0077
+[Install]
+WantedBy=default.target
