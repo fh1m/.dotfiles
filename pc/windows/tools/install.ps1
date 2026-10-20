@@ -147,7 +147,11 @@ if ($isRealHome) {
         (Join-Path $env:LOCALAPPDATA 'Programs\glazewm\glazewm.exe')
     ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
     if ($glazewm) {
-        $cmd = '"' + $glazewm + '" start'
+        # Wait for the desktop to settle, then start GlazeWM only if it is not already running.
+        # A second GlazeWM exits with "Another instance is already running" and shows a fatal dialog.
+        $startScript = "Start-Sleep -Seconds 20; if (-not (Get-Process glazewm -ErrorAction SilentlyContinue)) { Start-Process -FilePath '$glazewm' -ArgumentList 'start' }"
+        $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($startScript))
+        $cmd = "powershell.exe -NoProfile -WindowStyle Hidden -EncodedCommand $encoded"
         $have = (Get-ItemProperty -Path $runKey -Name 'Sensei-Tiling' -ErrorAction SilentlyContinue).'Sensei-Tiling'
         if ($have -ne $cmd) {
             $envChanged.Add('run:Sensei-Tiling')

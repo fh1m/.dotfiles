@@ -137,7 +137,7 @@ widgets:
         run_cmd: 'py -3 %USERPROFILE%\.local\bin\sensei-weather.py'
         return_format: "string"
         use_shell: true
-        run_interval: 900000
+        run_interval: 300000
         hide_empty: false
 
   bluetooth:
