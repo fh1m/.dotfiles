@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -eu
-unit='app-org.deskflow.deskflow@denserver.service'
-case "${1:-status}" in
-  start) test -r "$HOME/.local/state/den/deskflow/Deskflow.conf"; systemctl --user start "$unit" ;;
-  stop) systemctl --user stop "$unit" ;;
-  status) systemctl --user status "$unit" --no-pager ;;
-  *) echo 'Usage: sensei-den-input start|stop|status' >&2; exit 2 ;;
-esac

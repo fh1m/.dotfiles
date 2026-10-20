@@ -1,0 +1,38 @@
+{
+  "profiles": [
+    {
+      "guid": "{6f1c2a30-5d1e-4c1f-9a3b-2b7e4d0c5a11}",
+      "name": "Sensei · PowerShell",
+      "commandline": "pwsh.exe -NoLogo",
+      "startingDirectory": "%USERPROFILE%",
+      "font": { "face": "Iosevka Nerd Font Mono", "size": 11.5 },
+      "colorScheme": "Sensei",
+      "hidden": false
+    }
+  ],
+  "schemes": [
+    {
+      "name": "Sensei",
+      "background": "{{terminal.background}}",
+      "foreground": "{{terminal.foreground}}",
+      "cursorColor": "{{terminal.cursor}}",
+      "selectionBackground": "{{terminal.selection_background}}",
+      "black": "{{terminal.normal.black}}",
+      "red": "{{terminal.normal.red}}",
+      "green": "{{terminal.normal.green}}",
+      "yellow": "{{terminal.normal.yellow}}",
+      "blue": "{{terminal.normal.blue}}",
+      "purple": "{{terminal.normal.magenta}}",
+      "cyan": "{{terminal.normal.cyan}}",
+      "white": "{{terminal.normal.white}}",
+      "brightBlack": "{{terminal.bright.black}}",
+      "brightRed": "{{terminal.bright.red}}",
+      "brightGreen": "{{terminal.bright.green}}",
+      "brightYellow": "{{terminal.bright.yellow}}",
+      "brightBlue": "{{terminal.bright.blue}}",
+      "brightPurple": "{{terminal.bright.magenta}}",
+      "brightCyan": "{{terminal.bright.cyan}}",
+      "brightWhite": "{{terminal.bright.white}}"
+    }
+  ]
+}

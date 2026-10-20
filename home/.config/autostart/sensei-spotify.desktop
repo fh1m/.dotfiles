@@ -1,7 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Sensei music backend
-Comment=Start the explicitly selected official music client without playback commands
-Exec=@HOME@/.local/bin/sensei-spotify-control autostart
-Terminal=false
-NoDisplay=true

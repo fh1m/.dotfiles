@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-# Ensure an Alacritty deck exists. Never kill a shell to repaint its banner.
-set -euo pipefail
-if hyprctl clients -j | python3 -c 'import json,sys;sys.exit(not any(w.get("class")=="sensei-deck" for w in json.load(sys.stdin)))'; then
-    exit 0
-fi
-export SENSEI_DECK=1
-setsid -f "$HOME/.local/bin/sensei-terminal" --class sensei-deck --working-directory "$HOME" >/dev/null 2>&1

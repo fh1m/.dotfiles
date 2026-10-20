@@ -1,0 +1,53 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+add_newline = true
+palette = 'sensei'
+scan_timeout = 20
+command_timeout = 500
+format = """[](rose)[󰆍 SENSEI](bg:rose fg:ground bold)[](fg:rose) $directory$git_branch$git_status$python$container$line_break$character"""
+right_format = '$status$cmd_duration'
+
+[palettes.sensei]
+rose = '{{starship.rose}}'
+ground = '{{starship.ground}}'
+text = '{{starship.text}}'
+muted = '{{starship.muted}}'
+error = '{{starship.error}}'
+
+[directory]
+style = 'bold text'
+truncation_length = 3
+truncate_to_repo = false
+format = '[$path]($style)[$read_only]($read_only_style) '
+
+[git_branch]
+symbol = ' '
+style = 'rose'
+format = '[$symbol$branch]($style) '
+
+[git_status]
+style = 'rose'
+format = '([$all_status$ahead_behind]($style) )'
+untracked = '?'
+
+[python]
+symbol = ' '
+style = 'muted'
+format = '[${symbol}${version}( · $virtualenv)]($style) '
+
+[container]
+style = 'muted'
+format = '[ $name]($style) '
+
+[character]
+success_symbol = '[❯](bold rose)'
+error_symbol = '[❯](bold error)'
+
+[status]
+disabled = false
+symbol = '✗ '
+format = '[$symbol$status]($style) '
+style = 'error'
+
+[cmd_duration]
+min_time = 1000
+format = '[󱎫 $duration](muted)'

@@ -1,9 +1,0 @@
-# Private history stays on this host. No account, sync or background daemon.
-auto_sync = false
-update_check = false
-secrets_filter = true
-style = "compact"
-inline_height = 14
-show_preview = true
-filter_mode = "directory"
-history_filter = ["^ "]

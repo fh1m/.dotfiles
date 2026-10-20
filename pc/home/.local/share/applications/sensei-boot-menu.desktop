@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Choose operating system
-Comment=Restart to the Linux / Windows / Misc selector
-Exec=/home/fh1m/.local/bin/sensei-boot-menu
-Icon=system-reboot
-Terminal=false
-Categories=System;

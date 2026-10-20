@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-# Alacritty reloads theme files in place; refresh never injects shell commands.
-set -euo pipefail
-if [[ "${1:-}" != --quiet ]]; then
-    "$(dirname "$(readlink -f "$0")")/sensei-deck-reset"
-fi

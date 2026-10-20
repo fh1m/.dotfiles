@@ -1,9 +1,0 @@
-{
-  "baseFontSize": 17,
-  "interfaceFontFamily": "JetBrains Mono",
-  "textFontFamily": "JetBrains Mono",
-  "monospaceFontFamily": "Iosevka Nerd Font",
-  "enabledCssSnippets": [
-    "sensei-learning"
-  ]
-}

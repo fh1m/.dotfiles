@@ -1,0 +1,26 @@
+name: Validate Windows setup
+on:
+  push:
+  pull_request:
+jobs:
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer tests (dry run, apply, idempotence, backup)
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File windows/tests/install.Tests.ps1
+      - name: Parse every PowerShell script
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem windows -Recurse -Include *.ps1
+          foreach ($f in $files) {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errors) | Out-Null
+            if ($errors) { $errors | ForEach-Object { Write-Error "$($f.Name): $($_.Message)" }; exit 1 }
+          }
+      - name: Lint with PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Invoke-ScriptAnalyzer -Path windows -Recurse -Severity Error -EnableExit

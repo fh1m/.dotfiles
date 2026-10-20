@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Den Log Navigator
-Comment=Search, correlate and query local logs with lnav
-Exec=sensei-terminal -e sensei-logs %F
-Terminal=false
-Icon=utilities-log-viewer
-MimeType=text/x-log;application/x-log;
-Categories=Development;Utility;

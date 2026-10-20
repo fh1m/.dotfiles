@@ -1,3 +1,0 @@
-# Homie's VIA VL813: avoid idle suspend/resume on the hub that lost its TT state.
-# Device-specific mitigation, not a fix for a bad cable or electrical connection.
-ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="2109", ATTR{idProduct}=="2813", TEST=="power/control", ATTR{power/control}="on"

@@ -1,7 +1,0 @@
-[Unit]
-Description=Private Noesis vault and research-reader snapshots
-[Service]
-Type=oneshot
-ExecStart=@HOME@/.local/bin/sensei-learning-backup --all
-Nice=15
-IOSchedulingClass=idle

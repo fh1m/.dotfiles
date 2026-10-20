@@ -1,5 +1,0 @@
-#!/usr/bin/env python3
-"""Native NVIDIA NVDEC playback. Unsupported codecs retain mpv's fallback."""
-import os, sys
-from _sensei_machine import clean_graphics_env
-os.execvpe('mpv', ['mpv', '--hwdec=nvdec', '--vo=gpu-next', '--gpu-api=vulkan', *sys.argv[1:]], clean_graphics_env())

@@ -1,9 +1,0 @@
-[Unit]
-Description=Digital Den local versioned backup
-[Service]
-Type=oneshot
-ExecStart=%h/.local/bin/sensei-den backup run
-ExecStartPost=%h/.local/bin/sensei-den backup peer-copy
-Nice=10
-IOSchedulingClass=idle
-UMask=0077

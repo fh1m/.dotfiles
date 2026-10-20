@@ -1,4 +1,0 @@
-#!/usr/bin/env python3
-import json
-from _sensei_machine import facts
-print(json.dumps(facts()))

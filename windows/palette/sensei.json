@@ -1,0 +1,39 @@
+{
+  "_comment": "Single colour source for the Windows port. Values match the Linux Sensei palette so both machines look the same. Templates in windows/home use {{group.key}} tokens.",
+  "terminal": {
+    "background": "#090807",
+    "foreground": "#e8e2da",
+    "dim_foreground": "#a9a29a",
+    "cursor_text": "#000000",
+    "cursor": "#ffffff",
+    "selection_text": "#000000",
+    "selection_background": "#f23d70",
+    "normal": {
+      "black": "#171311",
+      "red": "#ff567a",
+      "green": "#9dbf9e",
+      "yellow": "#d6b59a",
+      "blue": "#a6b9d1",
+      "magenta": "#f23d70",
+      "cyan": "#76bcc0",
+      "white": "#e8e2da"
+    },
+    "bright": {
+      "black": "#706963",
+      "red": "#ff8099",
+      "green": "#b5d3b1",
+      "yellow": "#e8caa9",
+      "blue": "#c1d0e4",
+      "magenta": "#ff80a3",
+      "cyan": "#9bd4d6",
+      "white": "#fff3ea"
+    }
+  },
+  "starship": {
+    "rose": "#fb4670",
+    "ground": "#09090c",
+    "text": "#edf0f7",
+    "muted": "#a9b0bd",
+    "error": "#ff626f"
+  }
+}

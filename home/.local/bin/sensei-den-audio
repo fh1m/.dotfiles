@@ -1,8 +1,0 @@
-#!/usr/bin/python3
-"""Select PC playback on a laptop output; no microphone/default changes."""
-import sys,json
-from pathlib import Path
-sys.path.insert(0,str(Path.home()/'.local/share/sensei'))
-import den_audio
-try:print(json.dumps(den_audio.dispatch(sys.argv[1:] or ['status'])))
-except (ValueError,OSError,IndexError,KeyError,den_audio.subprocess.SubprocessError) as e:print(json.dumps({'error':str(e)}));sys.exit(1)

@@ -1,3 +1,0 @@
-# Merge into ~/.codex/config.toml; keep account and local session state private.
-[tui]
-animations = false
