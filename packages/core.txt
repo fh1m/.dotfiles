@@ -101,3 +101,7 @@ python-secretstorage
 
 # Single synchronized native A/V engine (tiny public Qt Quick wrapper)
 mpvqt
+
+# Explicit meeting voice processing (Sound → Meeting)
+easyeffects
+lsp-plugins-lv2

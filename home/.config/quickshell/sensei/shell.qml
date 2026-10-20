@@ -1,3 +1,4 @@
+//@ pragma UseQApplication
 import QtQuick
 // QS_NO_RELOAD_POPUP is supplied by the Hyprland session launcher.
 

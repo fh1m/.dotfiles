@@ -17,7 +17,7 @@ import qs.config
 Singleton {
     id: root
 
-    IpcHandler {target:"workspaces";function state():string {return JSON.stringify({monitors:root.outputState.map(m=>({name:m.name,active:m.activeWorkspace?.id,focused:m.focused})),mode:root.pageLabel,glyph:root.modeGlyph,special:root.activeSpecial,active:root.activeId,slots:root.slots.map(s=>({label:s.label,active:s.active}))});}}
+    IpcHandler {target:"workspaces";function state():string {return JSON.stringify({monitors:root.outputState.map(m=>({name:m.name,active:m.activeWorkspace?.id,focused:m.focused,slots:root.slotsFor(m.name).map(s=>({target:s.target,active:s.active,count:s.count,localCount:s.localCount,occupied:s.occupied}))})),mode:root.pageLabel,glyph:root.modeGlyph,special:root.activeSpecial,active:root.activeId,slots:root.slots.map(s=>({label:s.label,active:s.active}))});}}
     property var attentionAddresses: []
     property bool remoteCapture: false
     FileView {path:Quickshell.env("HOME")+"/.local/state/homie-control/input/active";watchChanges:true;printErrors:false
@@ -133,7 +133,7 @@ Singleton {
         return slots.map(s=>{
             const id=Number(s.target);
             const local=clientsState.filter(t=>logicalId(t.workspace?.id)===id && Number(t.monitor)===Number(monitor?.id));
-            return Object.assign({},s,{active:id===active,count:local.length,occupied:local.length>0,
+            return Object.assign({},s,{active:id===active,count:s.count,localCount:local.length,occupied:s.occupied,
                 elsewhere:outputState.some(m=>m.name!==output&&logicalId(m.activeWorkspace?.id)===id)});
         });
     }

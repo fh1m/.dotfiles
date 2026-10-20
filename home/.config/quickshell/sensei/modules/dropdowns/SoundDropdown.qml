@@ -14,9 +14,10 @@ DropdownFrame {
  function kind(){return page===0?"sinks":page===1?"sources":page===2?"sink-inputs":"source-outputs";}
  function nodes(){return page===0?SoundDesk.data.sinks:page===1?SoundDesk.data.sources.filter(n=>!n.name.endsWith('.monitor')):page===2?SoundDesk.data['sink-inputs']:SoundDesk.data['source-outputs'];}
  Column {width:parent.width;spacing:16
- Row {width:parent.width;spacing:8;Repeater {model:["Outputs","Mics","Apps","Capture","Devices","Balance","Den"];ControlTile {required property string modelData;required property int index;implicitWidth:(parent.width-48)/7;implicitHeight:36;label:modelData;navigation:true;selected:root.page===index;onActivated:root.page=index}}}
+ Row {width:parent.width;spacing:8;Repeater {model:["Outputs","Mics","Apps","Capture","Devices","Balance","Den","Meeting"];ControlTile {required property string modelData;required property int index;implicitWidth:(parent.width-56)/8;implicitHeight:36;label:modelData;navigation:true;selected:root.page===index;onActivated:root.page=index}}}
+ MeetingCheck {visible:root.page===7;width:parent.width}
  DenAudioPanel {visible:root.page===6;width:parent.width}
- DenAudioPanel {visible:root.page!==6;width:parent.width;compact:true;onExpandRequested:root.page=6}
+ DenAudioPanel {visible:root.page<6;width:parent.width;compact:true;onExpandRequested:root.page=6}
  Row {visible:root.page<6;spacing:10;ControlTile {label:Audio.muted?"Unmute output":"Mute output";glyph:"\uf028";onActivated:if(Audio.sink?.audio)Audio.sink.audio.muted=!Audio.muted}ControlTile {label:Audio.micMuted?"Unmute microphone":"Mute microphone";glyph:"\uf130";onActivated:if(Audio.source?.audio)Audio.source.audio.muted=!Audio.micMuted}ControlTile {label:"Advanced mixer";glyph:"\uf1de";onActivated:Quickshell.execDetached(["pavucontrol"])} }
  Row {visible:root.page<6;width:parent.width;spacing:10;Repeater {model:[{label:"Active output",kind:"sinks",name:SoundDesk.data.defaultSink},{label:"Active microphone",kind:"sources",name:SoundDesk.data.defaultSource}]
  ChamferPanel {required property var modelData;property var device:(SoundDesk.data[modelData.kind]||[]).find(n=>n.name===modelData.name)||{};width:(root.width-38)/2;height:62;fillColor:Theme.alpha(Theme.widgetSurface,.8);borderColor:Theme.widgetBorder;chamfer:6;scanlines:false

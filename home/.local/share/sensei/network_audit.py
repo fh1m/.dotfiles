@@ -40,3 +40,48 @@ def scan(interface,address=None):
   if status is None or status.get('state')!='up':continue
   hosts.append({'addresses':[{k:v for k,v in a.attrib.items() if k in ('addr','addrtype','vendor')} for a in row.findall('address')], 'ports':[{'port':p.get('portid'),'protocol':p.get('protocol'),'state':p.find('state').get('state'),'service':p.find('service').get('name') if p.find('service') is not None else None} for p in row.findall('ports/port')]})
  return {'scope':cidr,'target':host,'hosts':hosts,'note':'Bounded unprivileged scan. No scripts, exploitation, packet capture or password testing.'}
+
+def interface_name(name):
+ import re
+ if not re.fullmatch(r'[A-Za-z0-9_.:-]{1,32}',name or '') or not ( __import__('pathlib').Path('/sys/class/net')/name).exists():raise ValueError('Choose an existing interface')
+ return name
+
+def hostname(value):
+ import re
+ if not value or len(value)>253 or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9.:-]*',value):raise ValueError('Use a hostname or IP address, without a URL or command flags')
+ return value
+
+def diagnostic(action,interface=None,host=None):
+ import socket,urllib.request,time
+ if action=='public':
+  with urllib.request.urlopen('https://ipinfo.io/json',timeout=7) as response:
+   raw=response.read(131073)
+   if len(raw)>131072:raise ValueError('Provider response exceeded the bounded limit')
+   data=json.loads(raw)
+   if not isinstance(data,dict):raise ValueError('Provider response was not an object')
+  return {'kind':'Public egress / ASN','data':{k:data.get(k) for k in ['ip','hostname','city','region','country','org','timezone']},'note':'Requested from ipinfo.io. Organization is the observed egress network; VPNs and carrier NAT can differ from your billing ISP.'}
+ if action=='resolve':
+  name=hostname(host or 'example.com');start=time.monotonic()
+  text=command(['getent','ahosts',name],timeout=6)
+  return {'kind':'System DNS','host':name,'addresses':sorted({line.split()[0] for line in text.splitlines()})[:30],'elapsedMs':round((time.monotonic()-start)*1000),'note':'Uses the same system resolver as ordinary applications.'}
+ if action=='trace':
+  name=hostname(host or '1.1.1.1')
+  if not shutil.which('tracepath'):raise ValueError('tracepath is unavailable; install iputils')
+  r=subprocess.run(['tracepath','-n','-m','12',name],capture_output=True,text=True,timeout=15)
+  return {'kind':'Route path','host':name,'result':r.stdout[-10000:] or r.stderr[-1000:],'note':'Routers can suppress replies; missing hops do not prove the internet is down.'}
+ if action=='link':
+  name=interface_name(interface);data=json.loads(command(['ip','-s','-j','link','show','dev',name]))
+  details=''
+  if shutil.which('ethtool'):
+   r=subprocess.run(['ethtool',name],capture_output=True,text=True,timeout=4);details=r.stdout[-10000:] or r.stderr[-1000:]
+  return {'kind':'Link / driver counters','interface':name,'links':data,'physical':details,'note':'Counters are since interface creation, not current traffic rate. Unsupported driver fields remain unavailable.'}
+ if action=='health':
+  name=interface_name(interface);routes=json.loads(command(['ip','-j','route','show','dev',name]));gateway=next((r.get('gateway') for r in routes if r.get('dst')=='default'),None);checks=[]
+  for label,address in [('Gateway',gateway),('Public IP','1.1.1.1')]:
+   if not address:checks.append({'name':label,'state':'unavailable','detail':'No IPv4 gateway on this interface'});continue
+   r=subprocess.run(['ping','-n','-I',name,'-c','3','-W','1',address],capture_output=True,text=True,timeout=6)
+   checks.append({'name':label,'state':'reply' if r.returncode==0 else 'no reply','detail':r.stdout[-2200:] or r.stderr[-1000:]})
+  try:checks.append({'name':'DNS','state':'resolved','detail':diagnostic('resolve',host='example.com')})
+  except (OSError,ValueError,subprocess.SubprocessError) as error:checks.append({'name':'DNS','state':'failed','detail':str(error)})
+  return {'kind':'Connectivity checks','interface':name,'checks':checks,'note':'ICMP can be blocked. A missing reply alone is not proof of lost connectivity; DNS follows the system route.'}
+ raise ValueError('Unknown network diagnostic')

@@ -18,8 +18,8 @@ def source():
 def metrics(raw,rate=48000):
  samples=array.array('f');samples.frombytes(raw[:len(raw)//4*4]);values=[float(v) for v in samples if math.isfinite(v)]
  if not values:raise ValueError('The microphone delivered no samples')
- peak=max(abs(v) for v in values);rms=math.sqrt(sum(v*v for v in values)/len(values))
- return {'seconds':round(len(values)/rate,2),'peakDbFS':round(20*math.log10(max(peak,1e-9)),1),'rmsDbFS':round(20*math.log10(max(rms,1e-9)),1),'clippedPercent':round(100*sum(abs(v)>=.999 for v in values)/len(values),3),'signalDetected':peak>.002}
+ peak=max(abs(v) for v in values);rms=math.sqrt(sum(v*v for v in values)/len(values));mean=sum(values)/len(values);ac=math.sqrt(sum((v-mean)**2 for v in values)/len(values));acpeak=max(abs(v-mean) for v in values)
+ return {'seconds':round(len(values)/rate,2),'peakDbFS':round(20*math.log10(max(peak,1e-9)),1),'rmsDbFS':round(20*math.log10(max(rms,1e-9)),1),'clippedPercent':round(100*sum(abs(v)>=.999 for v in values)/len(values),3),'dcOffset':round(mean,6),'dcOffsetWarning':abs(mean)>.01,'acRmsDbFS':round(20*math.log10(max(ac,1e-9)),1),'signalDetected':acpeak>.002}
 
 def probe(seconds):
  row=source()
@@ -72,16 +72,22 @@ def transcribe(seconds,file=None,language='auto'):
   text=target.with_suffix('.txt').read_text().strip()
   return {'transcript':text,'note':'Local model output; review before copying. Temporary audio was deleted. Nothing was typed into an application.'}
 
+def route_default():
+ data=doctor();row=next((s for s in data['sources'] if s['name']==data['default']),None)
+ if not row:raise ValueError('No default microphone')
+ physical={s['index'] for s in data['sources']};routed=0
+ for stream in data['streams']:
+  if stream['sourceIndex'] not in physical:continue
+  call('move-source-output',str(stream['index']),row['name']);routed+=1
+ return {'routed':routed,'source':row['label'],'note':'Mute states preserved; future apps use the system default unless they override it.'}
+
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=['doctor','probe','route-default','transcribe','meter']);p.add_argument('--seconds',type=int,default=3,choices=range(1,31));p.add_argument('--file',type=Path);p.add_argument('--language',choices=['auto','en','bn'],default='auto');a=p.parse_args()
  if a.action=='doctor':return doctor()
  if a.action=='probe':return probe(min(a.seconds,8))
  if a.action=='meter':return meter(a.seconds)
  if a.action=='transcribe':return transcribe(a.seconds,a.file,a.language)
- data=doctor();row=next((s for s in data['sources'] if s['name']==data['default']),None)
- if not row:raise ValueError('No default microphone')
- for stream in data['streams']:call('move-source-output',str(stream['index']),row['name'])
- return {'routed':len(data['streams']),'source':row['label'],'note':'Mute states preserved; future apps use the system default unless they override it.'}
+ return route_default()
 if __name__=='__main__':
  def cancel(*_):raise KeyboardInterrupt
  signal.signal(signal.SIGTERM,cancel)

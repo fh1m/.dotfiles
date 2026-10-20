@@ -11,3 +11,8 @@ class Scope(unittest.TestCase):
   for target in ('192.168.1.2','192.168.0.255','192.168.0.0','8.8.8.8','192.168.0.1;id'):
    with self.assertRaises(ValueError):n.target('eth0',target,self.rows())
   self.assertEqual(n.target('eth0','192.168.0.104',self.rows()),'192.168.0.104')
+ def test_diagnostic_hostname_rejects_command_options_urls_and_injection(self):
+  for text in ['-c','https://example.com','a;id','a b','$(id)','']:
+   with self.assertRaises(ValueError):n.hostname(text)
+  self.assertEqual(n.hostname('example.com'),'example.com')
+  self.assertEqual(n.hostname('1.1.1.1'),'1.1.1.1')

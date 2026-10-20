@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""Explicit, reversible Vesktop voice processing. Never changes the default mic."""
+import argparse
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import time
+
+STATE = Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state'))/'sensei-voice/effects.json'
+
+def run(*args):
+    return subprocess.check_output(args, text=True, timeout=10).strip()
+
+def items(kind):
+    return json.loads(run('pactl', '-f', 'json', 'list', kind))
+
+def eligible(stream, sources):
+    source = next((s for s in sources if s['index'] == stream['source']), None)
+    props = stream.get('properties', {})
+    return (props.get('application.name', '').lower() == 'vesktop'
+            and source is not None and not source['name'].endswith('.monitor')
+            and props.get('stream.capture.sink') != 'true')
+
+def save(data):
+    STATE.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    temporary = STATE.with_suffix('.tmp')
+    fd = os.open(temporary, os.O_WRONLY|os.O_CREAT|os.O_TRUNC, 0o600)
+    with os.fdopen(fd, 'w') as stream:
+        json.dump(data, stream)
+    temporary.replace(STATE)
+
+def enable():
+    if STATE.exists():
+        raise ValueError('Voice processing already has a restore receipt; use off before enabling again.')
+    if not shutil.which('easyeffects') or not shutil.which('kwriteconfig6'):
+        raise ValueError('Install easyeffects and kconfig first.')
+    sources = items('sources')
+    default = run('pactl', 'get-default-source')
+    raw = next((s for s in sources if s['name'] == default), None)
+    if not raw or raw.get('mute') or default.startswith('easyeffects') or default.endswith('.monitor'):
+        raise ValueError('Select an unmuted physical microphone first.')
+    streams = [s for s in items('source-outputs') if eligible(s, sources)]
+    if not streams:
+        raise ValueError('No live Vesktop microphone streams. Join the call first.')
+    config = Path.home()/'.config/easyeffects/db/easyeffectsrc'
+    # Do not silently take over an existing effects configuration.
+    owned = STATE.parent/'managed-easyeffects-config'
+    running = subprocess.run(['pgrep', '-x', 'easyeffects'], stdout=subprocess.DEVNULL).returncode == 0
+    if running and not owned.exists():
+        raise ValueError('EasyEffects is already running. Select Den Voice in its input presets explicitly.')
+    if config.exists() and not owned.exists():
+        raise ValueError('Existing EasyEffects configuration preserved. Select Den Voice in EasyEffects explicitly.')
+    config.parent.mkdir(parents=True, exist_ok=True)
+    run('kwriteconfig6', '--notify', '--file', str(config), '--group', 'EffectsPipelines', '--key', 'processAllInputs', 'false')
+    run('kwriteconfig6', '--notify', '--file', str(config), '--group', 'EffectsPipelines', '--key', 'processAllOutputs', 'false')
+    run('kwriteconfig6', '--notify', '--file', str(config), '--group', 'StreamInputs', '--key', 'useDefaultInputDevice', 'false')
+    run('kwriteconfig6', '--notify', '--file', str(config), '--group', 'StreamInputs', '--key', 'inputDevice', default)
+    owned.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    owned.touch(mode=0o600)
+    log = STATE.parent/'easyeffects.log'
+    log.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with log.open('a') as output:
+        if not running:
+            subprocess.Popen(['easyeffects', '--service-mode'], stdout=output, stderr=output, start_new_session=True)
+    target = None
+    for _ in range(40):
+        target = next((s for s in items('sources') if s['name'] == 'easyeffects_source'), None)
+        if target:
+            break
+        time.sleep(.1)
+    if not target:
+        raise ValueError('EasyEffects source did not appear; original call routes are unchanged.')
+    run('easyeffects', '--load-preset', 'Den Voice')
+    receipt = {'target': target['name'], 'raw': default, 'streams': []}
+    for stream in streams:
+        original = next(s['name'] for s in sources if s['index'] == stream['source'])
+        receipt['streams'].append({'index': stream['index'], 'original': original})
+    # Save before changing routing so interruption is recoverable.
+    save(receipt)
+    for stream in receipt['streams']:
+        run('pactl', 'move-source-output', str(stream['index']), target['name'])
+    return {'processedStreams': len(streams), 'source': default, 'note': 'Den Voice: 80 Hz high-pass with +12 dB clean gain, speech loudness normalization, gentle compression, -3 dBFS limiter. No noise gate. System default unchanged. Use off to restore.'}
+
+def disable():
+    if not STATE.exists():
+        return {'note': 'No managed voice routes to restore.'}
+    data = json.loads(STATE.read_text())
+    sources = items('sources')
+    target = next((s for s in sources if s['name'] == data['target']), None)
+    streams = items('source-outputs')
+    restored = 0
+    pending = []
+    for old in data['streams']:
+        stream = next((s for s in streams if s['index'] == old['index']), None)
+        if not stream or not target or stream['source'] != target['index'] or not eligible(stream, sources):
+            continue
+        source = next((s for s in sources if s['name'] == old['original']), None)
+        if source:
+            run('pactl', 'move-source-output', str(old['index']), source['name'])
+            restored += 1
+        else:
+            pending.append(old)
+    if pending:
+        data['streams'] = pending
+        save(data)
+        return {'restoredStreams': restored, 'note': 'Original microphone is disconnected. Restore receipt retained; reconnect it and retry off.'}
+    STATE.unlink()
+    return {'restoredStreams': restored, 'note': 'Original routes restored where still present. Other app and mute choices preserved.'}
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=['on', 'off'])
+    args = parser.parse_args()
+    try:
+        print(json.dumps(enable() if args.action == 'on' else disable()))
+    except (ValueError, OSError, KeyError, subprocess.SubprocessError) as error:
+        print(json.dumps({'error': str(error)}))
+        raise SystemExit(1)
