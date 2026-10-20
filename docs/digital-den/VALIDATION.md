@@ -272,3 +272,26 @@ Do not treat the earlier three-case pass as current post-update proof. Homie's
 three-case acceptance passed before its final typography-only sync. Graphics/
 input acceptance after this host's Qt/NVIDIA/LLVM upgrade remains a separate
 follow-up; the typography and geometry unit checks are passing.
+
+
+## Permanent graphics repair — 2026-10-20
+
+Supersedes the session-only recovery above. See `GRAPHICS-RECOVERY.md`.
+Removed the Mesa/lib32-Mesa package hold and completed the signed pending full
+upgrade, installing both Mesa variants 26.2.4 against LLVM 23. Unmodified package
+files verified; EGL and GLX resolve every dependency. Fresh Wayland EGL reports
+Intel UHD 630 / Mesa 26.2.4 without LD_LIBRARY_PATH or LD_PRELOAD overrides.
+The shell and companion were relaunched without the old recovery directory;
+the session-only systemd override was removed. Input sharing remained active.
+
+Fresh physical bar-click acceptance passed all three cases: Sound collapsed,
+Sound expanded on Upper, and Display on Lower. The earlier post-upgrade failures
+are no longer reproduced by that complete run. All four laptop outputs are
+reported at their native configured modes (main 4K60, ScreenPad 3840×1100 at
+60 Hz, both external 1080p100). Six Den regression tests passed; the new read-only
+graphics doctor compiled and its live exit-code contract was checked.
+
+The only remaining driver activation gate is reboot: running NVIDIA 615.71.09
+versus installed userspace and new CachyOS kernel module 615.78.08. The doctor
+correctly exits 2 with no unresolved libraries or held-package warnings. No
+reboot has been performed, so post-boot NVIDIA/HDMI acceptance is pending.
