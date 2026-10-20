@@ -94,35 +94,35 @@ widgets:
     type: "yasb.clock.ClockWidget"
     options:
       class_name: 'clock'
-      label: "{%I:%M %p   %A, %d %B}"
-      label_alt: "{%H:%M:%S   %A %d %B %Y}"
+      label: "  {%I:%M %p   %A, %d %B}"
+      label_alt: "  {%H:%M:%S   %A %d %B %Y}"
       timezones: []
 
   cpu:
     type: "yasb.cpu.CpuWidget"
     options:
       class_name: 'cpu'
-      label: "cpu {info[percent][total]}%"
+      label: "  {info[percent][total]}%"
       update_interval: 2000
 
   memory:
     type: "yasb.memory.MemoryWidget"
     options:
       class_name: 'memory'
-      label: "ram {virtual_mem_percent}%"
+      label: "  {virtual_mem_percent}%"
       update_interval: 2000
 
   gpu:
     type: "yasb.gpu.GpuWidget"
     options:
       class_name: 'gpu'
-      label: "gpu {info[utilization]}%"
+      label: "  {info[utilization]}%"
 
   usb:
     type: "yasb.custom.CustomWidget"
     options:
       class_name: 'usb'
-      label: "usb {data}"
+      label: "  {data}"
       exec_options:
         run_cmd: "powershell -NoProfile -Command (Get-PnpDevice -Class USB -Status OK).Count"
         run_interval: 60000
@@ -157,10 +157,13 @@ widgets:
     type: "yasb.notifications.NotificationsWidget"
     options:
       class_name: 'notifications'
+      label: "  {count}"
+      label_alt: "  {count} new notifications"
 
   power_menu:
     type: "yasb.power_menu.PowerMenuWidget"
     options:
+      label: ""
       buttons:
         lock: ["Lock", ""]
         sleep: ["Sleep", ""]
