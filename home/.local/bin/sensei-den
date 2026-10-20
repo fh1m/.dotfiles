@@ -136,6 +136,11 @@ def companion(action,value=None):
         from companion_roam import memory
         record['memory']=memory(payload.get('memory',{}))
         write(STATE/'companion-travel.json',record);return record
+    if action=='guest-frequency':
+        try:minutes=int(value)
+        except (TypeError,ValueError):raise ValueError('Choose a visit interval from 3 to 120 minutes')
+        if not 3<=minutes<=120:raise ValueError('Choose a visit interval from 3 to 120 minutes')
+        cfg['guestMinutes']=minutes;write(CONFIG/'companion.json',cfg);return {'frequencyMinutes':minutes}
     if action=='guest-mode':
         if value not in ('mixed','quotes','stories','workshop'):raise ValueError('Choose mixed, quotes, stories or workshop')
         cfg['guestMode']=value;write(CONFIG/'companion.json',cfg);return {'guestMode':value}
@@ -143,7 +148,7 @@ def companion(action,value=None):
         catalog=read(HOME/'.local/share/sensei-companion/guests/catalog.json',{'guests':[]})
         ids=[g['id'] for g in catalog['guests']]
         if action=='guests':
-            if value not in ('on','off'):return {'enabled':cfg.get('guestsEnabled',True),'people':ids,'frequencyMinutes':cfg.get('guestMinutes',30),'mode':cfg.get('guestMode','mixed'),'entriesPerGuest':{g['id']:len(g.get('quotes',[]))+10*len(g.get('topics',[])) for g in catalog['guests']}}
+            if value not in ('on','off'):return {'enabled':cfg.get('guestsEnabled',True),'people':ids,'frequencyMinutes':cfg.get('guestMinutes',10),'mode':cfg.get('guestMode','mixed'),'entriesPerGuest':{g['id']:len(g.get('quotes',[]))+10*len(g.get('topics',[])) for g in catalog['guests']}}
             cfg['guestsEnabled']=value=='on'
         else:
             if value and value not in ids:raise ValueError('Choose a guest: '+', '.join(ids))
@@ -687,7 +692,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);s=p.add_subparsers(dest='command_name',required=True)
     for n in ['status','doctor','watch']:s.add_parser(n)
     q=s.add_parser('mode');q.add_argument('value',nargs='?',choices=['auto','together','away','homie'])
-    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','activity','activity-hide','activity-favorite','talk','remember','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','hide-seek','found','pulse','dim','grant','protocol','guest','guests','guest-mode']);q.add_argument('value',nargs='?')
+    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','activity','activity-hide','activity-favorite','talk','remember','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','hide-seek','found','pulse','dim','grant','protocol','guest','guests','guest-mode','guest-frequency']);q.add_argument('value',nargs='?')
     q=s.add_parser('sync');q.add_argument('action',nargs='?',default='status',choices=['status','scan','pause','resume'])
     q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','retain-preview','peer-copy'])
     q=s.add_parser('workbench');q.add_argument('action',nargs='?',default='open',choices=['open','start','stop','status'])

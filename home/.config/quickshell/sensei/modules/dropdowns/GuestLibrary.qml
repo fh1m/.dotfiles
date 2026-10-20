@@ -27,8 +27,13 @@ Column {
   }
  }
  Row {spacing:8
-  ControlTile {label:"Occasional visits on";selected:root.settings.guestsEnabled!==false;onActivated:{Den.companion("guests","on");root.feedback="Visitors welcome, at most once per half hour by default."}}
+  ControlTile {label:"Occasional visits on";selected:root.settings.guestsEnabled!==false;onActivated:{Den.companion("guests","on");root.feedback="Visitors welcome, at most once per chosen interval, when the desktop has room."}}
   ControlTile {label:"Visits off";selected:root.settings.guestsEnabled===false;onActivated:{Den.companion("guests","off");root.feedback="Guests off. Zondo keeps his ordinary desk routine."}}
+ }
+ Row {width:parent.width;spacing:8
+  Repeater {model:[{minutes:5,label:"Often · 5 min"},{minutes:10,label:"Regular · 10 min"},{minutes:30,label:"Occasional · 30 min"}]
+   ControlTile {required property var modelData;implicitWidth:(root.width-16)/3;label:modelData.label;selected:Number(root.settings.guestMinutes||10)===modelData.minutes;onActivated:{Den.companion("guest-frequency",String(modelData.minutes));root.feedback="Visits every "+modelData.minutes+" minutes when there's room. Quiet mode and fullscreen still take priority."}}
+  }
  }
  Text {visible:root.showFeedback;width:parent.width;text:root.feedback;wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
 }

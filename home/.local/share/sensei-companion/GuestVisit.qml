@@ -69,7 +69,7 @@ Item {
         if(!p.available){finish();return;}placement=p;
     }
     onPermittedChanged:checkSpace()
-    onTargetScreenChanged:if(active)finish()
+    onTargetScreenChanged:if(active)Qt.callLater(checkSpace)
     onObstaclesChanged:checkSpace()
     function tryRequest():void {
         const r=preferences.guestRequest;
@@ -80,8 +80,8 @@ Item {
     onPreferencesChanged:{if(preferences.guestsEnabled===false)finish();else tryRequest();}
     onPausedChanged:{if(paused){visibleCharacters=textLength;pageClock.stop();}else if(active)pageClock.restart();}
     Timer {interval:1500;repeat:true;running:root.permitted&&Number(root.preferences.guestRequest?.at||0)>root.seenRequest;onTriggered:{if(Date.now()/1000-Number(root.preferences.guestRequest?.at||0)>=300)stop();else root.tryRequest();}}
-    Timer {interval:60000;repeat:true;running:root.permitted&&root.preferences.guestsEnabled!==false
-        onTriggered:if(!root.active&&Date.now()-root.history.lastAt>=Math.max(15,root.preferences.guestMinutes||30)*60000)root.start('',false)
+    Timer {interval:15000;repeat:true;running:root.permitted&&root.preferences.guestsEnabled!==false
+        onTriggered:if(!root.active&&Date.now()-root.history.lastAt>=Math.max(3,Math.min(120,Number(root.preferences.guestMinutes)||10))*60000)root.start('',false)
     }
     Timer {id:pageClock;interval:Policy.duration(root.card)+(root.reducedMotion?0:Math.ceil(root.textLength/2)*30);onTriggered:root.next()}
     Timer {interval:1100;repeat:true;running:root.active&&!root.reducedMotion;onTriggered:root.frame=(root.frame+1)%4}

@@ -29,6 +29,7 @@ def run(args,authenticated=False):
   try:authenticated=time.time()-json.loads((CACHE/'auth-required.json').read_text()).get('at',0)<900;account() if authenticated else None
   except (OSError,ValueError,TypeError):authenticated=False
  args=list(args)
+ catalog="--flat-playlist" in args
  if '--dump-single-json' in args:
   at=args.index('--dump-single-json');args[at:at+1]=['--print',CATALOG_TEMPLATE]
  runtime=['--js-runtimes','node'] if not shutil.which('deno') and shutil.which('node') else []
@@ -44,7 +45,11 @@ def run(args,authenticated=False):
   raise ValueError('YouTube could not provide this item. Try another result or open it in your browser.')
  if len(r.stdout)>8*1024*1024:raise ValueError('YouTube response is too large')
  try:
-  data=json.loads(r.stdout)
+  if catalog:
+   rows=[json.loads(line) for line in r.stdout.splitlines() if line.strip()]
+   if not rows or len(rows)>50 or any(not isinstance(row,dict) for row in rows):raise ValueError()
+   data=rows[0] if len(rows)==1 and 'entries' in rows[0] else dict(rows[0],entries=rows)
+  else:data=json.loads(r.stdout)
   if not isinstance(data,dict):raise ValueError()
   if authenticated:data['_authenticated']=True
   return data

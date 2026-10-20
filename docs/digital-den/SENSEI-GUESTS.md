@@ -17,7 +17,7 @@ sensei-den companion guests
 
 IDs: `feynman hotz carmack karpathy keller lattner graham urban west rubin`.
 Invitations wait up to five minutes for safe space. Ordinary visits default to
-at most one per half hour per host; `guestMinutes` in the private companion
+at most one per ten minutes per host; `guestMinutes` in the private companion
 preferences changes the interval (minimum fifteen). Quiet, DND, disabled,
 suspended, fullscreen and the existing Den ownership lease take precedence.
 No browser requests, conversational service or audio are needed during a visit.
@@ -105,3 +105,9 @@ revealing it, so typing does not make the layout jump. Accepted invitations are
 remembered across renderer restarts instead of replaying an old request.
 
 [Research pass: 110 targeted searches and source decisions](SENSEI-GUESTS-RESEARCH.md).
+
+### Visit frequency and display travel
+
+Sensei guests offers 5/10/30-minute intervals. This machine is set to five minutes at the owner's request; quiet, fullscreen and safe placement still apply. CLI: `sensei-den companion guest-frequency 5` (3–120 minutes).
+
+A display change rechecks placement instead of unconditionally ending the visit. The page and quotation survive travel when the destination has room. A live Karpathy visit was observed progressing through all five cards, including the final question; these are sourced/local illustrated visits, with staged dialogue labelled separately.

@@ -59,6 +59,17 @@ class CompactPayloads(unittest.TestCase):
   with tempfile.TemporaryDirectory() as d,patch.object(y,'CACHE',Path(d)),patch.object(y.subprocess,'run',return_value=CompletedProcess([],0,'{"entries":[]}','')) as r:
    y.run(['--flat-playlist','--dump-single-json','example'])
    cmd=r.call_args.args[0];self.assertNotIn('--dump-single-json',cmd);self.assertIn(y.CATALOG_TEMPLATE,cmd)
+ def test_flat_catalog_accepts_one_json_record_per_result(self):
+  from subprocess import CompletedProcess
+  text='\n'.join(json.dumps({'id':v,'title':'Result'}) for v in ['abcdefghijk','lmnopqrstuv'])
+  with tempfile.TemporaryDirectory() as d,patch.object(y,'CACHE',Path(d)),patch.object(y.subprocess,'run',return_value=CompletedProcess([],0,text,'')):
+   result=y.run(['--flat-playlist','--dump-single-json','ytsearch10:test'])
+   self.assertEqual(len(result['entries']),2)
+ def test_single_entry_collection_is_not_dropped(self):
+  from subprocess import CompletedProcess
+  with tempfile.TemporaryDirectory() as d,patch.object(y,'CACHE',Path(d)),patch.object(y.subprocess,'run',return_value=CompletedProcess([],0,'{"id":"abcdefghijk","title":"Only entry"}','')):
+   result=y.run(['--flat-playlist','--dump-single-json','playlist'])
+   self.assertEqual(result['entries'][0]['id'],'abcdefghijk')
  def test_real_template_discards_an_oversized_unneeded_format_list(self):
   try:import yt_dlp
   except ImportError:self.skipTest('yt-dlp is optional in isolated unit environments')

@@ -177,3 +177,9 @@ translated subtitles. `youtube:skip=translated_subs` removes that redundant
 expansion while retaining publisher captions and the size limit. Actual native
 playback then advanced with video frames; this does not guarantee availability
 for restricted or captionless recordings.
+
+### Catalog JSON framing repair — 21 October 2026
+
+Flat yt-dlp `--print` searches produce newline-delimited result objects. The reader previously treated ten valid objects as one JSON document and rejected search as unreadable. Catalog requests now collect bounded JSON records into entries, including single-item collections; playback remains single-object metadata. Regression tests cover both framing cases.
+
+Live check: ten robotics search results, paired audio/video resolution, then Big Buck Bunny through the installed native widget engine. Selected video/audio tracks were confirmed; six samples advanced from 350 to 5683 ms with no playback error. The test was muted and stopped afterward. This verifies that sample and transport, not every restricted/private video or every network condition.
