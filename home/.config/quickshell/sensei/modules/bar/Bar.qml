@@ -62,6 +62,7 @@ Variants {
             spacing: 3
             RailFold { opensRight:false; expanded: bar.readoutsOpen; onToggled: bar.readoutsOpen = !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             RadioButton {anchors.verticalCenter:parent.verticalCenter}
+            ControllerButton {anchors.verticalCenter:parent.verticalCenter}
             EthernetButton {condensed:!bar.readoutsOpen;anchors.verticalCenter:parent.verticalCenter}
             BtReadout { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             DisplayBadge { output: bar.modelData.name===MachineProfile.primaryOutput?"main":bar.modelData.name; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }

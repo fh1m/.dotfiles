@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""Gamepad inventory, live test, viewer calibration and bounded rumble."""
+import argparse,json,sys,subprocess
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+import controllers as c
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=['list','watch','calibrate','rumble','deadzone','enabled','reset','ros-rate','ros-deadzone','ros-node','ros-sticky','export-ros','ros-coalesce','ros-probe','environments']);p.add_argument('id',nargs='?');p.add_argument('value',nargs='?');a=p.parse_args()
+try:
+ if a.action=='watch':c.watch()
+ elif a.action=='environments':print(json.dumps(c.environments()))
+ elif a.action=='ros-probe':print(json.dumps(c.probe_ros(a.id,a.value)))
+ elif a.action=='list':print(json.dumps(c.inventory()))
+ elif a.action=='export-ros':print(json.dumps(c.export_ros(a.id)))
+ elif a.action in ('calibrate','rumble'):
+  if not a.id:raise ValueError('Select a controller')
+  print(json.dumps(getattr(c,a.action)(a.id)))
+ else:print(json.dumps(c.setting(a.id,a.action,a.value)))
+except (ValueError,OSError,subprocess.SubprocessError) as e:print(json.dumps({'error':str(e)}));sys.exit(1)
+except KeyboardInterrupt:pass
