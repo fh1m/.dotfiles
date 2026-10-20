@@ -1,3 +1,15 @@
+# Chrome / Desktop Commander connectivity — 2026-10-20
+
+Homie's network was healthy; Chrome waited on a locked login keyring. Correctly
+addressing the active keyring daemon restored loading without weakening storage
+or replacing the browser profile. A real gnome-libsecret browser probe rendered
+the Desktop Commander login page, and device pairing completed; the connector
+listed Homie online. greetd now has optional PAM keyring hooks with a root-owned
+backup. Mandatory login rules are unchanged. Two preservation/idempotency tests
+passed. Future-login auto-unlock still needs a normal logout/login acceptance;
+no forced logout, keyring deletion or browser restart occurred.
+See ../docs/digital-den/KEYRING-AND-BROWSER.md.
+
 # Shared typography — 2026-10-20
 
 Homie runs the shared Zed Mono / Iosevka font hierarchy for bars, media,
