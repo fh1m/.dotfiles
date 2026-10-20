@@ -22,11 +22,16 @@ Variants {
         id: popup
 
         required property ShellScreen modelData
+        IpcHandler {target:'popup-'+popup.modelData.name;function state():string{return JSON.stringify({visible:popup.visible,name:popup.current,edge:popup.anchorEdge,x:popup.margins.left,y:popup.contentOriginY,width:popup.width,height:popup.height,anchor:popup.anchorX,output:popup.modelData.name});}}
 
         // Keep-off-the-edge margin, and the gap below the bar.
         readonly property real edge: 12
         readonly property real gap: 8
-        readonly property bool bottomPanel: ShellState.isExternalOutput(modelData?.name??"") ? ShellState.externalBarEdge(modelData?.name??"")==="bottom" : current === "external-display" || current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis"
+        property string anchorEdge: "top"
+        readonly property bool bottomPanel: anchorEdge === "bottom"
+        readonly property real topInset: ShellState.barInset(modelData?.name??"",'top')
+        readonly property real bottomInset: ShellState.barInset(modelData?.name??"",'bottom')
+        readonly property real contentOriginY: bottomPanel?(modelData?.height??1080)-bottomInset-height-margins.bottom:((current==='calendar'||current==='weather')?0:topInset)+margins.top
         readonly property real surfaceInset: bottomPanel ? 0 : 6
 
         // Which panel the loader holds, and where the surface sits. Both lag
@@ -83,8 +88,7 @@ Variants {
 
         IpcHandler {target:"popupmotion-"+popup.modelData?.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,ready:popup.surfaceReady,width:popup.width,height:popup.height,panelHeight:popup.panelHeight,requestedHeight:popup.implicitHeight,measuredHeight:popup.measuredHeight,stableFrames:popup.stableFrames,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
         function reserveCompanion():void {
-            const top=(popup.current==='calendar'||popup.current==='weather')?0:Appearance.metrics.barHeight;
-            const y=popup.bottomPanel?(modelData?.height??1080)-Appearance.metrics.barHeight-popup.height-popup.margins.bottom:top+popup.margins.top;
+            const y=popup.contentOriginY;
             ShellState.reserveCompanion('dropdown-'+modelData?.name,modelData?.name||'',popup.margins.left,y,popup.width,popup.height,popup.visible);
         }
         onVisibleChanged:reserveCompanion()
@@ -96,11 +100,11 @@ Variants {
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }
         visible: current !== "" && surfaceReady && !ShellState.externalDialogOpen
 
-        implicitWidth: Math.min((modelData?.width ?? 1920) - 2 * edge, 2 * surfaceInset + ((current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis") ? 1040 : current === "external-display" ? 440 : current === "code" ? 1100 : current === "spotify" ? (SpotifyDesk.page>=7?1840:1080) : current === "docker" ? 1080 : current === "sound" ? 780 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : (current === "displays" || current === "camera" || current === "engineering") ? 740 : current === "radio" ? 740 : current === "ethernet" ? 596 : current === "power" ? 500 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
+        implicitWidth: Math.min((modelData?.width ?? 1920) - 2 * edge, 2 * surfaceInset + ((current === "monitor" || current === "clipboard" || current === "usb" || current === "phone" || current === "oasis") ? 1040 : current === "external-display" ? 440 : current === "code" ? 1100 : current === "spotify" ? (SpotifyDesk.page>=7?1840:1080) : current === "docker" ? 1080 : current === "sound" ? 920 : current === "bluetooth" ? 620 : (current === "calendar" || current === "weather") ? 1080 : current === "comic" ? 740 : (current === "displays" || current === "camera" || current === "engineering") ? 740 : current === "radio" ? 740 : current === "ethernet" ? 596 : current === "power" ? 500 : current === "notifications" ? 510 : current === "system" || current === "ident" ? 596 : 380))
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.
-        implicitHeight: Math.max(1, Math.min((modelData?.height ?? 1080) - Appearance.metrics.barHeight - 2 * gap, Math.round(panelHeight + 2 * surfaceInset)))
+        implicitHeight: Math.max(1, Math.min((modelData?.height ?? 1080) - topInset - bottomInset - 2 * gap, Math.round(panelHeight + 2 * surfaceInset)))
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "sensei-popup"
@@ -118,17 +122,9 @@ Variants {
             left: true
         }
 
-        margins.top: current === "spotify" ? gap : (current === "calendar" || current === "weather") ? Appearance.metrics.barHeight + gap - surfaceInset : (popup.bottomPanel) ? 0 : gap
-        margins.bottom: (popup.bottomPanel) ? gap : 0
-        // Under the readout that opened it, pulled back in if that would hang
-        // the panel off the right edge. Both windows share an origin, so the
-        // bar's x maps straight across.
-        margins.left: {
-            const avail = popup.screen?.width ?? 1920;
-            if (popup.current === "calendar" || popup.current === "weather") return Math.round(Math.max(popup.edge,Math.min((popup.anchorX>0?popup.anchorX:avail/2)-popup.implicitWidth/2,avail-popup.implicitWidth-popup.edge)));
-            if (popup.current === "spotify") return Math.round((avail-popup.implicitWidth)/2);
-            return Math.round(Math.max(popup.edge, Math.min(popup.anchorX, avail - popup.implicitWidth - popup.edge)));
-        }
+        margins.top: popup.bottomPanel?0:((current==='calendar'||current==='weather')?topInset:0)+gap-surfaceInset
+        margins.bottom: popup.bottomPanel?gap:0
+        margins.left: Math.round(Math.max(popup.edge,Math.min((popup.anchorX||((popup.screen?.width??1920)/2))-popup.implicitWidth/2,(popup.screen?.width??1920)-popup.implicitWidth-popup.edge)))
 
         // Open, close and swap are three explicit animations rather than one
         // Behavior on `reveal`. A swap has to take the old panel out, change the
@@ -200,8 +196,10 @@ Variants {
 
             function onDropdownChanged():void {routeDropdown();}
             function onDropdownOriginScreenChanged():void {routeDropdown();}
+            function onDropdownEdgeChanged():void {routeDropdown();}
             function routeDropdown(): void {
                 const requested = ShellState.dropdown;
+                popup.anchorEdge=ShellState.dropdownEdge;
                 const bottom = requested === "monitor" || requested === "clipboard" || requested === "usb" || requested === "phone" || requested === "oasis";
                 const origin=ShellState.screens.find(s=>s.name===ShellState.dropdownOriginScreen);
                 const focused=ShellState.screens.find(s=>s.name===ShellState.focusedScreenName());

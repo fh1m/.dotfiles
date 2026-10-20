@@ -237,7 +237,7 @@ Scope {
     }
     IpcHandler {
         target: "sound"
-        function page(index: string): void { SoundDesk.page=Math.max(0,Math.min(5,parseInt(index)||0));ShellState.openDropdown("sound"); }
+        function page(index: string): void { SoundDesk.page=Math.max(0,Math.min(6,parseInt(index)||0));ShellState.openDropdown("sound"); }
         function state(): string { return JSON.stringify({volume:Audio.volume,muted:Audio.muted,playing:Cava.live,audible:Audio.audible,outputs:SoundDesk.data.sinks.length,inputs:SoundDesk.data.sources.length,apps:SoundDesk.data['sink-inputs'].length,capture:SoundDesk.data['source-outputs'].length,error:SoundDesk.error}); }
     }
     IpcHandler {
@@ -273,7 +273,7 @@ Scope {
     IpcHandler {
         target: "dropdown"
         function openOn(name:string,output:string):void {if(root.dropdownNames.includes(name))ShellState.openDropdownOn(name,output);}
-        function context():string {return JSON.stringify({origin:ShellState.dropdownOriginScreen,focused:ShellState.focusedScreenName(),name:ShellState.dropdown});}
+        function context():string {return JSON.stringify({origin:ShellState.dropdownOriginScreen,focused:ShellState.focusedScreenName(),name:ShellState.dropdown,anchor:ShellState.dropdownAnchorX,edge:ShellState.dropdownEdge,topInset:ShellState.barInset(ShellState.dropdownOriginScreen,"top"),bottomInset:ShellState.barInset(ShellState.dropdownOriginScreen,"bottom")});}
 
         function open(name: string): string {
             if (root.dropdownNames.indexOf(name) < 0)

@@ -73,7 +73,7 @@ Item {
     TapHandler { id: btTap
         onTapped: {
             ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x;
-            ShellState.toggleDropdownOn("bluetooth",root.QsWindow.window?.screen?.name??"");
+            ShellState.toggleDropdownAt("bluetooth",root,root.QsWindow.window);
         }
     }
 

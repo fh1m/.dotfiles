@@ -29,8 +29,8 @@ Column {
     function search(refresh,more){if(searcher.running||query.trim().length<2)return;section=0;appendPage=!!more;if(!more){results=[];nextPage=-1;}searcher.command=['@HOME@/.local/bin/sensei-spotify','youtube-search',query].concat(refresh?['refresh']:[]).concat(privateCollection?['private']:[]).concat(more?['offset='+nextPage]:[]);searcher.running=true;}
     function attachVideo(){
         if(!visible||!root.watching||SpotifyDesk.videoMode!=='youtube'||!hostWindow)return;
-        const point=video.mapToItem(null,0,0),top=hostWindow.bottomPanel?(hostWindow.screen.height-hostWindow.height-hostWindow.margins.bottom):hostWindow.margins.top;
-        const slot={x:Math.round(hostWindow.margins.left+point.x),y:Math.round(top+point.y+(hostWindow.bottomPanel?-1:1)*Appearance.metrics.barHeight),width:Math.round(video.width),height:Math.round(video.height),output:hostWindow.screen.name,track:YouTubeDesk.track.id};
+        const point=video.mapToItem(null,0,0),top=hostWindow.contentOriginY;
+        const slot={x:Math.round(hostWindow.margins.left+point.x),y:Math.round(top+point.y),width:Math.round(video.width),height:Math.round(video.height),output:hostWindow.screen.name,track:YouTubeDesk.track.id};
         if(JSON.stringify(SpotifyDesk.videoSlot)!==JSON.stringify(slot))SpotifyDesk.videoSlot=slot;
     }
     Timer {interval:200;repeat:true;running:root.visible&&root.watching&&SpotifyDesk.videoMode==='youtube';onTriggered:root.attachVideo()}
@@ -88,17 +88,18 @@ Column {
         GridView {
             id:grid
             visible:!videoColumn.visible||!YouTubeDesk.transcriptOpen;width:body.width-(videoColumn.visible?videoColumn.width+16:0)-(YouTubeDesk.transcriptOpen?body.width*.4+16:0);height:body.height;clip:true;model:root.rows
-            cellWidth:videoColumn.visible?width:width/Math.max(1,Math.floor(width/370))
-            cellHeight:videoColumn.visible?126:276
+            cellWidth:videoColumn.visible?width:width/Math.max(1,Math.floor(width/260))
+            cellHeight:videoColumn.visible?140:cellWidth+92
+            reuseItems:true;cacheBuffer:200
             ScrollBar.vertical:DeskScrollBar {}
             delegate:ChamferPanel {
                 id:resultCard
                 required property var modelData
                 width:grid.cellWidth-10;height:grid.cellHeight-10;fillColor:Theme.surfaceOne;borderColor:YouTubeDesk.track.id===modelData.id&&YouTubeDesk.ownsAudio?Theme.widgetAccent:Theme.rule;chamfer:6;scanlines:false
                 readonly property bool compact:videoColumn.visible
-                RoundedArtwork {x:10;y:10;width:resultCard.compact?100:parent.width-20;height:resultCard.compact?70:158;cornerRadius:5;source:modelData.art;asynchronous:true;fillMode:Image.PreserveAspectCrop;MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:root.activate(modelData,true)}}
-                Text {x:resultCard.compact?120:10;y:resultCard.compact?10:178;width:parent.width-x-10;text:modelData.title;textFormat:Text.PlainText;elide:Text.ElideRight;maximumLineCount:2;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paper}
-                Text {x:resultCard.compact?120:10;y:resultCard.compact?52:218;width:parent.width-x-10;text:modelData.artist+(modelData.duration?' · '+SpotifyDesk.fmt(modelData.duration):'');textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+                RoundedArtwork {id:thumbnail;x:10;y:10;width:resultCard.compact?88:parent.width-20;height:width;cornerRadius:5;source:modelData.art;asynchronous:true;fillMode:Image.PreserveAspectCrop;MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:root.activate(modelData,true)}}
+                Text {x:resultCard.compact?110:10;y:resultCard.compact?10:thumbnail.y+thumbnail.height+8;width:parent.width-x-10;text:modelData.title;textFormat:Text.PlainText;elide:Text.ElideRight;maximumLineCount:2;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paper}
+                Text {x:resultCard.compact?110:10;y:resultCard.compact?50:thumbnail.y+thumbnail.height+44;width:parent.width-x-10;text:modelData.artist+(modelData.duration?' · '+SpotifyDesk.fmt(modelData.duration):'');textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
                 Row {anchors.right:parent.right;anchors.bottom:parent.bottom;anchors.margins:8;spacing:6
                     MusicButton {visible:root.section===2;implicitWidth:32;implicitHeight:28;glyph:'\uf062';Accessible.name:'Move earlier in queue';onActivated:YouTubeDesk.moveQueued(modelData,-1)}
                     MusicButton {visible:root.section===2;implicitWidth:32;implicitHeight:28;glyph:'\uf063';Accessible.name:'Move later in queue';onActivated:YouTubeDesk.moveQueued(modelData,1)}

@@ -10,6 +10,12 @@ DropdownFrame {
  property var hostWindow:null
  property int section:0
  property bool live:false
+ property bool peakHold:false
+ property var heldBins:[]
+ property bool resetWaterfall:true
+ readonly property real scopeMHz:selectedBand==='fm'?frequency:((Radio.data.bands||[]).find(b=>b.id===selectedBand)?.lowMHz+(Radio.data.bands||[]).find(b=>b.id===selectedBand)?.highMHz)/2
+ onScopeMHzChanged:{live=false;heldBins=[];resetWaterfall=true;}
+ onGainChanged:{live=false;heldBins=[];resetWaterfall=true;}
  property var liveBins:[]
  property var liveFrame:({})
  property var scopeCanvas:null
@@ -21,8 +27,8 @@ DropdownFrame {
  IpcHandler {enabled:!!root.hostWindow?.visible;target:'radio-panel';function state():string{return JSON.stringify({available:Radio.available,busy:Radio.busy,live:root.live,bins:root.samples.length,rows:root.waterfall.length,section:root.section,history:Radio.history.length,error:Radio.error});}function scope(enabled:bool):void{root.live=enabled;}function section(index:int):void{root.section=Math.max(0,Math.min(2,index));}function action(name:string):void{Radio.run(name);}}
  Connections {target:Radio;function onReceiptChanged(){if(!root.live){root.liveBins=[];root.liveFrame=({});root.waterfall=[];}}}
  Connections {target:root.hostWindow;function onVisibleChanged(){if(!root.hostWindow.visible)root.live=false;}}
- Process {id:scope;running:root.live&&!!root.hostWindow?.visible;command:[Quickshell.env('HOME')+'/.local/bin/sensei-radio','stream',root.selectedBand];stdout:SplitParser {onRead:line=>{try{const d=JSON.parse(line);if(d.error){Radio.error=d.error;root.live=false;return;}root.liveFrame=d;root.liveBins=d.bins||[];if(root.liveBins.length){const points=root.liveBins.filter((_,i)=>i%Math.max(1,Math.ceil(root.liveBins.length/256))===0).map(b=>b.db);root.waterfall=[points].concat(root.waterfall).slice(0,64);if(root.scopeCanvas)root.scopeCanvas.requestPaint();}}catch(e){}}}onExited:root.live=false}
- Text {visible:!Radio.available;width:parent.width;height:visible?implicitHeight:0;text:'Connect an RTL-SDR receiver to this machine. The radio controls appear when USB is detected.';wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.paperMuted}
+ Process {id:scope;running:root.live&&!!root.hostWindow?.visible;command:[Quickshell.env('HOME')+'/.local/bin/sensei-radio','scope',String(root.scopeMHz),String(root.gain)];stdout:SplitParser {onRead:line=>{try{const d=JSON.parse(line);if(d.error){Radio.error=d.error;root.live=false;return;}root.liveFrame=d;root.liveBins=d.bins||[];if(root.peakHold)root.heldBins=root.liveBins.map((b,i)=>({hz:b.hz,db:root.heldBins[i]?.hz===b.hz?Math.max(b.db,root.heldBins[i].db):b.db}));if(root.liveBins.length){const points=root.liveBins.filter((_,i)=>i%Math.max(1,Math.ceil(root.liveBins.length/256))===0).map(b=>b.db);root.waterfall=[points].concat(root.waterfall).slice(0,64);if(root.scopeCanvas)root.scopeCanvas.requestPaint();}}catch(e){}}}onExited:root.live=false}
+ Text {visible:!Radio.available;width:parent.width;text:'Connect an RTL-SDR receiver to this machine. The radio controls appear when USB is detected.';wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.paperMuted}
  Loader {width:parent.width;active:Radio.available;sourceComponent:Component {
  Column {width:parent.width;spacing:16
   Row {width:parent.width;spacing:12
@@ -54,21 +60,33 @@ DropdownFrame {
    MusicButton {implicitWidth:180;implicitHeight:36;label:'5s spectrum';glyph:'\uf201';enabled:!root.live&&!Radio.busy&&Radio.available&&band.currentIndex>=0;onActivated:Radio.run('scan',[Radio.data.bands[band.currentIndex].id])}
   }
   Row {visible:root.section===0;width:parent.width;spacing:10
-   MusicButton {implicitWidth:180;implicitHeight:34;label:root.live?'Stop live survey':'Live waterfall';glyph:root.live?'\uf04d':'\uf201';enabled:Radio.available&&!Radio.busy;selected:root.live;onActivated:{root.live=!root.live;if(root.live){root.waterfall=[];root.liveBins=[];}}}
-   Text {anchors.verticalCenter:parent.verticalCenter;text:'Real sweeps · 1 s integration · auto-stops on close or after 10 min';font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
+   MusicButton {implicitWidth:180;implicitHeight:34;label:root.live?'Stop live scope':'Live RF / 20 fps';glyph:root.live?'\uf04d':'\uf201';enabled:Radio.available&&!Radio.busy;selected:root.live;onActivated:{root.live=!root.live;if(root.live){root.waterfall=[];root.liveBins=[];root.heldBins=[];root.resetWaterfall=true;}}}
+   Text {anchors.verticalCenter:parent.verticalCenter;text:'2.048 MHz window · '+root.scopeMHz.toFixed(3)+' MHz · stops on close';font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
+  }
+  Row {visible:root.section===0;width:parent.width;spacing:10
+   MusicButton {implicitWidth:150;implicitHeight:30;label:'Peak hold';glyph:'\uf201';selected:root.peakHold;onActivated:{root.peakHold=!root.peakHold;root.heldBins=[];}}
+   MusicButton {implicitWidth:170;implicitHeight:30;label:'Tune strongest bin';glyph:'\uf140';enabled:root.samples.length>0&&root.selectedBand==='fm';onActivated:{const peak=root.samples.reduce((a,b)=>a.db>b.db?a:b);if(peak.hz>=87500000&&peak.hz<=108000000){root.live=false;root.frequency=Math.round(peak.hz/100000)/10;}}}
+   Text {anchors.verticalCenter:parent.verticalCenter;text:'DC spikes can be receiver artefacts.';font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
   }
   ChamferPanel {visible:root.section===0;width:parent.width;height:222;fillColor:Theme.ink;borderColor:Theme.rule;scanlines:false
    Canvas {id:spectrum;Component.onCompleted:root.scopeCanvas=spectrum;Component.onDestruction:root.scopeCanvas=null;anchors.fill:parent;anchors.margins:14;onPaint:{
-    const c=getContext('2d'),w=width,h=root.waterfall.length?90:height-26;c.clearRect(0,0,width,height);c.strokeStyle=Theme.alpha(Theme.paper,.12);c.lineWidth=1;
+    const c=getContext('2d'),w=width,h=root.waterfall.length?90:height-26;
+    if(root.resetWaterfall){c.clearRect(0,0,width,height);root.resetWaterfall=false;}
+    c.clearRect(0,0,w,h+4);c.clearRect(0,height-22,w,22);c.strokeStyle=Theme.alpha(Theme.paper,.12);c.lineWidth=1;
     for(let j=1;j<5;j++){c.beginPath();c.moveTo(0,j*h/5);c.lineTo(w,j*h/5);c.stroke();}
-    const bins=root.samples;if(!bins.length)return;let low=Math.min(...bins.map(b=>b.db)),high=Math.max(...bins.map(b=>b.db));if(high-low<6)high=low+6;
-    c.beginPath();for(let i=0;i<bins.length;i++){const x=i*w/(bins.length-1),y=h-(bins[i].db-low)/(high-low)*(h-8);if(i===0)c.moveTo(x,y);else c.lineTo(x,y);}c.strokeStyle=Theme.widgetAccent;c.lineWidth=1.3;c.stroke();
-    if(root.waterfall.length){const rows=root.waterfall,cell=(height-h-30)/64;for(let y=0;y<rows.length;y++){const row=rows[y];for(let x=0;x<row.length;x++){const v=Math.max(0,Math.min(1,(row[x]-low)/Math.max(6,high-low)));c.fillStyle=Qt.rgba(.08+v*.85,.015+v*.08,.08+v*.4,.25+v*.75);c.fillRect(x*w/row.length,h+6+y*cell,Math.ceil(w/row.length),Math.ceil(cell));}}}
+    const bins=root.samples;if(!bins.length)return;let low=Math.min(...bins.map(b=>b.db)),high=Math.max(...bins.map(b=>b.db));if(high-low<12)high=low+12;
+    function trace(points,color,weight){c.beginPath();for(let i=0;i<points.length;i++){const x=i*w/(points.length-1),y=Math.max(0,Math.min(h,h-(points[i].db-low)/(high-low)*(h-8)));if(i===0)c.moveTo(x,y);else c.lineTo(x,y);}c.strokeStyle=color;c.lineWidth=weight;c.stroke();}
+    if(root.peakHold&&root.heldBins.length===bins.length)trace(root.heldBins,Theme.alpha(Theme.paper,.32),1);
+    trace(bins,Theme.widgetAccent,1.3);
+    if(root.waterfall.length){const y=Math.ceil(h+6),bottom=Math.floor(height-25),depth=bottom-y;
+     if(depth>1){const previous=c.getImageData(0,y,Math.floor(w),depth-1);c.putImageData(previous,0,y+1);}
+     const row=root.waterfall[0];for(let x=0;x<row.length;x++){const v=Math.max(0,Math.min(1,(row[x]-low)/Math.max(12,high-low)));c.fillStyle=Qt.rgba(.08+v*.85,.015+v*.08,.08+v*.4,.25+v*.75);c.fillRect(x*w/row.length,y,Math.ceil(w/row.length),1);}
+    }
     c.fillStyle=Theme.paperMuted;c.font='11px monospace';c.fillText((bins[0].hz/1e6).toFixed(2)+' MHz',0,height-3);c.fillText((bins[bins.length-1].hz/1e6).toFixed(2)+' MHz',Math.max(0,w-94),height-3);
    }}
    Text {anchors.centerIn:parent;visible:!root.samples.length;width:parent.width-40;text:'A real spectrum appears after a bounded capture.\nStart Live waterfall for real sweeps; Gqrx adds full demodulation.';horizontalAlignment:Text.AlignHCenter;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paperMuted}
   }
-  Text {visible:root.section===0;width:parent.width;text:Radio.receipt.kind==='usb-test'?'2.048 MS/s · '+Radio.receipt.seconds+' s · reported sample loss: '+Radio.receipt.lostSamplesReported+' · '+Radio.receipt.tuner:root.samples.length?((root.liveFrame.label||Radio.receipt.label||'Spectrum')+' · '+root.samples.length+' bins · relative dB · uncalibrated'+(root.live?' · LIVE':Radio.receipt.peakMHz?' · peak '+Radio.receipt.peakMHz+' MHz':'')):'No capture yet';font.family:Appearance.font.data;font.pixelSize:11;wrapMode:Text.Wrap;color:Theme.paperMuted}
+  Text {visible:root.section===0;width:parent.width;text:Radio.receipt.kind==='usb-test'?'2.048 MS/s · '+Radio.receipt.seconds+' s · reported sample loss: '+Radio.receipt.lostSamplesReported+' · '+Radio.receipt.tuner:root.samples.length?((root.liveFrame.label||Radio.receipt.label||'Spectrum')+' · '+root.samples.length+' bins · '+(root.liveFrame.units||Radio.receipt.units||'relative dB · uncalibrated')+(root.live?' · LIVE':Radio.receipt.peakMHz?' · peak '+Radio.receipt.peakMHz+' MHz':'')):'No capture yet';font.family:Appearance.font.data;font.pixelSize:11;wrapMode:Text.Wrap;color:Theme.paperMuted}
   Text {visible:root.section===1;width:parent.width;text:'TRY / Find FM stations. Compare antenna positions. Observe ISM-band energy. Use rtl_433 for your own weather sensors. Explore public beacon spectrum; cellular here is power only. Aircraft/satellite decoding needs suitable antennas and separate tools.';font.family:Appearance.font.ui;font.pixelSize:12;wrapMode:Text.Wrap;color:Theme.paperMuted}
   Column {visible:root.section===1;width:parent.width;spacing:16
    Text {width:parent.width;text:'RADIO LAB / reproducible curiosity';font.family:Appearance.font.heading;font.pixelSize:19;color:Theme.paper}

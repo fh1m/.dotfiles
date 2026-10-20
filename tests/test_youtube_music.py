@@ -49,6 +49,24 @@ class MediaBoundaries(unittest.TestCase):
   with self.assertRaises(ValueError):y.collections('watchlater',-1)
   with self.assertRaises(ValueError):y.search('example',offset=10000)
 
+class CompactPayloads(unittest.TestCase):
+ def test_stream_resolution_omits_full_format_inventory_and_preflight_requests(self):
+  with patch.object(y,'run',return_value={'id':'abcdefghijk','url':'https://r1.googlevideo.com/a','acodec':'aac'}) as r:
+   y.audio('abcdefghijk');args=r.call_args.args[0]
+   self.assertNotIn('--check-formats',args);self.assertIn('--print',args);self.assertNotIn('automatic_captions',args[args.index('--print')+1])
+ def test_catalog_dump_is_projected_before_crossing_process_boundary(self):
+  from subprocess import CompletedProcess
+  with tempfile.TemporaryDirectory() as d,patch.object(y,'CACHE',Path(d)),patch.object(y.subprocess,'run',return_value=CompletedProcess([],0,'{"entries":[]}','')) as r:
+   y.run(['--flat-playlist','--dump-single-json','example'])
+   cmd=r.call_args.args[0];self.assertNotIn('--dump-single-json',cmd);self.assertIn(y.CATALOG_TEMPLATE,cmd)
+ def test_real_template_discards_an_oversized_unneeded_format_list(self):
+  try:import yt_dlp
+  except ImportError:self.skipTest('yt-dlp is optional in isolated unit environments')
+  with yt_dlp.YoutubeDL({'quiet':True}) as downloader:
+   data={'id':'abcdefghijk','title':'Long lecture','formats':[{'fragments':['x'*9000000]}],'description':'x'*9000000,'url':'https://r1.googlevideo.com/a'}
+   text=downloader.evaluate_outtmpl(y.PLAYBACK_TEMPLATE,data)
+   self.assertLess(len(text),1000);self.assertEqual(json.loads(text)['id'],'abcdefghijk')
+
 class AuthenticationFallback(unittest.TestCase):
  def test_bot_challenge_retries_selected_account_once_and_remembers_requirement(self):
   from subprocess import CompletedProcess

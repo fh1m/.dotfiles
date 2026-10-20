@@ -124,9 +124,12 @@ Singleton {
     // middle of the bar, which is fine for a frame burst and wrong on camera.
     // A readout knows its own position; nothing else does.
     property var dropdownAnchors: ({})
+    property var dropdownAnchorEdges: ({})
+    property string dropdownEdge: "top"
 
-    function publishAnchor(name, x, output) {
+    function publishAnchor(name, x, output, edge) {
         if(output)name=output+":"+name;
+        if(edge==='top'||edge==='bottom'){const edges=Object.assign({},dropdownAnchorEdges);edges[name]=edge;dropdownAnchorEdges=edges;}
         if (dropdownAnchors[name] === x)
             return;
         const next = Object.assign({}, dropdownAnchors);
@@ -134,6 +137,23 @@ Singleton {
         dropdownAnchors = next;
     }
 
+    function barInset(output,edge) {
+        let value=0;
+        for(const [key,window] of Object.entries(barWindows))if(key===output+':'+edge&&window)value=Math.max(value,window.height||Appearance.metrics.barHeight);
+        return value;
+    }
+    function edgeFor(name,output) {
+        return dropdownAnchorEdges[output+':'+name] || (MachineProfile.role(output)==='screenpad'?'bottom':isExternalOutput(output)?externalBarEdge(output):['monitor','clipboard','usb','phone','oasis'].includes(name)?'bottom':'top');
+    }
+    function toggleDropdownAt(name,item,window) {
+        if(!window?.screen)return;
+        const output=window.screen.name;
+        const entry=Object.entries(barWindows).find(pair=>pair[1]===window);
+        const edge=entry?.[0]?.endsWith(':bottom')?'bottom':'top';
+        const point=item.mapToItem(window.contentItem,item.width/2,0);
+        publishAnchor(name,point.x,output,edge);
+        toggleDropdownOn(name,output);
+    }
     function anchorFor(name: string): real {
         return dropdownAnchors[dropdownOriginScreen+":"+name] ?? dropdownAnchors[name] ?? 0;
     }
@@ -160,7 +180,7 @@ Singleton {
         if(!screens.some(s=>s.name===output))output=focusedScreenName();
         if(!screens.some(s=>s.name===output))output=MachineProfile.primaryOutput;
         if(!screens.some(s=>s.name===output))return;
-        SpotifyDesk.fullscreen=false;dropdownOriginScreen=output;dropdownAnchorX=anchorFor(name);dropdown=name;dropdownStamp++;
+        SpotifyDesk.fullscreen=false;dropdownOriginScreen=output;dropdownEdge=edgeFor(name,output);dropdownAnchorX=anchorFor(name);dropdown=name;dropdownStamp++;
     }
     function toggleDropdownOn(name:string,output:string):void {
         if(!screens.some(s=>s.name===output)){toggleDropdown(name);return;}
@@ -174,20 +194,10 @@ Singleton {
     }
     function releaseInstrument():void {instrumentPinned=false;if(dropdown===""&&instrumentPrevious.name)openDropdownOn(instrumentPrevious.name,instrumentPrevious.output);}
     function openDropdown(name: string): void {
-        SpotifyDesk.fullscreen=false;
-        dropdownOriginScreen = barHovered && hoveredBarOutput ? hoveredBarOutput : focusedScreenName();
-        dropdownAnchorX = anchorFor(name);
-        dropdown = name;
+        openDropdownOn(name,barHovered&&hoveredBarOutput?hoveredBarOutput:focusedScreenName());
     }
-
     function toggleDropdown(name: string): void {
-        SpotifyDesk.fullscreen=false;
-        if (dropdownAnchors[name] !== undefined) dropdownAnchorX = anchorFor(name);
-        const origin=barHovered && hoveredBarOutput ? hoveredBarOutput : focusedScreenName();
-        const closing=dropdown===name&&dropdownOriginScreen===origin;
-        if(!closing)dropdownOriginScreen=origin;
-        dropdown=closing?"":name;
-        dropdownStamp++;
+        toggleDropdownOn(name,barHovered&&hoveredBarOutput?hoveredBarOutput:focusedScreenName());
     }
 
     // **One overlay at a time, and this is the only way in.**

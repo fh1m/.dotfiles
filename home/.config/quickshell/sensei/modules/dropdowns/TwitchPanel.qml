@@ -20,8 +20,8 @@ Column {
     function browse(section){if(fetch.running)return;root.section=section;fetch.command=['@HOME@/.local/bin/sensei-spotify'].concat(section===4?['twitch-account']:section===3?['twitch-saved']:['twitch-browse',section===1?'following':section===2?'search':'discover',query]);fetch.running=true;}
     function attach(){
         if(!visible||!root.watching||SpotifyDesk.videoMode!=='youtube'||!hostWindow)return;
-        const point=video.mapToItem(null,0,0),top=hostWindow.bottomPanel?(hostWindow.screen.height-hostWindow.height-hostWindow.margins.bottom):hostWindow.margins.top;
-        const slot={x:Math.round(hostWindow.margins.left+point.x),y:Math.round(top+point.y+(hostWindow.bottomPanel?-1:1)*Appearance.metrics.barHeight),width:Math.round(video.width),height:Math.round(video.height),output:hostWindow.screen.name,track:YouTubeDesk.track.id};
+        const point=video.mapToItem(null,0,0),top=hostWindow.contentOriginY;
+        const slot={x:Math.round(hostWindow.margins.left+point.x),y:Math.round(top+point.y),width:Math.round(video.width),height:Math.round(video.height),output:hostWindow.screen.name,track:YouTubeDesk.track.id};
         if(JSON.stringify(SpotifyDesk.videoSlot)!==JSON.stringify(slot))SpotifyDesk.videoSlot=slot;
     }
     Timer {interval:200;repeat:true;running:root.visible&&root.watching&&SpotifyDesk.videoMode==='youtube';onTriggered:root.attach()}

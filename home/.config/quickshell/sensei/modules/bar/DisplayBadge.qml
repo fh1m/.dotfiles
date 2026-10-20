@@ -32,6 +32,6 @@ Item {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onWheel: event => { DisplayControls.adjustLevel(root.output, event.angleDelta.y > 0 ? 5 : -5); event.accepted = true; }
-        onClicked: {const name=root.QsWindow.window?.screen?.name||MachineProfile.primaryOutput;ShellState.barContext(name);ShellState.openDropdownOn("displays",name);}
+        onClicked: {const name=root.QsWindow.window?.screen?.name||MachineProfile.primaryOutput;ShellState.barContext(name);ShellState.toggleDropdownAt("displays",root,root.QsWindow.window);}
     }
 }

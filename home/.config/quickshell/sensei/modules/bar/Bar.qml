@@ -13,7 +13,7 @@ Variants {
     PanelWindow {
         id: bar
         required property ShellScreen modelData
-        IpcHandler {target:"bar-controls-"+bar.modelData.name;function expand(value:string):void {bar.readoutsOpen=value==="on";}function state():string {return JSON.stringify({expanded:bar.readoutsOpen});}}
+        IpcHandler {target:"bar-controls-"+bar.modelData.name;function expand(value:string):void {bar.readoutsOpen=value==="on";}function state():string {return JSON.stringify({expanded:bar.readoutsOpen,sound:{x:soundButton.mapToItem(bar.contentItem,soundButton.width/2,soundButton.height/2).x,y:soundButton.mapToItem(bar.contentItem,soundButton.width/2,soundButton.height/2).y}});}}
         screen: modelData
         color: "transparent"
         implicitHeight: Appearance.metrics.barHeight
@@ -65,7 +65,7 @@ Variants {
             EthernetButton {condensed:!bar.readoutsOpen;anchors.verticalCenter:parent.verticalCenter}
             BtReadout { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             DisplayBadge { output: "main"; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
-            SoundButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
+            SoundButton { id:soundButton; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             NotificationsButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             BatteryButton { visible:!MachineProfile.desktop; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             SystemButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }

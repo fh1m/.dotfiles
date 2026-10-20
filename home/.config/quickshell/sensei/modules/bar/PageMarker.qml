@@ -76,7 +76,7 @@ Item {
         Accessible.role:Accessible.Button
         Accessible.name:root.modeText+" display settings"
         activeFocusOnTab:true
-        function openDisplay(){ShellState.barContext(root.output);ShellState.openDropdownOn("displays",root.QsWindow.window?.screen?.name??"");}
+        function openDisplay(){ShellState.barContext(root.output);ShellState.toggleDropdownAt("displays",root,root.QsWindow.window);}
         Accessible.onPressAction:openDisplay()
         Keys.onReturnPressed:openDisplay()
         Keys.onSpacePressed:openDisplay()

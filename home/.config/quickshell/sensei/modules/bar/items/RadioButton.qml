@@ -11,5 +11,5 @@ Item {
  BarSurface {anchors.fill:parent;grouped:true;selected:ShellState.dropdown==='radio';hovered:hover.hovered;pressed:tap.pressed}
  Text {anchors.centerIn:parent;text:'\uf519';font.family:Appearance.font.icons;font.pixelSize:18;color:Theme.signalRed}
  HoverHandler {id:hover;cursorShape:Qt.PointingHandCursor}
- TapHandler {id:tap;onTapped:{const output=root.QsWindow.window?.screen?.name||MachineProfile.primaryOutput;ShellState.publishAnchor('radio',root.mapToItem(null,0,0).x,output);ShellState.toggleDropdownOn('radio',output);}}
+ TapHandler {id:tap;onTapped:{const output=root.QsWindow.window?.screen?.name||MachineProfile.primaryOutput;ShellState.publishAnchor('radio',root.mapToItem(null,0,0).x,output);ShellState.toggleDropdownAt('radio',root,root.QsWindow.window);}}
 }

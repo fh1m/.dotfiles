@@ -15,6 +15,9 @@ Singleton {
     property var usedDisplays:[]
     property string engineOutput:''
     property var currentMedia:({})
+    property var recentMedia:({})
+    property string requestKey:""
+    property bool recoveryAttempt:false
     property real desiredVolume:65
     property bool startPaused:false
     property bool loadPaused:false
@@ -65,17 +68,27 @@ Singleton {
     Connections {
         target:root.engines[root.engineOutput]||null
         ignoreUnknownSignals:true
-        function onFailed(){root.error=root.platform+' playback could not continue. Press play to reconnect, or choose another item.';root.audioPlayer.stop();}
+        function onFailed(){const at=root.position;root.audioPlayer.stop();if(!root.recoveryAttempt&&!root.resolving&&root.track.id){root.pendingSeek=at;delete root.recentMedia[root.requestKey];root.play(root.track,root.watchMode,false,true);}else root.error=root.platform+' playback could not continue. Press play to reconnect, or choose another item.';}
         function onEnded(){if(root.repeat==='track'){root.audioPlayer.position=0;root.audioPlayer.play();}else root.next(false);}
         function onLoaded(){if(root.pendingSeek>0){root.audioPlayer.position=root.pendingSeek;root.pendingSeek=0;}}
     }
     function updateVideo(){if(engines[engineOutput]&&ownsAudio&&nativeVideo)audioPlayer.setVideoEnabled(true);}
     Connections {target:SpotifyDesk;function onVideoModeChanged(){Qt.callLater(root.relocate);Qt.callLater(root.updateVideo);}function onMusicVisibleChanged(){if(root.nativeVideo&&root.ownsAudio&&SpotifyDesk.videoMode==='youtube'&&!SpotifyDesk.musicVisible)SpotifyDesk.videoMode='mini';Qt.callLater(root.updateVideo);}function onPageChanged(){Qt.callLater(root.updateVideo);}function onVideoWindowOutputChanged(){Qt.callLater(root.relocate);}}
     function watch(item){play(item,true);}
-    function play(item,watchVideo,paused){startPaused=!!paused;
+    function play(item,watchVideo,paused,retrying){startPaused=!!paused;
         if(resolving||pauseSpotify.running||!item?.id)return;generation++;requestGeneration=generation;
         if(!queue.some(r=>r.id===item.id))queue=queue.concat([item]);
-        watchMode=!!watchVideo||item.kind==='twitch';error='';resolving=true;resolve.command=['@HOME@/.local/bin/sensei-spotify',item.kind==='twitch'?'twitch-watch':watchVideo?'youtube-watch':'youtube-audio',item.id].concat(watchMode?[String(quality)]:[]).concat(item.private?['private']:[]);resolve.running=true;
+        watchMode=!!watchVideo||item.kind==='twitch';error='';recoveryAttempt=!!retrying;
+        requestKey=[item.kind||'youtube',item.id,watchMode,quality,!!item.private].join(':');
+        const cached=recentMedia[requestKey];
+        if(!retrying&&cached&&Date.now()-cached.at<90000){acceptResolved(cached.data);return;}
+        resolving=true;resolve.command=['@HOME@/.local/bin/sensei-spotify',item.kind==='twitch'?'twitch-watch':watchVideo?'youtube-watch':'youtube-audio',item.id].concat(watchMode?[String(quality)]:[]).concat(item.private?['private']:[]);resolve.running=true;
+    }
+    function acceptResolved(d){
+        if(d.error||!d.stream){error=d.error||'YouTube stream unavailable.';return;}
+        if(Object.keys(recentMedia).length>=8)delete recentMedia[Object.keys(recentMedia)[0]];
+        recentMedia[requestKey]={at:Date.now(),data:d};pending=d;
+        if(SpotifyDesk.spotifyState.playing)pauseSpotify.running=true;else begin();
     }
     function removeQueued(item){queue=queue.filter(r=>r.id!==item.id);index=queue.findIndex(r=>r.id===track.id);}
     function moveQueued(item,direction){const from=queue.findIndex(r=>r.id===item.id),to=from+direction;if(from<0||to<0||to>=queue.length)return;let copy=queue.slice();copy.splice(to,0,copy.splice(from,1)[0]);queue=copy;index=queue.findIndex(r=>r.id===track.id);}
@@ -109,10 +122,7 @@ Singleton {
     Process {
         id:resolve
         stdout:StdioCollector {onStreamFinished:{
-            try {if(root.requestGeneration!==root.generation)return;const d=JSON.parse(text);if(d.error||!d.stream){root.error=d.error||'YouTube stream unavailable.';return;}
-                root.pending=d;
-                // Resolve first. A failed search never stops existing Spotify audio.
-                if(SpotifyDesk.spotifyState.playing){pauseSpotify.running=true;}else root.begin();
+            try {if(root.requestGeneration!==root.generation)return;const d=JSON.parse(text);root.acceptResolved(d);
             }catch(e){root.error='YouTube returned an unreadable stream.';}
         }}
         onExited:root.resolving=false

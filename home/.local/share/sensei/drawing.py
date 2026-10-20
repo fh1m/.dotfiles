@@ -150,11 +150,23 @@ def reconcile():
     profile=next(x for x in data['Profiles'] if x['Tablet']==MODEL)
     profile['AbsoluteModeSettings']['Tablet']=area(p,region)
    region=region or {'x':0,'y':0,'width':m['width']/m['scale'],'height':m['height']/m['scale'],'kind':'display'}
-   virtual=json.loads(call(['hyprctl','-i','0','devices','-j']))['tablets']
-   name=next((x.get('name') for x in virtual if 'opentabletdriver' in x.get('name','')),'')
-   if not name:raise ValueError('Artist Mode virtual pen is not present')
    if data!=source:
     e.save(path,data);call(['otd','loadsettings',str(path)]);call(['otd','savedefaultsettings'])
+   # Loading an output profile can recreate uinput devices. Resolve them after it.
+   name='';devices={}
+   for _ in range(10):
+    devices=json.loads(call(['hyprctl','-i','0','devices','-j']))
+    name=next((x.get('name') for x in devices.get('tablets',[]) if 'opentabletdriver' in x.get('name','')),'')
+    if name:break
+    time.sleep(.1)
+   if not name:raise ValueError('Artist Mode virtual pen is not present')
+   # Older compositor sessions may retain native interfaces from before the OTD
+   # udev ignore rule was installed. Never let those fight the virtual artist pen.
+   for kind in ('mice','keyboards','tablets'):
+    for raw in devices.get(kind,[]):
+     raw_name=raw.get('name','')
+     if raw_name.startswith('ugtablet-9-inch-pentablet'):
+      call(['hyprctl','-i','0','eval','hl.device({name='+json.dumps(raw_name)+',enabled=false})'])
    # JSON quoting is a safe Lua string for these driver-owned device/output names.
    call(['hyprctl','-i','0','eval','hl.device({name='+json.dumps(name)+',output='+json.dumps(m['name'])+',region_position={'+str(region['x'])+','+str(region['y'])+'},region_size={'+str(region['width'])+','+str(region['height'])+'},active_area_position={0,0},active_area_size={0,0},transform=0,relative_input=false})'])
    e.save(state/'mapped.json',{'output':m['name'],'device':name,'at':time.time(),'profile':p,'region':region})
@@ -192,6 +204,17 @@ def focus_ink():
   if 'xournal' in c.get('class','').lower() and name in c.get('title',''):
    call(['hyprctl','-i','0','dispatch','hl.dsp.send_shortcut({mods="",key="F11",window='+json.dumps('address:'+c['address'])+'})'])
    return {'focusMode':not bool(c.get('fullscreen'))}
+ raise ValueError('Open the scratchpad first')
+
+def tool(name):
+ if name not in ('pen','eraser'):raise ValueError('Choose Pen or Eraser')
+ saved=e.read(e.home()/'.local/state/sensei-drawing/current.json',{})
+ filename=Path(saved.get('path','/missing')).name
+ for c in json.loads(call(['hyprctl','-i','0','clients','-j'])):
+  if 'xournal' in c.get('class','').lower() and filename in c.get('title',''):
+   key='P' if name=='pen' else 'E'
+   call(['hyprctl','-i','0','dispatch','hl.dsp.send_shortcut({mods="CTRL|SHIFT",key='+json.dumps(key)+',window='+json.dumps('address:'+c['address'])+'})'])
+   return {'tool':name}
  raise ValueError('Open the scratchpad first')
 
 

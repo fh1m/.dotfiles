@@ -39,13 +39,13 @@ Item {
         onClicked: event => {
             if (event.button === Qt.RightButton) {
                 root.publish();
-                ShellState.toggleDropdownOn("comic",root.QsWindow.window?.screen?.name??"");
+                ShellState.toggleDropdownAt("comic",root,root.QsWindow.window);
             } else if (event.button === Qt.MiddleButton || (event.modifiers & Qt.ShiftModifier)) {
                 root.publish();
-                ShellState.toggleDropdownOn("ident",root.QsWindow.window?.screen?.name??"");
+                ShellState.toggleDropdownAt("ident",root,root.QsWindow.window);
             } else {
                 root.publish();
-                ShellState.toggleDropdownOn("code",root.QsWindow.window?.screen?.name??"");
+                ShellState.toggleDropdownAt("code",root,root.QsWindow.window);
             }
         }
     }

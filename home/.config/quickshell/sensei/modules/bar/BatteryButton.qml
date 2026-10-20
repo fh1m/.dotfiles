@@ -27,5 +27,5 @@ Item {
  function publish():void {ShellState.publishAnchor("power",root.mapToItem(null,0,0).x,root.QsWindow.window?.screen?.name??"");}
  onXChanged:publish()
  Component.onCompleted:Qt.callLater(publish)
- MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{root.publish();ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdownOn("power",root.QsWindow.window?.screen?.name??"");}}
+ MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{root.publish();ShellState.dropdownAnchorX=root.mapToItem(null,0,0).x;ShellState.toggleDropdownAt("power",root,root.QsWindow.window);}}
 }

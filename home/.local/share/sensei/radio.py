@@ -209,3 +209,31 @@ def compare():
  newer,older=rows;old={b['hz']:b['db'] for b in older['bins']};delta=[b['db']-old[b['hz']] for b in newer['bins'] if b['hz'] in old]
  if not delta:raise ValueError('The two captures have no common frequency bins.')
  return receipt({'kind':'comparison','at':time.time(),'band':newer['band'],'references':[older['id'],newer['id']],'commonBins':len(delta),'meanDeltaDb':round(sum(delta)/len(delta),2),'note':f'Mean change {sum(delta)/len(delta):+.2f} dB across {len(delta)} common bins. Signal variation is a confound; this is not calibrated antenna gain.'})
+
+
+def scope(frequency,gain=20):
+ """Twenty real FFT observations/s over a 2.048 MHz window; idle until called."""
+ frequency=float(frequency);gain=float(gain)
+ if not 24<=frequency<=1766 or not 0<=gain<=49.6:raise ValueError('Live scope: 24–1766 MHz; gain 0–49.6 dB.')
+ try:import numpy as np
+ except ImportError:raise ValueError('Live FFT requires python-numpy on the receiver host.') from None
+ with receiver():
+  rate=2048000;n=4096;frames=8;count=rate//20
+  p=subprocess.Popen(['rtl_sdr','-f',str(round(frequency*1e6)),'-s',str(rate),'-g',str(gain),'-'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
+  def terminate(*_):raise SystemExit(0)
+  previous=signal.signal(signal.SIGTERM,terminate);window=np.hanning(n).astype(np.float32);normal=float(window.sum())**2;deadline=time.monotonic()+600
+  try:
+   while time.monotonic()<deadline:
+    raw=p.stdout.read(count*2)
+    if len(raw)!=count*2:raise ValueError('Receiver disconnected or busy. Stop other SDR applications and reconnect.')
+    iq=(np.frombuffer(raw,dtype=np.uint8,count=frames*n*2).astype(np.float32)-127.5)/128
+    iq=(iq[::2]+1j*iq[1::2]).reshape(frames,n)
+    power=np.fft.fftshift((np.abs(np.fft.fft(iq*window,axis=1))**2).mean(axis=0))/normal
+    power=power.reshape(512,-1).mean(axis=1);db=10*np.log10(np.maximum(power,1e-12))
+    bins=[{'hz':round(frequency*1e6-rate/2+(i+.5)*rate/512),'db':round(float(v),2)} for i,v in enumerate(db)]
+    print(json.dumps({'kind':'live-iq','label':f'{frequency:.3f} MHz / 2.048 MHz span','bins':bins,'units':'relative dBFS · uncalibrated','rate':20,'gainDb':gain,'sampleRate':rate}),flush=True)
+  finally:
+   signal.signal(signal.SIGTERM,previous)
+   if p.poll() is None:p.terminate()
+   try:p.wait(timeout=3)
+   except subprocess.TimeoutExpired:p.kill();p.wait()

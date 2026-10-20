@@ -31,5 +31,5 @@ BarSurface {
 
     Component.onCompleted: Qt.callLater(() => ShellState.publishAnchor("notifications", root.mapToItem(null, 0, 0).x,root.QsWindow.window?.screen?.name??""))
     onXChanged: ShellState.publishAnchor("notifications", root.mapToItem(null, 0, 0).x,root.QsWindow.window?.screen?.name??"")
-    MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Notifications.markRead(); ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x; ShellState.toggleDropdownOn("notifications",root.QsWindow.window?.screen?.name??""); } }
+    MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Notifications.markRead(); ShellState.dropdownAnchorX = root.mapToItem(null, 0, 0).x; ShellState.toggleDropdownAt("notifications",root,root.QsWindow.window); } }
 }

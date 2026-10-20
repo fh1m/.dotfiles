@@ -4,6 +4,7 @@ import argparse
 import fcntl
 import json
 import os
+import re
 from pathlib import Path
 import shlex
 import socket
@@ -155,6 +156,14 @@ def main():
     args = parser.parse_args()
     if args.serve:
         words = shlex.split(os.environ.get('SSH_ORIGINAL_COMMAND', ''))
+        if words and words[0] == 'den-audio':
+            action = words[1] if len(words)>1 else ''
+            valid = (action in {'status','stop','check','test'} and len(words)==2) or (action=='start' and len(words)==4 and words[2] in {'lan','aux'}) or (action=='port' and len(words)==4)
+            if not valid or any(not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_.:-]{0,255}', word) for word in words[2:]):
+                raise ValueError('Restricted audio request rejected')
+            result=run([str(Path.home()/'.local/bin/sensei-den-audio'),*words[1:]],timeout=14)
+            value=json.loads(result.stdout)
+            print(json.dumps(value));return
         if len(words)>=2 and words[0]=='sensei-actions':
             # Exact executable, no shell, no catalog/trust editing or forwarding.
             # The engineering CLI validates every action and consumes host-bound confirmations.

@@ -47,6 +47,18 @@ class DenControl(unittest.TestCase):
                 den.main()
             action.assert_not_called()
 
+    def test_audio_gateway_rejects_worker_and_shell_arguments(self):
+        for command in ('den-audio worker lan output', 'den-audio start lan output;id', 'den-audio port output --help', 'den-audio start lan'):
+            with self.subTest(command=command),patch.object(den.sys,'argv',['den-control','--serve']),patch.dict(den.os.environ,{'SSH_ORIGINAL_COMMAND':command}),patch.object(den,'run') as run:
+                with self.assertRaises(ValueError):den.main()
+                run.assert_not_called()
+
+    def test_audio_gateway_passes_exact_validated_argv(self):
+        import subprocess
+        with patch.object(den.sys,'argv',['den-control','--serve']),patch.dict(den.os.environ,{'SSH_ORIGINAL_COMMAND':'den-audio start lan alsa_output.usb-device.analog-stereo'}),patch.object(den,'run',return_value=subprocess.CompletedProcess([],0,'{"active":true}')) as run,patch('builtins.print'):
+            den.main()
+            self.assertEqual(run.call_args.args[0][1:],['start','lan','alsa_output.usb-device.analog-stereo'])
+
     def test_receiver_storage_does_not_invoke_remote_shell(self):
         with patch.object(den, 'master', return_value=False), patch.object(den.subprocess, 'Popen') as open_path, patch.object(den, 'run') as run:
             den.dispatch('storage')

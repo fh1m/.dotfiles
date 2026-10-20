@@ -35,13 +35,13 @@ PanelWindow {
     Timer {interval:12000;running:window.visible&&window.collectionOpen&&!window.queuePinned&&!listHover.hovered;onTriggered:window.collectionOpen=false}
     property bool showTools:true
     property bool lyricsView:false
-    readonly property bool controlsShown:showTools||toolbarHover.hovered||!SpotifyDesk.playing||window.collectionOpen
+    readonly property bool controlsShown:showTools||window.collectionOpen
     HoverHandler {onPointChanged:{window.showTools=true;toolsIdle.restart()}}
     property bool focusArmed:false
     HyprlandFocusGrab {active:window.visible&&window.focusArmed&&!SpotifyDesk.musicBackdrop;windows:[window];onCleared:window.focusArmed=false}
     TapHandler {onTapped:{if(!SpotifyDesk.musicBackdrop)window.focusArmed=true;}}
     Item {width:parent.width;height:84;HoverHandler {id:toolbarHover}}
-    Timer {id:toolsIdle;interval:3500;running:window.visible;onTriggered:if(!toolbarHover.hovered)window.showTools=false;else restart()}
+    Timer {id:toolsIdle;interval:3500;running:window.visible;onTriggered:window.showTools=false}
     readonly property var rows: collection===0 ? SpotifyDesk.queueRows : SpotifyDesk.contextItem.id ? SpotifyDesk.contextRows : SpotifyDesk.playlistRows
     function sample(){if(!visible||palette.running||!SpotifyDesk.albumArt)return;sampledArt=SpotifyDesk.albumArt;palette.command=[Quickshell.env('HOME')+'/.local/bin/sensei-music-palette',sampledArt];palette.running=true;}
     onVisibleChanged: {reserveCompanion();if(visible){focusArmed=true;showTools=true;toolsIdle.restart();stage.forceActiveFocus();sample();}else focusArmed=false;}
@@ -131,20 +131,25 @@ PanelWindow {
             }
             MusicButton {anchors.bottom:parent.bottom;anchors.bottomMargin:10;anchors.horizontalCenter:parent.horizontalCenter;visible:window.collection===1&&!!SpotifyDesk.contextItem.id&&!!SpotifyDesk.nextPage;implicitWidth:140;implicitHeight:30;label:'Load more tracks';enabled:!SpotifyDesk.loading;onActivated:SpotifyDesk.more()}
         }
-        Row {
+        Item {
             visible:SpotifyDesk.zen
-            anchors.centerIn:parent
-            spacing:Math.max(30,stage.width*.04)
-            readonly property real artSize:Math.max(160,Math.min(490,stage.height-210,stage.width*.34))
-            RoundedArtwork {width:parent.artSize;height:width;cornerRadius:18;source:SpotifyDesk.albumArt;sourceSize:Qt.size(1000,1000);fillMode:Image.PreserveAspectCrop;asynchronous:true}
-            Column {anchors.verticalCenter:parent.verticalCenter;width:Math.min(640,stage.width*.4);spacing:22
-                Text {text:SpotifyDesk.playing?'NOW PLAYING':'PAUSED';font.family:Appearance.font.ui;font.pixelSize:12;font.letterSpacing:3;color:Theme.paperMuted}
-                Text {width:parent.width;text:SpotifyDesk.title;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.heading;font.pixelSize:Math.min(48,stage.width*.03);font.weight:Font.DemiBold;color:Theme.paper}
-                Text {width:parent.width;text:SpotifyDesk.artist;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:22;color:Theme.paperMuted}
-                Text {width:parent.width;text:SpotifyDesk.album;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.widgetMuted}
-                Rectangle {width:parent.width;height:2;color:Theme.alpha(Theme.paper,.12);Rectangle {height:2;width:parent.width*Math.min(1,SpotifyDesk.positionMs/Math.max(1,SpotifyDesk.playback.track?.duration||1));color:Theme.alpha(Theme.paper,.65)}}
-                MusicSpectrum {width:parent.width;height:50;visible:SpotifyDesk.spectrumEnabled;accent:Theme.paperMuted}
-                Text {text:SpotifyDesk.fmt(SpotifyDesk.positionMs)+' / '+SpotifyDesk.fmt(SpotifyDesk.playback.track?.duration||0);font.family:Appearance.font.data;font.pixelSize:12;color:Theme.paperMuted}
+            anchors.fill:parent
+            readonly property real artSize:Math.max(140,Math.min(440,stage.height-220,stage.width*.29))
+            readonly property real gap:Math.max(36,stage.width*.045)
+            Column {
+                id:focusAlbum
+                x:Math.max(stage.gutter,stage.width*.075)
+                anchors.verticalCenter:parent.verticalCenter
+                width:parent.artSize;spacing:14
+                RoundedArtwork {width:parent.width;height:width;cornerRadius:16;source:SpotifyDesk.albumArt;sourceSize:Qt.size(1000,1000);fillMode:Image.PreserveAspectCrop;asynchronous:true}
+                Text {width:parent.width;text:SpotifyDesk.title;textFormat:Text.PlainText;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight;font.family:'Noto Sans';font.pixelSize:Math.max(20,Math.min(30,stage.width*.019));font.weight:Font.DemiBold;color:Theme.paper}
+                Text {width:parent.width;text:SpotifyDesk.artist;textFormat:Text.PlainText;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight;font.family:'Noto Sans';font.pixelSize:18;color:Theme.paperMuted}
+                Text {width:parent.width;text:SpotifyDesk.album;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:'Noto Sans';font.pixelSize:13;color:Theme.paperMuted}
+            }
+            LyricsFollower {
+                x:focusAlbum.x+focusAlbum.width+parent.gap;y:Math.max(56,stage.height*.09)
+                width:Math.max(180,stage.width-x-Math.max(stage.gutter,stage.width*.06));height:stage.height-2*y
+                immersive:true;controlsVisible:false
             }
         }
         Text {visible:!SpotifyDesk.zen;x:stage.gutter;y:parent.height-34;width:parent.width-2*stage.gutter;text:SpotifyDesk.error||SpotifyDesk.statusError||SpotifyDesk.warning||'Esc / F11  restore widget     ·     Space  play / pause     ·     Tab  move between controls';textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:SpotifyDesk.error||SpotifyDesk.statusError?Theme.signalRed:Theme.paperMuted}

@@ -5,3 +5,6 @@ gqrx
 # XP-Pen driver/native scratchpad are shared drawing dependencies.
 opentabletdriver
 xournalpp
+
+# FFT scope runs only while the radio panel is active.
+python-numpy

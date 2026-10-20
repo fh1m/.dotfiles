@@ -4,6 +4,11 @@ from pathlib import Path
 CACHE=Path.home()/'.cache/sensei-spotify/youtube'
 LIBRARY=Path.home()/'.local/share/sensei-spotify/youtube-library.json'
 ACCOUNT=Path.home()/'.config/sensei-den/youtube.json'
+# Do not transport yt-dlp's full format/fragment/storyboard inventory into the UI.
+CATALOG_TEMPLATE='%(.{id,title,track,artist,channel,uploader,duration,url,entries,thumbnails})j'
+PLAYBACK_TEMPLATE='%(.{id,title,track,artist,channel,uploader,duration,url,acodec,vcodec,requested_formats,chapters})j'
+CAPTION_TEMPLATE='%(.{id,subtitles,automatic_captions})j'
+
 def identity(value):
  if re.fullmatch(r'[A-Za-z0-9_-]{11}',value):return value
  p=urllib.parse.urlsplit(value)
@@ -23,6 +28,9 @@ def run(args,authenticated=False):
  if not authenticated:
   try:authenticated=time.time()-json.loads((CACHE/'auth-required.json').read_text()).get('at',0)<900;account() if authenticated else None
   except (OSError,ValueError,TypeError):authenticated=False
+ args=list(args)
+ if '--dump-single-json' in args:
+  at=args.index('--dump-single-json');args[at:at+1]=['--print',CATALOG_TEMPLATE]
  runtime=['--js-runtimes','node'] if not shutil.which('deno') and shutil.which('node') else []
  options=['--cookies-from-browser','chrome+gnomekeyring:'+account()['profile']] if authenticated else []
  try:r=subprocess.run(['yt-dlp','--ignore-config','--no-warnings','--extractor-args','youtube:skip=translated_subs','--socket-timeout','6','--retries','0']+runtime+options+args,capture_output=True,text=True,timeout=35)
@@ -104,7 +112,7 @@ def audio(value,watch=False,quality=1080,authenticated=False):
  vid=identity(value)
  if quality not in (360,480,720,1080):raise ValueError('Choose 360p, 480p, 720p or 1080p')
  format=f'bestvideo[ext=mp4][vcodec^=avc1][height<={quality}]+bestaudio[ext=m4a]/best[ext=mp4][vcodec^=avc1][height<={quality}]' if watch else 'bestaudio[ext=m4a]/bestaudio'
- d=run(['--no-playlist','--check-formats','--dump-single-json','--skip-download','-f',format,'https://www.youtube.com/watch?v='+vid],authenticated);parts=d.get('requested_formats') or [d]
+ d=run(['--no-playlist','--print',PLAYBACK_TEMPLATE,'--skip-download','-f',format,'https://www.youtube.com/watch?v='+vid],authenticated);parts=d.get('requested_formats') or [d]
  sound=next((p for p in parts if p.get('acodec','none')!='none'),None);picture=next((p for p in parts if p.get('vcodec','none')!='none'),None)
  url=(sound or d).get('url','');host=urllib.parse.urlsplit(url).hostname or ''
  if not url.startswith('https://') or not host.endswith('.googlevideo.com'):raise ValueError('No safe audio stream was returned')
@@ -133,7 +141,7 @@ def transcript(value,language='en',authenticated=False):
   old=json.loads(path.read_text())
   if time.time()-path.stat().st_mtime<7*86400:return old
  except (OSError,ValueError):pass
- data=run(['--no-playlist','--dump-single-json','--skip-download','https://www.youtube.com/watch?v='+vid],authenticated)
+ data=run(['--no-playlist','--print',CAPTION_TEMPLATE,'--skip-download','https://www.youtube.com/watch?v='+vid],authenticated)
  manual=data.get('subtitles') or {};automatic=data.get('automatic_captions') or {};all_langs=sorted(set(manual)|set(automatic))
  selected=language if language in manual or language in automatic else next((k for k in all_langs if k.startswith(language+'-')),None)
  if not selected:return {'lines':[],'languages':all_langs,'warning':'No captions are published in this language. Choose another language; local transcription can be used separately.'}

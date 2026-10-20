@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
 import drawing as d
 p=argparse.ArgumentParser(description=__doc__);s=p.add_subparsers(dest='action',required=True)
-for name in ('status','apply','watch','recent','learn','attach','typed','focus'):s.add_parser(name)
+for name in ('status','apply','watch','recent','learn','attach','typed','focus','pen','eraser'):s.add_parser(name)
 q=s.add_parser('quick');q.add_argument('--new',action='store_true')
 q=s.add_parser('set');q.add_argument('json')
 q=s.add_parser('export');q.add_argument('path')
@@ -20,6 +20,7 @@ try:
     if signature!=now and d.connected():d.reconcile();signature=now
    except (ValueError,OSError,subprocess.SubprocessError):signature=None
    time.sleep(3)
+ elif a.action in ('pen','eraser'):print(json.dumps(d.tool(a.action)))
  elif a.action=='set':print(json.dumps(d.update(json.loads(a.json))))
  elif a.action=='quick':print(json.dumps(d.quick(a.new)))
  elif a.action=='export':print(json.dumps(d.export(a.path)))

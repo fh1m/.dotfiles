@@ -9,12 +9,13 @@ for name in ('status','test','stop','open','watch','history','sensors','folder',
 s.add_parser('scan').add_argument('band',choices=radio.BANDS)
 s.add_parser('stream').add_argument('band',choices=radio.BANDS)
 s.add_parser('record').add_argument('frequency',type=float)
-for name in ('fm','fm-worker'):
+for name in ('fm','fm-worker','scope'):
  q=s.add_parser(name);q.add_argument('frequency',type=float);q.add_argument('gain',type=float,nargs='?',default=20)
 a=p.parse_args()
 try:
  if a.verb=='watch':radio.watch()
  elif a.verb=='stream':radio.stream(a.band)
+ elif a.verb=='scope':radio.scope(a.frequency,a.gain)
  elif a.verb=='folder':
   import subprocess
   radio.ROOT.mkdir(parents=True,exist_ok=True,mode=0o700);subprocess.Popen(['xdg-open',str(radio.ROOT)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);print(json.dumps({'opened':'Radio receipts'}))

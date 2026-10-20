@@ -96,3 +96,11 @@ link. One exact-coordinate assertion failed during repeat input testing; cleanup
 released control and a complete subsequent run passed. Its cause remains unknown.
 Physical display transfer, unattended boot/Windows return, off-site operation and
 phone-controlled Spotify soak remain unverified. Private evidence stays local.
+
+## 20 October — audio, pen, media and popup repair
+
+Arete: 444 repository tests passed after the backend/gateway fixes. Actual YouTube A/V playback passed all four local outputs, with matching audio/video progression, advancing frames, pause/resume and measured instantaneous A/V difference below 0.02 ms in that fixture. This is a short playback test, not a guarantee about all videos or networks.
+
+Homie: the user confirmed PC music through laptop headphones is **clear and responsive**, and confirmed pen strokes draw after the rear USB-port recovery and Pen-tool selection. Direct observations recorded tip-contact transitions and pressure up to 65535. RTL capture measured 19.59 real FFT frames/s (512 bins); terminating the scope left no receiver child. The original hub path had USB protocol failures and is not certified by the direct-port result.
+
+Shared sound controls now include route diagnostics and playback-monitor signal checks; see AUDIO-AND-MEDIA.md. Final deployed UI, popup and Homie media acceptance follows in the deployment receipt below.

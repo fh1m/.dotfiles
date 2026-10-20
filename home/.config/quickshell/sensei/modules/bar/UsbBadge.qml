@@ -31,5 +31,5 @@ BarSurface {
             color: UsbLab.presence.count > 0 ? Theme.paper : Theme.paperMuted
         }
     }
-    MouseArea { id:usbPointer; anchors.fill: parent; hoverEnabled:true; cursorShape: Qt.PointingHandCursor; onWheel: event => { if (root.devices.length) { const count = root.devices.length + 1; root.deviceIndex = ((root.deviceIndex + 1 + (event.angleDelta.y > 0 ? 1 : -1) + count) % count) - 1; } event.accepted = true; }; onClicked: { ShellState.dropdownAnchorX = root.mapToItem(null,0,0).x; ShellState.toggleDropdownOn("usb",root.QsWindow.window?.screen?.name??""); } }
+    MouseArea { id:usbPointer; anchors.fill: parent; hoverEnabled:true; cursorShape: Qt.PointingHandCursor; onWheel: event => { if (root.devices.length) { const count = root.devices.length + 1; root.deviceIndex = ((root.deviceIndex + 1 + (event.angleDelta.y > 0 ? 1 : -1) + count) % count) - 1; } event.accepted = true; }; onClicked: { ShellState.dropdownAnchorX = root.mapToItem(null,0,0).x; ShellState.toggleDropdownAt("usb",root,root.QsWindow.window); } }
 }
