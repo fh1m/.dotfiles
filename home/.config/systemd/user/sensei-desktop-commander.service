@@ -1,0 +1,18 @@
+[Unit]
+Description=Digital Den Desktop Commander connection
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/sensei-commander
+Restart=on-failure
+RestartSec=15
+RestartPreventExitStatus=78
+KillMode=mixed
+TimeoutStopSec=20
+UMask=0077
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=default.target

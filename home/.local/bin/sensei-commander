@@ -1,0 +1,209 @@
+#!/usr/bin/env python3
+"""Supervise the pinned official remote agent; publish lifecycle, never raw output."""
+import fcntl
+import json
+import os
+from pathlib import Path
+import random
+import re
+import selectors
+import shutil
+import signal
+import socket
+import subprocess
+import time
+
+HOME = Path.home()
+STATE = HOME / '.local/state/sensei-den/desktop-commander.json'
+ENTRY = HOME / '.local/opt/sensei-desktop-commander/node_modules/@wonderwhy-er/desktop-commander/dist/index.js'
+STOP = False
+
+
+def event(line):
+    line = re.sub(r'\x1b\[[0-9;]*m', '', line)
+    if any(s in line for s in ('Verify this device in your browser:', 'Device code received',
+                               'Remote session expired and could not be renewed')):
+        return 'authentication-required'
+    if 'Presence tracked (device ' in line or 'Desktop Commander Remote is connected' in line:
+        return 'connected'
+    if any(s in line for s in ('Channel error:', 'Channel subscription timed out', 'Channel closed',
+                               'withdrawing broadcast capability', 'Remote session expired',
+                               'Device registered, but NOT reachable')):
+        return 'reconnecting'
+    return None
+
+
+class Lifecycle:
+    def __init__(self, persist, announce, clock=time.monotonic):
+        self.persist, self.announce, self.clock = persist, announce, clock
+        self.state, self.changed, self.pending = None, clock(), None
+        self.ever_connected = False
+        self.announced = None
+        self.last_notice = -10000
+
+    def change(self, state):
+        if state == self.state:
+            return
+        self.state, self.changed, self.pending = state, self.clock(), state
+        self.persist(state)
+        if state == 'connected':
+            self.ever_connected = True
+
+    def tick(self):
+        if not self.pending:
+            return
+        now = self.clock()
+        delay = 8 if self.pending == 'reconnecting' else 0
+        if now-self.changed < delay:
+            return
+        # Brief drops neither announce offline nor repeat the online toast.
+        if self.pending == self.announced:
+            self.pending = None
+            return
+        if self.pending != 'authentication-required' and now-self.last_notice < 15:
+            return
+        if self.announce(self.pending):
+            self.announced, self.pending, self.last_notice = self.pending, None, now
+
+
+def notify(state):
+    try:
+        owner = subprocess.run(['busctl', '--user', '--timeout=1', 'call', 'org.freedesktop.DBus',
+                                '/org/freedesktop/DBus', 'org.freedesktop.DBus', 'NameHasOwner',
+                                's', 'org.freedesktop.Notifications'], capture_output=True, text=True, timeout=2)
+        if owner.stdout.strip() != 'b true':
+            return False  # Do not start a notification daemon before desktop login.
+        host = socket.gethostname().split('.')[0].capitalize()
+        messages = {
+            'connected': ('Mission Control linked', ['The airlock is open. Your Den is within reach.',
+                          'Signal found. Zondo has put the antenna hat away.',
+                          'Remote tools ready. No terminal babysitting required.']),
+            'reconnecting': ('A small disturbance in the force', ['Commander lost its link. Retrying quietly; local work carries on.',
+                            'The signal went exploring. I’ll reconnect when it returns.']),
+            'authentication-required': ('A fresh handshake is needed', ['Saved pairing needs renewal. Open Desktop Commander pairing when convenient.']),
+        }
+        title, choices = messages[state]
+        r = subprocess.run(['notify-send', '-a', 'Den · Desktop Commander', '-i',
+                            'network-transmit-receive', '-t', '7000', '--',
+                            f'{host} · {title}', random.choice(choices)], timeout=3)
+        return r.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def main():
+    global STOP
+    STATE.parent.mkdir(parents=True, exist_ok=True)
+    os.umask(0o077)
+    lock = open(STATE.with_suffix('.lock'), 'w')
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        return 0
+    node = shutil.which('node')
+    attempt = 0
+
+    def persist(state):
+        data = {'schema': 1, 'host': socket.gethostname(), 'status': state,
+                'changedAt': time.time(), 'attempt': attempt, 'version': '0.3.0'}
+        staged = STATE.with_suffix('.staging')
+        staged.write_text(json.dumps(data)+'\n')
+        staged.replace(STATE)
+        print('Desktop Commander:', state, flush=True)
+
+    life = Lifecycle(persist, notify)
+
+    def stop(*_):
+        global STOP
+        STOP = True
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    def await_auth_notice():
+        life.change('authentication-required')
+        while not STOP:
+            life.tick()
+            if life.pending is None:
+                break
+            time.sleep(5)
+        return 0 if STOP else 78
+
+    if not node or not ENTRY.exists():
+        persist('installation-required')
+        return 78
+    if not (HOME/'.desktop-commander-device/device.json').is_file():
+        return await_auth_notice()
+    env = dict(os.environ, BROWSER='/usr/bin/false', NO_COLOR='1')
+    backoff = 5
+    while not STOP:
+        attempt += 1
+        life.change('reconnecting')
+        child = subprocess.Popen([node, str(ENTRY), 'remote', '--disable-no-sleep'],
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                 env=env, start_new_session=True)
+        selector = selectors.DefaultSelector()
+        selector.register(child.stdout, selectors.EVENT_READ)
+        buffer = b''
+        auth = False
+        started = time.monotonic()
+        last_poll = 0
+        try:
+            while not STOP and child.poll() is None and not auth:
+                for key, _ in selector.select(timeout=1):
+                    block = os.read(key.fileobj.fileno(), 4096)
+                    if not block:
+                        selector.unregister(key.fileobj)
+                        continue
+                    buffer = (buffer+block)[-32768:]
+                    while b'\n' in buffer:
+                        raw, buffer = buffer.split(b'\n', 1)
+                        status = event(raw.decode(errors='replace'))
+                        if status:
+                            life.change(status)
+                            auth = status == 'authentication-required'
+                # No HTTP polling: the official transport owns reconnect and heartbeats.
+                if time.monotonic()-last_poll >= 5:
+                    life.tick()
+                    last_poll = time.monotonic()
+        finally:
+            selector.close()
+            # The stdio MCP child can survive a crashed remote parent. Clean the
+            # owned process group even when that parent has already exited.
+            try:
+                os.killpg(child.pid, signal.SIGINT)
+            except ProcessLookupError:
+                pass
+            try:
+                child.wait(timeout=12)
+            except subprocess.TimeoutExpired:
+                os.killpg(child.pid, signal.SIGKILL)
+                child.wait()
+            cleanup_deadline = time.monotonic()+2
+            while time.monotonic()<cleanup_deadline:
+                try:
+                    os.killpg(child.pid, 0)
+                except ProcessLookupError:
+                    break
+                time.sleep(.1)
+            try:
+                os.killpg(child.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            child.stdout.close()
+        if auth:
+            return await_auth_notice()
+        if STOP:
+            break
+        life.change('reconnecting')
+        if time.monotonic()-started > 120:
+            backoff = 5
+        deadline = time.monotonic()+backoff+random.uniform(0, 2)
+        while not STOP and time.monotonic()<deadline:
+            life.tick()
+            time.sleep(.5)
+        backoff = min(60, backoff*2)
+    persist('stopped')
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
