@@ -263,3 +263,12 @@ This is a session recovery, not a permanent graphics-stack upgrade fix. A normal
 reboot aligns NVIDIA; the custom Mesa build still needs rebuilding against the
 installed LLVM or a properly maintained compatibility package. No reboot,
 compositor restart or application shutdown was performed.
+
+After recovery, actual bars, wallpaper and Zondo rendered again, and the full
+lyrics-plus-queue view was visually checked with the queue entirely on-screen.
+A repeated live popup harness passed the top-bar cases but failed the lower-bar
+Display click after the rolling update; another run failed the initial click.
+Do not treat the earlier three-case pass as current post-update proof. Homie's
+three-case acceptance passed before its final typography-only sync. Graphics/
+input acceptance after this host's Qt/NVIDIA/LLVM upgrade remains a separate
+follow-up; the typography and geometry unit checks are passing.
