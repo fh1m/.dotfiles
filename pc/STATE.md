@@ -149,3 +149,8 @@ Private installer packages, diagnostic logs, recovery information and exported d
 - Open decision: the same Windows sources now exist twice, as `windows/` on branch `windows` and as `pc/windows/` on branch `pc`. Both write the same profile paths. Choose one owner before any apply from `pc`. Phase 2 of the deployment plan has not been run.
 - Not run: the elevated Phase 0 check (`pc\tools\Test-HomieWindows.ps1` needs an elevated shell) and the Secure Boot, TPM and BitLocker queries.
 - Git: `git ls-remote` lists only `main` and `windows` on origin, so branch `pc` is missing upstream. The local `pc` branch is not pushed. Recreating it on origin needs your go-ahead.
+
+Follow-up, same day (read-only, non-elevated, live Revenger session):
+- Phase 2 step 3 checks pass in the live session: `pwsh` 7.6.7 profile loads without error; `starship prompt` renders from `~/.config/starship.toml` (STARSHIP_CONFIG set); Alacritty 0.17.0 config sets `program = "pwsh"`; `nvim` 0.12.6 headless loads colorscheme `sensei`; `codex-cli` 0.162.1 and `git` 2.55.0.windows.5 respond.
+- Owner decision, default taken: the `windows` branch owns the live profile, because the installer dry run reports no changes and its screen checks passed. `pc/windows` is an exact copy as of this commit. Re-copy it when `windows/` changes, and never apply from `pc` while `windows` is the owner.
+- Still open: a real Windows restart and cold boot, the elevated Phase 0 check, and pushing `pc` to origin (no remote `pc` branch exists yet).
