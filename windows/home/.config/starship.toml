@@ -1,7 +1,7 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 add_newline = true
 palette = 'sensei'
-scan_timeout = 20
+scan_timeout = 500
 command_timeout = 500
 format = """[](rose)[󰆍 SENSEI](bg:rose fg:ground bold)[](fg:rose) $directory$git_branch$git_status$python$container$line_break$character"""
 right_format = '$status$cmd_duration'

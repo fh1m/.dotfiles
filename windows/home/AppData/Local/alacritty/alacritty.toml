@@ -24,10 +24,10 @@ history = 10000
 multiplier = 3
 
 [font]
-normal = { family = "Iosevka Nerd Font Mono", style = "Medium" }
-bold = { family = "Iosevka Nerd Font Mono", style = "Bold" }
-italic = { family = "Iosevka Nerd Font Mono", style = "Italic" }
-bold_italic = { family = "Iosevka Nerd Font Mono", style = "Bold Italic" }
+normal = { family = "Iosevka NFM", style = "Regular" }
+bold = { family = "Iosevka NFM", style = "Bold" }
+italic = { family = "Iosevka NFM", style = "Italic" }
+bold_italic = { family = "Iosevka NFM", style = "Bold Italic" }
 size = 11.4
 offset = { x = 1, y = 4 }
 glyph_offset = { x = 1, y = 2 }

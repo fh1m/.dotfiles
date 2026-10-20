@@ -47,9 +47,18 @@ function Expand-Template([string]$Text) {
     [regex]::Replace($Text, '\{\{([a-z_.]+)\}\}', $evaluator)
 }
 
+# PowerShell reads its profile from the real Documents folder, which OneDrive can redirect
+# (for example OneDrive\Documents). Use that folder for the real profile; tests use Documents.
+$realDocs = [Environment]::GetFolderPath('MyDocuments')
+$docsRel = 'Documents'
+if (([IO.Path]::GetFullPath($TargetHome).TrimEnd('\') -eq [IO.Path]::GetFullPath($env:USERPROFILE).TrimEnd('\')) -and
+    $realDocs.StartsWith($env:USERPROFILE, [StringComparison]::OrdinalIgnoreCase)) {
+    $docsRel = $realDocs.Substring($env:USERPROFILE.Length).TrimStart('\')
+}
+
 # Source (under windows/home) -> destination (under the target home).
 $Entries = @(
-    @{ Source = 'home\Documents\PowerShell\Microsoft.PowerShell_profile.ps1'; Dest = 'Documents\PowerShell\Microsoft.PowerShell_profile.ps1'; Render = $false },
+    @{ Source = 'home\Documents\PowerShell\Microsoft.PowerShell_profile.ps1'; Dest = "$docsRel\PowerShell\Microsoft.PowerShell_profile.ps1"; Render = $false },
     @{ Source = 'home\.config\starship.toml';                                  Dest = '.config\starship.toml';                             Render = $true },
     @{ Source = 'home\AppData\Local\alacritty\alacritty.toml';                Dest = 'AppData\Local\alacritty\alacritty.toml';           Render = $true },
     @{ Source = 'home\AppData\Local\Microsoft\Windows Terminal\Fragments\Sensei\sensei.json'; Dest = 'AppData\Local\Microsoft\Windows Terminal\Fragments\Sensei\sensei.json'; Render = $true },

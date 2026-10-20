@@ -5,7 +5,7 @@
       "name": "Sensei · PowerShell",
       "commandline": "pwsh.exe -NoLogo",
       "startingDirectory": "%USERPROFILE%",
-      "font": { "face": "Iosevka Nerd Font Mono", "size": 11.5 },
+      "font": { "face": "Iosevka NFM", "size": 11.5 },
       "colorScheme": "Sensei",
       "hidden": false
     }
