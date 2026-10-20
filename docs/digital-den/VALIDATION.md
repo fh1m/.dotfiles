@@ -237,3 +237,16 @@ paused/playing state was restored afterward. Three real popup-click cases passed
 on each host after non-modal Den handling. Both input/cursor/presence services,
 and Homie's tablet watcher, were active at verification. These are bounded tests,
 not a guarantee against every future GPU/network fault.
+
+
+## Typography and sing-along sizing — 2026-10-20
+
+Arete: 462 tests passed, including enlarged-card collision/bounds cases for
+1920×1080, 1920×550 and 1280×720. All six Den tests passed. Live top-bar Sound
+(collapsed/expanded) and lower-bar Display placement passed; fullscreen focus
+layout and System typography were inspected through local screenshots. Zed Mono
+and Iosevka resolve to their actual installed fonts on both hosts. Playback was
+left paused after inspection; screenshots and private media state stay local.
+The singing geometry tests exercise 300/420 px cards and 96/160/200 px character
+sizes, and refuse overlap with the pet footprint or output edges. These are
+geometry tests, not a claim of a live lyric-provider test.

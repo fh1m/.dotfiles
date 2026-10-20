@@ -11,15 +11,15 @@ Column {
   readonly property real factor:Math.min((width-32)/Math.max(5760,root.px+root.snapshot.geometry.homie.width+1920),(height-24)/3240)
   Repeater {model:root.snapshot.outputs
    Rectangle {required property var modelData;x:16+(modelData.x+1920)*map.factor;y:12+(modelData.y+1080)*map.factor;width:modelData.width/modelData.scale*map.factor;height:modelData.height/modelData.scale*map.factor;color:Theme.ink;border.color:Theme.rule;radius:3
-    Text {anchors.centerIn:parent;text:modelData.name;font.family:Appearance.font.ui;font.pixelSize:9;color:Theme.widgetMuted}
+    Text {anchors.centerIn:parent;text:modelData.name;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.caption;color:Theme.widgetMuted}
    }
   }
   Rectangle {id:peer;x:16+(root.px+1920)*map.factor;y:12+(root.py+1080)*map.factor;width:root.snapshot.geometry.homie.width*map.factor;height:root.snapshot.geometry.homie.height*map.factor;color:Theme.surfaceTwo;border.color:Theme.signalRed;radius:3
-   Text {anchors.centerIn:parent;text:"HOMIE";font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.widgetText}
+   Text {anchors.centerIn:parent;text:"HOMIE";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.caption;color:Theme.widgetText}
    MouseArea {anchors.fill:parent;drag.target:peer;onReleased:{root.px=Math.round(((peer.x-16)/map.factor-1920)/16)*16;root.py=Math.round(((peer.y-12)/map.factor-1080)/16)*16;if(Math.abs(root.py+root.snapshot.geometry.homie.height)<80)root.py=-root.snapshot.geometry.homie.height;}}
   }
  }
- Text {width:parent.width;text:root.status+"\nHomie: "+root.px+", "+root.py+" · Upper ↔ Homie remains an explicit side link.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}
+ Text {width:parent.width;text:root.status+"\nHomie: "+root.px+", "+root.py+" · Upper ↔ Homie remains an explicit side link.";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetMuted}
  Row {spacing:8
   ControlTile {label:"Apply Den map";enabled:!worker.running;onActivated:root.run(["save","--x",String(root.px),"--y",String(root.py)])}
   ControlTile {label:"Top / middle-right";enabled:!worker.running;onActivated:{root.px=960;root.py=-1080;}}

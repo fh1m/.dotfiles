@@ -43,7 +43,7 @@ Item {
         anchors.right: parent.right; anchors.rightMargin: 13; y: 14
         visible: root.subtitle !== ""
         text: root.subtitle
-        font.family: Appearance.font.ui
+        font.family:Appearance.font.reading
         font.pixelSize: 11
         color: Theme.widgetMuted
     }

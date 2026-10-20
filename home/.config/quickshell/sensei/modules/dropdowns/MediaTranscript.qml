@@ -19,16 +19,16 @@ ChamferPanel {
             MusicButton {implicitWidth:86;implicitHeight:32;glyph:'';label:'Follow';selected:root.follow;onActivated:root.follow=!root.follow}
         }
         DeskTextField {width:parent.width;height:32;placeholderText:'Find in transcript…';onTextEdited:root.filter=text}
-        Text {width:parent.width;text:YouTubeDesk.transcriptLoading?'Loading captions…':YouTubeDesk.transcriptNotice||'Select a line to seek.';wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted;maximumLineCount:3;elide:Text.ElideRight}
+        Text {width:parent.width;text:YouTubeDesk.transcriptLoading?'Loading captions…':YouTubeDesk.transcriptNotice||'Select a line to seek.';wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.caption;color:Theme.paperMuted;maximumLineCount:3;elide:Text.ElideRight}
         ListView {id:lines;width:parent.width;height:Math.max(80,root.height-y-24);clip:true;spacing:6;model:YouTubeDesk.transcript.filter(r=>!root.filter||r.text.toLowerCase().includes(root.filter.toLowerCase()))
             ScrollBar.vertical:DeskScrollBar {}
             onDraggingChanged:if(dragging)root.follow=false
             delegate:Rectangle {required property var modelData;required property int index;width:lines.width;height:words.implicitHeight+32;radius:5;color:modelData.time===YouTubeDesk.transcript[YouTubeDesk.captionIndex]?.time?Theme.alpha(Theme.widgetAccent,.13):'transparent'
                 Text {x:8;y:8;text:SpotifyDesk.fmt(modelData.time);font.family:Appearance.font.data;font.pixelSize:10;color:Theme.widgetAccent}
-                Text {id:words;x:8;y:24;width:parent.width-16;text:modelData.text;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper}
+                Text {id:words;x:8;y:24;width:parent.width-16;text:modelData.text;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paper}
                 MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:YouTubeDesk.action('seek-to',[String(modelData.time)])}
             }
-            Text {anchors.centerIn:parent;visible:!lines.count;width:parent.width-20;text:YouTubeDesk.transcriptLoading?'Looking for published captions…':'No published captions matched. Not every video provides a transcript.';wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
+            Text {anchors.centerIn:parent;visible:!lines.count;width:parent.width-20;text:YouTubeDesk.transcriptLoading?'Looking for published captions…':'No published captions matched. Not every video provides a transcript.';wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
         }
     }
     Connections {target:YouTubeDesk;function onCaptionIndexChanged(){if(root.follow&&!root.filter&&YouTubeDesk.captionIndex>=0)lines.positionViewAtIndex(YouTubeDesk.captionIndex,ListView.Center);}}

@@ -37,13 +37,13 @@ Column {
     Rectangle {anchors.centerIn:parent;width:Math.min(parent.width-40,240);height:52;color:Theme.ink;border.color:Theme.widgetMuted
      Rectangle {anchors.centerIn:parent;width:parent.width; height:parent.height*((root.snapshot.area?.Height||152.4)/152.4);color:"#22f23d70";border.color:Theme.widgetAccent}
     }
-    Text {anchors.centerIn:parent;text:(root.snapshot.area?.Width||0).toFixed(1)+" × "+(root.snapshot.area?.Height||0).toFixed(1)+" mm";font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetText}
+    Text {anchors.centerIn:parent;text:(root.snapshot.area?.Width||0).toFixed(1)+" × "+(root.snapshot.area?.Height||0).toFixed(1)+" mm";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetText}
    }
    ControlSlider {width:parent.width;title:"Tip activation · %";maximum:20;level:root.snapshot.profile.threshold??1;onEdited:value=>root.edit({threshold:Math.round(value)})}
-   Text {width:parent.width;text:"Buttons apply only in drawing apps. Pressure curves remain app-owned; no hidden smoothing.";wrapMode:Text.Wrap;color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:11}
+   Text {width:parent.width;text:"Buttons apply only in drawing apps. Pressure curves remain app-owned; no hidden smoothing.";wrapMode:Text.Wrap;color:Theme.widgetMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary}
    Repeater {model:4
     Row {required property int index;width:parent.width;spacing:8
-     Text {width:64;anchors.verticalCenter:parent.verticalCenter;text:"Key "+(parent.index+1);color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:12}
+     Text {width:64;anchors.verticalCenter:parent.verticalCenter;text:"Key "+(parent.index+1);color:Theme.widgetMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body}
      DeskComboBox {width:parent.width-72;model:["undo","redo","eraser","pan","none"];currentIndex:Math.max(0,model.indexOf(root.snapshot.profile.buttons?.[parent.index]||"none"));onActivated:{let buttons=(root.snapshot.profile.buttons||["undo","redo","eraser","pan"]).slice();buttons[parent.index]=model[currentIndex];root.edit({buttons:buttons});}}
     }
    }
@@ -53,9 +53,9 @@ Column {
   property var points:[];property real pressure:0;property int samples:0
   Canvas {id:ink;anchors.fill:parent;onPaint:{const c=getContext("2d");c.clearRect(0,0,width,height);const p=pad.points;for(let i=1;i<p.length;i++){if(p[i].start)continue;c.beginPath();c.moveTo(p[i-1].x,p[i-1].y);c.lineTo(p[i].x,p[i].y);c.lineWidth=1+p[i].p*7;c.strokeStyle="#f23d70";c.lineCap="round";c.stroke();}}}
   PointHandler {acceptedDevices:PointerDevice.Stylus|PointerDevice.Airbrush;onActiveChanged:if(active)pad.points=pad.points.concat([{x:point.position.x,y:point.position.y,p:point.pressure,start:true}]);onPointChanged:if(active){pad.pressure=point.pressure;pad.samples++;pad.points=pad.points.concat([{x:point.position.x,y:point.position.y,p:point.pressure}]).slice(-2000);ink.requestPaint();}}
-  Text {anchors {left:parent.left;top:parent.top;margins:10}text:"PEN TEST · "+Math.round(pad.pressure*100)+"% · "+pad.samples+" samples · memory only";font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.widgetMuted}
+  Text {anchors {left:parent.left;top:parent.top;margins:10}text:"PEN TEST · "+Math.round(pad.pressure*100)+"% · "+pad.samples+" samples · memory only";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetMuted}
  }
  Row {spacing:8;ControlTile {implicitWidth:90;label:"Pen";glyph:"\uf303";onActivated:root.run(["pen"])}ControlTile {implicitWidth:100;label:"Eraser";glyph:"\uf12d";onActivated:root.run(["eraser"])}ControlTile {implicitWidth:100;label:"Refresh";enabled:!worker.running;onActivated:root.run(["status"])}ControlTile {implicitWidth:160;label:"Restore defaults";enabled:!worker.running;onActivated:root.edit({output:"upper",aspect:true,rotation:0,threshold:1,buttons:["undo","redo","eraser","pan"]})}}
- Text {width:parent.width;text:root.error;visible:text.length>0;wrapMode:Text.Wrap;color:Theme.widgetAccent;font.family:Appearance.font.ui;font.pixelSize:12}
+ Text {width:parent.width;text:root.error;visible:text.length>0;wrapMode:Text.Wrap;color:Theme.widgetAccent;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body}
  Process {id:worker;stdout:StdioCollector {onStreamFinished:{try{const d=JSON.parse(text);if(d.error)root.error=d.error;else{root.error=d.path?"Saved · "+d.path:d.preview?"Linked · "+d.preview:"";if(d.profile)root.snapshot=d;}}catch(e){root.error="Drawing action did not return a valid receipt.";}}}}
 }

@@ -17,7 +17,7 @@ Column {
  property int pulses:0
  property bool playing:false
  readonly property var puzzles:[{question:"A=1, B=0. What is A XOR B?",answers:["0","1"],correct:1,why:"XOR is true when exactly one input is true."},{question:"Rotate (1,0) by +90° in a right-handed xy plane. Result?",answers:["(0,1)","(0,-1)","(1,1)"],correct:0,why:"Counterclockwise rotation maps positive x to positive y."}]
- Text {width:parent.width;text:"ZONDO / OFF DUTY";font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.signalRed}
+ Text {width:parent.width;text:"ZONDO / OFF DUTY";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;color:Theme.signalRed}
  Row {spacing:8
   ControlTile {label:"High five";onActivated:{Den.companion("activity","highfive");root.feedback="Tiny palm. Very enthusiastic."}}
   ControlTile {label:"Make a boat";onActivated:{Den.companion("activity","paperboat");root.feedback="A research vessel with a wonderfully small budget."}}
@@ -38,7 +38,7 @@ Column {
  ControlTile {visible:root.game==="reaction";width:parent.width;label:root.reactionStart===0?"Start another 30-second round":root.beat>=root.reactionReady?"NOW · tap":"Wait for the cue";selected:root.reactionStart>0&&root.reactionReady<=root.beat;onActivated:{const now=Date.now();if(root.reactionStart===0){root.reactionStart=now;root.reactionReady=now+600+Math.random()*1600;}else if(now>=root.reactionReady){root.reactionTaps++;root.reactionMs+=now-root.reactionReady;root.feedback=root.reactionTaps+" taps · average "+Math.round(root.reactionMs/root.reactionTaps)+" ms";root.reactionReady=now+600+Math.random()*1600;}else root.feedback="Early! No penalty. Watch for the cue.";}}
  Timer {interval:100;repeat:true;running:root.visible&&root.game==="reaction"&&root.reactionStart>0;onTriggered:{root.beat=Date.now();if(root.beat-root.reactionStart>=30000){root.reactionStart=0;root.feedback="Break complete. "+root.reactionTaps+" taps; no leaderboard required.";}}}
  ControlTile {width:parent.width;label:"Hide-and-seek across the Den";onActivated:{Den.companion("hide-seek","");root.feedback="Find Zondo on the available wallpaper, then tap him. Quiet/fullscreen rules still apply.";}}
- Text {width:parent.width;text:root.puzzles[root.puzzle].question;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paper}
+ Text {width:parent.width;text:root.puzzles[root.puzzle].question;wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paper}
  Row {spacing:8
   Repeater {model:root.puzzles[root.puzzle].answers
    ControlTile {required property string modelData;required property int index;implicitWidth:120;label:modelData;onActivated:root.feedback=(index===root.puzzles[root.puzzle].correct?"Yes. ":"Try the mechanism: ")+root.puzzles[root.puzzle].why}
@@ -50,6 +50,6 @@ Column {
   ControlTile {label:"Tap on the pulse";enabled:root.playing;selected:root.pulses%2===1;onActivated:{const delta=Math.abs(Date.now()-root.beat);root.feedback=delta<140?"Together. Tiny drummer approves.":"No penalty. Aim for the next visual pulse.";Den.companion("activity","drums");}}
  }
  Timer {interval:700;repeat:true;running:root.playing;onTriggered:{root.beat=Date.now();root.pulses++;if(root.pulses>=24)root.playing=false;}}
- Text {width:parent.width;text:root.feedback;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
+ Text {width:parent.width;text:root.feedback;wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
  Component.onDestruction:root.playing=false
 }

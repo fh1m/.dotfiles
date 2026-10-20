@@ -2,8 +2,8 @@ import QtQuick
 import qs.config
 ControlTile {
  id:root
- textSize:13
- textFamily:Appearance.font.reading
+ textSize:Appearance.textSize.control
+ textFamily:Appearance.font.ui
  implicitHeight:38
  radius:9
  color:root.down?Theme.alpha(Theme.paper,.16):root.selected?Theme.alpha(Theme.signalRed,.18):hover.hovered?Theme.alpha(Theme.paper,.1):Theme.alpha(Theme.paper,.045)

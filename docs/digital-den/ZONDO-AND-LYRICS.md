@@ -77,3 +77,21 @@ Loader's `reloadCompanion` alone does not invalidate those scripts. This restart
 is independent of `den-input`, so it does not take over or stop normal local input.
 Live validation caught and corrected both an unsupported `Array.flatMap` use and
 an old cached JS import; the queue policy uses compatible array operations.
+
+
+## Shared typography — 2026-10-20
+
+Zed Mono supplies shell headings, controls and Zondo captions; Iosevka supplies
+media/body text and lyrics. Bengali, Devanagari and Arabic retain installed
+script fallbacks. `Appearance.textSize` owns the logical-pixel hierarchy:
+11 caption, 12 secondary, 13 body/control, 15 section, 18 title, 26 media title.
+Buttons no longer shrink their labels when their width changes. Selection-menu
+rows are 38 px, with the same control face and size as buttons.
+
+Zondo uses 13 px body text and 11 px captions. While singing an actual cached
+lyric, his existing sprite grows from the configured size to at least 160 px
+(maximum 200), and the card grows from 300 to 420 px with 20 px lyric text.
+The same renderer and collision-aware placement remain in use; no extra pet,
+input grab, animation timer or lyric request is added. Geometry is recalculated
+on resizing and the pet must still fit the output. Returning to ordinary speech
+restores the configured size. Speech remains suppressed when no safe space fits.

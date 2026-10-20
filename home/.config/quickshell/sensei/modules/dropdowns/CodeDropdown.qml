@@ -57,15 +57,15 @@ DropdownFrame {
                 width:parent.width;height:116;color:"#090807";radius:6;clip:true
                 Image {anchors {right:parent.right;top:parent.top;bottom:parent.bottom} width:348;source:Quickshell.env("HOME")+"/.local/share/sensei-companion/night-shift.png";fillMode:Image.PreserveAspectFit;asynchronous:true}
                 Column {x:16;y:20;width:parent.width-380;spacing:10
-                    Text {text:"AFTER HOURS / FH1M'S DIGITAL DEN";font.family:Appearance.font.ui;font.pixelSize:10;font.letterSpacing:1;color:Theme.signalRed}
-                    Text {width:parent.width;text:"The lab has a night shift.";font.family:Appearance.font.ui;font.pixelSize:18;color:Theme.paper}
-                    Text {width:parent.width;text:"Good questions. Small experiments. Occasional rubber ducks.";elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+                    Text {text:"AFTER HOURS / FH1M'S DIGITAL DEN";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.caption;font.letterSpacing:1;color:Theme.signalRed}
+                    Text {width:parent.width;text:"The lab has a night shift.";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.title;color:Theme.paper}
+                    Text {width:parent.width;text:"Good questions. Small experiments. Occasional rubber ducks.";elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
                 }
             }
             Rectangle {width:parent.width;height:72;color:Theme.surfaceOne;radius:3
                 Column {x:12;y:10;width:parent.width-170;spacing:6
-                    Text { textFormat: Text.PlainText;width:parent.width;elide:Text.ElideRight;text:CodeDesk.nerd.quotes?.[CodeDesk.quoteIndex]?.text?'“'+CodeDesk.nerd.quotes[CodeDesk.quoteIndex].text+'”':'One small experiment beats a large assumption.';color:Theme.signalRed;font.family:Appearance.font.ui;font.pixelSize:16}
-                    Text { textFormat: Text.PlainText;width:parent.width;elide:Text.ElideRight;text:CodeDesk.nerd.quotes?.[CodeDesk.quoteIndex]?.text?(CodeDesk.nerd.quotes[CodeDesk.quoteIndex].context||'')+' · Andrej Karpathy':'Den field note · Original desk wisdom';color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:11}
+                    Text { textFormat: Text.PlainText;width:parent.width;elide:Text.ElideRight;text:CodeDesk.nerd.quotes?.[CodeDesk.quoteIndex]?.text?'“'+CodeDesk.nerd.quotes[CodeDesk.quoteIndex].text+'”':'One small experiment beats a large assumption.';color:Theme.signalRed;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.title}
+                    Text { textFormat: Text.PlainText;width:parent.width;elide:Text.ElideRight;text:CodeDesk.nerd.quotes?.[CodeDesk.quoteIndex]?.text?(CodeDesk.nerd.quotes[CodeDesk.quoteIndex].context||'')+' · Andrej Karpathy':'Den field note · Original desk wisdom';color:Theme.paperMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary}
                 }
                 ControlTile {anchors.right:parent.right;anchors.rightMargin:12;anchors.verticalCenter:parent.verticalCenter;label:"Source";glyph:"\uf08e";implicitWidth:100;enabled:!!CodeDesk.nerd.quoteSource&&!!CodeDesk.nerd.quotes?.length;onActivated:CodeDesk.browse(CodeDesk.nerd.quoteSource)}
                 MouseArea {x:12;width:parent.width-170;height:parent.height;onClicked:CodeDesk.quoteIndex=(CodeDesk.quoteIndex+1)%Math.max(1,CodeDesk.nerd.quotes?.length||0)}
@@ -75,15 +75,15 @@ DropdownFrame {
                     ControlTile {required property string modelData;required property int index;label:modelData;glyph:["\uf005","\uf085","\uf1ea"][index];implicitWidth:190;selected:CodeDesk.nerdFeed===index;onActivated:CodeDesk.nerdFeed=index}
                 }
             }
-            Text { textFormat: Text.PlainText;width:parent.width;wrapMode:Text.Wrap;text:CodeDesk.nerdLoading?"Fetching public discovery…":(CodeDesk.nerd.errors||[]).join(' · ')||'Public search sorted by stars · not GitHub’s daily trending ranking · cached for one hour';font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+            Text { textFormat: Text.PlainText;width:parent.width;wrapMode:Text.Wrap;text:CodeDesk.nerdLoading?"Fetching public discovery…":(CodeDesk.nerd.errors||[]).join(' · ')||'Public search sorted by stars · not GitHub’s daily trending ranking · cached for one hour';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
             ScrollView {width:parent.width;height:300;contentWidth:availableWidth;clip:true
                 Column {width:parent.width;spacing:6
                     Repeater {model:CodeDesk.nerdFeed===2?(CodeDesk.nerd.news||[]):CodeDesk.nerdFeed===1?(CodeDesk.nerd.lab||[]):(CodeDesk.nerd.new||[])
                         Rectangle {required property var modelData;width:parent.width;height:86;color:Theme.surfaceOne;radius:3
                             Column {x:12;y:10;width:parent.width-28;spacing:6
-                                Text {width:parent.width;text:modelData.full_name||modelData.title;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.signalRed}
-                                Text {width:parent.width;text:modelData.description||modelData.summary||'No description';textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paper}
-                                Text { textFormat: Text.PlainText;width:parent.width;text:modelData.full_name?root.metric(modelData.stargazers_count)+' stars · '+root.metric(modelData.forks_count)+' forks · '+(modelData.language||'Mixed')+' · '+root.metric(modelData.open_issues_count)+' open issues':modelData.date;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
+                                Text {width:parent.width;text:modelData.full_name||modelData.title;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.signalRed}
+                                Text {width:parent.width;text:modelData.description||modelData.summary||'No description';textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paper}
+                                Text { textFormat: Text.PlainText;width:parent.width;text:modelData.full_name?root.metric(modelData.stargazers_count)+' stars · '+root.metric(modelData.forks_count)+' forks · '+(modelData.language||'Mixed')+' · '+root.metric(modelData.open_issues_count)+' open issues':modelData.date;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
                             }
                             MouseArea {anchors.fill:parent;onClicked:CodeDesk.browse(modelData.html_url||modelData.url)}
                         }
@@ -95,19 +95,19 @@ DropdownFrame {
     Component {
         id:curiosityPage
         Column {width:parent.width;spacing:12
-            Text { textFormat: Text.PlainText;width:parent.width;text:"Things people made. Questions worth stealing.";color:Theme.signalRed;font.family:Appearance.font.ui;font.pixelSize:16}
+            Text { textFormat: Text.PlainText;width:parent.width;text:"Things people made. Questions worth stealing.";color:Theme.signalRed;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.title}
             Row {spacing:8
                 ControlTile {label:"Show HN";glyph:"\uf0ad";implicitWidth:130;selected:CodeDesk.curiosityFeed===0;onActivated:CodeDesk.curiosityFeed=0}
                 ControlTile {label:"Ask HN";glyph:"\uf128";implicitWidth:130;selected:CodeDesk.curiosityFeed===1;onActivated:CodeDesk.curiosityFeed=1}
             }
-            Text { textFormat: Text.PlainText;width:parent.width;wrapMode:Text.Wrap;text:CodeDesk.nerdLoading?"Opening a small rabbit hole…":(CodeDesk.curiosity.errors||[]).join(' · ')||"Public Hacker News stories · refreshes on demand · no tracking or notifications";color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:11}
+            Text { textFormat: Text.PlainText;width:parent.width;wrapMode:Text.Wrap;text:CodeDesk.nerdLoading?"Opening a small rabbit hole…":(CodeDesk.curiosity.errors||[]).join(' · ')||"Public Hacker News stories · refreshes on demand · no tracking or notifications";color:Theme.paperMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary}
             ScrollView {width:parent.width;height:410;clip:true;contentWidth:availableWidth
                 Column {width:parent.width;spacing:8
                     Repeater {model:CodeDesk.curiosityFeed===0?(CodeDesk.curiosity.show||[]):(CodeDesk.curiosity.ask||[])
                         Rectangle {required property var modelData;width:parent.width;height:68;color:Theme.surfaceOne;radius:3
                             Column {x:12;y:10;width:parent.width-24;spacing:8
-                                Text {width:parent.width;text:modelData.title;textFormat:Text.PlainText;elide:Text.ElideRight;color:Theme.paper;font.family:Appearance.font.ui;font.pixelSize:13}
-                                Text { textFormat: Text.PlainText;text:modelData.score+" points · "+modelData.comments+" comments · "+modelData.by;color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:11}
+                                Text {width:parent.width;text:modelData.title;textFormat:Text.PlainText;elide:Text.ElideRight;color:Theme.paper;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body}
+                                Text { textFormat: Text.PlainText;text:modelData.score+" points · "+modelData.comments+" comments · "+modelData.by;color:Theme.paperMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary}
                             }
                             MouseArea {anchors.fill:parent;onClicked:CodeDesk.browse(modelData.url)}
                         }
@@ -140,8 +140,8 @@ DropdownFrame {
                     }
                 }
             }
-            Text { textFormat: Text.PlainText;visible:root.contributionInfo!=="";text:root.contributionInfo;color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:11}
-            TextField {id:search;Component.onCompleted:root.searchInput=search;Component.onDestruction:root.searchInput=null;width:parent.width;placeholderText:"Find a project…";placeholderTextColor:Theme.paperMuted;text:CodeDesk.query;onTextEdited:CodeDesk.query=text;color:Theme.paper;font.family:Appearance.font.ui;font.pixelSize:12;background:Rectangle{color:Theme.surfaceOne;border.color:search.activeFocus?Theme.signalRed:Theme.rule;radius:3} Keys.onEscapePressed:{CodeDesk.query="";event.accepted=true;}}
+            Text { textFormat: Text.PlainText;visible:root.contributionInfo!=="";text:root.contributionInfo;color:Theme.paperMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary}
+            TextField {id:search;Component.onCompleted:root.searchInput=search;Component.onDestruction:root.searchInput=null;width:parent.width;placeholderText:"Find a project…";placeholderTextColor:Theme.paperMuted;text:CodeDesk.query;onTextEdited:CodeDesk.query=text;color:Theme.paper;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;background:Rectangle{color:Theme.surfaceOne;border.color:search.activeFocus?Theme.signalRed:Theme.rule;radius:3} Keys.onEscapePressed:{CodeDesk.query="";event.accepted=true;}}
             Row {
                 width:parent.width;spacing:18
                 Column {width:(parent.width-18)*.53;spacing:8

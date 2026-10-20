@@ -46,20 +46,20 @@ DropdownFrame {
    Repeater {model:root.snapshot.experiments||[]
     Rectangle {id:experimentCard;required property var modelData;width:parent.width;implicitHeight:experimentBody.implicitHeight+20;radius:6;color:Theme.surfaceOne;border.color:Theme.rule
      Column {id:experimentBody;x:10;y:10;width:parent.width-20;spacing:6
-      Text {width:parent.width;text:(experimentCard.modelData.name||experimentCard.modelData.id)+" · process "+(experimentCard.modelData.status||"unknown");textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paper}
-      Text {width:parent.width;text:"Exit "+(experimentCard.modelData.exit_code??"pending")+" · "+(experimentCard.modelData.elapsed_seconds??"?")+" s · "+(experimentCard.modelData.git_commit||"no Git revision").slice(0,12);font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+      Text {width:parent.width;text:(experimentCard.modelData.name||experimentCard.modelData.id)+" · process "+(experimentCard.modelData.status||"unknown");textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paper}
+      Text {width:parent.width;text:"Exit "+(experimentCard.modelData.exit_code??"pending")+" · "+(experimentCard.modelData.elapsed_seconds??"?")+" s · "+(experimentCard.modelData.git_commit||"no Git revision").slice(0,12);font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
       Repeater {model:(experimentCard.modelData.measurements||[]).slice(0,8)
-       Text {required property var modelData;width:parent.width;text:modelData.name+": "+modelData.value+" "+modelData.unit;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper}
+       Text {required property var modelData;width:parent.width;text:modelData.name+": "+modelData.value+" "+modelData.unit;wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paper}
       }
-      Text {visible:!!experimentCard.modelData.comparison;width:parent.width;text:"Baseline: "+(experimentCard.modelData.comparison||[]).map(c=>c.name+" "+(c.state==="comparable"?"Δ "+Number(c.delta).toPrecision(4)+" "+c.unit:c.state)).join(" · ");wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
-      Text {visible:!!experimentCard.modelData.baseline_context;width:parent.width;text:"Changed baseline conditions: "+Object.keys(experimentCard.modelData.baseline_context||{}).filter(k=>experimentCard.modelData.baseline_context[k]).join(", ");wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
-      Text {visible:!!experimentCard.modelData.measurementError;width:parent.width;text:experimentCard.modelData.measurementError||"";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.signalRed}
+      Text {visible:!!experimentCard.modelData.comparison;width:parent.width;text:"Baseline: "+(experimentCard.modelData.comparison||[]).map(c=>c.name+" "+(c.state==="comparable"?"Δ "+Number(c.delta).toPrecision(4)+" "+c.unit:c.state)).join(" · ");wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
+      Text {visible:!!experimentCard.modelData.baseline_context;width:parent.width;text:"Changed baseline conditions: "+Object.keys(experimentCard.modelData.baseline_context||{}).filter(k=>experimentCard.modelData.baseline_context[k]).join(", ");wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
+      Text {visible:!!experimentCard.modelData.measurementError;width:parent.width;text:experimentCard.modelData.measurementError||"";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.signalRed}
       ControlTile {label:"Capture evidence…";enabled:!!root.projectFor(experimentCard.modelData.project);onActivated:root.action("evidence.capture",{project:root.projectFor(experimentCard.modelData.project),lab:experimentCard.modelData.id})}
       ControlTile {label:"Inspect receipt";onActivated:root.action("lab.inspect",{id:experimentCard.modelData.id})}
      }
     }
    }
-   Text {visible:!(root.snapshot.experiments||[]).length;width:parent.width;text:"No recorded experiments on this host yet. A reviewed project task can invoke sensei-lab with explicit metrics and baseline.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
+   Text {visible:!(root.snapshot.experiments||[]).length;width:parent.width;text:"No recorded experiments on this host yet. A reviewed project task can invoke sensei-lab with explicit metrics and baseline.";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
   }
   ZondoPlayground {width:parent.width;visible:root.page===2}
   Column {width:parent.width;visible:root.page===1;spacing:8
@@ -76,9 +76,9 @@ DropdownFrame {
    ControlTile {label:"Register passport…";enabled:hardwareId.text.trim()!==""&&hardwareLabel.text.trim()!==""&&hardwareNode.currentIndex>=0&&!worker.running;onActivated:{let data={id:hardwareId.text.trim(),label:hardwareLabel.text.trim(),node:root.snapshot.availableHardware[hardwareNode.currentIndex].node};if(hardwareBaud.text)data.baud=Number(hardwareBaud.text);if(hardwareFirmware.text.trim())data.firmware=hardwareFirmware.text.trim();if(root.linkHardwareProject)data.project=root.project.id;root.action("hardware.register",data)}}
 
    Repeater {model:root.snapshot.hardware||[]
-    Text {required property var modelData;width:parent.width;text:(modelData.label||modelData.id)+" · "+(modelData.ambiguous?"Ambiguous identity":modelData.connected?"Connected":"Disconnected")+" · "+(modelData.project||"No project")+"\n"+(modelData.nodes||[]).map(n=>n.node).join(", ")+"\n"+[modelData.expected_baud?modelData.expected_baud+" baud":"",modelData.firmware?"Firmware "+modelData.firmware:"",modelData.diagnostic_task?"Diagnostic: "+modelData.diagnostic_task:""].filter(Boolean).join(" · ");wrapMode:Text.Wrap;textFormat:Text.PlainText;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper}
+    Text {required property var modelData;width:parent.width;text:(modelData.label||modelData.id)+" · "+(modelData.ambiguous?"Ambiguous identity":modelData.connected?"Connected":"Disconnected")+" · "+(modelData.project||"No project")+"\n"+(modelData.nodes||[]).map(n=>n.node).join(", ")+"\n"+[modelData.expected_baud?modelData.expected_baud+" baud":"",modelData.firmware?"Firmware "+modelData.firmware:"",modelData.diagnostic_task?"Diagnostic: "+modelData.diagnostic_task:""].filter(Boolean).join(" · ");wrapMode:Text.Wrap;textFormat:Text.PlainText;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paper}
    }
-   Text {width:parent.width;visible:!root.snapshot.hardware?.length;text:"Register a connected device with sensei-hardware register ID --node /dev/… --label NAME. No board is opened or flashed.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
+   Text {width:parent.width;visible:!root.snapshot.hardware?.length;text:"Register a connected device with sensei-hardware register ID --node /dev/… --label NAME. No board is opened or flashed.";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
   }
   Row {width:parent.width;spacing:8;visible:root.page!==2
    DeskComboBox {width:180;enabled:!worker.running;model:["arete","homie"];currentIndex:root.targetHost==="homie"?1:0;onActivated:{root.targetHost=currentIndex===1?"homie":"arete";root.prepared={};root.snapshot={projects:[],jobs:[],hardware:[]};root.refresh();}}
@@ -90,7 +90,7 @@ DropdownFrame {
    ControlTile {label:"Capture evidence…";enabled:!!root.project.id&&!worker.running;onActivated:root.action("evidence.capture",{project:root.project.id})}
    ControlTile {label:"Open project";enabled:!!root.project.id&&!worker.running;onActivated:root.action("project.open",{project:root.project.id})}
   }
-  Text {width:parent.width;visible:root.page!==2&&!root.project.id;text:"No registered projects on this host. Register an existing checkout with sensei-actions register PROJECT DIRECTORY; add named task definitions and review them with sensei-actions trust.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
+  Text {width:parent.width;visible:root.page!==2&&!root.project.id;text:"No registered projects on this host. Register an existing checkout with sensei-actions register PROJECT DIRECTORY; add named task definitions and review them with sensei-actions trust.";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
   Flow {width:parent.width;spacing:8;visible:root.page===0
    Repeater {model:Object.keys(root.project.tasks||{})
     ControlTile {required property string modelData;label:modelData;enabled:!worker.running;onActivated:root.action("job.launch",{project:root.project.id,task:modelData})}
@@ -110,21 +110,21 @@ DropdownFrame {
    ControlTile {implicitWidth:120;label:"Add task…";enabled:taskTitle.text.trim()!==""&&!worker.running;onActivated:root.action("planner.task",{project:root.project.id,title:taskTitle.text.trim(),date:taskDate.text})}
   }
   ScrollView {id:reportScroll;width:parent.width;height:128;visible:root.page!==2;contentWidth:availableWidth;clip:true
-   TextArea {width:reportScroll.availableWidth;text:root.report;textFormat:TextEdit.PlainText;readOnly:true;selectByMouse:true;wrapMode:TextEdit.Wrap;color:Theme.paper;selectionColor:Theme.signalRed;selectedTextColor:Theme.ink;font.family:Appearance.font.ui;font.pixelSize:12;background:Rectangle {color:Theme.surfaceOne;border.color:Theme.rule;radius:6}}
+   TextArea {width:reportScroll.availableWidth;text:root.report;textFormat:TextEdit.PlainText;readOnly:true;selectByMouse:true;wrapMode:TextEdit.Wrap;color:Theme.paper;selectionColor:Theme.signalRed;selectedTextColor:Theme.ink;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;background:Rectangle {color:Theme.surfaceOne;border.color:Theme.rule;radius:6}}
   }
   Row {visible:!!root.prepared.confirmation;spacing:8
    ControlTile {label:"Confirm on "+root.targetHost;selected:true;enabled:!worker.running;onActivated:root.request(["run",root.prepared.plan.action,"--params",JSON.stringify(root.prepared.plan.params),"--confirmation",root.prepared.confirmation],"run")}
    ControlTile {label:"Cancel";onActivated:root.prepared={}}
   }
-  Text {visible:root.page===0;text:"JOB RECEIPTS / "+root.targetHost+(root.healthy?"":" · STALE / UNAVAILABLE");font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.signalRed}
+  Text {visible:root.page===0;text:"JOB RECEIPTS / "+root.targetHost+(root.healthy?"":" · STALE / UNAVAILABLE");font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.signalRed}
   ScrollView {id:jobScroll;visible:root.page===0;width:parent.width;height:Math.max(100,Math.min(320,(root.origin?.height??1080)-420));contentWidth:availableWidth;contentHeight:jobRows.implicitHeight;clip:true
    Column {id:jobRows;width:jobScroll.availableWidth;spacing:8
     Repeater {model:(root.snapshot.jobs||[]).slice().reverse()
      Rectangle {required property var modelData;width:jobRows.width;height:100;radius:6;color:Theme.surfaceOne;border.color:Theme.rule
       Column {anchors.fill:parent;anchors.margins:8;spacing:4
-       Text {width:parent.width;text:modelData.id+" · "+({succeeded:"passed",queued:"pending"}[modelData.state]||modelData.state);textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:modelData.state==="failed"?Theme.signalRed:Theme.paper}
-       Text {width:parent.width;text:(modelData.command||[]).join(" ");textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
-       Text {text:"Inputs "+(modelData.inputs||[]).length+" · Artifacts "+(modelData.artifacts||[]).length+" · Unit "+(modelData.unitState||"unknown");font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
+       Text {width:parent.width;text:modelData.id+" · "+({succeeded:"passed",queued:"pending"}[modelData.state]||modelData.state);textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:modelData.state==="failed"?Theme.signalRed:Theme.paper}
+       Text {width:parent.width;text:(modelData.command||[]).join(" ");textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
+       Text {text:"Inputs "+(modelData.inputs||[]).length+" · Artifacts "+(modelData.artifacts||[]).length+" · Unit "+(modelData.unitState||"unknown");font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
        Row {spacing:6
         ControlTile {implicitWidth:(jobRows.width-34)/4;implicitHeight:24;label:"Log";onActivated:root.action("job.logs",{id:modelData.id})}
         ControlTile {implicitWidth:(jobRows.width-34)/4;implicitHeight:24;label:"Evidence…";enabled:!!root.projectFor(modelData.project);onActivated:root.action("evidence.capture",{project:root.projectFor(modelData.project),job:modelData.id})}

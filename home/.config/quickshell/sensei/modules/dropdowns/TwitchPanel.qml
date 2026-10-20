@@ -46,14 +46,14 @@ Column {
         DeskTextField {width:parent.width-116;height:38;text:root.query;placeholderText:'Find channels or paste a twitch.tv channel / recording link…';onTextEdited:root.query=text;onAccepted:root.browse(2)}
         MusicButton {implicitWidth:108;implicitHeight:38;label:'Search';glyph:'\uf002';enabled:!fetch.running;onActivated:root.browse(2)}
     }
-    Text {width:parent.width;text:YouTubeDesk.platform==='Twitch'&&YouTubeDesk.error?YouTubeDesk.error:fetch.running?'Loading Twitch…':root.notice;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight}
+    Text {width:parent.width;text:YouTubeDesk.platform==='Twitch'&&YouTubeDesk.error?YouTubeDesk.error:fetch.running?'Loading Twitch…':root.notice;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight}
     Row {width:parent.width;height:Math.max(230,root.height-y-60);spacing:14
         Column {id:watchColumn;visible:root.watching;width:visible?Math.min(parent.width*.74,Math.max(240,parent.height-100)*16/9):0;height:parent.height;spacing:10
             Rectangle {width:parent.width;height:width*9/16;color:Theme.ink;radius:8
                 Item {id:video;anchors.fill:parent;visible:SpotifyDesk.videoMode==='youtube'}
-                Text {anchors.centerIn:parent;visible:SpotifyDesk.videoMode!=='youtube';text:'Video continues in the '+SpotifyDesk.videoMode+' player.';font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.paperMuted}
+                Text {anchors.centerIn:parent;visible:SpotifyDesk.videoMode!=='youtube';text:'Video continues in the '+SpotifyDesk.videoMode+' player.';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;color:Theme.paperMuted}
             }
-            Text {width:parent.width;text:YouTubeDesk.track.title||'';textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.paper}
+            Text {width:parent.width;text:YouTubeDesk.track.title||'';textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;color:Theme.paper}
             Row {width:parent.width;spacing:8
                 MusicButton {implicitWidth:42;implicitHeight:34;glyph:YouTubeDesk.playing?'\uf04c':'\uf04b';Accessible.name:'Play or pause Twitch';onActivated:YouTubeDesk.action('toggle')}
                 MusicButton {implicitWidth:156;implicitHeight:34;label:'Fullscreen';glyph:'\uf065';onActivated:SpotifyDesk.showVideo('fullscreen')}
@@ -66,16 +66,16 @@ Column {
         ListView {width:parent.width-(root.watching?watchColumn.width+14:0);height:parent.height;clip:true;spacing:8;model:root.rows;ScrollBar.vertical:DeskScrollBar {}
             delegate:ChamferPanel {required property var modelData;width:ListView.view.width;height:118;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:6;scanlines:false
                 RoundedArtwork {x:10;y:12;width:70;height:70;cornerRadius:8;source:modelData.art;asynchronous:true;fillMode:Image.PreserveAspectCrop}
-                Text {x:92;y:12;width:parent.width-104;text:modelData.artist;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.paper}
-                Text {x:92;y:35;width:parent.width-104;text:modelData.title;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
+                Text {x:92;y:12;width:parent.width-104;text:modelData.artist;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;color:Theme.paper}
+                Text {x:92;y:35;width:parent.width-104;text:modelData.title;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
                 Text {x:92;y:57;width:parent.width-104;text:modelData.live?'LIVE · '+Number(modelData.viewers||0).toLocaleString()+' viewers · '+(modelData.album||''):modelData.id.startsWith('videos/')?'Recording':'Channel · may be offline';font.family:Appearance.font.data;font.pixelSize:10;color:modelData.live?Theme.widgetAccent:Theme.paperMuted;elide:Text.ElideRight}
                 Row {anchors.right:parent.right;anchors.bottom:parent.bottom;anchors.margins:8;spacing:8
                     MusicButton {implicitWidth:34;implicitHeight:28;glyph:root.section===3?'\uf00d':'\uf02e';Accessible.name:root.section===3?'Remove local bookmark':'Save channel locally';onActivated:{bookmark.command=['@HOME@/.local/bin/sensei-spotify',root.section===3?'twitch-remove':'twitch-save',root.section===3?modelData.id:JSON.stringify(modelData)];bookmark.running=true;}}
                     MusicButton {implicitWidth:98;implicitHeight:28;label:'Watch';glyph:'\uf04b';enabled:!YouTubeDesk.loading;onActivated:YouTubeDesk.watch(Object.assign({},modelData,{private:root.useAccount}))}
                 }
             }
-            Text {visible:root.rows.length===0;anchors.centerIn:parent;text:'Choose Live now, Following or search for a channel.';width:parent.width-32;wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.paperMuted}
+            Text {visible:root.rows.length===0;anchors.centerIn:parent;text:'Choose Live now, Following or search for a channel.';width:parent.width-32;wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;color:Theme.paperMuted}
         }
     }
-    Text {width:parent.width;text:'Twitch video stays native. Chat, subscriptions and account changes remain on Twitch; no messages are sent from this widget.';wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+    Text {width:parent.width;text:'Twitch video stays native. Chat, subscriptions and account changes remain on Twitch; no messages are sent from this widget.';wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
 }

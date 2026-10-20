@@ -133,7 +133,7 @@ Item {
         occupied=windows;
         const file=wallpaperState.displays?.[target]?.file||wallpaperState.lockedFile||"";
         const roof=!speaking&&variant%3===1?Logic.roofPlace(file,screen.width,screen.height,pet.width,pet.height,windows,variant):null;
-        if(!animate&&placement.available&&!windows.some(w=>Logic.intersects({x:placement.x,y:placement.y,w:pet.width,h:pet.height},w)))return;
+        if(!animate&&placement.available&&placement.x>=12&&placement.y>=52&&placement.x+pet.width<=screen.width-12&&placement.y+pet.height<=screen.height-52&&!windows.some(w=>Logic.intersects({x:placement.x,y:placement.y,w:pet.width,h:pet.height},w)))return;
         placement=Logic.worldPlace(storyViews[target],storyWorld,screen.width,screen.height,pet.width,pet.height,windows,variant)||roof||Logic.place(screen.width,screen.height,pet.width,pet.height,windows,variant);
     }
     property string eventJob:""
@@ -295,13 +295,16 @@ Item {
     Timer {id:landingExpiry;interval:700;onTriggered:root.landing=false}
     function updateSpeech():void {if(speechWindow)speechWindow.visible=allowed&&speaking&&speechWindow.bubblePlace.available;}
     Timer {interval:250;repeat:true;running:root.allowed&&root.speaking;onTriggered:root.updateSpeech()}
+    readonly property bool singingCard:speaking&&messageKind==='singing along'
     readonly property var speechScreen:Quickshell.screens.find(s=>s.name===root.target)??Quickshell.screens[0]
     PanelWindow {
         id:speechWindow;screen:root.speechScreen;visible:false
-        readonly property var bubblePlace:Speech.place(root.speechScreen?.width??1920,root.speechScreen?.height??1080,256,speechWindow.implicitHeight,root.placement,pet.width,pet.height,root.occupied)
+        readonly property var bubblePlace:Speech.place(root.speechScreen?.width??1920,root.speechScreen?.height??1080,speechWindow.implicitWidth,speechWindow.implicitHeight,root.placement,pet.width,pet.height,root.occupied)
         anchors {left:true;top:true}
         margins {left:bubblePlace.x;top:bubblePlace.y}
-        implicitWidth:256;implicitHeight:Math.max(64,Math.ceil(body.implicitHeight)+caption.implicitHeight+36)
+        readonly property int cardPadding:root.singingCard?20:16
+        implicitWidth:Math.min((root.speechScreen?.width??1920)-32,root.singingCard?420:300)
+        implicitHeight:Math.max(root.singingCard?100:76,Math.ceil(body.implicitHeight)+caption.implicitHeight+2*cardPadding+8)
         color:"transparent";exclusionMode:ExclusionMode.Ignore
         WlrLayershell.layer:WlrLayer.Overlay;WlrLayershell.namespace:"zondo-speech"
         WlrLayershell.keyboardFocus:WlrKeyboardFocus.None;mask:Region {item:speechBubble}
@@ -312,8 +315,8 @@ Item {
 
             visible:true
             radius:9;color:root.messageKind==='phone post'?"#f211181b":"#f2171311";border.color:root.messageKind==='phone post'?"#788fbcc4":"#6244323a";border.width:1
-            Text {id:caption;anchors {left:parent.left;top:parent.top;leftMargin:14;topMargin:10} text:(root.messageKind==='phone post'?"▣ PHONE / ":"ZONDO / ")+root.messageKind.toUpperCase();width:parent.width-28;elide:Text.ElideRight;font.family:"JetBrainsMono Nerd Font";font.pixelSize:9;font.letterSpacing:1.1;color:root.messageKind==='phone post'?"#8fbcc4":"#f23d70"}
-            Text {id:body;anchors {left:parent.left;right:parent.right;top:caption.bottom;leftMargin:14;rightMargin:14;topMargin:7} text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:/[\u0980-\u09ff]/.test(text)?"Noto Sans Bengali":/[\u0900-\u097f]/.test(text)?"Noto Sans Devanagari":"Noto Sans";font.pixelSize:12;color:"#e8e2da"}
+            Text {id:caption;anchors {left:parent.left;top:parent.top;leftMargin:speechWindow.cardPadding;topMargin:speechWindow.cardPadding} text:(root.messageKind==='phone post'?"▣ PHONE / ":"ZONDO / ")+root.messageKind.toUpperCase();width:parent.width-2*speechWindow.cardPadding;elide:Text.ElideRight;font.family:"ZedMono Nerd Font";font.pixelSize:11;font.weight:Font.DemiBold;font.letterSpacing:.8;color:root.messageKind==='phone post'?"#8fbcc4":"#f23d70"}
+            Text {id:body;anchors {left:parent.left;right:parent.right;top:caption.bottom;leftMargin:speechWindow.cardPadding;rightMargin:speechWindow.cardPadding;topMargin:8} text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:/[\u0980-\u09ff]/.test(text)?"Noto Sans Bengali":/[\u0900-\u097f]/.test(text)?"Noto Sans Devanagari":"Iosevka Nerd Font";font.pixelSize:root.singingCard?20:13;lineHeight:1.3;font.weight:root.singingCard?Font.Medium:Font.Normal;color:"#e8e2da"}
         }
     }
     PanelWindow {
@@ -321,7 +324,7 @@ Item {
         screen:Quickshell.screens.find(s=>s.name===root.target)??Quickshell.screens[0]
         visible:root.allowed
         color:"transparent"
-        readonly property real spriteSize:Math.max(64,Math.min(180,root.preferences.size??96))
+        readonly property real spriteSize:Math.max(64,Math.min(root.singingCard?200:180,root.singingCard?Math.max(160,(root.preferences.size??96)*1.65):(root.preferences.size??96)))
         implicitWidth:spriteSize
         implicitHeight:spriteSize
         onWidthChanged:settle.restart()
@@ -409,9 +412,9 @@ Item {
             Rectangle {anchors.fill:parent;gradient:Gradient {orientation:Gradient.Horizontal;GradientStop {position:0;color:"#ee100e12"} GradientStop {position:1;color:"#00100e12"}}}
             Rectangle {anchors {left:parent.left;right:parent.right;bottom:parent.bottom;leftMargin:36;rightMargin:36;bottomMargin:28}height:2;color:"#30ffffff";Rectangle {height:2;width:parent.width*arrival.progress;color:"#ff4297"}}
             Column {anchors {left:parent.left;verticalCenter:parent.verticalCenter;leftMargin:Math.max(36,parent.width*.085)} spacing:22
-                Text {text:"FH1M / DIGITAL DEN";color:"#ff4297";font.family:"JetBrainsMono Nerd Font";font.pixelSize:Math.max(14,Math.min(22,arrival.width*.014)); font.letterSpacing:3}
-                Text {text:root.welcomeText; color:"#f4e9ee";font.family:"JetBrainsMono Nerd Font";font.pixelSize:Math.max(24,Math.min(52,arrival.width*.032))}
-                Text {text:"Zondo is at the desk.\nMake something that has to work.";color:"#c8b7bf";font.family:"JetBrainsMono Nerd Font";font.pixelSize:Math.max(14,Math.min(21,arrival.width*.014));lineHeight:1.5}
+                Text {text:"FH1M / DIGITAL DEN";color:"#ff4297";font.family:"ZedMono Nerd Font";font.pixelSize:Math.max(14,Math.min(22,arrival.width*.014)); font.letterSpacing:3}
+                Text {text:root.welcomeText; color:"#f4e9ee";font.family:"ZedMono Nerd Font";font.pixelSize:Math.max(24,Math.min(52,arrival.width*.032))}
+                Text {text:"Zondo is at the desk.\nMake something that has to work.";color:"#c8b7bf";font.family:"ZedMono Nerd Font";font.pixelSize:Math.max(14,Math.min(21,arrival.width*.014));lineHeight:1.5}
             }
         }
     }

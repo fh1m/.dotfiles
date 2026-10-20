@@ -28,7 +28,7 @@ Popup {
             Text {width:parent.width-42;text:'Music videos';font.family:Appearance.font.heading;font.pixelSize:19;color:Theme.paper}
             MusicButton {implicitWidth:32;implicitHeight:28;glyph:'\uf00d';Accessible.name:'Close video search';onActivated:root.close()}
         }
-        Text {width:parent.width;text:SpotifyDesk.title+' · '+SpotifyDesk.artist;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
+        Text {width:parent.width;text:SpotifyDesk.title+' · '+SpotifyDesk.artist;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
         Row {spacing:8
             MusicButton {implicitWidth:138;implicitHeight:30;label:'YouTube';glyph:'\uf16a';onActivated:SpotifyDesk.action('video-browser',[JSON.stringify(SpotifyDesk.lyricTrack())])}
             MusicButton {implicitWidth:96;implicitHeight:30;label:'Refresh';glyph:'\uf021';enabled:!SpotifyDesk.videosLoading;onActivated:SpotifyDesk.openVideos(true)}
@@ -36,8 +36,8 @@ Popup {
         Rectangle {
             visible:root.showVideo;width:parent.width;height:visible?Math.min(300,root.height*.4):0;color:Theme.ink;radius:8
             VideoOutput {id:video;anchors.fill:parent;fillMode:VideoOutput.PreserveAspectFit}
-            Text {anchors.top:parent.top;anchors.left:parent.left;anchors.margins:8;width:parent.width-16;text:SpotifyDesk.videoTitle;textFormat:Text.PlainText;elide:Text.ElideRight;color:Theme.paper;font.family:Appearance.font.ui;font.pixelSize:11;visible:SpotifyDesk.videoSource!=="";style:Text.Outline;styleColor:Theme.ink}
-            Text {anchors.centerIn:parent;width:parent.width-30;text:SpotifyDesk.videoPreviewLoading?'Preparing silent preview…':SpotifyDesk.videoPreviewError;textFormat:Text.PlainText;wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;color:Theme.paperMuted;font.family:Appearance.font.ui;font.pixelSize:12;visible:!SpotifyDesk.videoSource}
+            Text {anchors.top:parent.top;anchors.left:parent.left;anchors.margins:8;width:parent.width-16;text:SpotifyDesk.videoTitle;textFormat:Text.PlainText;elide:Text.ElideRight;color:Theme.paper;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;visible:SpotifyDesk.videoSource!=="";style:Text.Outline;styleColor:Theme.ink}
+            Text {anchors.centerIn:parent;width:parent.width-30;text:SpotifyDesk.videoPreviewLoading?'Preparing silent preview…':SpotifyDesk.videoPreviewError;textFormat:Text.PlainText;wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;color:Theme.paperMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;visible:!SpotifyDesk.videoSource}
             Row {anchors.right:parent.right;anchors.bottom:parent.bottom;anchors.margins:8;spacing:6;visible:SpotifyDesk.videoSource!==""
                 MusicButton {implicitWidth:36;implicitHeight:28;glyph:player.playing?'\uf04c':'\uf04b';Accessible.name:'Pause or resume silent video';onActivated:player.playing?player.pause():player.play()}
                 MusicButton {implicitWidth:36;implicitHeight:28;glyph:'\uf24d';Accessible.name:'Always-on-top video mini-player';onActivated:SpotifyDesk.showVideo('mini')}
@@ -53,13 +53,13 @@ Popup {
                 required property var modelData
                 width:ListView.view.width;height:64;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:6;scanlines:false
                 Column {x:10;y:10;width:parent.width-140;spacing:7
-                    Text {width:parent.width;text:modelData.title;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper}
-                    Text {width:parent.width;text:modelData.channel+(modelData.duration?' · '+SpotifyDesk.fmt(modelData.duration*1000):'');textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
+                    Text {width:parent.width;text:modelData.title;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paper}
+                    Text {width:parent.width;text:modelData.channel+(modelData.duration?' · '+SpotifyDesk.fmt(modelData.duration*1000):'');textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
                 }
                 MusicButton {anchors.right:parent.right;anchors.rightMargin:10;anchors.verticalCenter:parent.verticalCenter;implicitWidth:112;implicitHeight:30;label:'Preview';glyph:'\uf04b';enabled:!SpotifyDesk.videoPreviewLoading;onActivated:SpotifyDesk.previewVideo(modelData.id)}
             }
-            Text {visible:!(SpotifyDesk.videoData.rows||[]).length;anchors.centerIn:parent;width:parent.width-20;text:SpotifyDesk.videosLoading?'Finding music videos…':'Use YouTube search if no candidates are available.';wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paperMuted}
+            Text {visible:!(SpotifyDesk.videoData.rows||[]).length;anchors.centerIn:parent;width:parent.width-20;text:SpotifyDesk.videosLoading?'Finding music videos…':'Use YouTube search if no candidates are available.';wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
         }
-        Text {width:parent.width;text:SpotifyDesk.videoData.warning||'Silent previews keep Spotify as the soundtrack. Recordings may have different timing.';wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+        Text {width:parent.width;text:SpotifyDesk.videoData.warning||'Silent previews keep Spotify as the soundtrack. Recordings may have different timing.';wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
     }
 }

@@ -63,7 +63,7 @@ PanelWindow {
     Item {id:header;z:100;visible:!window.inlineVideo;x:12;y:8;width:parent.width-24;height:38
         property real startX:0
         property real startY:0
-        Text {id:heading;width:parent.width-330;anchors.verticalCenter:parent.verticalCenter;text:SpotifyDesk.videoTitle;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paper
+        Text {id:heading;width:parent.width-330;anchors.verticalCenter:parent.verticalCenter;text:SpotifyDesk.videoTitle;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paper
             DragHandler {target:null;enabled:!window.full;onActiveChanged:if(active){header.startX=SpotifyDesk.videoX;header.startY=SpotifyDesk.videoY;}onActiveTranslationChanged:{SpotifyDesk.videoX=Math.max(0,Math.min(header.startX+activeTranslation.x,(window.output?.width||1920)-window.width));SpotifyDesk.videoY=Math.max(0,Math.min(header.startY+activeTranslation.y,(window.output?.height||1080)-window.height));}}
         }
         Row {anchors.right:parent.right;spacing:7

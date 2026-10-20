@@ -11,7 +11,7 @@ DropdownFrame {
  Column {
  width:parent.width;spacing:8
  Row {spacing:8
- DeskTextField {id:search;width:270;height:32;placeholderText:"Search text, files, snippets…";text:ClipboardVault.query;onTextEdited:ClipboardVault.query=text;color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:13;selectByMouse:true}
+ DeskTextField {id:search;width:270;height:32;placeholderText:"Search text, files, snippets…";text:ClipboardVault.query;onTextEdited:ClipboardVault.query=text;color:Theme.widgetText;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;selectByMouse:true}
  Repeater {model:[{name:"All",key:"all"},{name:"Text / code",key:"text"},{name:"Images",key:"image"},{name:"Files",key:"files"},{name:"Pinned",key:"pinned"},{name:"Archive",key:"archived"}];ControlTile {required property var modelData;implicitWidth:112;implicitHeight:32;label:modelData.name;navigation:true;selected:ClipboardVault.filter===modelData.key;onActivated:ClipboardVault.filter=modelData.key}}
  }
  Row {
@@ -21,8 +21,8 @@ DropdownFrame {
  delegate:ChamferPanel {required property var modelData;width:list.width-10;height:57;chamfer:5;scanlines:false;fillColor:ClipboardVault.selected===modelData.id?Theme.blend(Theme.widgetRaised,Theme.widgetAccent,.13):pointer.containsMouse?Theme.widgetRaised:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.07)
  Image {x:6;y:7;width:43;height:43;source:modelData.kind==="image"?"file://"+modelData.path:"";visible:modelData.kind==="image";fillMode:Image.PreserveAspectFit;sourceSize.width:100;asynchronous:true}
  NrLabel {x:15;y:18;visible:modelData.kind!=="image";text:modelData.pinned?"\uf08d":modelData.kind==="files"?"\uf15b":"\uf121";pixelSize:20;color:Theme.widgetAccent}
- NrLabel {x:58;y:8;width:parent.width-65;text:modelData.title;pixelSize:13;elide:Text.ElideRight;maximumLineCount:1;tracked:false;font.capitalization:Font.MixedCase;font.family:Appearance.font.ui;color:Theme.widgetText}
- NrLabel {x:58;y:32;width:parent.width-65;text:Qt.formatDateTime(new Date(modelData.last*1000),"MMM d · hh:mm AP")+" · ×"+modelData.copies;pixelSize:11;color:Theme.widgetMuted;elide:Text.ElideRight;tracked:false;font.capitalization:Font.MixedCase;font.family:Appearance.font.ui}
+ NrLabel {x:58;y:8;width:parent.width-65;text:modelData.title;pixelSize:13;elide:Text.ElideRight;maximumLineCount:1;tracked:false;font.capitalization:Font.MixedCase;font.family:Appearance.font.reading;color:Theme.widgetText}
+ NrLabel {x:58;y:32;width:parent.width-65;text:Qt.formatDateTime(new Date(modelData.last*1000),"MMM d · hh:mm AP")+" · ×"+modelData.copies;pixelSize:11;color:Theme.widgetMuted;elide:Text.ElideRight;tracked:false;font.capitalization:Font.MixedCase;font.family:Appearance.font.reading}
  MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{ClipboardVault.select(modelData.id);ClipboardVault.action("copy",modelData.id);}}
  }
  }

@@ -8,8 +8,8 @@ ChamferPanel {height:64;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfe
         Row {anchors.fill:parent;anchors.margins:10;spacing:10
             RoundedArtwork {width:44;height:44;cornerRadius:5;source:SpotifyDesk.albumArt;asynchronous:true;fillMode:Image.PreserveAspectCrop}
             Column {width:Math.max(100,parent.width-progress.width-684);anchors.verticalCenter:parent.verticalCenter;spacing:5
-                Text {width:parent.width;text:SpotifyDesk.title;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paper}
-                Text {width:parent.width;text:SpotifyDesk.artist+' · '+(YouTubeDesk.ownsAudio?YouTubeDesk.platform.toUpperCase():'SPOTIFY');textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
+                Text {width:parent.width;text:SpotifyDesk.title;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paper}
+                Text {width:parent.width;text:SpotifyDesk.artist+' · '+(YouTubeDesk.ownsAudio?YouTubeDesk.platform.toUpperCase():'SPOTIFY');textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
             }
             MusicButton {implicitWidth:38;implicitHeight:38;glyph:'\uf048';Accessible.name:'Previous';enabled:!SpotifyDesk.trackLoading;onActivated:SpotifyDesk.action('previous')}
             MusicButton {implicitWidth:48;implicitHeight:38;glyph:SpotifyDesk.playing?'\uf04c':'\uf04b';Accessible.name:SpotifyDesk.playing?'Pause':'Play';selected:SpotifyDesk.playing;onActivated:SpotifyDesk.action('toggle')}

@@ -65,7 +65,7 @@ PanelWindow {
         readonly property real lyricWidth:width-2*gutter-cardWidth-listWidth-columnGap-(window.collectionOpen?20:0)
         Rectangle {visible:!SpotifyDesk.zen;x:stage.gutter;y:26;width:3;height:28;color:Theme.signalRed;radius:1}
         Text {visible:!SpotifyDesk.zen;x:stage.gutter+16;y:23;text:'LISTENING ROOM';font.family:Appearance.font.heading;font.pixelSize:20;font.weight:Font.DemiBold;color:Theme.paper}
-        Text {visible:!SpotifyDesk.zen;x:stage.gutter+16;y:51;text:SpotifyDesk.playing?'Your soundtrack. Room to breathe.':'Paused · the room is yours.';font.family:Appearance.font.forText(text);font.pixelSize:12;color:Theme.paperMuted}
+        Text {visible:!SpotifyDesk.zen;x:stage.gutter+16;y:51;text:SpotifyDesk.playing?'Your soundtrack. Room to breathe.':'Paused · the room is yours.';font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
         Row {anchors.right:parent.right;anchors.rightMargin:stage.gutter; y:27;spacing:8
             opacity:window.controlsShown?1:0 // Movement or the full toolbar hit area reveals controls before reaching a button.
             enabled:opacity>.5
@@ -88,9 +88,9 @@ PanelWindow {
                 RoundedArtwork {width:parent.width;height:width;cornerRadius:14;source:SpotifyDesk.albumArt;sourceSize:Qt.size(800,800);fillMode:Image.PreserveAspectCrop;asynchronous:true
                     Rectangle {anchors.fill:parent;visible:SpotifyDesk.albumArt==='';color:Theme.surfaceOne;radius:14;Text {anchors.centerIn:parent;text:'\uf001';font.family:Appearance.font.icons;font.pixelSize:64;color:Theme.widgetMuted}}
                 }
-                Text {width:parent.width;text:SpotifyDesk.title;textFormat:Text.PlainText;wrapMode:Text.Wrap;maximumLineCount:3;elide:Text.ElideRight;font.family:Appearance.font.heading;font.pixelSize:26;font.weight:Font.DemiBold;color:Theme.paper}
-                Text {width:parent.width;text:SpotifyDesk.artist;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.forText(text);font.pixelSize:15;color:Theme.paperMuted}
-                Text {width:parent.width;text:SpotifyDesk.album;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:12;color:Theme.widgetMuted}
+                Text {width:parent.width;text:SpotifyDesk.title;textFormat:Text.PlainText;wrapMode:Text.Wrap;maximumLineCount:3;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.mediaTitle;font.weight:Font.DemiBold;color:Theme.paper}
+                Text {width:parent.width;text:SpotifyDesk.artist;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.section;color:Theme.paperMuted}
+                Text {width:parent.width;text:SpotifyDesk.album;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.body;color:Theme.widgetMuted}
                 MusicButton {width:parent.width;implicitHeight:32;glyph:'\uf025';label:SpotifyDesk.devices.find(d=>d.is_active)?.name||'Playback devices';Accessible.name:'Playback device: '+label;onActivated:{SpotifyDesk.collapse(true);SpotifyDesk.page=5;}}
                 Slider {id:seek;width:parent.width;height:24;enabled:SpotifyDesk.playback.capabilities?.CanSeek??true;from:0;to:1;Binding {target:seek;property:'value';value:SpotifyDesk.positionMs/Math.max(1,SpotifyDesk.playback.track?.duration||0);when:!seek.pressed;restoreMode:Binding.RestoreNone}onMoved:SpotifyDesk.action('seek-to',[String(Math.round(value*(SpotifyDesk.playback.track?.duration||0)))]);background:Rectangle {x:seek.leftPadding;y:seek.topPadding+seek.availableHeight/2-2;width:seek.availableWidth;height:4;radius:2;color:Theme.rule;Rectangle {width:parent.width*seek.visualPosition;height:4;radius:2;color:Theme.signalRed}}handle:Rectangle {x:seek.leftPadding+seek.visualPosition*(seek.availableWidth-width);y:seek.topPadding+seek.availableHeight/2-5;width:10;height:10;radius:5;color:Theme.paper}}
 
@@ -122,12 +122,12 @@ PanelWindow {
                 MusicButton {implicitWidth:32;implicitHeight:32;glyph:'\uf021';Accessible.name:'Refresh collection';onActivated:{if(window.collection===0)SpotifyDesk.dispatch('queue');else if(SpotifyDesk.contextItem.id)SpotifyDesk.dispatch('context',[SpotifyDesk.contextItem.kind,SpotifyDesk.contextItem.id]);else SpotifyDesk.dispatch('library',['playlists','refresh']);}}
             }
             Item {id:collectionTitle;x:14;y:58;width:parent.width-28;height:38
-                Text {width:parent.width-(back.visible?80:0);anchors.verticalCenter:parent.verticalCenter;text:window.collection===0?'Up next · '+window.rows.length:SpotifyDesk.contextItem.title||'Your playlists · '+window.rows.length;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:14;color:Theme.paperMuted}
+                Text {width:parent.width-(back.visible?80:0);anchors.verticalCenter:parent.verticalCenter;text:window.collection===0?'Up next · '+window.rows.length:SpotifyDesk.contextItem.title||'Your playlists · '+window.rows.length;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.section;color:Theme.paperMuted}
                 MusicButton {id:back;anchors.right:parent.right;visible:window.collection===1&&!!SpotifyDesk.contextItem.id;implicitWidth:76;implicitHeight:30;label:'Back';glyph:'\uf060';onActivated:SpotifyDesk.contextItem={}}
             }
             ListView {id:tracks;x:14;y:104;width:parent.width-28;height:parent.height-y-48;clip:true;spacing:6;model:window.rows;ScrollBar.vertical:ScrollBar {}
                 delegate:SpotifyRow {required property var modelData;width:tracks.width;entry:modelData;onBrowseRequested:{window.collection=1;SpotifyDesk.browse(entry);}onPlayRequested:{if(window.collection===0)SpotifyDesk.play(entry,SpotifyDesk.queueRows);else SpotifyDesk.play(entry);}onQueueRequested:{if(['youtube','twitch'].includes(entry.kind))YouTubeDesk.enqueue(entry);else SpotifyDesk.action('queue-add',[entry.uri||entry.id]);}}
-                Text {anchors.centerIn:parent;visible:tracks.count===0;width:parent.width-24;text:SpotifyDesk.loading?'Loading your music…':window.collection===0?'The queue is quiet. Choose a playlist to begin.':'No playlists loaded. Refresh or open Spotify to reconnect.';wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;font.family:Appearance.font.forText(text);font.pixelSize:13;color:Theme.widgetMuted}
+                Text {anchors.centerIn:parent;visible:tracks.count===0;width:parent.width-24;text:SpotifyDesk.loading?'Loading your music…':window.collection===0?'The queue is quiet. Choose a playlist to begin.':'No playlists loaded. Refresh or open Spotify to reconnect.';wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.body;color:Theme.widgetMuted}
             }
             MusicButton {anchors.bottom:parent.bottom;anchors.bottomMargin:10;anchors.horizontalCenter:parent.horizontalCenter;visible:window.collection===1&&!!SpotifyDesk.contextItem.id&&!!SpotifyDesk.nextPage;implicitWidth:140;implicitHeight:30;label:'Load more tracks';enabled:!SpotifyDesk.loading;onActivated:SpotifyDesk.more()}
         }
@@ -145,9 +145,9 @@ PanelWindow {
                 y:focusRoom.stacked?36:(parent.height-height)/2
                 width:focusRoom.artSize;spacing:12
                 RoundedArtwork {width:parent.width;height:width;cornerRadius:16;source:SpotifyDesk.albumArt;sourceSize:Qt.size(1000,1000);fillMode:Image.PreserveAspectCrop;asynchronous:true}
-                Text {width:parent.width;text:SpotifyDesk.title;textFormat:Text.PlainText;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:Math.max(17,Math.min(27,stage.width*.017));font.weight:Font.DemiBold;color:Theme.paper}
-                Text {width:parent.width;text:SpotifyDesk.artist;textFormat:Text.PlainText;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:16;color:Theme.paperMuted}
-                Text {width:parent.width;text:SpotifyDesk.album;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:12;color:Theme.paperMuted}
+                Text {width:parent.width;text:SpotifyDesk.title;textFormat:Text.PlainText;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:Math.round(Math.max(22,Math.min(30,stage.width*.017)));font.weight:Font.DemiBold;color:Theme.paper}
+                Text {width:parent.width;text:SpotifyDesk.artist;textFormat:Text.PlainText;wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.title;color:Theme.paperMuted}
+                Text {width:parent.width;text:SpotifyDesk.album;textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
             }
             LyricsFollower {
                 id:focusLyrics
@@ -157,6 +157,6 @@ PanelWindow {
                 immersive:true;controlsVisible:false
             }
         }
-        Text {visible:!SpotifyDesk.zen;x:stage.gutter;y:parent.height-34;width:parent.width-2*stage.gutter;text:SpotifyDesk.error||SpotifyDesk.statusError||SpotifyDesk.warning||'Esc / F11  restore widget     ·     Space  play / pause     ·     Tab  move between controls';textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:12;color:SpotifyDesk.error||SpotifyDesk.statusError?Theme.signalRed:Theme.paperMuted}
+        Text {visible:!SpotifyDesk.zen;x:stage.gutter;y:parent.height-34;width:parent.width-2*stage.gutter;text:SpotifyDesk.error||SpotifyDesk.statusError||SpotifyDesk.warning||'Esc / F11  restore widget     ·     Space  play / pause     ·     Tab  move between controls';textFormat:Text.PlainText;elide:Text.ElideRight;font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.body;color:SpotifyDesk.error||SpotifyDesk.statusError?Theme.signalRed:Theme.paperMuted}
     }
 }

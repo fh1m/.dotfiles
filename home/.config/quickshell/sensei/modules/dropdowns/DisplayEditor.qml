@@ -32,7 +32,7 @@ Column {
     readonly property var original:root.actual.find(m=>m.name===modelData.name)||({width:1920,height:1080})
     x:20+(modelData.x-map.minX)*map.factor;y:15+(modelData.y-map.minY)*map.factor
     width:Math.max(38,original.width/modelData.scale*map.factor);height:Math.max(24,original.height/modelData.scale*map.factor);radius:4;color:root.selected===index?Theme.surfaceTwo:Theme.ink;opacity:modelData.enabled?1:.4;border.color:root.selected===index?Theme.signalRed:Theme.rule;border.width:1
-    Text {anchors.centerIn:parent;text:(index+1)+" · "+tile.modelData.name;font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paper}
+    Text {anchors.centerIn:parent;text:(index+1)+" · "+tile.modelData.name;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.caption;color:Theme.paper}
     MouseArea {anchors.fill:parent;drag.target:tile;enabled:root.token==="";onPressed:root.selected=tile.index;onReleased:{root.selected=tile.index;let x=Math.round(((tile.x-20)/map.factor+map.minX)/16)*16;let y=Math.round(((tile.y-15)/map.factor+map.minY)/16)*16;for(let i=0;i<root.draft.length;i++){if(i===tile.index)continue;const r=root.draft[i],m=root.actual[i];if(!m)continue;const edge=r.x+m.width/r.scale;if(Math.abs(x-edge)<40)x=Math.round(edge);const bottom=r.y+m.height/r.scale;if(Math.abs(y-bottom)<40)y=Math.round(bottom);}root.change({x:x,y:y});}}
    }
   }
@@ -49,7 +49,7 @@ Column {
   ControlTile {label:root.current.primary?"Main display":"Use as main";selected:!!root.current.primary;enabled:MachineProfile.role(root.current.name)!=="screenpad";onActivated:root.draft=root.draft.map(r=>Object.assign({},r,{primary:r.name===root.current.name}))}
   DeskComboBox {width:200;model:["Join displays"].concat(root.draft.filter(r=>r.name!==root.current.name&&r.enabled).map(r=>r.name));onActivated:root.change({mirror:currentIndex===0?"none":model[currentIndex]})}
  }
- Text {width:parent.width;text:root.status;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.paperMuted}
+ Text {width:parent.width;text:root.status;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
  Row {spacing:8
   ControlTile {label:"Refresh";enabled:!worker.running&&root.token==="";onActivated:root.refresh()}
   ControlTile {label:"Apply layout";selected:true;enabled:!worker.running&&root.token===""&&root.draft.length>0;onActivated:root.run("apply",[JSON.stringify(root.draft)])}

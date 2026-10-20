@@ -24,7 +24,7 @@ WidgetSection {
         Row {
             width: parent.width
             spacing: 8
-            Text { textFormat: Text.PlainText; width: parent.width-96; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight; text: Den.working ? "Working…" : ((Den.data.state ?? "Checking connection") + " · Clipboard " + (Den.data.clipboard === "active" ? "on" : "off") + " · Drives " + (Den.data.storageMounted ? "mounted" : "offline")); font.family: Appearance.font.ui; font.pixelSize: 11; color: Theme.widgetMuted }
+            Text { textFormat: Text.PlainText; width: parent.width-96; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight; text: Den.working ? "Working…" : ((Den.data.state ?? "Checking connection") + " · Clipboard " + (Den.data.clipboard === "active" ? "on" : "off") + " · Drives " + (Den.data.storageMounted ? "mounted" : "offline")); font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.secondary; color: Theme.widgetMuted }
             ControlTile { implicitWidth: 88; implicitHeight: 28; label: "Check"; glyph: "\uf021"; enabled: !Den.working; onActivated: Den.refresh() }
         }
         Row {
@@ -59,7 +59,7 @@ WidgetSection {
             ControlTile {implicitWidth:(parent.width-8)/2;label:"Restore my wallpapers";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-wallpaper-story","disable"])}
         }
         DenMap {width:parent.width;visible:!MachineProfile.desktop}
-        Text { textFormat: Text.PlainText; width: parent.width; visible: Den.error !== ""; text: Den.error; wrapMode: Text.Wrap; font.family: Appearance.font.ui; font.pixelSize: 11; color: Theme.signalRed }
+        Text { textFormat: Text.PlainText; width: parent.width; visible: Den.error !== ""; text: Den.error; wrapMode: Text.Wrap; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.secondary; color: Theme.signalRed }
         Row {width:parent.width;spacing:8
             ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"Dance break";glyph:"\uf001";onActivated:Den.companion("dance","")}
             ControlTile {implicitWidth:(parent.width-16)/3;implicitHeight:34;label:"More like this";glyph:"\uf164";onActivated:Den.companion("more","")}
@@ -69,12 +69,12 @@ WidgetSection {
         ControlTile {width:parent.width;label:"ScreenPad / Normal · Simulation · Coding · Hardware";glyph:"\uf108";visible:!MachineProfile.desktop;onActivated:ShellState.pinInstrument("context")}
         ControlTile {width:parent.width;label:"Engineering / projects & job queue";glyph:"\uf085";onActivated:ShellState.toggleDropdown("engineering")}
         DeskTextField {id:zondoThought;width:parent.width;placeholderText:"Tell Zondo a thought, or keep a personal memory";maximumLength:240;onAccepted:if(text.trim()){Den.companion("talk",text);text="";}}
-        Text {width:parent.width;visible:Den.reply!=="";text:Den.reply;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paper}
+        Text {width:parent.width;visible:Den.reply!=="";text:Den.reply;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paper}
         Row {width:parent.width;spacing:8
             ControlTile {implicitWidth:(parent.width-8)/2;label:"Talk to Zondo";glyph:"\uf075";onActivated:if(zondoThought.text.trim()){Den.companion("talk",zondoThought.text);zondoThought.text="";}}
             ControlTile {implicitWidth:(parent.width-8)/2;label:"Remember locally";glyph:"\uf02d";onActivated:if(zondoThought.text.trim()){Den.companion("remember",zondoThought.text);zondoThought.text="";}}
         }
-        Text {width:parent.width;text:"Local cue-based replies, no background AI. Remember stores your exact words privately on this machine.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:10;color:Theme.paperMuted}
+        Text {width:parent.width;text:"Local cue-based replies, no background AI. Remember stores your exact words privately on this machine.";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
 
     }
 }

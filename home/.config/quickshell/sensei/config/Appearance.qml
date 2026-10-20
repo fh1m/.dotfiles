@@ -50,19 +50,19 @@ Singleton {
  }
 
     readonly property QtObject font: QtObject {
-        // Titles, clock and UI text: JetBrainsMono Nerd Font.
-        readonly property string display: "JetBrainsMono Nerd Font Mono"
-        readonly property string heading: "JetBrainsMono Nerd Font Propo"
-        readonly property string ui: "JetBrainsMono Nerd Font Propo"
-        // Proportional long-form/media text; Qt merges installed script fallbacks.
-        readonly property string reading: "Noto Sans"
+        // Titles, clock and controls: Zed Mono.
+        readonly property string display: "ZedMono Nerd Font"
+        readonly property string heading: "ZedMono Nerd Font"
+        readonly property string ui: "ZedMono Nerd Font"
+        // Body/media text: Iosevka; retain script-specific fallbacks.
+        readonly property string reading: "Iosevka Nerd Font"
         function forText(value):string {const s=String(value);return /[\u0980-\u09ff]/.test(s)?"Noto Sans Bengali":/[\u0900-\u097f]/.test(s)?"Noto Sans Devanagari":/[\u0600-\u06ff]/.test(s)?"Noto Sans Arabic":reading;}
-        // Bar labels: JetBrainsMono Nerd Font. Data readouts and telemetry: Iosevka Nerd Font.
-        readonly property string barUi: "JetBrainsMono Nerd Font Propo"
+        // Bar labels: Zed Mono. Data readouts and telemetry: Iosevka Nerd Font.
+        readonly property string barUi: "ZedMono Nerd Font"
         readonly property string data: "Iosevka Nerd Font Mono"
         readonly property string telemetry: "Iosevka Nerd Font Mono"
-        // Russian accent labels use the JetBrainsMono face.
-        readonly property string accent: "JetBrainsMono Nerd Font Propo"
+        // Accent labels use the Zed Mono face.
+        readonly property string accent: "ZedMono Nerd Font"
         // Icons that are somebody else's standard rather than ours -- the
         // Bluetooth rune, so far. It is the data family's own Nerd Font
         // patch, so an icon from it sits on the same metrics as the labels
@@ -88,6 +88,18 @@ Singleton {
         readonly property int clock: 19
         // The bar clock's seconds, raised beside HH:MM in accent.
         readonly property int clockSeconds: 12
+    }
+
+    // Logical pixels: independent of output scale. Keep prose separate from telemetry.
+    readonly property QtObject textSize: QtObject {
+        readonly property int caption: 11
+        readonly property int secondary: 12
+        readonly property int body: 13
+        readonly property int control: 13
+        readonly property int section: 15
+        readonly property int title: 18
+        readonly property int mediaTitle: 26
+        readonly property int lyric: 20
     }
 
     // Fixed slot widths. Every changing number on the bar sits in one of these

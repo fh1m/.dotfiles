@@ -66,4 +66,21 @@ class SpeechLayout(unittest.TestCase):
         source=ROOT/'home/.local/share/sensei-companion/SpeechLayout.js'
         code="const vm=require('vm'),fs=require('fs');let c={};vm.createContext(c);vm.runInContext(fs.readFileSync(process.argv[1],'utf8'),c);for(let x of [12,300,1750])for(let y of [55,400,900])for(let h of [64,90,130]){let p={x,y},a=c.place(1920,1080,256,h,p,96,96,[]);if(a.available&&(c.intersects({...a,w:256,h},{...p,w:96,h:96})||a.x<0||a.y<0||a.x+256>1920||a.y+h>1080))process.exit(1);}let a=c.place(1920,1080,256,120,{x:400,y:400},96,96,[{x:0,y:0,w:1920,h:1080}]);if(a.available)process.exit(2);"
         subprocess.check_call(['node','-e',code,str(source)])
+    @unittest.skipUnless(shutil.which('node'),'Node needed for pure speech geometry checks')
+    def test_enlarged_singing_card_respects_small_and_large_outputs(self):
+        source=ROOT/'home/.local/share/sensei-companion/SpeechLayout.js'
+        code="""const vm=require('vm'),fs=require('fs');let c={};vm.createContext(c);
+        vm.runInContext(fs.readFileSync(process.argv[1],'utf8'),c);
+        let count=0;
+        for(const [sw,sh] of [[1920,1080],[1920,550],[1280,720]])
+        for(const w of [300,420]) for(const h of [100,160,260])
+        for(const size of [96,160,200]) for(const x of [12,600,sw-size-12]) {
+          const pet={x,y:sh-size-60};
+          const a=c.place(sw,sh,w,h,pet,size,size,[]);
+          if(a.available){count++;if(a.x<12||a.y<52||a.x+w>sw-12||a.y+h>sh-52||
+            c.intersects({...a,w,h},{...pet,w:size,h:size}))process.exit(1);}
+        }
+        if(count<50)process.exit(2);"""
+        subprocess.check_call(['node','-e',code,str(source)])
+
 if __name__=='__main__':unittest.main()

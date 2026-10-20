@@ -15,13 +15,13 @@ Column {
   ControlTile {implicitWidth:170;label:'Connections / SSH';navigation:true;selected:DesktopExtras.networkPage===1;onActivated:DesktopExtras.networkPage=1}
   ControlTile {implicitWidth:170;label:'Diagnostics';navigation:true;selected:DesktopExtras.networkPage===2;onActivated:{DesktopExtras.networkPage=2;DesktopExtras.loadNetwork();}}
  }
- Text { textFormat: Text.PlainText;width:parent.width;text:(Wifi.activeSsid|| (Wifi.wired?'Ethernet':'Disconnected'))+' ['+SysInfo.netInterfaces+']'+'  ·  ↑ '+Fmt.rateLong(SysInfo.netTxRate)+'  ↓ '+Fmt.rateLong(SysInfo.netRxRate);font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.widgetAccent;elide:Text.ElideRight}
+ Text { textFormat: Text.PlainText;width:parent.width;text:(Wifi.activeSsid|| (Wifi.wired?'Ethernet':'Disconnected'))+' ['+SysInfo.netInterfaces+']'+'  ·  ↑ '+Fmt.rateLong(SysInfo.netTxRate)+'  ↓ '+Fmt.rateLong(SysInfo.netRxRate);font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetAccent;elide:Text.ElideRight}
  ScrollView {width:parent.width;height:Math.min(550,wifiPanel.implicitHeight);clip:true;visible:DesktopExtras.networkPage===0
   WifiDropdown {id:wifiPanel;width:root.width;implicitWidth:root.width}
  }
  Column {width:parent.width;spacing:10;visible:DesktopExtras.networkPage===1
-  Text { textFormat: Text.PlainText;width:parent.width;text:'SSH server: '+(DesktopExtras.network.ssh||'unknown');color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:13}
-  DeskTextField {placeholderTextColor:Theme.widgetMuted;selectionColor:Theme.widgetAccent;selectedTextColor:Theme.widgetText;id:host;width:parent.width;height:38;placeholderText:'user@robot.local or ~/.ssh/config alias';color:Theme.widgetText;font.family:Appearance.font.ui;font.pixelSize:12;}
+  Text { textFormat: Text.PlainText;width:parent.width;text:'SSH server: '+(DesktopExtras.network.ssh||'unknown');color:Theme.widgetText;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body}
+  DeskTextField {placeholderTextColor:Theme.widgetMuted;selectionColor:Theme.widgetAccent;selectedTextColor:Theme.widgetText;id:host;width:parent.width;height:38;placeholderText:'user@robot.local or ~/.ssh/config alias';color:Theme.widgetText;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;}
   Grid {columns:3;spacing:7
    ControlTile {implicitWidth:175;label:'SSH connect';enabled:!!host.text;onActivated:root.action('ssh',host.text.trim())}
    ControlTile {implicitWidth:175;label:'Ping host';enabled:!!host.text;onActivated:root.action('ping',host.text.trim())}
@@ -37,11 +37,11 @@ Column {
    ControlTile {implicitWidth:175;label:'Reload SSH server';onActivated:root.action('ssh-reload')}
   }
   ScrollView {width:parent.width;height:240;clip:true
-   TextArea {readOnly:true;wrapMode:Text.Wrap;textFormat:TextEdit.PlainText;text:'Active connections\n'+(DesktopExtras.network.connections||'None')+'\n\nInterfaces\n'+(DesktopExtras.network.addresses||'');font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetText;background:ChamferPanel {fillColor:Theme.widgetSurface;chamfer:6;scanlines:false}}
+   TextArea {readOnly:true;wrapMode:Text.Wrap;textFormat:TextEdit.PlainText;text:'Active connections\n'+(DesktopExtras.network.connections||'None')+'\n\nInterfaces\n'+(DesktopExtras.network.addresses||'');font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetText;background:ChamferPanel {fillColor:Theme.widgetSurface;chamfer:6;scanlines:false}}
   }
  }
  ScrollView {width:parent.width;height:550;clip:true;visible:DesktopExtras.networkPage===2
-  TextArea {readOnly:true;wrapMode:Text.Wrap;textFormat:TextEdit.PlainText;text:'Routes\n'+(DesktopExtras.network.routes||'')+'\n\nDNS\n'+(DesktopExtras.network.dns||'')+'\n\nListening ports\n'+(DesktopExtras.network.listeners||'');font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetText;background:ChamferPanel {fillColor:Theme.widgetSurface;chamfer:6;scanlines:false}}
+  TextArea {readOnly:true;wrapMode:Text.Wrap;textFormat:TextEdit.PlainText;text:'Routes\n'+(DesktopExtras.network.routes||'')+'\n\nDNS\n'+(DesktopExtras.network.dns||'')+'\n\nListening ports\n'+(DesktopExtras.network.listeners||'');font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetText;background:ChamferPanel {fillColor:Theme.widgetSurface;chamfer:6;scanlines:false}}
  }
  Loader {width:parent.width;active:DesktopExtras.networkPage===2;visible:active;sourceComponent:Component {NetworkWorkbench {width:parent.width}}}
 }

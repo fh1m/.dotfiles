@@ -31,27 +31,27 @@ DropdownFrame {
  Timer {interval:15000;running:root.listen;onTriggered:root.listen=false}
  ScrollView {id:cameraScroll;width:parent.width;height:root.viewportHeight;contentWidth:availableWidth;contentHeight:cameraBody.implicitHeight;clip:true
  Column {id:cameraBody;width:cameraScroll.availableWidth;spacing:12
-  Text {text:"CAMERA SOURCE";font.family:Appearance.font.ui;font.pixelSize:11;font.letterSpacing:1;color:Theme.widgetMuted}
+  Text {text:"CAMERA SOURCE";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;font.letterSpacing:1;color:Theme.widgetMuted}
   DeskComboBox {width:parent.width;currentIndex:root.cameraIndex<0?Math.max(0,devices.videoInputs.findIndex(d=>String(d.id)===String(devices.defaultVideoInput.id))):root.cameraIndex;model:devices.videoInputs;textRole:"description";onActivated:index=>root.cameraIndex=index}
   Rectangle {width:parent.width;height:Math.min(240,root.viewportHeight*.42,width*9/16);radius:8;color:Theme.surfaceOne;clip:true
    VideoOutput {id:video;anchors.fill:parent;fillMode:VideoOutput.PreserveAspectFit;mirrored:root.mirrored;endOfStreamPolicy:VideoOutput.ClearOutput}
-   Text {anchors.centerIn:parent;visible:!root.preview;text:"Camera stays off until you start preview";font.family:Appearance.font.ui;font.pixelSize:14;color:Theme.paperMuted}
+   Text {anchors.centerIn:parent;visible:!root.preview;text:"Camera stays off until you start preview";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;color:Theme.paperMuted}
   }
   Row {width:parent.width;spacing:10
    ControlTile {implicitWidth:(parent.width-10)/2;label:root.preview?"Stop preview":"Start preview";selected:root.preview;glyph:"\uf030";onActivated:root.preview=!root.preview}
    ControlTile {implicitWidth:(parent.width-10)/2;label:"Mirror preview";selected:root.mirrored;onActivated:root.mirrored=!root.mirrored}
   }
-  Text {width:parent.width;text:cam.errorString||"Local preview only · no recording · closes with this panel";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:cam.errorString?Theme.signalRed:Theme.paperMuted}
+  Text {width:parent.width;text:cam.errorString||"Local preview only · no recording · closes with this panel";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:cam.errorString?Theme.signalRed:Theme.paperMuted}
   MeetingCheck {width:parent.width}
-  Text {text:"MONITOR MICROPHONE";font.family:Appearance.font.ui;font.pixelSize:11;font.letterSpacing:1;color:Theme.widgetMuted}
+  Text {text:"MONITOR MICROPHONE";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;font.letterSpacing:1;color:Theme.widgetMuted}
   DeskComboBox {width:parent.width;currentIndex:root.micIndex<0?Math.max(0,devices.audioInputs.findIndex(d=>String(d.id)===String(devices.defaultAudioInput.id))):root.micIndex;model:devices.audioInputs;textRole:"description";onActivated:index=>root.micIndex=index}
-  Text {text:"HEADPHONE / PLAYBACK OUTPUT";font.family:Appearance.font.ui;font.pixelSize:11;font.letterSpacing:1;color:Theme.widgetMuted}
+  Text {text:"HEADPHONE / PLAYBACK OUTPUT";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;font.letterSpacing:1;color:Theme.widgetMuted}
   DeskComboBox {width:parent.width;currentIndex:root.speakerIndex<0?Math.max(0,devices.audioOutputs.findIndex(d=>String(d.id)===String(devices.defaultAudioOutput.id))):root.speakerIndex;model:devices.audioOutputs;textRole:"description";onActivated:index=>root.speakerIndex=index}
   Row {spacing:8
    ControlTile {implicitWidth:(parent.width-8)/2;label:root.listen?"Stop mic return":"Hear mic · 15s";selected:root.listen;glyph:"\uf130";onActivated:root.listen=!root.listen}
    ControlTile {implicitWidth:(parent.width-8)/2;label:"Sound controls";glyph:"\uf028";onActivated:ShellState.openDropdownOn("sound",root.outputName)}
   }
-  Text {width:parent.width;text:"Use headphones for mic return. Starts at 12% monitor volume; actual meeting-app settings remain separate.";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:11;color:Theme.paperMuted}
+  Text {width:parent.width;text:"Use headphones for mic return. Starts at 12% monitor volume; actual meeting-app settings remain separate.";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
  }
  }
 }

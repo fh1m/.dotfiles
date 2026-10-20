@@ -66,7 +66,7 @@ DropdownFrame {
                     Repeater {model:ExternalDisplays.displays
                         Column {required property var modelData;width:parent.width
                             ControlSlider {visible:modelData.ready;height:visible?implicitHeight:0;title:(modelData.output===MachineProfile.primaryOutput?"Display":modelData.barEdge==="top"?"Upper":"Lower")+" · "+modelData.label;glyph:"\uf26c";level:modelData.level??0;onEdited:percent=>ExternalDisplays.setLevel(modelData.output,percent)}
-                            Text { textFormat: Text.PlainText;visible:!modelData.ready;width:parent.width;wrapMode:Text.Wrap;text:(modelData.output===MachineProfile.primaryOutput?"Display":modelData.barEdge==="top"?"Upper":"Lower")+" · monitor brightness controls unavailable";color:Theme.widgetMuted;font.family:Appearance.font.ui;font.pixelSize:12}
+                            Text { textFormat: Text.PlainText;visible:!modelData.ready;width:parent.width;wrapMode:Text.Wrap;text:(modelData.output===MachineProfile.primaryOutput?"Display":modelData.barEdge==="top"?"Upper":"Lower")+" · monitor brightness controls unavailable";color:Theme.widgetMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body}
                         }
                     }
                 }
@@ -90,7 +90,7 @@ DropdownFrame {
                 }
             }
             ActionRow { visible:!MachineProfile.desktop; implicitWidth: parent.width; label: ServicesControl.remoteActive ? "Stop remote access" : "Start remote access"; glyph: "\uf108"; detail: "NoMachine · on demand"; onActivated: ServicesControl.toggleRemote() }
-            Text { textFormat: Text.PlainText; width: parent.width; visible: (Power.error + ServicesControl.error).length > 0; text: Power.error || ServicesControl.error; color: Theme.widgetAccent; wrapMode: Text.WordWrap; font.family: Appearance.font.ui; font.pixelSize: 12 }
+            Text { textFormat: Text.PlainText; width: parent.width; visible: (Power.error + ServicesControl.error).length > 0; text: Power.error || ServicesControl.error; color: Theme.widgetAccent; wrapMode: Text.WordWrap; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.body }
         }
         Column {id:systemPageEnter1Container;
             width: parent.width; spacing: 12; visible: ShellState.systemPage === 1
@@ -112,7 +112,7 @@ DropdownFrame {
                     ControlTile { required property int modelData; label: `${modelData}%`; glyph: "\uf240"; selected: RobotBench.data.chargeLimit === modelData; onActivated: root.action("charge", String(modelData)) }
                 }
             }
-            Text { textFormat: Text.PlainText; width: parent.width; text: "60% desk use · 80% everyday · 100% travel"; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
+            Text { textFormat: Text.PlainText; width: parent.width; text: "60% desk use · 80% everyday · 100% travel"; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.body; color: Theme.widgetMuted }
             }
             Row {
                 spacing: 8
@@ -120,7 +120,7 @@ DropdownFrame {
                 ControlTile { label: "CPU boost"; glyph: "\udb80\ude10"; enabled: RobotBench.data.fanControlAvailable ?? false; selected: RobotBench.data.fanMode === 0; onActivated: root.action("fan", "boost") }
                 ControlTile { label: "CPU mode"; glyph: "\uf135"; onActivated: root.action("profile") }
             }
-            Text { textFormat: Text.PlainText; width: parent.width; text: `CPU ${RobotBench.data.cpuTemperature ?? "--"}°C  ·  CPU/GPU fans ${(RobotBench.data.fans ?? []).join(" / ")} RPM`; font.family: Appearance.font.ui; font.pixelSize: 13; color: (RobotBench.data.cpuTemperature ?? 0) >= 85 ? Theme.semanticAmber : Theme.widgetAccent }
+            Text { textFormat: Text.PlainText; width: parent.width; text: `CPU ${RobotBench.data.cpuTemperature ?? "--"}°C  ·  CPU/GPU fans ${(RobotBench.data.fans ?? []).join(" / ")} RPM`; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.body; color: (RobotBench.data.cpuTemperature ?? 0) >= 85 ? Theme.semanticAmber : Theme.widgetAccent }
             Grid {
                 columns: 3; spacing: 8
                 ControlTile { visible:!MachineProfile.desktop; label: "Touchpad"; glyph: "\uf245"; selected: RobotBench.data.touchpadEnabled ?? true; onActivated: root.action("touchpad") }
@@ -131,7 +131,7 @@ DropdownFrame {
                 ControlTile { label: RobotBench.data.cameraEnabled ? "Camera on" : "Camera off"; glyph: "\uf030"; enabled: RobotBench.data.cameraControlAvailable ?? false; selected: RobotBench.data.cameraEnabled ?? false; onActivated: root.action("camera") }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.widgetBorder }
-            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: MachineProfile.cpuName+" · "+MachineProfile.gpuName+"\nStorage free: "+(RobotBench.data.diskFreeGiB??"--")+" GiB · "+(RobotBench.data.diskUsedPercent??"--")+"% used"; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetMuted; lineHeight: 1.5 }
+            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: MachineProfile.cpuName+" · "+MachineProfile.gpuName+"\nStorage free: "+(RobotBench.data.diskFreeGiB??"--")+" GiB · "+(RobotBench.data.diskUsedPercent??"--")+"% used"; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.body; color: Theme.widgetMuted; lineHeight: 1.5 }
         }
         Column {id:systemPageEnter2Container;
             width: parent.width; spacing: 12; visible: ShellState.systemPage === 2
@@ -146,23 +146,23 @@ DropdownFrame {
                 ControlTile { label: "NVIDIA terminal"; glyph: "\uf120"; onActivated: root.launch(["@HOME@/.local/bin/sim-console"]) }
                 ControlTile { label: "GPU monitor"; glyph: "\uf201"; onActivated: root.launch(["@HOME@/.local/bin/sensei-terminal", "--title", "GPU-Monitor", "@HOME@/.local/bin/nvitop"]) }
             }
-            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: "Training mode enables the desktop performance policy and keeps the session awake. Display and compute share the GTX GPU; VRAM is not pooled with the laptop."; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
+            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: "Training mode enables the desktop performance policy and keeps the session awake. Display and compute share the GTX GPU; VRAM is not pooled with the laptop."; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.body; color: Theme.widgetMuted }
             NrLabel { pixelSize: 13; color: Theme.widgetAccent; text: MachineProfile.gpuName+" · "+(RobotBench.data.gpu.state==="active"?`${Math.round(RobotBench.data.gpu.usage)}% · ${Math.round(RobotBench.data.gpu.temperature)}°C`:"Telemetry unavailable") }
-            Text { textFormat: Text.PlainText; width: parent.width; text: RobotBench.data.gpu.state === "active" ? `VRAM ${Math.round(RobotBench.data.gpu.memoryUsedMiB ?? 0)} / ${Math.round(RobotBench.data.gpu.memoryTotalMiB ?? 0)} MiB` : "No GPU workload while sleeping"; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetText }
+            Text { textFormat: Text.PlainText; width: parent.width; text: RobotBench.data.gpu.state === "active" ? `VRAM ${Math.round(RobotBench.data.gpu.memoryUsedMiB ?? 0)} / ${Math.round(RobotBench.data.gpu.memoryTotalMiB ?? 0)} MiB` : "No GPU workload while sleeping"; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.body; color: Theme.widgetText }
             SegmentMeter { width: parent.width; segments: 40; segmentWidth: 11; segmentHeight: 8; value: (RobotBench.data.gpu.memory ?? 0) / 100; litColor: Theme.widgetAccent; hotThreshold: 0.85 }
             Column {
                 width: parent.width; spacing: 6
                 Repeater {
                     model: (RobotBench.data.gpu.processes ?? []).slice(0, 6)
-                    Text { required property var modelData; width: parent.width; elide: Text.ElideRight; textFormat: Text.PlainText; text: `${modelData.type.includes("C") ? "COMPUTE" : "GRAPHICS"}  ${modelData.name}  · PID ${modelData.pid} · ${modelData.memoryMiB ?? "--"} MiB`; font.family: Appearance.font.ui; font.pixelSize: 13; color: modelData.type.includes("C") ? Theme.widgetAccent : Theme.widgetAccent }
+                    Text { required property var modelData; width: parent.width; elide: Text.ElideRight; textFormat: Text.PlainText; text: `${modelData.type.includes("C") ? "COMPUTE" : "GRAPHICS"}  ${modelData.name}  · PID ${modelData.pid} · ${modelData.memoryMiB ?? "--"} MiB`; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.body; color: modelData.type.includes("C") ? Theme.widgetAccent : Theme.widgetAccent }
                 }
-                Text { textFormat: Text.PlainText; visible: (RobotBench.data.gpu.processes ?? []).length === 0; text: RobotBench.data.gpu.processesKnown ? "No dedicated GPU processes" : "GPU process list unavailable"; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetMuted }
+                Text { textFormat: Text.PlainText; visible: (RobotBench.data.gpu.processes ?? []).length === 0; text: RobotBench.data.gpu.processesKnown ? "No dedicated GPU processes" : "GPU process list unavailable"; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.body; color: Theme.widgetMuted }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.widgetBorder }
-            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: `USB serial devices: ${RobotBench.data.boardCount} · Simulators: ${RobotBench.data.simCount}\nCPU ${RobotBench.data.cpuTemperature ?? "--"}°C · Fans ${(RobotBench.data.fans ?? []).join("/")} RPM · Free disk ${RobotBench.data.diskFreeGiB ?? "--"} GiB`; font.family: Appearance.font.ui; font.pixelSize: 13; color: Theme.widgetText; lineHeight: 1.5 }
+            Text { textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap; text: `USB serial devices: ${RobotBench.data.boardCount} · Simulators: ${RobotBench.data.simCount}\nCPU ${RobotBench.data.cpuTemperature ?? "--"}°C · Fans ${(RobotBench.data.fans ?? []).join("/")} RPM · Free disk ${RobotBench.data.diskFreeGiB ?? "--"} GiB`; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.body; color: Theme.widgetText; lineHeight: 1.5 }
             Repeater {
                 model: (RobotBench.data.boards ?? []).slice(0, 3)
-                Text { required property string modelData; width: parent.width; elide: Text.ElideMiddle; textFormat: Text.PlainText; text: "\uf287 " + modelData; font.family: Appearance.font.ui; font.pixelSize: 12; color: Theme.widgetAccent }
+                Text { required property string modelData; width: parent.width; elide: Text.ElideMiddle; textFormat: Text.PlainText; text: "\uf287 " + modelData; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.body; color: Theme.widgetAccent }
             }
             Grid {
                 columns: 3; spacing: 8

@@ -48,7 +48,7 @@ ChamferPanel {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                pixelSize: 16
+                pixelSize: Appearance.textSize.title
                 font.family: Appearance.font.heading
                 font.capitalization: Font.MixedCase
                 font.letterSpacing: 0
@@ -70,12 +70,12 @@ ChamferPanel {
                 color: Theme.widgetMuted
                 font.family: Appearance.font.accent
                 font.letterSpacing: 0
-                font.pixelSize: 10
+                font.pixelSize: Appearance.textSize.caption
                 font.weight: Appearance.font.weightMedium
                 renderType: Text.NativeRendering
             }
 
-        Text { textFormat: Text.PlainText; x: 8; y: 31; visible: root.greeting !== ""; text: root.greeting; color: Theme.widgetMuted; font.family: Appearance.font.ui; font.pixelSize: 12; renderType: Text.QtRendering }
+        Text { textFormat: Text.PlainText; x: 8; y: 31; visible: root.greeting !== ""; text: root.greeting; color: Theme.widgetMuted; font.family:Appearance.font.reading; font.pixelSize: Appearance.textSize.body; renderType: Text.QtRendering }
 
         Item {
             id: right

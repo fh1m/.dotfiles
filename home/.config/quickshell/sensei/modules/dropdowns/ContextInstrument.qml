@@ -27,16 +27,16 @@ DropdownFrame {
   Repeater {model:root.snapshot.cards
    Rectangle {required property var modelData;width:(parent.width-8)/2;height:94;color:Theme.surfaceOne;border.color:Theme.rule;radius:5
     Column {anchors.fill:parent;anchors.margins:12;spacing:6
-     Text {text:modelData.title;font.family:Appearance.font.ui;font.pixelSize:12;font.letterSpacing:1;color:Theme.widgetAccent}
-     Text {width:parent.width;text:modelData.value;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:15;color:Theme.widgetText}
-     Text {width:parent.width;text:modelData.detail;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted}
+     Text {text:modelData.title;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;font.letterSpacing:1;color:Theme.widgetAccent}
+     Text {width:parent.width;text:modelData.value;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;color:Theme.widgetText}
+     Text {width:parent.width;text:modelData.detail;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetMuted}
     }
     MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:root.act(parent.modelData.action)}
    }
   }
  }
  Row {spacing:8;ControlTile {implicitWidth:120;label:"Refresh";enabled:!worker.running;onActivated:root.refresh()}ControlTile {implicitWidth:120;label:"Return";onActivated:ShellState.releaseInstrument()}}
- Text {width:parent.width;text:root.error||root.snapshot.note||"";wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:12;color:Theme.widgetMuted}
+ Text {width:parent.width;text:root.error||root.snapshot.note||"";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetMuted}
  }
  }
  Process {id:worker;onExited:{if(root.pendingRefresh){root.pendingRefresh=false;Qt.callLater(root.refresh);}}stdout:StdioCollector {onStreamFinished:{try{const d=JSON.parse(text);if(d.error)root.error=d.error;else if(root.operation==="preflight"){root.error=(d.ok?"Preflight passed: ":"Preflight needs attention: ")+(d.checks||[]).map(c=>c.name+" · "+c.detail).join("; ");}else if(d.mode===ShellState.instrumentMode){root.snapshot=d;root.error="";}else root.pendingRefresh=true;}catch(e){root.error="Context unavailable; your project is unchanged.";}}}}
