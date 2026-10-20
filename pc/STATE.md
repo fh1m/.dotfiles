@@ -497,3 +497,12 @@ popup-click cases per host passed. Input, cursor and presence services remained
 active; Homie's drawing watcher was active. Private runtime session scripts and
 the renderer root are kept in sync with `pc/den/`; generated artwork lives in the
 shared home profile. No private notification or lyric content is committed.
+
+### 2026-10-20 — Desktop Commander boot lifecycle
+
+Homie now runs the pinned official remote agent through
+`sensei-desktop-commander.service`, with user lingering for startup before login.
+Saved pairing is unchanged. Crash recovery, duplicate prevention, quiet network
+retry and connection notifications are shared with Arete. Six tests passed on
+both hosts; live agent crash recovery and official online identity were checked.
+See `docs/digital-den/DESKTOP-COMMANDER.md`; physical reboot was not performed.

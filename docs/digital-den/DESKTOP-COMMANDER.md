@@ -70,3 +70,12 @@ Physical cold boot is not performed automatically because it closes user work.
 
 Official lifecycle reference:
 [Desktop Commander remote-device documentation](https://github.com/wonderwhy-er/DesktopCommanderMCP/blob/main/src/remote-device/README.md).
+
+### Deployed check — 2026-10-20
+
+Arete and Homie: enabled + active, user lingering enabled, original paired device
+IDs online in the official device list. Six lifecycle tests passed on each host.
+A deliberate native-agent crash on each machine recovered to connected attempt
+2 without re-pairing. Arete's connection notification reached the existing Den
+notification receipts. Shared input/cursor/presence services remained running.
+Boot configuration is verified; a physical reboot remains untested.
