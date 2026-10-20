@@ -1,6 +1,7 @@
 # Homie / radio window
 
-The tower glyph appears on Homie's main bar while the RTL-SDR is connected.
+The tower glyph appears on the host's main bar while an RTL-SDR is connected.
+The current receiver lives on Homie; moving it to Arete uses the same interface.
 Open it for FM audio, a seven-second USB test, a five-second spectrum receipt,
 or Gqrx's full receiver/waterfall. The live survey shows real one-second integrations
 with a rolling waterfall, and stops when the panel closes or after ten minutes.
@@ -94,3 +95,21 @@ a valid negative observation, not a receiver or decoding success claim.
 
 Older tutorials recommending NOAA-15/18/19 APT are outdated: the constellation
 was decommissioned in 2025. Use current SatDump/ARISS transmission information.
+
+Gqrx uses a seed-only `~/.config/gqrx/sensei-rtl.conf`: RTL device 0,
+2.048 MS/s, 94.4 MHz and WFM mono. Your default profile stays untouched. Use its
+Start DSP button (Ctrl+D) to receive; close Gqrx before another widget capture.
+Its Qt 6 launch uses the existing qt6ct dark palette. The widget's gain is shown
+in dB, not a misleading percentage. A failed FM startup reports a receiver/audio
+error instead of declaring playback successful.
+
+Survey receipts include requested RF gain, integration interval and peak-hold
+aggregation. Changing signal level, tuner overload and local noise can all affect
+comparisons. IQ metadata names the detected USB receiver rather than assuming a
+future replacement has the same tuner.
+
+Validation: 433 automated tests passed. Live panel: 257 bins/four waterfall rows,
+real receipt history, and no receiver process after close. The saved IQ passed
+the official SigMF schema and SHA-512 validation. Both host installers report zero
+pending changes. Reboot/hardware unplug and optional satellite decoders were not
+tested in this pass.

@@ -31,10 +31,14 @@ PanelWindow {
     WlrLayershell.namespace:'sensei-music-video'
     WlrLayershell.keyboardFocus:visible&&!inlineVideo?WlrKeyboardFocus.OnDemand:WlrKeyboardFocus.None
     color:Theme.ink
-    onVisibleChanged:{if(visible)attachDelay.restart();else if(SpotifyDesk.videoOutput===preview)SpotifyDesk.videoOutput=null;}
-    onScreenChanged:if(visible)attachDelay.restart()
+    onVisibleChanged:{reserveCompanion();if(visible)attachDelay.restart();else if(SpotifyDesk.videoOutput===preview)SpotifyDesk.videoOutput=null;}
+    onScreenChanged:{reserveCompanion();if(visible)attachDelay.restart()}
     Timer {id:attachDelay;interval:80;onTriggered:if(window.visible&&!SpotifyDesk.videoAudioLinked)SpotifyDesk.attachVideo(preview)}
     Connections {target:SpotifyDesk;function onVideoModeChanged(){if(window.visible)attachDelay.restart();}function onVideoAudioLinkedChanged(){if(window.visible)attachDelay.restart();}}
+    function reserveCompanion():void {ShellState.reserveCompanion('video-'+(output?.name||''),output?.name||'',margins.left,margins.top,width,height,visible);}
+    onWidthChanged:reserveCompanion()
+    onHeightChanged:reserveCompanion()
+    onMarginsChanged:reserveCompanion()
     function describe(){return JSON.stringify({visible:window.visible,mode:SpotifyDesk.videoMode,display:window.screen?.name,position:SpotifyDesk.videoPlayer.position,playing:SpotifyDesk.videoPlayer.playing,inline:window.inlineVideo,geometry:{x:window.margins.left,y:window.margins.top,width:window.width,height:window.height},size:String(SpotifyDesk.videoAudioLinked?YouTubeDesk.nativePlayer.videoSize:'preview'),renderUpdates:YouTubeDesk.nativePlayer.frameNumber||0,avsync:YouTubeDesk.nativePlayer.avsync||0,playingOutputs:Object.entries(YouTubeDesk.engines).filter(e=>e[1]?.playing).map(e=>e[0])});}
     Shortcut {sequence:'Escape';enabled:window.visible;onActivated:SpotifyDesk.showVideo('inline')}
     Rectangle {anchors.fill:parent;color:Theme.ink;border.width:window.full?0:1;border.color:Theme.rule;radius:window.full?0:8}

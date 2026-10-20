@@ -79,7 +79,7 @@ def scan(band):
   label,low,high,step=BANDS[band];path=ROOT/('spectrum-'+uuid.uuid4().hex+'.csv')
   try:
    bounded(['rtl_power','-g','20','-f',f'{int(low)}:{int(high)}:{int(step)}','-i','1','-e','5s',str(path)],18)
-   bins=parse_power(path);result={'kind':'spectrum','band':band,'label':label,'at':time.time(),'bins':bins,'units':'relative dB · uncalibrated','seconds':5,'artifact':str(path),'peakMHz':round(max(bins,key=lambda b:b['db'])['hz']/1e6,4)}
+   bins=parse_power(path);result={'kind':'spectrum','band':band,'label':label,'at':time.time(),'bins':bins,'units':'relative dB · uncalibrated','gainDb':20,'integrationSeconds':1,'aggregation':'maximum per bin','seconds':5,'artifact':str(path),'peakMHz':round(max(bins,key=lambda b:b['db'])['hz']/1e6,4)}
    return receipt(result)
   except Exception:path.unlink(missing_ok=True);raise
 
@@ -154,9 +154,9 @@ def record_iq(frequency):
    data.chmod(0o600)
    if data.stat().st_size!=count*2:raise ValueError('IQ recording was interrupted; incomplete data was removed.')
    digest=hashlib.sha512(data.read_bytes()).hexdigest()
-   document={'global':{'core:datatype':'cu8','core:sample_rate':1024000,'core:version':'1.2.5','core:sha512':digest,'core:hw':'RTL2838 / R820T','core:description':'Five-second broadcast-FM experiment; RF gain 20 dB.'},'captures':[{'core:sample_start':0,'core:frequency':round(frequency*1e6),'core:datetime':started.isoformat().replace('+00:00','Z')}],'annotations':[]}
+   document={'global':{'core:datatype':'cu8','core:sample_rate':1024000,'core:version':'1.2.5','core:sha512':digest,'core:hw':'RTL-SDR / '+devices()[0]['name'],'core:description':'Five-second broadcast-FM experiment; RF gain 20 dB.'},'captures':[{'core:sample_start':0,'core:frequency':round(frequency*1e6),'core:datetime':started.isoformat().replace('+00:00','Z')}],'annotations':[]}
    save(meta,document)
-   return receipt({'kind':'iq','at':time.time(),'frequencyMHz':frequency,'sampleRate':1024000,'seconds':5,'bytes':data.stat().st_size,'datatype':'cu8','sha512':digest,'artifact':str(meta),'data':str(data)})
+   return receipt({'kind':'iq','at':time.time(),'frequencyMHz':frequency,'sampleRate':1024000,'seconds':5,'bytes':data.stat().st_size,'datatype':'cu8','gainDb':20,'sha512':digest,'artifact':str(meta),'data':str(data)})
   except Exception:data.unlink(missing_ok=True);meta.unlink(missing_ok=True);raise
 
 def sensors():

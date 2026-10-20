@@ -11,6 +11,16 @@ import qs.config
 // their visibility to them.
 Singleton {
     id: root
+    // Geometry only: let the independent companion avoid layer-shell panels.
+    property var companionSpaces: ({})
+    function reserveCompanion(key:string,output:string,x:real,y:real,w:real,h:real,shown:bool):void {
+        const next=Object.assign({},companionSpaces);
+        if(shown&&w>0&&h>0)next[key]={output:output,x:x,y:y,w:w,h:h};else delete next[key];
+        if(JSON.stringify(next)!==JSON.stringify(companionSpaces)){companionSpaces=next;companionSpaceWrite.restart();}
+    }
+    FileView {id:companionSpaceFile;path:Quickshell.env("HOME")+"/.local/state/sensei-den/panel-spaces.json";printErrors:false}
+    Timer {id:companionSpaceWrite;interval:160;onTriggered:companionSpaceFile.setText(JSON.stringify({version:1,spaces:Object.values(root.companionSpaces)}))}
+    Component.onCompleted:companionSpaceWrite.restart()
     property int systemPage: 0
     property int monitorPage: 0
 

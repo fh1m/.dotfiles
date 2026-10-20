@@ -47,6 +47,8 @@ Item {
     property bool walkingRight: false
     property bool deliberateTravel: false
     property int variant: 0
+    property var panelSpaces:[]
+    FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/panel-spaces.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.panelSpaces=JSON.parse(text()).spaces||[];root.refresh();}catch(e){}}}
     property var occupied:[]
     property var placement: ({available:false,x:18,y:56})
     property var recent: []
@@ -75,7 +77,7 @@ Item {
     property int activityTicks:0
     readonly property int extraPose:Logic.extendedPose(activity,frame)
     readonly property int pose: activity==="walk" ? (walkingRight?8:4)+frame%4 : activity==="wave" ? 13 : activity==="celebrate" ? 14 : activity==="think" ? 12 : activity==="sleep" ? 15 : frame%4
-    IpcHandler {target:"companion";function state():string{return JSON.stringify({name:"Zondo",musicPlaying:root.denMusic,allowed:root.allowed,speaking:root.speaking,speechVisible:speechWindow.visible,frame:root.frame,unread:root.notices.unread||0,dnd:root.notices.dnd||false,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,activity:root.activity,extraPose:root.extraPose,welcome:root.welcoming,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
+    IpcHandler {target:"companion";function state():string{return JSON.stringify({name:"Zondo",musicPlaying:root.denMusic,allowed:root.allowed,speaking:root.speaking,speechVisible:speechWindow.visible,frame:root.frame,unread:root.notices.unread||0,dnd:root.notices.dnd||false,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,obstacles:root.occupied,bubble:{x:speechWindow.margins.left,y:speechWindow.margins.top,width:speechWindow.width,height:speechWindow.height},activity:root.activity,extraPose:root.extraPose,welcome:root.welcoming,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
     property string lastPublished:""
     function publish():void {
         const data=JSON.stringify({output:target,allowed:allowed,eligible:eligible,speaking:speaking,speechVisible:speechWindow.visible,message:message,kind:messageKind,name:"Zondo",reducedMotion:reduced,activity:activity,extraPose:extraPose,pose:pose,lastNote:lastNote,noteKind:noteKind});
@@ -107,6 +109,7 @@ Item {
             if(c.hidden || c.mapped===false || !c.at || !c.size || (top.workspace?.id!==workspace && !c.pinned))continue;
             windows.push({x:c.at[0]-(data.x??0)-12,y:c.at[1]-(data.y??0)-12,w:c.size[0]+24,h:c.size[1]+24});
         }
+        for(const panel of panelSpaces)if(panel.output===target&&Number.isFinite(panel.x)&&Number.isFinite(panel.y)&&panel.w>0&&panel.h>0)windows.push({x:panel.x-12,y:panel.y-12,w:panel.w+24,h:panel.h+24});
         occupied=windows;
         const file=wallpaperState.displays?.[target]?.file||wallpaperState.lockedFile||"";
         const roof=!speaking&&variant%3===1?Logic.roofPlace(file,screen.width,screen.height,pet.width,pet.height,windows,variant):null;

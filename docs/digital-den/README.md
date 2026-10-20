@@ -99,6 +99,9 @@ den companion hide
 `show`, `follow`, `here` and `size 96` restore or adjust it. Preferences are private;
 the sprite sheet and QML are shared. Quiet mode, lock and fullscreen suppress it.
 There is no speech service, model download or additional companion renderer.
+Layer-shell widgets and the video mini-player publish only their display-relative
+rectangles to a private geometry file. Zondo avoids these as well as application
+windows; neither their text nor video content is inspected.
 
 The shared local catalogue mixes context-relevant tips with occasional original
 humour; recent lines do not repeat. The lively profile varies activities and uses short text roughly every 1–2
@@ -193,3 +196,10 @@ System → Den contains the physical map, input recovery, companion controls and
 [The Field Trip wallpaper story](STORY.md) documents native-pixel exports, original art, awww playback, Homie's away variant, Zondo's authored perches and recovery. [Experience evidence](EXPERIENCE-PASS.md) distinguishes verified checks from physical audio/next-login acceptance.
 
 For local speech: `sensei-voice doctor`, `sensei-voice probe`, or `sensei-voice transcribe --seconds 10`. Camera/Meeting check has explicit short input metering and transcript preview/copy. No audio is sent online, typed into another app or recorded in the background. `scripts/setup-den-voice.py --apply` reproduces the pinned on-demand model. `scripts/setup-den-tools.py --apply` installs the optional nvitop inspector; OS tools use the normal package manifest.
+
+## Radio bench
+
+Homie's USB RTL-SDR has a receiver-aware tower button: live spectrum/waterfall,
+FM through PipeWire, bounded sensor observations, SigMF recordings and immutable
+receipts. It also opens the preconfigured, themed Gqrx receiver. The same controls
+follow the dongle if moved to Arete. [Radio guide and measured checks](RADIO.md).

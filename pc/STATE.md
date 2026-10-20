@@ -16,6 +16,14 @@ bias tee, network radio listener, disks or bootloader changed.
 
 Shared source includes gentler focus indication, CPU-backed cursor texture,
 single-character sprite presentation, native media controls and immersive lyrics.
+433 automated tests pass. Live radio UI produced 257-bin frames/four waterfall
+rows, receipt history loaded, and closing released rtl_power. IQ passed official
+SigMF 1.2.5 schema and SHA-512 checks. Two repeated surveys matched 257 bins;
+mean change rounded to 0.00 dB (control repeat, no antenna improvement claim).
+Gqrx's private seed-only RTL profile and dark Qt 6 theme were visually verified.
+Homie's desktop harness passed all 11 checks; both installer previews had zero
+pending changes. Native YouTube micrograd playback passed pause/resume and A/V
+frame progression on DP-3 (32 render updates/second, measured A/V sync 0.01 ms).
 Physical uninterrupted boot remains a separate unresolved acceptance item below.
 
 # Zondo and development polish — 2026-10-17

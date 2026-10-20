@@ -37,6 +37,7 @@ def daemon():
     selector=selectors.DefaultSelector();selector.register(server,selectors.EVENT_READ,'request')
     gui_pidfd=os.pidfd_open(gui.pid);selector.register(gui_pidfd,selectors.EVENT_READ,'gui-exit')
     ipc=None
+    reconnect_at=0.0
     pool=concurrent.futures.ThreadPoolExecutor(max_workers=2)
     owner_pool=concurrent.futures.ThreadPoolExecutor(max_workers=1)
     owner_version=0
@@ -82,6 +83,18 @@ def daemon():
     try:
         while True:
             if gui.poll() is not None:raise RuntimeError('Cursor UI stopped')
+            if ipc is None and time.monotonic()>=reconnect_at:
+                candidate=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
+                try:
+                    latest=json.loads(hypr('instances','-j'))[0]
+                    path=pathlib.Path(os.environ['XDG_RUNTIME_DIR'])/'hypr'/latest['instance']/'.socket2.sock'
+                    candidate.connect(str(path));selector.register(candidate,selectors.EVENT_READ,'hypr');ipc=candidate;buffer=b''
+                except (OSError,ValueError,IndexError,subprocess.SubprocessError):
+                    candidate.close();reconnect_at=time.monotonic()+2
+                else:
+                    try:refresh_focus()
+                    except (OSError,ValueError,subprocess.SubprocessError):pass
+
             # No polling while idle. During remote ownership, query cursor position
             # through a short local Unix IPC request: no per-frame subprocess/rendering.
             if return_armed and return_monitor:
@@ -101,13 +114,18 @@ def daemon():
                         subprocess.run([str(ROOT/'bin/lan-mouse'),'cli','return-edge',str(edge)],timeout=1,check=True,stdout=subprocess.DEVNULL)
                 except (OSError,ValueError,subprocess.SubprocessError):pass
                 finally:q.close()
-            for key,_ in selector.select(.04 if return_armed else None):
+            for key,_ in selector.select(.04 if return_armed else .5 if ipc is None else None):
                 if key.data=='gui-exit':raise RuntimeError('Cursor UI stopped')
                 if key.data=='state':
                     os.read(watch,8192);refresh_focus();continue
                 if key.data=='hypr':
-                    data=ipc.recv(8192)
-                    if not data:return
+                    try:data=ipc.recv(8192)
+                    except OSError:data=b''
+                    if not data:
+                        # A transient event-stream disconnect must not tear down
+                        # the renderer, companion or local cursor controls.
+                        selector.unregister(ipc);ipc.close();ipc=None;buffer=b'';reconnect_at=time.monotonic()+1
+                        continue
                     buffer+=data
                     while b'\n' in buffer:
                         line,buffer=buffer.split(b'\n',1)
@@ -128,6 +146,7 @@ def daemon():
                     # Recovery remains local even if the PC is offline.
                     if action=='show':pulse()
     finally:
+        if ipc is not None:ipc.close()
         gui.terminate();server.close();os.close(gui_pidfd);os.close(watch);pool.shutdown(wait=False,cancel_futures=True);owner_pool.shutdown(wait=False,cancel_futures=True);SOCK.unlink(missing_ok=True)
         try:hypr('eval','if _G.den_ctrl_subscription then _G.den_ctrl_subscription:remove(); _G.den_ctrl_subscription=nil end')
         except (OSError,subprocess.SubprocessError):pass

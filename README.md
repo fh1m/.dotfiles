@@ -126,6 +126,15 @@ A file picker, a result, a monitor, USB diagnostics. Small jobs belong here; the
 
 Ubuntu-based robotics environments live in containers. The host remains the daily driver. Serial devices, GPU tooling and project sessions have a place in the same workflow. ARM emulation still runs on the CPU; two GPUs do not magically become one pool of VRAM.
 
+<details><summary>Homie can hear the invisible neighbourhood, too.</summary>
+
+![Live radio spectrum and waterfall on Homie](docs/assets/digital-den/radio-lab.png)
+
+RTL-SDR → FM, spectrum, sensor experiments and reproducible IQ captures.
+[Radio bench](docs/digital-den/RADIO.md). No background scanning.
+
+</details>
+
 ## 08 / A little less solemn
 
 
@@ -133,7 +142,7 @@ He escaped the README.
 
 <picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/digital-den/companion-local-travel.png"><img src="docs/assets/digital-den/companion-local-travel.gif" alt="The actual desktop companion waves, walks gently and offers a short text bubble over Arete's wallpaper" width="572"></picture>
 
-A small fh1m companion finds a free corner, types, wanders a little, and occasionally has opinions about coordinate frames. Useful tips, small jokes, no sound. Applications always win the space; quiet and reduced-motion controls are one command away. **System → Digital Den → Tour displays / Desk tip.** Try `:DenTip` inside Neovim. [Companion controls](docs/digital-den/README.md#the-little-engineer).
+Zondo, the Den’s deskbuddy, finds a free corner, types, wanders a little, and occasionally has opinions about coordinate frames. Useful tips, small jokes, no sound. Applications always win the space; quiet and reduced-motion controls are one command away. **System → Digital Den → Tour displays / Desk tip.** Try `:DenTip` inside Neovim. [Companion controls](docs/digital-den/README.md#the-little-engineer).
 
 The capture shows local travel; separate live checks verified an exclusive handoff to Homie and return to Arete. [Current implementation and checks](docs/digital-den/NEXT-PASS-IMPLEMENTATION.md).
 
@@ -195,7 +204,7 @@ Some nights call for a derivation. Some call for an album and a notebook. The De
 
 - **Listening room:** artwork, lyrics and queue together. Focus strips it back to the cover and song. Move it to another display, or put it behind your work with Backdrop.
 - **Engineering within reach:** reviewed project actions, explicit Arete/Homie jobs, unitful experiment comparisons and stable hardware passports. Pin the useful bit to ScreenPad. [Open the workbench](docs/digital-den/ENGINEERING.md).
-- **Zondo, desk-sized troublemaker:** reading, stargazing, gardening, robot wrangling—and dancing when Spotify plays. Project-history callbacks, local repetition memory and notification counts without reading private message bodies. Busy screen? He takes a bar perch instead of sitting on the code.
+- **Zondo, desk-sized troublemaker:** reading, stargazing, gardening, robot wrangling—and dancing when Spotify plays. Project-history callbacks, local repetition memory and notification counts without reading private message bodies. Busy screen? He finds free space or hides instead of sitting on the code.
 - **The old tmux buttons are home:** sessions, windows, panes and directory at a glance. No session needs to die for a cosmetic change.
 - **The editor has receipts:** a disposable Python fixture checks snippets, parsing, formatting, debugger configuration and real LSP hover on the host and ROS container. The field guide includes the editor’s live mappings and attached-language shortcuts.
 

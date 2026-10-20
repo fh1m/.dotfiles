@@ -82,6 +82,15 @@ Variants {
         readonly property real slide: Theme.reducedMotion ? 0 : 6
 
         IpcHandler {target:"popupmotion-"+popup.modelData?.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,ready:popup.surfaceReady,width:popup.width,height:popup.height,panelHeight:popup.panelHeight,requestedHeight:popup.implicitHeight,measuredHeight:popup.measuredHeight,stableFrames:popup.stableFrames,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
+        function reserveCompanion():void {
+            const top=(popup.current==='calendar'||popup.current==='weather')?0:Appearance.metrics.barHeight;
+            const y=popup.bottomPanel?(modelData?.height??1080)-Appearance.metrics.barHeight-popup.height-popup.margins.bottom:top+popup.margins.top;
+            ShellState.reserveCompanion('dropdown-'+modelData?.name,modelData?.name||'',popup.margins.left,y,popup.width,popup.height,popup.visible);
+        }
+        onVisibleChanged:reserveCompanion()
+        onWidthChanged:reserveCompanion()
+        onHeightChanged:reserveCompanion()
+        onMarginsChanged:reserveCompanion()
         screen: modelData
         color: "transparent"
         mask: Region { width: ShellState.dropdown === popup.current ? popup.width : 0; height: popup.height }

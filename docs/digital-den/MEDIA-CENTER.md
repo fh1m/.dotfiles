@@ -163,3 +163,17 @@ timeout; it does not bypass Spotify account or service restrictions.
 
 Public screenshots use a public lecture and public search, never private account
 collections. The test receipts omit stream URLs and account identifiers.
+
+## 2026-10-20 polish
+
+Mini-player has explicit previous/play-pause/next controls plus seek, volume,
+restore and display selection. Its video viewport preserves 16:9. The listening
+room's **Lyrics view** centres large live lyrics over the art-derived wash.
+Tools fade after 3.5 seconds during playback; pointer movement reveals them and
+hovering the toolbar keeps them available. Escape/F11 still exits.
+
+A real YouTube response exceeded the bounded metadata limit because of expanded
+translated subtitles. `youtube:skip=translated_subs` removes that redundant
+expansion while retaining publisher captions and the size limit. Actual native
+playback then advanced with video frames; this does not guarantee availability
+for restricted or captionless recordings.

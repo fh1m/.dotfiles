@@ -59,3 +59,11 @@ These changed implementation: explicit live rolling waterfall, same requested
 SHA-512, immutable receipts and negative sensor results. Gqrx already provides
 proper demodulation, filtering and waterfall; no parallel homegrown demodulator
 or exposed control server was built. Legacy NOAA APT is not advertised as live.
+
+Additional implementation verification read Gqrx's upstream `mainwindow.cpp`,
+`dockrxopt.cpp` and `mainwindow.ui`: the seed-only input configuration uses real
+supported keys, and Ctrl+D is its Start DSP shortcut. Actual packaged Gqrx 2.17.7
+opened `rtl=0` with that profile. Qt 6 requires qt6ct rather than the session's
+Qt 5 theme selector. Official SigMF 1.2.5 JSON schema and actual file SHA-512
+were validated in an isolated uv environment, without installing Python packages
+into the system interpreter.

@@ -155,3 +155,10 @@ Original sprites, short animation bursts and no online conversation model. Arete
 ## Re-capture on your machine
 
 `scripts/capture-gallery.py` takes the stills. `scripts/capture-showcase.py` records the main/ScreenPad tours; `scripts/capture-workflows.py` records the robotics/tmux tours. `scripts/build-duo-hero.sh` pairs them into the two-screen scenes. Capture scripts use the live desktop, restore focus and close only their showcase windows. Review frames before publishing; new widgets may need additional privacy treatment.
+
+## The invisible neighbourhood
+
+![Homie's live RTL-SDR spectrum and rolling waterfall in the shared pink-and-black shell](assets/digital-den/radio-lab.png)
+
+Actual receiver data, not a demo waveform. FM, bounded sensor observations, IQ
+captures and receipts live behind the tower button. [Radio bench](digital-den/RADIO.md).

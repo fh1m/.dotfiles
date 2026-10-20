@@ -15,6 +15,10 @@ PanelWindow {
         || ShellState.screens.find(s=>s.name===MachineProfile.primaryOutput) || ShellState.screens[0]
     screen: destination
     visible: SpotifyDesk.fullscreen && !!destination
+    function reserveCompanion():void {ShellState.reserveCompanion('listening-room',destination?.name||'',0,0,width,height,visible&&!SpotifyDesk.musicBackdrop);}
+    onWidthChanged:reserveCompanion()
+    onHeightChanged:reserveCompanion()
+    onScreenChanged:reserveCompanion()
     anchors {top:true;bottom:true;left:true;right:true}
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: SpotifyDesk.musicBackdrop ? WlrLayer.Bottom : WlrLayer.Top
@@ -40,7 +44,7 @@ PanelWindow {
     Timer {id:toolsIdle;interval:3500;running:window.visible;onTriggered:if(!toolbarHover.hovered)window.showTools=false;else restart()}
     readonly property var rows: collection===0 ? SpotifyDesk.queueRows : SpotifyDesk.contextItem.id ? SpotifyDesk.contextRows : SpotifyDesk.playlistRows
     function sample(){if(!visible||palette.running||!SpotifyDesk.albumArt)return;sampledArt=SpotifyDesk.albumArt;palette.command=[Quickshell.env('HOME')+'/.local/bin/sensei-music-palette',sampledArt];palette.running=true;}
-    onVisibleChanged: if(visible){focusArmed=true;showTools=true;toolsIdle.restart();stage.forceActiveFocus();sample();}else focusArmed=false;
+    onVisibleChanged: {reserveCompanion();if(visible){focusArmed=true;showTools=true;toolsIdle.restart();stage.forceActiveFocus();sample();}else focusArmed=false;}
     Connections {target:SpotifyDesk;function onAlbumArtChanged(){if(!SpotifyDesk.albumArt){window.wash='#402131';window.edge='#171019';}window.sample();}}
     Process {id:palette;stdout:StdioCollector {onStreamFinished:{if(window.sampledArt!==SpotifyDesk.albumArt)return;try{const p=JSON.parse(text);window.wash=p.wash;window.edge=p.edge;}catch(e){}}}onExited:if(window.sampledArt!==SpotifyDesk.albumArt)window.sample()}
     IpcHandler {target:"music-fullscreen";function state():string{return JSON.stringify({visible:window.visible,output:window.screen?.name,width:window.width,height:window.height,rows:window.rows.length,collection:window.collection,collectionOpen:window.collectionOpen,zen:SpotifyDesk.zen,lyricsView:window.lyricsView,controlsShown:window.controlsShown,backdrop:SpotifyDesk.musicBackdrop,focusArmed:window.focusArmed,seek:seek.value,duration:SpotifyDesk.playback.track?.duration,position:SpotifyDesk.positionMs,lyrics:SpotifyDesk.lyricsData.lines?.length||0,wash:String(window.wash)});}function mode(name:string):void {SpotifyDesk.zen=name==='focus';}function lyrics(enabled:bool):void {window.lyricsView=enabled;if(enabled){SpotifyDesk.zen=false;SpotifyDesk.loadLyrics(false);}}function backdrop(enabled:bool):void {SpotifyDesk.musicBackdrop=enabled;}function display(name:string):void {if(ShellState.screens.some(s=>s.name===name))SpotifyDesk.fullscreenOutput=name;}function collection(index:int):void{window.collectionOpen=true;window.collection=Math.max(0,Math.min(1,index));}}
