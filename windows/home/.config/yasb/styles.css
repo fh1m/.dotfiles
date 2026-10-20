@@ -1,0 +1,67 @@
+/* Sensei · YASB stylesheet. Palette matches windows/palette/sensei.json. */
+
+* {
+    font-family: "Iosevka Nerd Font Mono";
+    font-size: 12px;
+}
+
+.yasb-bar {
+    background-color: rgba(9, 8, 7, 0.92);
+    color: #e8e2da;
+    border-bottom: 1px solid rgba(242, 61, 112, 0.35);
+}
+
+.container-left,
+.container-center,
+.container-right {
+    padding: 0 4px;
+}
+
+/* Komorebi workspaces: rose for the active workspace, warm sand for populated ones. */
+.komorebi-workspaces .ws-btn {
+    color: #706963;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 0 9px;
+    margin: 3px 2px;
+}
+
+.komorebi-workspaces .ws-btn.populated {
+    color: #d6b59a;
+}
+
+.komorebi-workspaces .ws-btn.active {
+    color: #090807;
+    background-color: #f23d70;
+    font-weight: bold;
+}
+
+.komorebi-workspaces .workspace-layer {
+    color: #a6b9d1;
+    padding: 0 6px;
+}
+
+.komorebi-layout {
+    color: #a9a29a;
+    padding: 0 8px;
+}
+
+.clock {
+    color: #e8e2da;
+    font-weight: bold;
+}
+
+.cpu,
+.memory,
+.gpu {
+    color: #a9a29a;
+    padding: 0 8px;
+}
+
+.power_plan,
+.volume,
+.systray {
+    color: #a9a29a;
+    padding: 0 6px;
+}

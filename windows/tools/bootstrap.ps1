@@ -20,7 +20,11 @@ $Packages = @(
     @{ Id = 'Neovim.Neovim';            Name = 'Neovim';              Min = '0.12.6' },
     @{ Id = 'Alacritty.Alacritty';      Name = 'Alacritty';           Min = '0.17.0' },
     @{ Id = 'junegunn.fzf';             Name = 'fzf';                 Min = '0.74.5' },
-    @{ Id = 'Python.Python.3.13';       Name = 'Python 3.13 (real, not the Store stub)'; Min = '3.13.15' }
+    @{ Id = 'Python.Python.3.13';       Name = 'Python 3.13 (real, not the Store stub)'; Min = '3.13.15' },
+    @{ Id = 'DEVCOM.JetBrainsMonoNerdFont'; Name = 'JetBrains Mono Nerd Font (mono face; Iosevka not in winget)'; Min = '3.3.0' },
+    @{ Id = 'LGUG2Z.komorebi';          Name = 'komorebi (tiling window manager)'; Min = '0.1.41' },
+    @{ Id = 'LGUG2Z.whkd';              Name = 'whkd (hotkey daemon)';          Min = '0.2.10' },
+    @{ Id = 'AmN.yasb';                 Name = 'YASB (status bar)';            Min = '2.0.7' }
 )
 
 if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {

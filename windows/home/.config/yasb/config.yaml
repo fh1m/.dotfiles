@@ -1,0 +1,88 @@
+# Sensei · YASB status bar. Styled by styles.css in this folder.
+# Widgets reference komorebi, which is started by komorebi itself (see komorebi.json).
+watch_stylesheet: true
+watch_config: true
+update_check: false
+system_colors: false
+
+bars:
+  sensei-bar:
+    enabled: true
+    screens: ['*']
+    class_name: 'sensei-bar'
+    alignment:
+      position: 'top'
+      align: 'center'
+    dimensions:
+      width: '100%'
+      height: 32
+    padding:
+      top: 4
+      left: 8
+      bottom: 0
+      right: 8
+    window_flags:
+      always_on_top: false
+      windows_app_bar: true
+    widgets:
+      left: ['komorebi_workspaces', 'komorebi_layout']
+      center: ['clock']
+      right: ['cpu', 'memory', 'gpu', 'power_plan', 'volume', 'systray']
+
+widgets:
+  komorebi_workspaces:
+    type: "komorebi.workspaces.WorkspaceWidget"
+    options:
+      label_offline: "komorebi offline"
+      label_workspace_btn: "{index}"
+      label_workspace_active_btn: "{index}"
+      label_workspace_populated_btn: "{index}"
+      label_zero_index: false
+      hide_empty_workspaces: false
+      hide_if_offline: false
+      enable_scroll_switching: true
+      toggle_workspace_layer:
+        enabled: true
+        tiling_label: "tiling"
+        floating_label: "floating"
+      app_icons:
+        enabled_populated: false
+        enabled_active: false
+
+  komorebi_layout:
+    type: "komorebi.active_layout.ActiveLayoutWidget"
+    options:
+      label: "{layout}"
+
+  clock:
+    type: "yasb.clock.ClockWidget"
+    options:
+      label: "{%a %d %b  %H:%M}"
+      label_alt: "{%A %d %B %Y  %H:%M:%S}"
+      timezones: []
+
+  cpu:
+    type: "yasb.cpu.CpuWidget"
+    options:
+      label: "cpu {percent_cpu}%"
+      update_interval: 2000
+
+  memory:
+    type: "yasb.memory.MemoryWidget"
+    options:
+      label: "ram {percent_mem}%"
+      update_interval: 2000
+
+  gpu:
+    type: "yasb.gpu.GpuWidget"
+    options:
+      label: "gpu {temp_gpu}°"
+
+  power_plan:
+    type: "yasb.power_plan.PowerPlanWidget"
+
+  volume:
+    type: "yasb.volume.VolumeWidget"
+
+  systray:
+    type: "yasb.systray.SystrayWidget"

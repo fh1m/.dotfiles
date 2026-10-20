@@ -1,6 +1,12 @@
 # Sensei · PowerShell profile. Installed by windows/tools/install.ps1.
 # Keep this file small: machine-specific secrets and tokens never belong here.
 
+# Per-user tool folders (no admin, no machine PATH change).
+foreach ($dir in 'starship', 'komorebi', 'whkd') {
+    $path = Join-Path $env:LOCALAPPDATA "Programs\$dir"
+    if ((Test-Path $path) -and ($env:Path -notlike "*$path*")) { $env:Path = "$path;$env:Path" }
+}
+
 $env:STARSHIP_CONFIG = Join-Path $HOME '.config\starship.toml'
 if (Get-Command starship -ErrorAction SilentlyContinue) {
     Invoke-Expression (&starship init powershell)

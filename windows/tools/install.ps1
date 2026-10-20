@@ -1,17 +1,19 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Render the Sensei Windows dotfiles into a user profile.
+  Render the Sensei Windows setup into a user profile.
 
 .DESCRIPTION
   Dry run by default: prints what would change and writes nothing.
-  -Apply writes files. Any file that is replaced is first copied to
+  -Apply writes files and per-user settings. Any file that is replaced is first copied to
   %USERPROFILE%\.local\state\dotfiles-backups\<stamp>\ with its relative path.
-  Re-running with -Apply makes no changes once the files match.
-  Refuses to run as Administrator, like scripts/install.py refuses root.
+  Per-user environment variables live in HKCU\Environment and autostart entries in
+  HKCU\...\Run. Nothing here needs Administrator, and the script refuses to run as one.
+  Re-running with -Apply makes no changes once everything matches.
 
 .PARAMETER TargetHome
   Root to render into. Defaults to the current user's profile. Tests use a temp folder.
+  Environment and autostart are only written when TargetHome is the real profile.
 #>
 [CmdletBinding()]
 param(
@@ -50,8 +52,19 @@ $Entries = @(
     @{ Source = 'home\Documents\PowerShell\Microsoft.PowerShell_profile.ps1'; Dest = 'Documents\PowerShell\Microsoft.PowerShell_profile.ps1'; Render = $false },
     @{ Source = 'home\.config\starship.toml';                                  Dest = '.config\starship.toml';                             Render = $true },
     @{ Source = 'home\AppData\Local\alacritty\alacritty.toml';                Dest = 'AppData\Local\alacritty\alacritty.toml';           Render = $true },
-    @{ Source = 'home\AppData\Local\Microsoft\Windows Terminal\Fragments\Sensei\sensei.json'; Dest = 'AppData\Local\Microsoft\Windows Terminal\Fragments\Sensei\sensei.json'; Render = $true }
+    @{ Source = 'home\AppData\Local\Microsoft\Windows Terminal\Fragments\Sensei\sensei.json'; Dest = 'AppData\Local\Microsoft\Windows Terminal\Fragments\Sensei\sensei.json'; Render = $true },
+    @{ Source = 'home\.config\komorebi\komorebi.json';                        Dest = '.config\komorebi\komorebi.json';                  Render = $true },
+    @{ Source = 'home\.config\whkd\whkdrc';                                   Dest = '.config\whkd\whkdrc';                             Render = $false },
+    @{ Source = 'home\.config\yasb\config.yaml';                              Dest = '.config\yasb\config.yaml';                        Render = $false },
+    @{ Source = 'home\.config\yasb\styles.css';                               Dest = '.config\yasb\styles.css';                         Render = $true }
 )
+
+# Per-user variables that point each tool at its ~/.config folder.
+$EnvVars = [ordered]@{
+    KOMOREBI_CONFIG_HOME = Join-Path $TargetHome '.config\komorebi'
+    WHKD_CONFIG_HOME     = Join-Path $TargetHome '.config\whkd'
+    YASB_CONFIG_HOME     = Join-Path $TargetHome '.config\yasb'
+}
 
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
 $backupRoot = Join-Path $TargetHome ".local\state\dotfiles-backups\$stamp"
@@ -88,11 +101,36 @@ foreach ($entry in $Entries) {
     Move-Item -LiteralPath $temp -Destination $destPath -Force
 }
 
+# Per-user environment and autostart: only for the real profile, never for a test home.
+$realHome = [IO.Path]::GetFullPath($env:USERPROFILE).TrimEnd('\')
+$isRealHome = ([IO.Path]::GetFullPath($TargetHome).TrimEnd('\') -eq $realHome)
+$envChanged = New-Object System.Collections.Generic.List[string]
+if ($isRealHome) {
+    foreach ($name in $EnvVars.Keys) {
+        $want = [string]$EnvVars[$name]
+        $have = [Environment]::GetEnvironmentVariable($name, 'User')
+        if ($have -eq $want) { continue }
+        $envChanged.Add("env:$name")
+        if ($Apply) { [Environment]::SetEnvironmentVariable($name, $want, 'User') }
+    }
+    $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+    $tiling = Join-Path $env:LOCALAPPDATA 'Programs\komorebi\komorebic.exe'
+    if (Test-Path -LiteralPath $tiling) {
+        $cmd = '"' + $tiling + '" start --whkd'
+        $have = (Get-ItemProperty -Path $runKey -Name 'Sensei-Tiling' -ErrorAction SilentlyContinue).'Sensei-Tiling'
+        if ($have -ne $cmd) {
+            $envChanged.Add('run:Sensei-Tiling')
+            if ($Apply) { Set-ItemProperty -Path $runKey -Name 'Sensei-Tiling' -Value $cmd }
+        }
+    }
+}
+
 $result = [ordered]@{
-    apply    = [bool]$Apply
-    target   = $TargetHome
-    changed  = @($changed)
-    backedUp = @($backedUp)
-    backup   = $(if ($backedUp.Count -gt 0) { $backupRoot } else { $null })
+    apply        = [bool]$Apply
+    target       = $TargetHome
+    changed      = @($changed)
+    backedUp     = @($backedUp)
+    backup       = $(if ($backedUp.Count -gt 0) { $backupRoot } else { $null })
+    userSettings = @($envChanged)
 }
 $result | ConvertTo-Json -Depth 3
