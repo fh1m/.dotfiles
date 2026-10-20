@@ -53,17 +53,15 @@ $Entries = @(
     @{ Source = 'home\.config\starship.toml';                                  Dest = '.config\starship.toml';                             Render = $true },
     @{ Source = 'home\AppData\Local\alacritty\alacritty.toml';                Dest = 'AppData\Local\alacritty\alacritty.toml';           Render = $true },
     @{ Source = 'home\AppData\Local\Microsoft\Windows Terminal\Fragments\Sensei\sensei.json'; Dest = 'AppData\Local\Microsoft\Windows Terminal\Fragments\Sensei\sensei.json'; Render = $true },
-    @{ Source = 'home\.config\komorebi\komorebi.json';                        Dest = '.config\komorebi\komorebi.json';                  Render = $true },
-    @{ Source = 'home\.config\whkd\whkdrc';                                   Dest = '.config\whkd\whkdrc';                             Render = $false },
+    @{ Source = 'home\.glzr\glazewm\config.yaml';                             Dest = '.glzr\glazewm\config.yaml';                       Render = $true },
     @{ Source = 'home\.config\yasb\config.yaml';                              Dest = '.config\yasb\config.yaml';                        Render = $false },
     @{ Source = 'home\.config\yasb\styles.css';                               Dest = '.config\yasb\styles.css';                         Render = $true }
 )
 
-# Per-user variables that point each tool at its ~/.config folder.
+# Per-user variables that point each tool at its config folder. GlazeWM reads
+# ~/.glzr/glazewm/config.yaml by default, so it needs none.
 $EnvVars = [ordered]@{
-    KOMOREBI_CONFIG_HOME = Join-Path $TargetHome '.config\komorebi'
-    WHKD_CONFIG_HOME     = Join-Path $TargetHome '.config\whkd'
-    YASB_CONFIG_HOME     = Join-Path $TargetHome '.config\yasb'
+    YASB_CONFIG_HOME = Join-Path $TargetHome '.config\yasb'
 }
 
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
@@ -113,10 +111,14 @@ if ($isRealHome) {
         $envChanged.Add("env:$name")
         if ($Apply) { [Environment]::SetEnvironmentVariable($name, $want, 'User') }
     }
+    # GlazeWM starts YASB itself (see startup_commands in its config), so one Run entry is enough.
     $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
-    $tiling = Join-Path $env:LOCALAPPDATA 'Programs\komorebi\komorebic.exe'
-    if (Test-Path -LiteralPath $tiling) {
-        $cmd = '"' + $tiling + '" start --whkd'
+    $glazewm = @(
+        (Join-Path $env:ProgramFiles 'glazewm\glazewm.exe'),
+        (Join-Path $env:LOCALAPPDATA 'Programs\glazewm\glazewm.exe')
+    ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if ($glazewm) {
+        $cmd = '"' + $glazewm + '" start'
         $have = (Get-ItemProperty -Path $runKey -Name 'Sensei-Tiling' -ErrorAction SilentlyContinue).'Sensei-Tiling'
         if ($have -ne $cmd) {
             $envChanged.Add('run:Sensei-Tiling')

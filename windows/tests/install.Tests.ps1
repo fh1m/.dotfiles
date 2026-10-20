@@ -33,7 +33,7 @@ $before = Get-Tree $home1
 $dry = & $Installer -TargetHome $home1 | ConvertFrom-Json
 Assert-True ((Get-Tree $home1) -eq $before) 'dry run writes nothing'
 Assert-True ($dry.apply -eq $false) 'dry run reports apply=false'
-Assert-True ($dry.changed.Count -eq 8) 'dry run lists all eight managed files'
+Assert-True ($dry.changed.Count -eq 7) 'dry run lists all seven managed files'
 
 # 2. Apply writes the four files, rendered.
 $applied = & $Installer -Apply -TargetHome $home1 | ConvertFrom-Json
@@ -43,7 +43,7 @@ $alacrittyText = [IO.File]::ReadAllText($alacritty)
 Assert-True ($alacrittyText -notmatch '\{\{') 'no template tokens remain after render'
 Assert-True ($alacrittyText -match 'background = "#090807"') 'terminal background token rendered'
 Assert-True ($alacrittyText -match 'program = "pwsh"') 'alacritty launches PowerShell 7'
-Assert-True ($applied.changed.Count -eq 8) 'first apply changes eight files'
+Assert-True ($applied.changed.Count -eq 7) 'first apply changes seven files'
 Assert-True ($applied.backup -eq $null) 'no backup on first apply (nothing replaced)'
 
 # 3. Second apply is a no-op.
@@ -64,8 +64,9 @@ $rendered = [IO.File]::ReadAllText((Join-Path $home1 '.config\starship.toml'))
 Assert-True ($rendered -match "rose = '#fb4670'") 'starship palette rendered from palette/sensei.json'
 
 # 6. Komorebi border colours come from the palette, and a test home never writes per-user settings.
-$komorebi = [IO.File]::ReadAllText((Join-Path $home1 '.config\komorebi\komorebi.json'))
-Assert-True ($komorebi -match '"single":\s*\{ "r": 242, "g": 61,\s+"b": 112 \}') 'komorebi single border is the Sensei rose'
+$glazewm = [IO.File]::ReadAllText((Join-Path $home1 '.glzr\glazewm\config.yaml'))
+Assert-True ($glazewm -match "color: '#f23d70'") 'glazewm focused border is the Sensei rose'
+Assert-True ($glazewm -notmatch '\{\{') 'glazewm config has no template tokens left'
 Assert-True ($applied.userSettings.Count -eq 0) 'test home writes no environment or autostart settings'
 
 Remove-Item -LiteralPath $home1 -Recurse -Force

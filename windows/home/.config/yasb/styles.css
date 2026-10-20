@@ -17,8 +17,9 @@
     padding: 0 4px;
 }
 
-/* Komorebi workspaces: rose for the active workspace, warm sand for populated ones. */
-.komorebi-workspaces .ws-btn {
+/* GlazeWM workspaces: rose for the focused workspace, warm sand for populated ones.
+   The focused_* rules come after active_* so they win, as the YASB wiki requires. */
+.glazewm-workspaces .ws-btn {
     color: #706963;
     background: transparent;
     border: 1px solid transparent;
@@ -27,24 +28,35 @@
     margin: 3px 2px;
 }
 
-.komorebi-workspaces .ws-btn.populated {
+.glazewm-workspaces .ws-btn.populated {
     color: #d6b59a;
 }
 
-.komorebi-workspaces .ws-btn.active {
+.glazewm-workspaces .ws-btn.active_populated,
+.glazewm-workspaces .ws-btn.active_empty {
+    color: #e8e2da;
+}
+
+.glazewm-workspaces .ws-btn.focused_populated,
+.glazewm-workspaces .ws-btn.focused_empty {
     color: #090807;
     background-color: #f23d70;
     font-weight: bold;
 }
 
-.komorebi-workspaces .workspace-layer {
-    color: #a6b9d1;
+.glazewm-workspaces .offline-status {
+    color: #706963;
     padding: 0 6px;
 }
 
-.komorebi-layout {
+.glazewm-tiling-direction {
     color: #a9a29a;
-    padding: 0 8px;
+    padding: 0 6px;
+}
+
+.glazewm-binding-mode {
+    color: #f23d70;
+    padding: 0 6px;
 }
 
 .clock {

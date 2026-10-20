@@ -22,10 +22,11 @@ $Packages = @(
     @{ Id = 'junegunn.fzf';             Name = 'fzf';                 Min = '0.74.5' },
     @{ Id = 'Python.Python.3.13';       Name = 'Python 3.13 (real, not the Store stub)'; Min = '3.13.15' },
     @{ Id = 'DEVCOM.JetBrainsMonoNerdFont'; Name = 'JetBrains Mono Nerd Font (mono face; Iosevka not in winget)'; Min = '3.3.0' },
-    @{ Id = 'LGUG2Z.komorebi';          Name = 'komorebi (tiling window manager)'; Min = '0.1.41' },
-    @{ Id = 'LGUG2Z.whkd';              Name = 'whkd (hotkey daemon)';          Min = '0.2.10' },
     @{ Id = 'AmN.yasb';                 Name = 'YASB (status bar)';            Min = '2.0.7' }
 )
+# GlazeWM (tiling WM) is not listed here: it installs from the signed x64 MSI on its GitHub
+# release page, see windows/docs/SETUP.md. komorebi and whkd were removed after their
+# control socket failed on this Windows build.
 
 if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
     throw 'winget is not available. Install App Installer from the Microsoft Store, then re-run.'

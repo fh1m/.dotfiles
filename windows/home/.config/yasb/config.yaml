@@ -1,5 +1,5 @@
 # Sensei · YASB status bar. Styled by styles.css in this folder.
-# Widgets reference komorebi, which is started by komorebi itself (see komorebi.json).
+# GlazeWM starts YASB (startup_commands in ~/.glzr/glazewm/config.yaml), so no separate autostart is needed.
 watch_stylesheet: true
 watch_config: true
 update_check: false
@@ -25,34 +25,38 @@ bars:
       always_on_top: false
       windows_app_bar: true
     widgets:
-      left: ['komorebi_workspaces', 'komorebi_layout']
+      left: ['glazewm_workspaces', 'glazewm_tiling_direction', 'glazewm_binding_mode']
       center: ['clock']
       right: ['cpu', 'memory', 'gpu', 'power_plan', 'volume', 'systray']
 
 widgets:
-  komorebi_workspaces:
-    type: "komorebi.workspaces.WorkspaceWidget"
+  glazewm_workspaces:
+    type: "glazewm.workspaces.GlazewmWorkspacesWidget"
     options:
-      label_offline: "komorebi offline"
-      label_workspace_btn: "{index}"
-      label_workspace_active_btn: "{index}"
-      label_workspace_populated_btn: "{index}"
-      label_zero_index: false
-      hide_empty_workspaces: false
+      offline_label: "glazewm offline"
       hide_if_offline: false
+      monitor_exclusive: true
       enable_scroll_switching: true
-      toggle_workspace_layer:
-        enabled: true
-        tiling_label: "tiling"
-        floating_label: "floating"
       app_icons:
         enabled_populated: false
         enabled_active: false
 
-  komorebi_layout:
-    type: "komorebi.active_layout.ActiveLayoutWidget"
+  glazewm_tiling_direction:
+    type: "glazewm.tiling_direction.GlazewmTilingDirectionWidget"
     options:
-      label: "{layout}"
+      horizontal_label: "󰓡"
+      vertical_label: "󰓢"
+
+  glazewm_binding_mode:
+    type: "glazewm.binding_mode.GlazewmBindingModeWidget"
+    options:
+      hide_if_no_active: true
+      label_if_no_active: "No binding mode active"
+      default_icon: ""
+      icons:
+        none: ""
+        resize: ""
+        pause: ""
 
   clock:
     type: "yasb.clock.ClockWidget"

@@ -2,7 +2,7 @@
 # Keep this file small: machine-specific secrets and tokens never belong here.
 
 # Per-user tool folders (no admin, no machine PATH change).
-foreach ($dir in 'starship', 'komorebi', 'whkd') {
+foreach ($dir in 'starship') {
     $path = Join-Path $env:LOCALAPPDATA "Programs\$dir"
     if ((Test-Path $path) -and ($env:Path -notlike "*$path*")) { $env:Path = "$path;$env:Path" }
 }
