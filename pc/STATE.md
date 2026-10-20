@@ -468,3 +468,11 @@ bounded private cross-host notification receipts/acks, with distinct phone cards
 and DND handling. See `docs/digital-den/ZONDO-AND-LYRICS.md`. Deployment/test
 results are tracked in the validation record; notification fixture delivery is
 separate from a real physical-phone acceptance test.
+
+Final deployed polish verification: both hosts are on shared main; Arete's 461
+Python tests passed, Homie's 461 passed with one optional skip. Six Den checks
+passed. Actual phone-card presentation, exact-current-line singing and three
+popup-click cases per host passed. Input, cursor and presence services remained
+active; Homie's drawing watcher was active. Private runtime session scripts and
+the renderer root are kept in sync with `pc/den/`; generated artwork lives in the
+shared home profile. No private notification or lyric content is committed.

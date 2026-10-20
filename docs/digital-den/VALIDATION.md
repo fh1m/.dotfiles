@@ -226,3 +226,14 @@ and dismiss passively when another application/monitor gains focus. A watched
 normal grabs remain available when the input service is stopped. All four routes
 and pause/resume passed with System open after this repair. The new teardown
 regression checks that active, return-armed and running markers all clear.
+
+Final polish acceptance: Arete passed 461 Python tests; Homie passed 461 with one
+optional skip. Six Den Python checks passed. The generated phone pose and its
+real desktop notification bubble were captured and visually inspected: one
+character, distinct phone styling, actual owned fixture body and pending badge.
+A separate playback observation verified the visible sing-along message exactly
+matched the current media lyric line and used the `sing` pose; the song's prior
+paused/playing state was restored afterward. Three real popup-click cases passed
+on each host after non-modal Den handling. Both input/cursor/presence services,
+and Homie's tablet watcher, were active at verification. These are bounded tests,
+not a guarantee against every future GPU/network fault.
