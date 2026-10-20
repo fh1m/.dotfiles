@@ -64,19 +64,19 @@ widgets:
   cpu:
     type: "yasb.cpu.CpuWidget"
     options:
-      label: "cpu {percent_cpu}%"
+      label: "cpu {info[percent][total]}%"
       update_interval: 2000
 
   memory:
     type: "yasb.memory.MemoryWidget"
     options:
-      label: "ram {percent_mem}%"
+      label: "ram {virtual_mem_percent}%"
       update_interval: 2000
 
   gpu:
     type: "yasb.gpu.GpuWidget"
     options:
-      label: "gpu {temp_gpu}°"
+      label: "gpu {info[utilization]}%"
 
   power_plan:
     type: "yasb.power_plan.PowerPlanWidget"
