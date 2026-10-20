@@ -173,3 +173,25 @@ Software cursor mode is explicit on both hosts. Its meaning is documented in the
 [Hyprland options reference](https://wiki.hypr.land/configuring/core/config-options/).
 The native binary, original session scripts and cursor daemon were backed up
 privately under `~/.local/state/homie-control/backups/input-guard-*` before deployment.
+
+Final deployment verification: Arete passed 453 Python tests; Homie passed 453
+with one optional dependency skip. Five Den Python tests and two native Rust
+capture tests passed. The final native binary SHA256 matched on both hosts:
+`f4159ff1d41077152bac7dbadb30f1fb0dc40b2e5634e51ff4b7825f42d7acad`.
+After cursor-shape restoration was included, all eight crossings and both
+triple-Ctrl operations passed again. At 13:22:40 a real isolated compositor
+release was followed immediately by `sending Leave event to client 0`, without
+a release storm: the repaired backend-to-transport End path was exercised live.
+
+Actual cursor-locator/focus checks passed on eDP-1, DP-1, DP-2 and HDMI-A-1.
+Homie's three real popup-click cases also passed; its isolated `uv --with evdev`
+test environment supplied the missing harness dependency without changing system
+packages. Bar reservations are zero on both laptop panels, 44 px top on Upper,
+and 44 px bottom on Lower. Both input/cursor services and Homie's drawing watcher
+were active at handoff; no private vault/account data was committed.
+
+Real lyric receipts and live dance frames were observed. A two-minute random
+speech observation did not happen to include a sing-along; this is recorded
+separately from the passing lyric freshness, privacy, non-repetition and lease
+projection tests. The sing-along clock now survives roaming transitions, so short
+visits do not restart its entire waiting interval.
