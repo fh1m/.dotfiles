@@ -242,6 +242,175 @@
       "kind": "publisher transcript or author text",
       "sha256": "829f7aba209623622914529b1d4fd12cd4ef5b442d81ef08861ccb0ad5a70ef7",
       "author": "Jim Keller"
+    },
+    "feynman-atoms": {
+      "url": "https://www.feynmanlectures.caltech.edu/I_01.html",
+      "title": "Atoms in Motion · Feynman Lectures I.1",
+      "author": "Richard Feynman",
+      "checked": "2026-10-20",
+      "kind": "primary author text or source repository",
+      "checkedVia": "primary page inspected with web reader; direct download denied"
+    },
+    "feynman-quantum": {
+      "url": "https://www.feynmanlectures.caltech.edu/III_01.html",
+      "title": "Quantum Behavior · Feynman Lectures III.1",
+      "author": "Richard Feynman",
+      "checked": "2026-10-20",
+      "kind": "primary author text or source repository",
+      "checkedVia": "primary page inspected with web reader; direct download denied"
+    },
+    "karpathy-micrograd": {
+      "url": "https://github.com/karpathy/micrograd",
+      "title": "micrograd · source and tests",
+      "author": "Andrej Karpathy",
+      "checked": "2026-10-20",
+      "kind": "primary author text or source repository",
+      "sha256": "337151742e95f140b02a1c09547046b4525528b23caf16d3f31467e880274f4d"
+    },
+    "karpathy-makemore": {
+      "url": "https://github.com/karpathy/makemore",
+      "title": "makemore · model families",
+      "author": "Andrej Karpathy",
+      "checked": "2026-10-20",
+      "kind": "primary author text or source repository",
+      "sha256": "aa034f853f641650b39bc0be124d14edf18aae0b3a6882888d545f02db9b38dd"
+    },
+    "karpathy-llmc": {
+      "url": "https://github.com/karpathy/llm.c",
+      "title": "llm.c · training and correctness",
+      "author": "Andrej Karpathy",
+      "checked": "2026-10-20",
+      "kind": "primary author text or source repository",
+      "sha256": "b0d0133722ee2324b795e861d510b95a0be3b13bfb545623af2cf2433f52f4f2"
+    },
+    "hotz-win": {
+      "url": "https://geohot.github.io/blog/jekyll/update/2025/07/06/can-tinygrad-win.html",
+      "title": "Can tinygrad win? · 2025",
+      "author": "George Hotz",
+      "checked": "2026-10-20",
+      "kind": "primary author text or source repository",
+      "sha256": "274cf3427430f70dbbf6d51ad7ca612fc36aaf4e0ad2af9174c1918678754d2e"
+    },
+    "hotz-five": {
+      "url": "https://geohot.github.io/blog/jekyll/update/2025/12/29/five-years-of-tinygrad.html",
+      "title": "Five years of tinygrad · 2025",
+      "author": "George Hotz",
+      "checked": "2026-10-20",
+      "kind": "primary author text or source repository",
+      "sha256": "db4379529dc39ec64795dbfedf33e26064c29b69dd96c8a90154c8bd66354190"
+    },
+    "graham-great": {
+      "url": "https://paulgraham.com/greatwork.html",
+      "title": "How to Do Great Work · 2023",
+      "author": "Paul Graham",
+      "checked": "2026-10-20",
+      "kind": "primary author text or source repository",
+      "sha256": "bc978f2a6c3396ce910a214ff52d0a5636c9942483454b1ef8af68cb3876eb28"
+    },
+    "graham-early": {
+      "url": "https://paulgraham.com/early.html",
+      "title": "Early Work · 2020",
+      "author": "Paul Graham",
+      "checked": "2026-10-20",
+      "kind": "primary author text or source repository",
+      "sha256": "1c11a764c3da93264f6b3bbb6f144a81d4f9efe9149812e22fa9842ebac6f882"
+    },
+    "urban-tail": {
+      "url": "https://waitbutwhy.com/2015/12/the-tail-end.html",
+      "title": "The Tail End · 2015",
+      "author": "Tim Urban",
+      "checked": "2026-10-20",
+      "kind": "primary author text or source repository",
+      "sha256": "f22cb04b01833a7ecb16213b57eecc10e628dc838b1d3f3dd6103931a9cd3814"
+    },
+    "lattner-home": {
+      "url": "https://chrislattner.com/",
+      "title": "Swift origins · author account",
+      "author": "Chris Lattner",
+      "checked": "2026-10-20",
+      "kind": "primary author text or source repository",
+      "sha256": "0807fb4bc7cbcad87ada74065715aaf70158ea5ecf78ce87da7b3bb48b065d95"
+    },
+    "feynman-challenger": {
+      "url": "https://www.nasa.gov/history/rogersrep/v2appf.htm",
+      "title": "Personal observations on reliability of Shuttle · Appendix F",
+      "author": "Richard Feynman",
+      "kind": "primary author writing or publisher interview",
+      "checked": "2026-10-21",
+      "sha256": "4f2c4f4dd0e5457f7c769af363baa9b8c8c219313e1c86d540d150ef7556197b"
+    },
+    "hotz-entropy": {
+      "url": "https://geohot.github.io/blog/jekyll/update/2021/10/24/to-fight-against-entropy.html",
+      "title": "To Fight against Entropy · 2021",
+      "author": "George Hotz",
+      "kind": "primary author writing or publisher interview",
+      "checked": "2026-10-21",
+      "sha256": "f9bbfc8230b75b5227ea545f9ef1956193abc2e7b94ef7f3e66e1f31990550fc"
+    },
+    "carmack-doom": {
+      "url": "https://raw.githubusercontent.com/id-Software/DOOM/master/README.TXT",
+      "title": "DOOM source release · Carmack notes, 1997",
+      "author": "John Carmack",
+      "kind": "primary author writing or publisher interview",
+      "checked": "2026-10-21",
+      "sha256": "8ba968d15c0b316ecf9b9996bbd846aea2b9c538e00dddf4b4051038b5909fdf"
+    },
+    "karpathy-pong": {
+      "url": "https://karpathy.github.io/2016/05/31/rl/",
+      "title": "Pong from Pixels · 2016",
+      "author": "Andrej Karpathy",
+      "kind": "primary author writing or publisher interview",
+      "checked": "2026-10-21",
+      "sha256": "e40d501987ae73c7b563d698bd01acb83e4b8dd5be27c99b54a912300cffd21d"
+    },
+    "keller-hdsr": {
+      "url": "https://hdsr.mitpress.mit.edu/pub/n7la10vt/release/2",
+      "title": "Harvard fireside chat · HDSR, July 2026",
+      "author": "Jim Keller",
+      "kind": "primary author writing or publisher interview",
+      "checked": "2026-10-21",
+      "sha256": "c47c054f79a2c2ba71aff0230aa960cf0805a4abf7efd6a8bfb08307c004e4b9",
+      "retrieval": "web-reader extract of primary page; direct download refused HTTP 403"
+    },
+    "lattner-thesis": {
+      "url": "https://llvm.org/pubs/2002-12-LattnerMSThesis.html",
+      "title": "LLVM · Lattner M.S. thesis, 2002",
+      "author": "Chris Lattner",
+      "kind": "primary author writing or publisher interview",
+      "checked": "2026-10-21",
+      "sha256": "b1f23f4527f79ab781c7a5c60b6cf1a5833b02d8bc150303b3bfd813d751f3d2"
+    },
+    "graham-taste": {
+      "url": "https://paulgraham.com/taste.html",
+      "title": "Taste for Makers · 2002",
+      "author": "Paul Graham",
+      "kind": "primary author writing or publisher interview",
+      "checked": "2026-10-21",
+      "sha256": "ef12e1d4f85493e9eb07de13d5bd19f1d73fae8dad817fd6a7de713f0610d55e"
+    },
+    "urban-weeks": {
+      "url": "https://waitbutwhy.com/2014/05/life-weeks.html",
+      "title": "Your Life in Weeks · 2014",
+      "author": "Tim Urban",
+      "kind": "primary author writing or publisher interview",
+      "checked": "2026-10-21",
+      "sha256": "8790d9d3e64a3e1c6744f1a6db3d5a056478ccc09445ae6330166abaacd53593"
+    },
+    "west-vf2015": {
+      "url": "https://www.vanityfair.com/style/2015/09/kanye-west-yeezy-season-2-interview",
+      "title": "Yeezy Season 2 · Vanity Fair interview, 2015",
+      "author": "Kanye West",
+      "kind": "primary author writing or publisher interview",
+      "checked": "2026-10-21",
+      "sha256": "0027494d492807ca989ccd8dd2bf1c230b44f71492abacd47caa03ca388079d8"
+    },
+    "rubin-onbeing": {
+      "url": "https://onbeing.org/programs/rick-rubin-magic-everyday-mystery-and-getting-creative/",
+      "title": "Magic, Everyday Mystery, and Getting Creative · On Being",
+      "author": "Rick Rubin",
+      "kind": "primary author writing or publisher interview",
+      "checked": "2026-10-21",
+      "sha256": "d8dda389d6706165289a98c2b17780b87f0cb129d9a3bc644b7067059eff4ebe"
     }
   },
   "guests": [
@@ -332,6 +501,104 @@
           "context": "He distinguishes a useful formulation from a claim that it is the only possible route.",
           "question": "Are we mistaking our preferred method for a requirement?",
           "excerpt": true
+        },
+        {
+          "id": "feynman-research-11",
+          "source": "feynman-challenger",
+          "text": "reality must take precedence over public relations",
+          "context": "The claim is answerable to component evidence and actual operating conditions, not a comforting public message.",
+          "question": "Which reliability claim in our work needs better evidence?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "feynman-topic-01",
+          "title": "Names are not mechanisms",
+          "source": "feynman-science",
+          "story": "His bird example separates knowing a name from investigating behavior.",
+          "task": "Describe one sensor's behavior without using its technical name.",
+          "question": "What does the name hide from us?"
+        },
+        {
+          "id": "feynman-topic-02",
+          "title": "The feather question",
+          "source": "feynman-science",
+          "story": "A walk with his father becomes an investigation of what a bird is actually doing.",
+          "task": "Observe one ordinary object for five minutes before searching for an explanation.",
+          "question": "What did we notice before we looked it up?"
+        },
+        {
+          "id": "feynman-topic-03",
+          "title": "Honest negative results",
+          "source": "feynman-cargo",
+          "story": "His integrity argument includes reporting results that do not support the preferred conclusion.",
+          "task": "Keep a failed calibration beside the successful one with its conditions intact.",
+          "question": "What would disappear if we only saved the pretty plot?"
+        },
+        {
+          "id": "feynman-topic-04",
+          "title": "The experimenter is vulnerable",
+          "source": "feynman-cargo",
+          "story": "Self-deception is part of the experimental problem, not merely someone else's flaw.",
+          "task": "Write the outcome you hope for, then design a test that could reject it.",
+          "question": "Which measurement would disappoint us usefully?"
+        },
+        {
+          "id": "feynman-topic-05",
+          "title": "The missing control",
+          "source": "feynman-cargo",
+          "story": "The Young rat experiment in his address examines overlooked experimental cues.",
+          "task": "Change one nuisance cue in an experiment while preserving the intended signal.",
+          "question": "Are we measuring our hypothesis or a hidden shortcut?"
+        },
+        {
+          "id": "feynman-topic-06",
+          "title": "Replication has conditions",
+          "source": "feynman-cargo",
+          "story": "He distinguishes a convincing-looking procedure from understanding what actually makes it work.",
+          "task": "List the conditions another person needs to reproduce your measurement.",
+          "question": "Could someone repeat this without borrowing our assumptions?"
+        },
+        {
+          "id": "feynman-topic-07",
+          "title": "Many routes, one prediction",
+          "source": "feynman-nobel",
+          "story": "His Nobel lecture recounts different approaches to the same quantum-electrodynamics calculations.",
+          "task": "Derive a small result in two independent ways and compare the boundary cases.",
+          "question": "Do the two routes agree for the same reason?"
+        },
+        {
+          "id": "feynman-topic-08",
+          "title": "An unfinished idea is evidence",
+          "source": "feynman-nobel",
+          "story": "The lecture describes the development of ideas rather than presenting a frictionless discovery story.",
+          "task": "Save an abandoned derivation with the exact step that stopped working.",
+          "question": "Can a failed route teach the next attempt something?"
+        },
+        {
+          "id": "feynman-topic-09",
+          "title": "Small particles, large consequences",
+          "source": "feynman-atoms",
+          "story": "The first physics lecture uses the atomic picture to connect everyday properties with microscopic motion.",
+          "task": "Sketch how a temperature change could alter a material measurement.",
+          "question": "Which microscopic change could explain the macroscopic effect?"
+        },
+        {
+          "id": "feynman-topic-10",
+          "title": "Analogy has a boundary",
+          "source": "feynman-quantum",
+          "story": "The quantum-behavior chapter compares bullets, water waves and electrons before exposing the limits of those comparisons.",
+          "task": "Compare two models of one observation and name where each analogy fails.",
+          "question": "Which familiar picture has quietly stopped being valid?"
+        },
+        {
+          "id": "feynman-topic-11",
+          "title": "Reliability is not a public-relations number",
+          "source": "feynman-challenger",
+          "story": "His Challenger appendix contrasts management confidence with engineers' estimates, examines component evidence and argues against treating an absence of failures as proof of adequate margin.",
+          "task": "Write a reliability claim with its evidence, uncertainty and operating conditions; do not substitute a reassuring number.",
+          "question": "What evidence supports this margin when the environment changes?"
         }
       ]
     },
@@ -422,6 +689,104 @@
           "context": "The quoted claim concerns pure functions with value parameters, not arbitrary shared mutable objects.",
           "question": "Are all the inputs really values, or is something shared underneath?",
           "excerpt": true
+        },
+        {
+          "id": "carmack-research-11",
+          "source": "carmack-doom",
+          "text": "a vastly simpler (and faster) solution",
+          "context": "His retrospective points to reusing a representation already serving another part of the engine.",
+          "question": "Which second implementation could our existing representation replace?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "carmack-topic-01",
+          "title": "Latency is a chain",
+          "source": "carmack-latency",
+          "story": "His latency discussion follows delays across multiple cooperating parts of an interactive system.",
+          "task": "Measure input-to-visible-response delay and draw the full path.",
+          "question": "Which delay did we accidentally omit from the total?"
+        },
+        {
+          "id": "carmack-topic-02",
+          "title": "Prediction can be wrong",
+          "source": "carmack-latency",
+          "story": "Latency mitigation includes prediction and the consequences when a predicted state differs from reality.",
+          "task": "Compare an extrapolated sensor state with a later ground-truth measurement.",
+          "question": "How does this feel when the prediction fails?"
+        },
+        {
+          "id": "carmack-topic-03",
+          "title": "Local clarity, global behavior",
+          "source": "carmack-inline",
+          "story": "His inlining discussion considers code visibility and the difficulty of reasoning across calls.",
+          "task": "Read a critical path as one continuous sequence before extracting abstractions.",
+          "question": "What important state change was hidden behind a tidy function name?"
+        },
+        {
+          "id": "carmack-topic-04",
+          "title": "Repeated code has a cost too",
+          "source": "carmack-inline",
+          "story": "The archived exchange weighs the consequences of organization choices rather than treating one style as universally correct.",
+          "task": "Compare duplication and extraction for one real maintenance change.",
+          "question": "Which arrangement makes the next bug easier to see?"
+        },
+        {
+          "id": "carmack-topic-05",
+          "title": "Pure computations are inspectable",
+          "source": "carmack-functional",
+          "story": "His functional-programming essay distinguishes useful purity from unrelated language conveniences.",
+          "task": "Extract one calculation so inputs determine outputs without hidden mutation.",
+          "question": "Could this result change while its apparent inputs stay the same?"
+        },
+        {
+          "id": "carmack-topic-06",
+          "title": "State needs a border",
+          "source": "carmack-functional",
+          "story": "The essay examines the practical value of controlling side effects in an imperative codebase.",
+          "task": "Draw the boundary between a pure calculation and its device or file access.",
+          "question": "Where does the outside world enter this function?"
+        },
+        {
+          "id": "carmack-topic-07",
+          "title": "A language label is not the benefit",
+          "source": "carmack-functional",
+          "story": "He separates pure-function benefits from syntax, libraries and other features often grouped under functional programming.",
+          "task": "Name the exact property you want before adopting a programming style.",
+          "question": "Are we improving a property or collecting a label?"
+        },
+        {
+          "id": "carmack-topic-08",
+          "title": "The frame is a deadline",
+          "source": "carmack-latency",
+          "story": "Interactive latency makes timing visible to the person using the system.",
+          "task": "Set a response-time budget for a real UI or control interaction and measure it.",
+          "question": "What part of the budget belongs to us?"
+        },
+        {
+          "id": "carmack-topic-09",
+          "title": "Correctness before elegance",
+          "source": "carmack-inline",
+          "story": "The correspondence treats code structure as an engineering tradeoff with practical failure modes.",
+          "task": "Take an elegant refactor and prove one important behavior stayed unchanged.",
+          "question": "Which invariant deserves a test before we admire the code?"
+        },
+        {
+          "id": "carmack-topic-10",
+          "title": "Make effects explicit",
+          "source": "carmack-functional",
+          "story": "His practical discussion asks how functional ideas help actual C++ programs.",
+          "task": "Replace one implicit shared-state dependency with an explicit argument.",
+          "question": "What dependency could a reviewer now see immediately?"
+        },
+        {
+          "id": "carmack-topic-11",
+          "title": "The simpler solution already had a home",
+          "source": "carmack-doom",
+          "story": "In the DOOM source-release notes, he looks back at messy movement and sight tests and observes that the BSP tree already used for rendering could have supported a simpler solution. A shipped achievement still contained things he would improve.",
+          "task": "Find a representation already present in your project that could remove a second, fragile implementation.",
+          "question": "Have we already built the thing that could simplify this?"
         }
       ]
     },
@@ -512,6 +877,104 @@
           "context": "His simplest RNN example makes the persistent state explicit.",
           "question": "What information could fit in this state, and what would be lost?",
           "excerpt": true
+        },
+        {
+          "id": "karpathy-research-11",
+          "source": "karpathy-pong",
+          "text": "Our policy network is a 2-layer fully-connected net.",
+          "context": "A small visible mechanism makes the learning loop approachable; the historical example is not a claim about the latest RL frontier.",
+          "question": "Can we trace one rewarded action all the way to a parameter update?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "karpathy-topic-01",
+          "title": "Look at actual data",
+          "source": "karpathy-recipe",
+          "story": "His training recipe begins with careful inspection of the dataset before complicated modeling.",
+          "task": "View ten raw examples with their labels and record something surprising.",
+          "question": "What did a real example tell us that the aggregate hid?"
+        },
+        {
+          "id": "karpathy-topic-02",
+          "title": "Tiny-data overfitting",
+          "source": "karpathy-recipe",
+          "story": "The recipe uses overfitting a small batch as a debugging check.",
+          "task": "Make a tiny model fit a tiny trusted subset before scaling the run.",
+          "question": "If it cannot learn five examples, why trust fifty thousand?"
+        },
+        {
+          "id": "karpathy-topic-03",
+          "title": "One improvement at a time",
+          "source": "karpathy-recipe",
+          "story": "His staged recipe adds complexity after establishing a working baseline.",
+          "task": "Change one training ingredient and preserve the previous baseline results.",
+          "question": "Which change actually earned the improvement?"
+        },
+        {
+          "id": "karpathy-topic-04",
+          "title": "Recurrent character behavior",
+          "source": "karpathy-rnn",
+          "story": "His recurrent-network essay explores character-level generation and interprets observed behaviors.",
+          "task": "Train a deliberately small character model and inspect both good and broken outputs.",
+          "question": "What pattern did it learn, and what did we imagine it learned?"
+        },
+        {
+          "id": "karpathy-topic-05",
+          "title": "A scalar autograd engine",
+          "source": "karpathy-micrograd",
+          "story": "Micrograd exposes reverse-mode differentiation through a compact scalar engine.",
+          "task": "Differentiate a two-input expression by hand and compare every stored gradient.",
+          "question": "Can we point to the exact multiplication that moved this gradient?"
+        },
+        {
+          "id": "karpathy-topic-06",
+          "title": "Gradient checks are witnesses",
+          "source": "karpathy-micrograd",
+          "story": "The repository includes tests comparing gradients against PyTorch.",
+          "task": "Compare an analytic gradient with a finite-difference approximation on a tiny case.",
+          "question": "Does agreement survive a changed input?"
+        },
+        {
+          "id": "karpathy-topic-07",
+          "title": "Start with counts",
+          "source": "karpathy-makemore",
+          "story": "Makemore presents several character-model families, including a simple bigram model.",
+          "task": "Build a count-based baseline before training a more expressive name generator.",
+          "question": "How much structure did the simplest model already capture?"
+        },
+        {
+          "id": "karpathy-topic-08",
+          "title": "Architectures can be compared",
+          "source": "karpathy-makemore",
+          "story": "The project places multiple model families around the same character-generation task.",
+          "task": "Compare two models on the same split and inspect their characteristic failures.",
+          "question": "Did capacity help the task or only flatter the training set?"
+        },
+        {
+          "id": "karpathy-topic-09",
+          "title": "A training loop without magic",
+          "source": "karpathy-llmc",
+          "story": "Llm.c makes language-model training visible in C and CUDA.",
+          "task": "Follow one forward pass, loss, backward pass and parameter update through the implementation.",
+          "question": "Where did a tensor become bytes in a buffer?"
+        },
+        {
+          "id": "karpathy-topic-10",
+          "title": "Reference behavior matters",
+          "source": "karpathy-llmc",
+          "story": "The project includes correctness and performance comparisons alongside the training implementation.",
+          "task": "Keep a trusted reference output while optimizing one small kernel.",
+          "question": "Did the faster answer remain the same answer?"
+        },
+        {
+          "id": "karpathy-topic-11",
+          "title": "Pong is not magic in a box",
+          "source": "karpathy-pong",
+          "story": "His Pong tutorial follows a two-layer policy network from pixels and sampled actions to a policy-gradient update. It makes a working learning loop inspectable rather than relying on the impressive appearance of a game-playing agent.",
+          "task": "Trace one action, its eventual reward and the update that changes that action's probability.",
+          "question": "Where exactly did the reward turn into a change in behavior?"
         }
       ]
     },
@@ -602,6 +1065,104 @@
           "context": "His compiler work ties language choices to the behavior of the generated program.",
           "question": "Can we show where the speedup comes from?",
           "excerpt": true
+        },
+        {
+          "id": "lattner-research-11",
+          "source": "lattner-thesis",
+          "text": "The LLVM virtual instruction set is the glue that holds the system together.",
+          "context": "The representation connects optimization stages; an interface becomes useful because it preserves what those stages need.",
+          "question": "What meaning has to survive our next interface boundary?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "lattner-topic-01",
+          "title": "Three compiler responsibilities",
+          "source": "lattner-llvm",
+          "story": "The LLVM chapter separates frontend, optimizer and backend responsibilities.",
+          "task": "Trace one expression through parsing, representation, transformation and code generation.",
+          "question": "Which layer owns the meaning we are changing?"
+        },
+        {
+          "id": "lattner-topic-02",
+          "title": "An IR is a shared language",
+          "source": "lattner-llvm",
+          "story": "A common intermediate representation enables reuse between different language and target paths.",
+          "task": "Represent one tiny program in a form two independent tools can inspect.",
+          "question": "What agreement lets these tools cooperate?"
+        },
+        {
+          "id": "lattner-topic-03",
+          "title": "A pass should have a contract",
+          "source": "lattner-llvm",
+          "story": "The chapter explains modular optimization passes and their management.",
+          "task": "Describe the precondition and preserved property of one transformation.",
+          "question": "What remains true after the clever part runs?"
+        },
+        {
+          "id": "lattner-topic-04",
+          "title": "Libraries instead of a lump",
+          "source": "lattner-llvm",
+          "story": "The architecture makes compiler components reusable rather than forcing one monolithic tool.",
+          "task": "Use one component without invoking the entire application around it.",
+          "question": "Which interface made selective reuse possible?"
+        },
+        {
+          "id": "lattner-topic-05",
+          "title": "Diagnostics are part of the product",
+          "source": "lattner-llvm",
+          "story": "The chapter discusses Clang as a language frontend with tooling and diagnostic concerns.",
+          "task": "Rewrite one error so the next person knows what to inspect or change.",
+          "question": "Does this message explain a cause or merely announce disappointment?"
+        },
+        {
+          "id": "lattner-topic-06",
+          "title": "Runtime specialization",
+          "source": "lattner-llvm",
+          "story": "LLVM is described in uses beyond ahead-of-time compilation, including runtime specialization.",
+          "task": "Compare a general implementation with a version specialized for one known input property.",
+          "question": "Which fact became available only at runtime?"
+        },
+        {
+          "id": "lattner-topic-07",
+          "title": "Language design is collaborative",
+          "source": "lattner-home",
+          "story": "His Swift account credits language specialists, documentation work and internal dogfooding.",
+          "task": "Ask a real user to try one language or API change before polishing it.",
+          "question": "Which assumption did ordinary use break first?"
+        },
+        {
+          "id": "lattner-topic-08",
+          "title": "Interoperability is a constraint",
+          "source": "lattner-modular",
+          "story": "The Mojo discussion considers high-performance programming alongside existing developer ecosystems.",
+          "task": "Define what must remain compatible before improving a system boundary.",
+          "question": "What useful thing would a clean rewrite accidentally strand?"
+        },
+        {
+          "id": "lattner-topic-09",
+          "title": "Different levels need different tools",
+          "source": "lattner-syntax",
+          "story": "The interview spans compiler infrastructure, language design and AI-oriented systems.",
+          "task": "Choose the abstraction level at which one bug can actually be observed.",
+          "question": "Are we debugging the problem or the layer we like best?"
+        },
+        {
+          "id": "lattner-topic-10",
+          "title": "Modularity needs meaning",
+          "source": "lattner-llvm",
+          "story": "The chapter's reusable components depend on representations and explicit responsibilities.",
+          "task": "Remove one dependency from a component and check whether its contract still makes sense.",
+          "question": "Did we make a module or just another folder?"
+        },
+        {
+          "id": "lattner-topic-11",
+          "title": "A thesis about the glue",
+          "source": "lattner-thesis",
+          "story": "His master's thesis presents LLVM as infrastructure for optimization at several stages. The intermediate representation connects those stages; the architecture is more than one clever optimization pass.",
+          "task": "Draw the representation that lets two stages of your pipeline cooperate without sharing every implementation detail.",
+          "question": "What information must survive the boundary for the next stage to reason correctly?"
         }
       ]
     },
@@ -692,6 +1253,104 @@
           "context": "The essay’s discussion of hard work includes learning how to work effectively, not merely accumulating hours.",
           "question": "What did this attempt teach us about how we work?",
           "excerpt": true
+        },
+        {
+          "id": "graham-research-11",
+          "source": "graham-taste",
+          "text": "Good design is simple.",
+          "context": "Simplicity here is a demand on craft and problem solving, not permission to remove necessary behavior.",
+          "question": "What could become simpler without becoming less useful?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "graham-topic-01",
+          "title": "Problems before startup poses",
+          "source": "graham-ideas",
+          "story": "His startup-ideas essay looks for real unmet needs rather than merely plausible company concepts.",
+          "task": "Write down a problem you repeatedly experience before naming a product.",
+          "question": "Would we still want this fixed without the launch announcement?"
+        },
+        {
+          "id": "graham-topic-02",
+          "title": "Do the unscalable thing",
+          "source": "graham-scale",
+          "story": "He argues that manual early work can reveal what users actually need.",
+          "task": "Help one person complete a task manually before automating the workflow.",
+          "question": "Which detail would automation have hidden from us?"
+        },
+        {
+          "id": "graham-topic-03",
+          "title": "Protect the maker's block",
+          "source": "graham-schedule",
+          "story": "His schedule essay distinguishes the working rhythms of makers and managers.",
+          "task": "Reserve one uninterrupted block for a task with expensive context loading.",
+          "question": "What did that tiny meeting interrupt besides its own duration?"
+        },
+        {
+          "id": "graham-topic-04",
+          "title": "Effort needs direction",
+          "source": "graham-hard",
+          "story": "The essay examines hard work together with ability and genuine interest.",
+          "task": "Compare a week of effort with the specific skill or result it improved.",
+          "question": "Were we working hard on the right difficulty?"
+        },
+        {
+          "id": "graham-topic-05",
+          "title": "The frontier has gaps",
+          "source": "graham-great",
+          "story": "His great-work essay describes learning enough to notice overlooked gaps.",
+          "task": "Find one small unanswered question in a topic you already know reasonably well.",
+          "question": "What looks obvious from far away but unclear up close?"
+        },
+        {
+          "id": "graham-topic-06",
+          "title": "Curiosity can steer",
+          "source": "graham-great",
+          "story": "The essay treats curiosity as a guide to choosing and exploring work.",
+          "task": "Follow one unusually persistent question long enough to produce a small artifact.",
+          "question": "Which question keeps returning when nobody assigns it?"
+        },
+        {
+          "id": "graham-topic-07",
+          "title": "Early work can look awkward",
+          "source": "graham-early",
+          "story": "He writes about the difficulty of judging unfinished early work by mature standards.",
+          "task": "Keep a rough first version long enough to learn what it could become.",
+          "question": "Are we judging a seed by the shade it does not yet cast?"
+        },
+        {
+          "id": "graham-topic-08",
+          "title": "Solve your own recurring pain",
+          "source": "graham-ideas",
+          "story": "The essay connects noticing problems with direct familiarity rather than detached brainstorming.",
+          "task": "Keep a short log of friction in your real robotics or development day.",
+          "question": "Which annoyance has earned a prototype through repetition?"
+        },
+        {
+          "id": "graham-topic-09",
+          "title": "Delight is concrete work",
+          "source": "graham-scale",
+          "story": "His early-company advice includes unusually attentive service rather than abstract user enthusiasm.",
+          "task": "Improve one frustrating step for one real user and watch them try it.",
+          "question": "What changed for the person rather than for our pitch?"
+        },
+        {
+          "id": "graham-topic-10",
+          "title": "Ambition still needs a next step",
+          "source": "graham-great",
+          "story": "The essay connects large ambitions with sustained work at a field's frontier.",
+          "task": "Choose the smallest artifact that moves an ambitious question forward this week.",
+          "question": "What can we actually make before we name the revolution?"
+        },
+        {
+          "id": "graham-topic-11",
+          "title": "Taste gets tested by constraints",
+          "source": "graham-taste",
+          "story": "Taste for Makers connects simplicity across different crafts and considers how difficult constraints can force more elegant solutions. This is an argument about making good work, not a claim that all minimal-looking work is good.",
+          "task": "Remove one decorative or structural element and check whether the result becomes clearer, weaker or merely emptier.",
+          "question": "Did we simplify the experience or just delete something useful?"
         }
       ]
     },
@@ -782,6 +1441,104 @@
           "context": "A direction needs both internal desire and an honest look at external constraints.",
           "question": "What could we try to test this direction in the real world?",
           "excerpt": true
+        },
+        {
+          "id": "urban-research-11",
+          "source": "urban-weeks",
+          "text": "the only appropriate word to describe your weeks is precious.",
+          "context": "The visual metaphor includes enjoyment and improving other weeks, not only producing more work.",
+          "question": "What would make this week meaningful beyond its task list?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "urban-topic-01",
+          "title": "The monkey is a metaphor",
+          "source": "urban-procrastination",
+          "story": "His procrastination essay personifies immediate gratification rather than presenting a clinical diagnostic model.",
+          "task": "Notice one avoidance loop without turning it into a verdict on your character.",
+          "question": "What immediate reward is pulling us away?"
+        },
+        {
+          "id": "urban-topic-02",
+          "title": "Make the next step drawable",
+          "source": "urban-taming",
+          "story": "His follow-up breaks vague work into concrete manageable steps.",
+          "task": "Replace one intimidating task label with the next visible physical action.",
+          "question": "Could Zondo draw what doing this actually looks like?"
+        },
+        {
+          "id": "urban-topic-03",
+          "title": "The panic strategy has limits",
+          "source": "urban-procrastination",
+          "story": "The essay contrasts deadline-driven action with work that lacks a forcing deadline.",
+          "task": "Give a meaningful non-urgent project a small voluntary checkpoint.",
+          "question": "What valuable work never gets its own emergency?"
+        },
+        {
+          "id": "urban-topic-04",
+          "title": "Borrowed recipes versus reasons",
+          "source": "urban-chef",
+          "story": "The cook-and-chef essay contrasts following inherited recipes with reasoning from underlying ingredients.",
+          "task": "Explain the reason behind one standard procedure before changing it.",
+          "question": "Are we keeping the recipe because it works or because it is printed?"
+        },
+        {
+          "id": "urban-topic-05",
+          "title": "Expose the inherited assumption",
+          "source": "urban-chef",
+          "story": "The essay uses first-principles reasoning to examine accepted constraints.",
+          "task": "Write a commonly repeated constraint and identify what evidence actually supports it.",
+          "question": "Which part is physics, and which part is tradition?"
+        },
+        {
+          "id": "urban-topic-06",
+          "title": "Career plans are hypotheses",
+          "source": "urban-career",
+          "story": "His career framework treats self-understanding and reality as revisable rather than settled.",
+          "task": "Try a small sample of work in an attractive field before committing to its identity.",
+          "question": "Do we enjoy the work or the image of doing it?"
+        },
+        {
+          "id": "urban-topic-07",
+          "title": "Competing wants need daylight",
+          "source": "urban-career",
+          "story": "The career discussion separates different motivations rather than pretending one desire explains everything.",
+          "task": "List the interests and practical needs competing in one decision.",
+          "question": "Which voice is loud, and which need is quiet but real?"
+        },
+        {
+          "id": "urban-topic-08",
+          "title": "Distance includes the route",
+          "source": "urban-career",
+          "story": "The career essay considers the path between a present situation and a desired kind of work.",
+          "task": "Map one plausible intermediate project between today's skill and a distant goal.",
+          "question": "What bridge is missing between our two attractive endpoints?"
+        },
+        {
+          "id": "urban-topic-09",
+          "title": "Remaining occasions are finite",
+          "source": "urban-tail",
+          "story": "The Tail End visualizes remaining experiences and time with important people.",
+          "task": "Make room for one relationship or experience you keep postponing.",
+          "question": "Which good thing is rarer than the calendar makes it look?"
+        },
+        {
+          "id": "urban-topic-10",
+          "title": "A model can be redrawn",
+          "source": "urban-taming",
+          "story": "His practical follow-up treats procrastination as something to investigate and change through concrete behavior.",
+          "task": "Revisit a plan that failed and change its smallest actionable component.",
+          "question": "What would a kinder, more workable next attempt look like?"
+        },
+        {
+          "id": "urban-topic-11",
+          "title": "The week is not a productivity score",
+          "source": "urban-weeks",
+          "story": "Your Life in Weeks turns a lifespan into a visible grid and considers both enjoying weeks and improving other weeks. Its small diamonds are a metaphor for attention and life, not an obligation to maximize every hour.",
+          "task": "Choose one small thing that makes this week worth living, alongside the work you want to finish.",
+          "question": "What belongs in a good week besides completed tasks?"
         }
       ]
     },
@@ -872,6 +1629,104 @@
           "context": "He describes designing clothes as a challenge rather than assuming that success in music makes another craft easy.",
           "question": "How would somebody else tell whether this is better?",
           "excerpt": true
+        },
+        {
+          "id": "west-research-11",
+          "source": "west-vf2015",
+          "text": "The team has worked together longer now",
+          "context": "He is describing a calmer working atmosphere around the second show, despite the effort involved.",
+          "question": "Which shared habit would make our next difficult project calmer?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "west-topic-01",
+          "title": "A producer crosses mediums",
+          "source": "west-fader2008",
+          "story": "The long 2008 interview ranges across music, fashion and visual design ambitions.",
+          "task": "Bring one useful idea from music or clothing into a small interface sketch.",
+          "question": "What can another craft teach this one without becoming imitation?"
+        },
+        {
+          "id": "west-topic-02",
+          "title": "Contrasting ingredients",
+          "source": "west-fader2008",
+          "story": "The interview discusses combining influences that listeners might not expect together.",
+          "task": "Combine two contrasting visual or musical ideas in a private study.",
+          "question": "Does the contrast create a relationship or only a collision?"
+        },
+        {
+          "id": "west-topic-03",
+          "title": "A new sound risks rejection",
+          "source": "west-fader2008",
+          "story": "The conversation takes place around the stylistic shift of 808s and Heartbreak.",
+          "task": "Keep one unusual version beside the safe version before choosing.",
+          "question": "Are we rejecting it because it fails or because it feels unfamiliar?"
+        },
+        {
+          "id": "west-topic-04",
+          "title": "Ambition meets practice",
+          "source": "west-fader2008",
+          "story": "He describes design as a challenge that requires working toward something good.",
+          "task": "Choose one small visual skill and improve a real artifact with deliberate revisions.",
+          "question": "What did version three learn that confidence alone could not do?"
+        },
+        {
+          "id": "west-topic-05",
+          "title": "Architecture as imagination",
+          "source": "west-fader",
+          "story": "His Harvard visit links design and architecture with imagining a changed world.",
+          "task": "Sketch a room or workspace around the behavior you want it to support.",
+          "question": "What kind of life does this arrangement make easier?"
+        },
+        {
+          "id": "west-topic-06",
+          "title": "An idea needs a physical test",
+          "source": "west-gq",
+          "story": "The GQ profile describes design ambitions and built or prototyped environments.",
+          "task": "Turn a grand aesthetic idea into a small physical or digital mockup.",
+          "question": "What changes when the concept has to occupy real space?"
+        },
+        {
+          "id": "west-topic-07",
+          "title": "The whole presentation speaks",
+          "source": "west-gq",
+          "story": "The profile follows creative work across environments rather than isolating a single finished song.",
+          "task": "Review sound, typography and motion together in one deliberately small scene.",
+          "question": "Do these parts tell the same story?"
+        },
+        {
+          "id": "west-topic-08",
+          "title": "An influence is a starting point",
+          "source": "west-fader2008",
+          "story": "The interview traces musical influences and production decisions rather than presenting creativity as appearing from nowhere.",
+          "task": "Identify one influence, then deliberately change the element that makes your study yours.",
+          "question": "Where does reference end and our own decision begin?"
+        },
+        {
+          "id": "west-topic-09",
+          "title": "Taste can outrun technique",
+          "source": "west-fader2008",
+          "story": "His account separates the desire to make strong work from already possessing every technical skill.",
+          "task": "Describe the gap between what you can recognize and what you can currently make.",
+          "question": "Which technique would close one small part of that gap?"
+        },
+        {
+          "id": "west-topic-10",
+          "title": "A setting can carry an idea",
+          "source": "west-gq",
+          "story": "The profile connects the artist's creative work with architecture, spaces and prototypes.",
+          "task": "Build a small scene in which the setting contributes to the central idea.",
+          "question": "What is the room saying before anyone speaks?"
+        },
+        {
+          "id": "west-topic-11",
+          "title": "The calmer second show",
+          "source": "west-vf2015",
+          "story": "In the Yeezy Season 2 interview, he describes a calmer studio and backstage atmosphere after the team had worked together longer, while acknowledging that the preparation still took substantial effort.",
+          "task": "Improve one collaboration ritual so difficult work can happen with less avoidable friction.",
+          "question": "Could the room get calmer without the work becoming less ambitious?"
         }
       ]
     },
@@ -962,6 +1817,104 @@
           "context": "This is creative-process advice in context; it does not excuse ignoring usability, safety or other people’s needs.",
           "question": "What do we want to make before guessing what will get applause?",
           "excerpt": true
+        },
+        {
+          "id": "rubin-research-11",
+          "source": "rubin-onbeing",
+          "text": "Everything we do has all of ourselves in it.",
+          "context": "This is an invitation to notice personal presence in making, rather than treating creativity as a job title.",
+          "question": "What small detail would make this unmistakably ours?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "rubin-topic-01",
+          "title": "Listen before arranging",
+          "source": "rubin-listening",
+          "story": "His authorized book excerpt treats listening as active attention rather than merely waiting to respond.",
+          "task": "Hear one familiar recording without doing another task and note a missed detail.",
+          "question": "What did attention reveal that repetition had hidden?"
+        },
+        {
+          "id": "rubin-topic-02",
+          "title": "Leave room to receive",
+          "source": "rubin-listening",
+          "story": "The listening passage emphasizes receptivity as part of creative practice.",
+          "task": "Pause before improving a rough idea and describe what is already alive in it.",
+          "question": "What are we about to remove before understanding it?"
+        },
+        {
+          "id": "rubin-topic-03",
+          "title": "Blind demos reduce a bias",
+          "source": "rubin-tim",
+          "story": "He describes receiving band demos without being told which member wrote each one.",
+          "task": "Compare two alternatives before revealing their authors or status.",
+          "question": "Did the name influence what we thought we heard?"
+        },
+        {
+          "id": "rubin-topic-04",
+          "title": "A producer need not own the spotlight",
+          "source": "rubin-tim",
+          "story": "The conversation discusses creative work through the process of helping artists find a direction.",
+          "task": "Help a collaborator clarify their intention before offering your preferred solution.",
+          "question": "Whose work are we helping become more itself?"
+        },
+        {
+          "id": "rubin-topic-05",
+          "title": "Different artists, attentive ears",
+          "source": "rubin-tim",
+          "story": "The interview's career context spans artists in markedly different genres.",
+          "task": "Look for a useful creative principle across two very different kinds of work.",
+          "question": "What travels across genres without flattening their differences?"
+        },
+        {
+          "id": "rubin-topic-06",
+          "title": "A draft is not a verdict",
+          "source": "rubin-another",
+          "story": "The interview discusses The Creative Act and a sustained relationship with making work.",
+          "task": "Let one weak draft exist long enough to learn what it is reaching for.",
+          "question": "What might improve if this draft stopped being a referendum on us?"
+        },
+        {
+          "id": "rubin-topic-07",
+          "title": "Creativity beyond job titles",
+          "source": "rubin-another",
+          "story": "The conversation treats creative practice as broader than a narrow professional identity.",
+          "task": "Make one ordinary routine more considered without trying to turn it into content.",
+          "question": "Where could a small act of care become creative?"
+        },
+        {
+          "id": "rubin-topic-08",
+          "title": "Attention has a texture",
+          "source": "rubin-listening",
+          "story": "The listening excerpt invites a different quality of engagement with what is present.",
+          "task": "Notice the acoustic or visual texture of your current room before changing it.",
+          "question": "What is here before our commentary starts?"
+        },
+        {
+          "id": "rubin-topic-09",
+          "title": "An experiment can remain light",
+          "source": "rubin-tim",
+          "story": "The discussion explores creative process rather than prescribing one guaranteed formula.",
+          "task": "Try a reversible creative change with no obligation to keep it.",
+          "question": "Can we let the experiment answer instead of defending it?"
+        },
+        {
+          "id": "rubin-topic-10",
+          "title": "Keep your own hearing",
+          "source": "rubin-another",
+          "story": "The interview explores making and evaluating work from an attentive personal perspective.",
+          "task": "Compare outside feedback with the specific response you actually have to a draft.",
+          "question": "Which criticism helps the work, and which merely asks for different work?"
+        },
+        {
+          "id": "rubin-topic-11",
+          "title": "The maker is inside the work",
+          "source": "rubin-onbeing",
+          "story": "In the On Being conversation, he connects the things people make with the selves they bring to them. The discussion ranges beyond professional music into everyday creative acts.",
+          "task": "Put one personally meaningful detail into a small artifact without explaining it to everyone.",
+          "question": "Which detail would make this feel like our place even without a nameplate?"
         }
       ]
     },
@@ -1052,6 +2005,104 @@
           "context": "This short remark occurs in a philosophical discussion; it is not a proof of any particular technical claim.",
           "question": "What can we derive rather than decide by confidence?",
           "excerpt": true
+        },
+        {
+          "id": "hotz-research-11",
+          "source": "hotz-entropy",
+          "text": "A paradise built and maintained by machines.",
+          "context": "This is an aspiration in his land-and-robotics essay; the same account admits why the current human arrangement was not sufficient.",
+          "question": "What would maintenance look like before the robots arrive?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "hotz-topic-01",
+          "title": "Build the stack you inspect",
+          "source": "hotz-lex",
+          "story": "His discussion of tinygrad connects a small framework with visibility into the computation underneath it.",
+          "task": "Trace one tensor operation from your Python call toward an executed kernel.",
+          "question": "At which boundary did our understanding become a brand name?"
+        },
+        {
+          "id": "hotz-topic-02",
+          "title": "Kernels leave receipts",
+          "source": "hotz-lex",
+          "story": "He describes tinygrad's debug output as a way to inspect kernels, operations and transferred bytes.",
+          "task": "Record the operations and memory traffic for one tiny computation.",
+          "question": "Is our bottleneck arithmetic, movement, or our guess?"
+        },
+        {
+          "id": "hotz-topic-03",
+          "title": "A small framework is a bet",
+          "source": "hotz-win",
+          "story": "His tinygrad essay frames development speed and a complete search space as an explicit competitive hypothesis.",
+          "task": "Write the measurable prediction behind a simplification you want to make.",
+          "question": "What result would show that simpler was not better here?"
+        },
+        {
+          "id": "hotz-topic-04",
+          "title": "Optimization needs a target",
+          "source": "hotz-win",
+          "story": "The essay proposes evaluating search by actual execution speed rather than loyalty to an optimization technique.",
+          "task": "Benchmark two implementations against the same input and correctness check.",
+          "question": "Did it get faster, or did the benchmark get easier?"
+        },
+        {
+          "id": "hotz-topic-05",
+          "title": "Software before the chip",
+          "source": "hotz-five",
+          "story": "His five-year retrospective argues that a useful compute platform needs its software stack, not only silicon.",
+          "task": "Run one workload end to end before proposing a hardware upgrade.",
+          "question": "Which missing software path would a faster chip leave unfixed?"
+        },
+        {
+          "id": "hotz-topic-06",
+          "title": "Years inside a small codebase",
+          "source": "hotz-five",
+          "story": "The retrospective describes several years invested in a deliberately compact framework.",
+          "task": "Choose one small subsystem to understand deeply instead of starting another wrapper.",
+          "question": "Could we explain these hundred lines without their README?"
+        },
+        {
+          "id": "hotz-topic-07",
+          "title": "Ownership of computation",
+          "source": "hotz-latent",
+          "story": "The interview discusses compute infrastructure and the ambition to make the stack more accessible.",
+          "task": "List what remains usable if your current cloud account becomes unavailable.",
+          "question": "Which part of this experiment do we actually control?"
+        },
+        {
+          "id": "hotz-topic-08",
+          "title": "Autonomy is a system",
+          "source": "hotz-lex",
+          "story": "The conversation spans driving, models and deployment rather than treating autonomy as a single neural-network score.",
+          "task": "Trace a recorded perception error through estimation and control in a safe offline replay.",
+          "question": "Where does one plausible mistake become a system failure?"
+        },
+        {
+          "id": "hotz-topic-09",
+          "title": "A hypothesis is not a trophy",
+          "source": "hotz-win",
+          "story": "He explicitly presents tinygrad's strategy as a risky bet rather than a guaranteed victory.",
+          "task": "Write a stop condition for a technical bet before investing another month.",
+          "question": "What evidence would persuade us to change the plan?"
+        },
+        {
+          "id": "hotz-topic-10",
+          "title": "Visible work beats mythology",
+          "source": "hotz-five",
+          "story": "The public retrospective points to a concrete evolving stack of frontend, compiler, runtimes and drivers.",
+          "task": "Read a real change in a dependency and explain what behavior it changes.",
+          "question": "What can we learn from a diff that a reputation cannot show?"
+        },
+        {
+          "id": "hotz-topic-11",
+          "title": "Even a dream needs maintenance",
+          "source": "hotz-entropy",
+          "story": "His 2021 land-project essay imagines robots maintaining a self-sustaining place, but also explains shelving the project because the human management arrangement was not working. The robots are an aspiration in this account.",
+          "task": "Give one ambitious project an honest maintenance budget and identify who will actually do the recurring work.",
+          "question": "Who maintains paradise on an ordinary Tuesday?"
         }
       ]
     },
@@ -1142,6 +2193,104 @@
           "context": "He describes inspectable source as a practical way for users and external experts to investigate failures.",
           "question": "Can the next person inspect the layer where this fails?",
           "excerpt": true
+        },
+        {
+          "id": "keller-research-11",
+          "source": "keller-hdsr",
+          "text": "Creativity is the most important thing in design.",
+          "context": "He recalls a team making room for ideas before immediately shooting them down.",
+          "question": "Have we understood the proposal before preparing our objection?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "keller-topic-01",
+          "title": "Apprenticeship on real machines",
+          "source": "keller-oral",
+          "story": "His oral history recalls joining the VAX 8800 group and learning within a working architecture team.",
+          "task": "Study one mature subsystem and identify the design choice its original constraints explain.",
+          "question": "Which apparently odd choice made sense on that machine?"
+        },
+        {
+          "id": "keller-topic-02",
+          "title": "The Alpha follow-on",
+          "source": "keller-oral",
+          "story": "He describes becoming a co-architect of EV5 after the first Alpha implementation.",
+          "task": "Compare a second version of your design against the first version's actual limits.",
+          "question": "What did the first version teach that a fresh start would forget?"
+        },
+        {
+          "id": "keller-topic-03",
+          "title": "Bring-up is part of design",
+          "source": "keller-oral",
+          "story": "His account includes staying through operating-system bring-up on multiple chips.",
+          "task": "Define a minimal end-to-end bring-up test for one hardware or simulation stack.",
+          "question": "What must run before this design is more than a diagram?"
+        },
+        {
+          "id": "keller-topic-04",
+          "title": "Power changes the answer",
+          "source": "keller-oral",
+          "story": "The oral history discusses low-power processor work at P.A. Semi.",
+          "task": "Compare performance together with power and temperature for a repeatable workload.",
+          "question": "Which faster setting spends energy we cannot afford?"
+        },
+        {
+          "id": "keller-topic-05",
+          "title": "Memory remains physical",
+          "source": "keller-laws",
+          "story": "The compute discussion emphasizes enduring physical constraints behind AI workloads.",
+          "task": "Estimate bytes moved before interpreting a model's arithmetic throughput.",
+          "question": "How far did the data travel to do this little calculation?"
+        },
+        {
+          "id": "keller-topic-06",
+          "title": "Scaling needs communication",
+          "source": "keller-efy",
+          "story": "The interview discusses expanding from one chip toward larger systems.",
+          "task": "Measure communication time separately from useful work in a two-node experiment.",
+          "question": "When does adding a worker add more waiting?"
+        },
+        {
+          "id": "keller-topic-07",
+          "title": "Software needs a route in",
+          "source": "keller-efy",
+          "story": "The interview addresses making hardware usable through software and developer access.",
+          "task": "Document the smallest supported path from source to a result on unfamiliar hardware.",
+          "question": "Could another engineer run this without our private incantations?"
+        },
+        {
+          "id": "keller-topic-08",
+          "title": "Old laws, new workloads",
+          "source": "keller-laws",
+          "story": "The discussion places AI compute within longstanding architectural constraints.",
+          "task": "Predict the bottleneck of one new workload before reading the benchmark.",
+          "question": "Which old constraint survived the new vocabulary?"
+        },
+        {
+          "id": "keller-topic-09",
+          "title": "Teams carry architecture",
+          "source": "keller-oral",
+          "story": "His account follows designs and collaborators across several processor organizations.",
+          "task": "Write the interface assumptions another teammate needs before changing your module.",
+          "question": "What knowledge is currently trapped in one person's head?"
+        },
+        {
+          "id": "keller-topic-10",
+          "title": "One chip is not the whole product",
+          "source": "keller-efy",
+          "story": "The interview connects chips, scaling and the surrounding system.",
+          "task": "Draw the board, software and communication dependencies of a compute experiment.",
+          "question": "Which supporting component could make excellent silicon unusable?"
+        },
+        {
+          "id": "keller-topic-11",
+          "title": "Acknowledge before dismantling",
+          "source": "keller-hdsr",
+          "story": "In the Harvard fireside chat, he recalls a DEC team learning to acknowledge an idea before arguing against it. The story concerns preserving room for young engineers to contribute, not suspending technical scrutiny.",
+          "task": "Restate a collaborator's proposal so they recognize it before explaining the failure you see.",
+          "question": "Can we protect the person's willingness to think while testing the idea hard?"
         }
       ]
     }

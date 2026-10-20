@@ -223,3 +223,5 @@ both hosts; preserve their private certificates/configs. Private backups of the
 pre-change binaries/scripts live under `~/.local/state/homie-control/backups/`.
 Zondo's short sing-along lines use existing timed lyrics only, including on his
 cross-host journeys. No online conversation or extra lyric request is introduced.
+
+[Sensei guest visits](SENSEI-GUESTS.md): sourced excerpts, stories and original workshop prompts, with Zondo listening beside the visitor.

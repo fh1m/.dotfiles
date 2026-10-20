@@ -60,6 +60,7 @@ Singleton {
         return true;
     }
     function refresh(force) {
+        if(tab===4)return;
         if(tab===2 || tab===3){
             const process=tab===3?curiosityFetch:nerdFetch;
             if(!process.running){error="";process.command=[Quickshell.env("HOME")+"/.local/bin/sensei-nerd"].concat(tab===3?["--curiosity"]:[]).concat(force?["--refresh"]:[]);process.running=true;}
@@ -144,5 +145,5 @@ Singleton {
         onExited:if(root.openCodeConnection.state==="connected")root.refresh(true)
     }
     Timer {interval:60000;repeat:true;running:root.opened && root.tab===1 && root.provider>0;onTriggered:root.refresh(false)}
-    IpcHandler { target: "code"; function page(index:int):void {if(index<0||index>3)return;root.tab=index;ShellState.publishAnchor("code",12);ShellState.dropdown="code";} function toggle():void {ShellState.publishAnchor("code",12);ShellState.toggleDropdown("code");} function state():string {return JSON.stringify({open:root.opened,tab:root.tab,loading:root.loading,repositories:root.repositories.length,quotaRunning:quota.running,error:root.error,curiosityLoading:curiosityFetch.running,showStories:root.curiosity.show?.length||0,askStories:root.curiosity.ask?.length||0,quote:root.quoteIndex});} function subscriptions():void {root.tab=1;} function agent(name:string):void {if(name!=="codex" && name!=="opencode" && name!=="claude")return;root.provider=name==="opencode"?1:name==="claude"?2:0;root.tab=1;} function account(id:string):void {root.selectClaudeAccount(id);} }
+    IpcHandler { target: "code"; function page(index:int):void {if(index<0||index>4)return;root.tab=index;ShellState.publishAnchor("code",12);ShellState.dropdown="code";} function toggle():void {ShellState.publishAnchor("code",12);ShellState.toggleDropdown("code");} function state():string {return JSON.stringify({open:root.opened,tab:root.tab,loading:root.loading,repositories:root.repositories.length,quotaRunning:quota.running,error:root.error,curiosityLoading:curiosityFetch.running,showStories:root.curiosity.show?.length||0,askStories:root.curiosity.ask?.length||0,quote:root.quoteIndex});} function subscriptions():void {root.tab=1;} function agent(name:string):void {if(name!=="codex" && name!=="opencode" && name!=="claude")return;root.provider=name==="opencode"?1:name==="claude"?2:0;root.tab=1;} function account(id:string):void {root.selectClaudeAccount(id);} }
 }

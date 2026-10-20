@@ -11,7 +11,7 @@ DropdownFrame {
     property Item searchInput:null
     property string contributionInfo:""
     title: "fh1m / Code"
-    katakana: CodeDesk.tab === 0 ? "GITHUB" : CodeDesk.tab===1 ? "AGENTS" : CodeDesk.tab===2 ? "NERD TALK" : "RABBIT HOLES"
+    katakana: CodeDesk.tab === 0 ? "GITHUB" : CodeDesk.tab===1 ? "AGENTS" : CodeDesk.tab===2 ? "NERD TALK" : CodeDesk.tab===4 ? "SENSEI GUESTS" : "RABBIT HOLES"
     implicitWidth: 1100
     function ago(stamp) {return stamp ? "Updated " + new Date(stamp*1000).toLocaleTimeString(Qt.locale(), "hh:mm") : "Waiting for account data";}
     function duration(minutes) {
@@ -41,15 +41,17 @@ DropdownFrame {
             ControlTile {label:"Code";glyph:"\uf121";selected:CodeDesk.tab===0;implicitWidth:140;onActivated:CodeDesk.tab=0}
             ControlTile {label:"Agents";glyph:"\uf0e4";selected:CodeDesk.tab===1;implicitWidth:140;onActivated:CodeDesk.tab=1}
             ControlTile {label:"Nerd Talk";glyph:"\uf0eb";selected:CodeDesk.tab===2;implicitWidth:140;onActivated:CodeDesk.tab=2}
+            ControlTile {label:"Sensei guests";glyph:"\uf4ad";selected:CodeDesk.tab===4;implicitWidth:160;onActivated:CodeDesk.tab=4}
             ControlTile {label:"Hacker News";glyph:"\uf074";selected:CodeDesk.tab===3;implicitWidth:140;onActivated:CodeDesk.tab=3}
-            ControlTile {label:"Refresh";glyph:"\uf021";implicitWidth:120;enabled:!CodeDesk.loading;onActivated:CodeDesk.refresh(true)}
+            ControlTile {visible:CodeDesk.tab!==4;label:"Refresh";glyph:"\uf021";implicitWidth:120;enabled:!CodeDesk.loading;onActivated:CodeDesk.refresh(true)}
         }
-        NrLabel {textFormat:Text.PlainText;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:CodeDesk.tab===0?(CodeDesk.error || (CodeDesk.loading?"Refreshing GitHub…":root.ago(CodeDesk.data.fetchedAt)+(CodeDesk.data.stale?" · Cached":""))):(CodeDesk.tab>=2?root.ago((CodeDesk.tab===3?CodeDesk.curiosity:CodeDesk.nerd).fetchedAt):CodeDesk.provider===1?root.ago(CodeDesk.openCodeUsage.fetchedAt):CodeDesk.provider===2?(CodeDesk.claudeUsage.error||root.ago(CodeDesk.claudeUsage.fetchedAt)):(CodeDesk.usage.error||root.ago(CodeDesk.usage.fetchedAt)));color:CodeDesk.error?Theme.semanticAmber:Theme.paperMuted;pixelSize:12}
+        NrLabel {textFormat:Text.PlainText;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:CodeDesk.tab===0?(CodeDesk.error || (CodeDesk.loading?"Refreshing GitHub…":root.ago(CodeDesk.data.fetchedAt)+(CodeDesk.data.stale?" · Cached":""))):(CodeDesk.tab===4?"A visit, a source, a question · local and quiet-aware":CodeDesk.tab>=2?root.ago((CodeDesk.tab===3?CodeDesk.curiosity:CodeDesk.nerd).fetchedAt):CodeDesk.provider===1?root.ago(CodeDesk.openCodeUsage.fetchedAt):CodeDesk.provider===2?(CodeDesk.claudeUsage.error||root.ago(CodeDesk.claudeUsage.fetchedAt)):(CodeDesk.usage.error||root.ago(CodeDesk.usage.fetchedAt)));color:CodeDesk.error?Theme.semanticAmber:Theme.paperMuted;pixelSize:12}
         Loader {
             width:parent.width
-            sourceComponent:CodeDesk.tab===0?codePage:CodeDesk.tab===1?subscriptionPage:CodeDesk.tab===2?nerdPage:curiosityPage
+            sourceComponent:CodeDesk.tab===0?codePage:CodeDesk.tab===1?subscriptionPage:CodeDesk.tab===2?nerdPage:CodeDesk.tab===4?guestPage:curiosityPage
         }
     }
+    Component {id:guestPage;GuestLibrary {width:parent?parent.width:1000}}
     Component {
         id:nerdPage
         Column {width:parent.width;spacing:10
@@ -377,7 +379,7 @@ DropdownFrame {
                             model:[7,30,0]
                             ControlTile {required property int modelData;label:modelData===0?"All time":modelData+" days";selected:CodeDesk.claudeDays===modelData;onActivated:CodeDesk.setClaudeDays(modelData)}
                         }
-                        ControlTile {label:"Refresh";glyph:"";onActivated:CodeDesk.refreshClaude(true)}
+                        ControlTile {visible:CodeDesk.tab!==4;label:"Refresh";glyph:"";onActivated:CodeDesk.refreshClaude(true)}
                         // The default account keeps its login in ~/.claude.json, so it runs without CLAUDE_CONFIG_DIR.
                         ControlTile {label:"Open Claude here";glyph:"";onActivated:Quickshell.execDetached(["alacritty","-e","bash","-c","if [ \"$1\" = \"$HOME/.claude\" ]; then exec claude; else CLAUDE_CONFIG_DIR=\"$1\" exec claude; fi","claude",CodeDesk.claudeUsage.directory||""])}
                     }

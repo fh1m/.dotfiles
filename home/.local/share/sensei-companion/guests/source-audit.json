@@ -1,7 +1,10 @@
 {
   "guests": 10,
-  "quotations": 100,
-  "sources": 30,
+  "quotations": 110,
+  "curatedStories": 110,
+  "originalWorkshopVariants": 990,
+  "sources": 51,
+  "excerptSources": 40,
   "maxQuotedWordsPerSource": 25,
   "sourceMatches": [
     {
@@ -75,6 +78,13 @@
       "normalizedOffset": 58110
     },
     {
+      "id": "feynman-research-11",
+      "source": "feynman-challenger",
+      "sourceSha256": "4f2c4f4dd0e5457f7c769af363baa9b8c8c219313e1c86d540d150ef7556197b",
+      "excerptSha256": "24fa9b8c5f29f702c2d601fba61d5fe3793f90be09fe034fa6af464f52ea4a2b",
+      "normalizedOffset": 31865
+    },
+    {
       "id": "carmack-01",
       "source": "carmack-latency",
       "sourceSha256": "c9fca75278e3303486913e72fadcc7c7a337bf479798b15915038ac30ba13f4d",
@@ -143,6 +153,13 @@
       "sourceSha256": "236b6df9d6b4a439160f8f609df673412c15add52cca583ac9451e6b5fb4a971",
       "excerptSha256": "5b53b925a5a5166e9530034fbd730690e491e129f98180d2ccfc0989de85ed8d",
       "normalizedOffset": 6689
+    },
+    {
+      "id": "carmack-research-11",
+      "source": "carmack-doom",
+      "sourceSha256": "8ba968d15c0b316ecf9b9996bbd846aea2b9c538e00dddf4b4051038b5909fdf",
+      "excerptSha256": "b0de0a147e1e7b57555655b4a04965af78985cac0676e7d3abf87b56cb5dc52e",
+      "normalizedOffset": 1890
     },
     {
       "id": "karpathy-01",
@@ -215,6 +232,13 @@
       "normalizedOffset": 5804
     },
     {
+      "id": "karpathy-research-11",
+      "source": "karpathy-pong",
+      "sourceSha256": "e40d501987ae73c7b563d698bd01acb83e4b8dd5be27c99b54a912300cffd21d",
+      "excerptSha256": "889d8ec734b73b52305b7dd18df10de9e309740462f977e784ae67c544b7c16a",
+      "normalizedOffset": 6248
+    },
+    {
       "id": "lattner-01",
       "source": "lattner-llvm",
       "sourceSha256": "66cc6ffc4b2e7e6ed5789f7f12d1686b188c78d1d6e2e70cbecda8442f6b23c7",
@@ -283,6 +307,13 @@
       "sourceSha256": "dd9644a5a67dd1f73f96f2e6285cda32c9768373eec469876c180aa98de01f02",
       "excerptSha256": "8dd0e1f5d7ca179b1d23c49773e30206e366b89b72b2a93ddf4a875e3591dfa8",
       "normalizedOffset": 14239
+    },
+    {
+      "id": "lattner-research-11",
+      "source": "lattner-thesis",
+      "sourceSha256": "b1f23f4527f79ab781c7a5c60b6cf1a5833b02d8bc150303b3bfd813d751f3d2",
+      "excerptSha256": "df91324258c9745bcc1133194c76265f807e0f7d060b4c71ea68fefe75bb1926",
+      "normalizedOffset": 917
     },
     {
       "id": "graham-01",
@@ -355,6 +386,13 @@
       "normalizedOffset": 16172
     },
     {
+      "id": "graham-research-11",
+      "source": "graham-taste",
+      "sourceSha256": "ef12e1d4f85493e9eb07de13d5bd19f1d73fae8dad817fd6a7de713f0610d55e",
+      "excerptSha256": "3dc99ca46793fa1cf0e7985ab5619e8cd01421184faf4a0bf6bbe22fabc0d430",
+      "normalizedOffset": 4684
+    },
+    {
       "id": "urban-01",
       "source": "urban-chef",
       "sourceSha256": "0227445ce280dea9173b4254948eab3a71a12a86270052c87a6ecb59bc92df65",
@@ -423,6 +461,13 @@
       "sourceSha256": "4eb03693382848cc547a89a783a05a0693273faa6592aac61972649dcefb8a8d",
       "excerptSha256": "6fbc57d7821bcb971e0e6c6d8da38159b68a7064c0a1ead9e6598d9da90c6c61",
       "normalizedOffset": 39587
+    },
+    {
+      "id": "urban-research-11",
+      "source": "urban-weeks",
+      "sourceSha256": "8790d9d3e64a3e1c6744f1a6db3d5a056478ccc09445ae6330166abaacd53593",
+      "excerptSha256": "2d0df6e84aafd55cc933d301f798db23064c109ccd905e4a8a6b3139909fe14a",
+      "normalizedOffset": 1205
     },
     {
       "id": "west-01",
@@ -495,6 +540,13 @@
       "normalizedOffset": 3035
     },
     {
+      "id": "west-research-11",
+      "source": "west-vf2015",
+      "sourceSha256": "0027494d492807ca989ccd8dd2bf1c230b44f71492abacd47caa03ca388079d8",
+      "excerptSha256": "59cd2ec7a748e42b7fefd91f3ae4eca270a26cf0357a32676d271a0e86d1a6df",
+      "normalizedOffset": 1970
+    },
+    {
       "id": "rubin-01",
       "source": "rubin-tim",
       "sourceSha256": "91ceee09cb765116306cf24ccd7ebd89c00b1a654f9df122379a77d6a34c0437",
@@ -563,6 +615,13 @@
       "sourceSha256": "6bef336d5f336ae0b9b9a82245fc77cb30c3f1ddcac5ed94d4af6b4ef47ddf9a",
       "excerptSha256": "9d800700201cf10fdd93a4555a6389376d7c226bbeef1d7e636fc57bcbbc325d",
       "normalizedOffset": 8878
+    },
+    {
+      "id": "rubin-research-11",
+      "source": "rubin-onbeing",
+      "sourceSha256": "d8dda389d6706165289a98c2b17780b87f0cb129d9a3bc644b7067059eff4ebe",
+      "excerptSha256": "d62ea11c6c3ef32a6cd7347436c5795eafc1a3ad8945510caf38b68032bc42fb",
+      "normalizedOffset": 3215
     },
     {
       "id": "hotz-01",
@@ -635,6 +694,13 @@
       "normalizedOffset": 4480
     },
     {
+      "id": "hotz-research-11",
+      "source": "hotz-entropy",
+      "sourceSha256": "f9bbfc8230b75b5227ea545f9ef1956193abc2e7b94ef7f3e66e1f31990550fc",
+      "excerptSha256": "cfecf20bfba846a51bb0a4712ed0d28a2bf2f3ae3aa1ecdd3a371716a2035f8b",
+      "normalizedOffset": 4425
+    },
+    {
       "id": "keller-01",
       "source": "keller-oral",
       "sourceSha256": "d20ca6c81d3d56d90b555d87ae6ce74b506fce969358e5cf39f38285789e3fb7",
@@ -703,6 +769,13 @@
       "sourceSha256": "829f7aba209623622914529b1d4fd12cd4ef5b442d81ef08861ccb0ad5a70ef7",
       "excerptSha256": "d7788fe352478c4a5e0954f038cd11456e4bb3f8bbcf3caa6ffa14c58a0c3cdb",
       "normalizedOffset": 7715
+    },
+    {
+      "id": "keller-research-11",
+      "source": "keller-hdsr",
+      "sourceSha256": "c47c054f79a2c2ba71aff0230aa960cf0805a4abf7efd6a8bfb08307c004e4b9",
+      "excerptSha256": "7bcd44832584efa504c3b29ba286e8f86efdcdc39e796b891bf9bf2f8ed7a10f",
+      "normalizedOffset": 6909
     }
   ]
 }

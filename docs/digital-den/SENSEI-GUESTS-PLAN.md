@@ -60,3 +60,39 @@ sourced history, original reflections and practice prompts. Do not manufacture
 100 quotations by chopping a paragraph into fragments or disguising templates
 as historical advice. Record the actual content counts by kind. Extend the
 source ledger and selection policy, validate and inspect live again.
+
+### Expanded deck delivered on Arete
+
+100 real excerpts remain unchanged and source-matched. Added 100 curated topic
+stories and nine explicit original learning lenses per topic: 900 workshop
+variants, 110 selectable entries for each guest. This is a structured original
+practice deck, not a claim of 1,100 independent historical quotations. Added
+11 primary sources for a total of 41 source records. Topic roots are maintained
+in topics.tsv; deterministic compilation is checked, not silently regenerated
+at runtime. Mixed selection keeps real excerpts prominent; users can select a
+single content family. Thirty real guest/family start/pause/next/close cases
+passed. Homie is intentionally deferred, not failed or tested.
+
+### Final enrichment and polish — 21 October 2026
+
+Completed the recorded 110-query research pass (37 batched calls), then read
+selected primary material and added one further real excerpt and topic per
+person. Current totals: 110 source-matched excerpts, 110 curated topic stories,
+990 original workshop variants, 51 source records; 121 selectable entries per
+guest. The 990 variants are explicitly generated combinations of curated topics
+and nine authored learning lenses, not purported historical quotations.
+
+The identity/code widget now has Sensei guests beside Nerd Talk. A shared local
+GuestLibrary also serves Engineering without copying the implementation or
+triggering a GitHub refresh. Smooth text respects pause and reduced motion;
+card geometry uses the complete text so typing never changes its height. Front
+and sideways Zondo poses alternate according to who is speaking. Accepted
+request timestamps survive renderer restarts. Guest visits suppress the passive
+bar perch, preventing a second Zondo there. Homie remains intentionally skipped.
+
+Validation: eleven policy/content tests, 34 existing companion tests, all source
+matches, twelve transparent four-cell atlas checks, deterministic topic rebuild,
+Python compilation and whitespace checks pass. Thirty live guest/family cases,
+quiet cancellation, opt-out refusal, reduced-motion propagation and smooth reveal
+passed. Real screenshots inspected the scene and both guest-picker locations.
+A paused visit remained on its leased display beyond the usual roam interval.

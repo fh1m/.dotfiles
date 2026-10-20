@@ -18,7 +18,7 @@ Item {
     width:renderState.speaking?Math.min(330,Math.max(32,freeRight-freeLeft-20)):32;height:32
     x:freeLeft+(freeRight-freeLeft-width)/2
     readonly property bool available:preferred && freeRight-freeLeft>=56
-    visible:available && lease.output===output && lease.expires>now && renderState.output===output && renderState.eligible===true && renderState.allowed===false
+    visible:available && renderState.guestActive!==true && lease.output===output && lease.expires>now && renderState.output===output && renderState.eligible===true && renderState.allowed===false
     IpcHandler {target:"companion-perch-"+root.output+"-"+root.edge;function state():string{return JSON.stringify({visible:root.visible,x:root.x,width:root.width,available:root.available});}}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-render.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.renderState=JSON.parse(text());}catch(e){}}}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-travel.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.lease=JSON.parse(text());root.now=Date.now()/1000;}catch(e){}}}

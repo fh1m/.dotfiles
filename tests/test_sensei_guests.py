@@ -22,3 +22,26 @@ class Guests(unittest.TestCase):
  def test_reading_time_is_bounded_but_not_a_two_second_flash(self):
   self.assertEqual(self.js("duration({text:'Hello',kind:'staged dialogue'})"),7000)
   self.assertGreaterEqual(self.js("duration({text:Array(40).fill('word').join(' '),kind:'context'})"),14000)
+ def test_expanded_library_has_100_plus_entries_per_guest_without_fake_quotes(self):
+  data=json.loads((JS.parent/'guests/catalog.json').read_text())
+  for guest in data['guests']:
+   e=self.js('entries('+json.dumps(guest)+')')
+   self.assertGreaterEqual(len(e),110,guest['id'])
+   self.assertEqual(len({x['id'] for x in e}),len(e))
+   self.assertEqual(sum(not x.get('kind') for x in e),len(guest['quotes']))
+   self.assertEqual(sum(x.get('kind')=='story' for x in e),len(guest['topics']))
+   self.assertEqual(sum(x.get('kind')=='workshop' for x in e),len(guest['topics'])*9)
+   self.assertTrue(all(x.get('source') in data['sources'] for x in e))
+ def test_workshop_is_never_attributed_as_a_historical_quotation(self):
+  p=self.js("pages({name:'A'},{kind:'workshop',text:'Try an independent example.',context:'The source describes a test.',question:'What would fail?',source:'a'})")
+  self.assertFalse(any(x['kind']=='quotation' for x in p))
+  self.assertTrue(any(x['speaker']=='Zondo' and 'original exercise' in x['kind'] for x in p))
+ def test_explicit_family_selection_is_honored(self):
+  guest={'id':'a','quotes':[{'id':'q'}],'topics':[{'id':'t','title':'Topic','source':'s','story':'Fact','task':'Try it.','question':'Why?'}]}
+  for mode,kind in [('quotes',None),('stories','story'),('workshop','workshop')]:
+   expression='(()=>{let g='+json.dumps(guest)+';let c=choose([g],{},"a",0.9,"'+mode+'");return entries(g)[c.quote].kind||null;})()'
+   self.assertEqual(self.js(expression),kind)
+ def test_every_generated_visit_paginates_and_ends_with_zondo_question(self):
+  data=json.loads((JS.parent/'guests/catalog.json').read_text())
+  for guest in data['guests']:
+   self.assertTrue(self.js('(()=>{let g='+json.dumps(guest)+';return entries(g).every(q=>{let p=pages(g,q);return p.every(c=>c.text.length<=220)&&p[p.length-1].speaker==="Zondo"&&p[p.length-1].text.endsWith("?");});})()'))
