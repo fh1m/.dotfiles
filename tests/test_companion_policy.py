@@ -19,9 +19,14 @@ class CompanionPolicy(unittest.TestCase):
     def test_expired_current_line_cannot_be_sung_from_a_recent_receipt(self):
         self.assertEqual(self.js("singLine({playing:true,at:1000,until:1500,line:'hello'},1600,'',0)"), '')
         self.assertEqual(self.js("singLine({playing:true,at:1000,until:2500,line:'hello'},1600,'',0)"), 'hello')
-    def test_phone_and_peer_notifications_have_meaningful_source_labels(self):
-        self.assertEqual(self.js("noticeText({phone:true,app:'KDE Connect',summary:'Alice',body:'Hello'})"),'Your phone has stuff to say. KDE Connect: Alice — Hello')
-        self.assertTrue(self.js("noticeText({host:'homie',app:'Build',summary:'Failed'}).startsWith('Homie · ')") )
+    def test_notification_content_is_not_repeated_or_prefixed_by_app(self):
+        self.assertEqual(self.js("noticeTitle({phone:true,app:'KDE Connect',summary:'Alice',body:'Hello'})"),'Alice')
+        self.assertEqual(self.js("noticeText({phone:true,app:'KDE Connect',summary:'Alice',body:'Hello'})"),'Hello')
+        self.assertEqual(self.js("noticeText({app:'Build',summary:'Failed',body:'Failed'})"),'')
+    def test_singing_survives_short_gaps_but_honours_pause_dnd_and_end(self):
+        self.assertTrue(self.js('singingContinues(true,false,6000,75000,1000)'))
+        for args in ['false,false,6000,75000,1000','true,true,6000,75000,1000','true,false,75000,75000,74000','true,false,10000,75000,1000']:
+            self.assertFalse(self.js('singingContinues('+args+')'))
     def test_notification_queue_preserves_order_deduplicates_and_honours_dnd(self):
         expression="(()=>{Array.prototype.flatMap=undefined;return nextNotice([{unread:2,entries:[{id:'b',at:20},{id:'a',at:10}]}],['a']);})()"
         self.assertEqual(self.js(expression),{'id':'b','at':20})

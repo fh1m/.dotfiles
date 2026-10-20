@@ -95,3 +95,19 @@ The same renderer and collision-aware placement remain in use; no extra pet,
 input grab, animation timer or lyric request is added. Geometry is recalculated
 on resizing and the pet must still fit the output. Returning to ordinary speech
 restores the configured size. Speech remains suppressed when no safe space fits.
+
+## Notification and singing polish — 2026-10-20
+
+The bell remains a neutral history shortcut: no unread dot, count or hot-pink
+attention state. Zondo no longer wears a pending-count badge. His delivery card
+uses the notification summary as its title and the body once, without repeating
+the application name. Phone receipts retain their distinct colour and glyph.
+The original notification centre/history and fallback desktop cards remain.
+
+Singing episodes now last up to 75 seconds, with an eight-second grace for lyric
+handoff/instrumental gaps; a gap shows a musical note rather than stale words.
+Pause, DND, absent timing and unsafe placement still take precedence. Starts
+are at least two minutes apart, leaving breathing room between episodes. This
+is current-line text singing, not synthesized audio or word-level timestamps.
+The new transparent four-frame `zondo-singing-v2.png` was generated with imagegen
+against the original character reference and inspected before deployment.

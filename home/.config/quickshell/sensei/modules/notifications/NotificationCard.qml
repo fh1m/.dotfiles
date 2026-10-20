@@ -98,7 +98,7 @@ ChamferPanel {
             anchors.rightMargin: 8
             anchors.verticalCenter: parent.verticalCenter
             elide: Text.ElideRight
-            text: root.notification?.appName || "Application"
+            text: Notifications.plainSummary(root.notification?.summary || "Notification")
             font.family: Appearance.font.ui
             font.capitalization: Font.MixedCase
             tracked: false
@@ -132,7 +132,8 @@ ChamferPanel {
             renderType: Text.NativeRendering
             width: parent.width
 
-            text: "Sensei, " + Notifications.plainSummary(root.notification?.summary ?? "you have a notification")
+            text: ""
+            visible: false
             textFormat: Text.PlainText
             color: Theme.bright
             elide: Text.ElideRight

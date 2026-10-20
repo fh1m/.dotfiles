@@ -80,10 +80,14 @@ function singLine(receipt, now, last, random) {
     return !line||line===last?'':line;
 }
 
+function noticeTitle(entry) {
+    return String(entry.summary||'New notification').trim().slice(0,160);
+}
 function noticeText(entry) {
-    var text=(entry.phone?'Your phone has stuff to say. ':entry.host==='homie'?'Homie · ':'')+String(entry.app||'Notification')+': '+String(entry.summary||'');
-    if(entry.body&&entry.body!==entry.summary)text+=' — '+entry.body;
-    return text.slice(0,320);
+    return String(entry.body&&entry.body!==entry.summary?entry.body:'').trim().slice(0,320);
+}
+function singingContinues(playing, dnd, now, end, lastLineAt) {
+    return playing&&!dnd&&now<end&&now-lastLineAt<8000;
 }
 
 // Use ES5 array operations: Qt's JS engine does not provide Array.flatMap.

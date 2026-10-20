@@ -20,6 +20,9 @@ Item {
     property bool fullscreen: false
     property bool landing: false
     property string message: ""
+    property string noticeHeading: ""
+    property real singEndAt:0
+    property real lastLyricAt:0
     property string messageKind: "field note"
     property bool speaking: false
     property string activity: "read"
@@ -31,17 +34,17 @@ Item {
     onCurrentLyricChanged:{
         if(speaking&&messageKind==='singing along'){
             const fresh=Logic.singLine(currentLyric,Date.now(),'',0);
-            if(fresh)message='♪ '+fresh;else speaking=false;
+            if(fresh){message='♪ '+fresh;lastLyricAt=Date.now();}else message='♪';
         }else maybeSing();
     }
     function maybeSing():void {
-        if(!allowed||!speechWindow.bubblePlace.available||!denMusic||denDnd||speaking||preferences.chatter===false||Date.now()-lastSingAt<90000)return;
+        if(!allowed||!speechWindow.bubblePlace.available||!denMusic||denDnd||speaking||preferences.chatter===false||Date.now()-lastSingAt<120000)return;
         const line=Logic.singLine(currentLyric,Date.now(),lastSungLine,0);
-        if(line){lastSingAt=Date.now();lastSungLine=line;activity='sing';frame=0;say('♪ '+line,'singing along');speechExpiry.interval=18000;}
+        if(line){lastSingAt=Date.now();lastLyricAt=Date.now();singEndAt=Date.now()+75000;lastSungLine=line;activity='sing';frame=0;say('♪ '+line,'singing along');speechExpiry.interval=75000;speechExpiry.restart();}
     }
     // Follows actual lyric transitions; a bounded fallback survives output changes.
     Timer {interval:15000;repeat:true;running:root.preferences.chatter!==false&&root.preferences.enabled!==false;onTriggered:root.maybeSing()}
-    Timer {interval:250;repeat:true;running:root.speaking&&root.messageKind==='singing along';onTriggered:if(!Logic.singLine(root.currentLyric,Date.now(),'',0))root.speaking=false}
+    Timer {interval:250;repeat:true;running:root.speaking&&root.messageKind==='singing along';onTriggered:{const line=Logic.singLine(root.currentLyric,Date.now(),'',0);if(line){root.lastLyricAt=Date.now();root.message='♪ '+line;}else root.message='♪';if(!Logic.singingContinues(root.denMusic,root.denDnd,Date.now(),root.singEndAt,root.lastLyricAt))root.speaking=false;}}
     property bool musicPlaying:false
     readonly property bool denMusic:musicPlaying||(leased&&journey.musicPlaying===true)
     onDenMusicChanged:{if(denMusic){activity="dance";frame=0;poseExpiry.stop();}else vary();}
@@ -171,7 +174,7 @@ Item {
     function remember():void {if(memoryLoaded)memoryFile.setText(JSON.stringify({schema:1,recent:recent.slice(-40),turn:turn}));}
     function vary():void {activityTicks=0;activity=Logic.nextActivity(activity,denMusic,Math.random(),preferences.hiddenActivities||[],preferences.favoriteActivities||[]);if(placement.scene&&Math.random()<.4&&!denMusic){const moods={upper:"stargaze",main:"garden",lower:"calibrate",screenpad:"aquarium",homie:"robot"};activity=moods[placement.scene]||activity;}frame=0;poseExpiry.stop();}
     function welcome(text):void {if(Date.now()-lastWelcome<60000)return;if(preferences.welcome===false||preferences.quiet===true||preferences.enabled===false)return;lastWelcome=Date.now();welcomeText=text;welcoming=true;welcomeExpiry.restart();}
-    function say(text,kind):void {eventJob="";eventHost="";const words=String(text);const limit=kind==='singing along'?324:320;message=words.length>limit?words.slice(0,limit-4).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.interval=12000;speechExpiry.restart();updateSpeech();}
+    function say(text,kind):void {eventJob="";eventHost="";const words=String(text);const limit=kind==='singing along'?324:320;noticeHeading="";message=words.length>limit?words.slice(0,limit-4).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.interval=12000;speechExpiry.restart();updateSpeech();}
     function greet(manual):void {
         if(!allowed||!speechWindow.bubblePlace.available||speaking||(!manual&&(preferences.chatter===false||denDnd))||!Logic.notes.length)return;
         if(notices.dnd&&notices.unread>0){say(notices.unread+" notifications waiting quietly. No rush; the bell has them when you want them.","quiet desk");return;}
@@ -276,7 +279,7 @@ Item {
         const e=Logic.nextNotice(noticeSources,seen);
         if(e){noticeSeen=Array.from(new Set(seen.concat([e.id]))).slice(-128);
             if(noticeMemoryLoaded)noticeMemory.setText(JSON.stringify({ids:noticeSeen}));
-            lastNoticeAt=Date.now();activity=e.phone?'phone':'wave';frame=0;say(Logic.noticeText(e),e.phone?'phone post':'den post');
+            lastNoticeAt=Date.now();activity=e.phone?'phone':'wave';frame=0;say(Logic.noticeText(e),e.phone?'phone post':'den post');noticeHeading=Logic.noticeTitle(e);updateSpeech();
         }else if(pendingUnread>0&&Date.now()-lastNoticeAt>600000){lastNoticeAt=Date.now();say((phonePending?'Your phone still has stuff to say. ':'')+pendingUnread+' notifications are waiting in the bell. No rush.','pending post');}
     }
     Timer {id:noticeDelay;interval:1800;onTriggered:root.announceNotice()}
@@ -315,7 +318,7 @@ Item {
 
             visible:true
             radius:9;color:root.messageKind==='phone post'?"#f211181b":"#f2171311";border.color:root.messageKind==='phone post'?"#788fbcc4":"#6244323a";border.width:1
-            Text {id:caption;anchors {left:parent.left;top:parent.top;leftMargin:speechWindow.cardPadding;topMargin:speechWindow.cardPadding} text:(root.messageKind==='phone post'?"▣ PHONE / ":"ZONDO / ")+root.messageKind.toUpperCase();width:parent.width-2*speechWindow.cardPadding;elide:Text.ElideRight;font.family:"ZedMono Nerd Font";font.pixelSize:11;font.weight:Font.DemiBold;font.letterSpacing:.8;color:root.messageKind==='phone post'?"#8fbcc4":"#f23d70"}
+            Text {id:caption;anchors {left:parent.left;top:parent.top;leftMargin:speechWindow.cardPadding;topMargin:speechWindow.cardPadding} text:root.noticeHeading?((root.messageKind==='phone post'?'▣ ':'')+root.noticeHeading):(root.singingCard?'♪ SING WITH ME':'ZONDO / '+root.messageKind.toUpperCase());textFormat:Text.PlainText;width:parent.width-2*speechWindow.cardPadding;elide:Text.ElideRight;font.family:"ZedMono Nerd Font";font.pixelSize:root.noticeHeading?13:11;font.weight:Font.DemiBold;font.letterSpacing:root.noticeHeading?0:.8;color:root.messageKind==='phone post'?"#8fbcc4":"#f23d70"}
             Text {id:body;anchors {left:parent.left;right:parent.right;top:caption.bottom;leftMargin:speechWindow.cardPadding;rightMargin:speechWindow.cardPadding;topMargin:8} text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:/[\u0980-\u09ff]/.test(text)?"Noto Sans Bengali":/[\u0900-\u097f]/.test(text)?"Noto Sans Devanagari":/[\u0600-\u06ff]/.test(text)?"Noto Sans Arabic":"Iosevka Nerd Font";font.pixelSize:root.singingCard?20:13;lineHeight:1.3;font.weight:root.singingCard?Font.Medium:Font.Normal;color:"#e8e2da"}
         }
     }
@@ -385,9 +388,7 @@ Item {
             SequentialAnimation on rotation {running:root.allowed&&!root.reduced&&root.activity==='dance';loops:Animation.Infinite;NumberAnimation {from:-3;to:3;duration:420;easing.type:Easing.InOutSine}NumberAnimation {from:3;to:-3;duration:420;easing.type:Easing.InOutSine}onStopped:character.rotation=0}
 
         }
-        Rectangle {visible:root.pendingUnread>0;anchors.right:parent.right;anchors.bottom:parent.bottom;width:36;height:20;radius:6;color:root.phonePending?'#16252a':'#24131c';border.color:root.phonePending?'#8fbcc4':'#f23d70';border.width:1
-            Text {anchors.centerIn:parent;text:(root.phonePending?'▣ ':'• ')+Math.min(99,root.pendingUnread);font.family:'Iosevka Nerd Font';font.pixelSize:11;color:'#eee8e1'}
-        }
+
     }
     }
     NumberAnimation {id:welcomeFadeOut;target:welcomeCard;property:"opacity";to:0;duration:root.reduced?0:280;onFinished:root.welcoming=false}
