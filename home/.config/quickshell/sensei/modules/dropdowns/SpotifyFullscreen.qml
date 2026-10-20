@@ -111,7 +111,7 @@ PanelWindow {
                 ControlSlider {width:parent.width;title:YouTubeDesk.ownsAudio?'YouTube volume':'Spotify volume';level:SpotifyDesk.volume;onEdited:v=>SpotifyDesk.action('volume',[String(Math.round(v))])}
             }
         }
-        Rectangle {id:lyricCard;visible:!SpotifyDesk.zen;x:window.lyricsView?stage.gutter+Math.max(0,(stage.width-1200)/2):player.x+player.width+stage.columnGap;y:stage.bodyTop;width:window.lyricsView?Math.min(1200,stage.width-2*stage.gutter):stage.lyricWidth;height:stage.bodyHeight;radius:12;color:"transparent";border.color:"transparent"
+        Rectangle {id:lyricCard;visible:!SpotifyDesk.zen;x:window.lyricsView?stage.gutter+Math.max(0,(stage.width-2*stage.gutter-stage.listWidth-(window.collectionOpen?20:0)-1200)/2):player.x+player.width+stage.columnGap;y:stage.bodyTop;width:window.lyricsView?Math.min(1200,stage.width-2*stage.gutter-stage.listWidth-(window.collectionOpen?20:0)):stage.lyricWidth;height:stage.bodyHeight;radius:12;color:"transparent";border.color:"transparent"
             LyricsFollower {anchors.fill:parent;anchors.margins:16;immersive:true;controlsVisible:window.controlsShown}
         }
         Rectangle {id:listCard;visible:!SpotifyDesk.zen&&window.collectionOpen;x:lyricCard.x+lyricCard.width+20;y:stage.bodyTop;width:stage.listWidth;height:stage.bodyHeight;radius:12;color:Theme.alpha(Theme.ink,.9);border.color:Theme.rule

@@ -1,3 +1,12 @@
+# Shared typography — 2026-10-20
+
+Homie runs the shared Zed Mono / Iosevka font hierarchy for bars, media,
+dropdown controls and Zondo. The actual font faces resolve locally. All 462
+tests passed (one optional dependency skip); live Sound collapsed/expanded and
+Display popup anchor/bounds checks passed. Sing-along uses the existing sprite
+at 160–200 px with a 420 px lyric card and 20 px text; geometry is tested on
+main-display and ScreenPad-sized fixtures. No GPU, disk or input policy changed.
+
 # Radio, pen and media polish — 2026-10-20
 
 Homie detects XP-Pen Star G960S Plus (28bd:0918) and RTL2838 (0bda:2838),

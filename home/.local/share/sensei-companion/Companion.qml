@@ -316,7 +316,7 @@ Item {
             visible:true
             radius:9;color:root.messageKind==='phone post'?"#f211181b":"#f2171311";border.color:root.messageKind==='phone post'?"#788fbcc4":"#6244323a";border.width:1
             Text {id:caption;anchors {left:parent.left;top:parent.top;leftMargin:speechWindow.cardPadding;topMargin:speechWindow.cardPadding} text:(root.messageKind==='phone post'?"▣ PHONE / ":"ZONDO / ")+root.messageKind.toUpperCase();width:parent.width-2*speechWindow.cardPadding;elide:Text.ElideRight;font.family:"ZedMono Nerd Font";font.pixelSize:11;font.weight:Font.DemiBold;font.letterSpacing:.8;color:root.messageKind==='phone post'?"#8fbcc4":"#f23d70"}
-            Text {id:body;anchors {left:parent.left;right:parent.right;top:caption.bottom;leftMargin:speechWindow.cardPadding;rightMargin:speechWindow.cardPadding;topMargin:8} text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:/[\u0980-\u09ff]/.test(text)?"Noto Sans Bengali":/[\u0900-\u097f]/.test(text)?"Noto Sans Devanagari":"Iosevka Nerd Font";font.pixelSize:root.singingCard?20:13;lineHeight:1.3;font.weight:root.singingCard?Font.Medium:Font.Normal;color:"#e8e2da"}
+            Text {id:body;anchors {left:parent.left;right:parent.right;top:caption.bottom;leftMargin:speechWindow.cardPadding;rightMargin:speechWindow.cardPadding;topMargin:8} text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:/[\u0980-\u09ff]/.test(text)?"Noto Sans Bengali":/[\u0900-\u097f]/.test(text)?"Noto Sans Devanagari":/[\u0600-\u06ff]/.test(text)?"Noto Sans Arabic":"Iosevka Nerd Font";font.pixelSize:root.singingCard?20:13;lineHeight:1.3;font.weight:root.singingCard?Font.Medium:Font.Normal;color:"#e8e2da"}
         }
     }
     PanelWindow {
@@ -385,8 +385,8 @@ Item {
             SequentialAnimation on rotation {running:root.allowed&&!root.reduced&&root.activity==='dance';loops:Animation.Infinite;NumberAnimation {from:-3;to:3;duration:420;easing.type:Easing.InOutSine}NumberAnimation {from:3;to:-3;duration:420;easing.type:Easing.InOutSine}onStopped:character.rotation=0}
 
         }
-        Rectangle {visible:root.pendingUnread>0;anchors.right:parent.right;anchors.bottom:parent.bottom;width:30;height:18;radius:6;color:root.phonePending?'#16252a':'#24131c';border.color:root.phonePending?'#8fbcc4':'#f23d70';border.width:1
-            Text {anchors.centerIn:parent;text:(root.phonePending?'▣ ':'• ')+Math.min(99,root.pendingUnread);font.family:'Noto Sans';font.pixelSize:9;color:'#eee8e1'}
+        Rectangle {visible:root.pendingUnread>0;anchors.right:parent.right;anchors.bottom:parent.bottom;width:36;height:20;radius:6;color:root.phonePending?'#16252a':'#24131c';border.color:root.phonePending?'#8fbcc4':'#f23d70';border.width:1
+            Text {anchors.centerIn:parent;text:(root.phonePending?'▣ ':'• ')+Math.min(99,root.pendingUnread);font.family:'Iosevka Nerd Font';font.pixelSize:11;color:'#eee8e1'}
         }
     }
     }

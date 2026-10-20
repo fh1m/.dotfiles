@@ -250,3 +250,16 @@ left paused after inspection; screenshots and private media state stay local.
 The singing geometry tests exercise 300/420 px cards and 96/160/200 px character
 sizes, and refuse overlap with the pet footprint or output edges. These are
 geometry tests, not a claim of a live lyric-provider test.
+
+
+During the final app-harness verification, an independent 17:31 system upgrade
+had replaced NVIDIA 615.71 userspace with 615.78 while the loaded kernel module
+remained 615.71; it also replaced LLVM 22 with 23, leaving the custom Mesa EGL
+library unable to resolve `libLLVM.so.22.1`. New Qt windows could not create EGL
+contexts. Cached libraries were extracted privately (no package downgrade), and
+Intel Wayland EGL initialization passed with that private library path. The
+running shell supervisor and a session-only den-cursor systemd override use it.
+This is a session recovery, not a permanent graphics-stack upgrade fix. A normal
+reboot aligns NVIDIA; the custom Mesa build still needs rebuilding against the
+installed LLVM or a properly maintained compatibility package. No reboot,
+compositor restart or application shutdown was performed.
