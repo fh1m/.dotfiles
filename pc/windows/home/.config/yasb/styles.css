@@ -66,6 +66,7 @@
 .volume,
 .notifications,
 .power_menu,
+.power-menu-widget,
 .power_plan,
 .systray {
     background-color: {{roles.surface}};
