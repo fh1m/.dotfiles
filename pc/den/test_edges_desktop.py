@@ -28,7 +28,9 @@ def main(cycles=3,with_input=False):
        subprocess.run([str(root/'input-test/test'),'motion',"0" if entry=="top" else "1","-1" if entry=="top" else "0"],env=env,check=True)
        time.sleep(.3)
        ready=remote("cat /home/fh1m/.local/state/homie-control/input/return-armed").strip()
-       if ready=="1":break
+       token=(root/'input/active.session').read_text().strip()
+       placed=remote("cat /home/fh1m/.local/state/homie-control/input/placed-generation").strip()
+       if ready=="1" and placed==token:break
       assert ready=="1",(entry,"not ready")
       pos=json.loads(remote("hyprctl -i 0 cursorpos -j"))
       assert (pos["y"]>=1060 if entry=="top" else pos["x"]<=20),(entry,pos)

@@ -58,3 +58,15 @@ def engineering_acks(values):
         except (ValueError,TypeError):continue
         if identity not in out:out.append(identity)
     return out[-128:]
+
+
+def music_line(record, now=None):
+    """Only a fresh eight-word lyric receipt travels with Zondo; no media URLs."""
+    if not isinstance(record,dict):return {}
+    now=time.time()*1000 if now is None else now
+    at=record.get('at')
+    if type(at) not in (int,float) or not 0<=now-at<=30000 or record.get('playing') is not True:return {}
+    raw=record.get('line','')
+    if not isinstance(raw,str):return {}
+    line=' '.join(raw.split()[:8])[:180]
+    return {'at':at,'playing':True,'line':line} if line else {}

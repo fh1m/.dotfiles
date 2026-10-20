@@ -120,13 +120,14 @@ def companion_available():
 def companion(action,value=None):
     cfg=read(CONFIG/'companion.json',{'enabled':True,'quiet':False,'size':96})
     sys.path.insert(0,str(HOME/'.local/share/sensei'))
-    from companion_roam import engineering_events,engineering_acks
-    if action=='protocol':return {'schema':1,'leases':True,'availableOutputs':companion_available(),'render':read(STATE/'companion-render.json'),'musicPlaying':zondo_playing(),'memory':companion_memory(),'engineeringAcks':engineering_acks(read(STATE/'zondo-engineering-seen.json',{'ids':[]}).get('ids',[])),'engineeringEvents':engineering_events(read(HOME/'.local/state/sensei-engineering/receipts.json',{'events':[]}).get('events',[])),'enabled':cfg.get('enabled',True),'quiet':cfg.get('quiet',False),'suspended':cfg.get('suspended',False),'reducedMotion':cfg.get('reducedMotion',False)}
+    from companion_roam import engineering_events,engineering_acks,music_line
+    if action=='protocol':return {'schema':1,'leases':True,'availableOutputs':companion_available(),'render':read(STATE/'companion-render.json'),'musicPlaying':zondo_playing(),'musicLine':music_line(read(STATE/'zondo-music.json')),'memory':companion_memory(),'engineeringAcks':engineering_acks(read(STATE/'zondo-engineering-seen.json',{'ids':[]}).get('ids',[])),'engineeringEvents':engineering_events(read(HOME/'.local/state/sensei-engineering/receipts.json',{'events':[]}).get('events',[])),'enabled':cfg.get('enabled',True),'quiet':cfg.get('quiet',False),'suspended':cfg.get('suspended',False),'reducedMotion':cfg.get('reducedMotion',False)}
     if action=='grant':
         sys.path.insert(0,str(HOME/'.local/share/sensei'))
         from companion_roam import grant
         payload=json.loads(value);record=grant(read(STATE/'companion-travel.json'),payload['output'],payload['token'],payload.get('ttl',40))
         record['musicPlaying']=payload.get('musicPlaying') is True
+        record['musicLine']=music_line(payload.get('musicLine'))
         record['scene']=payload.get('scene') if payload.get('scene') in ('courier','parcel','detective','wrench') else ''
         record['engineeringEvents']=engineering_events(payload.get('engineeringEvents',[]))
         record['engineeringAcks']=engineering_acks(payload.get('engineeringAcks',[]))
@@ -549,7 +550,8 @@ def _companion_tick(peer):
     state["lastToken"]=token
     local=json.loads(run(['hyprctl','monitors','-j']).stdout)
     music=zondo_playing();repertoire=companion_memory()
-    from companion_roam import engineering_events,engineering_acks
+    from companion_roam import engineering_events,engineering_acks,music_line
+    line=music_line(read(STATE/'zondo-music.json'))
     acks=engineering_acks(read(STATE/'zondo-engineering-seen.json',{'ids':[]}).get('ids',[]))
     events=engineering_events(read(HOME/'.local/state/sensei-engineering/receipts.json',{'events':[]}).get('events',[]))
     available=companion_available()
@@ -558,6 +560,8 @@ def _companion_tick(peer):
         try:
             capability=json.loads(remote([str(HOME/'.local/bin/sensei-den'),'companion','protocol'],timeout=4))
             music=music or capability.get('musicPlaying') is True
+            peer_line=music_line(capability.get('musicLine'))
+            if peer_line.get('at',0)>line.get('at',0):line=peer_line
             events=engineering_events(events+capability.get('engineeringEvents',[]))
             acks=engineering_acks(acks+capability.get('engineeringAcks',[]))
             sys.path.insert(0,str(HOME/'.local/share/sensei'))
@@ -602,14 +606,14 @@ def _companion_tick(peer):
         # Hide first; a lost acknowledgement cannot create a second visible character.
         companion('grant',json.dumps({'output':'','token':token,'ttl':45}))
         state['remoteUntil']=now+45;write(STATE/'companion-route.json',state)
-        remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire,'engineeringEvents':events,'engineeringAcks':acks,'scene':scene})],timeout=4)
+        remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'musicLine':line,'memory':repertoire,'engineeringEvents':events,'engineeringAcks':acks,'scene':scene})],timeout=4)
     else:
         if remote_until>now:
             try:
                 remote([str(HOME/'.local/bin/sensei-den'),'companion','grant',json.dumps({'output':'','token':token,'ttl':0})],timeout=4)
                 state['remoteUntil']=0
             except (ValueError,OSError,subprocess.SubprocessError):return
-        companion('grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'memory':repertoire,'engineeringEvents':events,'engineeringAcks':acks,'scene':scene}))
+        companion('grant',json.dumps({'output':output,'token':token,'ttl':40,'musicPlaying':music,'musicLine':line,'memory':repertoire,'engineeringEvents':events,'engineeringAcks':acks,'scene':scene}))
         state['remoteUntil']=0
     write(STATE/'companion-route.json',state)
 

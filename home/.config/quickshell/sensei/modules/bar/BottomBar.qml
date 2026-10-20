@@ -19,11 +19,12 @@ Variants {
         property string registration: ""
         function registerEdge():void {if(registration)ShellState.registerBar(registration,null);registration=outputName+(topEdge?":top":":bottom");ShellState.registerBar(registration,bar);}
         onTopEdgeChanged: if(outputName)registerEdge()
-        Component.onCompleted: {outputName=modelData.name;if(outputName==="DP-2")ShellState.bottomBarWindow = bar;registerEdge();}
+        Component.onCompleted: {outputName=modelData.name;if(utilityRail||outputName==="DP-2"||MachineProfile.desktop)ShellState.bottomBarWindow = bar;registerEdge();}
         Component.onDestruction: {if (ShellState.bottomBarWindow === bar) ShellState.bottomBarWindow = null;ShellState.registerBar(registration,null);}
         required property ShellScreen modelData
         IpcHandler {target:"bar-controls-bottom-"+bar.outputName;function expand(side:string,value:string):void {if(side==="left")bar.archiveOpen=value==="on";else if(side==="right")bar.machineOpen=value==="on";}function state():string {return JSON.stringify({left:bar.archiveOpen,right:bar.machineOpen,top:bar.topEdge,display:{x:displayButton.mapToItem(bar.contentItem,displayButton.width/2,displayButton.height/2).x,y:displayButton.mapToItem(bar.contentItem,displayButton.width/2,displayButton.height/2).y}});}}
-        readonly property bool external: ShellState.externalScreens.some(s=>s.name===outputName)
+        readonly property bool utilityRail:ShellState.dockedRails&&MachineProfile.role(outputName)==='lower'
+        readonly property bool external: !utilityRail&&ShellState.externalScreens.some(s=>s.name===outputName)
         HoverHandler {onHoveredChanged:{ShellState.barHovered=hovered;if(hovered)ShellState.barContext(bar.outputName);}}
         property bool archiveOpen: false
         property bool machineOpen: false
@@ -79,7 +80,7 @@ Variants {
             CameraButton {visible:!bar.external&&Cameras.available;anchors.verticalCenter:parent.verticalCenter}
             UsbBadge { visible:!bar.external; condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
             SimLaunchpad { visible:!bar.external; condensed: !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
-            DisplayBadge { id:displayButton; output: MachineProfile.desktop ? bar.outputName : bar.external?bar.outputName:bar.outputName==="DP-2"?"screenpad":"main"; condensed: !bar.external && !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
+            DisplayBadge { id:displayButton; output: MachineProfile.desktop ? bar.outputName : bar.external?bar.outputName:MachineProfile.role(bar.outputName)==="screenpad"?"screenpad":bar.outputName===MachineProfile.primaryOutput?"main":bar.outputName; condensed: !bar.external && !bar.machineOpen; anchors.verticalCenter: parent.verticalCenter }
             anchors.right: parent.right
             anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter

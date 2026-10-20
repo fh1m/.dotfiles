@@ -135,7 +135,9 @@ def daemon():
                 action=server.recv(128).decode()
                 try:
                     if action in ('owner-on','owner-off'):peer_owned=(action=='owner-on');refresh_focus()
-                    elif action in ('recover','peer-lost'):recover(manual=action=='recover');refresh_focus()
+                    elif action in ('recover','peer-lost','capture-fault'):
+                        recover(manual=action!='peer-lost');refresh_focus()
+                        if action=='capture-fault':subprocess.Popen(['notify-send','Digital Den input paused','Repeated mouse-lock failures were stopped. Cursor is home; triple Ctrl resumes sharing.'])
                     elif action=='show-local':pulse()
                     elif action=='show':
                         try:peer=(ROOT/'input/active').read_text().strip()=='1'

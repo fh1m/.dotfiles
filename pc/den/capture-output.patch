@@ -1,8 +1,39 @@
 diff --git a/input-capture/src/layer_shell.rs b/input-capture/src/layer_shell.rs
-index 698c584..1b95dba 100644
+index 698c584..5e65229 100644
 --- a/input-capture/src/layer_shell.rs
 +++ b/input-capture/src/layer_shell.rs
-@@ -162,9 +162,24 @@ impl Window {
+@@ -62,6 +62,10 @@ use wayland_client::{
+ };
+ 
+ use input_event::{Event, KeyboardEvent, PointerEvent};
++use wayland_protocols::wp::cursor_shape::v1::client::{
++    wp_cursor_shape_manager_v1::WpCursorShapeManagerV1,
++    wp_cursor_shape_device_v1::{WpCursorShapeDeviceV1, Shape},
++};
+ 
+ use crate::{CaptureError, CaptureEvent};
+ 
+@@ -71,6 +75,7 @@ use super::{
+ };
+ 
+ struct Globals {
++    cursor_shapes: Option<WpCursorShapeManagerV1>,
+     compositor: wl_compositor::WlCompositor,
+     pointer_constraints: ZwpPointerConstraintsV1,
+     relative_pointer_manager: ZwpRelativePointerManagerV1,
+@@ -129,6 +134,11 @@ struct State {
+     pending_events: VecDeque<(Position, CaptureEvent)>,
+     outputs: Vec<Output>,
+     scroll_discrete_pending: bool,
++    den_release_burst: (std::time::Instant, u32),
++    den_capture_fault: bool,
++    den_cursor_shape: Option<WpCursorShapeDeviceV1>,
++    den_pointer_serial: u32,
++    den_rearm_after: Option<std::time::Instant>,
+ }
+ 
+ struct Inner {
+@@ -162,9 +172,24 @@ impl Window {
          log::debug!("creating window output: {output:?}, size: {size:?}");
          let g = &state.globals;
  
@@ -29,7 +60,7 @@ index 698c584..1b95dba 100644
          };
          let mut file = tempfile::tempfile().unwrap();
          draw(&mut file, (width, height));
-@@ -191,16 +206,17 @@ impl Window {
+@@ -191,16 +216,17 @@ impl Window {
              (),
          );
          let anchor = match pos {
@@ -52,7 +83,7 @@ index 698c584..1b95dba 100644
          surface.set_input_region(None);
          surface.commit();
          Window {
-@@ -241,6 +257,14 @@ fn get_edges(outputs: &[Output], pos: Position) -> Vec<(Output, i32)> {
+@@ -241,6 +267,14 @@ fn get_edges(outputs: &[Output], pos: Position) -> Vec<(Output, i32)> {
  }
  
  fn get_output_configuration(state: &State, pos: Position) -> Vec<Output> {
@@ -67,7 +98,34 @@ index 698c584..1b95dba 100644
      // get all output edges corresponding to the position
      let edges = get_edges(&state.outputs, pos);
      let opposite_edges = get_edges(&state.outputs, pos.opposite());
-@@ -369,6 +393,7 @@ impl LayerShellInputCapture {
+@@ -311,12 +345,14 @@ impl LayerShellInputCapture {
+         }
+         let shortcut_inhibit_manager = shortcut_inhibit_manager.ok();
+ 
++        let cursor_shapes = global_list.bind::<WpCursorShapeManagerV1, _, _>(&qh, 1..=1, ()).ok();
+         let mut state = State {
+             active_positions: Default::default(),
+             pointer: None,
+             keyboard: None,
+             global_list,
+             globals: Globals {
++                cursor_shapes,
+                 compositor,
+                 shm,
+                 layer_shell,
+@@ -337,6 +373,11 @@ impl LayerShellInputCapture {
+             pending_events: VecDeque::new(),
+             outputs: vec![],
+             scroll_discrete_pending: false,
++            den_release_burst: (std::time::Instant::now(), 0),
++            den_capture_fault: false,
++            den_cursor_shape: None,
++            den_pointer_serial: 0,
++            den_rearm_after: None,
+         };
+ 
+         for global in state.global_list.contents().clone_list() {
+@@ -369,6 +410,7 @@ impl LayerShellInputCapture {
      fn delete_client(&mut self, pos: Position) {
          let inner = self.0.get_mut();
          inner.state.active_positions.remove(&pos);
@@ -75,9 +133,16 @@ index 698c584..1b95dba 100644
          // remove all windows corresponding to this client
          while let Some(i) = inner.state.active_windows.iter().position(|w| w.pos == pos) {
              inner.state.active_windows.remove(i);
-@@ -478,16 +503,11 @@ impl State {
+@@ -477,17 +519,18 @@ impl State {
+     }
  
      fn ungrab(&mut self) {
++        // set_cursor(None) hides this client's pointer until explicitly restored,
++        // even after its lock ends if the pointer still rests on the edge.
++        if let Some(shape) = &self.den_cursor_shape { shape.set_shape(self.den_pointer_serial, Shape::Default); }
++        if self.pointer_lock.is_some() {
++            self.den_rearm_after = Some(std::time::Instant::now() + std::time::Duration::from_millis(250));
++        }
          // get focused client
 -        let window = match self.focused.as_ref() {
 -            Some(focused) => focused,
@@ -97,11 +162,160 @@ index 698c584..1b95dba 100644
  
          // destroy pointer lock
          if let Some(pointer_lock) = &self.pointer_lock {
+@@ -538,6 +581,13 @@ impl State {
+             log::info!(" * {output}");
+         }
+ 
++        // Output notifications can rebuild the barriers while one owns a lock.
++        // End that ownership before dropping its surface; never retain an orphan Arc.
++        if self.pointer_lock.is_some() {
++            if let Some(window) = &self.focused { self.pending_events.push_back((window.pos, CaptureEvent::End)); }
++        }
++        self.ungrab();
++        self.focused = None;
+         self.active_windows.clear();
+ 
+         let active_positions = self.active_positions.iter().cloned().collect::<Vec<_>>();
+@@ -707,9 +757,12 @@ impl Dispatch<wl_seat::WlSeat, ()> for State {
+         } = event
+         {
+             if capabilities.contains(wl_seat::Capability::Pointer) {
+-                if let Some(p) = state.pointer.take() {
+-                    p.release();
++                if state.pointer_lock.is_some() {
++                    if let Some(window) = &state.focused { state.pending_events.push_back((window.pos, CaptureEvent::End)); }
+                 }
++                state.ungrab();
++                if let Some(shape) = state.den_cursor_shape.take() { shape.destroy(); }
++                if let Some(p) = state.pointer.take() { p.release(); }
+                 state.pointer.replace(seat.get_pointer(qh, ()));
+             }
+             if capabilities.contains(wl_seat::Capability::Keyboard) {
+@@ -738,6 +791,15 @@ impl Dispatch<WlPointer, ()> for State {
+                 surface_x: _,
+                 surface_y: _,
+             } => {
++                // A duplicate Enter must neither replace ownership nor reveal
++                // the deliberately hidden local pointer during remote control.
++                if app.pointer_lock.is_some() { return; }
++                app.den_pointer_serial = serial;
++                if app.den_cursor_shape.is_none() {
++                    if let Some(manager) = &app.globals.cursor_shapes { app.den_cursor_shape = Some(manager.get_pointer(pointer, qh, ())); }
++                }
++                if let Some(shape) = &app.den_cursor_shape { shape.set_shape(serial, Shape::Default); }
++                if app.den_capture_fault || app.den_rearm_after.is_some_and(|until| std::time::Instant::now() < until) { return; }
+                 // get client corresponding to the focused surface
+                 {
+                     if let Some(window) = app.active_windows.iter().find(|w| w.surface == surface) {
+@@ -755,7 +817,10 @@ impl Dispatch<WlPointer, ()> for State {
+                     .unwrap();
+                 app.pending_events.push_back((pos, CaptureEvent::Begin));
+             }
+-            wl_pointer::Event::Leave { .. } => {
++            wl_pointer::Event::Leave { surface, .. } => {
++                // A queued leave from a destroyed/replaced barrier is not a loss
++                // of the current barrier's ownership.
++                if !app.focused.as_ref().is_some_and(|w| w.surface == surface) { return; }
+                 /* There are rare cases, where when a window is opened in
+                  * just the wrong moment, the pointer is released, while
+                  * still grabbed.
+@@ -764,7 +829,19 @@ impl Dispatch<WlPointer, ()> for State {
+                  * lock, relative pointer,... objects are still in place)
+                  */
+                 if app.pointer_lock.is_some() {
++                    if let Some(window) = &app.focused { app.pending_events.push_back((window.pos, CaptureEvent::End)); }
++                    let now = std::time::Instant::now();
+                     log::warn!("compositor released mouse");
++                    if den_release_storm(&mut app.den_release_burst, now) {
++                        app.den_capture_fault = true;
++                        // Fail open, not an unbounded lock/release loop. The
++                        // independent recovery daemon stops sharing and centres locally.
++                        if let Ok(path) = std::env::var("DEN_CURSOR_SOCKET") {
++                            if let Ok(sock) = std::os::unix::net::UnixDatagram::unbound() {
++                                let _ = sock.send_to(b"capture-fault", path);
++                            }
++                        }
++                    }
+                 }
+                 app.ungrab();
+             }
+@@ -774,7 +851,7 @@ impl Dispatch<WlPointer, ()> for State {
+                 button,
+                 state,
+             } => {
+-                let window = app.focused.as_ref().unwrap();
++                let Some(window) = app.focused.as_ref() else { return; };
+                 app.pending_events.push_back((
+                     window.pos,
+                     CaptureEvent::Input(Event::Pointer(PointerEvent::Button {
+@@ -785,7 +862,7 @@ impl Dispatch<WlPointer, ()> for State {
+                 ));
+             }
+             wl_pointer::Event::Axis { time, axis, value } => {
+-                let window = app.focused.as_ref().unwrap();
++                let Some(window) = app.focused.as_ref() else { return; };
+                 if app.scroll_discrete_pending {
+                     // each axisvalue120 event is coupled with
+                     // a corresponding axis event, which needs to
+@@ -803,7 +880,7 @@ impl Dispatch<WlPointer, ()> for State {
+                 }
+             }
+             wl_pointer::Event::AxisValue120 { axis, value120 } => {
+-                let window = app.focused.as_ref().unwrap();
++                let Some(window) = app.focused.as_ref() else { return; };
+                 app.scroll_discrete_pending = true;
+                 app.pending_events.push_back((
+                     window.pos,
+@@ -1033,3 +1110,27 @@ delegate_noop!(State: ignore wl_buffer::WlBuffer);
+ delegate_noop!(State: ignore WlSurface);
+ delegate_noop!(State: ignore ZwpKeyboardShortcutsInhibitorV1);
+ delegate_noop!(State: ignore ZwpLockedPointerV1);
++
++// A bounded lock-loss burst trips fail-open; isolated compositor releases do not.
++fn den_release_storm(burst: &mut (std::time::Instant, u32), now: std::time::Instant) -> bool {
++    if now.duration_since(burst.0).as_secs_f32() > 1.0 { *burst = (now, 0); }
++    burst.1 = burst.1.saturating_add(1);
++    burst.1 >= 5
++}
++
++#[cfg(test)]
++mod den_safety_tests {
++    use super::den_release_storm;
++    use std::time::{Instant, Duration};
++    #[test]
++    fn repeated_lock_losses_trip_but_isolated_losses_do_not() {
++        let start = Instant::now(); let mut burst = (start, 0);
++        for n in 0..4 { assert!(!den_release_storm(&mut burst, start + Duration::from_millis(n * 100))); }
++        assert!(den_release_storm(&mut burst, start + Duration::from_millis(400)));
++        assert!(!den_release_storm(&mut burst, start + Duration::from_secs(2)));
++        assert!(!den_release_storm(&mut burst, start + Duration::from_secs(4)));
++    }
++}
++
++delegate_noop!(State: ignore WpCursorShapeManagerV1);
++delegate_noop!(State: ignore WpCursorShapeDeviceV1);
 diff --git a/input-capture/src/lib.rs b/input-capture/src/lib.rs
-index 6a850b3..1cdfcf5 100644
+index 6a850b3..837208a 100644
 --- a/input-capture/src/lib.rs
 +++ b/input-capture/src/lib.rs
-@@ -132,7 +132,8 @@ pub struct InputCapture {
+@@ -39,6 +39,8 @@ pub type CaptureHandle = u64;
+ pub enum CaptureEvent {
+     /// capture on this capture handle is now active
+     Begin,
++    /// Compositor revoked a live capture; release the matching transport too.
++    End,
+     /// input event coming from capture handle
+     Input(Event),
+ }
+@@ -47,6 +49,7 @@ impl Display for CaptureEvent {
+     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+         match self {
+             CaptureEvent::Begin => write!(f, "begin capture"),
++            CaptureEvent::End => write!(f, "end capture"),
+             CaptureEvent::Input(e) => write!(f, "{e}"),
+         }
+     }
+@@ -132,7 +135,8 @@ pub struct InputCapture {
  impl InputCapture {
      /// create a new client with the given id
      pub async fn create(&mut self, id: CaptureHandle, pos: Position) -> Result<(), CaptureError> {
@@ -111,7 +325,7 @@ index 6a850b3..1cdfcf5 100644
  
          self.id_map.insert(id, pos);
  
-@@ -147,11 +148,9 @@ impl InputCapture {
+@@ -147,11 +151,9 @@ impl InputCapture {
  
      /// destroy the client with the given id, if it exists
      pub async fn destroy(&mut self, id: CaptureHandle) -> Result<(), CaptureError> {
@@ -125,7 +339,7 @@ index 6a850b3..1cdfcf5 100644
          log::debug!("destroying capture {id} @ {pos}");
          let remaining = self.position_map.get_mut(&pos).expect("id vector");
          remaining.retain(|&i| i != id);
-@@ -349,3 +348,23 @@ async fn create(
+@@ -349,3 +351,23 @@ async fn create(
      }
      Err(CaptureCreationError::NoAvailableBackend)
  }
@@ -200,7 +414,7 @@ index a2c7112..95818fa 100644
      EnableEmulation,
      /// synchronize all state
 diff --git a/src/capture.rs b/src/capture.rs
-index 8f739bd..aa56754 100644
+index 8f739bd..03d2971 100644
 --- a/src/capture.rs
 +++ b/src/capture.rs
 @@ -37,6 +37,9 @@ pub(crate) enum ICaptureEvent {
@@ -277,13 +491,19 @@ index 8f739bd..aa56754 100644
                          },
                          _ => {}
                      }
-@@ -320,14 +347,42 @@ impl CaptureTask {
+@@ -320,14 +347,48 @@ impl CaptureTask {
          event: (CaptureHandle, CaptureEvent),
      ) -> Result<(), CaptureError> {
          let (handle, event) = event;
 +        if !self.captures.iter().any(|&(h, ..)| h == handle) { return Ok(()); }
          log::trace!("({handle}): {event:?}");
  
++        if event == CaptureEvent::End {
++            if self.active_client == Some(handle) { return self.release_capture(capture).await; }
++            return Ok(());
++        }
++        if matches!(event, CaptureEvent::Input(_)) && self.active_client.is_none() { return Ok(()); }
++
 +        if let CaptureEvent::Input(Event::Keyboard(KeyboardEvent::Key { key, state, .. })) = event {
 +            if std::env::var("DEN_CTRL_COMMAND").is_ok() && self.active_client.is_some() {
 +                let taps=self.ctrl_taps.key(key,state,Instant::now());
@@ -320,7 +540,7 @@ index 8f739bd..aa56754 100644
              self.event_tx
                  .send(ICaptureEvent::CaptureBegin(handle))
                  .expect("channel closed");
-@@ -345,8 +400,16 @@ impl CaptureTask {
+@@ -345,8 +406,16 @@ impl CaptureTask {
              return Ok(());
          }
  
@@ -337,7 +557,15 @@ index 8f739bd..aa56754 100644
              self.state = State::WaitingForAck;
              self.active_client.replace(handle);
              self.event_tx
-@@ -368,7 +431,7 @@ impl CaptureTask {
+@@ -357,6 +426,7 @@ impl CaptureTask {
+         let opposite_pos = to_proto_pos(self.get_pos(handle).opposite());
+ 
+         let event = match event {
++            CaptureEvent::End => unreachable!("capture end is handled before transport"),
+             CaptureEvent::Begin => ProtoEvent::Enter(opposite_pos),
+             CaptureEvent::Input(e) => match self.state {
+                 // connection not acknowledged, repeat `Enter` event
+@@ -368,7 +438,7 @@ impl CaptureTask {
          if let Err(e) = self.conn.send(event, handle).await {
              const DUR: Duration = Duration::from_millis(500);
              debounce!(PREV_LOG, DUR, log::warn!("releasing capture: {e}"));
@@ -346,7 +574,7 @@ index 8f739bd..aa56754 100644
          }
          Ok(())
      }
-@@ -376,6 +439,8 @@ impl CaptureTask {
+@@ -376,6 +446,8 @@ impl CaptureTask {
      async fn release_capture(&mut self, capture: &mut InputCapture) -> Result<(), CaptureError> {
          // If we have an active client, notify them we're leaving
          if let Some(handle) = self.active_client.take() {
@@ -355,7 +583,7 @@ index 8f739bd..aa56754 100644
              // Synthesize key-up events for every key still held in the
              // capture's pressed_keys set BEFORE sending Leave. Without
              // this, pressing the release-bind chord (typically all four
-@@ -469,3 +534,41 @@ impl<T> Drop for DropGuard<T> {
+@@ -469,3 +541,41 @@ impl<T> Drop for DropGuard<T> {
              .expect("channel closed");
      }
  }
@@ -700,7 +928,7 @@ index 853267c..e9f08e2 100644
      }
  }
 diff --git a/src/service.rs b/src/service.rs
-index d0772f6..b2d4b85 100644
+index d0772f6..9ef3d58 100644
 --- a/src/service.rs
 +++ b/src/service.rs
 @@ -70,6 +70,7 @@ pub struct Service {
@@ -746,14 +974,17 @@ index d0772f6..b2d4b85 100644
              FrontendRequest::EnableCapture => self.capture.reenable(),
              FrontendRequest::EnableEmulation => self.emulation.reenable(),
              FrontendRequest::Enumerate() => self.enumerate(),
-@@ -315,7 +337,18 @@ impl Service {
+@@ -315,7 +337,21 @@ impl Service {
                  self.emulation_status = Status::Enabled;
                  self.notify_frontend(FrontendEvent::EmulationStatus(self.emulation_status));
              }
 -            EmulationEvent::ReleaseNotify => self.capture.release(),
 +            EmulationEvent::Left { addr } => {
 +                self.remove_incoming(addr);
-+                if let Ok(path) = std::env::var("DEN_RETURN_ARMED") { let _ = std::fs::write(path, "0"); }
++                // A late Leave from the other route must not disarm a new entry.
++                if self.incoming_conns.is_empty() {
++                    if let Ok(path) = std::env::var("DEN_RETURN_ARMED") { let _ = std::fs::write(path, "0"); }
++                }
 +            }
 +            EmulationEvent::ReleaseNotify => {
 +                self.capture.release();
@@ -766,7 +997,7 @@ index d0772f6..b2d4b85 100644
              EmulationEvent::Connected { addr, fingerprint } => {
                  self.notify_frontend(FrontendEvent::DeviceConnected { addr, fingerprint });
              }
-@@ -328,7 +361,29 @@ impl Service {
+@@ -328,7 +364,29 @@ impl Service {
                  // we entered the capture zone for an incoming connection
                  // => notify it that its capture should be released
                  if let Some(incoming) = self.incoming_conn_info.get(&handle) {
@@ -797,7 +1028,7 @@ index d0772f6..b2d4b85 100644
                  }
              }
              ICaptureEvent::CaptureDisabled => {
-@@ -341,7 +396,19 @@ impl Service {
+@@ -341,7 +399,19 @@ impl Service {
              }
              ICaptureEvent::ClientEntered(handle) => {
                  log::info!("entering client {handle} ...");
@@ -818,7 +1049,7 @@ index d0772f6..b2d4b85 100644
              }
          }
      }
-@@ -386,18 +453,17 @@ impl Service {
+@@ -386,18 +456,17 @@ impl Service {
      const ENTER_HANDLE_BEGIN: u64 = u64::MAX / 2 + 1;
  
      fn add_incoming(&mut self, addr: SocketAddr, pos: Position, fingerprint: String) {
@@ -847,7 +1078,7 @@ index d0772f6..b2d4b85 100644
      }
  
      fn update_incoming(&mut self, addr: SocketAddr, pos: Position, fingerprint: String) {
-@@ -412,7 +478,7 @@ impl Service {
+@@ -412,7 +481,7 @@ impl Service {
              incoming.fingerprint = fingerprint.clone();
              changed = true;
          }
@@ -856,7 +1087,7 @@ index d0772f6..b2d4b85 100644
              incoming.pos = pos;
              changed = true;
          }
-@@ -429,16 +495,12 @@ impl Service {
+@@ -429,16 +498,12 @@ impl Service {
      }
  
      fn remove_incoming(&mut self, addr: SocketAddr) -> Option<SocketAddr> {
@@ -878,7 +1109,7 @@ index d0772f6..b2d4b85 100644
      }
  
      fn notify_frontend(&mut self, event: FrontendEvent) {
-@@ -578,9 +640,20 @@ impl Service {
+@@ -578,9 +643,20 @@ impl Service {
          let Some(cmd) = self.client_manager.get_enter_cmd(handle) else {
              return;
          };

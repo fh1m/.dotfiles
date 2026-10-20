@@ -12,6 +12,10 @@ class CompanionPolicy(unittest.TestCase):
     def js(self, expression):
         code="const vm=require('vm'),fs=require('fs');let c={};vm.createContext(c);vm.runInContext(fs.readFileSync(process.argv[1],'utf8'),c);c.notes=JSON.parse(fs.readFileSync(process.argv[1].replace('ZondoLogic.js','notes.json'),'utf8'));console.log(JSON.stringify(vm.runInContext(process.argv[2],c)));"
         return json.loads(subprocess.check_output(['node','-e',code,str(JS),expression],text=True))
+    def test_singing_only_uses_fresh_playing_short_nonrepeated_lyrics(self):
+        self.assertEqual(self.js("singLine({playing:true,at:1000,line:'one two three four five six seven eight nine'},2000,'',.1)"), 'one two three four five six seven eight')
+        for receipt, now, last, random in [({'playing':False,'at':1000,'line':'hello'},2000,'',.1), ({'playing':True,'at':1000,'line':'hello'},32000,'',.1), ({'playing':True,'at':3000,'line':'hello'},2000,'',.1), ({'playing':True,'at':1000,'line':'hello'},2000,'hello',.1), ({'playing':True,'at':1000,'line':'hello'},2000,'',.8)]:
+            self.assertEqual(self.js(f'singLine({json.dumps(receipt)},{now},{json.dumps(last)},{random})'), '')
     def test_rooftops_require_known_wallpaper_and_clear_space(self):
         self.assertIsNone(self.js("roofPlace('/unknown.png',1920,1080,256,208,[],1)"))
         self.assertIsNone(self.js("roofPlace('/wallhaven-1q2p3v.png',1920,550,256,208,[],1)"))

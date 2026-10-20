@@ -435,3 +435,20 @@ Native story acceptance: main advanced through 2528cef and 42b5624 on both hosts
 Main `321d06f` deployed with the PC installer; matching Sound studio now controls PC→laptop stereo through the restricted gateway. User confirmed clear/responsive music and actual pen drawing. Homie passed 444 tests (one optional skip), eleven desktop checks, real top/bottom bar click-placement checks, YouTube and live Twitch playback/transport checks. The receiver measured 19.59 FFT frames/s; stopping left no receiver child. Native input/cursor remain active; no failed user services observed.
 
 The VIA hub had repeated USB protocol/transaction-translator errors and stale tablet enumeration. A targeted hub reauthorization cleared the fault; rear-port tablet operation is verified. Device-scoped no-autosuspend mitigation is installed; physical operation through the hub is not certified. No controller-wide reset, disk, firmware or GPU policy changes. See docs/digital-den/AUDIO-AND-MEDIA.md for routing, signal checks and undo.
+
+### 2026-10-20 — input ownership and docked layout
+
+Both hosts receive the pinned native capture repair: compositor revocation ends
+transport ownership, stale barrier events are ignored, release restores cursor
+shape, and rapid re-entry is inhibited before locking. A separate fail-open guard
+remains. Eight live crossing combinations and pause/resume passed after the root
+state fixes; stopped-receiver, restarted-watcher and emergency-release tests also
+passed. The earlier guarded-only crossing failure is recorded in the validation
+log rather than hidden. Whole-machine freeze causality remains unproven.
+
+Arete's docked rails move to Upper (top) and Lower (utility bottom); its internal
+panels lose bar reservations. Homie's PC bar layout is preserved. The XP-Pen is
+currently connected via the VIA hub; threshold 7 and existing pen settings are
+preserved. Reconnect and virtual-driver identity changes now trigger remapping.
+Zondo's cached lyric snippets can travel on existing leases without new network
+lyrics requests. See `docs/digital-den/VALIDATION.md` for evidence and boundaries.

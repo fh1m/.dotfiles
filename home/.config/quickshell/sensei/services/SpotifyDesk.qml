@@ -92,6 +92,11 @@ Singleton {
  property string videoTrackKey:""
  function openVideos(refresh){videosOpen=true;if(videoFetch.running)return;videoTrackKey=lyricsKey;videosLoading=true;videoFetch.command=['@HOME@/.local/bin/sensei-spotify','music-videos',JSON.stringify(lyricTrack())].concat(refresh?['refresh']:[]);videoFetch.running=true;}
  Process {id:videoFetch;stdout:StdioCollector {onStreamFinished:{if(root.videoTrackKey!==root.lyricsKey)return;try{root.videoData=JSON.parse(text);}catch(e){root.videoData={rows:[],warning:'Video search unavailable; music keeps playing.'};}}}onExited:root.videosLoading=false}
+ // Curated local receipt for Zondo; no full lyrics, signed media URLs or account data.
+ FileView {id:zondoMusic;path:Quickshell.env('HOME')+'/.local/state/sensei-den/zondo-music.json';printErrors:false}
+ function publishLyric(){const line=lyricsData?.synced&&lyricIndex>=0?lyricsData.lines[lyricIndex]?.text||'':'';zondoMusic.setText(JSON.stringify({at:Date.now(),playing:playing,title:title,line:line.trim().split(/\s+/).slice(0,8).join(' ')}));}
+ onLyricIndexChanged:publishLyric()
+ onPlayingChanged:publishLyric()
  property bool lyricsOpen:false
  property var lyricsData:({lines:[],plain:'',synced:false})
  property bool lyricsLoading:false
@@ -108,7 +113,7 @@ Singleton {
  onLyricsKeyChanged:{videoData={rows:[]};videosOpen=false;lyricsData={lines:[],plain:'',synced:false};lyricOffset=0;if(lyricsVisible)lyricsDelay.restart();}
  Timer {id:lyricsDelay;interval:250;onTriggered:root.loadLyrics()}
  Process {id:lyricsFetch;stdout:StdioCollector {onStreamFinished:{if(root.activeLyricsKey!==root.lyricsKey)return;try{const d=JSON.parse(text);root.lyricsError=d.error||'';if(!d.error){root.lyricsData=d;root.lyricOffset=d.offset||0;}}catch(e){root.lyricsError='Sensei, lyrics could not be loaded.';}}}onExited:{root.lyricsLoading=false;if(root.lyricsVisible&&root.activeLyricsKey!==root.lyricsKey)lyricsDelay.restart();}}
- Timer {interval:250;repeat:true;running:root.lyricsVisible&&root.playing;triggeredOnStart:true;onTriggered:{root.positionClock=Date.now();root.lyricPosition=root.positionMs;}}
+ Timer {interval:root.lyricsVisible?250:1000;repeat:true;running:(root.lyricsVisible||root.lyricsData.synced)&&root.playing;triggeredOnStart:true;onTriggered:{root.positionClock=Date.now();root.lyricPosition=root.positionMs;}}
  function artworkUrl(value){const url=String(value||'');if(/^spotify:image:[a-f0-9]{40}$/i.test(url))return 'https://i.scdn.co/image/'+url.slice(14);return /^(https:\/\/|file:\/\/)/.test(url)?url:'';}
  function fmt(ms){let s=Math.floor(Math.max(0,ms)/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,'0');}
  function dispatch(name,args){if(name==='status'){if(!statusProc.running)statusProc.running=true;return;}if(name==='queue'){if(YouTubeDesk.ownsAudio)return;if(!queueProc.running)queueProc.running=true;return;}let job=[name].concat(args||[]);if(fetch.running){let key=JSON.stringify(job);let q=requests.filter(j=>JSON.stringify(j)!==key);q.push(job);requests=q.slice(-8);return;}op=name;opArgs=args||[];activeQuery=name==='search'?String((args||[])[0]||''):query;loading=true;fetch.command=["@HOME@/.local/bin/sensei-spotify"].concat(job);fetch.running=true;}

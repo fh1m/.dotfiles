@@ -32,3 +32,11 @@ class EngineeringReceipts(unittest.TestCase):
   ids=[str(uuid.uuid4()) for _ in range(150)]
   self.assertEqual(len(m.engineering_acks(ids)),128)
   self.assertEqual(m.engineering_acks([ids[0],ids[0],'not-a-uuid']),[ids[0]])
+
+class MusicReceipt(unittest.TestCase):
+ def test_short_lyrics_only_and_no_account_metadata(self):
+  row={'at':1000,'playing':True,'line':'one two three four five six seven eight nine','url':'secret'}
+  self.assertEqual(m.music_line(row,now=2000),{'at':1000,'playing':True,'line':'one two three four five six seven eight'})
+ def test_expired_paused_and_malformed_receipts_are_ignored(self):
+  for row in [None,{}, {'at':1000,'playing':False,'line':'x'},{'at':float('nan'),'playing':True,'line':'x'},{'at':1000,'playing':True,'line':42}]:self.assertEqual(m.music_line(row,now=2000),{})
+  self.assertEqual(m.music_line({'at':1000,'playing':True,'line':'x'},now=32000),{})

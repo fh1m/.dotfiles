@@ -116,3 +116,60 @@ YouTube played the Karpathy micrograd lecture on Homie DP-3 and all four Arete o
 The fullscreen focus view was visually inspected with artwork, track metadata and large sans-serif timed lyrics. Its diagnostic reported `controlsShown:false` after idle, including paused playback. Movement exposes the controls; Escape/F11 recovery remains available. No always-visible corner buttons remain in this mode.
 
 The RTL panel displayed 512 live bins and 56 waterfall observations without QML errors. Stop released the receiver child. After USB recovery, the tablet and receiver enumerated directly on rear motherboard ports; no further descriptor/TT protocol errors appeared during the observed ten-minute window. The exact VIA model now has a device-scoped no-autosuspend rule; physical hub operation remains unverified.
+
+## 20 October — cursor ownership and docked rails
+
+The previous Arete boot contains 77,849 `compositor released mouse` messages,
+peaking at 3,506 in a one-second sliding window. This is a verified input capture
+storm. It does not establish the sole cause of the reported whole-machine freeze;
+the available kernel journal did not provide a corresponding GPU reset or panic.
+
+Source-level repairs in the pinned Lan Mouse patch:
+
+- Compositor lock loss now emits a capture End through the transport state
+  machine. The remote owner and local pointer lock no longer disagree.
+- Re-entry inhibition runs before creating/hiding a pointer lock, rather than
+  repeatedly grabbing a barrier that the upper layer immediately rejects.
+- Stale surface-leave events cannot destroy another barrier's lock. Output
+  rebuilds release ownership before destroying/replacing surfaces.
+- The optional standard cursor-shape protocol restores the default cursor on
+  release and on refused re-entry; hiding it is limited to actual capture.
+- A late receiver Leave clears return arming only if no newer incoming owner
+  remains. The desktop harness waits for the matching placement generation,
+  rather than mistaking a previous entry's armed flag for the current one.
+- A five-loss/one-second fail-open guard remains defense in depth. Its independent
+  daemon pauses input and centres locally; it never silently resumes capture.
+
+The first guarded build passed two crossings but failed the next exact-position
+check. After ownership repairs and generation-aware verification, eight crossings
+passed (all top/right entry × bottom/left return combinations, twice), along with
+triple-Ctrl pause and resume. Receiver-stop, watcher-restart and native emergency
+release checks also passed; receiver-stop released capture in 3.268 seconds.
+This is bounded acceptance, not proof that future driver/network faults cannot occur.
+
+Docked layout now uses the full top bar on Upper and the full utility bar on
+Lower. Both laptop panels have no bar layers. Three real button-click cases
+passed: Upper Sound collapsed/expanded, Lower Display. Popups stayed inside the
+clicked output and used its correct edge and anchor. The shared QML expressions
+also passed disconnected, partially docked and PC-only routing fixtures.
+
+The XP-Pen is present behind Homie's VIA hub, with its existing writing profile,
+threshold 7, pressure, tilt and eraser retained. The targeted hub power rule is
+active (`power/control=on`). A watcher bug skipped reapplying an identical profile
+after reconnect; disconnect now invalidates its signature. The virtual pen's
+identity is also included so a driver restart triggers remapping. A mock
+connect/disconnect/reconnect regression verifies reapplication without disturbing
+the user's tablet. This pass does not claim a new physical stroke measurement.
+
+Zondo now translates one decoded sprite atlas instead of recropping/reloading its
+source each frame. Upper's live capture was visually checked. Dance has a slower
+frame cadence and small eased sway; reduced motion still disables movement.
+Occasional short sing-along receipts reuse already-loaded timed lyrics, expire
+in 30 seconds and never fetch new lyrics. Only eight words plus timestamp/play
+state may follow his existing cross-host lease; account data and media URLs do
+not. DND, quiet, chatter preferences and non-repetition remain enforced.
+
+Software cursor mode is explicit on both hosts. Its meaning is documented in the
+[Hyprland options reference](https://wiki.hypr.land/configuring/core/config-options/).
+The native binary, original session scripts and cursor daemon were backed up
+privately under `~/.local/state/homie-control/backups/input-guard-*` before deployment.

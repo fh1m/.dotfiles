@@ -21,6 +21,7 @@ if sys.argv[1]=="cursor":
     os.execv(sys.executable,[sys.executable,str(state/"den-cursor.py"),"daemon"])
 if sys.argv[1]=="clipboard":
     os.execv(sys.executable,[sys.executable,str(state/"den-clipboard.py"),"hub"])
+os.environ["DEN_CURSOR_SOCKET"]=str(state/"cursor.sock")
 binary=state/"bin/lan-mouse"
 if not binary.exists():binary=pathlib.Path("/usr/bin/lan-mouse")
 (state/"input/active").write_text("0")

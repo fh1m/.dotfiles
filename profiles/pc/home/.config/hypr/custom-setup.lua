@@ -306,4 +306,4 @@ hl.bind("SUPER + CTRL + N", hl.dsp.exec_cmd("@HOME@/.local/bin/sensei-draw quick
 hl.bind("SUPER + CTRL + SHIFT + N", hl.dsp.exec_cmd("@HOME@/.local/bin/sensei-draw typed"))
 
 -- Stable cursor texture uploads on mixed/USB display paths; no hiding timer.
-hl.config({ cursor = { use_cpu_buffer = 1, inactive_timeout = 0 } })
+hl.config({ cursor = { no_hardware_cursors = 1, use_cpu_buffer = 1, inactive_timeout = 0, hide_on_key_press = false } })

@@ -23,6 +23,10 @@ Item {
     property string messageKind: "field note"
     property bool speaking: false
     property string activity: "read"
+    property var lyricReceipt:({})
+    property string lastSungLine:''
+    FileView {path:Quickshell.env('HOME')+'/.local/state/sensei-den/zondo-music.json';watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.lyricReceipt=JSON.parse(text());}catch(e){root.lyricReceipt=({});}}}
+    Timer {interval:60000;repeat:true;running:root.allowed&&root.denMusic&&root.preferences.chatter!==false&&!root.notices.dnd;onTriggered:{if(root.speaking)return;const line=Logic.singLine(root.leased&&root.journey.musicLine?.at>Number(root.lyricReceipt.at||0)?root.journey.musicLine:root.lyricReceipt,Date.now(),root.lastSungLine,Math.random());if(line){root.lastSungLine=line;root.activity='dance';root.say('♪ '+line,'singing along');speechExpiry.interval=6500;}}}
     property bool musicPlaying:false
     readonly property bool denMusic:musicPlaying||(leased&&journey.musicPlaying===true)
     onDenMusicChanged:{if(denMusic){activity="dance";frame=0;poseExpiry.stop();}else vary();}
@@ -151,7 +155,7 @@ Item {
     function remember():void {if(memoryLoaded)memoryFile.setText(JSON.stringify({schema:1,recent:recent.slice(-40),turn:turn}));}
     function vary():void {activityTicks=0;activity=Logic.nextActivity(activity,denMusic,Math.random(),preferences.hiddenActivities||[],preferences.favoriteActivities||[]);if(placement.scene&&Math.random()<.4&&!denMusic){const moods={upper:"stargaze",main:"garden",lower:"calibrate",screenpad:"aquarium",homie:"robot"};activity=moods[placement.scene]||activity;}frame=0;poseExpiry.stop();}
     function welcome(text):void {if(Date.now()-lastWelcome<60000)return;if(preferences.welcome===false||preferences.quiet===true||preferences.enabled===false)return;lastWelcome=Date.now();welcomeText=text;welcoming=true;welcomeExpiry.restart();}
-    function say(text,kind):void {eventJob="";eventHost="";const words=String(text);message=words.length>160?words.slice(0,156).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.restart();updateSpeech();}
+    function say(text,kind):void {eventJob="";eventHost="";const words=String(text);message=words.length>160?words.slice(0,156).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.interval=12000;speechExpiry.restart();updateSpeech();}
     function greet(manual):void {
         if(!allowed||!speechWindow.bubblePlace.available||speaking||(!manual&&(preferences.chatter===false||notices.dnd))||!Logic.notes.length)return;
         if(notices.dnd&&notices.unread>0){say(notices.unread+" notifications waiting quietly. No rush; the bell has them when you want them.","quiet desk");return;}
@@ -249,7 +253,7 @@ Item {
     Timer {interval:24000;repeat:true;running:root.allowed&&!root.reduced&&!root.speaking;onTriggered:root.walk()}
     Timer {interval:18000;repeat:true;running:root.allowed&&!root.reduced&&root.activity==="typing";onTriggered:{root.typingBurst=true;burstExpiry.restart();}}
     Timer {id:burstExpiry;interval:1320;onTriggered:{root.typingBurst=false;if(root.activity==="typing")root.frame=0;}}
-    Timer {interval:root.activitySprite?.frames>4?110:160;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk"||root.activity==="climb"||root.activity==="dance"||(root.activitySprite&&(root.activitySprite.frames>4||root.activityTicks<12)));onTriggered:{root.frame=(root.frame+1)%(root.activitySprite?.frames||4);root.activityTicks++;}}
+    Timer {interval:root.activity==="dance"?180:root.activitySprite?.frames>4?130:180;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk"||root.activity==="climb"||root.activity==="dance"||(root.activitySprite&&(root.activitySprite.frames>4||root.activityTicks<12)));onTriggered:{root.frame=(root.frame+1)%(root.activitySprite?.frames||4);root.activityTicks++;}}
     Timer {id:poseExpiry;interval:2200;onTriggered:{root.vary();root.frame=0;root.deliberateTravel=false;}}
     Timer {id:speechExpiry;interval:12000;onTriggered:{root.speaking=false;}}
     Timer {id:landingExpiry;interval:700;onTriggered:root.landing=false}
@@ -331,7 +335,13 @@ Item {
             readonly property size sourceSize:Qt.size(atlas.implicitWidth,atlas.implicitHeight)
             readonly property rect sourceClipRect:frameRect
             readonly property real renderScale:Math.min(width/frameRect.width,height/frameRect.height)
-            Image {id:atlas;anchors.fill:parent;source:character.atlasSource;sourceClipRect:character.frameRect;fillMode:Image.PreserveAspectFit;cache:true;asynchronous:false;retainWhileLoading:true;smooth:true}
+            // Keep one decoded atlas texture. Changing sourceClipRect reloaded the PNG on every frame.
+            Image {id:atlas;source:character.atlasSource;cache:true;asynchronous:true;retainWhileLoading:true;smooth:true
+                width:implicitWidth*character.renderScale;height:implicitHeight*character.renderScale
+                x:(character.width-character.frameRect.width*character.renderScale)/2-character.frameRect.x*character.renderScale
+                y:(character.height-character.frameRect.height*character.renderScale)/2-character.frameRect.y*character.renderScale
+            }
+            SequentialAnimation on rotation {running:root.allowed&&!root.reduced&&root.activity==='dance';loops:Animation.Infinite;NumberAnimation {from:-3;to:3;duration:420;easing.type:Easing.InOutSine}NumberAnimation {from:3;to:-3;duration:420;easing.type:Easing.InOutSine}onStopped:character.rotation=0}
 
         }
     }

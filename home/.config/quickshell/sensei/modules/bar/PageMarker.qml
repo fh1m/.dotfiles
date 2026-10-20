@@ -20,8 +20,9 @@ Item {
     id: root
 
     property string output: ""
-    readonly property bool external: ShellState.isExternalOutput(output || Spaces.focusedMonitor?.name || "")
-    readonly property string modeText: external ? (ShellState.externalBarEdge(output||Spaces.focusedMonitor?.name||"")==="top"?"Upper":"Lower") : MachineProfile.role(output)==="screenpad" ? "Utility" : Spaces.modeGlyph + " " + Spaces.pageLabel
+    readonly property bool utilityRail:ShellState.dockedRails&&MachineProfile.role(output)==='lower'
+    readonly property bool external: !utilityRail&&ShellState.isExternalOutput(output || Spaces.focusedMonitor?.name || "")
+    readonly property string modeText: external ? (ShellState.externalBarEdge(output||Spaces.focusedMonitor?.name||"")==="top"?"Upper":"Lower") : (utilityRail||MachineProfile.role(output)==="screenpad") ? "Utility" : Spaces.modeGlyph + " " + Spaces.pageLabel
 
     // Five normal pages covers workspaces 1 to 25, and one more for the
     // special page. Beyond that the pips stop being countable at a glance

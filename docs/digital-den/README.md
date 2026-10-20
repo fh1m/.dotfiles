@@ -203,3 +203,23 @@ Homie's USB RTL-SDR has a receiver-aware tower button: live spectrum/waterfall,
 FM through PipeWire, bounded sensor observations, SigMF recordings and immutable
 receipts. It also opens the preconfigured, themed Gqrx receiver. The same controls
 follow the dongle if moved to Arete. [Radio guide and measured checks](RADIO.md).
+
+### Docked bars and input recovery
+
+With both Upper and Lower connected to Arete, Upper owns its full top bar and
+Lower owns its full utility/bottom bar. Main and ScreenPad remain unobstructed.
+Unplugging either external restores the normal laptop rails automatically;
+Homie's desktop rails are independent. Dropdowns follow the actual clicked bar.
+
+Double Ctrl locates the current cursor. Triple Ctrl toggles sharing and, when
+pausing, returns the cursor to Arete's main centre. Ctrl+Alt+Esc is the native
+capture-release chord. Lock loss now ends network ownership as well as the local
+lock. Rapid repeated losses pause sharing as a last resort; see the
+[performed checks and remaining limits](VALIDATION.md#20-october--cursor-ownership-and-docked-rails).
+
+The pinned native patch is `pc/den/capture-output.patch`, applied to the upstream
+revision documented in `pc/den/README.md`. Rebuild and deploy the same binary on
+both hosts; preserve their private certificates/configs. Private backups of the
+pre-change binaries/scripts live under `~/.local/state/homie-control/backups/`.
+Zondo's short sing-along lines use existing timed lyrics only, including on his
+cross-host journeys. No online conversation or extra lyric request is introduced.

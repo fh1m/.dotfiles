@@ -72,3 +72,10 @@ function worldPlace(view,world,width,height,w,h,windows,variant) {
  }
  return null;
 }
+
+// A short, fresh line from the existing media widget, never a new lyrics request.
+function singLine(receipt, now, last, random) {
+    if(!receipt||!receipt.playing||!Number.isFinite(receipt.at)||now-receipt.at<0||now-receipt.at>30000||random>.4)return '';
+    var line=String(receipt.line||'').trim().split(/\s+/).slice(0,8).join(' ');
+    return !line||line===last?'':line;
+}

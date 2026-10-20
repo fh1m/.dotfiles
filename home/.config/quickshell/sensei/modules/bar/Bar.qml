@@ -64,7 +64,7 @@ Variants {
             RadioButton {anchors.verticalCenter:parent.verticalCenter}
             EthernetButton {condensed:!bar.readoutsOpen;anchors.verticalCenter:parent.verticalCenter}
             BtReadout { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
-            DisplayBadge { output: "main"; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
+            DisplayBadge { output: bar.modelData.name===MachineProfile.primaryOutput?"main":bar.modelData.name; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             SoundButton { id:soundButton; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             NotificationsButton { condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }
             BatteryButton { visible:!MachineProfile.desktop; condensed: !bar.readoutsOpen; anchors.verticalCenter: parent.verticalCenter }

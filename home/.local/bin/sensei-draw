@@ -16,8 +16,10 @@ try:
   while True:
    try:
     rows=d.monitors();app=json.loads(d.call(['hyprctl','-i','0','activewindow','-j'])).get('class','')
-    now=json.dumps([d.connected(),d.prefs(),[(m['name'],m['width'],m['height'],m['scale']) for m in rows],app,d.canvas_view() if d.connected() and 'xournal' in app.lower() else None])
-    if signature!=now and d.connected():d.reconcile();signature=now
+    virtual=[t for t in json.loads(d.call(['hyprctl','-i','0','devices','-j'])).get('tablets',[]) if 'opentabletdriver' in t.get('name','')]
+    now=json.dumps([virtual,d.connected(),d.prefs(),[(m['name'],m['width'],m['height'],m['scale']) for m in rows],app,d.canvas_view() if d.connected() and 'xournal' in app.lower() else None])
+    if not d.connected():signature=None
+    elif signature!=now:d.reconcile();signature=now
    except (ValueError,OSError,subprocess.SubprocessError):signature=None
    time.sleep(3)
  elif a.action in ('pen','eraser'):print(json.dumps(d.tool(a.action)))
