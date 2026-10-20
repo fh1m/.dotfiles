@@ -429,3 +429,9 @@ Homie remained on main at f355044 and passed 366 repository tests. Matching part
 
 
 Native story acceptance: main advanced through 2528cef and 42b5624 on both hosts, installed with the existing hardware-specific installer. Homie passed all 368 tests, plays a 1920×1080 / 128-frame / 16.01-second lighthouse chapter in awww, and has a pre-rendered away variant. Cross-host start epochs match; QML background is unmapped during native playback. Four stronger focus corners are deployed, cursor/watch services remain active, and no failed user units were observed. No storage/firmware changes or reboot occurred.
+
+## 20 October — shared media/audio and USB recovery
+
+Main `321d06f` deployed with the PC installer; matching Sound studio now controls PC→laptop stereo through the restricted gateway. User confirmed clear/responsive music and actual pen drawing. Homie passed 444 tests (one optional skip), eleven desktop checks, real top/bottom bar click-placement checks, YouTube and live Twitch playback/transport checks. The receiver measured 19.59 FFT frames/s; stopping left no receiver child. Native input/cursor remain active; no failed user services observed.
+
+The VIA hub had repeated USB protocol/transaction-translator errors and stale tablet enumeration. A targeted hub reauthorization cleared the fault; rear-port tablet operation is verified. Device-scoped no-autosuspend mitigation is installed; physical operation through the hub is not certified. No controller-wide reset, disk, firmware or GPU policy changes. See docs/digital-den/AUDIO-AND-MEDIA.md for routing, signal checks and undo.

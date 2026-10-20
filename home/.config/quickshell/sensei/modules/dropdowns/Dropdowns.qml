@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import Quickshell.Io
 import Quickshell
 import Quickshell.Hyprland
@@ -330,6 +331,14 @@ Variants {
                 }
             }
 
+            Flickable {
+                width:parent.width
+                height:Math.max(1,Math.min(popup.panelHeight,popup.height-2*popup.surfaceInset))
+                contentHeight:content.height
+                clip:true
+                interactive:popup.current!=='spotify'&&contentHeight>height
+                boundsBehavior:Flickable.StopAtBounds
+                ScrollBar.vertical:DeskScrollBar {}
             Loader {
                 id: content
                 // Heavy panels instantiate over multiple event-loop turns so
@@ -378,6 +387,7 @@ Variants {
                 }
             }
 
+            }
             Component {
                 id: identPanel
 

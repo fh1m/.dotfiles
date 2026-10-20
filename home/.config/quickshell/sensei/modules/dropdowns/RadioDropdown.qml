@@ -80,13 +80,13 @@ DropdownFrame {
     trace(bins,Theme.widgetAccent,1.3);
     if(root.waterfall.length){const y=Math.ceil(h+6),bottom=Math.floor(height-25),depth=bottom-y;
      if(depth>1){const previous=c.getImageData(0,y,Math.floor(w),depth-1);c.putImageData(previous,0,y+1);}
-     const row=root.waterfall[0];for(let x=0;x<row.length;x++){const v=Math.max(0,Math.min(1,(row[x]-low)/Math.max(12,high-low)));c.fillStyle=Qt.rgba(.08+v*.85,.015+v*.08,.08+v*.4,.25+v*.75);c.fillRect(x*w/row.length,y,Math.ceil(w/row.length),1);}
+     const row=root.waterfall[0];for(let x=0;x<row.length;x++){const v=Math.max(0,Math.min(1,(row[x]-low)/Math.max(12,high-low)));c.fillStyle=Qt.rgba(.10+v*.8,.025+v*.09,.13+v*.35,1);c.fillRect(x*w/row.length,y,Math.ceil(w/row.length),1);}
     }
     c.fillStyle=Theme.paperMuted;c.font='11px monospace';c.fillText((bins[0].hz/1e6).toFixed(2)+' MHz',0,height-3);c.fillText((bins[bins.length-1].hz/1e6).toFixed(2)+' MHz',Math.max(0,w-94),height-3);
    }}
    Text {anchors.centerIn:parent;visible:!root.samples.length;width:parent.width-40;text:'A real spectrum appears after a bounded capture.\nStart Live waterfall for real sweeps; Gqrx adds full demodulation.';horizontalAlignment:Text.AlignHCenter;wrapMode:Text.Wrap;font.family:Appearance.font.ui;font.pixelSize:13;color:Theme.paperMuted}
   }
-  Text {visible:root.section===0;width:parent.width;text:Radio.receipt.kind==='usb-test'?'2.048 MS/s · '+Radio.receipt.seconds+' s · reported sample loss: '+Radio.receipt.lostSamplesReported+' · '+Radio.receipt.tuner:root.samples.length?((root.liveFrame.label||Radio.receipt.label||'Spectrum')+' · '+root.samples.length+' bins · '+(root.liveFrame.units||Radio.receipt.units||'relative dB · uncalibrated')+(root.live?' · LIVE':Radio.receipt.peakMHz?' · peak '+Radio.receipt.peakMHz+' MHz':'')):'No capture yet';font.family:Appearance.font.data;font.pixelSize:11;wrapMode:Text.Wrap;color:Theme.paperMuted}
+  Text {visible:root.section===0;width:parent.width;text:!root.liveFrame.bins?.length&&Radio.receipt.kind==='usb-test'?'2.048 MS/s · '+Radio.receipt.seconds+' s · reported sample loss: '+Radio.receipt.lostSamplesReported+' · '+Radio.receipt.tuner:root.samples.length?((root.liveFrame.label||Radio.receipt.label||'Spectrum')+' · '+root.samples.length+' bins · '+(root.liveFrame.units||Radio.receipt.units||'relative dB · uncalibrated')+(root.live?' · LIVE':Radio.receipt.peakMHz?' · peak '+Radio.receipt.peakMHz+' MHz':'')):'No capture yet';font.family:Appearance.font.data;font.pixelSize:11;wrapMode:Text.Wrap;color:Theme.paperMuted}
   Text {visible:root.section===1;width:parent.width;text:'TRY / Find FM stations. Compare antenna positions. Observe ISM-band energy. Use rtl_433 for your own weather sensors. Explore public beacon spectrum; cellular here is power only. Aircraft/satellite decoding needs suitable antennas and separate tools.';font.family:Appearance.font.ui;font.pixelSize:12;wrapMode:Text.Wrap;color:Theme.paperMuted}
   Column {visible:root.section===1;width:parent.width;spacing:16
    Text {width:parent.width;text:'RADIO LAB / reproducible curiosity';font.family:Appearance.font.heading;font.pixelSize:19;color:Theme.paper}

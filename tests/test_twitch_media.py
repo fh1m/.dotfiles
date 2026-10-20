@@ -22,7 +22,7 @@ class TwitchMedia(unittest.TestCase):
   import subprocess
   result=subprocess.CompletedProcess([],0,json.dumps({'url':'https://video.ttvnw.net/stream','is_live':True}),'')
   with patch.object(t.subprocess,'run',return_value=result) as run,patch.object(t,'session') as session:
-   record=t.stream('roboticists');self.assertTrue(record['combined']);session.assert_not_called();self.assertNotIn('cookies',' '.join(run.call_args.args[0]))
+   record=t.stream('roboticists');self.assertTrue(record['combined']);session.assert_not_called();self.assertNotIn('cookies',' '.join(run.call_args.args[0]));self.assertIn('--print',run.call_args.args[0]);self.assertNotIn('--dump-single-json',run.call_args.args[0])
  def test_local_bookmark_deduplicates_without_saving_signed_streams(self):
   with tempfile.TemporaryDirectory() as d,patch.object(t,'LIBRARY',Path(d)/'saved.json'):
    t.saved({'id':'roboticists','stream':'SECRET','title':'one'});t.saved({'id':'roboticists','title':'two'})

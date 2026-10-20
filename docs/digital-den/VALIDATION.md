@@ -104,3 +104,15 @@ Arete: 444 repository tests passed after the backend/gateway fixes. Actual YouTu
 Homie: the user confirmed PC music through laptop headphones is **clear and responsive**, and confirmed pen strokes draw after the rear USB-port recovery and Pen-tool selection. Direct observations recorded tip-contact transitions and pressure up to 65535. RTL capture measured 19.59 real FFT frames/s (512 bins); terminating the scope left no receiver child. The original hub path had USB protocol failures and is not certified by the direct-port result.
 
 Shared sound controls now include route diagnostics and playback-monitor signal checks; see AUDIO-AND-MEDIA.md. Final deployed UI, popup and Homie media acceptance follows in the deployment receipt below.
+
+### Deployment and desktop acceptance
+
+Both hosts deployed shared main `321d06f`. Native input and cursor services remain active; Arete’s clipboard bridge and Homie storage mount are active. Homie passed all eleven read-only desktop checks and 444 repository tests (one optional test skipped); Arete passed all 444.
+
+Real pointer clicks verified sound buttons both folded and expanded on each host, plus the ScreenPad, Upper, Lower and Homie bottom display controls: all eight cases used the clicked output/edge/centre and stayed within the output. Cursor/fold preferences were restored. Short displays now scroll oversized ordinary panels instead of clipping unreachable actions.
+
+YouTube played the Karpathy micrograd lecture on Homie DP-3 and all four Arete outputs. Live Twitch discovery and a real public stream passed on each host, with advancing rendered frames and pause/resume. Live-stream clocks may restart on reconnect, so the harness requires resume-position continuity only for seekable recordings; live tests still require advancing A/V, rendered frames and bounded sync error. These do not certify every channel, account permission or future network condition.
+
+The fullscreen focus view was visually inspected with artwork, track metadata and large sans-serif timed lyrics. Its diagnostic reported `controlsShown:false` after idle, including paused playback. Movement exposes the controls; Escape/F11 recovery remains available. No always-visible corner buttons remain in this mode.
+
+The RTL panel displayed 512 live bins and 56 waterfall observations without QML errors. Stop released the receiver child. After USB recovery, the tablet and receiver enumerated directly on rear motherboard ports; no further descriptor/TT protocol errors appeared during the observed ten-minute window. The exact VIA model now has a device-scoped no-autosuspend rule; physical hub operation remains unverified.

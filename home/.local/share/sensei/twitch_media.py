@@ -88,7 +88,7 @@ def stream(value,quality=720,authenticated=False):
  if quality not in (360,480,720,1080):raise ValueError('Invalid video quality')
  options=['--cookies-from-browser','chrome+gnomekeyring:'+browser_account()['profile']] if authenticated else []
  try:
-  r=subprocess.run(['yt-dlp','--ignore-config','--no-warnings','--socket-timeout','8','--retries','0']+options+['--no-playlist','--dump-single-json','--skip-download','-f',f'best[height<={quality}]/best','https://www.twitch.tv/'+ident],capture_output=True,text=True,timeout=35)
+  r=subprocess.run(['yt-dlp','--ignore-config','--no-warnings','--socket-timeout','8','--retries','0']+options+['--no-playlist','--print','%(.{url,title,uploader,thumbnail,duration,is_live})j','--skip-download','-f',f'best[height<={quality}]/best','https://www.twitch.tv/'+ident],capture_output=True,text=True,timeout=35)
   if r.returncode or len(r.stdout)>8*1024*1024:raise ValueError('unavailable')
   d=json.loads(r.stdout)
  except (OSError,ValueError,subprocess.TimeoutExpired):raise ValueError('This Twitch stream is offline, restricted or temporarily unavailable. Refresh or choose another channel.') from None

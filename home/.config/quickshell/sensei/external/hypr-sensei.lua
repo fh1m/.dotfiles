@@ -209,7 +209,7 @@ hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl -d intel_backlig
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -d intel_backlight set 5%-"), { locked = true })
 
 -- Volume in 5% steps, so one press is one segment on the OSD's 20-segment bar,
--- capped at 100%. The OSD follows PipeWire whoever moves it.
+-- capped at 200% (100% is unity gain). The OSD follows PipeWire whoever moves it.
 hl.bind("XF86AudioRaiseVolume",
     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 2.0 @DEFAULT_AUDIO_SINK@ 5%+"),
     { locked = true, repeating = true })
