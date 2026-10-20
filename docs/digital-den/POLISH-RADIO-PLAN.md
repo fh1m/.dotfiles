@@ -52,3 +52,15 @@ remained the same PID with zero restarts from 04:36 through 10:46. Layer-panel
 geometry is published privately and used as an exclusion area for Zondo and his
 bubble; live checking moved him outside an open display panel. No window text,
 clipboard content or video content is used by that geometry mechanism.
+
+### Final deployment check, 10:50
+
+Both host worktrees are clean at the deployed implementation revision; installer
+previews report zero changes. Homie's 11 desktop checks pass again, and the fresh
+shell reports no QML errors. The RTL-SDR is now physically absent from both USB
+inventories: its button hides, the disconnected panel is usable, and no rtl_power
+process remains. Earlier attached-hardware measurements above remain the test
+receipts; no final attached-device test is falsely claimed. Arete's saved manual
+input pause is enabled and preserved; Triple Ctrl resumes through the existing
+toggle. Cursor visual services are active without restart churn. Main tests:
+433 passed; separate native cursor/recovery tests: five passed.
