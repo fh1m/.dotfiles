@@ -94,9 +94,13 @@ Singleton {
  Process {id:videoFetch;stdout:StdioCollector {onStreamFinished:{if(root.videoTrackKey!==root.lyricsKey)return;try{root.videoData=JSON.parse(text);}catch(e){root.videoData={rows:[],warning:'Video search unavailable; music keeps playing.'};}}}onExited:root.videosLoading=false}
  // Curated local receipt for Zondo; no full lyrics, signed media URLs or account data.
  FileView {id:zondoMusic;path:Quickshell.env('HOME')+'/.local/state/sensei-den/zondo-music.json';printErrors:false}
- function publishLyric(){const line=lyricsData?.synced&&lyricIndex>=0?lyricsData.lines[lyricIndex]?.text||'':'';zondoMusic.setText(JSON.stringify({at:Date.now(),playing:playing,title:title,line:line.trim().split(/\s+/).slice(0,8).join(' ')}));}
+ function publishLyric(){const now=Date.now();const line=lyricsData?.synced&&lyricIndex>=0?lyricsData.lines[lyricIndex]?.text||'':'';const next=Number(lyricsData?.lines?.[lyricIndex+1]?.time)||Number(playback.track?.duration)||lyricPosition+4000;zondoMusic.setText(JSON.stringify({at:now,until:now+Math.max(0,Math.min(30000,next-lyricPosition-lyricOffset)),playing:playing,title:title,line:line.trim().slice(0,320)}));}
  onLyricIndexChanged:publishLyric()
  onPlayingChanged:publishLyric()
+ property bool zondoLyricsEnabled:false
+ FileView {path:Quickshell.env('HOME')+'/.config/sensei-den/companion.json';watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{const c=JSON.parse(text());root.zondoLyricsEnabled=c.enabled!==false&&c.chatter!==false&&c.quiet!==true;}catch(e){root.zondoLyricsEnabled=false;}}}
+ readonly property bool wantsLyrics:lyricsVisible||(zondoLyricsEnabled&&playing&&title!=='Spotify')
+ onWantsLyricsChanged:if(wantsLyrics)lyricsDelay.restart()
  property bool lyricsOpen:false
  property var lyricsData:({lines:[],plain:'',synced:false})
  property bool lyricsLoading:false
@@ -108,11 +112,11 @@ Singleton {
  readonly property int lyricIndex:{let index=-1;const position=lyricPosition+lyricOffset;for(let i=0;i<(lyricsData.lines||[]).length;i++){if(lyricsData.lines[i].time>position)break;index=i;}return index;}
  function lyricTrack(){return {title:title,artist:artist,album:album,duration:playback.track?.duration||player?.length*1000||0};}
  function adjustLyrics(delta){lyricOffset=Math.max(-60000,Math.min(60000,lyricOffset+delta));action('lyric-offset',[JSON.stringify(lyricTrack()),String(lyricOffset)]);}
- function loadLyrics(refresh){if(!lyricsVisible||lyricsFetch.running||title==='Spotify')return;activeLyricsKey=lyricsKey;lyricPosition=positionMs;lyricsLoading=true;lyricsError='';const track={title:title,artist:artist,album:album,duration:playback.track?.duration||player?.length*1000||0};lyricsFetch.command=['@HOME@/.local/bin/sensei-spotify','synced-lyrics',JSON.stringify(track)].concat(refresh?['refresh']:[]);lyricsFetch.running=true;}
+ function loadLyrics(refresh){if(!wantsLyrics||lyricsFetch.running||title==='Spotify')return;activeLyricsKey=lyricsKey;lyricPosition=positionMs;lyricsLoading=true;lyricsError='';const track={title:title,artist:artist,album:album,duration:playback.track?.duration||player?.length*1000||0};lyricsFetch.command=['@HOME@/.local/bin/sensei-spotify','synced-lyrics',JSON.stringify(track)].concat(refresh?['refresh']:[]);lyricsFetch.running=true;}
  onLyricsOpenChanged:if(lyricsOpen){lyricsData={lines:[],plain:'',synced:false};lyricsDelay.restart();}
- onLyricsKeyChanged:{videoData={rows:[]};videosOpen=false;lyricsData={lines:[],plain:'',synced:false};lyricOffset=0;if(lyricsVisible)lyricsDelay.restart();}
+ onLyricsKeyChanged:{videoData={rows:[]};videosOpen=false;lyricsData={lines:[],plain:'',synced:false};lyricOffset=0;if(wantsLyrics)lyricsDelay.restart();}
  Timer {id:lyricsDelay;interval:250;onTriggered:root.loadLyrics()}
- Process {id:lyricsFetch;stdout:StdioCollector {onStreamFinished:{if(root.activeLyricsKey!==root.lyricsKey)return;try{const d=JSON.parse(text);root.lyricsError=d.error||'';if(!d.error){root.lyricsData=d;root.lyricOffset=d.offset||0;}}catch(e){root.lyricsError='Sensei, lyrics could not be loaded.';}}}onExited:{root.lyricsLoading=false;if(root.lyricsVisible&&root.activeLyricsKey!==root.lyricsKey)lyricsDelay.restart();}}
+ Process {id:lyricsFetch;stdout:StdioCollector {onStreamFinished:{if(root.activeLyricsKey!==root.lyricsKey)return;try{const d=JSON.parse(text);root.lyricsError=d.error||'';if(!d.error){root.lyricsData=d;root.lyricOffset=d.offset||0;}}catch(e){root.lyricsError='Sensei, lyrics could not be loaded.';}}}onExited:{root.lyricsLoading=false;if(root.wantsLyrics&&root.activeLyricsKey!==root.lyricsKey)lyricsDelay.restart();}}
  Timer {interval:root.lyricsVisible?250:1000;repeat:true;running:(root.lyricsVisible||root.lyricsData.synced)&&root.playing;triggeredOnStart:true;onTriggered:{root.positionClock=Date.now();root.lyricPosition=root.positionMs;}}
  function artworkUrl(value){const url=String(value||'');if(/^spotify:image:[a-f0-9]{40}$/i.test(url))return 'https://i.scdn.co/image/'+url.slice(14);return /^(https:\/\/|file:\/\/)/.test(url)?url:'';}
  function fmt(ms){let s=Math.floor(Math.max(0,ms)/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,'0');}

@@ -449,6 +449,8 @@ Scope {
     // and dismiss behaviour.
     IpcHandler {
         target: "notify"
+        function state():string {return JSON.stringify({unread:Notifications.unreadCount,dnd:Notifications.doNotDisturb});}
+        function dnd(enabled:bool):void {Notifications.doNotDisturb=enabled;}
 
         function send(summary: string, body: string, app: string, urgency: string): string {
             if (!summary)

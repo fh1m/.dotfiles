@@ -26,12 +26,27 @@ Item {
     property var lyricReceipt:({})
     property string lastSungLine:''
     FileView {path:Quickshell.env('HOME')+'/.local/state/sensei-den/zondo-music.json';watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.lyricReceipt=JSON.parse(text());}catch(e){root.lyricReceipt=({});}}}
-    // Keep the clock across output/host lease changes; short visits must not reset it.
-    Timer {interval:60000;repeat:true;running:root.preferences.chatter!==false&&root.preferences.enabled!==false;onTriggered:{if(!root.allowed||!root.denMusic||root.notices.dnd||root.speaking)return;const line=Logic.singLine(root.leased&&root.journey.musicLine?.at>Number(root.lyricReceipt.at||0)?root.journey.musicLine:root.lyricReceipt,Date.now(),root.lastSungLine,Math.random());if(line){root.lastSungLine=line;root.activity='dance';root.say('♪ '+line,'singing along');speechExpiry.interval=6500;}}}
+    property real lastSingAt:0
+    readonly property var currentLyric:leased&&journey.musicLine?.at>Number(lyricReceipt.at||0)?journey.musicLine:lyricReceipt
+    onCurrentLyricChanged:{
+        if(speaking&&messageKind==='singing along'){
+            const fresh=Logic.singLine(currentLyric,Date.now(),'',0);
+            if(fresh)message='♪ '+fresh;else speaking=false;
+        }else maybeSing();
+    }
+    function maybeSing():void {
+        if(!allowed||!speechWindow.bubblePlace.available||!denMusic||denDnd||speaking||preferences.chatter===false||Date.now()-lastSingAt<90000)return;
+        const line=Logic.singLine(currentLyric,Date.now(),lastSungLine,0);
+        if(line){lastSingAt=Date.now();lastSungLine=line;activity='sing';frame=0;say('♪ '+line,'singing along');speechExpiry.interval=18000;}
+    }
+    // Follows actual lyric transitions; a bounded fallback survives output changes.
+    Timer {interval:15000;repeat:true;running:root.preferences.chatter!==false&&root.preferences.enabled!==false;onTriggered:root.maybeSing()}
+    Timer {interval:250;repeat:true;running:root.speaking&&root.messageKind==='singing along';onTriggered:if(!Logic.singLine(root.currentLyric,Date.now(),'',0))root.speaking=false}
     property bool musicPlaying:false
     readonly property bool denMusic:musicPlaying||(leased&&journey.musicPlaying===true)
     onDenMusicChanged:{if(denMusic){activity="dance";frame=0;poseExpiry.stop();}else vary();}
     property var telemetry:({})
+    property string lastDeskWarning:""
     property var personal:[]
     property var memory:({recent:[],turn:0})
     property bool memoryLoaded:false
@@ -82,7 +97,7 @@ Item {
     property int activityTicks:0
     readonly property int extraPose:Logic.extendedPose(activity,frame)
     readonly property int pose: activity==="walk" ? (walkingRight?8:4)+frame%4 : activity==="wave" ? 13 : activity==="celebrate" ? 14 : activity==="think" ? 12 : activity==="sleep" ? 15 : frame%4
-    IpcHandler {target:"companion";function state():string{return JSON.stringify({name:"Zondo",musicPlaying:root.denMusic,allowed:root.allowed,speaking:root.speaking,speechVisible:speechWindow.visible,frame:root.frame,unread:root.notices.unread||0,dnd:root.notices.dnd||false,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,obstacles:root.occupied,bubble:{x:speechWindow.margins.left,y:speechWindow.margins.top,width:speechWindow.width,height:speechWindow.height},activity:root.activity,extraPose:root.extraPose,welcome:root.welcoming,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
+    IpcHandler {target:"companion";function state():string{return JSON.stringify({name:"Zondo",musicPlaying:root.denMusic,allowed:root.allowed,speaking:root.speaking,speechVisible:speechWindow.visible,frame:root.frame,unread:root.pendingUnread,phonePending:root.phonePending,noticeAcks:root.noticeSeen.length,dnd:root.denDnd,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,obstacles:root.occupied,bubble:{x:speechWindow.margins.left,y:speechWindow.margins.top,width:speechWindow.width,height:speechWindow.height},activity:root.activity,extraPose:root.extraPose,welcome:root.welcoming,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect,viewport:{width:frameViewport.width,height:frameViewport.height,clipped:frameViewport.clip},scale:character.renderScale},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
     property string lastPublished:""
     function publish():void {
         const data=JSON.stringify({output:target,allowed:allowed,eligible:eligible,speaking:speaking,speechVisible:speechWindow.visible,message:message,kind:messageKind,name:"Zondo",reducedMotion:reduced,activity:activity,extraPose:extraPose,pose:pose,lastNote:lastNote,noteKind:noteKind});
@@ -91,7 +106,7 @@ Item {
     FileView {id:renderFile;path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-render.json";printErrors:false}
     Component.onCompleted:Qt.callLater(publish)
     onAllowedChanged:{updateSpeech();publish();}
-    onSpeakingChanged:{updateSpeech();publish();}
+    onSpeakingChanged:{updateSpeech();publish();if(!speaking&&["sing","phone"].includes(activity))vary();}
     onMessageChanged:publish()
     onActivityChanged:{activityTicks=0;Qt.callLater(publish);}
     onReducedChanged:Qt.callLater(publish)
@@ -156,11 +171,11 @@ Item {
     function remember():void {if(memoryLoaded)memoryFile.setText(JSON.stringify({schema:1,recent:recent.slice(-40),turn:turn}));}
     function vary():void {activityTicks=0;activity=Logic.nextActivity(activity,denMusic,Math.random(),preferences.hiddenActivities||[],preferences.favoriteActivities||[]);if(placement.scene&&Math.random()<.4&&!denMusic){const moods={upper:"stargaze",main:"garden",lower:"calibrate",screenpad:"aquarium",homie:"robot"};activity=moods[placement.scene]||activity;}frame=0;poseExpiry.stop();}
     function welcome(text):void {if(Date.now()-lastWelcome<60000)return;if(preferences.welcome===false||preferences.quiet===true||preferences.enabled===false)return;lastWelcome=Date.now();welcomeText=text;welcoming=true;welcomeExpiry.restart();}
-    function say(text,kind):void {eventJob="";eventHost="";const words=String(text);message=words.length>160?words.slice(0,156).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.interval=12000;speechExpiry.restart();updateSpeech();}
+    function say(text,kind):void {eventJob="";eventHost="";const words=String(text);const limit=kind==='singing along'?324:320;message=words.length>limit?words.slice(0,limit-4).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.interval=12000;speechExpiry.restart();updateSpeech();}
     function greet(manual):void {
-        if(!allowed||!speechWindow.bubblePlace.available||speaking||(!manual&&(preferences.chatter===false||notices.dnd))||!Logic.notes.length)return;
+        if(!allowed||!speechWindow.bubblePlace.available||speaking||(!manual&&(preferences.chatter===false||denDnd))||!Logic.notes.length)return;
         if(notices.dnd&&notices.unread>0){say(notices.unread+" notifications waiting quietly. No rush; the bell has them when you want them.","quiet desk");return;}
-        if(notices.unread>0&&notices.event&&nudgedEvent!==notices.event){nudgedEvent=notices.event;say(notices.unread+' notifications waiting. The bell has the details whenever you are ready.','desk post');return;}
+        if(pendingUnread>0){announceNotice();if(speaking)return;}
         if(turn%3===0&&telemetry.suggestions?.length){
             const options=telemetry.suggestions.filter(x=>x!==lastContextLine);
             if(options.length){turn++;lastContextLine=options[Math.floor(Math.random()*options.length)];say(lastContextLine,"our workbench");remember();vary();return;}
@@ -246,15 +261,35 @@ Item {
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-notifications.json";watchChanges:true;printErrors:false
         onFileChanged:reload();onLoaded:{try{const n=JSON.parse(text());if(root.noticeLoaded&&((n.event&&n.event!==root.notices.event)||n.unread>root.seenUnread)&&!n.dnd)noticeDelay.restart();if(root.noticeLoaded&&root.notices.dnd&&!n.dnd&&n.unread>0)noticeDelay.restart();root.seenUnread=n.unread||0;root.notices=n;root.noticeLoaded=true;}catch(e){}}
     }
-    Timer {id:noticeDelay;interval:1800;onTriggered:if(root.eligible&&!root.notices.dnd&&root.notices.unread>0){root.nudgedEvent=root.notices.event;root.say(root.notices.unread+' unread notification'+(root.notices.unread===1?'':'s')+(root.notices.app?' · '+root.notices.app:'')+'. The bell has the details.','desk post');}}
+    property var noticeSeen:[]
+    property real lastNoticeAt:0
+    property bool noticeMemoryLoaded:false
+    readonly property var noticeSources:(leased?(journey.deskNotices||[]):[]).filter(n=>n.host!==notices.host).concat([notices])
+    readonly property int pendingUnread:noticeSources.reduce((sum,n)=>sum+Number(n.unread||0),0)
+    readonly property bool phonePending:noticeSources.some(n=>n.unread>0&&(n.entries||[]).some(e=>e.phone))
+    readonly property bool denDnd:noticeSources.some(n=>n.dnd===true)
+    onDenDndChanged:if(denDnd)speaking=false
+    FileView {id:noticeMemory;onLoadFailed:root.noticeMemoryLoaded=true;path:Quickshell.env('HOME')+'/.local/state/sensei-den/zondo-notice-seen.json';printErrors:false;onLoaded:{try{root.noticeSeen=Array.from(new Set(root.noticeSeen.concat(JSON.parse(text()).ids||[]))).slice(-128);}catch(e){}root.noticeMemoryLoaded=true;}}
+    function announceNotice():void {
+        if(!allowed||!speechWindow.bubblePlace.available||denDnd||speaking||preferences.notificationChatter===false)return;
+        const seen=noticeSeen.concat(journey.noticeAcks||[]);
+        const e=Logic.nextNotice(noticeSources,seen);
+        if(e){noticeSeen=Array.from(new Set(seen.concat([e.id]))).slice(-128);
+            if(noticeMemoryLoaded)noticeMemory.setText(JSON.stringify({ids:noticeSeen}));
+            lastNoticeAt=Date.now();activity=e.phone?'phone':'wave';frame=0;say(Logic.noticeText(e),e.phone?'phone post':'den post');
+        }else if(pendingUnread>0&&Date.now()-lastNoticeAt>600000){lastNoticeAt=Date.now();say((phonePending?'Your phone still has stuff to say. ':'')+pendingUnread+' notifications are waiting in the bell. No rush.','pending post');}
+    }
+    Timer {id:noticeDelay;interval:1800;onTriggered:root.announceNotice()}
+    Timer {interval:3500;repeat:true;running:root.preferences.enabled!==false&&root.preferences.notificationChatter!==false;onTriggered:root.announceNotice()}
 
-    Timer {interval:Math.max(15000,Math.min(120000,(root.preferences.activitySeconds??27)*1000));repeat:true;running:root.eligible&&!root.reduced;onTriggered:root.vary()}
-    Process {id:deskSample;command:[Quickshell.env("HOME")+"/.local/bin/sensei-zondo-context"];stdout:StdioCollector {onStreamFinished:{try{const x=JSON.parse(text);root.telemetry=x;const changed=root.musicPlaying!==x.playing;root.musicPlaying=x.playing;if(changed)root.vary();if(x.warning&&root.eligible&&!root.notices.dnd)root.say(x.warning,"measured, not guessed");}catch(e){}}}}
+
+    Timer {interval:Math.max(15000,Math.min(120000,(root.preferences.activitySeconds??27)*1000));repeat:true;running:root.eligible&&!root.reduced&&!root.speaking;onTriggered:root.vary()}
+    Process {id:deskSample;command:[Quickshell.env("HOME")+"/.local/bin/sensei-zondo-context"];stdout:StdioCollector {onStreamFinished:{try{const x=JSON.parse(text);root.telemetry=x;const changed=root.musicPlaying!==x.playing;root.musicPlaying=x.playing;if(changed)root.vary();if(!x.warning)root.lastDeskWarning="";if(x.warning&&root.eligible&&!root.denDnd&&!root.speaking&&x.warning!==root.lastDeskWarning){root.lastDeskWarning=x.warning;root.say(x.warning,"measured, not guessed");}}catch(e){}}}}
     Timer {interval:20000;repeat:true;running:root.preferences.enabled!==false;triggeredOnStart:true;onTriggered:if(!deskSample.running)deskSample.running=true}
     Timer {interval:24000;repeat:true;running:root.allowed&&!root.reduced&&!root.speaking;onTriggered:root.walk()}
     Timer {interval:18000;repeat:true;running:root.allowed&&!root.reduced&&root.activity==="typing";onTriggered:{root.typingBurst=true;burstExpiry.restart();}}
     Timer {id:burstExpiry;interval:1320;onTriggered:{root.typingBurst=false;if(root.activity==="typing")root.frame=0;}}
-    Timer {interval:root.activity==="dance"?180:root.activitySprite?.frames>4?130:180;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk"||root.activity==="climb"||root.activity==="dance"||(root.activitySprite&&(root.activitySprite.frames>4||root.activityTicks<12)));onTriggered:{root.frame=(root.frame+1)%(root.activitySprite?.frames||4);root.activityTicks++;}}
+    Timer {interval:root.activity==="sing"?240:root.activity==="dance"?180:root.activitySprite?.frames>4?130:180;repeat:true;running:root.allowed&&!root.reduced&&(root.typingBurst||root.activity==="walk"||root.activity==="climb"||root.activity==="dance"||root.activity==="sing"||(root.activitySprite&&(root.activitySprite.frames>4||root.activityTicks<12)));onTriggered:{root.frame=(root.frame+1)%(root.activitySprite?.frames||4);root.activityTicks++;}}
     Timer {id:poseExpiry;interval:2200;onTriggered:{root.vary();root.frame=0;root.deliberateTravel=false;}}
     Timer {id:speechExpiry;interval:12000;onTriggered:{root.speaking=false;}}
     Timer {id:landingExpiry;interval:700;onTriggered:root.landing=false}
@@ -269,16 +304,16 @@ Item {
         implicitWidth:256;implicitHeight:Math.max(64,Math.ceil(body.implicitHeight)+caption.implicitHeight+36)
         color:"transparent";exclusionMode:ExclusionMode.Ignore
         WlrLayershell.layer:WlrLayer.Overlay;WlrLayershell.namespace:"zondo-speech"
-        WlrLayershell.keyboardFocus:WlrKeyboardFocus.None;mask:Region {}
+        WlrLayershell.keyboardFocus:WlrKeyboardFocus.None;mask:Region {item:speechBubble}
         Rectangle {
             id:speechBubble
-            TapHandler {onTapped:{if(root.eventJob)Quickshell.execDetached(["qs","-c","sensei","ipc","call","engineering-receipts","open",root.eventHost,root.eventJob]);else Quickshell.execDetached(["qs","-c","sensei","ipc","call","dropdown","open","engineering"]);}}
+            TapHandler {onTapped:{if(root.eventJob)Quickshell.execDetached(["qs","-c","sensei","ipc","call","engineering-receipts","open",root.eventHost,root.eventJob]);else Quickshell.execDetached(["qs","-c","sensei","ipc","call","dropdown","open",["phone post","den post","pending post"].includes(root.messageKind)?"notifications":"engineering"]);}}
             anchors.fill:parent
 
             visible:true
-            radius:9;color:"#f2171311";border.color:"#6244323a";border.width:1
-            Text {id:caption;anchors {left:parent.left;top:parent.top;leftMargin:14;topMargin:10} text:"ZONDO / "+root.messageKind.toUpperCase();width:parent.width-28;elide:Text.ElideRight;font.family:"JetBrainsMono Nerd Font";font.pixelSize:9;font.letterSpacing:1.1;color:"#f23d70"}
-            Text {id:body;anchors {left:parent.left;right:parent.right;top:caption.bottom;leftMargin:14;rightMargin:14;topMargin:7} text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:"JetBrainsMono Nerd Font";font.pixelSize:12;color:"#e8e2da"}
+            radius:9;color:root.messageKind==='phone post'?"#f211181b":"#f2171311";border.color:root.messageKind==='phone post'?"#788fbcc4":"#6244323a";border.width:1
+            Text {id:caption;anchors {left:parent.left;top:parent.top;leftMargin:14;topMargin:10} text:(root.messageKind==='phone post'?"▣ PHONE / ":"ZONDO / ")+root.messageKind.toUpperCase();width:parent.width-28;elide:Text.ElideRight;font.family:"JetBrainsMono Nerd Font";font.pixelSize:9;font.letterSpacing:1.1;color:root.messageKind==='phone post'?"#8fbcc4":"#f23d70"}
+            Text {id:body;anchors {left:parent.left;right:parent.right;top:caption.bottom;leftMargin:14;rightMargin:14;topMargin:7} text:root.message;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:/[\u0980-\u09ff]/.test(text)?"Noto Sans Bengali":/[\u0900-\u097f]/.test(text)?"Noto Sans Devanagari":"Noto Sans";font.pixelSize:12;color:"#e8e2da"}
         }
     }
     PanelWindow {
@@ -331,19 +366,24 @@ Item {
             readonly property url atlasSource:Qt.resolvedUrl(root.activitySprite?root.activitySprite.file:root.activity==="climb"?"zondo-climb-v1.png":root.extraPose>=0?"zondo-life-v2.png":"fh1m-motion-v2.png")
             readonly property real cell:1254/4
             readonly property int tile:root.extraPose>=0?root.extraPose:root.pose
-            readonly property rect frameRect:{if(root.activitySprite){const a=root.activitySprite,c=root.frame%(a.frames||4),r=a.row;return Qt.rect(a.xs[c],a.ys[r],a.xs[c+1]-a.xs[c],a.ys[r+1]-a.ys[r]);}if(root.activity==="climb"){const xs=[0,543,1086,1629,2172],c=root.frame%4;return Qt.rect(xs[c],0,xs[c+1]-xs[c],724);}if(!(root.extraPose>=0))return Qt.rect((tile%4)*cell,Math.floor(tile/4)*cell,cell,cell);const xs=[0,313,627,945,1254],ys=[0,323,627,931,1254],c=tile%4,r=Math.floor(tile/4);return Qt.rect(xs[c],ys[r],xs[c+1]-xs[c],ys[r+1]-ys[r]);}
+            readonly property rect frameRect:{if(root.activitySprite){const a=root.activitySprite,c=root.frame%(a.frames||4),r=a.row;if(a.rects){const q=a.rects[c];return Qt.rect(q[0],q[1],q[2],q[3]);}return Qt.rect(a.xs[c],a.ys[r],a.xs[c+1]-a.xs[c],a.ys[r+1]-a.ys[r]);}if(root.activity==="climb"){const xs=[0,543,1086,1629,2172],c=root.frame%4;return Qt.rect(xs[c],0,xs[c+1]-xs[c],724);}if(!(root.extraPose>=0))return Qt.rect((tile%4)*cell,Math.floor(tile/4)*cell,cell,cell);const xs=[0,313,627,945,1254],ys=[0,323,627,931,1254],c=tile%4,r=Math.floor(tile/4);return Qt.rect(xs[c],ys[r],xs[c+1]-xs[c],ys[r+1]-ys[r]);}
             readonly property int status:atlas.status
             readonly property size sourceSize:Qt.size(atlas.implicitWidth,atlas.implicitHeight)
             readonly property rect sourceClipRect:frameRect
             readonly property real renderScale:Math.min(width/frameRect.width,height/frameRect.height)
-            // Keep one decoded atlas texture. Changing sourceClipRect reloaded the PNG on every frame.
-            Image {id:atlas;source:character.atlasSource;cache:true;asynchronous:true;retainWhileLoading:true;smooth:true
-                width:implicitWidth*character.renderScale;height:implicitHeight*character.renderScale
-                x:(character.width-character.frameRect.width*character.renderScale)/2-character.frameRect.x*character.renderScale
-                y:(character.height-character.frameRect.height*character.renderScale)/2-character.frameRect.y*character.renderScale
+            // Clip the scaled frame itself, not the square pet surface: tall
+            // frames otherwise expose the adjacent characters at either side.
+            Item {id:frameViewport;anchors.centerIn:parent;width:character.frameRect.width*character.renderScale;height:character.frameRect.height*character.renderScale;clip:true
+                Image {id:atlas;source:character.atlasSource;cache:true;asynchronous:true;retainWhileLoading:true;smooth:true
+                    width:implicitWidth*character.renderScale;height:implicitHeight*character.renderScale
+                    x:-character.frameRect.x*character.renderScale;y:-character.frameRect.y*character.renderScale
+                }
             }
             SequentialAnimation on rotation {running:root.allowed&&!root.reduced&&root.activity==='dance';loops:Animation.Infinite;NumberAnimation {from:-3;to:3;duration:420;easing.type:Easing.InOutSine}NumberAnimation {from:3;to:-3;duration:420;easing.type:Easing.InOutSine}onStopped:character.rotation=0}
 
+        }
+        Rectangle {visible:root.pendingUnread>0;anchors.right:parent.right;anchors.bottom:parent.bottom;width:30;height:18;radius:6;color:root.phonePending?'#16252a':'#24131c';border.color:root.phonePending?'#8fbcc4':'#f23d70';border.width:1
+            Text {anchors.centerIn:parent;text:(root.phonePending?'▣ ':'• ')+Math.min(99,root.pendingUnread);font.family:'Noto Sans';font.pixelSize:9;color:'#eee8e1'}
         }
     }
     }

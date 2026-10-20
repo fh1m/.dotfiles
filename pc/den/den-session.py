@@ -6,7 +6,7 @@ from den_layout import roles as display_roles
 from den_geometry import load as geometry,ranges as edge_ranges
 state=pathlib.Path.home()/".local/state/homie-control"
 if sys.argv[1]=="reset":
-    for name in ("active","return-armed"):
+    for name in ("active","return-armed","running"):
         (state/"input"/name).write_text("0")
     raise SystemExit(0)
 while True:
@@ -25,6 +25,7 @@ os.environ["DEN_CURSOR_SOCKET"]=str(state/"cursor.sock")
 binary=state/"bin/lan-mouse"
 if not binary.exists():binary=pathlib.Path("/usr/bin/lan-mouse")
 (state/"input/active").write_text("0")
+(state/"input/running").write_text("1")
 config=tomllib.loads((state/"input/config.toml").read_text())
 if config.get("clients"):
     outputs=display_roles(json.loads(subprocess.check_output(["hyprctl","monitors","-j"])))

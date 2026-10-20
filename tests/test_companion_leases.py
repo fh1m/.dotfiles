@@ -36,7 +36,26 @@ class EngineeringReceipts(unittest.TestCase):
 class MusicReceipt(unittest.TestCase):
  def test_short_lyrics_only_and_no_account_metadata(self):
   row={'at':1000,'playing':True,'line':'one two three four five six seven eight nine','url':'secret'}
-  self.assertEqual(m.music_line(row,now=2000),{'at':1000,'playing':True,'line':'one two three four five six seven eight'})
+  self.assertEqual(m.music_line(row,now=2000),{'at':1000,'playing':True,'line':'one two three four five six seven eight nine'})
  def test_expired_paused_and_malformed_receipts_are_ignored(self):
   for row in [None,{}, {'at':1000,'playing':False,'line':'x'},{'at':float('nan'),'playing':True,'line':'x'},{'at':1000,'playing':True,'line':42}]:self.assertEqual(m.music_line(row,now=2000),{})
   self.assertEqual(m.music_line({'at':1000,'playing':True,'line':'x'},now=32000),{})
+
+class CurrentLyricLease(unittest.TestCase):
+ def test_line_deadline_is_preserved_and_expired_lines_are_not_forwarded(self):
+  row={'at':1000,'until':2000,'playing':True,'line':'short line'}
+  self.assertEqual(m.music_line(row,now=1500),row)
+  self.assertEqual(m.music_line(row,now=2000),{})
+  self.assertEqual(m.music_line(dict(row,until=90000),now=1500),{})
+
+class DesktopNoticeReceipt(unittest.TestCase):
+ def test_phone_receipt_is_bounded_and_drops_private_fields_outside_requested_text(self):
+  row={'unread':4,'dnd':True,'entries':[{'id':'homie:1000:3','at':1000,'phone':True,'app':'KDE Connect','summary':'Message','body':'Hello','actions':['exec'],'token':'private'}]}
+  receipt=m.notification_receipt(row,'homie',now=2000)
+  self.assertTrue(receipt['dnd']);self.assertEqual(receipt['unread'],4)
+  self.assertEqual(receipt['entries'][0]['body'],'Hello');self.assertNotIn('private',str(receipt));self.assertNotIn('actions',str(receipt))
+ def test_malformed_stale_and_other_host_notification_ids_rejected(self):
+  row={'unread':999,'entries':[{'id':'arete:1000:1','at':1000},{'id':'homie:1000:1','at':float('nan')}]}
+  self.assertEqual(m.notification_receipt(row,'homie',now=2000)['entries'],[])
+  self.assertEqual(m.notification_receipt({},'unknown'),{})
+  self.assertEqual(m.notification_acks(['homie:1000:1','homie:1000:1','unsafe']),['homie:1000:1'])

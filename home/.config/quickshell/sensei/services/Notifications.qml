@@ -23,13 +23,15 @@ Singleton {
     property bool doNotDisturb: false
     property string companionApp:""
     property double companionEvent:0
+    property double companionReadAt:0
     FileView {id:companionNotice;path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-notifications.json";printErrors:false}
-    function publishCompanion(){companionNotice.setText(JSON.stringify({unread:unreadCount,dnd:doNotDisturb,app:companionApp,event:companionEvent})+"\n");}
+    function publishCompanion(){companionNotice.setText(JSON.stringify({unread:unreadCount,dnd:doNotDisturb,host:MachineProfile.host.toLowerCase(),app:companionApp,event:companionEvent,entries:history.filter(e=>e.at>companionReadAt).slice(0,12).map(e=>({id:MachineProfile.host.toLowerCase()+":"+e.at+":"+e.id,at:e.at,phone:/kde.?connect/i.test(e.app+" "+e.icon),app:e.app,summary:e.summary,body:root.plainSummary(e.body)}))})+"\n");}
+    Component.onCompleted:publishCompanion()
     onUnreadCountChanged:publishCompanion()
     onDoNotDisturbChanged:publishCompanion()
 
-    function markRead(): void { unreadCount = 0; }
-    function clearHistory(): void { history = []; unreadCount = 0; }
+    function markRead(): void { companionReadAt=Date.now(); unreadCount = 0;publishCompanion(); }
+    function clearHistory(): void { history = [];companionReadAt=Date.now(); unreadCount = 0;publishCompanion(); }
 
     // Newest first.
     //
@@ -167,6 +169,7 @@ Singleton {
                 body: root.safeBody(notification.body || ""),
                 time: new Date().toLocaleTimeString(Qt.locale(), "hh:mm AP"),
                 id: notification.id,
+                at:Date.now(),
                 critical: notification.urgency === NotificationUrgency.Critical
             };
             root.companionApp=entry.app;root.companionEvent=Date.now();

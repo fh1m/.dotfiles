@@ -4,7 +4,8 @@ import Quickshell.Io
 import Quickshell.Wayland
 ShellRoot {
     id: root
-    // Zondo policy v6: reload this root when the shared JS policy changes.
+    // Loader reload refreshes QML only. Restart den-cursor when shared JS changes;
+    // Qt caches imported scripts for the renderer engine lifetime.
     property real companionRevision:Date.now()
     Loader {
         id:companionLoader

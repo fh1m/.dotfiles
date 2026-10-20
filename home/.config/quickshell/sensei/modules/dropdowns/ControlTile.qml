@@ -4,6 +4,7 @@ import qs.config
 Rectangle {
  id:root
  property int textSize:0
+ property string textFamily:Appearance.font.ui
  property string label:""
  // Every action gets a visual anchor, including legacy text-only panels.
  // Explicit glyphs still override the semantic fallback.
@@ -39,8 +40,8 @@ Rectangle {
  Text { textFormat: Text.PlainText;anchors.centerIn:parent;text:root.glyph;font.family:Appearance.font.icons;font.pixelSize:root.width<100?16:root.height>=38?17:15;color:root.selected||pointer.containsMouse?root.accentColor:Theme.widgetMuted;Behavior on color {ColorAnimation {duration:Theme.motionAck}}}
  }
   Column {visible:root.label!==""&&root.label!=="‹"&&root.label!=="›"&&root.label!=="←"&&root.label!=="→";anchors.verticalCenter:parent.verticalCenter;width:Math.max(0,parent.width-(iconCell.visible?iconCell.width+parent.spacing:0));spacing:2
- NrLabel {textFormat:Text.PlainText;width:parent.width;elide:Text.ElideRight;centred:false;tracked:false;pixelSize:root.textSize>0?root.textSize:root.width<100?10:root.width>=130&&root.height>=36?12:11;font.family:Appearance.font.ui;font.capitalization:Font.MixedCase;font.weight:root.selected?Font.DemiBold:Font.Medium;font.letterSpacing:0;text:root.label;color:root.navigation&&root.selected?root.accentColor:Theme.widgetText}
- Text {id:tileDetail;textFormat:Text.PlainText;visible:root.detail!=="";width:parent.width;text:root.detail;elide:Text.ElideRight;font.family:Appearance.font.ui;font.pixelSize:9;color:Theme.widgetMuted}
+ NrLabel {textFormat:Text.PlainText;width:parent.width;elide:Text.ElideRight;centred:false;tracked:false;pixelSize:root.textSize>0?root.textSize:root.width<100?10:root.width>=130&&root.height>=36?12:11;font.family:root.textFamily;font.capitalization:Font.MixedCase;font.weight:root.selected?Font.DemiBold:Font.Medium;font.letterSpacing:0;text:root.label;color:root.navigation&&root.selected?root.accentColor:Theme.widgetText}
+ Text {id:tileDetail;textFormat:Text.PlainText;visible:root.detail!=="";width:parent.width;text:root.detail;elide:Text.ElideRight;font.family:root.textFamily;font.pixelSize:9;color:Theme.widgetMuted}
  }
  }
 

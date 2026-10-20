@@ -61,12 +61,41 @@ def engineering_acks(values):
 
 
 def music_line(record, now=None):
-    """Only a fresh eight-word lyric receipt travels with Zondo; no media URLs."""
+    """Only a fresh current-line lyric receipt travels with Zondo; no media URLs."""
     if not isinstance(record,dict):return {}
     now=time.time()*1000 if now is None else now
     at=record.get('at')
     if type(at) not in (int,float) or not 0<=now-at<=30000 or record.get('playing') is not True:return {}
     raw=record.get('line','')
     if not isinstance(raw,str):return {}
-    line=' '.join(raw.split()[:8])[:180]
-    return {'at':at,'playing':True,'line':line} if line else {}
+    line=raw.strip()[:320]
+    until=record.get('until')
+    if type(until) in (int,float) and not now<until<=at+30000:return {}
+    out={'at':at,'playing':True,'line':line} if line else {}
+    if out and type(until) in (int,float):out['until']=until
+    return out
+
+
+def notification_receipt(record,host,now=None):
+    """Bounded plain notification projection, kept only within the private Den."""
+    import re
+    if host not in ('arete','homie') or not isinstance(record,dict):return {}
+    now=time.time()*1000 if now is None else now
+    unread=record.get('unread',0)
+    if type(unread) is not int:unread=0
+    out={'host':host,'unread':max(0,min(100,unread)),'dnd':record.get('dnd') is True,'entries':[]}
+    for row in record.get('entries',[])[:12] if isinstance(record.get('entries'),list) else []:
+        if not isinstance(row,dict):continue
+        at=row.get('at');identity=row.get('id','')
+        if type(at) not in (int,float) or not 0<=now-at<86400000 or not isinstance(identity,str) or not re.fullmatch(host+r':\d+:\d+',identity):continue
+        item={'id':identity,'at':at,'host':host,'phone':row.get('phone') is True}
+        for key,size in [('app',60),('summary',120),('body',240)]:
+            item[key]=str(row.get(key,'')).replace('\x00','')[:size]
+        out['entries'].append(item)
+    return out
+
+
+def notification_acks(values):
+    import re
+    if not isinstance(values,list):return []
+    return list(dict.fromkeys(x for x in values[-256:] if isinstance(x,str) and re.fullmatch(r'(arete|homie):\d+:\d+',x)))[-128:]

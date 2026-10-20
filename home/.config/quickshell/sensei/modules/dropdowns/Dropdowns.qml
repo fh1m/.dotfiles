@@ -263,9 +263,19 @@ Variants {
         // A click anywhere outside closes. The bar is in the list so clicking
         // another readout reaches it and switches dropdowns in one go.
         HyprlandFocusGrab {
-            active: !(ShellState.instrumentPinned&&popup.current==="engineering") && popup.grabArmed && popup.reveal > 0.99 && !openAnim.running && !swapAnim.running && !presentTimer.running && ShellState.dropdown === popup.current && !ShellState.externalDialogOpen
+            active: !Den.nativeSharing && !(ShellState.instrumentPinned&&popup.current==="engineering") && popup.grabArmed && popup.reveal > 0.99 && !openAnim.running && !swapAnim.running && !presentTimer.running && ShellState.dropdown === popup.current && !ShellState.externalDialogOpen
             windows: [popup].concat(popup.current==='spotify'&&SpotifyDesk.videoWindow?[SpotifyDesk.videoWindow]:[]).concat(Object.values(ShellState.barWindows)).filter(w => w !== null)
             onCleared: if (popup.current !== "" && ShellState.dropdown === popup.current && popup.grabArmed && !(ShellState.instrumentPinned&&popup.current==="engineering") && !ShellState.externalDialogOpen && popup.reveal > 0.99 && !openAnim.running && !swapAnim.running && !presentTimer.running && !focusReturn.running) outsideClose.restart()
+        }
+
+        // Modal focus grabs exclude Lan Mouse's edge surfaces. During sharing,
+        // preserve cursor freedom and dismiss passively on actual app/monitor focus.
+        Connections {target:Hyprland
+            function onRawEvent(event){
+                if(!Den.nativeSharing||popup.current===""||!popup.grabArmed||ShellState.externalDialogOpen||popup.reveal<.99||openAnim.running||swapAnim.running||(ShellState.instrumentPinned&&popup.current==='engineering'))return;
+                if(event.name==='activewindow'&&String(event.data).split(',')[0])outsideClose.restart();
+                if(event.name==='focusedmon'&&String(event.data).split(',')[0]!==popup.modelData.name)outsideClose.restart();
+            }
         }
 
         Timer { id: focusReturn; interval: 260; onTriggered: if(popup.current!==""&&!ShellState.externalDialogOpen) popup.grabArmed=true }
@@ -304,7 +314,7 @@ Variants {
             // closes the dropdown like any click off it. Zero-height, and so
             // inert, for a panel that fills the surface.
             MouseArea {
-                anchors.top: content.bottom
+                anchors.top: contentViewport.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
@@ -332,6 +342,7 @@ Variants {
             }
 
             Flickable {
+                id:contentViewport
                 width:parent.width
                 height:Math.max(1,Math.min(popup.panelHeight,popup.height-2*popup.surfaceInset))
                 contentHeight:content.height

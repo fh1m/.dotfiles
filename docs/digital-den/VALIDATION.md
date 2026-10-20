@@ -195,3 +195,34 @@ speech observation did not happen to include a sing-along; this is recorded
 separately from the passing lyric freshness, privacy, non-repetition and lease
 projection tests. The sing-along clock now survives roaming transitions, so short
 visits do not restart its entire waiting interval.
+
+## 20 October — lyrics, Zondo and further cursor acceptance
+
+Twelve more normal Den crossings passed, covering all four route combinations
+three times, with triple-Ctrl pause/resume. Stale helper, receiver-stop (3.471 s),
+watcher-restart and native release-chord tests passed. A fullscreen-music crossing
+then failed to enter: the listening room's compositor focus grab was modal and
+blocked the native capture barrier. The room is now non-modal. All four crossings
+and pause/resume passed with it open after that change. The initial failure is
+kept here; it was not labelled passed or hidden behind another watchdog.
+
+Actual focus-room layout checks passed on eDP-1, DP-1, DP-2 and HDMI-A-1: artwork
+left, lyric pane right, at least 40 px separation and both sections within output
+bounds. The full layout and generated asset ownership are documented in
+[Zondo and lyrics](ZONDO-AND-LYRICS.md). The existing reference GIF was inspected;
+our fill is line-timed, not a false claim of provider word/syllable timing.
+
+A native D-Bus fixture labelled `KDE Connect` verified phone classification,
+retained plain summary/body and DND suppression of speech. It was explicitly a
+local test message, not a claim that a physical phone sent it. DND was restored
+after the check. New projection tests reject malformed/stale/foreign-host IDs and
+strip notification actions/unknown fields. Existing lyric tests now preserve a
+complete current line, including its expiry, rather than truncating eight words.
+
+The same entry failure was reproduced with the System dropdown open. During an
+active native input session, shared dropdowns now avoid compositor modal grabs
+and dismiss passively when another application/monitor gains focus. A watched
+`input/running` marker is set by session startup and cleared in ExecStopPost;
+normal grabs remain available when the input service is stopped. All four routes
+and pause/resume passed with System open after this repair. The new teardown
+regression checks that active, return-armed and running markers all clear.

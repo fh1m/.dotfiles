@@ -20,4 +20,13 @@ class Safety(unittest.TestCase):
         service=Path(__file__).with_name("den-cursor.service").read_text()
         self.assertNotIn("Requires=den-input",service)
         self.assertNotIn("Wants=den-input",service)
+    def test_session_teardown_clears_capture_and_nonmodal_marker(self):
+        import runpy,sys
+        sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'home/.local/share/sensei'))
+        with tempfile.TemporaryDirectory() as d:
+            home=Path(d);state=home/'.local/state/homie-control/input';state.mkdir(parents=True)
+            for name in ('active','return-armed','running'):(state/name).write_text('1')
+            with patch('pathlib.Path.home',return_value=home),patch.object(sys,'argv',['den-session.py','reset']):
+                with self.assertRaises(SystemExit):runpy.run_path(str(Path(__file__).with_name('den-session.py')),run_name='__main__')
+            self.assertEqual([(state/n).read_text() for n in ('active','return-armed','running')],['0','0','0'])
 if __name__=="__main__":unittest.main()

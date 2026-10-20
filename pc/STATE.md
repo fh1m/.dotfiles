@@ -452,3 +452,19 @@ currently connected via the VIA hub; threshold 7 and existing pen settings are
 preserved. Reconnect and virtual-driver identity changes now trigger remapping.
 Zondo's cached lyric snippets can travel on existing leases without new network
 lyrics requests. See `docs/digital-den/VALIDATION.md` for evidence and boundaries.
+
+### 2026-10-20 — listening room and event-aware Zondo
+
+Further cursor testing exposed compositor focus-grab conflicts in fullscreen
+music and ordinary dropdowns. The listening room is now non-modal; shared panels
+avoid modal grabs while the native input session runs, using passive app/monitor
+focus dismissal. Four routes passed with each repaired UI open, after twelve
+normal crossings. Session teardown clears the watched running marker.
+
+Media typography, responsive artwork-left spacing and line-timed sing-along fill
+are shared. Zondo has two new locally generated transparent pose atlases, exact
+frame clipping (fixes adjacent-sprite copies), current-line singing episodes and
+bounded private cross-host notification receipts/acks, with distinct phone cards
+and DND handling. See `docs/digital-den/ZONDO-AND-LYRICS.md`. Deployment/test
+results are tracked in the validation record; notification fixture delivery is
+separate from a real physical-phone acceptance test.

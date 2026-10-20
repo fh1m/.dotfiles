@@ -6,6 +6,8 @@ import qs.services
 Singleton {
     id: root
     property var data: ({peer:{host:"Homie",authenticated:false},input:"unknown",storage:"unavailable",clipboard:"unavailable"})
+    property bool nativeSharing:false
+    FileView {path:Quickshell.env('HOME')+'/.local/state/homie-control/input/running';watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:root.nativeSharing=text().trim()==='1';onLoadFailed:root.nativeSharing=false}
     property string reply:""
     property string companionActionName:""
     property string error: ""
@@ -25,7 +27,7 @@ Singleton {
     }
     function execute(args):void {if(action.running)return;error="";action.command=[Quickshell.env("HOME")+"/.local/bin/den-control"].concat(args);action.running=true;}
     Component.onCompleted:refresh()
-    IpcHandler {target:"den-view";function state():string{return JSON.stringify({data:root.data,error:root.error});}function refresh():void{root.refresh();}function act(name:string):void{if(["toggle","locate","home","storage"].indexOf(name)>=0)root.execute([name]);}}
+    IpcHandler {target:"den-view";function state():string{return JSON.stringify({data:root.data,nativeSharing:root.nativeSharing,error:root.error});}function refresh():void{root.refresh();}function act(name:string):void{if(["toggle","locate","home","storage"].indexOf(name)>=0)root.execute([name]);}}
     Process {id:scan;command:[Quickshell.env("HOME")+"/.local/bin/den-control","status","--json"]
         stdout:StdioCollector {onStreamFinished:{try{root.data=JSON.parse(text);}catch(e){root.data={peer:{state:"unavailable",authenticated:false},input:"inactive",storage:"not configured"};root.error="Den status unavailable";}}}
     }

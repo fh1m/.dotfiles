@@ -16,9 +16,10 @@ ChamferPanel {
     readonly property bool critical: level === "CRITICAL"
     readonly property bool low: level === "LOW"
 
-    readonly property color tone: low ? Theme.paperMuted : Theme.signalRed
+    readonly property bool phone:/kde.?connect/i.test(String(notification?.appName||'')+' '+String(notification?.appIcon||''))
+    readonly property color tone: critical ? Theme.signalRed : phone ? '#8fbcc4' : low ? Theme.paperMuted : Theme.signalRed
 
-    readonly property string tabText: critical ? "ACTION REQUIRED" : (low ? "QUIET" : "NOTICE")
+    readonly property string tabText: critical ? "ACTION REQUIRED" : (phone ? "PHONE · KDE CONNECT" : low ? "QUIET" : "NOTICE")
 
     // Critical never times out; everything else gets the spec's six seconds.
     readonly property int lifetime: critical ? 0 : 6000

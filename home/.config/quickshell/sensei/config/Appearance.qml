@@ -54,6 +54,9 @@ Singleton {
         readonly property string display: "JetBrainsMono Nerd Font Mono"
         readonly property string heading: "JetBrainsMono Nerd Font Propo"
         readonly property string ui: "JetBrainsMono Nerd Font Propo"
+        // Proportional long-form/media text; Qt merges installed script fallbacks.
+        readonly property string reading: "Noto Sans"
+        function forText(value):string {const s=String(value);return /[\u0980-\u09ff]/.test(s)?"Noto Sans Bengali":/[\u0900-\u097f]/.test(s)?"Noto Sans Devanagari":/[\u0600-\u06ff]/.test(s)?"Noto Sans Arabic":reading;}
         // Bar labels: JetBrainsMono Nerd Font. Data readouts and telemetry: Iosevka Nerd Font.
         readonly property string barUi: "JetBrainsMono Nerd Font Propo"
         readonly property string data: "Iosevka Nerd Font Mono"

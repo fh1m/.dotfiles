@@ -32,7 +32,7 @@ function place(width,height,w,h,windows,variant) {
 // Weighted variety without consecutive repeats; no emotional inference or activity logging.
 function nextActivity(previous, music, random, hidden, favorites) {
     hidden=hidden||[];favorites=favorites||[];
-    var extra=Object.keys(activityAtlases);
+    var extra=Object.keys(activityAtlases).filter(function(x){return x!=='sing'&&x!=='phone';});
     var pool=music?['dance','dance','guitar','dance','stretch']:['read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','sleep','think','wave','typing'];
     pool=pool.concat(music?extra.filter(function(x){return ['drums','bass','headphones','conduct'].indexOf(x)>=0;}):extra);
     pool=pool.concat(favorites.filter(function(x){return pool.indexOf(x)>=0;}));
@@ -75,7 +75,23 @@ function worldPlace(view,world,width,height,w,h,windows,variant) {
 
 // A short, fresh line from the existing media widget, never a new lyrics request.
 function singLine(receipt, now, last, random) {
-    if(!receipt||!receipt.playing||!Number.isFinite(receipt.at)||now-receipt.at<0||now-receipt.at>30000||random>.4)return '';
-    var line=String(receipt.line||'').trim().split(/\s+/).slice(0,8).join(' ');
+    if(!receipt||!receipt.playing||(Number.isFinite(receipt.until)&&now>=receipt.until)||!Number.isFinite(receipt.at)||now-receipt.at<0||now-receipt.at>30000||random>.4)return '';
+    var line=String(receipt.line||'').trim().slice(0,320);
     return !line||line===last?'':line;
+}
+
+function noticeText(entry) {
+    var text=(entry.phone?'Your phone has stuff to say. ':entry.host==='homie'?'Homie · ':'')+String(entry.app||'Notification')+': '+String(entry.summary||'');
+    if(entry.body&&entry.body!==entry.summary)text+=' — '+entry.body;
+    return text.slice(0,320);
+}
+
+// Use ES5 array operations: Qt's JS engine does not provide Array.flatMap.
+function nextNotice(sources, seen) {
+    if(sources.some(function(n){return n.dnd===true;}))return null;
+    var rows=[];
+    sources.forEach(function(n){if(n.unread>0)rows=rows.concat(n.entries||[]);});
+    rows=rows.filter(function(e){return seen.indexOf(e.id)<0;});
+    rows.sort(function(a,b){return a.at-b.at;});
+    return rows.length?rows[0]:null;
 }
