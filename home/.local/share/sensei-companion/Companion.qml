@@ -1,4 +1,5 @@
 import QtQuick
+import "."
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -10,6 +11,18 @@ import "SpeechLayout.js" as Speech
 Item {
     id: root
     property string ownerOutput: ""
+    GuestVisit {
+        id:senseiGuests
+        targetScreen:root.speechScreen
+        permitted:root.eligible&&!root.denDnd&&root.preferences.guestsEnabled!==false
+        busy:root.speaking
+        reducedMotion:root.reduced
+        obstacles:root.occupied
+        preferences:root.preferences
+        onBegan:{root.speaking=false;root.publish();}
+        onEnded:root.publish()
+    }
+
     property var journey: ({})
     onJourneyChanged:{if(journey.scene!==activity&&["courier","parcel","detective","wrench"].includes(journey.scene)){activity=journey.scene;frame=0;poseExpiry.restart();}const m=journey.memory;if(m&&Number(m.turn)>turn&&Array.isArray(m.recent)){turn=m.turn;recent=m.recent.slice(-40);remember();}}
     property real journeyClock: Date.now()/1000
@@ -38,7 +51,7 @@ Item {
         }else maybeSing();
     }
     function maybeSing():void {
-        if(!allowed||!speechWindow.bubblePlace.available||!denMusic||denDnd||speaking||preferences.chatter===false||Date.now()-lastSingAt<120000)return;
+        if(senseiGuests.active||!allowed||!speechWindow.bubblePlace.available||!denMusic||denDnd||speaking||preferences.chatter===false||Date.now()-lastSingAt<120000)return;
         const line=Logic.singLine(currentLyric,Date.now(),lastSungLine,0);
         if(line){lastSingAt=Date.now();lastLyricAt=Date.now();singEndAt=Date.now()+75000;lastSungLine=line;activity='sing';frame=0;say('♪ '+line,'singing along');speechExpiry.interval=75000;speechExpiry.restart();}
     }
@@ -100,10 +113,10 @@ Item {
     property int activityTicks:0
     readonly property int extraPose:Logic.extendedPose(activity,frame)
     readonly property int pose: activity==="walk" ? (walkingRight?8:4)+frame%4 : activity==="wave" ? 13 : activity==="celebrate" ? 14 : activity==="think" ? 12 : activity==="sleep" ? 15 : frame%4
-    IpcHandler {target:"companion";function state():string{return JSON.stringify({name:"Zondo",musicPlaying:root.denMusic,allowed:root.allowed,speaking:root.speaking,speechVisible:speechWindow.visible,frame:root.frame,unread:root.pendingUnread,phonePending:root.phonePending,noticeAcks:root.noticeSeen.length,dnd:root.denDnd,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,obstacles:root.occupied,bubble:{x:speechWindow.margins.left,y:speechWindow.margins.top,width:speechWindow.width,height:speechWindow.height},activity:root.activity,extraPose:root.extraPose,welcome:root.welcoming,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect,viewport:{width:frameViewport.width,height:frameViewport.height,clipped:frameViewport.clip},scale:character.renderScale},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
+    IpcHandler {target:"companion";function guest(id:string):bool{return senseiGuests.start(id,true);}function guestNext():void{senseiGuests.next();}function guestPause():void{senseiGuests.paused=!senseiGuests.paused;}function guestClose():void{senseiGuests.finish();}function state():string{return JSON.stringify({name:"Zondo",musicPlaying:root.denMusic,guest:{active:senseiGuests.active,id:senseiGuests.guest.id||"",page:senseiGuests.pageIndex,pages:senseiGuests.cards.length,kind:senseiGuests.card.kind||"",paused:senseiGuests.paused},allowed:root.allowed,speaking:root.speaking,speechVisible:speechWindow.visible,frame:root.frame,unread:root.pendingUnread,phonePending:root.phonePending,noticeAcks:root.noticeSeen.length,dnd:root.denDnd,output:root.target,fullscreen:root.fullscreen,pose:root.pose,size:root.preferences.size??96,reducedMotion:root.reduced,travel:root.deliberateTravel,placement:root.placement,obstacles:root.occupied,bubble:{x:speechWindow.margins.left,y:speechWindow.margins.top,width:speechWindow.width,height:speechWindow.height},activity:root.activity,extraPose:root.extraPose,welcome:root.welcoming,message:root.message,kind:root.messageKind,sprite:{status:character.status,sourceWidth:character.sourceSize.width,clip:character.sourceClipRect,viewport:{width:frameViewport.width,height:frameViewport.height,clipped:frameViewport.clip},scale:character.renderScale},panel:{x:pet.margins.left,y:pet.margins.top,width:pet.width,height:pet.height}});}}
     property string lastPublished:""
     function publish():void {
-        const data=JSON.stringify({output:target,allowed:allowed,eligible:eligible,speaking:speaking,speechVisible:speechWindow.visible,message:message,kind:messageKind,name:"Zondo",reducedMotion:reduced,activity:activity,extraPose:extraPose,pose:pose,lastNote:lastNote,noteKind:noteKind});
+        const data=JSON.stringify({output:target,allowed:allowed,eligible:eligible,speaking:speaking||senseiGuests.active,speechVisible:speechWindow.visible||senseiGuests.active,message:message,kind:messageKind,name:"Zondo",reducedMotion:reduced,activity:activity,extraPose:extraPose,pose:pose,lastNote:lastNote,noteKind:noteKind});
         if(data!==lastPublished && renderFile){lastPublished=data;renderFile.setText(data);}
     }
     FileView {id:renderFile;path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-render.json";printErrors:false}
@@ -174,9 +187,9 @@ Item {
     function remember():void {if(memoryLoaded)memoryFile.setText(JSON.stringify({schema:1,recent:recent.slice(-40),turn:turn}));}
     function vary():void {activityTicks=0;activity=Logic.nextActivity(activity,denMusic,Math.random(),preferences.hiddenActivities||[],preferences.favoriteActivities||[]);if(placement.scene&&Math.random()<.4&&!denMusic){const moods={upper:"stargaze",main:"garden",lower:"calibrate",screenpad:"aquarium",homie:"robot"};activity=moods[placement.scene]||activity;}frame=0;poseExpiry.stop();}
     function welcome(text):void {if(Date.now()-lastWelcome<60000)return;if(preferences.welcome===false||preferences.quiet===true||preferences.enabled===false)return;lastWelcome=Date.now();welcomeText=text;welcoming=true;welcomeExpiry.restart();}
-    function say(text,kind):void {eventJob="";eventHost="";const words=String(text);const limit=kind==='singing along'?324:320;noticeHeading="";message=words.length>limit?words.slice(0,limit-4).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.interval=12000;speechExpiry.restart();updateSpeech();}
+    function say(text,kind):void {if(senseiGuests.active)return;eventJob="";eventHost="";const words=String(text);const limit=kind==='singing along'?324:320;noticeHeading="";message=words.length>limit?words.slice(0,limit-4).replace(/\s+\S*$/,"")+"…":words;messageKind=kind||"field note";speaking=true;speechExpiry.interval=12000;speechExpiry.restart();updateSpeech();}
     function greet(manual):void {
-        if(!allowed||!speechWindow.bubblePlace.available||speaking||(!manual&&(preferences.chatter===false||denDnd))||!Logic.notes.length)return;
+        if(senseiGuests.active||!allowed||!speechWindow.bubblePlace.available||speaking||(!manual&&(preferences.chatter===false||denDnd))||!Logic.notes.length)return;
         if(notices.dnd&&notices.unread>0){say(notices.unread+" notifications waiting quietly. No rush; the bell has them when you want them.","quiet desk");return;}
         if(pendingUnread>0){announceNotice();if(speaking)return;}
         if(turn%3===0&&telemetry.suggestions?.length){
@@ -274,7 +287,7 @@ Item {
     onDenDndChanged:if(denDnd)speaking=false
     FileView {id:noticeMemory;onLoadFailed:root.noticeMemoryLoaded=true;path:Quickshell.env('HOME')+'/.local/state/sensei-den/zondo-notice-seen.json';printErrors:false;onLoaded:{try{root.noticeSeen=Array.from(new Set(root.noticeSeen.concat(JSON.parse(text()).ids||[]))).slice(-128);}catch(e){}root.noticeMemoryLoaded=true;}}
     function announceNotice():void {
-        if(!allowed||!speechWindow.bubblePlace.available||denDnd||speaking||preferences.notificationChatter===false)return;
+        if(senseiGuests.active||!allowed||!speechWindow.bubblePlace.available||denDnd||speaking||preferences.notificationChatter===false)return;
         const seen=noticeSeen.concat(journey.noticeAcks||[]);
         const e=Logic.nextNotice(noticeSources,seen);
         if(e){noticeSeen=Array.from(new Set(seen.concat([e.id]))).slice(-128);
@@ -296,7 +309,7 @@ Item {
     Timer {id:poseExpiry;interval:2200;onTriggered:{root.vary();root.frame=0;root.deliberateTravel=false;}}
     Timer {id:speechExpiry;interval:12000;onTriggered:{root.speaking=false;}}
     Timer {id:landingExpiry;interval:700;onTriggered:root.landing=false}
-    function updateSpeech():void {if(speechWindow)speechWindow.visible=allowed&&speaking&&speechWindow.bubblePlace.available;}
+    function updateSpeech():void {if(speechWindow)speechWindow.visible=!senseiGuests.active&&allowed&&speaking&&speechWindow.bubblePlace.available;}
     Timer {interval:250;repeat:true;running:root.allowed&&root.speaking;onTriggered:root.updateSpeech()}
     readonly property bool singingCard:speaking&&messageKind==='singing along'
     readonly property var speechScreen:Quickshell.screens.find(s=>s.name===root.target)??Quickshell.screens[0]
@@ -325,7 +338,7 @@ Item {
     PanelWindow {
         id:pet
         screen:Quickshell.screens.find(s=>s.name===root.target)??Quickshell.screens[0]
-        visible:root.allowed
+        visible:root.allowed&&!senseiGuests.active
         color:"transparent"
         readonly property real spriteSize:Math.max(64,Math.min(root.singingCard?200:180,root.singingCard?Math.max(160,(root.preferences.size??96)*1.65):(root.preferences.size??96)))
         implicitWidth:spriteSize

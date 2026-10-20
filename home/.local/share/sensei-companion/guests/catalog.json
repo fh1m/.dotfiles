@@ -1,0 +1,1149 @@
+{
+  "schema": 1,
+  "rosterSource": "https://fh1m.github.io/mongla_ws/",
+  "disclaimer": "Illustrated tribute visits. Introductions and Zondo replies are staged; only quotation cards reproduce sourced words. Context and life/work cards are our summaries.",
+  "sources": {
+    "feynman-cargo": {
+      "url": "https://calteches.library.caltech.edu/51/2/CargoCult.htm",
+      "title": "Cargo Cult Science · 1974",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "a94efd60337f7de7aafa2774ae5978915618efb5433d42d86627e9985615201d",
+      "author": "Richard Feynman"
+    },
+    "feynman-science": {
+      "url": "https://www.feynman.com/science/what-is-science/",
+      "title": "What Is Science?",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "a4feea30f8675dbff5e266cd0887ab246bab69a0b88645960dba13c52b395fb9",
+      "author": "Richard Feynman"
+    },
+    "feynman-nobel": {
+      "url": "https://www.nobelprize.org/prizes/physics/1965/feynman/lecture/",
+      "title": "Nobel lecture · 1965",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "c9d2d58de9f8e7ba849034c3fb440f1cd0dbff66e0ba0e2c1bddb03192edc050",
+      "author": "Richard Feynman"
+    },
+    "carmack-latency": {
+      "url": "https://danluu.com/latency-mitigation/",
+      "title": "Latency Mitigation Strategies",
+      "checked": "2026-10-20",
+      "kind": "archived author essay",
+      "sha256": "c9fca75278e3303486913e72fadcc7c7a337bf479798b15915038ac30ba13f4d",
+      "author": "John Carmack"
+    },
+    "carmack-inline": {
+      "url": "http://number-none.com/blow/john_carmack_on_inlined_code.html",
+      "title": "John Carmack on inlined code",
+      "checked": "2026-10-20",
+      "kind": "archived author email",
+      "sha256": "0c2ab6c4787b89bd880b4b9993d51baa62a1c6002d55d4d2fe2ceba7a5d1504f",
+      "author": "John Carmack"
+    },
+    "carmack-functional": {
+      "url": "https://www.gamedeveloper.com/programming/in-depth-functional-programming-in-c-",
+      "title": "Functional Programming in C++",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "236b6df9d6b4a439160f8f609df673412c15add52cca583ac9451e6b5fb4a971",
+      "author": "John Carmack"
+    },
+    "karpathy-recipe": {
+      "url": "https://karpathy.github.io/2019/04/25/recipe/",
+      "title": "A Recipe for Training Neural Networks",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "d3c48db7854610ac7a266f6b1253d103686f0606a9ca46bd207514e020432d18",
+      "author": "Andrej Karpathy"
+    },
+    "karpathy-rnn": {
+      "url": "https://karpathy.github.io/2015/05/21/rnn-effectiveness/",
+      "title": "The Unreasonable Effectiveness of RNNs",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "a29a202d3306222928a165338a3d5be3e71b5c1189727cac27f315911adb3160",
+      "author": "Andrej Karpathy"
+    },
+    "lattner-llvm": {
+      "url": "https://aosabook.org/en/v1/llvm.html",
+      "title": "The Architecture of LLVM",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "66cc6ffc4b2e7e6ed5789f7f12d1686b188c78d1d6e2e70cbecda8442f6b23c7",
+      "author": "Chris Lattner"
+    },
+    "lattner-modular": {
+      "url": "https://www.modular.com/blog/developer-voices-deep-dive-with-chris-lattner-on-mojo",
+      "title": "Developer Voices · Mojo deep dive",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "b8475e53e6f26e124dd505a8d82a747aea56883717b05c542365ddce0dd1ed87",
+      "author": "Chris Lattner"
+    },
+    "lattner-syntax": {
+      "url": "https://syntax.fm/show/679/creator-of-swift-tesla-autopilot-and-tensorflow-new-ai-language-mojo-with-chris-lattner/transcript",
+      "title": "Syntax 679 · Chris Lattner",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "dd9644a5a67dd1f73f96f2e6285cda32c9768373eec469876c180aa98de01f02",
+      "author": "Chris Lattner"
+    },
+    "graham-ideas": {
+      "url": "https://paulgraham.com/startupideas.html",
+      "title": "How to Get Startup Ideas",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "8c207d442b6ee684627c09b07849215b4ee7d2f43b43323acf832460af2d862a",
+      "author": "Paul Graham"
+    },
+    "graham-scale": {
+      "url": "https://paulgraham.com/ds.html",
+      "title": "Do Things that Don’t Scale",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "7fab8cd721346fa0fa56e41564ccc6f7755668e626923bf94717f9251bd09d06",
+      "author": "Paul Graham"
+    },
+    "graham-schedule": {
+      "url": "https://paulgraham.com/makersschedule.html",
+      "title": "Maker’s Schedule, Manager’s Schedule",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "909b387940355db2901458272711aec42cae18bee31957427f9dc2e1369c74f5",
+      "author": "Paul Graham"
+    },
+    "graham-hard": {
+      "url": "https://paulgraham.com/hwh.html",
+      "title": "How to Work Hard",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "c2ff76958fec76c5ca02e1179965415ab2d744f09c9f7114fb29fac6d019f96d",
+      "author": "Paul Graham"
+    },
+    "urban-chef": {
+      "url": "https://waitbutwhy.com/2015/11/the-cook-and-the-chef-musks-secret-sauce.html",
+      "title": "The Cook and the Chef",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "0227445ce280dea9173b4254948eab3a71a12a86270052c87a6ecb59bc92df65",
+      "author": "Tim Urban"
+    },
+    "urban-procrastination": {
+      "url": "https://waitbutwhy.com/2013/10/why-procrastinators-procrastinate.html",
+      "title": "Why Procrastinators Procrastinate",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "c7cff33824d770c3f41d0473972c4f3d1d74d41f7911611375707a0570556377",
+      "author": "Tim Urban"
+    },
+    "urban-taming": {
+      "url": "https://waitbutwhy.com/2013/11/how-to-beat-procrastination.html",
+      "title": "How to Beat Procrastination",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "5bedbc5810a2da5f3d5e70f4cca0a44591122d3f13c53057107160dc9779c14a",
+      "author": "Tim Urban"
+    },
+    "urban-career": {
+      "url": "https://waitbutwhy.com/2018/04/picking-career.html",
+      "title": "How to Pick a Career",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "4eb03693382848cc547a89a783a05a0693273faa6592aac61972649dcefb8a8d",
+      "author": "Tim Urban"
+    },
+    "west-fader": {
+      "url": "https://www.thefader.com/2013/11/18/kanye-west-harvard-video-yeezus",
+      "title": "Harvard GSD speech · 2013 · The FADER",
+      "checked": "2026-10-20",
+      "kind": "publisher reproduction of speech",
+      "sha256": "9d1cfb5c58419c78a28cf23b07091d25d6bcf13e8f98439250f9eef5cf958446",
+      "author": "Kanye West"
+    },
+    "west-gq": {
+      "url": "https://www.gq.com/story/inside-kanye-west-vision-for-the-future-cover-may-2020",
+      "title": "GQ interview · 2020",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "17f2dcb0669e3de806ccebb98b42da2f9efc47b48a2e8e44fc37715d4aaa8262",
+      "author": "Kanye West"
+    },
+    "west-fader2008": {
+      "url": "https://www.thefader.com/2013/10/23/kanye-west-unedited-the-complete-fader-interview-2008",
+      "title": "The complete FADER interview · 2008",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "7ec951b4cdbbdcb95eb6b28cda35b8e6702ebfdf6df75bea7aeb00327db9c0f2",
+      "author": "Kanye West"
+    },
+    "rubin-tim": {
+      "url": "https://tim.blog/2023/01/16/rick-rubin-2-transcript/",
+      "title": "Tim Ferriss 649 · Rick Rubin",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "91ceee09cb765116306cf24ccd7ebd89c00b1a654f9df122379a77d6a34c0437",
+      "author": "Rick Rubin"
+    },
+    "rubin-listening": {
+      "url": "https://pioneerworks.org/broadcast/rick-rubin-creative-act-listening",
+      "title": "The Creative Act · Listening excerpt",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "3517372a87d153e65e2e8cdd55c36e3a88a65e0dbac574eac9b820e786432f94",
+      "author": "Rick Rubin"
+    },
+    "rubin-another": {
+      "url": "https://www.anothermag.com/design-living/15185/rick-rubin-interview-the-creative-act-a-way-of-being-book-jefferson-hack",
+      "title": "AnOther · Lessons in Creativity",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "6bef336d5f336ae0b9b9a82245fc77cb30c3f1ddcac5ed94d4af6b4ef47ddf9a",
+      "author": "Rick Rubin"
+    },
+    "hotz-latent": {
+      "url": "https://www.latent.space/p/geohot",
+      "title": "Latent Space · George Hotz · 2023",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "8ffb3bb8f1efd042685e6442b4fd85350521f0dd669517a57f2f9a975340a18c",
+      "author": "George Hotz"
+    },
+    "hotz-lex": {
+      "url": "https://lexfridman.com/george-hotz-3-transcript/",
+      "title": "Lex Fridman 387 · George Hotz",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "cbf67f4fc40d7714c97deaa95f098b5b3bf328c8f68a5bad5d9e03e2c1cc2747",
+      "author": "George Hotz"
+    },
+    "keller-oral": {
+      "url": "https://archive.computerhistory.org/resources/access/text/2024/10/102809019-05-01-acc.pdf",
+      "title": "CHM oral history · July 8, 2024",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "d20ca6c81d3d56d90b555d87ae6ce74b506fce969358e5cf39f38285789e3fb7",
+      "author": "Jim Keller"
+    },
+    "keller-laws": {
+      "url": "https://tenstorrent.com/newsroom/jim-keller-ai-still-obeys-the-old-laws-of-compute",
+      "title": "AI Still Obeys the Old Laws of Compute",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "8e5430b6a36cfdafdd9d67e49434c0cda033bf76275d0f88edaceb3d7cf99f25",
+      "author": "Jim Keller"
+    },
+    "keller-efy": {
+      "url": "https://www.electronicsforyou.biz/eb-specials/leaders-talk-eb-specials/we-want-to-make-it-very-easy-to-expand-from-a-single-chip-to-a-large-number-of-chips/",
+      "title": "Electronics For You · Jim Keller · 2023",
+      "checked": "2026-10-20",
+      "kind": "publisher transcript or author text",
+      "sha256": "829f7aba209623622914529b1d4fd12cd4ef5b442d81ef08861ccb0ad5a70ef7",
+      "author": "Jim Keller"
+    }
+  },
+  "guests": [
+    {
+      "id": "feynman",
+      "name": "Richard Feynman",
+      "role": "Physicist · question the measurement",
+      "story": "Feynman’s account of quantum electrodynamics shows several routes toward one calculation. His scientific-integrity argument also underlies your public Mongla measurement ledger.",
+      "storySource": "feynman-cargo",
+      "atlas": "feynman-v3.png",
+      "quotes": [
+        {
+          "id": "feynman-01",
+          "source": "feynman-cargo",
+          "text": "you must not fool yourself",
+          "context": "The warning includes the experimenter: evidence against a favorite idea belongs in the report too.",
+          "question": "Which result would make us change our mind?",
+          "excerpt": true
+        },
+        {
+          "id": "feynman-02",
+          "source": "feynman-cargo",
+          "text": "We must publish both kinds of result.",
+          "context": "A disappointing measurement still tells the next engineer something useful.",
+          "question": "Would we keep this result if it looked less impressive?",
+          "excerpt": true
+        },
+        {
+          "id": "feynman-03",
+          "source": "feynman-cargo",
+          "text": "Details that could throw doubt",
+          "context": "He asks experimenters to disclose weaknesses rather than present only the convincing half of a result.",
+          "question": "What uncertainty have we left out of the graph?",
+          "excerpt": true
+        },
+        {
+          "id": "feynman-04",
+          "source": "feynman-cargo",
+          "text": "a kind of utter honesty",
+          "context": "Scientific integrity demands more than technically truthful individual statements.",
+          "question": "Could the presentation imply more than we measured?",
+          "excerpt": true
+        },
+        {
+          "id": "feynman-05",
+          "source": "feynman-science",
+          "text": "Science is the belief in the ignorance of experts.",
+          "context": "Expertise can guide a test; it cannot replace checking the claim.",
+          "question": "What would we measure rather than accept on authority?",
+          "excerpt": true
+        },
+        {
+          "id": "feynman-06",
+          "source": "feynman-science",
+          "text": "what we know and what we call it",
+          "context": "His father distinguished naming inertia from explaining an observation.",
+          "question": "Can I explain the mechanism without using its name?",
+          "excerpt": true
+        },
+        {
+          "id": "feynman-07",
+          "source": "feynman-science",
+          "text": "freedom of thought",
+          "context": "His account treats questioning inherited explanations as part of scientific practice.",
+          "question": "Which familiar explanation should we test for ourselves?",
+          "excerpt": true
+        },
+        {
+          "id": "feynman-08",
+          "source": "feynman-nobel",
+          "text": "try to guess equations",
+          "context": "In his Nobel lecture, mathematical proposals still need consistency and contact with physical results.",
+          "question": "What constraints must our proposed equation satisfy?",
+          "excerpt": true
+        },
+        {
+          "id": "feynman-09",
+          "source": "feynman-nobel",
+          "text": "the variety of hypotheses",
+          "context": "Different formulations can suggest different paths into an unsolved problem.",
+          "question": "Can we represent this problem in another way?",
+          "excerpt": true
+        },
+        {
+          "id": "feynman-10",
+          "source": "feynman-nobel",
+          "text": "not absolutely necessary",
+          "context": "He distinguishes a useful formulation from a claim that it is the only possible route.",
+          "question": "Are we mistaking our preferred method for a requirement?",
+          "excerpt": true
+        }
+      ]
+    },
+    {
+      "id": "carmack",
+      "name": "John Carmack",
+      "role": "Programmer · trace the real execution",
+      "story": "Carmack’s engineering writing examines latency, state and execution order. The useful Den connection is concrete: trace the work a frame actually performs before adding another abstraction.",
+      "storySource": "carmack-latency",
+      "atlas": "carmack-v3.png",
+      "quotes": [
+        {
+          "id": "carmack-01",
+          "source": "carmack-latency",
+          "text": "Many systems need to cooperate",
+          "context": "Low latency depends on several stages cooperating, not only one fast function.",
+          "question": "Where does the oldest input spend its time?",
+          "excerpt": true
+        },
+        {
+          "id": "carmack-02",
+          "source": "carmack-latency",
+          "text": "Prevent GPU buffering",
+          "context": "Queued frames can preserve throughput while increasing the delay a person feels.",
+          "question": "Did we measure latency as well as frame rate?",
+          "excerpt": true
+        },
+        {
+          "id": "carmack-03",
+          "source": "carmack-latency",
+          "text": "Continuously updated time warping",
+          "context": "His discussion explores correcting a displayed view using newer motion information.",
+          "question": "Which part of our result could use a fresher measurement?",
+          "excerpt": true
+        },
+        {
+          "id": "carmack-04",
+          "source": "carmack-inline",
+          "text": "their code should follow sequentially.",
+          "context": "When operations are inherently ordered, their execution order should be visible.",
+          "question": "Can we trace the whole path without guessing which call runs next?",
+          "excerpt": true
+        },
+        {
+          "id": "carmack-05",
+          "source": "carmack-inline",
+          "text": "consider inlining it.",
+          "context": "For a single-use function, he considers whether an extra boundary is actually helping.",
+          "question": "What does this helper clarify, and what does it hide?",
+          "excerpt": true
+        },
+        {
+          "id": "carmack-06",
+          "source": "carmack-inline",
+          "text": "try to make it completely functional.",
+          "context": "A nearly pure computation may become easier to reason about by exposing its remaining dependencies.",
+          "question": "Which hidden state can become an explicit input?",
+          "excerpt": true
+        },
+        {
+          "id": "carmack-07",
+          "source": "carmack-inline",
+          "text": "code duplication is a greater evil",
+          "context": "His argument for visible execution is not a license to copy logic everywhere.",
+          "question": "Can we preserve one implementation and still make the ordering clear?",
+          "excerpt": true
+        },
+        {
+          "id": "carmack-08",
+          "source": "carmack-functional",
+          "text": "the abstraction is still valuable.",
+          "context": "Even when hardware has side effects, a useful programming abstraction can make reasoning clearer.",
+          "question": "At which boundary is this model useful, and where does it stop?",
+          "excerpt": true
+        },
+        {
+          "id": "carmack-09",
+          "source": "carmack-functional",
+          "text": "Pure functions have a lot of nice properties.",
+          "context": "Explicit inputs and outputs make testing and reuse easier to inspect.",
+          "question": "Could we test this calculation without starting the entire application?",
+          "excerpt": true
+        },
+        {
+          "id": "carmack-10",
+          "source": "carmack-functional",
+          "text": "completely thread safe.",
+          "context": "The quoted claim concerns pure functions with value parameters, not arbitrary shared mutable objects.",
+          "question": "Are all the inputs really values, or is something shared underneath?",
+          "excerpt": true
+        }
+      ]
+    },
+    {
+      "id": "karpathy",
+      "name": "Andrej Karpathy",
+      "role": "AI educator · earn the baseline",
+      "story": "Karpathy’s training recipe starts with data inspection and simple baselines. His recurrent-network essay makes stateful computation tangible with small implementations and inspected outputs.",
+      "storySource": "karpathy-recipe",
+      "atlas": "karpathy-v4.png",
+      "quotes": [
+        {
+          "id": "karpathy-01",
+          "source": "karpathy-recipe",
+          "text": "Become one with the data",
+          "context": "Inspect examples and distributions before assuming that a training failure belongs to the model.",
+          "question": "What does an actual difficult sample look like?",
+          "excerpt": true
+        },
+        {
+          "id": "karpathy-02",
+          "source": "karpathy-recipe",
+          "text": "overfit one batch",
+          "context": "Fitting a tiny batch checks whether the training pipeline can learn at all.",
+          "question": "Can our model deliberately memorize two examples?",
+          "excerpt": true
+        },
+        {
+          "id": "karpathy-03",
+          "source": "karpathy-recipe",
+          "text": "visualize just before the net",
+          "context": "The input tensor immediately before inference is more trustworthy than an earlier preview.",
+          "question": "Have we looked at exactly what the model receives?",
+          "excerpt": true
+        },
+        {
+          "id": "karpathy-04",
+          "source": "karpathy-recipe",
+          "text": "Neural net training fails silently",
+          "context": "A running training loop can produce plausible numbers while containing a serious mistake.",
+          "question": "What test could fail even if the loss decreases?",
+          "excerpt": true
+        },
+        {
+          "id": "karpathy-05",
+          "source": "karpathy-recipe",
+          "text": "verify loss @ init",
+          "context": "An expected initial loss is a useful inexpensive sanity check.",
+          "question": "What loss should an untrained model produce here?",
+          "excerpt": true
+        },
+        {
+          "id": "karpathy-06",
+          "source": "karpathy-recipe",
+          "text": "fix random seed",
+          "context": "Controlling randomness helps distinguish a code change from a different experimental draw.",
+          "question": "Which variables did we change besides the code?",
+          "excerpt": true
+        },
+        {
+          "id": "karpathy-07",
+          "source": "karpathy-rnn",
+          "text": "RNNs essentially describe programs.",
+          "context": "A recurrent network can be viewed as a repeated state transition rather than a mysterious box.",
+          "question": "What state changes at one step?",
+          "excerpt": true
+        },
+        {
+          "id": "karpathy-08",
+          "source": "karpathy-rnn",
+          "text": "a deceptively simple API",
+          "context": "A small input/output interface can conceal dependence on an entire preceding sequence.",
+          "question": "What history is hiding behind this interface?",
+          "excerpt": true
+        },
+        {
+          "id": "karpathy-09",
+          "source": "karpathy-rnn",
+          "text": "You’re learning stateful programs",
+          "context": "The learned computation carries information forward across steps.",
+          "question": "Can we trace a three-step example by hand?",
+          "excerpt": true
+        },
+        {
+          "id": "karpathy-10",
+          "source": "karpathy-rnn",
+          "text": "a single hidden vector",
+          "context": "His simplest RNN example makes the persistent state explicit.",
+          "question": "What information could fit in this state, and what would be lost?",
+          "excerpt": true
+        }
+      ]
+    },
+    {
+      "id": "lattner",
+      "name": "Chris Lattner",
+      "role": "Compiler engineer · design the boundary",
+      "story": "Lattner describes LLVM as reusable compiler libraries. His later Mojo discussions connect language design, existing ecosystems and hardware capability instead of treating them as separate concerns.",
+      "storySource": "lattner-llvm",
+      "atlas": "lattner-v3.png",
+      "quotes": [
+        {
+          "id": "lattner-01",
+          "source": "lattner-llvm",
+          "text": "reusable libraries with well-defined interfaces",
+          "context": "LLVM’s early architecture sought components that could serve different languages and targets.",
+          "question": "What can another project reuse without copying our whole application?",
+          "excerpt": true
+        },
+        {
+          "id": "lattner-02",
+          "source": "lattner-llvm",
+          "text": "as loosely coupled as possible",
+          "context": "Passes can evolve more independently when their boundaries do not require knowledge of every other pass.",
+          "question": "Which assumption couples these two modules unnecessarily?",
+          "excerpt": true
+        },
+        {
+          "id": "lattner-03",
+          "source": "lattner-llvm",
+          "text": "inherent architectural problems",
+          "context": "Some limitations come from a system’s structure rather than a local inefficient operation.",
+          "question": "Are we tuning a function or repairing a boundary?",
+          "excerpt": true
+        },
+        {
+          "id": "lattner-04",
+          "source": "lattner-llvm",
+          "text": "LLVM doesn't magically solve all optimization problems!",
+          "context": "A modular architecture creates opportunities; it does not remove the need to understand the optimization.",
+          "question": "Which part still requires measurement and domain knowledge?",
+          "excerpt": true
+        },
+        {
+          "id": "lattner-05",
+          "source": "lattner-modular",
+          "text": "familiarity is good.",
+          "context": "Reusing a familiar language surface can reduce the cost of adopting a new implementation model.",
+          "question": "What should stay familiar while the internals improve?",
+          "excerpt": true
+        },
+        {
+          "id": "lattner-06",
+          "source": "lattner-modular",
+          "text": "let's do the hard thing",
+          "context": "The interview presents building a language as a deliberate cost-benefit decision, not an automatic virtue.",
+          "question": "What benefit would justify this new maintenance burden?",
+          "excerpt": true
+        },
+        {
+          "id": "lattner-07",
+          "source": "lattner-modular",
+          "text": "Programmers I've seen generally love growing",
+          "context": "An effective tool can help people acquire capabilities without discarding what they already know.",
+          "question": "Does this interface help us learn one useful new idea?",
+          "excerpt": true
+        },
+        {
+          "id": "lattner-08",
+          "source": "lattner-modular",
+          "text": "library based extensibility",
+          "context": "Putting capabilities in libraries can keep the language boundary smaller and more adaptable.",
+          "question": "Does this need new syntax, or would a library be enough?",
+          "excerpt": true
+        },
+        {
+          "id": "lattner-09",
+          "source": "lattner-syntax",
+          "text": "this complexity is really slowing everything down.",
+          "context": "A short excerpt on the design tradeoff: verify the surrounding interview before treating simplicity as a universal rule.",
+          "question": "Which complexity are we moving, rather than removing?",
+          "excerpt": true
+        },
+        {
+          "id": "lattner-10",
+          "source": "lattner-syntax",
+          "text": "most people don’t wanna know about the compiler.",
+          "context": "His compiler work ties language choices to the behavior of the generated program.",
+          "question": "Can we show where the speedup comes from?",
+          "excerpt": true
+        }
+      ]
+    },
+    {
+      "id": "graham",
+      "name": "Paul Graham",
+      "role": "Essayist · notice what is missing",
+      "story": "Graham’s essays connect useful ideas with observed needs and protect the uninterrupted time needed to build them. His startup advice is context, not a universal instruction for every engineering project.",
+      "storySource": "graham-ideas",
+      "atlas": "graham-v3.png",
+      "quotes": [
+        {
+          "id": "graham-01",
+          "source": "graham-ideas",
+          "text": "Live in the future, then build what's missing.",
+          "context": "He recommends noticing gaps from direct experience rather than inventing needs in the abstract.",
+          "question": "What problem did we actually encounter this week?",
+          "excerpt": true
+        },
+        {
+          "id": "graham-02",
+          "source": "graham-ideas",
+          "text": "build what seems interesting.",
+          "context": "Curiosity can expose an opportunity before it looks like a business plan.",
+          "question": "What would we build even without a pitch deck?",
+          "excerpt": true
+        },
+        {
+          "id": "graham-03",
+          "source": "graham-ideas",
+          "text": "problems you have yourself.",
+          "context": "In this essay, attention to missing things matters more than forcing an idea on demand.",
+          "question": "What inconvenience have we learned to ignore?",
+          "excerpt": true
+        },
+        {
+          "id": "graham-04",
+          "source": "graham-scale",
+          "text": "Do Things that Don't Scale",
+          "context": "Early hands-on work can reveal what a polished automated system would otherwise conceal.",
+          "question": "Which manual step would teach us something before automating it?",
+          "excerpt": true
+        },
+        {
+          "id": "graham-05",
+          "source": "graham-scale",
+          "text": "recruit users manually",
+          "context": "A new product may need deliberate contact with real users rather than waiting for discovery.",
+          "question": "Who could try this and tell us where it breaks?",
+          "excerpt": true
+        },
+        {
+          "id": "graham-06",
+          "source": "graham-scale",
+          "text": "work hard to delight users",
+          "context": "Care at a small scale can uncover what people value about a tool.",
+          "question": "Which small improvement would make today's use noticeably easier?",
+          "excerpt": true
+        },
+        {
+          "id": "graham-07",
+          "source": "graham-schedule",
+          "text": "half a day at least.",
+          "context": "A maker often needs a larger continuous block than a calendar’s smallest appointment slot.",
+          "question": "What work needs a protected uninterrupted block?",
+          "excerpt": true
+        },
+        {
+          "id": "graham-08",
+          "source": "graham-schedule",
+          "text": "Meetings cost them more.",
+          "context": "The essay compares a maker’s interrupted flow with a manager’s scheduling needs.",
+          "question": "Could this discussion be handled without breaking the work block?",
+          "excerpt": true
+        },
+        {
+          "id": "graham-09",
+          "source": "graham-hard",
+          "text": "learn not to lie to yourself",
+          "context": "Effort alone is not a substitute for choosing worthwhile work and developing the relevant skill.",
+          "question": "Are we pushing on the right part of this problem?",
+          "excerpt": true
+        },
+        {
+          "id": "graham-10",
+          "source": "graham-hard",
+          "text": "performative hard work",
+          "context": "The essay’s discussion of hard work includes learning how to work effectively, not merely accumulating hours.",
+          "question": "What did this attempt teach us about how we work?",
+          "excerpt": true
+        }
+      ]
+    },
+    {
+      "id": "urban",
+      "name": "Tim Urban",
+      "role": "Writer · examine the thinking process",
+      "story": "Urban uses diagrams and characters to make habits and assumptions visible. His essays are useful thinking prompts; the illustrated metaphors are not clinical models of the brain.",
+      "storySource": "urban-chef",
+      "atlas": "urban-v3.png",
+      "quotes": [
+        {
+          "id": "urban-01",
+          "source": "urban-chef",
+          "text": "The chef reasons from first principles",
+          "context": "The chef metaphor asks where a rule came from rather than merely copying the recipe.",
+          "question": "Which assumption can we derive instead of borrowing?",
+          "excerpt": true
+        },
+        {
+          "id": "urban-02",
+          "source": "urban-chef",
+          "text": "No one else knows shit either.",
+          "context": "This provocative heading challenges automatic deference, not the value of expertise or evidence.",
+          "question": "Whose conclusion are we treating as certain without checking?",
+          "excerpt": true
+        },
+        {
+          "id": "urban-03",
+          "source": "urban-chef",
+          "text": "negative feedback is a free boost",
+          "context": "In the essay’s metaphor, criticism can supply information for revising a model.",
+          "question": "What useful signal is hiding in this uncomfortable feedback?",
+          "excerpt": true
+        },
+        {
+          "id": "urban-04",
+          "source": "urban-procrastination",
+          "text": "Instant Gratification Monkey",
+          "context": "This is his fictional character for choosing immediate ease over a longer-term intention.",
+          "question": "What easy distraction is currently steering the wheel?",
+          "excerpt": true
+        },
+        {
+          "id": "urban-05",
+          "source": "urban-procrastination",
+          "text": "The Dark Playground",
+          "context": "His metaphor describes leisure that feels uneasy because an intended task remains unresolved.",
+          "question": "Do we need a real break or a smaller next step?",
+          "excerpt": true
+        },
+        {
+          "id": "urban-06",
+          "source": "urban-procrastination",
+          "text": "The Panic Monster",
+          "context": "A deadline can force action, but curiosity-driven work needs another way to begin.",
+          "question": "How could we start before a crisis becomes the only motivator?",
+          "excerpt": true
+        },
+        {
+          "id": "urban-07",
+          "source": "urban-taming",
+          "text": "small, clear, manageable tasks",
+          "context": "Breaking work into a tractable action can make the beginning less intimidating.",
+          "question": "What is the smallest useful action we can finish now?",
+          "excerpt": true
+        },
+        {
+          "id": "urban-08",
+          "source": "urban-taming",
+          "text": "planning does not involve doing",
+          "context": "A plan is useful only when it changes what happens at the next working moment.",
+          "question": "What does this plan tell us to do next?",
+          "excerpt": true
+        },
+        {
+          "id": "urban-09",
+          "source": "urban-career",
+          "text": "Wisdom hurts at first",
+          "context": "His career essay asks the reader to examine competing wants rather than assume a single inherited definition of success.",
+          "question": "Which part of this ambition is actually ours?",
+          "excerpt": true
+        },
+        {
+          "id": "urban-10",
+          "source": "urban-career",
+          "text": "being in touch with reality",
+          "context": "A direction needs both internal desire and an honest look at external constraints.",
+          "question": "What could we try to test this direction in the real world?",
+          "excerpt": true
+        }
+      ]
+    },
+    {
+      "id": "west",
+      "name": "Kanye West",
+      "role": "Artist & designer · interrogate the form",
+      "story": "The shoulders section points to West’s design interests. These visits use his creative-work discussions, with original wording sourced separately from our interpretation; a cameo is not an endorsement of all his views.",
+      "storySource": "west-fader",
+      "atlas": "west-v3.png",
+      "quotes": [
+        {
+          "id": "west-01",
+          "source": "west-fader",
+          "text": "the world can be saved through design",
+          "context": "His Harvard visit frames design as consequential work rather than a decorative finish.",
+          "question": "What real experience does this design improve?",
+          "excerpt": true
+        },
+        {
+          "id": "west-02",
+          "source": "west-fader",
+          "text": "everything needs to actually be architected.",
+          "context": "The design argument asks that a surface and its underlying construction be considered together.",
+          "question": "Does the interface express what the system actually does?",
+          "excerpt": true
+        },
+        {
+          "id": "west-03",
+          "source": "west-fader",
+          "text": "I really do believe",
+          "context": "His certainty is part of the speech’s rhetoric; our job is still to test a design with actual use.",
+          "question": "What observation could challenge this design conviction?",
+          "excerpt": true
+        },
+        {
+          "id": "west-04",
+          "source": "west-gq",
+          "text": "words are one of our lowest forms of communication.",
+          "context": "In the interview he contrasts verbal explanation with other ways to express an idea.",
+          "question": "Could a sketch or working prototype explain this better?",
+          "excerpt": true
+        },
+        {
+          "id": "west-05",
+          "source": "west-gq",
+          "text": "make things that are speechless.",
+          "context": "The conversation moves between objects, materials and lived environments.",
+          "question": "Which material constraint should shape this idea?",
+          "excerpt": true
+        },
+        {
+          "id": "west-06",
+          "source": "west-gq",
+          "text": "We get so wrapped up into words.",
+          "context": "A broad creative ambition still needs a concrete artifact to become inspectable.",
+          "question": "What can we make today rather than only describe?",
+          "excerpt": true
+        },
+        {
+          "id": "west-07",
+          "source": "west-fader2008",
+          "text": "I don't have the leeway",
+          "context": "In this interview he talks about the expectations attached to work released under his name.",
+          "question": "What quality bar are we willing to put our name on?",
+          "excerpt": true
+        },
+        {
+          "id": "west-08",
+          "source": "west-fader2008",
+          "text": "design a pant",
+          "context": "He treats clothing as another creative medium rather than a boundary imposed by his earlier work.",
+          "question": "Which adjacent craft would improve our main work?",
+          "excerpt": true
+        },
+        {
+          "id": "west-09",
+          "source": "west-fader2008",
+          "text": "working at something to the point where it was good.",
+          "context": "In the interview he describes persistence at a craft rather than treating talent as a complete explanation.",
+          "question": "What would a small first attempt in that medium look like?",
+          "excerpt": true
+        },
+        {
+          "id": "west-10",
+          "source": "west-fader2008",
+          "text": "challenge for me",
+          "context": "He describes designing clothes as a challenge rather than assuming that success in music makes another craft easy.",
+          "question": "How would somebody else tell whether this is better?",
+          "excerpt": true
+        }
+      ]
+    },
+    {
+      "id": "rubin",
+      "name": "Rick Rubin",
+      "role": "Producer · listen before adding",
+      "story": "Rubin’s interviews and writing describe attention, taste and removing what obscures a work. His creative practice offers a lens, not a scientific guarantee about how every person should create.",
+      "storySource": "rubin-tim",
+      "atlas": "rubin-v3.png",
+      "quotes": [
+        {
+          "id": "rubin-01",
+          "source": "rubin-tim",
+          "text": "the mindset that allows the creation to happen.",
+          "context": "He describes the book’s aim as helping a creative process become possible rather than prescribing his autobiography.",
+          "question": "What condition would make it easier to begin creating?",
+          "excerpt": true
+        },
+        {
+          "id": "rubin-02",
+          "source": "rubin-tim",
+          "text": "open to interpretation",
+          "context": "The conversation leaves room for the reader’s own picture rather than insisting on a single response.",
+          "question": "What meaning do we find here rather than borrow from somebody else?",
+          "excerpt": true
+        },
+        {
+          "id": "rubin-03",
+          "source": "rubin-tim",
+          "text": "It took seven years",
+          "context": "He describes the time spent arriving at the book’s approach; apparent simplicity can conceal revision.",
+          "question": "Which part of this simple result took the most rethinking?",
+          "excerpt": true
+        },
+        {
+          "id": "rubin-04",
+          "source": "rubin-listening",
+          "text": "When listening, there is only now.",
+          "context": "His writing treats listening as an active quality of attention, not simply waiting to speak.",
+          "question": "Can I listen once without preparing my reply?",
+          "excerpt": true
+        },
+        {
+          "id": "rubin-05",
+          "source": "rubin-listening",
+          "text": "Paying attention with no preconceived ideas.",
+          "context": "The excerpt links careful attention with understanding another perspective.",
+          "question": "What might we hear differently if we stopped trying to win?",
+          "excerpt": true
+        },
+        {
+          "id": "rubin-06",
+          "source": "rubin-listening",
+          "text": "We listen with the whole body",
+          "context": "He describes listening as an experience involving a person’s whole attention rather than only their ears.",
+          "question": "What are we noticing beyond the words?",
+          "excerpt": true
+        },
+        {
+          "id": "rubin-07",
+          "source": "rubin-listening",
+          "text": "fully and clearly understand",
+          "context": "The surrounding passage asks the listener to receive another person’s meaning before reacting to it.",
+          "question": "What would we ask to check that we understood?",
+          "excerpt": true
+        },
+        {
+          "id": "rubin-08",
+          "source": "rubin-another",
+          "text": "I think you have to test them.",
+          "context": "He answers a question about ideas by describing the need to try them, rather than trust every first impression.",
+          "question": "Which idea could we test with a small artifact today?",
+          "excerpt": true
+        },
+        {
+          "id": "rubin-09",
+          "source": "rubin-another",
+          "text": "My only goal is to learn.",
+          "context": "In this interview he describes asking for clarification rather than turning the exchange into his own performance.",
+          "question": "What question would help us understand instead of sound clever?",
+          "excerpt": true
+        },
+        {
+          "id": "rubin-10",
+          "source": "rubin-another",
+          "text": "the audience comes last",
+          "context": "This is creative-process advice in context; it does not excuse ignoring usability, safety or other people’s needs.",
+          "question": "What do we want to make before guessing what will get applause?",
+          "excerpt": true
+        }
+      ]
+    },
+    {
+      "id": "hotz",
+      "name": "George Hotz",
+      "role": "Hacker · make the check mean something",
+      "story": "Hotz’s tinygrad discussions connect small abstractions with inspectable execution and strong tests. The original fromthetransistor project is also part of your learning spine.",
+      "storySource": "hotz-latent",
+      "atlas": "hotz-v3.png",
+      "quotes": [
+        {
+          "id": "hotz-01",
+          "source": "hotz-latent",
+          "text": "CI is super important.",
+          "context": "He describes a green check as a promise that a change can be merged, not merely a decorative badge.",
+          "question": "Would our test have caught the last real bug?",
+          "excerpt": true
+        },
+        {
+          "id": "hotz-02",
+          "source": "hotz-latent",
+          "text": "we're fixing the test",
+          "context": "A bug that passes CI is a reason to repair the check that missed it.",
+          "question": "What regression should become impossible after this fix?",
+          "excerpt": true
+        },
+        {
+          "id": "hotz-03",
+          "source": "hotz-latent",
+          "text": "forwards and backwards",
+          "context": "His small comparison tests check tinygrad against another implementation in both directions of differentiation.",
+          "question": "Can we compare this result with a simple trusted baseline?",
+          "excerpt": true
+        },
+        {
+          "id": "hotz-04",
+          "source": "hotz-latent",
+          "text": "not guaranteed laziness",
+          "context": "He distinguishes a programming interface from one particular execution strategy.",
+          "question": "Which behavior is guaranteed, and which is an implementation choice?",
+          "excerpt": true
+        },
+        {
+          "id": "hotz-05",
+          "source": "hotz-latent",
+          "text": "the actual kernels",
+          "context": "His debugging discussion emphasizes inspecting what really executes rather than a more convenient diagram.",
+          "question": "Are we looking at the computation that actually ran?",
+          "excerpt": true
+        },
+        {
+          "id": "hotz-06",
+          "source": "hotz-latent",
+          "text": "collapse under their own weight",
+          "context": "He argues for increasing capability without letting complexity grow unchecked.",
+          "question": "What could we delete and still keep the useful behavior?",
+          "excerpt": true
+        },
+        {
+          "id": "hotz-07",
+          "source": "hotz-lex",
+          "text": "not at all limited by my typing speed.",
+          "context": "In this part of the interview, he distinguishes thinking through a program from entering text quickly.",
+          "question": "Is typing actually the bottleneck in what we are doing?",
+          "excerpt": true
+        },
+        {
+          "id": "hotz-08",
+          "source": "hotz-lex",
+          "text": "you can cite sources, explicitly.",
+          "context": "He describes retrieval as a way to attach an answer to inspectable evidence.",
+          "question": "Can we follow this claim back to the original source?",
+          "excerpt": true
+        },
+        {
+          "id": "hotz-09",
+          "source": "hotz-lex",
+          "text": "hard things are actually hard.",
+          "context": "His point here concerns real computational difficulty rather than treating everything as a presentation problem.",
+          "question": "Which part of this challenge remains hard after the hype is removed?",
+          "excerpt": true
+        },
+        {
+          "id": "hotz-10",
+          "source": "hotz-lex",
+          "text": "Math is real.",
+          "context": "This short remark occurs in a philosophical discussion; it is not a proof of any particular technical claim.",
+          "question": "What can we derive rather than decide by confidence?",
+          "excerpt": true
+        }
+      ]
+    },
+    {
+      "id": "keller",
+      "name": "Jim Keller",
+      "role": "Computer architect · revisit the decomposition",
+      "story": "Keller’s Computer History Museum oral history describes learning by bringing up real machines. His architecture discussions distinguish a useful boundary change from endless local additions.",
+      "storySource": "keller-oral",
+      "atlas": "keller-v3.png",
+      "quotes": [
+        {
+          "id": "keller-01",
+          "source": "keller-oral",
+          "text": "we basically lived in the lab",
+          "context": "His account of bringing up computers includes sustained debugging across hardware and software, not just a diagram that looked right.",
+          "question": "Which real system behavior have we still not exercised?",
+          "excerpt": true
+        },
+        {
+          "id": "keller-02",
+          "source": "keller-oral",
+          "text": "how computers were actually built end-to-end",
+          "context": "He describes learning across a working machine while firmware and hardware were being debugged together.",
+          "question": "Can we trace this behavior across the whole stack?",
+          "excerpt": true
+        },
+        {
+          "id": "keller-03",
+          "source": "keller-oral",
+          "text": "became curve fits to simple equations",
+          "context": "His material-science recollection notices the gap between foundational descriptions and tractable engineering models.",
+          "question": "Where is this equation an approximation, and how would we check it?",
+          "excerpt": true
+        },
+        {
+          "id": "keller-04",
+          "source": "keller-oral",
+          "text": "overhaul this from scratch",
+          "context": "In his AMD recollection he describes an explicit decision to replace an approach that was not working.",
+          "question": "What evidence would justify changing this architecture?",
+          "excerpt": true
+        },
+        {
+          "id": "keller-05",
+          "source": "keller-laws",
+          "text": "There are no new laws",
+          "context": "In this interview he connects AI infrastructure with older high-performance-computing constraints.",
+          "question": "Which familiar bottleneck is hiding behind the new vocabulary?",
+          "excerpt": true
+        },
+        {
+          "id": "keller-06",
+          "source": "keller-laws",
+          "text": "AI is mostly matrix computation",
+          "context": "The full discussion also includes nonlinear operations and the data movement required to sustain them.",
+          "question": "Are we measuring useful computation or waiting for memory?",
+          "excerpt": true
+        },
+        {
+          "id": "keller-07",
+          "source": "keller-laws",
+          "text": "if it’s too small it’s really bad",
+          "context": "The surrounding passage concerns sizing memory for computation, not a rule that bigger is always better.",
+          "question": "What working set must fit for this design to behave well?",
+          "excerpt": true
+        },
+        {
+          "id": "keller-08",
+          "source": "keller-efy",
+          "text": "Converting algorithms to programs that run efficiently requires considerable effort.",
+          "context": "The interview distinguishes an algorithmic idea from an efficient implementation on a real machine.",
+          "question": "Which part of this algorithm is difficult to map onto the hardware?",
+          "excerpt": true
+        },
+        {
+          "id": "keller-09",
+          "source": "keller-efy",
+          "text": "each piece is simpler to build.",
+          "context": "His chiplet explanation divides interfaces and functions into smaller pieces rather than treating one giant chip as inevitable.",
+          "question": "Where could a clearer interface simplify this system?",
+          "excerpt": true
+        },
+        {
+          "id": "keller-10",
+          "source": "keller-efy",
+          "text": "transparency allows for more effective debugging.",
+          "context": "He describes inspectable source as a practical way for users and external experts to investigate failures.",
+          "question": "Can the next person inspect the layer where this fails?",
+          "excerpt": true
+        }
+      ]
+    }
+  ]
+}

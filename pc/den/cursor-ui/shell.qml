@@ -10,7 +10,7 @@ ShellRoot {
     Loader {
         id:companionLoader
         asynchronous:true
-        source:Quickshell.env("HOME")+"/.local/share/sensei-companion/Companion.qml?v="+root.companionRevision
+        source:"file://"+Quickshell.env("HOME")+"/.local/share/sensei-companion/Companion.qml?v="+root.companionRevision
         onLoaded:item.ownerOutput=Qt.binding(()=>root.focusedOutput)
     }
     property bool focusDimming:false

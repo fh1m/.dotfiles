@@ -1,0 +1,82 @@
+{
+  "tool": "built-in imagegen",
+  "date": "2026-10-20",
+  "style": "natural adult proportions; individual likeness based on portrait and speaking references",
+  "outputs": {
+    "feynman": {
+      "file": "feynman-v3.png",
+      "references": [
+        "https://upload.wikimedia.org/wikipedia/en/4/42/Richard_Feynman_Nobel.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+        "https://calisphere.org/crop/999x999/26951/1a73a3c4b98dc231f5c0a6c3a009c853"
+      ]
+    },
+    "carmack": {
+      "file": "carmack-v3.png",
+      "references": [
+        "https://upload.wikimedia.org/wikipedia/commons/2/2d/John_Carmack_2025.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+        "https://media.wired.com/photos/5933038395879f6d0c00a5cc/191%3A100/w_1280%2Cc_limit/carmack_flickr.jpg"
+      ]
+    },
+    "karpathy": {
+      "file": "karpathy-v4.png",
+      "references": [
+        "https://karpathy.ai/assets/me_ori.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/c/c0/Andrej_Karpathy%2C_OpenAI.png"
+      ]
+    },
+    "lattner": {
+      "file": "lattner-v3.png",
+      "references": [
+        "https://cdn.prod.website-files.com/64174a9fd03969ab5b930a08/66a7a72b6694c9bec56f9880_Chris.jpg",
+        "https://www.golem.de/2202/163331-314679-314676.png"
+      ]
+    },
+    "graham": {
+      "file": "graham-v3.png",
+      "references": [
+        "https://upload.wikimedia.org/wikipedia/commons/e/e3/Paulgraham_240x320.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+        "https://i.insider.com/5ce28bf8f06717053f0e8f99?format=jpeg&width=911"
+      ]
+    },
+    "urban": {
+      "file": "urban-v3.png",
+      "references": [
+        "https://images.tedium.co/uploads/Tim-Urban.jpg",
+        "https://pi.tedcdn.com/r/talkstar-photos.s3.amazonaws.com/uploads/d5d00454-d7aa-434c-8fae-ff2bc97c5f02/TimUrban_2016-embed.jpg?quality=80&w=1600"
+      ]
+    },
+    "west": {
+      "file": "west-v3.png",
+      "references": [
+        "https://image.tmdb.org/t/p/original/8UXVqRvg0K3ct4Yt5tF1iTRB8a0.jpg",
+        "https://i.insider.com/528a2ede69beddfb7968bc3c?auto=webp&format=jpeg&width=800"
+      ]
+    },
+    "rubin": {
+      "file": "rubin-v3.png",
+      "references": [
+        "https://cdn.sanity.io/images/vgvol637/production/6e3ca0bb5c8828ca54c1830f9858c2aae9181bc6-1874x2400.jpg",
+        "https://thumbnails.cbsig.net/CBS_Production_News_VMS/2023/01/13/2161497667759/60_RubinTease_10_1622826_1920x1080.jpg"
+      ]
+    },
+    "hotz": {
+      "file": "hotz-v3.png",
+      "references": [
+        "https://upload.wikimedia.org/wikipedia/commons/6/6c/George_Hotz_at_TechCrunch_Disrupt.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+        "https://s.hdnux.com/photos/51/53/11/10924634/11/ratio4x3_1920.jpg"
+      ]
+    },
+    "keller": {
+      "file": "keller-v3.png",
+      "references": [
+        "https://upload.wikimedia.org/wikipedia/commons/f/f2/Jim_Keller_%28engineer%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+        "https://cdn.sanity.io/images/jpb4ed5r/production/c0dbe76698891507bf4bcbf75668b19845073959-453x453.png"
+      ]
+    }
+  },
+  "zondo": [
+    "zondo-listener-v1.png",
+    "zondo-listener-side-v1.png"
+  ],
+  "notes": "Reference photographs are not shipped. Staged illustration, not endorsement. Zondo keeps his fictional buddy identity."
+}

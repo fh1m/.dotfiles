@@ -136,6 +136,16 @@ def companion(action,value=None):
         from companion_roam import memory
         record['memory']=memory(payload.get('memory',{}))
         write(STATE/'companion-travel.json',record);return record
+    if action in ('guest','guests'):
+        catalog=read(HOME/'.local/share/sensei-companion/guests/catalog.json',{'guests':[]})
+        ids=[g['id'] for g in catalog['guests']]
+        if action=='guests':
+            if value not in ('on','off'):return {'enabled':cfg.get('guestsEnabled',True),'people':ids,'frequencyMinutes':cfg.get('guestMinutes',30)}
+            cfg['guestsEnabled']=value=='on'
+        else:
+            if value and value not in ids:raise ValueError('Choose a guest: '+', '.join(ids))
+            cfg.update(guestRequest={'id':value or '', 'at':time.time()})
+        write(CONFIG/'companion.json',cfg);return {'enabled':cfg.get('guestsEnabled',True),'requested':value or 'random','people':ids}
     if action in ('talk','remember'):
         if not value or not value.strip():raise ValueError('Write a short thought first')
         if action=='talk':
@@ -674,7 +684,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);s=p.add_subparsers(dest='command_name',required=True)
     for n in ['status','doctor','watch']:s.add_parser(n)
     q=s.add_parser('mode');q.add_argument('value',nargs='?',choices=['auto','together','away','homie'])
-    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','activity','activity-hide','activity-favorite','talk','remember','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','hide-seek','found','pulse','dim','grant','protocol']);q.add_argument('value',nargs='?')
+    q=s.add_parser('companion');q.add_argument('action',nargs='?',default='status',choices=['status','activity','activity-hide','activity-favorite','talk','remember','toggle','show','hide','quiet','suspended','here','follow','size','wave','celebrate','think','sleep','walk','dance','read','sip','stretch','stargaze','juggle','robot','plane','sketch','explore','garden','guitar','say','chatter','motion','tip','more','less','roam','tour','hide-seek','found','pulse','dim','grant','protocol','guest','guests']);q.add_argument('value',nargs='?')
     q=s.add_parser('sync');q.add_argument('action',nargs='?',default='status',choices=['status','scan','pause','resume'])
     q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','retain-preview','peer-copy'])
     q=s.add_parser('workbench');q.add_argument('action',nargs='?',default='open',choices=['open','start','stop','status'])

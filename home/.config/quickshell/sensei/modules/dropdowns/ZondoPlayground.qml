@@ -18,6 +18,17 @@ Column {
  property bool playing:false
  readonly property var puzzles:[{question:"A=1, B=0. What is A XOR B?",answers:["0","1"],correct:1,why:"XOR is true when exactly one input is true."},{question:"Rotate (1,0) by +90° in a right-handed xy plane. Result?",answers:["(0,1)","(0,-1)","(1,1)"],correct:0,why:"Counterclockwise rotation maps positive x to positive y."}]
  Text {width:parent.width;text:"ZONDO / OFF DUTY";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;color:Theme.signalRed}
+ Text {width:parent.width;text:"GUESTS / A SMALL CONVERSATION";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;color:Theme.signalRed}
+ Text {width:parent.width;text:"Real sourced excerpts, illustrated visits. Zondo listens sideways, then asks the awkward useful question. Visits wait for clear wallpaper and respect quiet mode.";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
+ Flow {width:parent.width;spacing:8
+  Repeater {model:[{id:"feynman",name:"Richard Feynman"},{id:"hotz",name:"George Hotz"},{id:"carmack",name:"John Carmack"},{id:"karpathy",name:"Andrej Karpathy"},{id:"keller",name:"Jim Keller"},{id:"lattner",name:"Chris Lattner"},{id:"graham",name:"Paul Graham"},{id:"urban",name:"Tim Urban"},{id:"west",name:"Kanye West"},{id:"rubin",name:"Rick Rubin"}]
+   ControlTile {required property var modelData;implicitWidth:(root.width-8)/2;label:modelData.name;onActivated:{Den.companion("guest",modelData.id);root.feedback="Invitation sent. A visit needs clear wallpaper on Zondo's current display."}}
+  }
+ }
+ Row {spacing:8
+  ControlTile {label:"Occasional visits on";onActivated:{Den.companion("guests","on");root.feedback="Visitors welcome, at most once per half hour by default."}}
+  ControlTile {label:"Visits off";onActivated:{Den.companion("guests","off");root.feedback="Guests off. Zondo keeps his ordinary desk routine."}}
+ }
  Row {spacing:8
   ControlTile {label:"High five";onActivated:{Den.companion("activity","highfive");root.feedback="Tiny palm. Very enthusiastic."}}
   ControlTile {label:"Make a boat";onActivated:{Den.companion("activity","paperboat");root.feedback="A research vessel with a wonderfully small budget."}}
