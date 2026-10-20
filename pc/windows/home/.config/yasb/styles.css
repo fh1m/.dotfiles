@@ -1,0 +1,128 @@
+/* Sensei · YASB stylesheet. Colours come from windows/palette/sensei.json (derived from the
+   main wallpaper by windows/tools/sensei-palette.py). The Linux bars use the same roles:
+   ground for the bar, surface for quiet cells, raised for the selected cell, primary for the one
+   active accent, muted for passive readings. As on the Linux desktop, labels use ZedMono NF
+   (ZedMono Nerd Font) and numbers, time and telemetry use Iosevka NFM (Iosevka Nerd Font Mono).
+   Qt stylesheets cannot cut corners, so cells use a 2px radius where the Linux bar has a chamfer. */
+
+* {
+    font-family: "ZedMono NF";
+    font-size: 14px;
+}
+
+/* Bar grounds: no outline around the bar itself, only a hairline on the edge that faces the desktop. */
+.sensei-top,
+.sensei-bottom {
+    background-color: {{roles.ground}};
+    color: {{roles.text}};
+}
+
+.sensei-top {
+    border-bottom: 1px solid {{roles.outline}};
+}
+
+.sensei-bottom {
+    border-top: 1px solid {{roles.outline}};
+}
+
+.container-left,
+.container-center {
+    padding: 0 4px;
+}
+
+.container-right {
+    padding: 0 10px 0 4px;
+}
+
+/* Identity: "fh1m // R-01" in the accent, as the Linux badge has it. */
+.sensei-identity {
+    color: {{roles.primary}};
+    font-weight: bold;
+    padding: 0 12px;
+    margin: 0 2px;
+}
+
+/* Media ticker: the Linux bar's scrolling track name, muted. */
+.sensei-media {
+    color: {{roles.muted}};
+    padding: 0 8px;
+}
+
+/* Centre clock: the time in full text, the date in muted text. */
+.clock {
+    color: {{roles.text}};
+    font-family: "Iosevka NFM";
+    font-weight: bold;
+    padding: 0 8px;
+}
+
+/* Instrument cells: surface fill, hairline outline, the Linux bar's card style. */
+.cpu,
+.memory,
+.gpu,
+.usb,
+.bluetooth,
+.brightness,
+.volume,
+.notifications,
+.power_menu,
+.power_plan,
+.systray {
+    background-color: {{roles.surface}};
+    border: 1px solid {{roles.outline}};
+    border-radius: 2px;
+    color: {{roles.muted}};
+    padding: 0 10px;
+    margin: 5px 3px;
+}
+
+.cpu,
+.memory,
+.gpu,
+.usb {
+    font-family: "Iosevka NFM";
+}
+
+.systray {
+    padding: 0 6px;
+}
+
+/* GlazeWM workspaces: the Linux tabs. Populated tabs are brighter, the focused tab gets the
+   accent text and a raised cell with an accent outline. focused_* comes after active_* so it wins,
+   as the YASB wiki requires. */
+.glazewm-workspaces .ws-btn {
+    color: {{roles.muted}};
+    background: transparent;
+    border: 1px solid {{roles.outline}};
+    border-radius: 2px;
+    padding: 0 10px;
+    margin: 5px 3px;
+}
+
+.glazewm-workspaces .ws-btn.populated {
+    color: {{roles.text}};
+}
+
+.glazewm-workspaces .ws-btn.active_populated,
+.glazewm-workspaces .ws-btn.active_empty {
+    color: {{roles.text}};
+    background-color: {{roles.raised}};
+}
+
+.glazewm-workspaces .ws-btn.focused_populated,
+.glazewm-workspaces .ws-btn.focused_empty {
+    color: {{roles.primary}};
+    background-color: {{roles.raised}};
+    border: 1px solid {{roles.primary}};
+    font-weight: bold;
+}
+
+.glazewm-workspaces .offline-status {
+    color: {{roles.muted}};
+    padding: 0 6px;
+}
+
+.glazewm-binding-mode {
+    color: {{roles.primary}};
+    padding: 0 6px;
+}

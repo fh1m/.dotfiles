@@ -51,3 +51,14 @@ GPU work requires actual tests: Vulkan/OpenGL rendering, a CUDA-enabled framewor
 - Verify Toshiba filesystem UUID `3b5d6396-a091-4aac-bb67-fc0e90da988b`, backup completion records and sample restores. It remains ext4; do not accept a Windows format prompt.
 - Recheck free capacity. Restore irreplaceable archived SATA files to a second physical drive before relying on the HDD as their only remaining copy. Maintain historical copies rather than blindly merging old configs over new ones.
 - Before final NVMe conversion, quiesce changing apps/services or use an offline copy, preserve final Ubuntu personal files plus any new service data, check the preservation copy and confirm both SATA OSes boot without the NVMe. This is a later staged operation.
+
+## Windows user environment (Sensei)
+
+```powershell
+pwsh -NoProfile -File pc\windows\tests\install.Tests.ps1
+pwsh -NoProfile -File pc\windows\tools\install.ps1
+pwsh -NoProfile -File pc\windows\tools\bootstrap.ps1
+Get-Process glazewm, yasb -ErrorAction SilentlyContinue | Select-Object ProcessName, Id
+```
+
+The first command runs the installer checks. The second is a dry run and writes nothing; `-Apply` needs an approved step. The third lists winget packages and installs nothing without `-Apply`. A passing test is not a screen check: confirm both bars are visible on the desktop after a restart.

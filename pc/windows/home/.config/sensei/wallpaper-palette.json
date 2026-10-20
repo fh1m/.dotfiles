@@ -1,0 +1,13 @@
+{
+  "ground": "{{roles.ground}}",
+  "surface": "{{roles.surface}}",
+  "raised": "{{roles.raised}}",
+  "primary": "{{roles.primary}}",
+  "vibrant": "{{roles.vibrant}}",
+  "secondary": "{{roles.secondary}}",
+  "tertiary": "{{roles.tertiary}}",
+  "text": "{{roles.text}}",
+  "muted": "{{roles.muted}}",
+  "outline": "{{roles.outline}}",
+  "error": "{{roles.error}}"
+}

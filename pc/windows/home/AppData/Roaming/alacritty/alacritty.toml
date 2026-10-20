@@ -1,0 +1,102 @@
+# Sensei · Windows terminal. Same palette and Iosevka metrics as the Linux desktop.
+# Rendered from windows/palette/sensei.json by tools/install.ps1.
+[general]
+live_config_reload = true
+
+[terminal.shell]
+program = "pwsh"
+args = ["-NoLogo"]
+
+[env]
+TERM = "alacritty"
+
+[window]
+decorations = "Full"
+opacity = 0.96
+padding = { x = 14, y = 8 }
+dynamic_padding = true
+resize_increments = true
+title = "Sensei · Terminal"
+dynamic_title = true
+
+[scrolling]
+history = 10000
+multiplier = 3
+
+[font]
+normal = { family = "Iosevka NFM", style = "Regular" }
+bold = { family = "Iosevka NFM", style = "Bold" }
+italic = { family = "Iosevka NFM", style = "Italic" }
+bold_italic = { family = "Iosevka NFM", style = "Bold Italic" }
+size = 11.4
+offset = { x = 1, y = 4 }
+glyph_offset = { x = 1, y = 2 }
+builtin_box_drawing = true
+
+[colors.primary]
+background = "{{terminal.background}}"
+foreground = "{{terminal.foreground}}"
+dim_foreground = "{{terminal.dim_foreground}}"
+
+[colors.cursor]
+text = "{{terminal.cursor_text}}"
+cursor = "{{terminal.cursor}}"
+
+[colors.selection]
+text = "{{terminal.selection_text}}"
+background = "{{terminal.selection_background}}"
+
+[colors.normal]
+black = "{{terminal.normal.black}}"
+red = "{{terminal.normal.red}}"
+green = "{{terminal.normal.green}}"
+yellow = "{{terminal.normal.yellow}}"
+blue = "{{terminal.normal.blue}}"
+magenta = "{{terminal.normal.magenta}}"
+cyan = "{{terminal.normal.cyan}}"
+white = "{{terminal.normal.white}}"
+
+[colors.bright]
+black = "{{terminal.bright.black}}"
+red = "{{terminal.bright.red}}"
+green = "{{terminal.bright.green}}"
+yellow = "{{terminal.bright.yellow}}"
+blue = "{{terminal.bright.blue}}"
+magenta = "{{terminal.bright.magenta}}"
+cyan = "{{terminal.bright.cyan}}"
+white = "{{terminal.bright.white}}"
+
+[cursor]
+style = { shape = "Underline", blinking = "Never" }
+unfocused_hollow = true
+
+[selection]
+save_to_clipboard = true
+
+[mouse]
+hide_when_typing = false
+
+[[keyboard.bindings]]
+key = "V"
+mods = "Control|Shift"
+action = "Paste"
+
+[[keyboard.bindings]]
+key = "C"
+mods = "Control|Shift"
+action = "Copy"
+
+[[keyboard.bindings]]
+key = "PageUp"
+mods = "Shift"
+action = "ScrollPageUp"
+
+[[keyboard.bindings]]
+key = "PageDown"
+mods = "Shift"
+action = "ScrollPageDown"
+
+[[keyboard.bindings]]
+key = "Space"
+mods = "Control|Shift"
+action = "ToggleViMode"

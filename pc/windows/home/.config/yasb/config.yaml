@@ -1,0 +1,179 @@
+# Sensei · YASB bars. Styled by styles.css in this folder.
+# Two bars, like the Linux desktop: sensei-top is the main rail (identity, ticker, clock, controls)
+# and sensei-bottom is the ScreenPad strip (machine meters, workspaces, devices).
+# GlazeWM starts YASB (startup_commands in ~/.glzr/glazewm/config.yaml), so no separate autostart is needed.
+watch_stylesheet: true
+watch_config: true
+update_check: false
+system_colors: false
+
+bars:
+  sensei-top:
+    enabled: true
+    screens: ['*']
+    class_name: 'sensei-top'
+    alignment:
+      position: 'top'
+      align: 'center'
+    dimensions:
+      width: '100%'
+      height: 40
+    padding:
+      top: 0
+      left: 0
+      bottom: 0
+      right: 0
+    window_flags:
+      always_on_top: false
+      windows_app_bar: true
+    widgets:
+      left: ['sensei_identity', 'sensei_media']
+      center: ['clock']
+      right: ['sensei_weather', 'bluetooth', 'brightness', 'volume', 'notifications', 'power_menu']
+
+  sensei-bottom:
+    enabled: true
+    screens: ['*']
+    class_name: 'sensei-bottom'
+    alignment:
+      position: 'bottom'
+      align: 'center'
+    dimensions:
+      width: '100%'
+      height: 40
+    padding:
+      top: 0
+      left: 0
+      bottom: 0
+      right: 0
+    window_flags:
+      always_on_top: true
+      windows_app_bar: true
+    widgets:
+      left: ['cpu', 'memory', 'gpu']
+      center: ['glazewm_workspaces', 'glazewm_binding_mode']
+      right: ['usb', 'power_plan', 'systray']
+
+widgets:
+  sensei_identity:
+    type: "yasb.custom.CustomWidget"
+    options:
+      class_name: 'sensei-identity'
+      label: "fh1m // R-01"
+
+  sensei_media:
+    type: "yasb.media.MediaWidget"
+    options:
+      class_name: 'sensei-media'
+      label: "{artist} - {title}"
+      show_thumbnail: false
+
+  glazewm_workspaces:
+    type: "glazewm.workspaces.GlazewmWorkspacesWidget"
+    options:
+      offline_label: "glazewm offline"
+      hide_if_offline: false
+      monitor_exclusive: true
+      enable_scroll_switching: true
+      app_icons:
+        enabled_populated: false
+        enabled_active: false
+
+  glazewm_binding_mode:
+    type: "glazewm.binding_mode.GlazewmBindingModeWidget"
+    options:
+      hide_if_no_active: true
+      label_if_no_active: "No binding mode active"
+      default_icon: ""
+      icons:
+        none: ""
+        resize: ""
+        pause: ""
+
+  clock:
+    type: "yasb.clock.ClockWidget"
+    options:
+      class_name: 'clock'
+      label: "{%I:%M %p   %A, %d %B}"
+      label_alt: "{%H:%M:%S   %A %d %B %Y}"
+      timezones: []
+
+  cpu:
+    type: "yasb.cpu.CpuWidget"
+    options:
+      class_name: 'cpu'
+      label: "cpu {info[percent][total]}%"
+      update_interval: 2000
+
+  memory:
+    type: "yasb.memory.MemoryWidget"
+    options:
+      class_name: 'memory'
+      label: "ram {virtual_mem_percent}%"
+      update_interval: 2000
+
+  gpu:
+    type: "yasb.gpu.GpuWidget"
+    options:
+      class_name: 'gpu'
+      label: "gpu {info[utilization]}%"
+
+  usb:
+    type: "yasb.custom.CustomWidget"
+    options:
+      class_name: 'usb'
+      label: "usb {data}"
+      exec_options:
+        run_cmd: "powershell -NoProfile -Command (Get-PnpDevice -Class USB -Status OK).Count"
+        run_interval: 60000
+        hide_empty: false
+
+  sensei_weather:
+    type: "yasb.custom.CustomWidget"
+    options:
+      class_name: 'sensei-weather'
+      label: "{data}"
+      exec_options:
+        run_cmd: 'py -3 %USERPROFILE%\.local\bin\sensei-weather.py'
+        return_format: "string"
+        use_shell: true
+        run_interval: 900000
+        hide_empty: false
+
+  bluetooth:
+    type: "yasb.bluetooth.BluetoothWidget"
+    options:
+      class_name: 'bluetooth'
+
+  brightness:
+    type: "yasb.brightness.BrightnessWidget"
+
+  volume:
+    type: "yasb.volume.VolumeWidget"
+    options:
+      class_name: 'volume'
+
+  notifications:
+    type: "yasb.notifications.NotificationsWidget"
+    options:
+      class_name: 'notifications'
+
+  power_menu:
+    type: "yasb.power_menu.PowerMenuWidget"
+    options:
+      buttons:
+        lock: ["Lock", ""]
+        sleep: ["Sleep", ""]
+        restart: ["Restart", ""]
+        shutdown: ["Shut down", ""]
+        cancel: ["Cancel", ""]
+
+  power_plan:
+    type: "yasb.power_plan.PowerPlanWidget"
+    options:
+      class_name: 'power_plan'
+
+  systray:
+    type: "yasb.systray.SystrayWidget"
+    options:
+      class_name: 'systray'
