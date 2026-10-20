@@ -113,7 +113,9 @@ if ($isRealHome) {
     }
     # GlazeWM starts YASB itself (see startup_commands in its config), so one Run entry is enough.
     $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+    # The v3.10.1 MSI installs to glzr.io\GlazeWM; the other two are fallbacks.
     $glazewm = @(
+        (Join-Path $env:ProgramFiles 'glzr.io\GlazeWM\glazewm.exe'),
         (Join-Path $env:ProgramFiles 'glazewm\glazewm.exe'),
         (Join-Path $env:LOCALAPPDATA 'Programs\glazewm\glazewm.exe')
     ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
