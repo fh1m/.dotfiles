@@ -26,7 +26,8 @@ Item {
     property var lyricReceipt:({})
     property string lastSungLine:''
     FileView {path:Quickshell.env('HOME')+'/.local/state/sensei-den/zondo-music.json';watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.lyricReceipt=JSON.parse(text());}catch(e){root.lyricReceipt=({});}}}
-    Timer {interval:60000;repeat:true;running:root.allowed&&root.denMusic&&root.preferences.chatter!==false&&!root.notices.dnd;onTriggered:{if(root.speaking)return;const line=Logic.singLine(root.leased&&root.journey.musicLine?.at>Number(root.lyricReceipt.at||0)?root.journey.musicLine:root.lyricReceipt,Date.now(),root.lastSungLine,Math.random());if(line){root.lastSungLine=line;root.activity='dance';root.say('♪ '+line,'singing along');speechExpiry.interval=6500;}}}
+    // Keep the clock across output/host lease changes; short visits must not reset it.
+    Timer {interval:60000;repeat:true;running:root.preferences.chatter!==false&&root.preferences.enabled!==false;onTriggered:{if(!root.allowed||!root.denMusic||root.notices.dnd||root.speaking)return;const line=Logic.singLine(root.leased&&root.journey.musicLine?.at>Number(root.lyricReceipt.at||0)?root.journey.musicLine:root.lyricReceipt,Date.now(),root.lastSungLine,Math.random());if(line){root.lastSungLine=line;root.activity='dance';root.say('♪ '+line,'singing along');speechExpiry.interval=6500;}}}
     property bool musicPlaying:false
     readonly property bool denMusic:musicPlaying||(leased&&journey.musicPlaying===true)
     onDenMusicChanged:{if(denMusic){activity="dance";frame=0;poseExpiry.stop();}else vary();}
