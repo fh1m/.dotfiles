@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Hyprland
 ShellRoot {
     id: root
     // Loader reload refreshes QML only. Restart den-cursor when shared JS changes;
@@ -25,9 +26,9 @@ ShellRoot {
     property real phase: 0
     IpcHandler {
         target: "den-cursor"
-        function state(): string { return JSON.stringify({focusedOutput:root.focusedOutput,dimOpacity:root.focusDimming?36/255:0,locatorActive:root.active,focusStyle:"steady-edge",focusMarker:root.focusMarker}) }
+        function state(): string { return JSON.stringify({focusedOutput:root.focusedOutput,dimOpacity:root.focusDimming?36/255:0,locatorActive:root.active,focusStyle:"brief-edge",focusMarker:root.focusMarker,cueOpacity:root.markerOpacity}) }
         function reloadCompanion():void {root.companionRevision=Date.now()}
-        function focus(name: string): void {if(name===root.focusedOutput)return;root.focusedOutput=name;}
+        function focus(name: string): void {if(name===root.focusedOutput)return;root.focusedOutput=name;if(name)root.showFocusCue();}
         function pulse(name: string, x: real, y: real): void {
             root.output=name; root.px=x; root.py=y; root.active=true;
             motion.restart(); expiry.restart();
@@ -62,22 +63,36 @@ ShellRoot {
             Rectangle { x:root.px-3; y:root.py-3; width:6; height:6; radius:3; color:"#fff0f8"; opacity:1-root.phase }
         }
     }
-    // A stationary, click-through edge cue; never tint the display contents.
+    // Localised switch acknowledgement. Never tint the screen or keep a label.
+    property real markerOpacity:0
+    function showFocusCue():void {
+        if(!focusMarker)return;
+        if(reducedMotion){markerOpacity=1;markerExpiry.restart();}
+        else markerMotion.restart();
+    }
+    Timer {id:markerExpiry;interval:650;onTriggered:root.markerOpacity=0}
+    SequentialAnimation {id:markerMotion
+        NumberAnimation {target:root;property:"markerOpacity";from:0;to:1;duration:110;easing.type:Easing.OutCubic}
+        PauseAnimation {duration:420}
+        NumberAnimation {target:root;property:"markerOpacity";to:0;duration:650;easing.type:Easing.OutCubic}
+    }
+    Connections {target:Hyprland;function onRawEvent(event){if(event.name==="activewindowv2"&&root.focusedOutput)root.showFocusCue();}}
+
     Variants {
         model:Quickshell.screens.filter(s=>!s.name.startsWith("SENSEI-"))
         PanelWindow {
             required property var modelData
             screen:modelData
-            visible:root.focusMarker && root.focusedOutput===modelData.name
+            visible:root.focusMarker && root.markerOpacity>0 && root.focusedOutput===modelData.name
             color:"transparent"
-            implicitHeight:3
+            implicitHeight:5
             anchors {top:true;left:true;right:true}
             exclusionMode:ExclusionMode.Ignore
             WlrLayershell.layer:WlrLayer.Overlay
             WlrLayershell.namespace:"den-focus-marker"
             WlrLayershell.keyboardFocus:WlrKeyboardFocus.None
             mask:Region {}
-            Rectangle {anchors.horizontalCenter:parent.horizontalCenter;width:64;height:3;radius:1.5;color:"#ca7a96"}
+            Rectangle {anchors.horizontalCenter:parent.horizontalCenter;width:180;height:4;radius:2;color:"#f23d70";opacity:root.markerOpacity}
         }
     }
 }
