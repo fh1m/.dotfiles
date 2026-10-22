@@ -92,7 +92,7 @@ ShellRoot {
             WlrLayershell.namespace:"den-focus-marker"
             WlrLayershell.keyboardFocus:WlrKeyboardFocus.None
             mask:Region {}
-            Rectangle {anchors.horizontalCenter:parent.horizontalCenter;width:180;height:4;radius:2;color:"#f23d70";opacity:root.markerOpacity}
+            Rectangle {anchors.horizontalCenter:parent.horizontalCenter;width:180;height:4;radius:2;color:"#e6d7bb";opacity:root.markerOpacity}
         }
     }
 }
