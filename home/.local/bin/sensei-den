@@ -43,7 +43,7 @@ def write(path,value):
 def host():return socket.gethostname().split('.')[0]
 
 
-def remote(args,timeout=10,private=False):
+def remote(args,timeout=10,private=False,fresh=False):
     if host()!='arete':raise ValueError('Run cross-host administration from Arete')
     alias='homie'
     if private:
@@ -52,7 +52,7 @@ def remote(args,timeout=10,private=False):
         # a read-only preflight instead of trusting an open TCP port.
         if access.get('privateAlias') and not connectivity():alias=access['privateAlias']
     # Select a route before sending a command. Never replay a job after an SSH error.
-    r=run(['ssh','-4','-n','-F',str(PRIVATE/'client.conf'),alias,shlex.join([str(x) for x in args])],timeout=timeout)
+    r=run(['ssh','-4']+(['-S','none'] if fresh else [])+['-n','-F',str(PRIVATE/'client.conf'),alias,shlex.join([str(x) for x in args])],timeout=timeout)
     if r.returncode:raise ValueError('Homie unavailable or command failed; existing work is preserved')
     return r.stdout
 
@@ -62,7 +62,7 @@ def service(name):return run(['systemctl','--user','is-active',name]).stdout.str
 
 def connectivity():
     try:
-        if host()=='arete':return remote(['hostname'],timeout=3).strip().split('.')[0]=='homie'
+        if host()=='arete':return remote(['hostname'],timeout=3,fresh=True).strip().split('.')[0]=='homie'
         r=run(['ssh','-n','-F',str(PRIVATE/'master-client.conf'),'arete-den-control','den-control','status'],timeout=3)
         return r.returncode==0
     except (OSError,ValueError,subprocess.SubprocessError):return False

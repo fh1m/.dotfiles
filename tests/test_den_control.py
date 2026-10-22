@@ -19,6 +19,11 @@ class DenControl(unittest.TestCase):
             self.assertEqual(den.peer_command('hostname'),'homie')
         self.assertIn('-4',call.call_args.args[0])
 
+    def test_fresh_check_bypasses_connection_multiplexing(self):
+        import subprocess
+        with patch.object(den,'run',return_value=subprocess.CompletedProcess([],0,'homie','')) as call:
+            den.peer_command('hostname',fresh=True)
+        self.assertIn('-S',call.call_args.args[0]);self.assertIn('none',call.call_args.args[0])
     def test_offline_receiver_never_starts_local_capture(self):
         with patch.object(den, 'peer_command', side_effect=RuntimeError('offline')), patch.object(den, 'run') as run:
             with self.assertRaises(RuntimeError):

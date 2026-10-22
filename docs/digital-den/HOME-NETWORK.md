@@ -181,3 +181,33 @@ test its power/upstream connection. Preserve Wi-Fi while doing this. Recheck
 DHCP and a sustained local transfer after carrier returns. Persistent carrier
 loss is below the IP/DNS layer; changing DNS or installing a watchdog cannot
 repair it. Separate cellular/WAN backup is needed for an actual ISP outage.
+
+## Repeated Zondo connection notices · follow-up
+
+NetworkManager later reported the Wi-Fi address conflicting with Arete's own
+Ethernet MAC, consistent with multihomed ARP flux. Both physical NICs had default
+arp_ignore=0 and arp_announce=0. The NetworkManager dispatcher template
+`system/etc/NetworkManager/dispatcher.d/20-den-arp-scope` now scopes ARP responses
+and announcements to the appropriate physical interface on up/reapply/DHCP events.
+It excludes virtual interfaces; the global defaults, Docker and VPN settings are
+unchanged. Installed root-owned at `/etc/NetworkManager/dispatcher.d/` on Arete;
+current physical NIC values read back as arp_ignore=1 and arp_announce=2.
+
+An isolated kernel test reproduced two responding MACs for one IP before the
+change and exactly one afterward. Run manually with root:
+`python3 tests/manual/den_arp_scope.py`. It creates temporary named namespaces
+and virtual links only, then removes them in a finally block; it does not touch
+live network devices. Shell syntax and shellcheck pass for the dispatcher.
+Actual dual-link acceptance remains pending carrier on the disconnected Ethernet
+interface. Do not infer that this repairs the physical USB/cable interruption.
+
+The presence watcher had been alive since 20 October and had not loaded the new
+Python transport code. Restarted only den-watch to load it. Den health queries
+now bypass SSH connection multiplexing: a master tied to an old source address
+cannot serve as the sole health verdict after a route change. Actual commands
+retain their existing no-replay behavior. Zondo receives the watcher's connection
+notification; that notification is not an independent internet connectivity test.
+
+Rollback: remove the installed dispatcher and restore the previous per-interface
+values (0/0 on this audited host). Revert the relevant commit for SSH health logic.
+Do not clear SSH host keys or disable the firewall to suppress connection notices.

@@ -13,6 +13,10 @@ class Continuity(unittest.TestCase):
             self.assertEqual(m.remote(['hostname']),'homie')
         self.assertIn('-4',call.call_args.args[0])
 
+    def test_health_uses_a_fresh_connection_not_a_stale_master(self):
+        with patch.object(m,'host',return_value='arete'),patch.object(m,'remote',return_value='homie') as call:
+            self.assertTrue(m.connectivity())
+        call.assert_called_once_with(['hostname'],timeout=3,fresh=True)
     def setUp(self):
         self.t=tempfile.TemporaryDirectory();self.root=Path(self.t.name)
         self.p=patch.object(m,'CONFIG',self.root/'config');self.p.start()

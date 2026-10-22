@@ -30,8 +30,8 @@ def unit(name):
     return result.stdout.strip() or 'inactive'
 
 
-def peer_command(command):
-    result = run(['ssh', '-4', '-n', '-F', str(ROOT/'client.conf'), 'homie', command], timeout=5)
+def peer_command(command, fresh=False):
+    result = run(['ssh', '-4'] + (['-S', 'none'] if fresh else []) + ['-n', '-F', str(ROOT/'client.conf'), 'homie', command], timeout=5)
     if result.returncode:
         raise RuntimeError('Homie is unavailable. Local input remains yours.')
     return result.stdout
@@ -47,7 +47,7 @@ def status():
     try:
         result = json.loads(peer_command("python3 -c " + shlex.quote(
             "import json,socket,subprocess; print(json.dumps({'host':socket.gethostname(),"
-            "'input':subprocess.run(['systemctl','--user','is-active','--quiet','den-input']).returncode==0}))")))
+            "'input':subprocess.run(['systemctl','--user','is-active','--quiet','den-input']).returncode==0}))"), fresh=True))
         online = result['host'].split('.')[0] == 'homie'
     except (RuntimeError, OSError, ValueError, subprocess.SubprocessError):
         online = False

@@ -1,0 +1,11 @@
+#!/bin/sh
+# Keep a multihomed laptop from claiming its other NIC's IPv4 address.
+# Applies on reconnect/hotplug; virtual bridges, containers and VPNs are excluded.
+case "${2:-}" in up|dhcp4-change|reapply) ;; *) exit 0 ;; esac
+case "${1:-}" in ''|*[!a-zA-Z0-9_.:-]*) exit 1 ;; esac
+base="/sys/class/net/$1"
+[ -d "$base/device" ] || exit 0
+conf="/proc/sys/net/ipv4/conf/$1"
+[ -w "$conf/arp_ignore" ] && printf '1\n' > "$conf/arp_ignore"
+[ -w "$conf/arp_announce" ] && printf '2\n' > "$conf/arp_announce"
+exit 0
