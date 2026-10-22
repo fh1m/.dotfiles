@@ -34,7 +34,7 @@ loosely attached. This pass connects native ink to the same record history.
 |---|---|---|
 | P1, repaired | `sensei/drawing.py:learning` created Excalidraw; native scratch was outside the connected record workflow. | Native ink artifact linked to selected origin; identity retries preserve actual stroke bytes. |
 | P1, repaired | Backup used a general 25 MiB limit, smaller than the new 64 MiB owned-background allowance. | Bounded exception only for UUID-owned journals/backgrounds; regression test. Large arbitrary datasets remain excluded. |
-| P1, runtime dependency | Installed Qt 6.12.0 with local Quickshell stamped 6.11.2; actual build reproduced incomplete-MOC-type failure. | Attributed upstream compatibility port in the pinned build. Do not restart the desktop until a matched build succeeds. |
+| P1, runtime dependency | Installed Qt 6.12.0 with local Quickshell stamped 6.11.2; actual build reproduced incomplete-MOC-type failure. | Attributed upstream compatibility port in the pinned build. Matched build succeeded; existing desktop session retained. |
 | P2, repaired | `scripts/audit-noesis-qml.py` depended on an unavailable historical commit. | Audit current working tree by default, optional explicit revision, clear invalid-ref failure; inventory regenerated. |
 | P2, next | `policies.py:137` uses `timeline(identity)[-10:]`; `index.py:246` reads full history before slicing. | Add a bounded latest-events query for tutor context. This is a verified scaling risk, not a measured current UI fault. Full causal reducers may still need history. |
 | P2, deployment boundary | Homie doctor reports no active Noesis vault. | Choose/register its intended local or mounted vault explicitly; do not silently duplicate private laptop learning content. |
@@ -80,3 +80,8 @@ See [research and limitations](INK-RESEARCH.md), [daily ink workflow](INK.md), a
 [living execution status](INK-PLAN.md). Future improvements should earn their place
 by reducing resume/capture friction or strengthening independent evidence—not by
 increasing note counts, plugin counts or dashboard density.
+
+Deployment verification: the matched Qt 6.12 runtime, headless ink dialog and real
+Xournal++ roundtrip also passed on Homie. Both scoped deployments retain rollback
+manifests and active drawing watchers. Homie's missing active vault remains an
+explicit configuration boundary, not a failed native ink test.

@@ -69,3 +69,18 @@ Machine-local current-document state is ignored. User-authored content stays pri
   of this new linked workflow. Test a real lesson/derivation when convenient.
 - Homie: reachable, Qt 6.12; no active Noesis vault. Deploy reusable tools only,
   leaving private content authority and vault choice explicit.
+
+## Deployment receipt
+
+Committed as `2ddb2a5` and pushed to main. Scoped deployment completed on Arete and
+Homie with per-machine rollback manifests under `~/.local/state/noesis-deployments/`.
+Both drawing watchers are active. Arete doctor has no warnings. The Qt 6.12 native
+runtime built successfully and was checked on Homie before activation; no desktop
+or input-sharing restart was performed. Headless ink dialog and real Xournal++
+PDF/relocation roundtrips passed on **both** machines. Homie still deliberately has
+no active vault selected; disposable fixtures were used there.
+
+Preview export runs in one bounded background worker so a slow export cannot block
+tablet reconnect/mapping. Final drawing suite is 9 tests. The new notebook can be
+physically checked when the user next writes; no unattended test can certify hand
+comfort or actual learning outcomes.
