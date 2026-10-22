@@ -1,12 +1,12 @@
 """Loopback go-librespot adapter. No developer Web API, no browser credentials."""
-import json,os,re,time,urllib.request,urllib.parse,urllib.error
+import json,os,re,time,urllib.request,urllib.parse,urllib.error,http.client
 from pathlib import Path
 BASE='http://127.0.0.1:3678'
 STORE=Path.home()/'.cache/sensei-spotify/headless'
 class NoRedirect(urllib.request.HTTPRedirectHandler):
  def redirect_request(self,*args,**kwargs):return None
 HTTP=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect)
-def request(path,body=None):
+def request(path,body=None,_recover=True):
  if not path.startswith('/') or path.startswith('//'):raise ValueError('Invalid local music endpoint')
  read=body is None and path.startswith(('/library/','/context/'))
  if read:
@@ -15,13 +15,14 @@ def request(path,body=None):
   if until>time.time():raise ValueError('Spotify library is cooling down for '+str(int(until-time.time())+1)+' seconds.')
  req=urllib.request.Request(BASE+path,data=json.dumps(body).encode() if body is not None else None,headers={'Content-Type':'application/json'})
  try:
-  with HTTP.open(req,timeout=12) as r:
+  with HTTP.open(req,timeout=4 if path=='/status' else 12) as r:
    if r.status==204:raise ValueError('Music needs a Spotify sign-in. Open Account → Sign in.')
    raw=r.read(8*1024*1024+1)
    if len(raw)>8*1024*1024:raise ValueError('Music response exceeded the local limit')
    return json.loads(raw) if raw else {}
  except urllib.error.HTTPError as ex:
   if ex.code==204:raise ValueError('Music needs a Spotify sign-in. Open Account → Sign in.')
+  if path=='/status' and body is None and ex.code>=500 and _recover and recover_service():return recovered_status()
   if ex.code==429:
    try:delay=max(1,int(ex.headers.get('Retry-After','60')))
    except (ValueError,TypeError):delay=60
@@ -31,7 +32,58 @@ def request(path,body=None):
    temp.replace(STORE/'backoff.json')
    raise ValueError('Spotify requested a '+str(delay)+'-second pause; saved library data is still available.')
   raise ValueError('Music request was rejected ('+str(ex.code)+'). Playback was not retried.') from None
- except (urllib.error.URLError,TimeoutError):raise ValueError('The headless music service is unavailable. Open Account → Restart music service.') from None
+ except (urllib.error.URLError,TimeoutError,ConnectionError,http.client.HTTPException):
+  # Retry only the read, never an uncertain playback/queue mutation.
+  if path=='/status' and body is None and _recover and recover_service():
+   return recovered_status()
+  raise ValueError('Music connection is recovering. Your saved playback is preserved; try Play shortly.') from None
+
+def recovered_status():
+ for attempt in range(6):
+  try:return request('/status',_recover=False)
+  except ValueError as ex:
+   if 'sign-in' not in str(ex) and 'recovering' not in str(ex):raise
+   time.sleep(.5)
+ raise ValueError('Music is reconnecting to Spotify; saved playback remains available.')
+
+def recover_service():
+ import fcntl,subprocess
+ STORE.mkdir(parents=True,exist_ok=True,mode=0o700)
+ with (STORE/'recovery.lock').open('a') as lock:
+  try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+  except BlockingIOError:return False
+  try:last=float((STORE/'recovery-at').read_text())
+  except (OSError,ValueError):last=0
+  if time.time()-last<120:return False
+  (STORE/'recovery-at').write_text(str(time.time()))
+  try:
+   result=subprocess.run(['systemctl','--user','restart','sensei-go-spotify.service'],capture_output=True,timeout=5)
+   if result.returncode:return False
+   time.sleep(.5)
+   return True
+  except (OSError,subprocess.TimeoutExpired):return False
+
+def remembered_playback():
+ try:return json.loads((STORE/'playback.json').read_text())
+ except (OSError,ValueError):return {}
+
+def remember_playback(d):
+ if d.get('stopped',True) or d.get('buffering') or not (d.get('track') or {}).get('uri'):return
+ STORE.mkdir(parents=True,exist_ok=True,mode=0o700)
+ # Private playback metadata only. Never save login/session credentials.
+ data={k:d.get(k) for k in ('track','queue','context_uri','paused','volume','volume_steps','shuffle_context','repeat_context','repeat_track')}
+ tmp=STORE/('playback.'+str(os.getpid())+'.tmp')
+ with tmp.open('w') as f:os.chmod(tmp,0o600);json.dump(data,f)
+ tmp.replace(STORE/'playback.json')
+
+def resume_saved(d):
+ saved=remembered_playback();track=saved.get('track') or {}
+ if not track.get('uri'):raise ValueError('Choose a track to start playback; no saved session exists yet.')
+ # One atomic context+queue load, not a series of racing add-to-queue calls.
+ upcoming=[t['uri'] for t in saved.get('queue') or [] if t.get('uri')][:50]
+ request('/player/play',{'uri':track['uri'],'position':max(0,int(track.get('position',0))),'queued':upcoming})
+ mark_intent(d,'start',track['uri'],track.get('position',0))
+
 
 def uri(kind,identity):
  if kind=='collection' and identity=='tracks':return 'spotify:collection:tracks'
@@ -45,6 +97,7 @@ def row(t,kind='track'):
 def raw_status():
  d=request('/status')
  if not d:raise ValueError('Music needs a Spotify sign-in. Open Account → Sign in.')
+ remember_playback(d)
  return d
 
 def mark_intent(before,action,context=None,position=0):
@@ -180,8 +233,8 @@ def dispatch(args):
   context=uri(a[0],a[1]);d=cache(context,lambda:listing(context),ttl=3,force=force)
   return dict(d,item={'kind':a[0],'id':a[1],'uri':context})
  if name=='queue':
-  d=raw_status();rows=[row(t.get('track') or {'uri':t['uri']}) for t in d.get('queue',[])]
-  return {'rows':rows,'total':len(rows),'warning':'Upcoming playback window · up to 50 tracks' if rows else ''}
+  d=raw_status();saved=d.get('buffering') or d.get('stopped');q=(remembered_playback().get('queue') if saved else d.get('queue')) or [];rows=[row(t.get('track') or {'uri':t['uri']}) for t in q]
+  return {'rows':rows,'total':len(rows),'stale':bool(saved),'warning':'Saved queue · press Play to resume' if saved and rows else 'Upcoming playback window · up to 50 tracks' if rows else ''}
  if name=='devices':
   d=raw_status();return {'rows':[{'id':d['device_id'],'name':d['device_name'],'active':not d['stopped'],'is_active':not d['stopped'],'type':'Headless Connect','volume_percent':round(d.get('volume',0)*100/max(1,d.get('volume_steps',100)))}],'warning':'This headless player is local. Choose remote devices from a Spotify Connect controller.'}
  if name=='search':
@@ -214,9 +267,11 @@ def dispatch(args):
   u=a[0] if a[0].startswith('spotify:') else uri('track',a[0]);request('/player/add_to_queue',{'uri':u})
  elif name=='playlist-add':request('/library/playlists/add_tracks',{'playlist_uri':uri('playlist',a[0]),'uris':[a[1] if a[1].startswith('spotify:') else uri('track',a[1])]})
  elif name in ('play','pause','toggle','next','previous'):
-  before=raw_status() if name in ('next','previous') else None
+  before=raw_status()
+  if before.get('stopped') and name in ('play','toggle'):
+   resume_saved(before);return {'ok':True,'backend':'headless','restored':True}
   request('/player/'+{'play':'resume','pause':'pause','toggle':'playpause','next':'next','previous':'prev'}[name],{})
-  if before:mark_intent(before,name)
+  if name in ('next','previous'):mark_intent(before,name)
  elif name=='volume':request('/player/volume',{'volume':max(0,min(100,int(float(a[0]))))})
  elif name in ('seek','seek-to'):request('/player/seek',{'position':int(float(a[0])),'relative':name=='seek'})
  elif name=='shuffle':request('/player/shuffle_context',{'shuffle_context':not raw_status().get('shuffle_context',False)})
@@ -233,8 +288,7 @@ def dispatch(args):
    values=[uri('track',str(x).rsplit(':',1)[-1]) for x in values]
    offset=payload.get('offset',0) if isinstance(payload,dict) else 0
    if type(offset) is not int or not 0<=offset<len(values):raise ValueError('Invalid queue offset')
-   values=values[offset:];request('/player/play',{'uri':values[0]})
-   for u in values[1:]:request('/player/add_to_queue',{'uri':u})
+   values=values[offset:];request('/player/play',{'uri':values[0],'queued':values[1:]})
    return {'ok':True,'backend':'headless'}
   before=raw_status();request('/player/play',body);mark_intent(before,'start',body['uri'])
  else:raise ValueError('This operation is not available in the headless backend. Your library was not modified.')

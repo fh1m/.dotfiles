@@ -11,6 +11,13 @@ Scope {
     id: root
 
     IpcHandler {
+        target: "wifi"
+        function state():string {return JSON.stringify({radioOn:Wifi.radioOn,connected:Wifi.connected,ssid:Wifi.activeSsid,linking:Wifi.linking,queued:!!Wifi.pendingConnection,error:Wifi.error});}
+        function connect(ssid:string):void {Wifi.connect(ssid);}
+        function disconnect():void {Wifi.disconnect();}
+    }
+
+    IpcHandler {
         target: "display-brightness"
         function set(output: string, level: real): void { DisplayControls.setLevel(output, level); }
         function state(): string { return JSON.stringify({main:Brightness.ready ? Brightness.value * 100 : RobotBench.data.mainBrightness,screenpad:RobotBench.data.brightness,error:DisplayControls.error}); }

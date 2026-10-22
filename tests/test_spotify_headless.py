@@ -57,4 +57,34 @@ class Headless(unittest.TestCase):
   with tempfile.TemporaryDirectory() as d,patch.object(h,'STORE',Path(d)):
    h.mark_intent({'track':{'uri':'same'}},'start','spotify:collection:tracks',90000)
    self.assertFalse(h.transitioning({'track':{'uri':'same','position':90200},'context_uri':'spotify:collection:tracks'}))
+ def test_playlist_queue_is_one_atomic_request(self):
+  values=['spotify:track:'+'a'*22,'spotify:track:'+'b'*22,'spotify:track:'+'b'*22]
+  with patch.object(h,'request',return_value={}) as req:
+   h.dispatch(['play-list',json.dumps(values)])
+   req.assert_called_once_with('/player/play',{'uri':values[0],'queued':values[1:]})
+ def test_stopped_resume_uses_saved_position_and_queue_without_replaying_skips(self):
+  saved={'track':{'uri':'spotify:track:'+'a'*22,'position':42000},'queue':[{'uri':'spotify:track:'+'b'*22}]}
+  with patch.object(h,'raw_status',return_value={'stopped':True}),patch.object(h,'remembered_playback',return_value=saved),patch.object(h,'mark_intent'),patch.object(h,'request') as req:
+   self.assertTrue(h.dispatch(['play'])['restored'])
+   req.assert_called_once_with('/player/play',{'uri':saved['track']['uri'],'position':42000,'queued':[saved['queue'][0]['uri']]})
+ def test_transition_cannot_erase_saved_queue(self):
+  saved={'stopped':False,'track':{'uri':'spotify:track:'+'a'*22},'queue':[{'uri':'spotify:track:'+'b'*22}]}
+  with tempfile.TemporaryDirectory() as d,patch.object(h,'STORE',Path(d)):
+   h.remember_playback(saved)
+   h.remember_playback({'stopped':False,'buffering':True,'track':{'uri':'new'},'queue':[]})
+   self.assertEqual(h.remembered_playback()['queue'],saved['queue'])
+   with patch.object(h,'raw_status',return_value={'stopped':True}):
+    result=h.dispatch(['queue']);self.assertTrue(result['stale']);self.assertEqual(len(result['rows']),1)
+ def test_recovery_is_rate_limited_across_calls(self):
+  with tempfile.TemporaryDirectory() as d,patch.object(h,'STORE',Path(d)),patch('subprocess.run') as run,patch.object(h.time,'sleep'):
+   run.return_value.returncode=0
+   self.assertTrue(h.recover_service());self.assertFalse(h.recover_service());self.assertEqual(run.call_count,1)
+ def test_uncertain_write_is_never_replayed_or_restarted(self):
+  import urllib.error
+  with patch.object(h.HTTP,'open',side_effect=urllib.error.URLError('offline')) as http,patch.object(h,'recover_service') as recovery:
+   with self.assertRaises(ValueError):h.request('/player/next',{})
+   self.assertEqual(http.call_count,1);recovery.assert_not_called()
+ def test_recovery_waits_for_login_without_restarting_again(self):
+  with patch.object(h,'request',side_effect=[ValueError('Music needs a Spotify sign-in.'),{'stopped':True}]) as request,patch.object(h.time,'sleep'):
+   self.assertEqual(h.recovered_status(),{'stopped':True});self.assertEqual(request.call_count,2)
 if __name__=='__main__':unittest.main()

@@ -20,7 +20,7 @@ Singleton {
     id: root
 
     readonly property bool active: ShellState.dropdown === "wifi" || (ShellState.dropdown === "system" && ShellState.systemPage === 3 && DesktopExtras.networkPage === 0)
-    readonly property bool radioOn: Networking.wifiEnabled
+    readonly property bool radioOn: Networking.wifiEnabled && Machine.wifiInterface !== ""
 
     readonly property var device: {
         for (const candidate of Networking.devices?.values ?? []) {
@@ -39,7 +39,7 @@ Singleton {
     readonly property real strength: {
         for (const network of device?.networks?.values ?? []) {
             if (network.connected)
-                return network.signalStrength;
+                return Number(network.signalStrength) || 0;
         }
         return 0;
     }
@@ -190,12 +190,20 @@ Singleton {
 
     // A known network (stored secret) or an open one: no passphrase to hide, so
     // nmcli needs no prompt and no stdin.
-    function connect(ssid: string): void {
+    property var pendingConnection: null
+    function runConnection(command, secret, ssid): void {
+        if (!Machine.wifiInterface) { error="No wireless adapter is available"; return; }
+        // Never replace argv/stdin on a live Process. The latest click is run
+        // after its predecessor exits, and stale results cannot win the UI.
+        if (connectProc.running) { pendingConnection={command:command,secret:secret,ssid:ssid}; return; }
         begin(ssid);
-        root._pendingSecret = "";
-        connectProc.stdinEnabled = false;
-        connectProc.command = ["nmcli", "device", "wifi", "connect", ssid, "ifname", Machine.wifiInterface];
-        connectProc.running = true;
+        _pendingSecret=secret;
+        connectProc.stdinEnabled=secret!=="";
+        connectProc.command=command;
+        connectProc.running=true;
+    }
+    function connect(ssid: string): void {
+        runConnection(["nmcli", "--wait", "20", "device", "wifi", "connect", ssid, "ifname", Machine.wifiInterface], "", ssid);
     }
 
     // **The passphrase goes to nmcli on stdin, never as an argument.** A
@@ -206,11 +214,7 @@ Singleton {
     // from stdin; `_pendingSecret` is written in connectProc.onStarted and the
     // pipe is then closed. Verified: the psk never appears in the process argv.
     function connectWithPsk(ssid: string, psk: string): void {
-        begin(ssid);
-        root._pendingSecret = psk;
-        connectProc.stdinEnabled = true;
-        connectProc.command = ["nmcli", "--ask", "device", "wifi", "connect", ssid, "ifname", Machine.wifiInterface];
-        connectProc.running = true;
+        runConnection(["nmcli", "--wait", "20", "--ask", "device", "wifi", "connect", ssid, "ifname", Machine.wifiInterface], psk, ssid);
     }
 
     function begin(ssid: string): void {
@@ -220,11 +224,7 @@ Singleton {
     }
 
     function disconnect(): void {
-        error = "";
-        root._pendingSecret = "";
-        connectProc.stdinEnabled = false;
-        connectProc.command = ["nmcli", "device", "disconnect", Machine.wifiInterface];
-        connectProc.running = true;
+        runConnection(["nmcli", "--wait", "10", "device", "disconnect", Machine.wifiInterface], "", "Disconnecting");
     }
 
     // Delete the saved connection, so the network stops being "known" and asks
@@ -458,6 +458,12 @@ Singleton {
         // The reason is set before `linking` clears, so anything watching
         // `linking` fall to "" already sees whether it worked.
         onExited: exitCode => {
+            if (root.pendingConnection) {
+                const next=root.pendingConnection; root.pendingConnection=null;
+                root._pendingSecret="";
+                Qt.callLater(()=>root.runConnection(next.command,next.secret,next.ssid));
+                return;
+            }
             const ok = exitCode === 0;
             root.error = ok ? "" : root.describe(connectError.text);
             root.errorDetail = ok ? "" : connectError.text.trim();

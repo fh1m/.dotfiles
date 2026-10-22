@@ -1,3 +1,17 @@
+# Shared widget and media repair — 2026-10-23
+
+Homie and Arete use the same repaired Wi-Fi action serializer, headless Spotify
+adapter/backend and Claude quota views. Actual queue creation and pause/resume
+passed on both hosts; Arete also passed deliberate service-loss recovery with
+its two-entry queue restored. Homie's stale UI was retaining an older shell
+following an undeployed GuestLibrary dependency: the missing public components
+and assets were deployed and only the main shell was refreshed. Application and
+input-sharing processes were preserved. Read-only state sweeps returned 53
+Arete / 45 Homie endpoints without failed calls or reported errors. Both user
+service managers have no failed units. Backup sampled-data check and SHA256
+restore proof passed; Arete's scheduled backup rerun including peer-copy passed.
+See ../docs/digital-den/STATE-AND-MEDIA-REPAIR.md for limits and rollback.
+
 # Chrome / Desktop Commander connectivity — 2026-10-20
 
 Homie's network was healthy; Chrome waited on a locked login keyring. Correctly

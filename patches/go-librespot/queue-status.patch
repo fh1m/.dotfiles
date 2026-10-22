@@ -1,5 +1,5 @@
 diff --git a/daemon/api_gen.go b/daemon/api_gen.go
-index 2e75c4f..faffc69 100644
+index 2e75c4f..c947205 100644
 --- a/daemon/api_gen.go
 +++ b/daemon/api_gen.go
 @@ -40,6 +40,8 @@ type ApiContextTrackItem struct {
@@ -11,7 +11,16 @@ index 2e75c4f..faffc69 100644
  	// Cached Entries with full metadata; poll again while cached < length
  	Cached int `json:"cached"`
  
-@@ -305,6 +307,7 @@ type ApiShuffleContext struct {
+@@ -197,6 +199,8 @@ type ApiOutput struct {
+ 
+ // ApiPlay An initiate playback payload
+ type ApiPlay struct {
++	// Den: an explicit ordered queue installed with this context.
++	Queued []string `json:"queued,omitempty"`
+ 	// Paused Start playback as paused
+ 	Paused bool `json:"paused,omitempty"`
+ 
+@@ -305,6 +309,7 @@ type ApiShuffleContext struct {
  
  // ApiStatus The player status
  type ApiStatus struct {
@@ -73,8 +82,31 @@ index c4afe25..380effb 100644
  }
  
  // Paging bounds of /library/playlists, matching the spec.
+diff --git a/daemon/controls.go b/daemon/controls.go
+index cfe8540..394b3a7 100644
+--- a/daemon/controls.go
++++ b/daemon/controls.go
+@@ -324,7 +324,7 @@ type skipToFunc func(*connectpb.ContextTrack) bool
+ // here, so controllers see the new context immediately; resolving the context
+ // and walking it to the starting track runs on the loader lane, and the track
+ // it lands on is loaded once it has.
+-func (p *AppPlayer) loadContext(spotCtx *connectpb.Context, skipTo skipToFunc, paused, drop bool, then func(error)) {
++func (p *AppPlayer) loadContext(spotCtx *connectpb.Context, skipTo skipToFunc, paused, drop bool, then func(error), queueOverride ...[]*connectpb.ContextTrack) {
+ 	p.state.setPaused(paused)
+ 
+ 	sessionId := make([]byte, 16)
+@@ -376,6 +376,9 @@ func (p *AppPlayer) loadContext(spotCtx *connectpb.Context, skipTo skipToFunc, p
+ 	if p.state.tracks != nil {
+ 		queued = p.state.tracks.UpcomingQueue()
+ 	}
++	if len(queueOverride) > 0 {
++		queued = queueOverride[0]
++	}
+ 
+ 	p.loader.submit(loaderJob{
+ 		name:  "resolve " + spotCtx.Uri,
 diff --git a/daemon/player.go b/daemon/player.go
-index 7b3b133..d65cbc5 100644
+index 7b3b133..af14b9f 100644
 --- a/daemon/player.go
 +++ b/daemon/player.go
 @@ -702,6 +702,17 @@ func (p *AppPlayer) handleApiRequest(req ApiRequest) (any, error) {
@@ -95,7 +127,7 @@ index 7b3b133..d65cbc5 100644
  
  		return resp, nil
  	case ApiRequestTypeContextTracks:
-@@ -720,7 +731,17 @@ func (p *AppPlayer) handleApiRequest(req ApiRequest) (any, error) {
+@@ -720,10 +731,19 @@ func (p *AppPlayer) handleApiRequest(req ApiRequest) (any, error) {
  		uris, ready := p.app.contextLists.get(data.Uri)
  		p.scheduleContextEnumerate(data.Uri)
  
@@ -112,8 +144,50 @@ index 7b3b133..d65cbc5 100644
 +		resp.Offset = start
 +		return resp, nil
  	case ApiRequestTypeResume:
- 		_ = p.play()
+-		_ = p.play()
+-		return nil, nil
++		return nil, p.play()
+ 	case ApiRequestTypePause:
+ 		_ = p.pause()
  		return nil, nil
+@@ -762,6 +782,17 @@ func (p *AppPlayer) handleApiRequest(req ApiRequest) (any, error) {
+ 		return nil, nil
+ 	case ApiRequestTypePlay:
+ 		data := req.Data.(ApiPlay)
++		if len(data.Queued) > 89 {
++			return nil, ErrBadRequest
++		}
++		var queued []*connectpb.ContextTrack
++		for _, uri := range data.Queued {
++			id, err := librespot.SpotifyIdFromUri(uri)
++			if err != nil || id == nil {
++				return nil, ErrBadRequest
++			}
++			queued = append(queued, &connectpb.ContextTrack{Uri: uri})
++		}
+ 
+ 		var skipTo skipToFunc
+ 		if len(data.SkipToUri) > 0 {
+@@ -812,6 +843,10 @@ func (p *AppPlayer) handleApiRequest(req ApiRequest) (any, error) {
+ 						FeatureVersion:    librespot.VersionNumberString(),
+ 					}
+ 
++					var override [][]*connectpb.ContextTrack
++					if data.Queued != nil {
++						override = append(override, queued)
++					}
+ 					p.loadContext(spotCtx, skipTo, loadPaused, true, func(err error) {
+ 						if err != nil {
+ 							p.app.log.WithError(err).Warn("failed loading context")
+@@ -830,7 +865,7 @@ func (p *AppPlayer) handleApiRequest(req ApiRequest) (any, error) {
+ 								p.app.log.WithError(err).Warnf("failed resuming after initial seek")
+ 							}
+ 						}
+-					})
++					}, override...)
+ 				}}
+ 			},
+ 		})
 diff --git a/daemon/track_meta_cache.go b/daemon/track_meta_cache.go
 index d16e383..536694a 100644
 --- a/daemon/track_meta_cache.go

@@ -1,0 +1,16 @@
+# Optional Homie -> Arete quota-only route. Install only after verifying the
+# server host key locally and authorizing the client public key on Arete with
+# restrict,from=<trusted LAN>,command=<absolute sensei-code path> claude-quotas.
+# Keep private keys and the pinned known_hosts file outside this repository.
+Host arete-quota
+    HostName arete.local
+    User fh1m
+    AddressFamily inet
+    IdentityFile ~/.ssh/den_homie_to_arete
+    IdentitiesOnly yes
+    BatchMode yes
+    ConnectTimeout 3
+    StrictHostKeyChecking yes
+    HostKeyAlias arete-den-quota
+    UserKnownHostsFile ~/.config/sensei/den-quota-known-hosts
+    ClearAllForwardings yes

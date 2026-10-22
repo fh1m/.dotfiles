@@ -384,11 +384,54 @@ def claude_identity(directory):
             'plan': ' '.join(p for p in [org, tier[1] if tier else ''] if p) or None,
             'organization': account.get('organizationName')}
 
+def claude_quota_key(directory):
+    import hashlib
+    email=claude_identity(directory).get('email')
+    return hashlib.sha256(email.strip().lower().encode()).hexdigest() if email else None
+
+def claude_quota_export():
+    # Only account hashes and quota receipts cross hosts; never tokens/transcripts.
+    import socket
+    rows=[]
+    for account in claude_accounts():
+        directory=account['configDir']; key=claude_quota_key(directory)
+        snapshot=cached(Path(directory)/CLAUDE_SNAPSHOT)
+        if key and snapshot.get('updated_at'):
+            rows.append({'key':key,'snapshot':{k:snapshot.get(k) for k in ('updated_at','five_hour','seven_day')},'identity':claude_identity(directory)})
+    return {'host':socket.gethostname(),'rows':rows}
+
+def peer_claude_quotas():
+    import socket
+    host=socket.gethostname().split('.')[0]
+    peer={'arete':'homie','homie':'arete'}.get(host)
+    if not peer:return {}
+    path=CACHE/'claude-peer-quotas.json'; old=cached(path)
+    if time.time()-old.get('checkedAt',0)<60:return old
+    try:
+        config=HOME/'.config/sensei/den-quota-ssh.conf'
+        command=(['ssh','-4','-F',str(config),'arete-quota','den-quota'] if host=='homie' and config.exists() else ['ssh','-4','-o','BatchMode=yes','-o','ConnectTimeout=3',peer,'~/.local/bin/sensei-code claude-quotas'])
+        result=subprocess.run(command,capture_output=True,text=True,timeout=5)
+        if result.returncode:raise ValueError('Peer unavailable')
+        data=json.loads(result.stdout)
+        if not isinstance(data.get('rows'),list):raise ValueError('Invalid quota receipt')
+        old={'checkedAt':time.time(),'host':data.get('host',peer),'rows':data['rows']}
+    except (OSError,ValueError,subprocess.TimeoutExpired):
+        old=dict(old,checkedAt=time.time())
+    save(path,old)
+    return old
+
 def claude_limits(directory):
-    """Windows the statusline recorded for this config dir. Missing or unreadable means none."""
-    snapshot = cached(Path(directory)/CLAUDE_SNAPSHOT)
-    if not snapshot.get('updated_at'): return None
-    return {'updatedAt': snapshot['updated_at'], 'fiveHour': snapshot.get('five_hour'), 'sevenDay': snapshot.get('seven_day')}
+    import socket
+    local=cached(Path(directory)/CLAUDE_SNAPSHOT)
+    candidates=[(local,socket.gethostname())]
+    key=claude_quota_key(directory)
+    if key:
+        remote=peer_claude_quotas()
+        candidates.extend((r.get('snapshot',{}),remote.get('host','peer')) for r in remote.get('rows',[]) if r.get('key')==key)
+    snapshot,host=max(candidates,key=lambda pair:str(pair[0].get('updated_at','')))
+    if not snapshot.get('updated_at'):return None
+    return {'updatedAt':snapshot['updated_at'],'fiveHour':snapshot.get('five_hour'),
+            'sevenDay':snapshot.get('seven_day'),'sourceHost':host}
 
 def claude_usage(days=30, directory=None):
     """Aggregate token counts from one account's local transcripts. Message text is never kept."""
@@ -443,7 +486,7 @@ def claude_usage(days=30, directory=None):
             'models': sorted(models.values(), key=lambda m: m['output'], reverse=True)[:10],
             'projects': [{'name': n, 'responses': c} for n, c in sorted(projects.items(), key=lambda p: p[1], reverse=True)[:5]],
             'daily': series, 'limits': claude_limits(directory),
-            'quotaNote': 'Token counts come from local transcripts. Subscription windows show only when a status line has recorded them.',
+            'quotaNote': 'Tokens are local transcript totals. Account-wide subscription windows use the newest matching-account status-line receipt from either Den host; they update after Claude activity, not continuously.',
             'fetchedAt': time.time()}
 
 
@@ -455,6 +498,17 @@ def claude_account(ident):
     raise RuntimeError(f'Unknown Claude account: {ident}')
 
 def claude_snapshot(days=30, ident=None):
+    if ident and ident.startswith('peer:'):
+        peer=peer_claude_quotas()
+        row=next((r for r in peer.get('rows',[]) if 'peer:'+r.get('key','')==ident),None)
+        if not row:raise RuntimeError('Remote quota receipt unavailable; retry when the peer is online')
+        snap=row['snapshot']
+        emit({'provider':'claude','account':ident,'accountName':peer.get('host','Peer'),
+              'identity':row.get('identity',{}),'state':'Remote account quota · no local transcripts',
+              'limits':{'updatedAt':snap['updated_at'],'fiveHour':snap.get('five_hour'),'sevenDay':snap.get('seven_day'),'sourceHost':peer.get('host')},
+              'totals':{},'models':[],'projects':[],'daily':[],
+              'quotaNote':'Newest saved account quota receipt from the other Den host. Refreshes after Claude activity; transcript totals are not copied.','fetchedAt':time.time()})
+        return
     account = claude_account(ident)
     data = claude_usage(days, account['configDir'])
     data.update(account=account['id'], accountName=account['name'])
@@ -466,6 +520,15 @@ def claude_accounts_snapshot(days=7):
         usage = claude_usage(days, account['configDir'])
         rows.append({'id': account['id'], 'name': account['name'], 'directory': account['configDir'],
                      'identity': usage['identity'], 'limits': usage['limits'], 'totals': usage['totals']})
+    keys={claude_quota_key(a['configDir']) for a in claude_accounts()}
+    peer=peer_claude_quotas()
+    for r in peer.get('rows',[]):
+        if r.get('key') in keys:continue
+        snap=r.get('snapshot',{})
+        rows.append({'id':'peer:'+r['key'],'name':peer.get('host','Peer')+' account',
+                     'identity':r.get('identity',{}),'totals':{},
+                     'limits':{'updatedAt':snap.get('updated_at'),'fiveHour':snap.get('five_hour'),'sevenDay':snap.get('seven_day'),'sourceHost':peer.get('host')}})
+    rows.sort(key=lambda r:not r.get('identity',{}).get('signedIn'))
     emit({'accounts': rows, 'days': days, 'fetchedAt': time.time()})
 
 
@@ -474,16 +537,20 @@ def main():
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--days',type=int,choices=[0,7,30],default=30)
-    parser.add_argument('action', choices=['overview', 'details', 'repositories', 'activity', 'codex', 'codex-watch', 'opencode', 'claude', 'claude-accounts'])
+    parser.add_argument('action', choices=['overview', 'details', 'repositories', 'activity', 'codex', 'codex-watch', 'opencode', 'claude', 'claude-accounts', 'claude-quotas'])
     parser.add_argument('--account', default='')
     parser.add_argument('repo', nargs='?')
     parser.add_argument('--refresh', action='store_true')
     args = parser.parse_args()
+    if args.refresh and args.action in ('claude','claude-accounts'):
+        path=CACHE/'claude-peer-quotas.json'; old=cached(path)
+        if old:save(path,dict(old,checkedAt=0))
     if args.action == 'overview': code(args.refresh)
     elif args.action == 'details': details(args.repo or '')
     elif args.action == 'repositories': repositories(args.repo or '')
     elif args.action == 'activity': activity(args.repo or '1')
     elif args.action == 'opencode': opencode_snapshot(args.refresh,args.days)
+    elif args.action == 'claude-quotas': emit(claude_quota_export())
     elif args.action == 'claude': claude_snapshot(args.days, args.account)
     elif args.action == 'claude-accounts': claude_accounts_snapshot(args.days if args.days else 7)
     else:

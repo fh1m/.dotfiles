@@ -42,12 +42,12 @@ Singleton {
     // from the same moment.
     Process {
         running: true
-        command: ["sh", "-c", "act=$(ip route show default 2>/dev/null | grep -oP 'dev \\K\\S+' | head -1); wl=''; for w in /sys/class/net/*/wireless; do [ -e \"$w\" ] && wl=$(basename \"$(dirname \"$w\")\") && break; done; [ -z \"$act\" ] && act=$wl; [ -z \"$act\" ] && act=$(ls /sys/class/net 2>/dev/null | grep -vx lo | head -1); [ -z \"$wl\" ] && wl=$act; printf '%s\\n%s\\n' \"$act\" \"$wl\""]
+        command: ["sh", "-c", "act=$(ip route show default 2>/dev/null | grep -oP 'dev \\K\\S+' | head -1); wl=''; for w in /sys/class/net/*/wireless; do [ -e \"$w\" ] && wl=$(basename \"$(dirname \"$w\")\") && break; done; [ -z \"$act\" ] && act=$wl; [ -z \"$act\" ] && act=$(ls /sys/class/net 2>/dev/null | grep -vx lo | head -1); printf '%s\\n%s\\n' \"$act\" \"$wl\""]
         stdout: StdioCollector {
             onStreamFinished: {
                 const lines = text.split("\n");
                 root.netInterface = (lines[0] ?? "").trim();
-                root.wifiInterface = (lines[1] ?? "").trim() || root.netInterface;
+                root.wifiInterface = (lines[1] ?? "").trim();
             }
         }
     }

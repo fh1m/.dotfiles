@@ -166,5 +166,6 @@ Singleton {
  Timer {interval:5000;repeat:true;running:root.musicVisible&&root.playback.localReleased===true;onTriggered:root.dispatch('status')}
  Timer {interval:15000;repeat:true;running:root.musicVisible&&(root.fullscreen||root.page===0||root.page===1)&&root.playing;onTriggered:{root.dispatch('queue');if(root.fullscreen)root.dispatch('devices');}}
  Timer {interval:5000;repeat:true;running:root.musicVisible&&root.cataloguePending;onTriggered:{if(++root.catalogueAttempts>20){root.cataloguePending=false;root.warning='Track names are taking longer than expected. Saved rows remain available; refresh when ready.';return;}if(root.contextItem.id)root.dispatch('context',[root.contextItem.kind,root.contextItem.id]);else if(root.page===0)root.dispatch('home');else if(root.page===3)root.dispatch('library',[root.libraryKind]);}}
+ Timer {interval:15000;repeat:true;running:root.musicVisible&&root.playback.backend==='headless';onTriggered:root.dispatch('status')}
  Timer {interval:60000;repeat:true;running:!root.player;triggeredOnStart:true;onTriggered:root.dispatch('account')}
 }

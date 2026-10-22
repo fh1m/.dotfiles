@@ -29,7 +29,7 @@ Singleton {
     Component.onCompleted:refresh()
     IpcHandler {target:"den-view";function state():string{return JSON.stringify({data:root.data,nativeSharing:root.nativeSharing,error:root.error});}function refresh():void{root.refresh();}function act(name:string):void{if(["toggle","locate","home","storage"].indexOf(name)>=0)root.execute([name]);}}
     Process {id:scan;command:[Quickshell.env("HOME")+"/.local/bin/den-control","status","--json"]
-        stdout:StdioCollector {onStreamFinished:{try{root.data=JSON.parse(text);}catch(e){root.data={peer:{state:"unavailable",authenticated:false},input:"inactive",storage:"not configured"};root.error="Den status unavailable";}}}
+        stdout:StdioCollector {onStreamFinished:{try{root.data=JSON.parse(text);if(root.error==="Den status unavailable")root.error="";}catch(e){root.data={peer:{state:"unavailable",authenticated:false},input:"inactive",storage:"not configured"};root.error="Den status unavailable";}}}
     }
     Process {id:action
         stderr:StdioCollector {onStreamFinished:if(text.trim())root.error=text.trim().split("\n").filter(s=>s.startsWith("Den:")).join("\n")||"Den action unavailable";}

@@ -28,7 +28,7 @@ DropdownFrame {
         return text;
     }
     // A recorded window: what is left, the bar's fill, and when it resets. Missing means none recorded.
-    function windowLeft(w) {return w&&w.used_percentage!=null?Math.max(0,100-w.used_percentage).toFixed(0)+"% remaining":"No window recorded";}
+    function windowLeft(w) {if(w?.resets_at&&Date.parse(w.resets_at)<=Date.now())return "Window ended · awaiting update";return w&&w.used_percentage!=null?Math.max(0,100-w.used_percentage).toFixed(0)+"% remaining":"No window recorded";}
     function fillOf(w) {return w&&w.used_percentage!=null?Math.max(0,Math.min(1,(100-w.used_percentage)/100)):0;}
     function resetText(iso) {if(!iso)return "No reset recorded";const t=new Date(iso);return t<new Date()?"Reset passed · open Claude to record":"Resets "+t.toLocaleString(Qt.locale(),"ddd d MMM · hh:mm AP");}
     function peakDaily(days) {return (days??[]).reduce((m,d)=>Math.max(m,d.tokens),1);}
@@ -383,7 +383,7 @@ DropdownFrame {
                         // The default account keeps its login in ~/.claude.json, so it runs without CLAUDE_CONFIG_DIR.
                         ControlTile {label:"Open Claude here";glyph:"";onActivated:Quickshell.execDetached(["alacritty","-e","bash","-c","if [ \"$1\" = \"$HOME/.claude\" ]; then exec claude; else CLAUDE_CONFIG_DIR=\"$1\" exec claude; fi","claude",CodeDesk.claudeUsage.directory||""])}
                     }
-                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;wrapMode:Text.WordWrap;pixelSize:10;color:Theme.paperMuted;text:CodeDesk.claudeUsage.quotaNote||""}
+                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;wrapMode:Text.WordWrap;pixelSize:10;color:Theme.paperMuted;text:(CodeDesk.claudeUsage.limits?.sourceHost ? "Quota receipt: "+CodeDesk.claudeUsage.limits.sourceHost+" · "+CodeDesk.claudeUsage.limits.updatedAt+". " : "")+(CodeDesk.claudeUsage.quotaNote||"")}
                 }
             }
         }
