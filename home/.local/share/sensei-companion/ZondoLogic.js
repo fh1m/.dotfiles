@@ -91,10 +91,29 @@ function singingContinues(playing, dnd, now, end, lastLineAt) {
 }
 
 // Use ES5 array operations: Qt's JS engine does not provide Array.flatMap.
-function nextNotice(sources, seen) {
+function nextNotice(sources, seen, now, presence) {
+    now=now===undefined?Date.now():now;
+    function linkState(e) {
+        if(e.app!=='Digital Den')return null;
+        if(e.summary==='Den peer unavailable')return false;
+        if(e.summary==='Homie connected')return true;
+        return null;
+    }
+    // Link notices are state transitions, not timeless messages. Keep history in
+    // the bell, but never narrate an obsolete outage as a current condition.
+    var latest={};
+    sources.forEach(function(n){(n.entries||[]).forEach(function(e){
+        if(linkState(e)!==null&&(!latest[n.host||'local']||e.at>latest[n.host||'local'].at))latest[n.host||'local']=e;
+    });});
     if(sources.some(function(n){return n.dnd===true;}))return null;
     var rows=[];
-    sources.forEach(function(n){if(n.unread>0)rows=rows.concat(n.entries||[]);});
+    sources.forEach(function(n){if(n.unread>0)rows=rows.concat((n.entries||[]).filter(function(e){
+        var state=linkState(e);
+        if(state===null)return true;
+        if(latest[n.host||'local']!==e||now-e.at<0||now-e.at>120000)return false;
+        var fresh=presence&&typeof presence.peer==='boolean'&&now-presence.time*1000>=0&&now-presence.time*1000<90000;
+        return !fresh||state===presence.peer;
+    }));});
     rows=rows.filter(function(e){return seen.indexOf(e.id)<0;});
     rows.sort(function(a,b){return a.at-b.at;});
     return rows.length?rows[0]:null;

@@ -211,3 +211,16 @@ notification; that notification is not an independent internet connectivity test
 Rollback: remove the installed dispatcher and restore the previous per-interface
 values (0/0 on this audited host). Revert the relevant commit for SSH health logic.
 Do not clear SSH host keys or disable the firewall to suppress connection notices.
+
+### Zondo connection announcements
+
+Connection notifications remain in notification history, but Zondo treats them as
+state transitions: only the newest per originating host is eligible, for two
+minutes. Fresh Den presence (under 90 seconds) vetoes a contradictory transition.
+This prevents an unread outage from being narrated after recovery. Ordinary and
+phone notifications retain their existing queue policy. Speech waits for its
+persistent acknowledgement file before selecting a notice.
+
+Regression: `python3 -m unittest discover -s tests -p test_companion_policy.py`.
+Changes to imported companion JavaScript require restarting only `den-cursor`,
+which renders the locator/companion; do not restart `den-input` for this change.

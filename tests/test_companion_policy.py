@@ -32,6 +32,22 @@ class CompanionPolicy(unittest.TestCase):
         self.assertEqual(self.js(expression),{'id':'b','at':20})
         self.assertIsNone(self.js("nextNotice([{unread:1,dnd:true,entries:[{id:'a',at:10}]}],[])"))
         self.assertIsNone(self.js("nextNotice([{unread:0,entries:[{id:'a',at:10}]}],[])"))
+    def test_link_notices_follow_latest_transition_and_live_presence(self):
+        down={'id':'down','at':100000,'app':'Digital Den','summary':'Den peer unavailable'}
+        up={'id':'up','at':110000,'app':'Digital Den','summary':'Homie connected'}
+        sources=[{'host':'arete','unread':2,'entries':[down,up]}]
+        expr=f'nextNotice({json.dumps(sources)},[],120000,{{peer:true,time:119}})'
+        self.assertEqual(self.js(expr),up)
+        # A resolved outage is not spoken even if the recovery was acknowledged.
+        self.assertIsNone(self.js(expr.replace('[],120000', '["up"],120000')))
+        self.assertIsNone(self.js(f'nextNotice({json.dumps(sources)},[],300000,{{}})'))
+        only=[{'unread':1,'entries':[down]}]
+        self.assertIsNone(self.js(f'nextNotice({json.dumps(only)},[],120000,{{peer:true,time:119}})'))
+        self.assertEqual(self.js(f'nextNotice({json.dumps(only)},[],120000,{{peer:false,time:119}})'),down)
+        self.assertEqual(self.js(f'nextNotice({json.dumps(only)},[],120000,{{peer:true,time:1}})'),down)
+    def test_ordinary_notifications_are_not_expired_by_link_policy(self):
+        entry={'id':'phone','at':10,'phone':True,'app':'KDE Connect','summary':'Message'}
+        self.assertEqual(self.js(f'nextNotice([{{unread:1,entries:[{json.dumps(entry)}]}}],[],999999,{{peer:true,time:999}})'),entry)
     def test_rooftops_require_known_wallpaper_and_clear_space(self):
         self.assertIsNone(self.js("roofPlace('/unknown.png',1920,1080,256,208,[],1)"))
         self.assertIsNone(self.js("roofPlace('/wallhaven-1q2p3v.png',1920,550,256,208,[],1)"))

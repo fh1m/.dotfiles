@@ -287,9 +287,9 @@ Item {
     onDenDndChanged:if(denDnd)speaking=false
     FileView {id:noticeMemory;onLoadFailed:root.noticeMemoryLoaded=true;path:Quickshell.env('HOME')+'/.local/state/sensei-den/zondo-notice-seen.json';printErrors:false;onLoaded:{try{root.noticeSeen=Array.from(new Set(root.noticeSeen.concat(JSON.parse(text()).ids||[]))).slice(-128);}catch(e){}root.noticeMemoryLoaded=true;}}
     function announceNotice():void {
-        if(senseiGuests.active||!allowed||!speechWindow.bubblePlace.available||denDnd||speaking||preferences.notificationChatter===false)return;
+        if(!noticeMemoryLoaded||senseiGuests.active||!allowed||!speechWindow.bubblePlace.available||denDnd||speaking||preferences.notificationChatter===false)return;
         const seen=noticeSeen.concat(journey.noticeAcks||[]);
-        const e=Logic.nextNotice(noticeSources,seen);
+        const e=Logic.nextNotice(noticeSources,seen,Date.now(),presence);
         if(e){noticeSeen=Array.from(new Set(seen.concat([e.id]))).slice(-128);
             if(noticeMemoryLoaded)noticeMemory.setText(JSON.stringify({ids:noticeSeen}));
             lastNoticeAt=Date.now();activity=e.phone?'phone':'wave';frame=0;say(Logic.noticeText(e),e.phone?'phone post':'den post');noticeHeading=Logic.noticeTitle(e);updateSpeech();
