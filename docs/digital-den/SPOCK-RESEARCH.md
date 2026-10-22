@@ -551,4 +551,3 @@ These are candidate sources returned for each four-query batch, not a claim that
 - [Enable Network-Wide DNS Blocking with Pi-hole | Edward Angert](https://edwardangert.com/docs/pi-hole/network-level-blocking/)
 - [AdGuard Home – setup guide](https://sergeibabko.github.io/AdGuard-Home-Setup-Guide/)
 - [#7842 The Boostrap DNS servers are ignored on AdGuard Home when resolving the Fallback DNS servers · AdGuardHome | baike.dev](https://baike.dev/en/tools/adguardteam-adguardhome/issues/7842)
-
