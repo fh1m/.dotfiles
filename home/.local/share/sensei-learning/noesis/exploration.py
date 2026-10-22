@@ -49,7 +49,10 @@ def begin_publication(root, operation):
         publish(path,json.dumps(value),checksum(original))
 
 
-def prepare(root, identity, title, mode, operation, native_cli=None, prediction="", code_file=None):
+def prepare(root, identity, title, mode, operation, native_cli=None, prediction="", code_file=None, paper="plain", pdf_file=None):
+    if mode=='ink':
+        from .ink import prepare as prepare_ink
+        return prepare_ink(root,identity,title,operation,paper,pdf_file)
     from .scopes import assert_unique
     assert_unique(root)
     origin = target(root, identity)
@@ -222,9 +225,9 @@ def reconnect(root, identity, location, title, operation, native_cli=None):
     destination = contained(root, location)
     old = props.get('local_file') or props.get('location')
     if not destination.is_file(): raise ValueError('Choose an existing file inside this owning vault')
-    if props.get('artifact_kind') == 'drawing' and not (destination.suffix == '.canvas' or destination.name.endswith('.excalidraw.md')):
+    if props.get('artifact_kind') == 'drawing' and not (destination.suffix == '.canvas' or destination.name.endswith('.excalidraw.md') or props.get('drawing_format')=='ink' and destination.suffix=='.xopp'):
         raise ValueError('Choose an editable Canvas or Excalidraw file; exports are separate figures')
-    if props.get('artifact_kind')=='drawing' and title!=props.get('title') and location==old and native_cli:
+    if props.get('artifact_kind')=='drawing' and title!=props.get('title') and location==old and native_cli and props.get('drawing_format')!='ink':
         suffix='.excalidraw.md' if destination.name.endswith('.excalidraw.md') else '.canvas'
         renamed=destination.with_name(title+suffix)
         if renamed.exists():raise ValueError('Another drawing already uses this name; choose another title')
@@ -253,7 +256,7 @@ def recover(root, operation):
     request=json.loads(reservation.read_text()).get('request',{})
     if request.get('action')!='prepare':raise ValueError('This operation is not a recoverable artifact creation')
     mode=request['mode']
-    expected=contained(root,'Explorations/'+operation+('/scratch.py' if mode=='scratch' else '/drawing.excalidraw.md' if mode=='freehand' else '/map.canvas'))
+    expected=contained(root,'Explorations/'+operation+('/scratch.py' if mode=='scratch' else '/notebook-'+operation+'.xopp' if mode=='ink' else '/drawing.excalidraw.md' if mode=='freehand' else '/map.canvas'))
     if mode=='scratch' and request.get('code_file'):expected=Path(request['code_file'])
     if not expected.is_file():raise ValueError('No created file is confirmed. Inspect Obsidian and the preserved operation; recovery will not repeat creation.')
-    return prepare(root,request['origin'],request['title'],mode,operation,prediction=request.get('prediction',''),code_file=request.get('code_file'))
+    return prepare(root,request['origin'],request['title'],mode,operation,prediction=request.get('prediction',''),code_file=request.get('code_file'),paper=request.get('paper','plain'),pdf_file=request.get('pdf_file'))

@@ -238,12 +238,56 @@ def learning():
  root=ctx.get('vault') or e.read(e.home()/'.config/sensei-learning/config.json',{}).get('active_vault')
  if not root:raise ValueError('Choose a learning vault in Noesis first')
  binary=str(e.home()/'.local/bin/noesis');identity=ctx.get('id')
+ current=e.read(e.home()/'.local/state/sensei-drawing/current.json',{})
+ if identity and current.get('record_id')==identity and current.get('vault')==root and Path(current.get('path','/missing')).is_file():return open_native(current['path'],root,identity)
  if not identity:
-  row=json.loads(call([binary,'record','question','Quick learning sketch','--vault',root,'--body','A spontaneous diagram; not an assessment.']))
+  row=json.loads(call([binary,'record','question','Quick learning sketch','--vault',root,'--body','A spontaneous handwritten question; not an assessment.']))
   identity=row.get('id')
- if not identity:raise ValueError('Open the learning record you want to draw about')
- row=json.loads(call([binary,'drawing-create',identity,'--vault',root,'--title','Sketch '+datetime.datetime.now().strftime('%Y-%m-%d %H-%M'),'--mode','freehand','--operation-id',str(uuid.uuid4())],30))
- call([binary,'artifact-open',row['id'],'--vault',root],30);place('obsidian');return row
+ if not identity:raise ValueError('Open the learning record you want to write about')
+ row=json.loads(call([binary,'drawing-create',identity,'--vault',root,'--title','Notebook '+datetime.datetime.now().strftime('%Y-%m-%d %H-%M'),'--mode','ink','--operation-id',str(uuid.uuid4())],30))
+ call([binary,'artifact-open',row['id'],'--vault',root],30);return row
+
+def open_native(path,vault=None,identity=None):
+ file=Path(path).expanduser().resolve()
+ if not file.is_file() or file.suffix!='.xopp':raise ValueError('Choose an existing Xournal++ notebook')
+ if bool(vault)!=bool(identity):raise ValueError('Learning notebooks need both their vault and record ID')
+ state={'path':str(file)}
+ if vault:state.update(vault=str(Path(vault).expanduser().resolve()),record_id=identity)
+ e.save(e.home()/'.local/state/sensei-drawing/current.json',state)
+ clients=json.loads(call(['hyprctl','-i','0','clients','-j']))
+ resumed=any('xournal' in c.get('class','').lower() and file.name in c.get('title','') for c in clients)
+ if not resumed:subprocess.Popen(['xournalpp',str(file)],env=e.session_environment(),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+ place('xournal',file.name)
+ if vault:refresh_learning_preview(force=True)
+ return dict(state,resumed=resumed)
+
+_preview_worker=None
+
+def schedule_learning_preview():
+ # Native PDF export can take seconds; never block tablet reconnect/mapping.
+ import threading
+ global _preview_worker
+ if _preview_worker is None or not _preview_worker.is_alive():
+  _preview_worker=threading.Thread(target=refresh_learning_preview,daemon=True,name='ink-preview')
+  _preview_worker.start()
+
+def refresh_learning_preview(force=False):
+ current=e.read(e.home()/'.local/state/sensei-drawing/current.json',{})
+ if not current.get('vault') or not current.get('record_id'):return {'linked':False}
+ file=Path(current.get('path','/missing'))
+ if not file.is_file():return {'linked':True,'error':'Notebook missing; reconnect the artifact in Noesis'}
+ st=file.stat();background=file.parent/'background.pdf'
+ signature=[str(file),st.st_mtime_ns,st.st_size,background.stat().st_mtime_ns if background.is_file() else None]
+ state_path=e.home()/'.local/state/sensei-drawing/preview.json';old=e.read(state_path,{})
+ if not force and old.get('exported')==signature:return {'linked':True,'unchanged':True}
+ if not force and old.get('pending')!=signature:
+  e.save(state_path,{'pending':signature,'exported':old.get('exported')});return {'linked':True,'settling':True}
+ try:
+  result=json.loads(call([str(e.home()/'.local/bin/noesis'),'drawing-publish',current['record_id'],'--vault',current['vault']],35))
+  e.save(state_path,dict(result,exported=signature));return dict(result,linked=True)
+ except (ValueError,OSError,subprocess.SubprocessError) as ex:
+  # Preserve the last PDF; retry only after another save or an explicit refresh.
+  e.save(state_path,{'exported':signature,'error':str(ex)[:240]});return {'linked':True,'error':str(ex)[:240]}
 
 def export(path):
  p=Path(path).expanduser().resolve();folder=scratch_root().resolve()
@@ -254,6 +298,8 @@ def export(path):
  return {'editable':str(p),'preview':str(out)}
 
 def attach():
+ current=e.read(e.home()/'.local/state/sensei-drawing/current.json',{})
+ if current.get('record_id'):return refresh_learning_preview(force=True)
  saved=e.read(e.home()/'.local/state/sensei-drawing/current.json',{});result=export(saved.get('path',''))
  root=e.read(e.home()/'.config/sensei-learning/config.json',{}).get('active_vault')
  if not root:raise ValueError('Choose a learning vault; the scratch is safely saved')

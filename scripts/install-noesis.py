@@ -7,7 +7,7 @@ spec=importlib.util.spec_from_file_location('installer',ROOT/'scripts/install.py
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() and not path.is_symlink() else None
 def files(bridge=False):
  prefixes=['.config/quickshell/noesis','.local/share/sensei-learning/ui','.local/share/sensei-learning/noesis','.local/share/sensei-learning/examples']
- exact=['.local/bin/sensei-learn','.local/bin/noesis','.local/share/applications/org.fh1m.Noesis.desktop','.local/share/icons/hicolor/scalable/apps/org.fh1m.Noesis.svg']
+ exact=['.local/bin/sensei-learning-backup','.local/bin/sensei-draw','.local/share/sensei/drawing.py','.local/bin/sensei-learn','.local/bin/noesis','.local/share/applications/org.fh1m.Noesis.desktop','.local/share/icons/hicolor/scalable/apps/org.fh1m.Noesis.svg']
  if bridge:
   prefixes+=['.config/quickshell/sensei/modules/learning']
   exact+=['.config/quickshell/sensei/services/Oasis.qml','.config/quickshell/sensei/services/NoesisBridge.qml','.config/quickshell/sensei/shell.qml','.config/quickshell/sensei/modules/bar/ArchiveButton.qml','.config/quickshell/sensei/modules/bar/BottomBar.qml','.config/hypr/oasis.lua','.config/quickshell/sensei/services/Spaces.qml','.config/quickshell/sensei/services/WindowDesk.qml','.config/quickshell/sensei/modules/navigation/NavigationOverlay.qml','.config/quickshell/sensei/modules/navigation/WorkspacePreview.qml']

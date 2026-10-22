@@ -29,7 +29,7 @@ class Drawing(unittest.TestCase):
   script=Path(__file__).resolve().parents[1]/'home/.local/bin/sensei-draw'
   # Each watch pass samples USB presence three times; a true/false/true
   # sequence must reconcile twice even though prefs/monitor/app are identical.
-  with patch.object(sys,'argv',[str(script),'watch']),patch.object(d,'monitors',return_value=[]),patch.object(d,'call',return_value=json.dumps({'class':''})),patch.object(d,'prefs',return_value={}),patch.object(d,'connected',side_effect=[True,True,True,False,False,False,True,True,True]),patch.object(d,'reconcile') as reconcile,patch('time.sleep',side_effect=[None,None,KeyboardInterrupt]):
+  with patch.object(sys,'argv',[str(script),'watch']),patch.object(d,'monitors',return_value=[]),patch.object(d,'call',return_value=json.dumps({'class':''})),patch.object(d,'prefs',return_value={}),patch.object(d,'connected',side_effect=[True,True,True,False,False,False,True,True,True]),patch.object(d,'schedule_learning_preview'),patch.object(d,'reconcile') as reconcile,patch('time.sleep',side_effect=[None,None,KeyboardInterrupt]):
    with self.assertRaises(KeyboardInterrupt):runpy.run_path(str(script),run_name='__main__')
    self.assertEqual(reconcile.call_count,2)
  def test_recreated_virtual_pen_reapplies_identical_usb_profile(self):
@@ -40,7 +40,25 @@ class Drawing(unittest.TestCase):
   def call(args):
    if 'devices' in args:return json.dumps({'tablets':[{'name':'opentabletdriver-virtual-artist-tablet','address':next(identities)}]})
    return json.dumps({'class':''})
-  with patch.object(sys,'argv',[str(script),'watch']),patch.object(d,'monitors',return_value=[]),patch.object(d,'call',side_effect=call),patch.object(d,'prefs',return_value={}),patch.object(d,'connected',return_value=True),patch.object(d,'reconcile') as reconcile,patch('time.sleep',side_effect=[None,KeyboardInterrupt]):
+  with patch.object(sys,'argv',[str(script),'watch']),patch.object(d,'monitors',return_value=[]),patch.object(d,'call',side_effect=call),patch.object(d,'prefs',return_value={}),patch.object(d,'connected',return_value=True),patch.object(d,'schedule_learning_preview'),patch.object(d,'reconcile') as reconcile,patch('time.sleep',side_effect=[None,KeyboardInterrupt]):
    with self.assertRaises(KeyboardInterrupt):runpy.run_path(str(script),run_name='__main__')
    self.assertEqual(reconcile.call_count,2)
+class LearningPreview(unittest.TestCase):
+ def test_export_worker_does_not_duplicate_while_busy(self):
+  from unittest.mock import patch,MagicMock
+  worker=MagicMock();worker.is_alive.return_value=True
+  with patch.object(d,'_preview_worker',worker),patch('threading.Thread') as thread:
+   d.schedule_learning_preview();thread.assert_not_called()
+
+ def test_export_waits_for_a_stable_save_and_skips_unchanged_journal(self):
+  import tempfile,json
+  from unittest.mock import patch
+  with tempfile.TemporaryDirectory() as folder,patch.object(d.e,'home',return_value=Path(folder)),patch.object(d,'call',return_value='{"published":true,"preview":"fixture.pdf"}') as call:
+   root=Path(folder);file=root/'note.xopp';file.write_bytes(b'ink')
+   d.e.save(root/'.local/state/sensei-drawing/current.json',{'path':str(file),'vault':str(root/'vault'),'record_id':'fixture'})
+   self.assertTrue(d.refresh_learning_preview()['settling']);call.assert_not_called()
+   self.assertTrue(d.refresh_learning_preview()['published']);self.assertEqual(call.call_count,1)
+   self.assertTrue(d.refresh_learning_preview()['unchanged']);self.assertEqual(call.call_count,1)
+   file.write_bytes(b'changed ink')
+   self.assertTrue(d.refresh_learning_preview()['settling']);self.assertTrue(d.refresh_learning_preview()['published']);self.assertEqual(call.call_count,2)
 if __name__=='__main__':unittest.main()

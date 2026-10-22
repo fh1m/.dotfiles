@@ -21,7 +21,20 @@ def atomic_json(path,record):
   if os.path.exists(tmp):os.unlink(tmp)
 def eligible(p,root):
  parts=p.relative_to(root).parts
+ if len(parts)==3 and parts[0]=='Explorations' and (p.name.startswith(('.ink-','.preview-','.background.pdf.','.creating-')) or p.name.startswith('.notebook-') and not p.name.endswith('.xopp')):return False
  return not any(x in EXCLUDE for x in parts) and not p.is_symlink() and not p.name.startswith(('workspace','.env')) and p.suffix not in {'.log','.db','.sqlite','.sqlite3'}
+def snapshot_limit(p,root):
+ # Native ink and its owned PDF background must not silently become external
+ # at the generic 25 MiB threshold. Journals/autosaves remain bounded at 64 MiB.
+ parts=p.relative_to(root).parts
+ if len(parts)==3 and parts[0]=='Explorations':
+  import uuid
+  try:uuid.UUID(parts[1])
+  except ValueError:pass
+  else:
+   if p.suffix=='.xopp' or p.name=='background.pdf':return 64*1024*1024
+ return 25*1024*1024
+
 def backup(root):
  STATE.mkdir(parents=True,exist_ok=True)
  with (STATE/'.lock').open('a') as stream:
@@ -31,7 +44,7 @@ def backup(root):
    references={}
    for p in sorted(original.rglob('*')):
     if not p.is_file() or not eligible(p,original):continue
-    if p.stat().st_size>25*1024*1024 or p.suffix.lower() in {'.mcap','.bag','.mp4','.mkv'}:
+    if p.stat().st_size>snapshot_limit(p,original) or p.suffix.lower() in {'.mcap','.bag','.mp4','.mkv'}:
      references[str(p.relative_to(original))]={'location':str(p),'size':p.stat().st_size,'protection':'external; not included in text snapshot'};continue
     before=p.stat();target=stage/p.relative_to(original);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,target)
     after=p.stat()

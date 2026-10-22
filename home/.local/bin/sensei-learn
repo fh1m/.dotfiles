@@ -563,13 +563,13 @@ def library_action(root,args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','convolution-observe','convolution-prepare','convolution-check','host-request','host-lease','drawing-create','scratch-create','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','artifact-reconnect','exploration-recover','scratch-outputs','editor-setting']:
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','convolution-observe','convolution-prepare','convolution-check','host-request','host-lease','drawing-create','drawing-publish','drawing-preview','scratch-create','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','artifact-reconnect','exploration-recover','scratch-outputs','editor-setting']:
         p = commands.add_parser(cmd); p.add_argument('--vault'); p.add_argument('--expect-vault-id')
         if cmd in ('convolution-observe','convolution-prepare','convolution-check'):
             p.add_argument('record_id');p.add_argument('--configuration',required=True);p.add_argument('--prediction',required=True);p.add_argument('--operation-id',required=True)
-        if cmd in ('open-project','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','scratch-outputs'):p.add_argument('record_id')
+        if cmd in ('open-project','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','scratch-outputs','drawing-publish','drawing-preview'):p.add_argument('record_id')
         if cmd in ('drawing-create','scratch-create'):
-            p.add_argument('record_id');p.add_argument('--title',required=True);p.add_argument('--prediction',default='');p.add_argument('--code-file');p.add_argument('--mode',choices=['canvas','freehand'],default='canvas');p.add_argument('--operation-id',required=True)
+            p.add_argument('record_id');p.add_argument('--title',required=True);p.add_argument('--prediction',default='');p.add_argument('--code-file');p.add_argument('--mode',choices=['canvas','freehand','ink'],default='canvas');p.add_argument('--operation-id',required=True);p.add_argument('--paper',choices=['plain','lined','graph'],default='plain');p.add_argument('--pdf-file')
         if cmd in ('scratch-run','exploration-recover'):p.add_argument('--operation-id',required=True)
         if cmd == 'artifact-reconnect':p.add_argument('record_id');p.add_argument('--location',required=True);p.add_argument('--title',required=True);p.add_argument('--operation-id',required=True)
         if cmd == 'annotation-open':p.add_argument('--annotation-key',required=True);p.add_argument('--projection')
@@ -749,15 +749,22 @@ def main():
         if args.command=='artifact-reconnect':
             from noesis.exploration import reconnect
             print(json.dumps(reconnect(root,args.record_id,args.location,args.title,args.operation_id,cli),default=str));return 0
+        if args.command in ('drawing-publish','drawing-preview'):
+            from noesis.ink import publish_preview
+            result=publish_preview(root,args.record_id)
+            if args.command=='drawing-preview':subprocess.Popen(['xdg-open',result['preview']],start_new_session=True)
+            print(json.dumps(result));return 0
         if args.command in ('drawing-create','scratch-create','scratch-run','scratch-open','scratch-terminal','artifact-open'):
             from noesis import exploration
             if args.command in ('drawing-create','scratch-create'):
-                result=exploration.prepare(root,args.record_id,args.title,'scratch' if args.command=='scratch-create' else args.mode,args.operation_id,cli,args.prediction,args.code_file)
+                result=exploration.prepare(root,args.record_id,args.title,'scratch' if args.command=='scratch-create' else args.mode,args.operation_id,cli,args.prediction,args.code_file,paper=args.paper,pdf_file=args.pdf_file)
                 print(json.dumps(result));return 0
             if args.command=='scratch-run':print(json.dumps(exploration.run(root,args.record_id,args.operation_id),default=str));return 0
             if args.command=='artifact-open':
                 record,file=exploration.local_file(root,args.record_id)
-                if file.is_relative_to(root) and (file.suffix=='.canvas' or file.name.endswith('.excalidraw.md')):cli(root,'open','path='+str(file.relative_to(root)))
+                if record['props'].get('drawing_format')=='ink':
+                    subprocess.Popen([str(Path.home()/'.local/bin/sensei-draw'),'open',str(file),'--vault',str(root),'--record-id',args.record_id],start_new_session=True)
+                elif file.is_relative_to(root) and (file.suffix=='.canvas' or file.name.endswith('.excalidraw.md')):cli(root,'open','path='+str(file.relative_to(root)))
                 else:subprocess.Popen(['xdg-open',str(file)],start_new_session=True)
             else:subprocess.Popen(exploration.open_code(root,args.record_id) if args.command=='scratch-open' else exploration.terminal_command(root,args.record_id),start_new_session=True)
             print(json.dumps({'opened':True}));return 0

@@ -25,6 +25,14 @@ if [ "$(git -C "$source_dir" rev-parse HEAD)" != "$revision" ]; then
     exit 1
 fi
 
+# Port of upstream 5d5d49873fe8cf1f99ddfd5006ceb2057c5c9b13:
+# Qt 6.12 requires complete MOC types; retain our pinned fork.
+compat_patch="$(dirname "$(realpath "$0")")/patches/quickshell-qt612.patch"
+if ! git -C "$source_dir" apply --reverse --check "$compat_patch" 2>/dev/null; then
+    git -C "$source_dir" apply --check "$compat_patch"
+    git -C "$source_dir" apply "$compat_patch"
+fi
+
 cmake -S "$source_dir" -B "$build_dir" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX="$stage" \

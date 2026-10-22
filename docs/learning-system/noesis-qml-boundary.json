@@ -1,6 +1,20 @@
 {
-  "baseline": "aca05d1",
+  "baseline": "working-tree",
   "files": {
+    "home/.config/quickshell/noesis/shell.qml": {
+      "imports": [
+        "QtQuick",
+        "Quickshell",
+        "\"ui\" as LearningUi"
+      ],
+      "singleton_symbols": [
+        "NoesisController.open"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
     "home/.config/quickshell/sensei/config/NoesisStyle.qml": {
       "imports": [
         "QtQuick",
@@ -23,24 +37,10 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/sensei/modules/learning/NoesisActionDialog.qml": {
-      "imports": [
-        "QtQuick",
-        "QtQuick.Controls",
-        "QtQuick.Layouts",
-        "qs.config"
-      ],
-      "singleton_symbols": [],
-      "processes": [],
-      "file_views": [],
-      "ipc_targets": [],
-      "timers": 0
-    },
     "home/.config/quickshell/sensei/modules/learning/NoesisButton.qml": {
       "imports": [
         "QtQuick",
-        "QtQuick.Controls",
-        "qs.config"
+        "\"../../noesis-ui\" as Shared"
       ],
       "singleton_symbols": [],
       "processes": [],
@@ -54,17 +54,11 @@
         "QtQuick.Layouts",
         "Quickshell",
         "Quickshell.Io",
-        "qs.components",
-        "qs.config",
-        "qs.services"
+        "\"../../noesis-ui\" as Shared",
+        "qs.services",
+        "\"../../services\" as LearningBridge"
       ],
-      "singleton_symbols": [
-        "Oasis.activeVault",
-        "Oasis.captureRequested",
-        "Oasis.currentContext",
-        "Oasis.open",
-        "Oasis.run"
-      ],
+      "singleton_symbols": [],
       "processes": [],
       "file_views": [],
       "ipc_targets": [
@@ -72,12 +66,10 @@
       ],
       "timers": 0
     },
-    "home/.config/quickshell/sensei/modules/learning/NoesisCourseOutline.qml": {
+    "home/.config/quickshell/sensei/modules/learning/NoesisWindow.qml": {
       "imports": [
         "QtQuick",
-        "QtQuick.Controls",
-        "QtQuick.Layouts",
-        "qs.config"
+        "\"../../noesis-ui\" as Shared"
       ],
       "singleton_symbols": [],
       "processes": [],
@@ -85,31 +77,290 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/sensei/modules/learning/NoesisCreateDialog.qml": {
+    "home/.local/share/sensei-learning/ui/NoesisActionDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisButton.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisController.qml": {
+      "imports": [
+        "QtQuick",
+        "Quickshell",
+        "Quickshell.Io"
+      ],
+      "singleton_symbols": [],
+      "processes": [
+        "hostLease",
+        "watch",
+        "snapshot",
+        "operation",
+        "receipt",
+        "reader",
+        "preferences",
+        "requestResolver"
+      ],
+      "file_views": [
+        "\"@HOME@/.local/share/sensei-learning/build.json\"",
+        "root.windowOpen&&root.activeVault?root.activeVault+\"/\"+(root.state.frontier_path||\"00 Home/Current Frontier.md\"):\"\""
+      ],
+      "ipc_targets": [
+        "noesis"
+      ],
+      "timers": 4
+    },
+    "home/.local/share/sensei-learning/ui/NoesisConvolutionPage.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [
+        "NoesisController.activeVault",
+        "NoesisController.drafts",
+        "NoesisController.operationId",
+        "NoesisController.operationResult",
+        "NoesisController.run",
+        "NoesisController.savePreferences",
+        "NoesisController.windowOpen"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 2
+    },
+    "home/.local/share/sensei-learning/ui/NoesisCourseOutline.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisCoursePage.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisCourseStudio.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [
+        "NoesisController.layouts",
+        "NoesisController.layouts.Course",
+        "NoesisController.note",
+        "NoesisController.savePreferences"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisCreateDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "Quickshell"
+      ],
+      "singleton_symbols": [
+        "NoesisController.activeVault",
+        "NoesisController.currentContext.vault_id",
+        "NoesisController.drafts",
+        "NoesisController.error",
+        "NoesisController.exitRequested",
+        "NoesisController.operationId",
+        "NoesisController.operationResult",
+        "NoesisController.run",
+        "NoesisController.savePreferences",
+        "NoesisController.uncertainReceipt",
+        "NoesisController.working"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 1
+    },
+    "home/.local/share/sensei-learning/ui/NoesisDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisDocument.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisDocumentBlock.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisEditor.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls"
+      ],
+      "singleton_symbols": [
+        "NoesisController.exitRequested"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisEmpty.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisEvidenceDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [
+        "NoesisController.activeVault",
+        "NoesisController.exitRequested",
+        "NoesisController.hostReady",
+        "NoesisController.operationId",
+        "NoesisController.operationVault",
+        "NoesisController.run",
+        "NoesisController.uncertainReceipt",
+        "NoesisController.working"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 1
+    },
+    "home/.local/share/sensei-learning/ui/NoesisExperimentContext.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisField.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls"
+      ],
+      "singleton_symbols": [
+        "NoesisController.exitRequested"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisHelpDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
         "QtQuick.Layouts",
         "Quickshell",
-        "qs.config",
-        "qs.services"
+        "Quickshell.Io"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisInvestigationPage.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisLabPage.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
       ],
       "singleton_symbols": [
-        "Oasis.activeVault",
-        "Oasis.operationResult",
-        "Oasis.run",
-        "Oasis.working"
+        "NoesisController.note"
       ],
       "processes": [],
       "file_views": [],
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/sensei/modules/learning/NoesisDialog.qml": {
+    "home/.local/share/sensei-learning/ui/NoesisLearningContext.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
-        "qs.config"
+        "QtQuick.Layouts"
       ],
       "singleton_symbols": [],
       "processes": [],
@@ -117,250 +368,339 @@
       "ipc_targets": [],
       "timers": 0
     },
-    "home/.config/quickshell/sensei/modules/learning/NoesisEditor.qml": {
+    "home/.local/share/sensei-learning/ui/NoesisMaterialDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
-        "qs.config"
-      ],
-      "singleton_symbols": [],
-      "processes": [],
-      "file_views": [],
-      "ipc_targets": [],
-      "timers": 0
-    },
-    "home/.config/quickshell/sensei/modules/learning/NoesisEmpty.qml": {
-      "imports": [
-        "QtQuick",
-        "QtQuick.Layouts",
-        "qs.config"
-      ],
-      "singleton_symbols": [],
-      "processes": [],
-      "file_views": [],
-      "ipc_targets": [],
-      "timers": 0
-    },
-    "home/.config/quickshell/sensei/modules/learning/NoesisEvidenceDialog.qml": {
-      "imports": [
-        "QtQuick",
-        "QtQuick.Controls",
-        "QtQuick.Layouts",
-        "qs.config",
-        "qs.services"
+        "QtQuick.Layouts"
       ],
       "singleton_symbols": [
-        "Oasis.activeVault",
-        "Oasis.run",
-        "Oasis.working"
+        "NoesisController.activeVault",
+        "NoesisController.error",
+        "NoesisController.run",
+        "NoesisController.working"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisNavigation.qml": {
+      "imports": [
+        "QtQuick"
+      ],
+      "singleton_symbols": [
+        "NoesisController.layouts"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisOutlineDialog.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [
+        "NoesisController.activeVault",
+        "NoesisController.operationKind",
+        "NoesisController.operationResult",
+        "NoesisController.operationResult.course",
+        "NoesisController.operationUuid",
+        "NoesisController.run",
+        "NoesisController.working"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisPracticePage.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [
+        "NoesisController.currentContext.path",
+        "NoesisController.layouts",
+        "NoesisController.layouts.Practice",
+        "NoesisController.note",
+        "NoesisController.savePreferences"
       ],
       "processes": [],
       "file_views": [],
       "ipc_targets": [],
       "timers": 1
     },
-    "home/.config/quickshell/sensei/modules/learning/NoesisExperimentContext.qml": {
+    "home/.local/share/sensei-learning/ui/NoesisPrerequisiteDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
-        "QtQuick.Layouts",
-        "qs.config"
-      ],
-      "singleton_symbols": [],
-      "processes": [],
-      "file_views": [],
-      "ipc_targets": [],
-      "timers": 0
-    },
-    "home/.config/quickshell/sensei/modules/learning/NoesisField.qml": {
-      "imports": [
-        "QtQuick",
-        "QtQuick.Controls",
-        "qs.config"
-      ],
-      "singleton_symbols": [],
-      "processes": [],
-      "file_views": [],
-      "ipc_targets": [],
-      "timers": 0
-    },
-    "home/.config/quickshell/sensei/modules/learning/NoesisLearningContext.qml": {
-      "imports": [
-        "QtQuick",
-        "QtQuick.Controls",
-        "QtQuick.Layouts",
-        "qs.config"
-      ],
-      "singleton_symbols": [],
-      "processes": [],
-      "file_views": [],
-      "ipc_targets": [],
-      "timers": 0
-    },
-    "home/.config/quickshell/sensei/modules/learning/NoesisMaterialDialog.qml": {
-      "imports": [
-        "QtQuick",
-        "QtQuick.Controls",
-        "QtQuick.Layouts",
-        "qs.config",
-        "qs.services"
+        "QtQuick.Layouts"
       ],
       "singleton_symbols": [
-        "Oasis.activeVault",
-        "Oasis.error",
-        "Oasis.run",
-        "Oasis.working"
-      ],
-      "processes": [],
-      "file_views": [],
-      "ipc_targets": [],
-      "timers": 0
-    },
-    "home/.config/quickshell/sensei/modules/learning/NoesisOutlineDialog.qml": {
-      "imports": [
-        "QtQuick",
-        "QtQuick.Controls",
-        "QtQuick.Layouts",
-        "qs.config",
-        "qs.services"
-      ],
-      "singleton_symbols": [
-        "Oasis.activeVault",
-        "Oasis.operationKind",
-        "Oasis.operationResult",
-        "Oasis.operationUuid",
-        "Oasis.run",
-        "Oasis.working"
-      ],
-      "processes": [],
-      "file_views": [],
-      "ipc_targets": [],
-      "timers": 0
-    },
-    "home/.config/quickshell/sensei/modules/learning/NoesisPrerequisiteDialog.qml": {
-      "imports": [
-        "QtQuick",
-        "QtQuick.Controls",
-        "QtQuick.Layouts",
-        "qs.config",
-        "qs.services"
-      ],
-      "singleton_symbols": [
-        "Oasis.activeVault",
-        "Oasis.run",
-        "Oasis.working"
+        "NoesisController.activeVault",
+        "NoesisController.run",
+        "NoesisController.working"
       ],
       "processes": [],
       "file_views": [],
       "ipc_targets": [],
       "timers": 1
     },
-    "home/.config/quickshell/sensei/modules/learning/NoesisRow.qml": {
+    "home/.local/share/sensei-learning/ui/NoesisReadingPage.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisResearchPage.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [
+        "NoesisController.currentContext.path",
+        "NoesisController.note",
+        "NoesisController.working"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisRow.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisSelect.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisStartDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
         "QtQuick.Layouts",
-        "qs.config"
+        "QtQuick.Dialogs"
       ],
-      "singleton_symbols": [],
+      "singleton_symbols": [
+        "NoesisController.activeVault",
+        "NoesisController.drafts",
+        "NoesisController.savePreferences"
+      ],
       "processes": [],
       "file_views": [],
       "ipc_targets": [],
-      "timers": 0
+      "timers": 1
     },
-    "home/.config/quickshell/sensei/modules/learning/NoesisSelect.qml": {
+    "home/.local/share/sensei-learning/ui/NoesisStudyDesk.qml": {
       "imports": [
         "QtQuick",
-        "QtQuick.Controls",
-        "qs.config"
-      ],
-      "singleton_symbols": [],
-      "processes": [],
-      "file_views": [],
-      "ipc_targets": [],
-      "timers": 0
-    },
-    "home/.config/quickshell/sensei/modules/learning/NoesisWindow.qml": {
-      "imports": [
-        "QtQuick",
+        "QtQuick.Window",
         "QtQuick.Controls",
         "QtQuick.Layouts",
         "Quickshell",
         "Quickshell.Io",
-        "qs.components",
-        "qs.config",
-        "qs.services",
-        "\"../dropdowns\" as Content"
+        "Quickshell.Hyprland",
+        "Quickshell.Wayland"
       ],
       "singleton_symbols": [
-        "Oasis.activeVault",
-        "Oasis.close",
-        "Oasis.drafts",
-        "Oasis.error",
-        "Oasis.legacyInterface",
-        "Oasis.mainMonitor",
-        "Oasis.message",
-        "Oasis.operationKind",
-        "Oasis.operationVault",
-        "Oasis.presentationMode",
-        "Oasis.preview",
-        "Oasis.refresh",
-        "Oasis.savePreferences",
-        "Oasis.state",
-        "Oasis.windowHeight",
-        "Oasis.windowOpen",
-        "Oasis.windowWidth",
-        "Oasis.working",
-        "Theme.widgetAccent",
-        "Theme.widgetMuted",
-        "Theme.widgetSurface"
+        "NoesisController.layouts",
+        "NoesisController.layouts.StudyDesk",
+        "NoesisController.mainMonitor",
+        "NoesisController.open",
+        "NoesisController.preferencesReady",
+        "NoesisController.presentationMode",
+        "NoesisController.savePreferences",
+        "NoesisController.standalone",
+        "NoesisController.studyWorkspace",
+        "NoesisController.toolHandoffOpen",
+        "NoesisController.windowOpen"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [
+        "noesis-study-desk"
+      ],
+      "timers": 1
+    },
+    "home/.local/share/sensei-learning/ui/NoesisStudyPane.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [
+        "NoesisController.activeVault",
+        "NoesisController.note",
+        "NoesisController.open",
+        "NoesisController.windowOpen",
+        "NoesisController.working"
+      ],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 3
+    },
+    "home/.local/share/sensei-learning/ui/NoesisStyle.qml": {
+      "imports": [
+        "QtQuick",
+        "Quickshell"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisTodayPage.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Controls",
+        "QtQuick.Layouts"
+      ],
+      "singleton_symbols": [],
+      "processes": [],
+      "file_views": [],
+      "ipc_targets": [],
+      "timers": 0
+    },
+    "home/.local/share/sensei-learning/ui/NoesisWindow.qml": {
+      "imports": [
+        "QtQuick",
+        "QtQuick.Window",
+        "QtQuick.Controls",
+        "QtQuick.Layouts",
+        "Quickshell",
+        "Quickshell.Io"
+      ],
+      "singleton_symbols": [
+        "NoesisController.activeVault",
+        "NoesisController.closeForTool",
+        "NoesisController.drafts",
+        "NoesisController.error",
+        "NoesisController.exitRequested",
+        "NoesisController.hide",
+        "NoesisController.legacyInterface",
+        "NoesisController.mainMonitor",
+        "NoesisController.message",
+        "NoesisController.operationVault",
+        "NoesisController.presentationMode",
+        "NoesisController.preview",
+        "NoesisController.refresh",
+        "NoesisController.requestExit",
+        "NoesisController.returnBehavior",
+        "NoesisController.savePreferences",
+        "NoesisController.specialistHandoff",
+        "NoesisController.standalone",
+        "NoesisController.state.notes",
+        "NoesisController.windowHeight",
+        "NoesisController.windowOpen",
+        "NoesisController.windowWidth",
+        "NoesisController.working"
       ],
       "processes": [
         "clientLookup",
+        "nativeStateCheck",
+        "nativeStateRepair",
         "modeDispatch",
-        "presentationCheck",
-        "geometryWrite"
+        "presentationCheck"
       ],
       "file_views": [],
       "ipc_targets": [
         "noesis-window"
       ],
-      "timers": 3
+      "timers": 5
     },
-    "home/.config/quickshell/sensei/modules/learning/NoesisWorkspace.qml": {
+    "home/.local/share/sensei-learning/ui/NoesisWorkspace.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
         "QtQuick.Layouts",
+        "QtQuick.Dialogs",
         "Quickshell",
-        "Quickshell.Io",
-        "qs.components",
-        "qs.config",
-        "qs.services"
+        "Quickshell.Io"
       ],
       "singleton_symbols": [
-        "Oasis.activeVault",
-        "Oasis.cancel",
-        "Oasis.choose",
-        "Oasis.collectionScope",
-        "Oasis.currentContext",
-        "Oasis.drafts",
-        "Oasis.error",
-        "Oasis.listRatio",
-        "Oasis.message",
-        "Oasis.note",
-        "Oasis.operationKind",
-        "Oasis.operationResult",
-        "Oasis.pathScope",
-        "Oasis.preview",
-        "Oasis.quiet",
-        "Oasis.run",
-        "Oasis.savePreferences",
-        "Oasis.setPathScope",
-        "Oasis.state",
-        "Oasis.windowOpen",
-        "Oasis.working",
-        "Oasis.workspace"
+        "NoesisController.activeVault",
+        "NoesisController.activeVault.split",
+        "NoesisController.cancel",
+        "NoesisController.checkCancelled",
+        "NoesisController.choose",
+        "NoesisController.collectionScope",
+        "NoesisController.currentContext",
+        "NoesisController.currentContext.id",
+        "NoesisController.currentContext.vault",
+        "NoesisController.drafts",
+        "NoesisController.error",
+        "NoesisController.exitRequested",
+        "NoesisController.hostReady",
+        "NoesisController.listRatio",
+        "NoesisController.mainMonitor",
+        "NoesisController.markRequest",
+        "NoesisController.message",
+        "NoesisController.note",
+        "NoesisController.openRequest",
+        "NoesisController.operationError",
+        "NoesisController.operationId",
+        "NoesisController.operationKind",
+        "NoesisController.operationResult",
+        "NoesisController.operationResult.event",
+        "NoesisController.operationResult.id",
+        "NoesisController.operationResult.operation_id",
+        "NoesisController.operationResult.path",
+        "NoesisController.operationResult.target",
+        "NoesisController.operationVault",
+        "NoesisController.pathScope",
+        "NoesisController.pendingOperation",
+        "NoesisController.pendingOperation.id",
+        "NoesisController.pendingOperation.kind",
+        "NoesisController.pendingOperation.receipt_supported",
+        "NoesisController.pendingOperation.vault",
+        "NoesisController.placement",
+        "NoesisController.presentationMode",
+        "NoesisController.preview",
+        "NoesisController.quiet",
+        "NoesisController.recoverExploration",
+        "NoesisController.requestExit",
+        "NoesisController.returnBehavior",
+        "NoesisController.run",
+        "NoesisController.savePreferences",
+        "NoesisController.setPathScope",
+        "NoesisController.specialistHandoff",
+        "NoesisController.state.code_editor",
+        "NoesisController.state.vaults",
+        "NoesisController.studyWorkspace",
+        "NoesisController.uncertainReceipt",
+        "NoesisController.windowOpen",
+        "NoesisController.working",
+        "NoesisController.workspace"
       ],
       "processes": [
         "worker",
@@ -370,22 +710,20 @@
       "ipc_targets": [],
       "timers": 4
     },
-    "home/.config/quickshell/sensei/modules/learning/NoesisZoteroDialog.qml": {
+    "home/.local/share/sensei-learning/ui/NoesisZoteroDialog.qml": {
       "imports": [
         "QtQuick",
         "QtQuick.Controls",
         "QtQuick.Layouts",
         "Quickshell",
-        "Quickshell.Io",
-        "qs.config",
-        "qs.services"
+        "Quickshell.Io"
       ],
       "singleton_symbols": [
-        "Oasis.activeVault",
-        "Oasis.error",
-        "Oasis.operationResult",
-        "Oasis.run",
-        "Oasis.working"
+        "NoesisController.activeVault",
+        "NoesisController.error",
+        "NoesisController.operationResult",
+        "NoesisController.run",
+        "NoesisController.working"
       ],
       "processes": [
         "reader"
@@ -393,34 +731,6 @@
       "file_views": [],
       "ipc_targets": [],
       "timers": 1
-    },
-    "home/.config/quickshell/sensei/services/Oasis.qml": {
-      "imports": [
-        "QtQuick",
-        "Quickshell",
-        "Quickshell.Io"
-      ],
-      "singleton_symbols": [
-        "ShellState.dropdown"
-      ],
-      "processes": [
-        "watch",
-        "snapshot",
-        "operation",
-        "receipt",
-        "reader",
-        "preferences"
-      ],
-      "file_views": [
-        "\"@HOME@/.config/sensei-learning/config.json\"",
-        "root.activeVault?root.activeVault+\"/\"+(root.state.frontier_path||\"00 Home/Current Frontier.md\"):\"\"",
-        "\"@HOME@/.local/state/sensei-learning/window.json\""
-      ],
-      "ipc_targets": [
-        "noesis",
-        "oasis"
-      ],
-      "timers": 3
     }
   }
 }

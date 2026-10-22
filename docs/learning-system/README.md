@@ -8,6 +8,8 @@ evidence and carries the remaining release gates forward.
 
 ![Noesis on the main display](assets/noesis-workspace.png)
 
+[Native pen notebooks and PDF annotation](INK.md) · [October source audit](NOESIS-AUDIT-2026-10-23.md) · [32-query research synthesis](INK-RESEARCH.md)
+
 ## Start
 
 ```sh
