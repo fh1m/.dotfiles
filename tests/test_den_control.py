@@ -13,6 +13,12 @@ loader.exec_module(den)
 
 
 class DenControl(unittest.TestCase):
+    def test_peer_uses_supported_ipv4_transport(self):
+        import subprocess
+        with patch.object(den,'run',return_value=subprocess.CompletedProcess([],0,'homie','')) as call:
+            self.assertEqual(den.peer_command('hostname'),'homie')
+        self.assertIn('-4',call.call_args.args[0])
+
     def test_offline_receiver_never_starts_local_capture(self):
         with patch.object(den, 'peer_command', side_effect=RuntimeError('offline')), patch.object(den, 'run') as run:
             with self.assertRaises(RuntimeError):

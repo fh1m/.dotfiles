@@ -31,7 +31,7 @@ def unit(name):
 
 
 def peer_command(command):
-    result = run(['ssh', '-n', '-F', str(ROOT/'client.conf'), 'homie', command], timeout=5)
+    result = run(['ssh', '-4', '-n', '-F', str(ROOT/'client.conf'), 'homie', command], timeout=5)
     if result.returncode:
         raise RuntimeError('Homie is unavailable. Local input remains yours.')
     return result.stdout

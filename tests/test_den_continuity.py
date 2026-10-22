@@ -7,6 +7,12 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1]
 l=importlib.machinery.SourceFileLoader('continuity',str(ROOT/'home/.local/bin/sensei-den'));s=importlib.util.spec_from_loader(l.name,l);m=importlib.util.module_from_spec(s);l.exec_module(m)
 class Continuity(unittest.TestCase):
+    def test_peer_transport_skips_blocked_link_local_ipv6(self):
+        import subprocess
+        with patch.object(m,'host',return_value='arete'),patch.object(m,'run',return_value=subprocess.CompletedProcess([],0,'homie','')) as call:
+            self.assertEqual(m.remote(['hostname']),'homie')
+        self.assertIn('-4',call.call_args.args[0])
+
     def setUp(self):
         self.t=tempfile.TemporaryDirectory();self.root=Path(self.t.name)
         self.p=patch.object(m,'CONFIG',self.root/'config');self.p.start()

@@ -148,3 +148,36 @@ These tests were not silently simulated on the owner's active household network.
 - AdGuard Home setup/backup: https://adguard-dns.io/kb/adguard-home/getting-started/
 - OpenWrt constrained-device warning:
   https://openwrt.org/supported_devices/432_warning
+
+## Dropout investigation · same evening
+
+At 19:11:55 the RTL8152 reported carrier off. At 19:12:17 the entire USB hub
+and its audio/Ethernet children disconnected; the adapter re-enumerated one
+second later. Further Ethernet carrier transitions occurred at 19:13:33,
+19:15:39 and 19:15:48. Wired DHCP repeatedly timed out and the interface had no
+carrier by 19:27. The owner could not confirm whether the hub/cable was moved.
+This proves physical-link interruption, not whether its cause was intentional
+unplugging, hub power, cable or switch port. Do not label it fixed by software.
+The selected 5-GHz association had no recorded deauthentication after the
+intentional band change; Wi-Fi carried the default route after wired failure.
+
+A separate reproducible control-path defect was found: mDNS offered Homie's IPv6
+link-local address first, while Homie's firewall explicitly dropped its SSH
+traffic. IPv4 SSH worked. Short health-check deadlines could expire on the
+blocked address and falsely report an available peer offline. Den's Arete→Homie
+SSH calls now explicitly use IPv4; private SSH aliases also select that family.
+Pinned host keys, authentication and firewall remain intact. No remote action
+is replayed after an error. Fresh IPv4 authentication passed; five actual Den
+status checks reported authenticated in approximately 0.1 seconds each.
+
+Private backup: `~/.local/state/den/network-audit/2026-10-22-dropout-before/`.
+Bounded probe log: `~/.local/state/den/network-audit/dropout-check-2026-10-22.jsonl`.
+Regression tests assert IPv4 transport in both Den control and continuity paths.
+No input-sharing service, compositor or system network service was restarted.
+
+Remaining physical acceptance: confirm link LEDs, reseat the Ethernet lead,
+try another switch port/cable and, if the whole hub resets without movement,
+test its power/upstream connection. Preserve Wi-Fi while doing this. Recheck
+DHCP and a sustained local transfer after carrier returns. Persistent carrier
+loss is below the IP/DNS layer; changing DNS or installing a watchdog cannot
+repair it. Separate cellular/WAN backup is needed for an actual ISP outage.

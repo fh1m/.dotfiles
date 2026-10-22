@@ -52,7 +52,7 @@ def remote(args,timeout=10,private=False):
         # a read-only preflight instead of trusting an open TCP port.
         if access.get('privateAlias') and not connectivity():alias=access['privateAlias']
     # Select a route before sending a command. Never replay a job after an SSH error.
-    r=run(['ssh','-n','-F',str(PRIVATE/'client.conf'),alias,shlex.join([str(x) for x in args])],timeout=timeout)
+    r=run(['ssh','-4','-n','-F',str(PRIVATE/'client.conf'),alias,shlex.join([str(x) for x in args])],timeout=timeout)
     if r.returncode:raise ValueError('Homie unavailable or command failed; existing work is preserved')
     return r.stdout
 
