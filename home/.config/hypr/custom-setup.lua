@@ -27,7 +27,7 @@ hl.monitor({output="DP-1",mode="preferred",position="-1920x-1080",scale=1})
 -- Keep the motion; shadows stay off for Intel render time. Blur is set in hypr-sensei.lua (special workspaces only).
 hl.config({
     animations = { enabled = true },
-    decoration = { shadow = { enabled = false } }, general = { border_size = 2 }, input = { touchpad = { natural_scroll = true }, follow_mouse = 1 },
+    decoration = { shadow = { enabled = false } }, general = { border_size = 2, col = { active_border = "rgba(ca7a96dd)", inactive_border = "rgba(ffffff18)" } }, input = { touchpad = { natural_scroll = true }, follow_mouse = 1 },
     group = {
         auto_group = false,
         drag_into_group = 1,

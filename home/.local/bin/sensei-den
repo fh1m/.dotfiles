@@ -182,7 +182,10 @@ def companion(action,value=None):
     elif action=='hide-seek':cfg.update(seeking=True,tourAt=time.time(),roaming=True,reducedMotion=False,anchorManual=False,message='Find me on an available patch of wallpaper. Follow the pink engineering trail across the Den.',messageAt=time.time())
     elif action=='found':cfg.update(seeking=False,message='Found! Your reward is a tiny engineer with excellent hiding intentions.',messageAt=time.time(),pose='wave',poseAt=time.time())
     elif action=='tour':cfg.update(tourAt=time.time(),roaming=True,reducedMotion=False,anchorManual=False)
-    elif action=='pulse':cfg['focusPulse']=value=='on' if value else not cfg.get('focusPulse',True)
+    elif action=='pulse':
+        # Legacy command now controls the stationary marker; no flashing mode.
+        cfg['focusMarker']=value=='on' if value else not cfg.get('focusMarker',True)
+        cfg['focusPulse']=False
     elif action=='dim':cfg['focusDimming']=value=='on' if value else not cfg.get('focusDimming',False)
     elif action=='toggle':cfg['enabled']=not cfg.get('enabled',True)
     elif action in ('show','hide'):cfg['enabled']=action=='show'

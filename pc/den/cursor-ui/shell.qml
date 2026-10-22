@@ -14,9 +14,9 @@ ShellRoot {
         onLoaded:item.ownerOutput=Qt.binding(()=>root.focusedOutput)
     }
     property bool focusDimming:false
-    property bool focusPulse:true
+    property bool focusMarker:true
     property bool reducedMotion:false
-    FileView {path:Quickshell.env("HOME")+"/.config/sensei-den/companion.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{const p=JSON.parse(text());root.focusDimming=false;root.focusPulse=p.focusPulse!==false;root.reducedMotion=p.reducedMotion===true;}catch(e){}}}
+    FileView {path:Quickshell.env("HOME")+"/.config/sensei-den/companion.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{const p=JSON.parse(text());root.focusDimming=false;root.focusMarker=p.focusMarker!==false;root.reducedMotion=p.reducedMotion===true;}catch(e){}}}
     property string output: ""
     property string focusedOutput: ""
     property real px: 0
@@ -25,9 +25,9 @@ ShellRoot {
     property real phase: 0
     IpcHandler {
         target: "den-cursor"
-        function state(): string { return JSON.stringify({focusedOutput:root.focusedOutput,dimOpacity:root.focusDimming?36/255:0,locatorActive:root.active}) }
+        function state(): string { return JSON.stringify({focusedOutput:root.focusedOutput,dimOpacity:root.focusDimming?36/255:0,locatorActive:root.active,focusStyle:"steady-edge",focusMarker:root.focusMarker}) }
         function reloadCompanion():void {root.companionRevision=Date.now()}
-        function focus(name: string): void {if(name===root.focusedOutput)return;root.focusedOutput=name;if(name&&root.focusPulse&&!root.reducedMotion)focusSettle.restart();}
+        function focus(name: string): void {if(name===root.focusedOutput)return;root.focusedOutput=name;}
         function pulse(name: string, x: real, y: real): void {
             root.output=name; root.px=x; root.py=y; root.active=true;
             motion.restart(); expiry.restart();
@@ -62,26 +62,22 @@ ShellRoot {
             Rectangle { x:root.px-3; y:root.py-3; width:6; height:6; radius:3; color:"#fff0f8"; opacity:1-root.phase }
         }
     }
-    property real focusPulseOpacity:0
-    Timer {id:focusSettle;interval:100;onTriggered:focusFlash.restart()}
-    SequentialAnimation {id:focusFlash
-        NumberAnimation {target:root;property:"focusPulseOpacity";to:.055;duration:180;easing.type:Easing.InOutSine}
-        NumberAnimation {target:root;property:"focusPulseOpacity";to:0;duration:520;easing.type:Easing.OutCubic}
-    }
+    // A stationary, click-through edge cue; never tint the display contents.
     Variants {
         model:Quickshell.screens.filter(s=>!s.name.startsWith("SENSEI-"))
         PanelWindow {
             required property var modelData
             screen:modelData
-            visible:root.focusPulseOpacity>0 && root.focusedOutput===modelData.name
+            visible:root.focusMarker && root.focusedOutput===modelData.name
             color:"transparent"
-            anchors {top:true;bottom:true;left:true;right:true}
+            implicitHeight:3
+            anchors {top:true;left:true;right:true}
             exclusionMode:ExclusionMode.Ignore
             WlrLayershell.layer:WlrLayer.Overlay
-            WlrLayershell.namespace:"den-focus-pulse"
+            WlrLayershell.namespace:"den-focus-marker"
             WlrLayershell.keyboardFocus:WlrKeyboardFocus.None
             mask:Region {}
-            Rectangle {anchors.fill:parent;color:"#f23d70";opacity:root.focusPulseOpacity}
+            Rectangle {anchors.horizontalCenter:parent.horizontalCenter;width:64;height:3;radius:1.5;color:"#ca7a96"}
         }
     }
 }

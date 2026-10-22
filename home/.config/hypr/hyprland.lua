@@ -52,9 +52,9 @@ hl.config({
     general = {
         gaps_in     = 5,
         gaps_out    = 12,
-        border_size = 1,
+        border_size = 2,
         col = {
-            active_border   = "rgba(ffffff55)",
+            active_border   = "rgba(ca7a96dd)",
             inactive_border = "rgba(ffffff18)",
         },
         resize_on_border = true,
