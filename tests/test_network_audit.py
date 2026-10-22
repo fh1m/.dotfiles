@@ -16,3 +16,13 @@ class Scope(unittest.TestCase):
    with self.assertRaises(ValueError):n.hostname(text)
   self.assertEqual(n.hostname('example.com'),'example.com')
   self.assertEqual(n.hostname('1.1.1.1'),'1.1.1.1')
+
+class LinkCapacity(unittest.TestCase):
+ def test_fast_ethernet_hardware_limit(self):
+  text='Supported link modes:   10baseT/Half 10baseT/Full\n                        100baseT/Half 100baseT/Full\nSupported pause frame use: No\nSpeed: 100Mb/s\nDuplex: Full'
+  self.assertEqual(n.link_capacity(text),{'negotiatedMbps':100,'supportedMaxMbps':100,'duplex':'Full','hardwareLimited':True})
+ def test_gigabit_capable_link_negotiating_slow(self):
+  text='Supported link modes: 10baseT/Full 100baseT/Full 1000baseT/Full\nSupported pause frame use: Yes\nSpeed: 100Mb/s\nDuplex: Full'
+  self.assertFalse(n.link_capacity(text)['hardwareLimited']);self.assertEqual(n.link_capacity(text)['supportedMaxMbps'],1000)
+ def test_unknown_link_not_guessed(self):
+  self.assertEqual(n.link_capacity('Speed: Unknown!'),{'negotiatedMbps':None,'supportedMaxMbps':None,'duplex':None,'hardwareLimited':False})

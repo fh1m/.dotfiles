@@ -51,6 +51,15 @@ def hostname(value):
  if not value or len(value)>253 or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9.:-]*',value):raise ValueError('Use a hostname or IP address, without a URL or command flags')
  return value
 
+def link_capacity(text):
+ import re
+ speed=re.search(r'(?m)^\s*Speed:\s*(\d+)Mb/s',text)
+ duplex=re.search(r'(?m)^\s*Duplex:\s*(\w+)',text)
+ supported=re.search(r'Supported link modes:\s*(.*?)(?=\n\s*[A-Za-z][^\n]*:|\Z)',text,re.S)
+ modes=[int(v) for v in re.findall(r'(\d+)base',supported.group(1))] if supported else []
+ rate=int(speed.group(1)) if speed else None;maximum=max(modes) if modes else None
+ return {'negotiatedMbps':rate,'supportedMaxMbps':maximum,'duplex':duplex.group(1) if duplex else None,'hardwareLimited':bool(rate and maximum and rate==maximum and maximum<=100)}
+
 def diagnostic(action,interface=None,host=None):
  import socket,urllib.request,time
  if action=='public':
@@ -74,7 +83,17 @@ def diagnostic(action,interface=None,host=None):
   details=''
   if shutil.which('ethtool'):
    r=subprocess.run(['ethtool',name],capture_output=True,text=True,timeout=4);details=r.stdout[-10000:] or r.stderr[-1000:]
-  return {'kind':'Link / driver counters','interface':name,'links':data,'physical':details,'note':'Counters are since interface creation, not current traffic rate. Unsupported driver fields remain unavailable.'}
+  capacity=link_capacity(details);summary=''
+  from pathlib import Path
+  if (Path('/sys/class/net')/name/'wireless').exists() and shutil.which('iw'):
+   r=subprocess.run(['iw','dev',name,'link'],capture_output=True,text=True,timeout=4)
+   details=r.stdout[-10000:] or r.stderr[-1000:]
+   summary='Wi-Fi PHY rates vary and are not application throughput. Repeater backhaul and Ethernet ports may be slower.'
+  elif capacity['negotiatedMbps']:
+   summary='Negotiated '+str(capacity['negotiatedMbps'])+' Mb/s · '+str(capacity['duplex'] or 'unknown duplex')
+   if capacity['hardwareLimited']:summary+='\nAdapter capability is limited to '+str(capacity['supportedMaxMbps'])+' Mb/s; settings cannot enable gigabit.'
+   elif capacity['supportedMaxMbps'] and capacity['negotiatedMbps']<capacity['supportedMaxMbps']:summary+='\nBelow adapter maximum '+str(capacity['supportedMaxMbps'])+' Mb/s. Check peer port, cable and negotiation.'
+  return {'kind':'Link / driver counters','interface':name,'links':data,'physical':details,'capacity':capacity,'result':summary,'note':'Counters are since interface creation, not current traffic rate. Unsupported driver fields remain unavailable.'}
  if action=='health':
   name=interface_name(interface);routes=json.loads(command(['ip','-j','route','show','dev',name]));gateway=next((r.get('gateway') for r in routes if r.get('dst')=='default'),None);checks=[]
   for label,address in [('Gateway',gateway),('Public IP','1.1.1.1')]:
