@@ -21,6 +21,9 @@ class Lyrics(unittest.TestCase):
  def test_plain_provider_fallback_never_invents_timing(self):
   with patch.object(l,'fetch',side_effect=[None,[],{'lyrics':'Plain words'}]):
    d=l.lookup(TRACK);self.assertFalse(d['synced']);self.assertEqual(d['plain'],'Plain words');self.assertEqual(d['provider'],'lyrics.ovh')
+ def test_malformed_fallback_is_a_safe_miss(self):
+  with patch.object(l,'fetch',side_effect=[None,[],['invalid response']]),patch.object(l,'musixmatch',return_value=None):
+   d=l.lookup(TRACK);self.assertFalse(d['synced']);self.assertEqual(d['plain'],'')
  def test_provider_outage_keeps_positive_cache(self):
   l.atomic(l.CACHE/(l.identity(TRACK)+'.json'),{'lines':[],'plain':'Saved','synced':False})
   with patch.object(l,'fetch',side_effect=OSError('offline')):
@@ -32,6 +35,17 @@ class Lyrics(unittest.TestCase):
    d=l.lookup(TRACK);self.assertEqual(d['provider'],'Local');self.assertEqual(d['offset'],-250);f.assert_not_called()
  def test_instrumental_is_valid_not_an_error(self):
   with patch.object(l,'fetch',return_value={'instrumental':True}):self.assertTrue(l.lookup(TRACK)['instrumental'])
+ def test_musixmatch_authorized_plain_and_copyright(self):
+  response={'message':{'header':{'status_code':200},'body':{'lyrics':{'lyrics_body':'Licensed sample','lyrics_copyright':'Copyright owner'}}}}
+  with patch.dict(l.os.environ,{'MUSIXMATCH_API_KEY':'test-only'}),patch.object(l,'fetch',return_value=response):
+   result=l.musixmatch(TRACK);self.assertEqual(result['provider'],'Musixmatch');self.assertFalse(result['synced']);self.assertEqual(result['notice'],'Copyright owner')
+ def test_musixmatch_restricted_is_not_displayed(self):
+  response={'message':{'header':{'status_code':200},'body':{'lyrics':{'restricted':1,'lyrics_body':'Restricted'}}}}
+  with patch.dict(l.os.environ,{'MUSIXMATCH_API_KEY':'test-only'}),patch.object(l,'fetch',return_value=response):self.assertIsNone(l.musixmatch(TRACK))
+ def test_musixmatch_failure_never_exposes_key(self):
+  with patch.dict(l.os.environ,{'MUSIXMATCH_API_KEY':'test-only'}),patch.object(l,'fetch',return_value={'message':{'header':{'status_code':401}}}):
+   with self.assertRaisesRegex(ValueError,'requires authorization') as e:l.musixmatch(TRACK)
+   self.assertNotIn('test-only',str(e.exception))
  def test_versions_have_separate_timing_cache(self):
   self.assertNotEqual(l.identity(TRACK),l.identity(dict(TRACK,duration=300000)))
 class Videos(unittest.TestCase):

@@ -103,6 +103,7 @@ Singleton {
  onWantsLyricsChanged:if(wantsLyrics)lyricsDelay.restart()
  property bool lyricsOpen:false
  property var lyricsData:({lines:[],plain:'',synced:false})
+ readonly property bool hasLyrics: !lyricsData.instrumental && (!!String(lyricsData.plain||'').trim() || (lyricsData.lines||[]).some(line=>!!String(line.text||'').trim()))
  property bool lyricsLoading:false
  property string lyricsError:''
  property string activeLyricsKey:''

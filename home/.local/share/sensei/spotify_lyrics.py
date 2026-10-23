@@ -48,6 +48,34 @@ def choose(items,title,artist,duration):
   if item.get('syncedLyrics') or item.get('plainLyrics') or item.get('instrumental'):matches.append((ts+ar+(0.15 if item.get('syncedLyrics') else 0)-delta/100,item))
  return max(matches,key=lambda x:x[0])[1] if matches else None
 
+def musixmatch(track):
+ # Only a user-provided licensed API key; never reuse a web client's token.
+ key=os.environ.get('MUSIXMATCH_API_KEY','').strip()
+ if not key:
+  try:key=(Path.home()/'.config/sensei-spotify/musixmatch.key').read_text().strip()
+  except OSError:return None
+ if not key:return None
+ params={'q_track':str(track.get('title',''))[:250],'q_artist':str(track.get('artist','')).split(',')[0][:200],'apikey':key,'format':'json'}
+ data=fetch('https://api.musixmatch.com/ws/1.1/matcher.lyrics.get?'+urllib.parse.urlencode(params))
+ if not isinstance(data,dict):raise ValueError('Invalid Musixmatch response')
+ message=data.get('message',{})
+ if not isinstance(message,dict):raise ValueError('Invalid Musixmatch response')
+ header=message.get('header',{})
+ if not isinstance(header,dict):raise ValueError('Invalid Musixmatch response')
+ code=int(header.get('status_code',0))
+ if code==404:return None
+ if code!=200:raise ValueError('Musixmatch is unavailable or requires authorization')
+ body=message.get('body',{})
+ lyrics=body.get('lyrics',{}) if isinstance(body,dict) else {}
+ if not isinstance(lyrics,dict):return None
+ if lyrics.get('restricted'):return None
+ text=str(lyrics.get('lyrics_body') or '').strip()
+ if not text:return None
+ result=parse({'plainLyrics':text},'Musixmatch')
+ result['notice']=str(lyrics.get('lyrics_copyright') or 'Musixmatch · licensed lyrics')
+ result['attribution_url']=str(lyrics.get('backlink_url') or 'https://www.musixmatch.com/')
+ return result
+
 def lookup(track,refresh=False):
  title=str(track.get('title','')).strip()[:250];artist=str(track.get('artist','')).split(',')[0].strip()[:200]
  empty={'lines':[],'plain':'','synced':False,'provider':'','notice':'Start a song to follow its lyrics.'}
@@ -85,8 +113,11 @@ def lookup(track,refresh=False):
   # Independent plain-text fallback; never invent synchronized timestamps.
   try:
    other=fetch('https://api.lyrics.ovh/v1/'+urllib.parse.quote(artist,safe='')+'/'+urllib.parse.quote(clean_title(title),safe=''))
-   result=parse({'plainLyrics':(other or {}).get('lyrics','')},'lyrics.ovh')
+   result=parse({'plainLyrics':other.get('lyrics','') if isinstance(other,dict) else ''},'lyrics.ovh')
   except (OSError,ValueError,TimeoutError):result=dict(empty);unavailable=True
+ if not (result['synced'] or result['plain'] or result.get('instrumental')):
+  try:result=musixmatch(track) or result
+  except (OSError,ValueError,TimeoutError,TypeError):unavailable=True
  if not (result['synced'] or result['plain'] or result.get('instrumental')):
   if positive:return dict(saved,offset=offset,notice='Saved lyrics · providers unavailable' if unavailable else 'Saved lyrics')
   result=dict(empty,notice='Lyrics providers are unavailable. Retry later or add a local lyric file.' if unavailable else 'No reliable lyrics matched this recording. Try Search or add a local lyric file.')

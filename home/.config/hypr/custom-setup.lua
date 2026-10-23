@@ -272,8 +272,9 @@ end
 -- Popup content owns its motion; keep its compositor surface free of blur.
 hl.layer_rule({ name = "sensei-popup-soft-reveal", match = { namespace = "^sensei-popup$" }, blur = false, no_anim = true })
 
--- Give the Intel display renderer better scheduling; allow scanout where eligible.
-hl.config({ render = { new_render_scheduling = true, direct_scanout = 2 } })
+-- Use the stable frame scheduler on the mixed Intel/NVIDIA multi-display laptop.
+-- Experimental triple buffering is under investigation for all-output freezes.
+hl.config({ render = { new_render_scheduling = false, direct_scanout = 2 } })
 
 -- Native learning frontier (installed with the reusable Oasis system).
 dofile(os.getenv("HOME") .. "/.config/hypr/oasis.lua")

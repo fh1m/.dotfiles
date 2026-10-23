@@ -41,6 +41,7 @@ Variants {
         // on screen — binding it straight to ShellState.dropdownAnchorX made a
         // swap teleport the outgoing panel to the incoming readout first.
         property string current: ""
+        property bool requestedHere: false
         property real cachedHeight: 0
         property real anchorX: ShellState.dropdownAnchorX
         // The surface is sized to the panel, but a panel that animates its own
@@ -87,7 +88,7 @@ Variants {
         // is still behind the bar at the start of the slide.
         readonly property real slide: Theme.reducedMotion ? 0 : 6
 
-        IpcHandler {target:"popupmotion-"+popup.modelData?.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,ready:popup.surfaceReady,width:popup.width,height:popup.height,panelHeight:popup.panelHeight,requestedHeight:popup.implicitHeight,measuredHeight:popup.measuredHeight,stableFrames:popup.stableFrames,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
+        IpcHandler {target:"popupmotion-"+popup.modelData?.name;function contentState():string {let texts=[];function walk(n,a){if(!n)return;let opacity=a*(n.opacity===undefined?1:n.opacity);if(n.visible===false||opacity<0.8)return;if(typeof n.text==='string'&&n.text.trim())texts.push(n.text.slice(0,160));for(let c of (n.children||[]))walk(c,opacity);}walk(content.item,1);return JSON.stringify({current:popup.current,texts:texts});}function state():string {return JSON.stringify({current:popup.current,reveal:popup.reveal,loaderReady:content.status===Loader.Ready,ready:popup.surfaceReady,width:popup.width,height:popup.height,panelHeight:popup.panelHeight,requestedHeight:popup.implicitHeight,measuredHeight:popup.measuredHeight,stableFrames:popup.stableFrames,open:openAnim.running,close:closeAnim.running,swap:swapAnim.running});}}
         function reserveCompanion():void {
             const y=popup.contentOriginY;
             ShellState.reserveCompanion('dropdown-'+modelData?.name,modelData?.name||'',popup.margins.left,y,popup.width,popup.height,popup.visible);
@@ -146,7 +147,7 @@ Variants {
             id: presentTimer
             interval: 16
             onTriggered: {
-                if (popup.current === "" || ShellState.dropdown !== popup.current) return;
+                if (!popup.requestedHere || popup.current === "" || ShellState.dropdown !== popup.current || content.status !== Loader.Ready) return;
                 // Wait for the compositor to acknowledge the newly sized surface.
                 if (popup.panelHeight <= 0) { restart(); return; }
                 const h = Math.round(popup.panelHeight);
@@ -206,6 +207,7 @@ Variants {
                 const focused=ShellState.screens.find(s=>s.name===ShellState.focusedScreenName());
                 const wantedScreen = (origin ?? focused ?? ShellState.barScreens[0])?.name;
                 const want = popup.modelData?.name === wantedScreen ? requested : "";
+                popup.requestedHere = want !== "";
 
                 // **The ID editor arms at once.** It is typed into the moment
                 // it opens, from a click on the bar -- and with the pointer
@@ -321,26 +323,8 @@ Variants {
                 onClicked: ShellState.dropdown = ""
             }
 
-            // The compositor can slide a real, styled surface into view while
-            // the expensive panel tree is still being instantiated. Fade the
-            // content over it when ready, instead of flashing a new surface.
-            ChamferPanel {
-                anchors.fill: parent
-                visible: opacity > 0
-                opacity: content.status === Loader.Ready ? 0 : 1
-                Behavior on opacity { NumberAnimation { duration: Theme.reducedMotion ? 0 : Theme.motionAck; easing.type: Easing.OutCubic } }
-                scanlines: false
-                chamfer: Theme.radiusPanel
-                fillColor: Theme.widgetGlass
-                borderColor: Theme.widgetBorder
-                Column {
-                    anchors.centerIn: parent
-                    spacing: 9
-                    Text { textFormat: Text.PlainText; text: "SENSEI // " + popup.current.toUpperCase(); color: Theme.widgetText; font.family: Appearance.font.data; font.pixelSize: 17; font.bold: true }
-                    Text { textFormat: Text.PlainText; text: content.status === Loader.Error ? "Panel failed to load" : "Preparing controls…"; color: Theme.widgetMuted; font.family: Appearance.font.data; font.pixelSize: 12 }
-                }
-            }
-
+            // Keep a cold panel unmapped until its asynchronous tree is ready.
+            // A full-sized placeholder looked like a black flash before controls.
             Flickable {
                 id:contentViewport
                 width:parent.width
@@ -355,6 +339,19 @@ Variants {
                 // Heavy panels instantiate over multiple event-loop turns so
                 // clicking a readout never blocks the bar's first response.
                 asynchronous: true
+                onStatusChanged: {
+                    if (status === Loader.Ready && popup.requestedHere && popup.current !== "" && ShellState.dropdown === popup.current) {
+                        popup.stableFrames=0;
+                        presentTimer.restart();
+                    } else if (status === Loader.Error) {
+                        console.error("Dropdown failed to load:", popup.current);
+                        popup.surfaceReady=false;
+                        if (popup.requestedHere && ShellState.dropdown === popup.current) {
+                            ShellState.dropdown="";
+                            Quickshell.execDetached(["notify-send", "Panel unavailable", "The panel could not load. Check the Quickshell log and try again."]);
+                        }
+                    }
+                }
                 opacity: status === Loader.Ready ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: Theme.reducedMotion ? 0 : Theme.motionAck; easing.type: Easing.OutCubic } }
 

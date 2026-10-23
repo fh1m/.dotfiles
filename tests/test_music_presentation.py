@@ -46,6 +46,32 @@ class Palette(unittest.TestCase):
 
 
 class MusicService(unittest.TestCase):
+    def test_lyrics_visibility_uses_actual_content_not_provider_success(self):
+        expression=next(line.split('hasLyrics:',1)[1].strip() for line in SOURCE.read_text().splitlines() if 'readonly property bool hasLyrics:' in line)
+        script="const assert=require('assert');let lyricsData;const has=()=>EXPR;".replace('EXPR',expression)+r"""
+lyricsData={lines:[],plain:''};assert.equal(has(),false);
+lyricsData={lines:[{time:0,text:'   '}],plain:' '};assert.equal(has(),false);
+lyricsData={lines:[{time:1000,text:'A line'}]};assert.equal(has(),true);
+lyricsData={plain:'Unsynced words'};assert.equal(has(),true);
+lyricsData={instrumental:true,plain:'metadata'};assert.equal(has(),false);
+"""
+        subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)
+
+    def test_focus_art_centers_without_lyrics_on_each_display_shape(self):
+        source=(ROOT/'home/.config/quickshell/sensei/modules/dropdowns/SpotifyFullscreen.qml').read_text()
+        expression=next(line.strip()[2:] for line in source.splitlines() if line.strip().startswith('x:!window.showLyrics||focusRoom.stacked?'))
+        script=r"""
+const assert=require('assert');let window,focusRoom,parent,width;
+const x=()=>EXPR;
+for(const screen of [1920,1080,3840,720]){
+ window={showLyrics:false};focusRoom={stacked:false,margin:60};parent={width:screen};width=300;
+ assert.equal(x()+width/2,screen/2);
+ window.showLyrics=true;assert.equal(x(),60);
+ focusRoom.stacked=true;assert.equal(x()+width/2,screen/2);
+}
+""".replace('EXPR',expression)
+        subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)
+
     def test_pagination_identity_art_and_queue_selection(self):
         functions = '\n'.join(line.strip() for line in SOURCE.read_text().splitlines()
                               if line.strip().startswith(('function accept(', 'function uniqueRows(', 'function play(', 'function artworkUrl(')))

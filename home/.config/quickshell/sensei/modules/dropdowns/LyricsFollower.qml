@@ -8,6 +8,7 @@ Column {
  property bool follow:true
  property bool immersive:false
  property bool controlsVisible:true
+ readonly property bool licensedNotice:SpotifyDesk.lyricsData.provider==='Musixmatch'
  onControlsVisibleChanged:Qt.callLater(root.followLine)
  spacing:10
  onVisibleChanged:if(visible)Qt.callLater(root.followLine)
@@ -20,13 +21,13 @@ Column {
  MusicButton {accentColor:Theme.widgetAccent;implicitWidth:82;implicitHeight:30;label:'− 0.25s';onActivated:SpotifyDesk.adjustLyrics(-250)}
  MusicButton {accentColor:Theme.widgetAccent;implicitWidth:88;implicitHeight:30;label:'+ 0.25s';onActivated:SpotifyDesk.adjustLyrics(250)}
  }
- Text {visible:root.controlsVisible; textFormat: Text.PlainText;width:parent.width;height:18;text:SpotifyDesk.lyricsError||SpotifyDesk.lyricsData.notice||(SpotifyDesk.lyricsData.synced?'Click a line to seek · timing offset '+(SpotifyDesk.lyricOffset>=0?'+':'')+SpotifyDesk.lyricOffset+' ms':SpotifyDesk.lyricsLoading?'Sensei, finding this song…':'Timing is unavailable for this song.');font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.secondary;color:SpotifyDesk.lyricsError?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}
+ Text {visible:root.controlsVisible||root.licensedNotice; textFormat: Text.PlainText;width:parent.width;height:18;text:SpotifyDesk.lyricsError||SpotifyDesk.lyricsData.notice||(SpotifyDesk.lyricsData.synced?'Click a line to seek · timing offset '+(SpotifyDesk.lyricOffset>=0?'+':'')+SpotifyDesk.lyricOffset+' ms':SpotifyDesk.lyricsLoading?'Sensei, finding this song…':'Timing is unavailable for this song.');font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.secondary;color:SpotifyDesk.lyricsError?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}
  Row {visible:root.controlsVisible;width:parent.width;spacing:8
  MusicButton {implicitWidth:82;implicitHeight:30;glyph:'\uf021';label:'Retry';enabled:!SpotifyDesk.lyricsLoading;onActivated:SpotifyDesk.loadLyrics(true)}
  MusicButton {implicitWidth:128;implicitHeight:30;glyph:'\uf07c';label:'Local file';onActivated:SpotifyDesk.action('lyrics-folder',[JSON.stringify(SpotifyDesk.lyricTrack())])}
  Text {anchors.verticalCenter:parent.verticalCenter;width:parent.width-226;text:SpotifyDesk.lyricsData.instrumental?'INSTRUMENTAL':SpotifyDesk.lyricsData.synced?'TIMED':SpotifyDesk.lyricsData.plain?'PLAIN TEXT':'NO MATCH';font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.caption;color:Theme.widgetMuted;elide:Text.ElideRight}
  }
- ChamferPanel {width:parent.width;height:Math.max(140,root.height-(root.controlsVisible?106:0));fillColor:root.immersive?"transparent":Theme.widgetSurface;borderColor:root.immersive?"transparent":Theme.widgetBorder;chamfer:6;scanlines:false
+ ChamferPanel {width:parent.width;height:Math.max(140,root.height-(root.controlsVisible?106:root.licensedNotice?28:0));fillColor:root.immersive?"transparent":Theme.widgetSurface;borderColor:root.immersive?"transparent":Theme.widgetBorder;chamfer:6;scanlines:false
  ListView {id:lines;boundsBehavior:Flickable.StopAtBounds;anchors.fill:parent;anchors.margins:12;clip:true;spacing:8;visible:SpotifyDesk.lyricsData.synced;model:SpotifyDesk.lyricsData.lines||[];topMargin:height*.35;bottomMargin:height*.35
  Behavior on contentY {enabled:root.follow;NumberAnimation {duration:240;easing.type:Easing.OutCubic}}
  onDraggingChanged:if(dragging)root.follow=false
