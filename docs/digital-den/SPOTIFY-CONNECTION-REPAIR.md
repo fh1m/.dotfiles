@@ -61,3 +61,17 @@ Sources:
 - https://github.com/devgianlu/go-librespot/blob/master/api-spec.yml
 - https://github.com/devgianlu/go-librespot/blob/master/README.md
 - https://github.com/devgianlu/go-librespot/blob/master/ids.go
+
+## Deployment receipt
+
+Shared files and the patched native binary are deployed on Arete and Homie.
+Both keep their own credentials; nothing was copied between accounts. Homie's
+Account view reports connected with a saved login and 320 kb/s requested. Its
+playback was not started, avoiding a takeover from Arete's active receiver.
+
+87 focused tests passed on each host (74 Spotify tests and 13 presentation
+checks), plus the native decoder regression. Native binary SHA-256 on both:
+`91f5d7ce3e4875f387a7442fac43ddaf1c6a11d2497732a224a2a239eedc4b50`.
+Homie backup: `~/.local/state/den-repairs/spotify-login-20261023-221311/`.
+Only bar/widget processes were restarted to activate changed singleton/IPC
+interfaces. No compositor, applications or shared-input service was restarted.
