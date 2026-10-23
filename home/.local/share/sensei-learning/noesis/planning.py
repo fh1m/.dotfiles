@@ -15,7 +15,7 @@ class Planner:
   text=json.dumps(value,ensure_ascii=False,indent=2)+'\n';publish(path,text,expected=__import__('hashlib').sha256(path.read_bytes()).hexdigest() if path.exists() else None);path.chmod(0o600)
  def status(self):
   workspace=self.read(self.root/'workspace.json');config=self.read(self.config,workspace);cache=self.read(self.root/'cache.json')
-  return {'connection':'connected' if config.get('token') else 'workspace_ready' if config.get('root_id') else 'needs_connection','root_url':config.get('root_url','https://www.notion.so'),'collections':list(config.get('collections',{})),'pending':len(self.pending()),'last_sync':cache.get('updated_at'),'records':cache.get('records',[]),'message':('Workspace verified through the Notion connector; unattended desktop sync needs its scoped connection' if config.get('root_id') else 'Sign in to Notion and connect a private Noesis root') if not config.get('token') else 'Notion owns plans; Noesis owns learning evidence'}
+  return {'connection':'connected' if config.get('token') else 'workspace_ready' if config.get('root_id') else 'needs_connection','root_url':config.get('root_url','https://www.notion.so'),'collections':list(config.get('collections',{})),'pending':len(self.pending()),'pending_records':self.pending(),'last_sync':cache.get('updated_at'),'records':cache.get('records',[]),'message':('Workspace verified through the Notion connector; unattended desktop sync needs its scoped connection' if config.get('root_id') else 'Sign in to Notion and connect a private Noesis root') if not config.get('token') else 'Notion owns plans; Noesis owns learning evidence'}
  def connect(self,token,parent):
   uuid.UUID(parent);token=token.strip()
   if not token or any(c.isspace() for c in token):raise ValueError('Use a scoped Notion connection token')
@@ -97,7 +97,7 @@ class Planner:
  def properties(self,row):
   props={'Title':{'title':rich(row['title'])}}
   if not row.get('remote_id'):props['Noesis ID']={'rich_text':rich(row['id'])}
-  for key,value in row['fields'].items():props[key]={'select':{'name':value}} if key in ('Area','State') else {'date':value} if key=='When' else {'url':value}
+  for key,value in row['fields'].items():props[key]={'select':None if value is None else {'name':value}} if key in ('Area','State') else {'date':value} if key=='When' else {'url':value}
   return props
  def sync(self):
   with lock(self.root):

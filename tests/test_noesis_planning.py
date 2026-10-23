@@ -40,4 +40,28 @@ class Planning(unittest.TestCase):
   spec=importlib.util.spec_from_file_location('agenda_planning',Path(__file__).resolve().parents[1]/'home/.local/share/sensei/agenda.py');agenda=importlib.util.module_from_spec(spec);spec.loader.exec_module(agenda)
   with tempfile.TemporaryDirectory() as d:
    p=Planner(Path(d));p.save(p.root/'cache.json',{'records':[{'id':'record','properties':{'When':{'date':{'start':'2026-10-27'}},'State':{'select':None},'Area':{'select':None},'Title':{'title':[{'plain_text':'Study'}]}}}]})
-   rows=agenda.planning(Path(d));self.assertEqual(len(rows),1);self.assertEqual(rows[0]['category'],'Planning')
+   rows=agenda.planning(Path(d));self.assertEqual(len(rows),1);self.assertEqual(rows[0]['category'],'Planning');self.assertTrue(rows[0]['all_day'])
+
+ def test_throttle_retries_bounded_and_honors_retry_after(self):
+  import io,urllib.error
+  from unittest.mock import patch
+  with tempfile.TemporaryDirectory() as d:
+   p=Planner(Path(d));p._token='fixture'
+   error=urllib.error.HTTPError('https://api.notion.com',429,'limited',{'Retry-After':'2'},None)
+   with patch('urllib.request.urlopen',side_effect=[error,io.BytesIO(b'{"ok":true}')]) as request,patch('time.sleep') as sleep:
+    self.assertTrue(p.api('GET','users/me')['ok']);self.assertEqual(request.call_count,2);sleep.assert_called_once_with(2)
+ def test_duplicate_retry_reuses_existing_remote_record(self):
+  with tempfile.TemporaryDirectory() as d:
+   p=Planner(Path(d));p.save(p.config,{'token':'fixture','collections':{'Tasks':{'source_id':'source'}}})
+   p.enqueue('Tasks','Read',{'Area':'Explore'},str(uuid.uuid4()))
+   p.query=lambda source,filters=None:[{'id':'existing','properties':{}}]
+   def no_creation(*args):raise AssertionError('Duplicate remote creation')
+   p.api=no_creation;result=p.sync();self.assertEqual(result['sent'],1);self.assertEqual(p.status()['pending'],0)
+ def test_auth_expiration_preserves_offline_work(self):
+  import urllib.error
+  from unittest.mock import patch
+  with tempfile.TemporaryDirectory() as d:
+   p=Planner(Path(d));p._token='fixture';p.enqueue('Tasks','Read',{},str(uuid.uuid4()))
+   with patch('urllib.request.urlopen',side_effect=urllib.error.HTTPError('https://api.notion.com',401,'expired',{},None)):
+    with self.assertRaisesRegex(ValueError,'renewed authorization'):p.api('GET','users/me')
+   self.assertEqual(len(p.pending()),1)

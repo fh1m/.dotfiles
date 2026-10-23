@@ -28,7 +28,7 @@ def learning(home=Path.home()):
     if any(x.get('review_plan_id')==plan['id'] and x.get('event') in ('attempt','review') and x.get('outcome') in ('failed','partial','succeeded') for x in timeline):continue
     date=datetime.datetime.fromisoformat(plan['due'].replace('Z','+00:00')).astimezone()
     record=identities[target]
-    result.append(dict(uid='noesis:'+vault+':'+plan['id'],source='noesis',title=record['title'],date=date.date().isoformat(),time=date.strftime('%H:%M'),due=date.timestamp(),vault=str(root),vault_id=vault,record_id=target,read_only=True,category='Learning review'))
+    result.append(dict(uid='noesis:'+vault+':'+plan['id'],source='noesis',title=record['title'],date=date.date().isoformat(),time=date.strftime('%H:%M'),due=date.timestamp(),vault=str(root),vault_id=vault,record_id=target,read_only=True,all_day=len(date)==10,category='Learning review'))
   except (OSError,ValueError,TypeError,KeyError,sqlite3.Error):continue
  return [row for row in result if identities_seen[row['vault_id']]==1]
 
@@ -49,5 +49,5 @@ def planning(home=Path.home()):
     moment=moment.replace(tzinfo=ZoneInfo('Asia/Dhaka'))
   except ValueError:continue
   title=''.join(t.get('plain_text') or t.get('text',{}).get('content','') for t in props.get('Title',{}).get('title',[]))
-  rows.append(dict(uid='notion:'+record['id'],source='notion',title=title,date=moment.date().isoformat(),time=moment.strftime('%H:%M'),due=moment.timestamp(),read_only=True,category=(props.get('Area',{}).get('select') or {}).get('name','Planning'),url=record.get('url'),sync_time=data.get('updated_at')))
+  rows.append(dict(uid='notion:'+record['id'],source='notion',title=title,date=moment.date().isoformat(),time=moment.strftime('%H:%M'),due=moment.timestamp(),read_only=True,all_day=len(date)==10,category=(props.get('Area',{}).get('select') or {}).get('name','Planning'),url=record.get('url'),sync_time=data.get('updated_at')))
  return rows

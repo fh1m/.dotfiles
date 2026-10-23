@@ -23,7 +23,7 @@ Singleton {
  SystemClock {id:dayClock;precision:root.focusState.running?SystemClock.Seconds:SystemClock.Minutes}
  readonly property string barSummary:{const d=Qt.formatDateTime(dayClock.date,'yyyy-MM-dd');const todo=tasks.filter(t=>!t.archived&&!t.done&&t.date<=d).length;let items=[];if(todo>0)items.push(todo+(todo===1?' task':' tasks'));if(upcoming.length)items.push('Next '+upcoming[0].time+' '+upcoming[0].title);return items.join('  ·  ');}
  readonly property string focusReadout:focusState.running&&focusRemaining(dayClock.date.getTime())>0?(focusState.phase==='focus'?'Focus ':'Break ')+formatSeconds(focusRemaining(dayClock.date.getTime())):''
- function openLinked(item){if(item.source==="noesis")Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/noesis","window","--owner",item.vault,"--vault-id",item.vault_id,"--record-id",item.record_id]);}
+ function openLinked(item){if(item.source==="notion"&&/^https:\/\/(www\.|app\.)?notion\.(so|com)\//.test(item.url||"")){Qt.openUrlExternally(item.url);return;}if(item.source==="noesis")Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/noesis","window","--owner",item.vault,"--vault-id",item.vault_id,"--record-id",item.record_id]);}
  function timer(seconds,title){dispatch(["@HOME@/.local/bin/sensei-calendar","timer",String(seconds),title]);}
  onMonthChanged:refresh()
  Process {id:list;command:["@HOME@/.local/bin/sensei-calendar","list",root.month];stdout:StdioCollector {onStreamFinished:{try{let d=JSON.parse(text);root.linked=d.linked||[];root.events=(d.events||[]).concat(root.linked.map(e=>Object.assign({id:e.uid,repeat:"none",all_day:true,duration:0,lead:0,occurrence:e.due},e)));root.clocks=d.clocks;root.tasks=d.tasks||[];root.upcoming=d.upcoming||[];root.focusState=d.focus||root.focusState;}catch(e){}}}}
@@ -32,6 +32,7 @@ Singleton {
  function importCalendar(){ShellState.externalDialogOpen=true;ics.chosen="";ics.running=true;}
  FileView {path:"@HOME@/.local/share/sensei-calendar/revision";watchChanges:true;printErrors:false;onFileChanged:{reload();root.refresh();}}
  Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==="calendar")root.refresh();}}
+ FileView {path:"@HOME@/.local/state/noesis-planning/cache.json";watchChanges:true;printErrors:false;onFileChanged:{reload();root.refresh();}}
  property string today:Qt.formatDateTime(dayClock.date,"yyyy-MM-dd")
  onTodayChanged:refresh()
  Component.onCompleted:refresh()

@@ -566,7 +566,7 @@ def main():
     for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','convolution-observe','convolution-prepare','convolution-check','host-request','host-lease','replica','planning','academic','drawing-create','drawing-publish','drawing-preview','scratch-create','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','artifact-reconnect','exploration-recover','scratch-outputs','editor-setting']:
         p = commands.add_parser(cmd); p.add_argument('--vault'); p.add_argument('--expect-vault-id')
         if cmd=='replica':p.add_argument('replica_action',choices=['status','protect']);p.add_argument('--folder-id')
-        if cmd=='planning':p.add_argument('planning_action',choices=['status','open','connect','setup','enqueue','sync']);p.add_argument('--parent-id');p.add_argument('--token-stdin',action='store_true');p.add_argument('--collection',default='Tasks');p.add_argument('--title');p.add_argument('--fields',default='{}');p.add_argument('--operation-id')
+        if cmd=='planning':p.add_argument('planning_action',choices=['status','open','connect','setup','enqueue','sync']);p.add_argument('--parent-id');p.add_argument('--token-stdin',action='store_true');p.add_argument('--collection',default='Tasks');p.add_argument('--title');p.add_argument('--fields',default='{}');p.add_argument('--operation-id');p.add_argument('--remote-id');p.add_argument('--base-revision')
         if cmd=='academic':p.add_argument('academic_action',choices=['configure','catalog','audit','record','study','refresh','sources','calendar-export']);p.add_argument('--output');p.add_argument('--course');p.add_argument('--term',default='Fall 2026');p.add_argument('--kind');p.add_argument('--data');p.add_argument('--operation-id')
         if cmd in ('convolution-observe','convolution-prepare','convolution-check'):
             p.add_argument('record_id');p.add_argument('--configuration',required=True);p.add_argument('--prediction',required=True);p.add_argument('--operation-id',required=True)
@@ -640,7 +640,7 @@ def main():
             elif args.planning_action=='connect':
                 if not args.token_stdin:raise ValueError('Supply the scoped token through --token-stdin, never a command-line argument')
                 result=planner.connect(sys.stdin.readline(),args.parent_id)
-            elif args.planning_action=='enqueue':result=planner.enqueue(args.collection,args.title or '',json.loads(args.fields),args.operation_id or str(uuid.uuid4()))
+            elif args.planning_action=='enqueue':result=planner.enqueue(args.collection,args.title or '',json.loads(args.fields),args.operation_id or str(uuid.uuid4()),remote_id=args.remote_id,base_revision=args.base_revision)
             else:result=getattr(planner,args.planning_action)()
             print(json.dumps(result));return 0
         if args.command=='academic':
