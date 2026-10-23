@@ -146,7 +146,7 @@ Singleton {
  function restart(){Quickshell.execDetached(["systemctl","--user","restart",spotifyState.backend==='headless'?"sensei-go-spotify.service":"sensei-spotify.service"]);dispatch('account');}
  FileView {path:'@HOME@/.config/sensei-den/music.json';watchChanges:true;printErrors:false;onFileChanged:{reload();root.transportQueue=[];root.dispatch('status');}onLoaded:root.dispatch('status')}
  FileView {id:nativeEvents;path:'@HOME@/.cache/sensei-spotify/native-event.json';watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:root.dispatch('status')}
- Component.onCompleted:Qt.callLater(()=>root.dispatch("status"))
+ Component.onCompleted:Qt.callLater(()=>{root.dispatch('status');root.dispatch('account');})
  onPageChanged:{cataloguePending=false;query="";refresh(false);if(page===0&&lyricsOpen)lyricsDelay.restart();}
  onLibraryKindChanged:if(page===3){const cached=libraryCache[libraryKind];libraryRows=cached?.rows||[];refresh(false);}
  onSearchKindChanged:if(page===4&&query.trim().length>=3)searchDelay.restart();
