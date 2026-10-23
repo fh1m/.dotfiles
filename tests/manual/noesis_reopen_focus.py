@@ -47,3 +47,7 @@ assert indicated(False),'Underline should clear when another application is focu
 call([qs,'-p',str(Path.home()/'.config/quickshell/sensei'),'ipc','call','oasis','open'])
 assert indicated(True),'Reopen should restore focus indication'
 print(json.dumps({'underline_follows_actual_focus':True}))
+
+window=call([qs,'-p',str(Path.home()/'.config/quickshell/noesis'),'ipc','call','noesis-window','state'])
+assert window.get('error')!='Noesis window is not yet available to the compositor.','Successful discovery retained a stale window error'
+print(json.dumps({'no_stale_discovery_error':True}))

@@ -29,3 +29,10 @@ session. It opens the real application and changes focus; it does not alter note
 The scoped installer backs up changed deployed files under the private
 `~/.local/state/noesis-deployments/` directory. No compositor or input-sharing
 restart is required.
+
+Follow-up: window discovery now waits for asynchronous Wayland mapping with a
+bounded retry while opening, and clears its own stale discovery message after
+success. The live regression first reproduced the stale message and then passed
+with no stale error. Homie became unreachable over mDNS, its pinned LAN endpoint
+and Tailscale before deployment; the repair is pushed for its next scoped
+installation, but PC runtime verification is pending rather than claimed passed.
