@@ -99,3 +99,25 @@ configuration-load error appeared in the checked runtime log.
 A ten-second diagnostic run returned all compositor IPC calls in 6.53ms or less;
 available RAM fell to 473MiB. This short observation does **not** close the
 intermittent display-freeze investigation. No reliable reproduction was obtained.
+
+## Homie deployment acceptance
+
+Homie reconnected during this pass and fast-forwarded main to d2e2a81. Shared
+music, lyrics and dropdown files were deployed with private backups at
+`~/.local/state/den-repairs/smoothness-20261023-214751/`. Its renderer settings
+were not changed. All 78 focused tests also passed on Homie.
+
+The reload exposed an older incomplete deployment: ControllerDropdown and its
+service/helper were missing from the installed tree, despite existing in Git.
+Installed those dependencies and the already-manifested `python-evdev` package.
+The System panel then reported Loader.Ready, surface ready and reveal=1 on DP-3.
+
+Also completed deployment of the previous Noesis launch repairs with its scoped
+installer. A single controlled restart of **only Homie's main Quickshell shell**
+was necessary: hot reload retained the previous Noesis singleton interface.
+The new process exposes focused/launching/error fields correctly. Applications,
+compositor and the independent cursor/input process were preserved. No account,
+private-vault migration or authenticated Notion-sync acceptance is implied.
+
+User feedback after the renderer change: **too soon to tell**. Keep the freeze
+investigation open; do not describe it as permanently fixed.
