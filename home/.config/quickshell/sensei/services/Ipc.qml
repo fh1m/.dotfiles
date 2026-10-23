@@ -40,6 +40,8 @@ Scope {
     }
     IpcHandler {
         target: "spotify"
+        function login():void {SpotifyDesk.login();}
+        function connection():string {return JSON.stringify({connected:!!SpotifyDesk.account.cachedLogin,service:SpotifyDesk.account.service,quality:SpotifyDesk.account.quality||'',requestedQuality:SpotifyDesk.account.requestedQuality||'',pending:SpotifyDesk.authorizationPending,message:SpotifyDesk.loginMessage});}
         function fullscreen():void {if(SpotifyDesk.fullscreen)SpotifyDesk.collapse(true);else SpotifyDesk.expand();}
         function closeFullscreen():void {SpotifyDesk.collapse(false);}
         function search(query: string): void { SpotifyDesk.page=4;SpotifyDesk.query=query;ShellState.openDropdown("spotify"); }

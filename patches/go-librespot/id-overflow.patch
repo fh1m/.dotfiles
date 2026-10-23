@@ -1,0 +1,31 @@
+diff --git a/ids.go b/ids.go
+index a2f756c..5b1cf51 100644
+--- a/ids.go
++++ b/ids.go
+@@ -189,6 +189,10 @@ func SpotifyIdFromBase62(typ SpotifyIdType, id string) (*SpotifyId, error) {
+ 		return nil, fmt.Errorf("failed decoding base62: %s", id)
+ 	}
+ 
++	if i.Sign() < 0 || i.BitLen() > 128 {
++		return nil, fmt.Errorf("spotify id exceeds 128 bits")
++	}
++
+ 	return &SpotifyId{typ, i.FillBytes(make([]byte, 16))}, nil
+ }
+ 
+diff --git a/ids_overflow_test.go b/ids_overflow_test.go
+new file mode 100644
+--- /dev/null
++++ b/ids_overflow_test.go
+@@ -0,0 +1,11 @@
++package go_librespot_test
++import (
++ "testing"
++ librespot "github.com/devgianlu/go-librespot"
++)
++func TestSpotifyIDOverflowReturnsError(t *testing.T) {
++ for _, id := range []string{"zzzzzzzzzzzzzzzzzzzzzz", "-1"} {
++  if _, err := librespot.SpotifyIdFromBase62(librespot.SpotifyIdTypeTrack,id); err == nil { t.Fatal("invalid ID accepted") }
++ }
++ if _, err := librespot.SpotifyIdFromBase62(librespot.SpotifyIdTypeTrack,"1111111111111111111111"); err != nil {t.Fatal(err)}
++}

@@ -13,9 +13,10 @@ if a.build:
  if head!=PIN:
   if subprocess.check_output(['git','status','--porcelain'],cwd=source).strip():raise SystemExit('Build checkout has changes; preserved. Use a separate clean checkout.')
   subprocess.run(['git','fetch','origin',PIN],cwd=source,check=True);subprocess.run(['git','checkout','--detach',PIN],cwd=source,check=True)
- patch=ROOT/'patches/go-librespot/queue-status.patch'
- check=subprocess.run(['git','apply','--reverse','--check',str(patch)],cwd=source,capture_output=True)
- if check.returncode:subprocess.run(['git','apply','--check',str(patch)],cwd=source,check=True);subprocess.run(['git','apply',str(patch)],cwd=source,check=True)
+ for filename in ('queue-status.patch','id-overflow.patch'):
+  patch=ROOT/'patches/go-librespot'/filename
+  check=subprocess.run(['git','apply','--reverse','--check',str(patch)],cwd=source,capture_output=True)
+  if check.returncode:subprocess.run(['git','apply','--check',str(patch)],cwd=source,check=True);subprocess.run(['git','apply',str(patch)],cwd=source,check=True)
  binary.parent.mkdir(parents=True,exist_ok=True)
  env=dict(os.environ,GOMAXPROCS='2')
  subprocess.run(['nice','-n','10','go','build','-o',str(binary)+'.next','./cmd/daemon'],cwd=source,env=env,check=True)

@@ -107,19 +107,20 @@ DropdownFrame {
  }
  }
  Column {visible:root.page===6;width:parent.width;spacing:14
- ChamferPanel {width:parent.width;height:176;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
- Column {anchors.fill:parent;anchors.margins:18;spacing:13
+ ChamferPanel {width:parent.width;height:accountDetails.implicitHeight+36;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
+ Column {id:accountDetails;anchors.fill:parent;anchors.margins:18;spacing:13
  Text { textFormat: Text.PlainText;text:'Sensei, your music lives here.';font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.title;color:Theme.widgetText}
- Text { textFormat: Text.PlainText;width:parent.width;text:(SpotifyDesk.playback.backend==='official'?'Player  Spotify desktop\nLibrary  '+SpotifyDesk.account.service+'\nBridge  Spicetify '+(SpotifyDesk.account.version||'not connected')+'\nSession  '+(SpotifyDesk.account.cachedLogin?'Desktop signed in':'Open Spotify to sign in'):'Player  '+SpotifyDesk.account.version+'\nService  '+SpotifyDesk.account.service+'\nConnect name  '+(SpotifyDesk.account.deviceName||'Sensei')+'\nLogin  '+(SpotifyDesk.account.cachedLogin?'Saved locally':'Sign in once in your browser')+(SpotifyDesk.account.quality?'\nAudio  '+SpotifyDesk.account.quality:''));font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.body;color:Theme.widgetMuted;lineHeight:1.45}
+ Text { textFormat: Text.PlainText;width:parent.width;text:(SpotifyDesk.playback.backend==='official'?'Player  Spotify desktop\nLibrary  '+SpotifyDesk.account.service+'\nBridge  Spicetify '+(SpotifyDesk.account.version||'not connected')+'\nSession  '+(SpotifyDesk.account.cachedLogin?'Desktop signed in':'Open Spotify to sign in'):'Player  '+SpotifyDesk.account.version+'\nService  '+SpotifyDesk.account.service+'\nConnect name  '+(SpotifyDesk.account.deviceName||'Sensei')+'\nLogin  '+(SpotifyDesk.account.cachedLogin?'Saved locally':'Sign in once in your browser')+(SpotifyDesk.account.username?'\nAccount  '+SpotifyDesk.account.username:'')+(SpotifyDesk.account.requestedQuality?'\nQuality requested  '+SpotifyDesk.account.requestedQuality:'')+(SpotifyDesk.account.quality?'\nPlaying audio  '+SpotifyDesk.account.quality:''));font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.body;color:Theme.widgetMuted;lineHeight:1.45}
  }
  }
- Row {spacing:10
- ControlTile {implicitWidth:220;label:'Use lightweight player';onActivated:SpotifyDesk.selectBackend('headless')}
- ControlTile {implicitWidth:220;label:'Use official Spotify';onActivated:SpotifyDesk.selectBackend('official')}
- ControlTile {implicitWidth:220;label:'Open official Spotify';onActivated:SpotifyDesk.openOfficial()}
- Text {text:'Control · '+(SpotifyDesk.playback.backend||'native');font.pixelSize:12;color:Theme.widgetMuted;anchors.verticalCenter:parent.verticalCenter}
+ Row {width:parent.width;spacing:10
+ ControlTile {implicitWidth:(parent.width-20)/3;label:'Lightweight player';glyph:'\uf025';selected:SpotifyDesk.playback.backend==='headless';onActivated:SpotifyDesk.selectBackend('headless')}
+ ControlTile {implicitWidth:(parent.width-20)/3;label:'Official player';glyph:'\uf1bc';selected:SpotifyDesk.playback.backend==='official';onActivated:SpotifyDesk.selectBackend('official')}
+ ControlTile {implicitWidth:(parent.width-20)/3;label:'Open Spotify';glyph:'\uf08e';onActivated:SpotifyDesk.openOfficial()}
  }
- Row {spacing:10;ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Sign in / reconnect';glyph:'\uf1bc';onActivated:SpotifyDesk.playback.backend==='official'?SpotifyDesk.openOfficial():SpotifyDesk.login()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:SpotifyDesk.playback.backend==='official'?'Repair desktop bridge':'Restart music service';glyph:'\uf021';onActivated:SpotifyDesk.repairBridge()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Open Spotify web';glyph:'\uf08e';onActivated:Quickshell.execDetached(['xdg-open','https://open.spotify.com/'])}}
+ Text {visible:!!SpotifyDesk.loginMessage;width:parent.width;text:SpotifyDesk.loginMessage+(SpotifyDesk.pairingCode?'\nPairing code: '+SpotifyDesk.pairingCode:'');textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}
+ ControlTile {visible:!!SpotifyDesk.loginUrl;implicitWidth:220;label:'Open Spotify account link';glyph:'\uf08e';onActivated:Quickshell.execDetached(['xdg-open',SpotifyDesk.loginUrl])}
+ Row {spacing:10;ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:SpotifyDesk.account.cachedLogin?'Spotify account':'Sign in / reconnect';glyph:'\uf1bc';onActivated:SpotifyDesk.playback.backend==='official'?SpotifyDesk.openOfficial():SpotifyDesk.login()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:SpotifyDesk.playback.backend==='official'?'Repair desktop bridge':'Restart music service';glyph:'\uf021';onActivated:SpotifyDesk.repairBridge()}ControlTile {accentColor:Theme.widgetAccent;implicitWidth:(parent.parent.width-20)/3;label:'Open Spotify web';glyph:'\uf08e';onActivated:Quickshell.execDetached(['xdg-open','https://open.spotify.com/'])}}
  ChamferPanel {width:parent.width;height:250;fillColor:Theme.surfaceOne;borderColor:Theme.rule;chamfer:Theme.radiusPanel;scanlines:false
  Column {anchors.fill:parent;anchors.margins:18;spacing:14
  Text { textFormat: Text.PlainText;width:parent.width;text:'Ready in the background';font.family:Appearance.font.forText(text);font.pixelSize:Appearance.textSize.title;color:Theme.widgetText}

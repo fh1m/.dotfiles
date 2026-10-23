@@ -16,12 +16,16 @@ def request(path,body=None,_recover=True):
  req=urllib.request.Request(BASE+path,data=json.dumps(body).encode() if body is not None else None,headers={'Content-Type':'application/json'})
  try:
   with HTTP.open(req,timeout=4 if path=='/status' else 12) as r:
-   if r.status==204:raise ValueError('Music needs a Spotify sign-in. Open Account → Sign in.')
+   if r.status==204:
+    if path=='/auth/code':return {}
+    raise ValueError('Music is reconnecting; saved login and playback are preserved.')
    raw=r.read(8*1024*1024+1)
    if len(raw)>8*1024*1024:raise ValueError('Music response exceeded the local limit')
    return json.loads(raw) if raw else {}
  except urllib.error.HTTPError as ex:
-  if ex.code==204:raise ValueError('Music needs a Spotify sign-in. Open Account → Sign in.')
+  if ex.code==204:
+   if path=='/auth/code':return {}
+   raise ValueError('Music is reconnecting; saved login and playback are preserved.')
   if path=='/status' and body is None and ex.code>=500 and _recover and recover_service():return recovered_status()
   if ex.code==429:
    try:delay=max(1,int(ex.headers.get('Retry-After','60')))
@@ -42,7 +46,7 @@ def recovered_status():
  for attempt in range(6):
   try:return request('/status',_recover=False)
   except ValueError as ex:
-   if 'sign-in' not in str(ex) and 'recovering' not in str(ex):raise
+   if not any(word in str(ex) for word in ('sign-in','recovering','reconnecting')):raise
    time.sleep(.5)
  raise ValueError('Music is reconnecting to Spotify; saved playback remains available.')
 
@@ -63,6 +67,19 @@ def recover_service():
    return True
   except (OSError,subprocess.TimeoutExpired):return False
 
+def saved_login():
+ try:
+  value=json.loads((Path.home()/'.config/sensei-go-spotify/state.json').read_text()).get('credentials',{})
+  return {'username':value.get('username','')} if value.get('data') and value.get('username') else {}
+ except (OSError,ValueError,AttributeError):return {}
+
+def _configured_bitrate():
+ try:
+  text=(Path.home()/'.config/sensei-go-spotify/config.yml').read_text()
+  match=re.search(r'^bitrate:\s*(96|160|320)\s*(?:#.*)?$',text,re.M)
+  return int(match.group(1)) if match else 160
+ except OSError:return 160
+
 def remembered_playback():
  try:return json.loads((STORE/'playback.json').read_text())
  except (OSError,ValueError):return {}
@@ -79,15 +96,20 @@ def remember_playback(d):
 def resume_saved(d):
  saved=remembered_playback();track=saved.get('track') or {}
  if not track.get('uri'):raise ValueError('Choose a track to start playback; no saved session exists yet.')
+ checked=uri('track',track['uri'].rsplit(':',1)[-1])
  # One atomic context+queue load, not a series of racing add-to-queue calls.
- upcoming=[t['uri'] for t in saved.get('queue') or [] if t.get('uri')][:50]
- request('/player/play',{'uri':track['uri'],'position':max(0,int(track.get('position',0))),'queued':upcoming})
+ upcoming=[uri('track',t['uri'].rsplit(':',1)[-1]) for t in saved.get('queue') or [] if t.get('uri')][:50]
+ request('/player/play',{'uri':checked,'position':max(0,int(track.get('position',0))),'queued':upcoming})
  mark_intent(d,'start',track['uri'],track.get('position',0))
 
 
 def uri(kind,identity):
  if kind=='collection' and identity=='tracks':return 'spotify:collection:tracks'
  if kind not in ('track','album','artist','playlist') or not re.fullmatch(r'[A-Za-z0-9]{22}',str(identity)):raise ValueError('Invalid Spotify identity')
+ # Go's 128-bit Spotify ID decoder must never receive an overflowing number.
+ alphabet='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';value=0
+ for ch in identity:value=value*62+alphabet.index(ch)
+ if value>=1<<128:raise ValueError('Invalid Spotify identity: exceeds 128 bits')
  return 'spotify:'+kind+':'+identity
 
 def row(t,kind='track'):
@@ -95,8 +117,11 @@ def row(t,kind='track'):
  return {'id':u.rsplit(':',1)[-1],'uri':u,'kind':typ,'title':t.get('name') or u.rsplit(':',1)[-1], 'artist':', '.join(t.get('artist_names') or t.get('artists') or []) or t.get('owner_username') or typ.title(),'album':t.get('album_name',''),'albumId':(t.get('album_uri') or '').rsplit(':',1)[-1],'art':t.get('album_cover_url') or t.get('image_url') or '', 'duration':t.get('duration',0),'count':t.get('length',0),'description':re.sub('<[^>]+>','',t.get('description',''))}
 
 def raw_status():
- d=request('/status')
- if not d:raise ValueError('Music needs a Spotify sign-in. Open Account → Sign in.')
+ try:d=request('/status')
+ except ValueError as ex:
+  if 'reconnecting' not in str(ex):raise
+  d=recovered_status()
+ if not d:raise ValueError('Music is reconnecting; saved login and playback are preserved.')
  remember_playback(d)
  return d
 
@@ -117,7 +142,14 @@ def transitioning(d):
  return True
 
 def status():
- d=raw_status();t=d.get('track') or {};pending=transitioning(d)
+ try:d=raw_status()
+ except ValueError:
+  saved=remembered_playback();track=saved.get('track') or {}
+  if not track.get('uri'):raise
+  uri('track',track['uri'].rsplit(':',1)[-1])
+  return {'ready':False,'backend':'headless','playing':False,'loading':True,'track':row(track),'progress':track.get('position',0),'warning':'Music is reconnecting. Saved login, artwork and queue are preserved.'}
+ t=d.get('track') or {};pending=transitioning(d)
+ if not t and d.get('stopped'):t=remembered_playback().get('track') or {}
  return {'ready':True,'backend':'headless','owner':'headless-client' if not d.get('stopped') else 'inactive','playing':bool(t) and not d.get('stopped',True) and not d.get('paused',True),'loading':pending or d.get('buffering',False) or (not d.get('stopped',True) and not t),'track':row(t) if t else {},'progress':t.get('position',0),'volume':round(d.get('volume',0)*100/max(1,d.get('volume_steps',100))),'shuffle':d.get('shuffle_context',False),'repeat':'track' if d.get('repeat_track') else 'context' if d.get('repeat_context') else 'off','device':d.get('device_name'),'deviceId':d.get('device_id'),'context':d.get('context_uri'),'eventUri':t.get('uri',''),'eventTime':time.time()*1000}
 
 def cache(key,load,ttl=300,force=False):
@@ -207,18 +239,37 @@ def dispatch(args):
   return dispatch(['liked-play',page['rows'][0]['id']])
  if name=='signin':
   import subprocess
-  try:d=request('/auth/code')
-  except ValueError:d={}
-  url=d.get('url','')
-  if url.startswith('https://') and urllib.parse.urlsplit(url).hostname in ('spotify.com','accounts.spotify.com','www.spotify.com'):
-   subprocess.Popen(['xdg-open',url],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True);return {'ok':True}
-  return {'ok':True,'warning':'Already signed in, or authorization is not yet ready. Check Account.'}
+  for attempt in range(5):
+   try:d=request('/auth/code')
+   except ValueError:d={}
+   url=d.get('url','') if isinstance(d,dict) else ''
+   if url:
+    parsed=urllib.parse.urlsplit(url)
+    if parsed.scheme!='https' or parsed.hostname not in ('spotify.com','accounts.spotify.com','www.spotify.com') or parsed.username or parsed.password or parsed.port not in (None,443):
+     raise ValueError('Spotify returned an untrusted pairing link; nothing was opened.')
+    result={'ok':True,'authorizationPending':True,'loginUrl':url,'pairingCode':str(d.get('code',''))[:40],'warning':'Approve this device in Spotify, then return here. Your connection will refresh automatically.'}
+    break
+   try:s=raw_status()
+   except ValueError:s={}
+   if s.get('username'):
+    url='https://www.spotify.com/account/overview/'
+    result={'ok':True,'connected':True,'loginUrl':url,'warning':'Spotify is already connected. Your Account page is opening so you can verify your subscription.'}
+    break
+   if attempt==0:
+    subprocess.run(['systemctl','--user','start','sensei-go-spotify.service'],capture_output=True,timeout=5)
+   time.sleep(.4)
+  else:raise ValueError('Spotify pairing is not ready. Check the music service and connection, then retry Sign in.')
+  try:
+   browser=subprocess.run(['xdg-open',url],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=8)
+   if browser.returncode:result['warning']='The browser could not open. Use the account link or pairing code shown below.'
+  except (OSError,subprocess.TimeoutExpired):result['warning']='The browser could not open. Use the account link or pairing code shown below.'
+  return result
  if name=='status':return status()
  if name=='account':
   try:s=raw_status();ready=True
-  except ValueError:s={};ready=False
+  except ValueError:s=saved_login();ready=False
   t=s.get('track') or {};quality=' · '.join(x for x in [str(t.get('codec') or '').title(),str(t['bitrate'])+' kb/s' if t.get('bitrate') else '',str(round(t['sample_rate']/1000,1))+' kHz' if t.get('sample_rate') else ''] if x)
-  return {'quality':quality,'backend':'headless','service':'connected' if ready else 'sign-in required','cachedLogin':ready,'deviceName':s.get('device_name','Den'),'version':'go-librespot · bd3fa740','catalogue':'Connect session · no public Web API'}
+  return {'quality':quality,'backend':'headless','service':'connected' if ready else 'reconnecting' if s.get('username') else 'sign-in required','cachedLogin':ready or bool(s.get('username')),'username':s.get('username',''),'requestedQuality':'320 kb/s' if _configured_bitrate()==320 else str(_configured_bitrate())+' kb/s','deviceName':s.get('device_name','Den'),'version':'go-librespot · bd3fa740','catalogue':'Connect session · no public Web API'}
  if name=='library':return library(a[0],force=force)
  if name=='more':
   if not a[0].startswith('headless:'):raise ValueError('Refresh this library before loading another page')

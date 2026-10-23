@@ -72,6 +72,17 @@ for(const screen of [1920,1080,3840,720]){
 """.replace('EXPR',expression)
         subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)
 
+    def test_signin_before_status_uses_selected_control_backend(self):
+        function=next(line.strip() for line in SOURCE.read_text().splitlines() if line.strip().startswith('function login('))
+        script=r"""
+const vm=require('vm'),assert=require('assert'),calls=[];
+const c={transport:{running:false},spotifyState:{},sendTransport:(name,args)=>calls.push(name),openOfficial:()=>calls.push('official')};
+vm.createContext(c);vm.runInContext(FUNCTION,c);c.login();assert.deepEqual(calls,['signin']);
+c.spotifyState.backend='official';c.login();assert.deepEqual(calls,['signin','official']);
+c.transport.running=true;c.login();assert.equal(calls.length,2);
+""".replace('FUNCTION',json.dumps(function))
+        subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)
+
     def test_pagination_identity_art_and_queue_selection(self):
         functions = '\n'.join(line.strip() for line in SOURCE.read_text().splitlines()
                               if line.strip().startswith(('function accept(', 'function uniqueRows(', 'function play(', 'function artworkUrl(')))
