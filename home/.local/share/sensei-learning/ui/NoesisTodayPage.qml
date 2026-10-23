@@ -9,6 +9,8 @@ ScrollView {
  property bool collectionScope:false
  property bool pathScoped:false
  property bool busy:false
+ signal university()
+ signal planning()
  signal openContext(var row)
  signal toggleQuiet()
  signal clearPathScope()
@@ -19,6 +21,10 @@ ScrollView {
  contentWidth:availableWidth
  ScrollBar.horizontal.policy:ScrollBar.AlwaysOff
  ColumnLayout {width:root.availableWidth;spacing:NoesisStyle.lg
+  Flow {Layout.fillWidth:true;spacing:NoesisStyle.sm
+   NoesisButton {text:"University · "+(root.context.academic?.earned_credits||0)+" / 141 credits";onClicked:root.university()}
+   NoesisButton {text:"Planning · "+(root.context.planning?.pending||0)+" pending";onClicked:root.planning()}
+  }
   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;textFormat:Text.PlainText;text:root.context.continue?"Continue your work":root.context.empty_reason==="no-records"?"Begin with something worth understanding":"Choose a thread to continue";wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.title}
   NoesisRow {Layout.fillWidth:true;visible:!!root.context.continue;title:root.context.continue?.title||"";subtitle:(root.context.continue?.vault_name?root.context.continue.vault_name+" · ":"")+(root.context.continue?.unfinished_attempt?"Unfinished attempt · reasoning and exposure preserved":root.context.continue?.position||"Resume this working context");trailing:"Resume →";onClicked:root.openContext(root.context.continue)}
   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;Layout.fillWidth:true;visible:!root.context.continue;textFormat:Text.PlainText;text:root.context.empty_reason==="data-unavailable"?"Some registered storage is unavailable. Its saved work remains owned by that vault.":root.context.empty_reason==="no-records"?"Start with a source, a question or a prediction. Progress will come from your recorded work.":"Saved material remains available even when no next action is due.";wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}

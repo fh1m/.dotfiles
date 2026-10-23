@@ -31,3 +31,23 @@ def learning(home=Path.home()):
     result.append(dict(uid='noesis:'+vault+':'+plan['id'],source='noesis',title=record['title'],date=date.date().isoformat(),time=date.strftime('%H:%M'),due=date.timestamp(),vault=str(root),vault_id=vault,record_id=target,read_only=True,category='Learning review'))
   except (OSError,ValueError,TypeError,KeyError,sqlite3.Error):continue
  return [row for row in result if identities_seen[row['vault_id']]==1]
+
+
+def planning(home=Path.home()):
+ """Read the private planning cache; no Notion network calls from the clock."""
+ file=home/'.local/state/noesis-planning/cache.json';rows=[]
+ if not file.exists():return rows
+ try:data=json.loads(file.read_text())
+ except (OSError,ValueError):return rows
+ for record in data.get('records',[]):
+  props=record.get('properties',{});date=(props.get('When',{}).get('date') or {}).get('start')
+  if not date or (props.get('State',{}).get('select') or {}).get('name') in ('Done','Abandoned','Parked'):continue
+  try:
+   moment=datetime.datetime.fromisoformat(date.replace('Z','+00:00'))
+   if moment.tzinfo is None:
+    from zoneinfo import ZoneInfo
+    moment=moment.replace(tzinfo=ZoneInfo('Asia/Dhaka'))
+  except ValueError:continue
+  title=''.join(t.get('plain_text') or t.get('text',{}).get('content','') for t in props.get('Title',{}).get('title',[]))
+  rows.append(dict(uid='notion:'+record['id'],source='notion',title=title,date=moment.date().isoformat(),time=moment.strftime('%H:%M'),due=moment.timestamp(),read_only=True,category=(props.get('Area',{}).get('select') or {}).get('name','Planning'),url=record.get('url'),sync_time=data.get('updated_at')))
+ return rows

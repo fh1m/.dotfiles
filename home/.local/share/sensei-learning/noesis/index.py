@@ -71,7 +71,7 @@ class Index:
         self.check_owner()
         if paths is None:
             previous = dict(self.db.execute('SELECT path,stamp FROM records'))
-            candidates = notes(self.root)
+            candidates = notes(self.root,include_conflicts=True)
         else:
             if not isinstance(paths, list) or len(paths) > 1000:raise ValueError('Changed paths must be a bounded list')
             targets = [contained(self.root, p) for p in paths]
@@ -88,6 +88,9 @@ class Index:
         with self.db:
             for path in candidates:
                 relative = str(path.relative_to(self.root))
+                if '.sync-conflict-' in path.name:
+                    errors.append({'path':relative,'error':'Unresolved synchronization conflict; both versions preserved'})
+                    continue
                 if relative.startswith((self.manifest.get('templates', 'Templates') + '/', '92 Templates/')):continue
                 seen.add(relative)
                 stat = path.stat()

@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import os,sys,json,sqlite3,datetime as D,time,subprocess,calendar,uuid,re
+import os,sys,json,sqlite3,datetime as D,time,subprocess,calendar,uuid,re,hashlib
 from pathlib import Path
 os.umask(0o077);root=Path(os.environ.get('SENSEI_CALENDAR_DIR',Path.home()/'.local/share/sensei-calendar'));root.mkdir(parents=True,exist_ok=True);c=sqlite3.connect(root/'calendar.sqlite',timeout=15);c.row_factory=sqlite3.Row
 c.execute('pragma journal_mode=WAL');c.execute('pragma synchronous=FULL')
@@ -12,6 +12,8 @@ for col,definition in [('rrule',"text default ''"),('timezone',"text default 'As
 c.execute('create table if not exists exceptions(event integer, occurrence real, primary key(event,occurrence))');c.commit()
 c.execute('create table if not exists tasks(id integer primary key,title text,date text,project text,priority integer,estimate integer,done integer default 0,archived integer default 0,minutes integer default 0)')
 c.execute('create table if not exists settings(key text primary key,value text)');c.commit()
+c.execute('create table if not exists imported_events(uid text primary key,source text,sequence integer,stamp text,digest text)')
+c.execute('create table if not exists import_revisions(id integer primary key,uid text,imported_at real,previous text,incoming text)');c.commit()
 a=sys.argv[1:];cmd=a[0] if a else 'list';now=time.time()
 if cmd=='due':
  import fcntl
@@ -82,8 +84,8 @@ try:
     if stamp>=now:upcoming.append(dict(e,occurrence=stamp,time=D.datetime.fromtimestamp(stamp).strftime('%H:%M'),date=D.datetime.fromtimestamp(stamp).strftime('%Y-%m-%d')))
   sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
   try:
-   from agenda import learning
-   linked=learning()
+   from agenda import learning,planning
+   linked=learning()+planning()
   except (ImportError,OSError,ValueError):linked=[]
   print(json.dumps({'linked':linked,'clocks':clocks,'events':sorted(rows,key=lambda e:e['occurrence']),'total':c.execute('select count(*) from events where done=0').fetchone()[0],'tasks':[dict(t) for t in c.execute('select * from tasks order by archived,done,priority desc,date,id desc')],'focus':focus_state(),'upcoming':sorted(upcoming,key=lambda e:e['occurrence'])[:32]}))
  elif cmd=='save':
@@ -163,22 +165,41 @@ try:
   lines+=['END:VCALENDAR'];target=Path(a[1]) if len(a)>1 else root/'calendar.ics';target.write_text('\r\n'.join(lines)+'\r\n');print(str(target))
  elif cmd=='import':
   text=re.sub(r'\r?\n[ \t]','',Path(a[1]).read_text());count=0
+  source=next((unescape(line.split(':',1)[1]) for line in text.splitlines() if line.startswith('X-WR-CALNAME:')),str(Path(a[1]).resolve()))
   for block in text.split('BEGIN:VEVENT')[1:]:
    fields={}
    for line in block.split('END:VEVENT')[0].splitlines():
     if ':' in line:
      key,value=line.split(':',1);fields[key]=value
-   datekey=next((k for k in fields if k.startswith('DTSTART')),None)
-   if not datekey:continue
    if any(k.startswith('RECURRENCE-ID') for k in fields):raise SystemExit('Sensei, edited occurrences in this file need separate events; import cancelled without changes.')
+   datekey=next((k for k in fields if k.startswith('DTSTART')),None)
+   uid=fields.get('UID');existing=c.execute('select * from events where uid=?',(uid,)).fetchone() if uid else None
+   if not datekey and fields.get('STATUS')=='CANCELLED' and existing:
+    imported=c.execute('select * from imported_events where uid=?',(uid,)).fetchone()
+    if not imported or imported['source']!=source:raise ValueError('Cancellation source does not own this event; preserved')
+    sequence=int(fields.get('SEQUENCE','0'));stamp=fields.get('DTSTAMP','');digest=hashlib.sha256(json.dumps(fields,sort_keys=True).encode()).hexdigest()
+    if sequence<imported['sequence'] or sequence==imported['sequence'] and stamp and imported['stamp'] and stamp<imported['stamp']:continue
+    if imported['digest']==digest:continue
+    c.execute('insert into import_revisions(uid,imported_at,previous,incoming) values(?,?,?,?)',(uid,now,json.dumps(dict(existing)),json.dumps(fields)))
+    c.execute('update events set done=1 where uid=?',(uid,))
+    c.execute('insert or replace into imported_events values(?,?,?,?,?)',(uid,source,sequence,stamp,digest));count+=1;continue
+   if not datekey:continue
    raw=fields[datekey];dt=parse_ics_date(datekey,raw);rule=fields.get('RRULE','')
    if rule:rrulestr(rule,dtstart=dt)
    endkey=next((k for k in fields if k.startswith('DTEND')),None)
-   length=(parse_ics_date(endkey,fields[endkey])-dt).total_seconds() if endkey else seconds(fields.get('DURATION','PT30M'))
+   length=(parse_ics_date(endkey,fields[endkey])-dt).total_seconds() if endkey else seconds(fields.get('DURATION','P1D' if 'T' not in raw else 'PT30M'))
    lead=max(0,-seconds(fields.get('TRIGGER','-PT10M'))//60)
    recurrence={'FREQ=DAILY':'daily','FREQ=WEEKLY':'weekly','FREQ=MONTHLY':'monthly'}.get(rule,'custom' if rule else 'none')
    title=unescape(fields.get('SUMMARY','Imported event'));uid=fields.get('UID',str(uuid.uuid4()));before=c.total_changes
-   c.execute('insert or ignore into events(uid,title,start,duration,lead,repeat,location,notes,category,all_day,rrule,timezone) values(?,?,?,?,?,?,?,?,"Imported",?,?,?)',(uid,title,dt.timestamp(),max(1,int(length//60)),int(lead),recurrence,unescape(fields.get('LOCATION','')),unescape(fields.get('DESCRIPTION','')),int('T' not in raw),rule,getattr(dt.tzinfo,'key','UTC')));count+=int(c.total_changes>before)
+   digest=hashlib.sha256(json.dumps(fields,sort_keys=True).encode()).hexdigest();sequence=int(fields.get('SEQUENCE','0'));stamp=fields.get('DTSTAMP','')
+   imported=c.execute('select * from imported_events where uid=?',(uid,)).fetchone()
+   if imported and imported['source']!=source:raise ValueError('Calendar UID belongs to a different source; import preserved')
+   if imported and (sequence<imported['sequence'] or sequence==imported['sequence'] and stamp and imported['stamp'] and stamp<imported['stamp']):continue
+   if imported and imported['digest']==digest:continue
+   if existing and not imported and existing['category']!='Imported':raise ValueError('Imported UID conflicts with a personal event; preserved')
+   c.execute('insert into import_revisions(uid,imported_at,previous,incoming) values(?,?,?,?)',(uid,now,json.dumps(dict(existing)) if existing else None,json.dumps(fields)))
+   c.execute('insert into events(uid,title,start,duration,lead,repeat,location,notes,category,all_day,rrule,timezone,done) values(?,?,?,?,?,?,?,?,"Imported",?,?,?,?) on conflict(uid) do update set title=excluded.title,start=excluded.start,duration=excluded.duration,lead=excluded.lead,repeat=excluded.repeat,location=excluded.location,notes=excluded.notes,all_day=excluded.all_day,rrule=excluded.rrule,timezone=excluded.timezone,done=excluded.done',(uid,title,dt.timestamp(),max(1,int(length//60)),int(lead),recurrence,unescape(fields.get('LOCATION','')),unescape(fields.get('DESCRIPTION','')),int('T' not in raw),rule,getattr(dt.tzinfo,'key','UTC'),int(fields.get('STATUS')=='CANCELLED')))
+   c.execute('insert or replace into imported_events values(?,?,?,?,?)',(uid,source,sequence,stamp,digest));count+=1
    ident=c.execute('select id from events where uid=?',(uid,)).fetchone()[0]
    for key,value in fields.items():
     if key.startswith('EXDATE'):

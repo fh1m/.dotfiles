@@ -35,3 +35,7 @@ NoesisNavigation 1.0 NoesisNavigation.qml
 NoesisConvolutionPage 1.0 NoesisConvolutionPage.qml
 NoesisStartDialog 1.0 NoesisStartDialog.qml
 NoesisHelpDialog 1.0 NoesisHelpDialog.qml
+
+NoesisSession 1.0 NoesisSession.qml
+NoesisUniversity 1.0 NoesisUniversity.qml
+NoesisPlanning 1.0 NoesisPlanning.qml

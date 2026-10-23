@@ -102,12 +102,12 @@ def publish(path, text, expected=None):
             os.unlink(temp)
 
 
-def notes(root):
+def notes(root, include_conflicts=False):
     for folder, dirs, files in os.walk(root, followlinks=False):
         dirs[:] = [d for d in dirs if not d.startswith('.') and d not in {'node_modules', 'Datasets', 'Runs'} and not (Path(folder) / d).is_symlink()]
         for name in files:
             path = Path(folder) / name
-            if path.suffix == '.md' and not path.is_symlink():
+            if path.suffix == '.md' and (include_conflicts or '.sync-conflict-' not in path.name) and not path.is_symlink():
                 yield path
 
 

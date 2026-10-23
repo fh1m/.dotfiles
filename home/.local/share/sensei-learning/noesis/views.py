@@ -74,7 +74,12 @@ def today(index, context_id=None, path_id=None, quiet=False):
     record_count=index.db.execute("SELECT count(*) FROM records WHERE kind NOT IN ('activity','relationship','home','frontier','daily','protocol')").fetchone()[0]
     actions=next_actions(index,quiet,path_id)[:5]
     paths=[row for row in index.query(kind=['path','course','resource'],resource_kinds=['course','book','playlist'],limit=50)['records'] if row.get('status') not in ('parked','abandoned','retired','complete')][:6]
-    return {'continue':resume,'records':actions,'paths':paths,'record_count':record_count,
+    from .academic import audit,owner
+    from .planning import Planner
+    try:academic=audit(owner())
+    except (ValueError,OSError):academic={'earned_credits':0,'remaining_credits':141,'warnings':[],'enrollments':[]}
+    planning=Planner().status()
+    return {'academic':{'earned_credits':academic['earned_credits'],'remaining_credits':academic['remaining_credits'],'warnings':academic['warnings'],'enrollments':academic['enrollments']},'planning':{'connection':planning['connection'],'pending':planning['pending'],'last_sync':planning['last_sync']},'continue':resume,'records':actions,'paths':paths,'record_count':record_count,
             'availability':'ready','empty_reason':'no-records' if not record_count else 'no-active-work' if not resume and not actions else 'nothing-due' if not actions else None,'generation':index.generation,
             'message':'Resume when you are ready. Suggestions are optional, and age is not a competence estimate.'}
 

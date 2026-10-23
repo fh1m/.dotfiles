@@ -6,16 +6,16 @@ NoesisDialog {
  id:root
  property string vaultScope:""
  property bool restoring:false
- function stash(){if(restoring||!vaultScope)return;let drafts=Object.assign({},NoesisController.drafts);drafts[vaultScope+":start-learning"]=JSON.stringify({origin:origin.text,title:label.text,format:format.currentIndex});NoesisController.drafts=drafts;NoesisController.savePreferences();}
+ function stash(){if(restoring||!vaultScope)return;let drafts=Object.assign({},controller.drafts);drafts[vaultScope+":start-learning"]=JSON.stringify({origin:origin.text,title:label.text,format:format.currentIndex});controller.drafts=drafts;controller.savePreferences();}
  signal beginLearning(string kind,string medium,string source,string title,string question)
  signal zotero()
  modal:true
  title:"Start learning"
  width:Math.min(620,parent?.width-32||620)
  height:Math.min(620*NoesisStyle.interfaceScale,parent?.height-32||700)
- function begin(){restoring=true;vaultScope=NoesisController.activeVault;origin.text="";label.text="";format.currentIndex=7;try{let saved=JSON.parse(NoesisController.drafts[vaultScope+":start-learning"]||"null");if(saved){origin.text=saved.origin||"";label.text=saved.title||"";format.currentIndex=Math.max(0,Math.min(10,saved.format??7));}}catch(e){}restoring=false;open();origin.forceActiveFocus();}
+ function begin(){restoring=true;vaultScope=controller.activeVault;origin.text="";label.text="";format.currentIndex=7;try{let saved=JSON.parse(controller.drafts[vaultScope+":start-learning"]||"null");if(saved){origin.text=saved.origin||"";label.text=saved.title||"";format.currentIndex=Math.max(0,Math.min(10,saved.format??7));}}catch(e){}restoring=false;open();origin.forceActiveFocus();}
  onClosed:stash()
- Connections {target:NoesisController;function onFlushRequested(){root.stash();}function onActiveVaultChanged(){root.close();}}
+ Connections {target:controller;function onFlushRequested(){root.stash();}function onActiveVaultChanged(){root.close();}}
  function suggest(){let value=origin.text.trim();if(/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(value))format.currentIndex=value.includes("list=")?1:0;else if(/\.pdf($|[?#])/i.test(value)||/^https?:\/\/(arxiv\.org|doi\.org)\//i.test(value))format.currentIndex=3;else if(/^https?:\/\//i.test(value))format.currentIndex=5;}
  contentItem:ScrollView {id:scroll;clip:true;contentWidth:availableWidth
   ColumnLayout {width:scroll.availableWidth;spacing:NoesisStyle.lg
@@ -32,12 +32,12 @@ NoesisDialog {
    Text {Layout.fillWidth:true;text:"Title · your own wording";wrapMode:Text.Wrap;color:NoesisStyle.ink;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
    NoesisField {id:label;onTextChanged:if(root.visible&&!root.restoring)draftSave.restart();objectName:"learning-title";Layout.fillWidth:true;placeholderText:"A title you will recognize later";Accessible.name:"Learning title"}
    Text {Layout.fillWidth:true;text:"Noesis identifies common links locally. It does not fetch titles, transcripts or course outlines. Choose the format and title yourself; the original source stays linked.";wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
-   Text {Layout.fillWidth:true;text:"Saved in: "+NoesisController.activeVault;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
+   Text {Layout.fillWidth:true;text:"Saved in: "+controller.activeVault;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.label}
   }
  }
  footer:Flow {spacing:NoesisStyle.sm
   NoesisButton {text:"Cancel";onClicked:root.close()}
-  NoesisButton {text:"Continue";primary:true;enabled:root.vaultScope===NoesisController.activeVault&&!!NoesisController.activeVault&&(label.text.trim()!==""||origin.text.trim()!=="");onClicked:{let index=format.currentIndex;let kind=index===7?"question":index===8?"concept":index===9?"task":index===10?"experiment":"resource";let medium=["video","playlist","course","paper","book","article","docs"][index]||"";let source=origin.text.trim();let title=label.text.trim()||source;root.close();let sourceLike=/^(https?:\/\/|file:\/\/|\/|10\.\d{4,9}\/|arxiv:)/i.test(source);root.beginLearning(kind,medium,["resource","task"].includes(kind)&&sourceLike?source:"",title,!sourceLike||["question","concept","experiment"].includes(kind)?source:"");let drafts=Object.assign({},NoesisController.drafts);delete drafts[root.vaultScope+":start-learning"];NoesisController.drafts=drafts;NoesisController.savePreferences();}}
+  NoesisButton {text:"Continue";primary:true;enabled:root.vaultScope===controller.activeVault&&!!controller.activeVault&&(label.text.trim()!==""||origin.text.trim()!=="");onClicked:{let index=format.currentIndex;let kind=index===7?"question":index===8?"concept":index===9?"task":index===10?"experiment":"resource";let medium=["video","playlist","course","paper","book","article","docs"][index]||"";let source=origin.text.trim();let title=label.text.trim()||source;root.close();let sourceLike=/^(https?:\/\/|file:\/\/|\/|10\.\d{4,9}\/|arxiv:)/i.test(source);root.beginLearning(kind,medium,["resource","task"].includes(kind)&&sourceLike?source:"",title,!sourceLike||["question","concept","experiment"].includes(kind)?source:"");let drafts=Object.assign({},controller.drafts);delete drafts[root.vaultScope+":start-learning"];controller.drafts=drafts;controller.savePreferences();}}
  }
  Timer {id:draftSave;interval:500;onTriggered:root.stash()}
  FileDialog {id:filePicker;title:"Choose material to learn from";onAccepted:{origin.text=decodeURIComponent(String(selectedFile).replace(/^file:\/\//,""));root.suggest();}}

@@ -1,0 +1,8 @@
+[Unit]
+Description=Stage official UIU academic source revisions for review
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/noesis academic refresh
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=90

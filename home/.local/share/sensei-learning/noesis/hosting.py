@@ -42,18 +42,24 @@ def executable(home):
     preferred=Path(home)/'.local/opt/sensei-quickshell/bin/qs'
     return str(preferred) if preferred.exists() else 'qs'
 
-def launch(home,*,embedded=False,owner=None,vault_id=None,record_id=None,capture=False,start=False):
+def launch(home,*,embedded=False,owner=None,vault_id=None,record_id=None,capture=False,start=False,new=False,monitor=None,window_id=None):
     home=Path(home);qs=executable(home)
     config=(home/'.config/quickshell'/('sensei' if embedded else 'noesis')).resolve()
     if not (config/'shell.qml').is_file():raise ValueError('Noesis host is not installed: '+str(config))
     state=home/'.local/state/sensei-learning';state.mkdir(parents=True,exist_ok=True);state.chmod(0o700)
     prefs=json.loads((state/'window.json').read_text()) if (state/'window.json').exists() else {}
+    if prefs.get('version',1)<3:prefs.update(placement='current',return_behavior='stay')
     request={'version':1,'request_id':str(uuid.uuid4()),'action':'start' if start else 'capture' if capture else 'resume' if record_id else 'open'}
     if owner:
         from .scopes import identity
         request['owner']={'vault_id':vault_id or identity(Path(owner).expanduser().resolve()),'registered_location':str(Path(owner).expanduser().resolve())}
     if record_id:request['record_id']=record_id
     request=resolve_request(request)
+    if new:request["new_window"]=True
+    if window_id:
+        from .windows import validate_id
+        request["window_id"]=validate_id(window_id)
+    if monitor:request["monitor"]=monitor
     def ipc(target,method,*args):
         run=subprocess.run([qs,'-p',str(config),'ipc','call',target,method,*args],text=True,capture_output=True,timeout=5)
         if run.returncode:return None
@@ -96,6 +102,9 @@ def launch(home,*,embedded=False,owner=None,vault_id=None,record_id=None,capture
                 time.sleep(.1)
             if not hello:raise RuntimeError('Noesis startup did not become ready; inspect '+str(state/'application.log'))
         if not hello.get('host_ready',True):raise RuntimeError('Another Noesis host owns the session; close it before selecting this host')
+        if (new or monitor) and not monitor and os.environ.get('HYPRLAND_INSTANCE_SIGNATURE'):
+            screens=json.loads(subprocess.check_output(['hyprctl','monitors','-j'],text=True))
+            request['monitor']=next((s['name'] for s in screens if s.get('focused')),None)
         payload=base64.b64encode(json.dumps(request,separators=(',',':')).encode()).decode()
         ack=ipc('noesis','request',payload)
         if not ack:raise RuntimeError('Launch acknowledgement is uncertain; inspect request '+request['request_id']+' before repeating')

@@ -1,0 +1,1578 @@
+{
+  "version": 1,
+  "institution": "United International University, Bangladesh",
+  "program": "BSCSE",
+  "effective_from": "Summer 2026",
+  "degree_credits": 141,
+  "minimum_cgpa": 2.0,
+  "minimum_fydp_grade": "C",
+  "baskets": {
+    "general-elective": 9,
+    "elective": 15
+  },
+  "specialization_minimum_courses": 4,
+  "courses": [
+    {
+      "code": "ENG1011",
+      "display_code": "ENG 1011",
+      "title": "English I",
+      "credits": 3.0,
+      "bucket": "language",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 1
+    },
+    {
+      "code": "ENG1013",
+      "display_code": "ENG 1013",
+      "title": "English II",
+      "credits": 3.0,
+      "bucket": "language",
+      "tracks": [],
+      "prerequisites": [
+        "ENG1101"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 2
+    },
+    {
+      "code": "SOC2101",
+      "display_code": "SOC 2101",
+      "title": "Society, Environment and Engineering Ethics",
+      "credits": 3.0,
+      "bucket": "general-required",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 5
+    },
+    {
+      "code": "PMG4101",
+      "display_code": "PMG 4101",
+      "title": "Project Management",
+      "credits": 3.0,
+      "bucket": "general-required",
+      "tracks": [],
+      "prerequisites": [
+        "CSE3411"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 9
+    },
+    {
+      "code": "BDS1201",
+      "display_code": "BDS 1201",
+      "title": "History of the Emergence of Bangladesh",
+      "credits": 2.0,
+      "bucket": "general-required",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 1
+    },
+    {
+      "code": "ECO4101",
+      "display_code": "ECO 4101",
+      "title": "Economics",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "SOC4101",
+      "display_code": "SOC 4101",
+      "title": "Introduction to Sociology",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "ACT2111",
+      "display_code": "ACT 2111",
+      "title": "Financial and Managerial Accounting",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "IPE3401",
+      "display_code": "IPE 3401",
+      "title": "Industrial and Operational Management",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "GED4003",
+      "display_code": "GED 4003",
+      "title": "Technology Entrepreneurship",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "PSY2101",
+      "display_code": "PSY 2101",
+      "title": "Psychology",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "BDS2201",
+      "display_code": "BDS 2201",
+      "title": "Bangladesh Studies",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "BAN2501",
+      "display_code": "BAN 2501",
+      "title": "Bangla",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "SOC4301",
+      "display_code": "SOC 4301",
+      "title": "Introduction to Anthropology",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "FLN1101",
+      "display_code": "FLN 1101",
+      "title": "Introduction to a Foreign Language",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "SWL4101",
+      "display_code": "SWL 4101",
+      "title": "Software and Law",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "BHV2101",
+      "display_code": "BHV 2101",
+      "title": "Introduction to Behavioral Science",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "URC1101",
+      "display_code": "URC 1101",
+      "title": "Life Skill for Success",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "GED1005",
+      "display_code": "GED 1005",
+      "title": "AI Literacy and Prompt Engineering",
+      "credits": 3.0,
+      "bucket": "general-elective",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "PHY2105",
+      "display_code": "PHY 2105",
+      "title": "Physics",
+      "credits": 3.0,
+      "bucket": "science",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 3
+    },
+    {
+      "code": "PHY2106",
+      "display_code": "PHY 2106",
+      "title": "Physics Laboratory",
+      "credits": 1.0,
+      "bucket": "science",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 3
+    },
+    {
+      "code": "BIO3105",
+      "display_code": "BIO 3105",
+      "title": "Biology for Engineers",
+      "credits": 3.0,
+      "bucket": "science",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 7
+    },
+    {
+      "code": "MATH1151",
+      "display_code": "MATH 1151",
+      "title": "Fundamental Calculus",
+      "credits": 3.0,
+      "bucket": "math",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 1
+    },
+    {
+      "code": "MATH2183",
+      "display_code": "MATH 2183",
+      "title": "Calculus and Linear Algebra",
+      "credits": 3.0,
+      "bucket": "math",
+      "tracks": [],
+      "prerequisites": [
+        "MATH1151"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 3
+    },
+    {
+      "code": "MATH2201",
+      "display_code": "MATH 2201",
+      "title": "Coordinate Geometry and Vector Analysis",
+      "credits": 3.0,
+      "bucket": "math",
+      "tracks": [],
+      "prerequisites": [
+        "MATH1151"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 4
+    },
+    {
+      "code": "MATH2205",
+      "display_code": "MATH 2205",
+      "title": "Probability and Statistics",
+      "credits": 3.0,
+      "bucket": "math",
+      "tracks": [],
+      "prerequisites": [
+        "MATH1151"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 5
+    },
+    {
+      "code": "EEE2113",
+      "display_code": "EEE 2113",
+      "title": "Electrical Circuits",
+      "credits": 3.0,
+      "bucket": "engineering",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 5
+    },
+    {
+      "code": "EEE2123",
+      "display_code": "EEE 2123",
+      "title": "Electronics",
+      "credits": 3.0,
+      "bucket": "engineering",
+      "tracks": [],
+      "prerequisites": [
+        "EEE2113"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 6
+    },
+    {
+      "code": "EEE2124",
+      "display_code": "EEE 2124",
+      "title": "Electronics Laboratory",
+      "credits": 1.0,
+      "bucket": "engineering",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 6
+    },
+    {
+      "code": "EEE4261",
+      "display_code": "EEE 4261",
+      "title": "Green Computing",
+      "credits": 3.0,
+      "bucket": "engineering",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 12
+    },
+    {
+      "code": "CSE1110",
+      "display_code": "CSE 1110",
+      "title": "Introduction to Computer Systems",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 1
+    },
+    {
+      "code": "CSE1111",
+      "display_code": "CSE 1111",
+      "title": "Structured Programming Language",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE1110"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 2
+    },
+    {
+      "code": "CSE1112",
+      "display_code": "CSE 1112",
+      "title": "Structured Programming Language Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE1110"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 2
+    },
+    {
+      "code": "CSE1115",
+      "display_code": "CSE 1115",
+      "title": "Object Oriented Programming",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE2215"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 4
+    },
+    {
+      "code": "CSE1116",
+      "display_code": "CSE 1116",
+      "title": "Object Oriented Programming Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE2216"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 4
+    },
+    {
+      "code": "CSE2118",
+      "display_code": "CSE 2118",
+      "title": "Advanced Object Oriented Programming Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE1116"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 7
+    },
+    {
+      "code": "CSE4165",
+      "display_code": "CSE 4165",
+      "title": "Web Programming",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE1115",
+        "CSE1116"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 6
+    },
+    {
+      "code": "CSE1325",
+      "display_code": "CSE 1325",
+      "title": "Digital Logic Design",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 4
+    },
+    {
+      "code": "CSE1326",
+      "display_code": "CSE 1326",
+      "title": "Digital Logic Design Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 4
+    },
+    {
+      "code": "CSE3313",
+      "display_code": "CSE 3313",
+      "title": "Computer Architecture",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE1325"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 7
+    },
+    {
+      "code": "CSE4325",
+      "display_code": "CSE 4325",
+      "title": "Microprocessors and Microcontrollers",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE3313"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 8
+    },
+    {
+      "code": "CSE4326",
+      "display_code": "CSE 4326",
+      "title": "Microprocessors and Microcontrollers Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "EEE2124"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 8
+    },
+    {
+      "code": "CSE2213",
+      "display_code": "CSE 2213",
+      "title": "Discrete Mathematics",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 2
+    },
+    {
+      "code": "CSE2215",
+      "display_code": "CSE 2215",
+      "title": "Data Structure and Algorithms I",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE1111"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 3
+    },
+    {
+      "code": "CSE2216",
+      "display_code": "CSE 2216",
+      "title": "Data Structure and Algorithms I Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE1112"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 3
+    },
+    {
+      "code": "CSE2217",
+      "display_code": "CSE 2217",
+      "title": "Data Structure and Algorithms II",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE2215"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 5
+    },
+    {
+      "code": "CSE2218",
+      "display_code": "CSE 2218",
+      "title": "Data Structure and Algorithms II Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE2216"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 5
+    },
+    {
+      "code": "CSE2233",
+      "display_code": "CSE 2233",
+      "title": "Theory of Computation",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 9
+    },
+    {
+      "code": "CSE3411",
+      "display_code": "CSE 3411",
+      "title": "System Analysis and Design",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE3521"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 7
+    },
+    {
+      "code": "CSE3412",
+      "display_code": "CSE 3412",
+      "title": "System Analysis and Design Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE3522"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 7
+    },
+    {
+      "code": "CSE3421",
+      "display_code": "CSE 3421",
+      "title": "Software Engineering",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE3411"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 8
+    },
+    {
+      "code": "CSE3422",
+      "display_code": "CSE 3422",
+      "title": "Software Engineering Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE3412"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 8
+    },
+    {
+      "code": "CSE4531",
+      "display_code": "CSE 4531",
+      "title": "Computer Security",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE3711",
+        "CSE4509"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 11
+    },
+    {
+      "code": "CSE3521",
+      "display_code": "CSE 3521",
+      "title": "Database Management Systems",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE2215"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 6
+    },
+    {
+      "code": "CSE3522",
+      "display_code": "CSE 3522",
+      "title": "Database Management Systems Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE2216"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 6
+    },
+    {
+      "code": "CSE4509",
+      "display_code": "CSE 4509",
+      "title": "Operating Systems",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE2217",
+        "CSE3313"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 10
+    },
+    {
+      "code": "CSE4510",
+      "display_code": "CSE 4510",
+      "title": "Operating Systems Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE2218"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 10
+    },
+    {
+      "code": "CSE3711",
+      "display_code": "CSE 3711",
+      "title": "Computer Networks",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE2217"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 9
+    },
+    {
+      "code": "CSE3712",
+      "display_code": "CSE 3712",
+      "title": "Computer Networks Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 9
+    },
+    {
+      "code": "CSE3811",
+      "display_code": "CSE 3811",
+      "title": "Artificial Intelligence",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "MATH2205",
+        "CSE2217"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 8
+    },
+    {
+      "code": "CSE3812",
+      "display_code": "CSE 3812",
+      "title": "Artificial Intelligence Laboratory",
+      "credits": 1.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "MATH2205",
+        "CSE2218"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 8
+    },
+    {
+      "code": "CSE4889",
+      "display_code": "CSE 4889",
+      "title": "Machine Learning",
+      "credits": 3.0,
+      "bucket": "core",
+      "tracks": [],
+      "prerequisites": [
+        "CSE3811",
+        "CSE3812",
+        "MATH2183"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 9
+    },
+    {
+      "code": "CSE4121",
+      "display_code": "CSE 4121",
+      "title": "Security Monitoring",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4759",
+      "display_code": "CSE 4759",
+      "title": "Wireless and Cellular Communication",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4123",
+      "display_code": "CSE 4123",
+      "title": "Software and Application Security",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security",
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4125",
+      "display_code": "CSE 4125",
+      "title": "Ethical Hacking and Network Defense",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4127",
+      "display_code": "CSE 4127",
+      "title": "Cloud Security",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4129",
+      "display_code": "CSE 4129",
+      "title": "Digital Forensics",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4131",
+      "display_code": "CSE 4131",
+      "title": "Internet of Things (IoT) Security",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE3715",
+      "display_code": "CSE 3715",
+      "title": "Data Communication",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4199",
+      "display_code": "CSE 4199",
+      "title": "Special Topics",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4793",
+      "display_code": "CSE 4793",
+      "title": "Advanced Network Services and Management",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4783",
+      "display_code": "CSE 4783",
+      "title": "Cryptography",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4777",
+      "display_code": "CSE 4777",
+      "title": "Network Security",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4943",
+      "display_code": "CSE 4943",
+      "title": "Web Application Security",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4949",
+      "display_code": "CSE 4949",
+      "title": "IT Audit: Concepts and Practice",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security",
+        "Software Engineering",
+        "Business System Engineering",
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE3542",
+      "display_code": "CSE 3542",
+      "title": "Industry Internship",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Network and Cyber Security",
+        "Software Engineering",
+        "Embedded System and Robotics",
+        "Business System Engineering",
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4435",
+      "display_code": "CSE 4435",
+      "title": "Software Architecture",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4181",
+      "display_code": "CSE 4181",
+      "title": "Mobile Application Development",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4495",
+      "display_code": "CSE 4495",
+      "title": "Software Testing and Quality Assurance",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4587",
+      "display_code": "CSE 4587",
+      "title": "Cloud Computing",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4567",
+      "display_code": "CSE 4567",
+      "title": "Advanced Database Management Systems",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4413",
+      "display_code": "CSE 4413",
+      "title": "Virtual Reality/Augmented Reality System Design",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4611",
+      "display_code": "CSE 4611",
+      "title": "Compiler Design",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4945",
+      "display_code": "CSE 4945",
+      "title": "UI: Concepts and Design",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering",
+        "Business System Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4871",
+      "display_code": "CSE 4871",
+      "title": "Data Analytics",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering",
+        "Business System Engineering",
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4299",
+      "display_code": "CSE 4299",
+      "title": "Special Topics",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4133",
+      "display_code": "CSE 4133",
+      "title": "Business Intelligence",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering",
+        "Business System Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4451",
+      "display_code": "CSE 4451",
+      "title": "Human Computer Interaction",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering",
+        "Business System Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4485",
+      "display_code": "CSE 4485",
+      "title": "Game Design and Development",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4523",
+      "display_code": "CSE 4523",
+      "title": "Simulation and Modeling",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4621",
+      "display_code": "CSE 4621",
+      "title": "Computer Graphics",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4601",
+      "display_code": "CSE 4601",
+      "title": "Mathematical Analysis for Computer Science",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4633",
+      "display_code": "CSE 4633",
+      "title": "Basic Graph Theory",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4655",
+      "display_code": "CSE 4655",
+      "title": "Algorithm Engineering",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4547",
+      "display_code": "CSE 4547",
+      "title": "Multimedia Systems Design",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4613",
+      "display_code": "CSE 4613",
+      "title": "Computational Geometry",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Software Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4379",
+      "display_code": "CSE 4379",
+      "title": "Real-time Embedded Systems",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Embedded System and Robotics"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4337",
+      "display_code": "CSE 4337",
+      "title": "Robotics",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Embedded System and Robotics"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4399",
+      "display_code": "CSE 4399",
+      "title": "Special Topics",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Embedded System and Robotics"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4327",
+      "display_code": "CSE 4327",
+      "title": "VLSI Design",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Embedded System and Robotics"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4853",
+      "display_code": "CSE 4853",
+      "title": "Internet of Things (IoT)",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Embedded System and Robotics"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4819",
+      "display_code": "CSE 4819",
+      "title": "AI for Autonomous Systems",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Embedded System and Robotics",
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4813",
+      "display_code": "CSE 4813",
+      "title": "Deep Learning",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Embedded System and Robotics",
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4815",
+      "display_code": "CSE 4815",
+      "title": "Large Language Model and Generative AI",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Embedded System and Robotics",
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4329",
+      "display_code": "CSE 4329",
+      "title": "Digital System Design",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Embedded System and Robotics"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4397",
+      "display_code": "CSE 4397",
+      "title": "Interfacing",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Embedded System and Robotics"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4891",
+      "display_code": "CSE 4891",
+      "title": "Data Mining",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Business System Engineering",
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4823",
+      "display_code": "CSE 4823",
+      "title": "Data Driven Decision Making",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Business System Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4817",
+      "display_code": "CSE 4817",
+      "title": "Big Data Analytics",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Business System Engineering",
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4821",
+      "display_code": "CSE 4821",
+      "title": "Digital Marketing",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Business System Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4941",
+      "display_code": "CSE 4941",
+      "title": "Enterprise Systems: Concepts and Practice",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Business System Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4765",
+      "display_code": "CSE 4765",
+      "title": "Electronic Commerce",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Business System Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4499",
+      "display_code": "CSE 4499",
+      "title": "Special Topics",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "Business System Engineering"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4811",
+      "display_code": "CSE 4811",
+      "title": "Natural Language Processing",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4893",
+      "display_code": "CSE 4893",
+      "title": "Introduction to Bioinformatics",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4883",
+      "display_code": "CSE 4883",
+      "title": "Digital Image Processing",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4825",
+      "display_code": "CSE 4825",
+      "title": "Speech Processing and Recognition",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4599",
+      "display_code": "CSE 4599",
+      "title": "Special Topics",
+      "credits": 3.0,
+      "bucket": "elective",
+      "tracks": [
+        "AI and Data Science"
+      ],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/"
+    },
+    {
+      "code": "CSE4000A",
+      "display_code": "CSE 4000A",
+      "title": "Final Year Design Project – I",
+      "credits": 2.0,
+      "bucket": "fydp",
+      "tracks": [],
+      "prerequisites": [],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 10
+    },
+    {
+      "code": "CSE4000B",
+      "display_code": "CSE 4000B",
+      "title": "Final Year Design Project – II",
+      "credits": 2.0,
+      "bucket": "fydp",
+      "tracks": [],
+      "prerequisites": [
+        "CSE4000A"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 11
+    },
+    {
+      "code": "CSE4000C",
+      "display_code": "CSE 4000C",
+      "title": "Final Year Design Project – III",
+      "credits": 2.0,
+      "bucket": "fydp",
+      "tracks": [],
+      "prerequisites": [
+        "CSE4000A",
+        "CSE4000B"
+      ],
+      "description_url": "https://cse.uiu.ac.bd/ug-program/course-description/",
+      "recommended_trimester": 12
+    }
+  ],
+  "equivalences": [
+    {
+      "course": "CSE4853",
+      "equivalent": "EEE4523",
+      "source": "https://cse.uiu.ac.bd/ug-program/course-plan/"
+    },
+    {
+      "course": "CSE4379",
+      "equivalent": "EEE4513",
+      "source": "https://cse.uiu.ac.bd/ug-program/course-plan/"
+    },
+    {
+      "course": "CSE4337",
+      "equivalent": "EEE4515",
+      "source": "https://cse.uiu.ac.bd/ug-program/course-plan/"
+    },
+    {
+      "course": "CSE4327",
+      "equivalent": "EEE4121",
+      "source": "https://cse.uiu.ac.bd/ug-program/course-plan/"
+    },
+    {
+      "course": "CSE4399",
+      "equivalent": "EEE4519",
+      "source": "https://cse.uiu.ac.bd/ug-program/course-plan/"
+    },
+    {
+      "course": "CSE4821",
+      "equivalent": "MKT4313",
+      "source": "https://cse.uiu.ac.bd/ug-program/course-plan/"
+    },
+    {
+      "course": "CSE4765",
+      "equivalent": "CSE4463",
+      "source": "https://cse.uiu.ac.bd/ug-program/course-plan/"
+    },
+    {
+      "course": "GED4003",
+      "equivalent": "TEC2499",
+      "source": "https://cse.uiu.ac.bd/ug-program/course-plan/"
+    }
+  ],
+  "issues": [
+    {
+      "course": "ENG1013",
+      "unknown_prerequisite": "ENG1101",
+      "resolution": "unresolved; do not infer substitution"
+    },
+    {
+      "course": "CSE1115",
+      "conflicting_prerequisites": {
+        "course_plan": [
+          "CSE2215"
+        ],
+        "course_description": [
+          "CSE1111"
+        ]
+      },
+      "resolution": "unresolved; advisor/updated curriculum confirmation required"
+    },
+    {
+      "course": "CSE1116",
+      "conflicting_prerequisites": {
+        "course_plan": [
+          "CSE2216"
+        ],
+        "course_description": [
+          "CSE1112"
+        ]
+      },
+      "resolution": "unresolved; advisor/updated curriculum confirmation required"
+    }
+  ],
+  "source": {
+    "url": "https://cse.uiu.ac.bd/ug-program/course-plan/",
+    "retrieved_at": "2026-10-23T08:30:26.438581+00:00",
+    "sha256": "2795dc4707557815a4ec3a78365634aca6a0a1329e516eb1d0a247be06595059",
+    "method": "indexed official page text; direct fetch unavailable",
+    "status": "source discrepancies require review"
+  },
+  "description_coverage": "Course description source links included; descriptions and prerequisites are not all independently reconciled with the course sequence",
+  "grade_policy_source": "https://www.uiu.ac.bd/academics/grading-performance-evaluation/",
+  "attendance_policy_source": "https://www.uiu.ac.bd/academics/academic-information-policies/"
+}

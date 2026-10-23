@@ -563,8 +563,11 @@ def library_action(root,args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('init'); p.add_argument('--layout',choices=['network','classic'],default='network'); p.add_argument('subject'); p.add_argument('--dest'); p.add_argument('--goal'); p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-git', action='store_true')
-    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','convolution-observe','convolution-prepare','convolution-check','host-request','host-lease','drawing-create','drawing-publish','drawing-preview','scratch-create','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','artifact-reconnect','exploration-recover','scratch-outputs','editor-setting']:
+    for cmd in ['doctor', 'open', 'frontier', 'today', 'search', 'capture', 'new', 'use', 'status', 'due', 'gates', 'tasks', 'cli', 'backup', 'vaults', 'adopt', 'preview', 'update', 'review', 'canvas', 'attach', 'files', 'enable-drawing','resource','progress','attempt','import-csl','import-notes','read-resource','window-state','window','practice','migrate','query','timeline','serve','record','link','event','next','context','recover','promote','operation-status','zotero-probe','zotero-import','zotero-search','artifact-check','vault-register','vault-fork','course-import','outline-move','open-project','convolution-observe','convolution-prepare','convolution-check','host-request','host-lease','replica','planning','academic','drawing-create','drawing-publish','drawing-preview','scratch-create','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','artifact-reconnect','exploration-recover','scratch-outputs','editor-setting']:
         p = commands.add_parser(cmd); p.add_argument('--vault'); p.add_argument('--expect-vault-id')
+        if cmd=='replica':p.add_argument('replica_action',choices=['status','protect']);p.add_argument('--folder-id')
+        if cmd=='planning':p.add_argument('planning_action',choices=['status','open','connect','setup','enqueue','sync']);p.add_argument('--parent-id');p.add_argument('--token-stdin',action='store_true');p.add_argument('--collection',default='Tasks');p.add_argument('--title');p.add_argument('--fields',default='{}');p.add_argument('--operation-id')
+        if cmd=='academic':p.add_argument('academic_action',choices=['configure','catalog','audit','record','study','refresh','sources','calendar-export']);p.add_argument('--output');p.add_argument('--course');p.add_argument('--term',default='Fall 2026');p.add_argument('--kind');p.add_argument('--data');p.add_argument('--operation-id')
         if cmd in ('convolution-observe','convolution-prepare','convolution-check'):
             p.add_argument('record_id');p.add_argument('--configuration',required=True);p.add_argument('--prediction',required=True);p.add_argument('--operation-id',required=True)
         if cmd in ('open-project','artifact-open','scratch-open','scratch-terminal','scratch-run','annotation-open','scratch-outputs','drawing-publish','drawing-preview'):p.add_argument('record_id')
@@ -615,9 +618,9 @@ def main():
         if cmd == 'import-csl':p.add_argument('source');p.add_argument('--dry-run',action='store_true')
         if cmd == 'import-notes':p.add_argument('source');p.add_argument('--resource',required=True)
         if cmd == 'read-resource':p.add_argument('--target-id');p.add_argument('path');p.add_argument('--reader',choices=['sioyek','zotero','default'],default='sioyek')
-        if cmd == 'window':p.add_argument('--embedded',action='store_true');p.add_argument('--owner');p.add_argument('--vault-id');p.add_argument('--record-id');p.add_argument('--capture',action='store_true');p.add_argument('--start',action='store_true')
+        if cmd == 'window':p.add_argument('--new',action='store_true');p.add_argument('--monitor');p.add_argument('--window-id');p.add_argument('--embedded',action='store_true');p.add_argument('--owner');p.add_argument('--vault-id');p.add_argument('--record-id');p.add_argument('--capture',action='store_true');p.add_argument('--start',action='store_true')
         if cmd == 'host-request':p.add_argument('--stdin-line',action='store_true')
-        if cmd == 'window-state':p.add_argument('--interface-scale',type=float);p.add_argument('--reading-scale',type=float);p.add_argument('--layouts-json');p.add_argument('--pending-json');p.add_argument('--instance-json');p.add_argument('--visible',choices=['on','off']);p.add_argument('--placement',choices=['current','dedicated']);p.add_argument('--study-workspace');p.add_argument('--return-behavior',choices=['hide','stay'])
+        if cmd == 'window-state':p.add_argument('--window-id',default='main');p.add_argument('--active-vault');p.add_argument('--interface-scale',type=float);p.add_argument('--reading-scale',type=float);p.add_argument('--layouts-json');p.add_argument('--pending-json');p.add_argument('--instance-json');p.add_argument('--visible',choices=['on','off']);p.add_argument('--placement',choices=['current','dedicated']);p.add_argument('--study-workspace');p.add_argument('--return-behavior',choices=['hide','stay'])
         if cmd == 'window-state':p.add_argument('--presentation',choices=['fullscreen','workspace','tiled','normal']);p.add_argument('--collection',choices=['on','off']);p.add_argument('--drafts-json');p.add_argument('--drafts-stdin',action='store_true');p.add_argument('--path-scope');p.add_argument('--path-scope-vault');p.add_argument('--width',type=int);p.add_argument('--height',type=int);p.add_argument('--workspace',choices=['Today','Learn','Research','Practice','Lab','Library']);p.add_argument('--list-ratio',type=float);p.add_argument('--context-json');p.add_argument('--monitor');p.add_argument('--quiet',choices=['on','off'])
         if cmd == 'editor-setting':p.add_argument('editor',choices=['nvim','zed'])
         if cmd == 'cli': p.add_argument('obsidian_command'); p.add_argument('options', nargs=argparse.REMAINDER)
@@ -627,9 +630,31 @@ def main():
             from noesis.scopes import identity
             if identity(vault(args.vault)) != args.expect_vault_id:raise ValueError('Vault identity changed or storage is unavailable; no action was started. Reselect the correct owner.')
         if args.command == 'init': initialize(args); return 0
+        if args.command=='replica':
+            from noesis import replication
+            print(json.dumps(replication.protect(args.folder_id) if args.replica_action=='protect' else replication.status()));return 0
+        if args.command=='planning':
+            from noesis.planning import Planner
+            planner=Planner(HOME)
+            if args.planning_action=='open':subprocess.Popen(['xdg-open',planner.status()['root_url']],start_new_session=True);result={'opened':True}
+            elif args.planning_action=='connect':
+                if not args.token_stdin:raise ValueError('Supply the scoped token through --token-stdin, never a command-line argument')
+                result=planner.connect(sys.stdin.readline(),args.parent_id)
+            elif args.planning_action=='enqueue':result=planner.enqueue(args.collection,args.title or '',json.loads(args.fields),args.operation_id or str(uuid.uuid4()))
+            else:result=getattr(planner,args.planning_action)()
+            print(json.dumps(result));return 0
+        if args.command=='academic':
+            from noesis import academic
+            from noesis import academic_sources
+            if args.academic_action in ('refresh','sources','calendar-export'):
+                result=academic_sources.refresh() if args.academic_action=='refresh' else academic_sources.status() if args.academic_action=='sources' else academic_sources.export_ics(args.output)
+                print(json.dumps(result));return 0
+            if args.academic_action=='configure':print(json.dumps(academic.configure(vault(args.vault))));return 0
+            result=academic.study(vault(args.vault),args.course,args.term) if args.academic_action=='study' else academic.catalog() if args.academic_action=='catalog' else academic.audit(academic.owner()) if args.academic_action=='audit' else academic.record(academic.owner(),args.kind,json.loads(args.data or '{}'),args.operation_id or str(uuid.uuid4()))
+            print(json.dumps(result));return 0
         if args.command=='window':
             from noesis.hosting import launch
-            print(json.dumps(launch(HOME,embedded=args.embedded,owner=args.owner,vault_id=args.vault_id,record_id=args.record_id,capture=args.capture,start=args.start)));return 0
+            print(json.dumps(launch(HOME,embedded=args.embedded,owner=args.owner,vault_id=args.vault_id,record_id=args.record_id,capture=args.capture,start=args.start,new=args.new,monitor=args.monitor,window_id=args.window_id)));return 0
         if args.command=='host-lease':
             import fcntl
             directory=HOME/'.local/state/sensei-learning';directory.mkdir(parents=True,exist_ok=True);directory.chmod(0o700)
@@ -643,13 +668,14 @@ def main():
             from noesis.hosting import resolve_request
             print(json.dumps(resolve_request(json.loads(sys.stdin.readline()))));return 0
         if args.command=='window-state':
-            file=HOME/'.local/state/sensei-learning/window.json'
+            from noesis.windows import state_file
+            file=state_file(HOME,args.window_id);file.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
             with vault_lock(file.parent):
                 state=json.loads(file.read_text()) if file.exists() else {}
                 file.parent.chmod(0o700)
                 if file.exists() and state.get('version',1)<2 and not file.with_name('window.v1.rollback.json').exists():
                     store(file.with_name('window.v1.rollback.json'),state)
-                state['version']=2
+                state['version']=3
                 for option in ['interface_scale','reading_scale']:
                     value=getattr(args,option)
                     if value is not None:
@@ -670,6 +696,7 @@ def main():
                     drafts=json.loads(sys.stdin.readline() if args.drafts_stdin else args.drafts_json)
                     if not isinstance(drafts,dict) or any(not isinstance(v,str) for v in drafts.values()):raise ValueError('Drafts must map targets to text')
                     state['drafts']=drafts
+                if args.active_vault is not None:state['active_vault']=args.active_vault
                 if args.path_scope is not None:state['path_scope']=args.path_scope;state['path_scope_vault']=args.path_scope_vault or ''
                 if args.workspace:state['workspace']=args.workspace
                 if args.presentation:state['presentation']=args.presentation
@@ -681,7 +708,7 @@ def main():
                     context=json.loads(args.context_json)
                     if not isinstance(context,dict):raise ValueError('Context must be an object')
                     state['context']={k:context.get(k) for k in ['id','path','title','type','vault','vault_id','session_state','surface','context_tab','read_anchor','course']}
-                if any(value is not None for value in [args.width,args.height,args.drafts_json,True if args.drafts_stdin else None,args.path_scope,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet,args.presentation,args.collection,args.pending_json,args.instance_json,args.visible,args.placement,args.study_workspace,args.return_behavior]):
+                if any(value is not None for value in [args.active_vault,args.width,args.height,args.drafts_json,True if args.drafts_stdin else None,args.path_scope,args.workspace,args.list_ratio,args.context_json,args.monitor,args.quiet,args.presentation,args.collection,args.pending_json,args.instance_json,args.visible,args.placement,args.study_workspace,args.return_behavior]):
                     store(file,state)
                     from noesis.hosting import process_start
                     instance=state.get('instance',{})

@@ -13,8 +13,8 @@ NoesisDialog {
  signal search(string query)
  title:connectionMode?"Connect existing knowledge":"Connect a prerequisite"
  height:Math.min(640*NoesisStyle.interfaceScale,(parent?.height||800)-32)
- function begin(record,relation){connectionMode=relation==="references";target=Object.assign({},record);vaultScope=NoesisController.activeVault;rows=[];chosen=({});lookup.text="";reason.text="";role.currentIndex=0;submitting=false;open();lookup.forceActiveFocus();}
- function results(records){if(opened&&vaultScope===NoesisController.activeVault){rows=records.filter(row=>row.id!==target.id);matches.currentIndex=rows.length?0:-1;}}
+ function begin(record,relation){connectionMode=relation==="references";target=Object.assign({},record);vaultScope=controller.activeVault;rows=[];chosen=({});lookup.text="";reason.text="";role.currentIndex=0;submitting=false;open();lookup.forceActiveFocus();}
+ function results(records){if(opened&&vaultScope===controller.activeVault){rows=records.filter(row=>row.id!==target.id);matches.currentIndex=rows.length?0:-1;}}
  contentItem:ScrollView {id:form;clip:true;contentWidth:availableWidth;ColumnLayout {width:form.availableWidth
   spacing:NoesisStyle.md
   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;text:root.connectionMode?"Connect an existing note, concept, drawing, source or experiment without duplicating it.":"Which mechanism matters for this activity? Reuse material in this vault.";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body}
@@ -29,9 +29,9 @@ NoesisDialog {
   NoesisSelect {id:role;visible:!root.connectionMode;objectName:"prerequisite-role";Layout.fillWidth:true;model:["Required before continuing","Study alongside","Optional deeper study"];Accessible.name:"Prerequisite role"}
   Text {renderType:Text.NativeRendering;font.hintingPreference:Font.PreferFullHinting;text:"This connects the material. It does not claim that you understand it or award capability.";Layout.fillWidth:true;wrapMode:Text.Wrap;color:NoesisStyle.secondary;font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.caption}
  }}
- footer:NoesisButton {id:save;text:root.connectionMode?"Connect existing record":"Connect prerequisite";primary:true;hint:"Ctrl+Enter";enabled:!!root.chosen.id&&reason.text.trim()!==""&&!NoesisController.working&&root.vaultScope===NoesisController.activeVault;onClicked:{root.submitting=true;NoesisController.run(root.connectionMode?["link",root.target.id,root.chosen.id,"references","--reason",reason.text]:["link",root.target.id,root.chosen.id,"prerequisite","--role",["gate","parallel","deep-descent"][role.currentIndex],"--reason",reason.text]);}}
+ footer:NoesisButton {id:save;text:root.connectionMode?"Connect existing record":"Connect prerequisite";primary:true;hint:"Ctrl+Enter";enabled:!!root.chosen.id&&reason.text.trim()!==""&&!controller.working&&root.vaultScope===controller.activeVault;onClicked:{root.submitting=true;controller.run(root.connectionMode?["link",root.target.id,root.chosen.id,"references","--reason",reason.text]:["link",root.target.id,root.chosen.id,"prerequisite","--role",["gate","parallel","deep-descent"][role.currentIndex],"--reason",reason.text]);}}
 
  Timer {id:delay;interval:150;onTriggered:root.search(lookup.text)}
  Shortcut {sequence:"Ctrl+Return";enabled:root.opened;onActivated:if(save.enabled)save.clicked()}
- Connections {target:NoesisController;function onFinished(ok){if(root.submitting){root.submitting=false;if(ok)root.close();}}}
+ Connections {target:controller;function onFinished(ok){if(root.submitting){root.submitting=false;if(ok)root.close();}}}
 }

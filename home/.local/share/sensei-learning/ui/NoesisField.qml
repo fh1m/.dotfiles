@@ -4,7 +4,7 @@ TextField {
  id:root
  renderType:TextEdit.NativeRendering
  font.hintingPreference:Font.PreferFullHinting
- readOnly:NoesisController.exitRequested
+ readOnly:controller.exitRequested
  Accessible.name:placeholderText
  hoverEnabled:true;selectByMouse:true
  implicitHeight:NoesisStyle.control

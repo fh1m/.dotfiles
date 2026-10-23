@@ -4,7 +4,7 @@ TextArea {
  id:root
  renderType:TextEdit.NativeRendering
  font.hintingPreference:Font.PreferFullHinting
- readOnly:NoesisController.exitRequested
+ readOnly:controller.exitRequested
  Accessible.name:placeholderText
  Keys.onPressed:event=>{if((event.key===Qt.Key_Tab||event.key===Qt.Key_Backtab)&&(event.modifiers&Qt.ControlModifier)){event.accepted=true;let next=root.nextItemInFocusChain(!(event.modifiers&Qt.ShiftModifier)&&event.key!==Qt.Key_Backtab);if(next)next.forceActiveFocus(Qt.TabFocusReason);}}
  font.family:NoesisStyle.uiFont;font.pixelSize:NoesisStyle.body

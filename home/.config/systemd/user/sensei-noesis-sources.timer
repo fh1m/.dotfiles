@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily Noesis academic source refresh
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=15min
+Persistent=true
+[Install]
+WantedBy=timers.target
