@@ -49,8 +49,9 @@ The bundled UIU catalogue applies Summer 2026 onward. It contains 122 courses
 and 141 required degree credits including elective baskets. Its indexed official
 source and unresolved prerequisite discrepancies are recorded alongside it.
 Descriptions are not completely reconciled; do not treat a linked source as an
-imported description. The Fall 2026 calendar contains nine verified early-term
-events only; later exam/installment dates are not guessed.
+imported description. The active Fall 2026 calendar contains only independently confirmed registration
+and class-start dates. Seven previously indexed archive entries were withdrawn
+from the agenda and retained for review; exam/installment dates are not guessed.
 
 ## Agenda, sources and recovery
 

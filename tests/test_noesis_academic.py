@@ -47,3 +47,9 @@ class Academic(unittest.TestCase):
     if p==bad:raise ValueError('No Noesis manifest')
     return 'target'
    with patch('noesis.scopes.locations',return_value={bad,good}),patch('noesis.scopes.identity',side_effect=identity):self.assertEqual(owner(home),good)
+
+ def test_only_revalidated_dates_are_active(self):
+  from noesis.academic_sources import calendar,export_ics
+  data=calendar();self.assertEqual(len(data['events']),2);self.assertEqual(len(data['pending_events']),7)
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d)/'calendar.ics';export_ics(p);self.assertEqual(p.read_text().count('STATUS:CANCELLED'),7)

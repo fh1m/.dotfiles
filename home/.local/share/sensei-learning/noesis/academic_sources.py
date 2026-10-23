@@ -22,8 +22,9 @@ def refresh():
  return {'sources':rows}
 def export_ics(destination):
  data=calendar();lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Noesis//UIU academic sources//EN','X-WR-CALNAME:UIU BSCSE Undergraduate Fall 2026']
- for e in data['events']:
+ for e in data['events']+data.get('withdrawn_events',[]):
   lines+=['BEGIN:VEVENT','UID:'+e['uid'],'SEQUENCE:'+str(e['sequence']),'DTSTART;VALUE=DATE:'+e['start'].replace('-','')]
   if e.get('end'):lines+=['DTEND;VALUE=DATE:'+e['end'].replace('-','')]
+  if e['status']=='withdrawn-unverified':lines+=['STATUS:CANCELLED']
   lines+=['SUMMARY:'+e['title'],'DESCRIPTION:'+e['source']+' — '+e['status'],'END:VEVENT']
- lines+=['END:VCALENDAR'];Path(destination).write_text('\r\n'.join(lines)+'\r\n');return {'path':str(destination),'events':len(data['events']),'coverage':data['coverage']}
+ lines+=['END:VCALENDAR'];Path(destination).write_text('\r\n'.join(lines)+'\r\n');return {'path':str(destination),'events':len(data['events']),'withdrawn':len(data.get('withdrawn_events',[])),'coverage':data['coverage']}

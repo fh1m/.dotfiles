@@ -113,3 +113,25 @@ relaunch restoration. Encrypted active-vault backup and disposable restore passe
 restore snapshot receipt stays private. Syncthing reports five folders, zero
 pending files and zero conflicts. The final Python Noesis suite has 179 passing
 checks; four calendar checks and native offscreen scenarios also pass.
+
+
+Source correction, superseding the earlier nine-event verification claim:
+revalidation directly confirms only October 24–26 registration and October 27
+class start through the newly-admitted-students official notice. The archive is
+403/unavailable; seven other indexed entries are now pending review, with stable
+UID/sequence-1 withdrawal receipts so already-imported agendas stop presenting
+them as obligations. No dates were invented to replace them. Historical imports
+and their revisions remain recoverable. This is a source-availability gate, not
+completed calendar coverage.
+
+
+Final verification checkpoint: 183 Noesis tests and four calendar revision tests
+pass; native offscreen ink/University/Plan/secondary-window checks pass. Encrypted
+backup plus disposable restore also passed on Homie. Planning now exposes
+pending offline entries and explicit revision-based editing; the desktop calendar
+opens the owning Notion record and respects timed versus all-day entries.
+429 Retry-After, expired authorization and duplicate-creation retry tests pass.
+The Notion live round trip remains blocked on a separate scoped desktop API
+connection, already requested through the private Connection field. Full source
+reconciliation remains incomplete: BIO3105 is 3 credits in the course plan versus
+1 in the description page, now recorded rather than silently harmonized.

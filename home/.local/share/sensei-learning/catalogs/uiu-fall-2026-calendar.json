@@ -5,7 +5,7 @@
   "source": "https://www.uiu.ac.bd/academics/calendar/",
   "retrieved_at": "2026-10-23T08:44:34.226836+00:00",
   "method": "Indexed official page; direct retrieval currently unavailable",
-  "coverage": "Partial; exam, installment and later-term dates remain unverified and are not inferred from graduate or semester calendars",
+  "coverage": "Only registration October 24–26 and class start October 27 independently confirmed. Other archive dates retained for review and withdrawn from active agenda; exams and installments unknown.",
   "events": [
     {
       "uid": "uiu:undergraduate:fall2026:advising",
@@ -14,19 +14,8 @@
       "end": "2026-10-27",
       "all_day": true,
       "timezone": "Asia/Dhaka",
-      "source": "https://www.uiu.ac.bd/academics/calendar/",
-      "status": "published-indexed",
-      "sequence": 0
-    },
-    {
-      "uid": "uiu:undergraduate:fall2026:orientation",
-      "title": "Open Day Orientation",
-      "start": "2026-10-25",
-      "end": "2026-10-27",
-      "all_day": true,
-      "timezone": "Asia/Dhaka",
-      "source": "https://www.uiu.ac.bd/academics/calendar/",
-      "status": "published-indexed",
+      "source": "https://www.uiu.ac.bd/notice/course-registration-notice-for-newly-admitted-students-fall-2026-trimester/",
+      "status": "confirmed-notice",
       "sequence": 0
     },
     {
@@ -36,9 +25,24 @@
       "end": null,
       "all_day": true,
       "timezone": "Asia/Dhaka",
-      "source": "https://www.uiu.ac.bd/academics/calendar/",
-      "status": "published-indexed",
+      "source": "https://www.uiu.ac.bd/notice/course-registration-notice-for-newly-admitted-students-fall-2026-trimester/",
+      "status": "confirmed-notice",
       "sequence": 0
+    }
+  ],
+  "sha256": "a9ff5f3cfd1f174e792e91277efd120791a8f1bdfaef43ed3bd51776fcaa7d1c",
+  "pending_events": [
+    {
+      "uid": "uiu:undergraduate:fall2026:orientation",
+      "title": "Open Day Orientation",
+      "start": "2026-10-25",
+      "end": "2026-10-27",
+      "all_day": true,
+      "timezone": "Asia/Dhaka",
+      "source": "https://www.uiu.ac.bd/academics/calendar/",
+      "status": "pending-revalidation",
+      "sequence": 0,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
     },
     {
       "uid": "uiu:undergraduate:fall2026:drop-full",
@@ -48,8 +52,9 @@
       "all_day": true,
       "timezone": "Asia/Dhaka",
       "source": "https://www.uiu.ac.bd/academics/calendar/",
-      "status": "published-indexed",
-      "sequence": 0
+      "status": "pending-revalidation",
+      "sequence": 0,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
     },
     {
       "uid": "uiu:undergraduate:fall2026:grade-change",
@@ -59,8 +64,9 @@
       "all_day": true,
       "timezone": "Asia/Dhaka",
       "source": "https://www.uiu.ac.bd/academics/calendar/",
-      "status": "published-indexed",
-      "sequence": 0
+      "status": "pending-revalidation",
+      "sequence": 0,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
     },
     {
       "uid": "uiu:undergraduate:fall2026:online-class",
@@ -70,8 +76,9 @@
       "all_day": true,
       "timezone": "Asia/Dhaka",
       "source": "https://www.uiu.ac.bd/academics/calendar/",
-      "status": "published-indexed",
-      "sequence": 0
+      "status": "pending-revalidation",
+      "sequence": 0,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
     },
     {
       "uid": "uiu:undergraduate:fall2026:holiday",
@@ -81,8 +88,9 @@
       "all_day": true,
       "timezone": "Asia/Dhaka",
       "source": "https://www.uiu.ac.bd/academics/calendar/",
-      "status": "published-indexed",
-      "sequence": 0
+      "status": "pending-revalidation",
+      "sequence": 0,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
     },
     {
       "uid": "uiu:undergraduate:fall2026:fydp-grades",
@@ -92,8 +100,9 @@
       "all_day": true,
       "timezone": "Asia/Dhaka",
       "source": "https://www.uiu.ac.bd/academics/calendar/",
-      "status": "published-indexed",
-      "sequence": 0
+      "status": "pending-revalidation",
+      "sequence": 0,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
     },
     {
       "uid": "uiu:undergraduate:fall2026:registration-fine",
@@ -103,9 +112,95 @@
       "all_day": true,
       "timezone": "Asia/Dhaka",
       "source": "https://www.uiu.ac.bd/academics/calendar/",
-      "status": "published-indexed",
-      "sequence": 0
+      "status": "pending-revalidation",
+      "sequence": 0,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
     }
   ],
-  "sha256": "a9ff5f3cfd1f174e792e91277efd120791a8f1bdfaef43ed3bd51776fcaa7d1c"
+  "withdrawn_events": [
+    {
+      "uid": "uiu:undergraduate:fall2026:orientation",
+      "title": "Open Day Orientation",
+      "start": "2026-10-25",
+      "end": "2026-10-27",
+      "all_day": true,
+      "timezone": "Asia/Dhaka",
+      "source": "https://www.uiu.ac.bd/academics/calendar/",
+      "status": "withdrawn-unverified",
+      "sequence": 1,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
+    },
+    {
+      "uid": "uiu:undergraduate:fall2026:drop-full",
+      "title": "Last day to drop with 100% adjustable refund",
+      "start": "2026-10-31",
+      "end": null,
+      "all_day": true,
+      "timezone": "Asia/Dhaka",
+      "source": "https://www.uiu.ac.bd/academics/calendar/",
+      "status": "withdrawn-unverified",
+      "sequence": 1,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
+    },
+    {
+      "uid": "uiu:undergraduate:fall2026:grade-change",
+      "title": "Summer 2026 grade-change application deadline",
+      "start": "2026-11-04",
+      "end": null,
+      "all_day": true,
+      "timezone": "Asia/Dhaka",
+      "source": "https://www.uiu.ac.bd/academics/calendar/",
+      "status": "withdrawn-unverified",
+      "sequence": 1,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
+    },
+    {
+      "uid": "uiu:undergraduate:fall2026:online-class",
+      "title": "Regular Saturday class (online)",
+      "start": "2026-11-05",
+      "end": null,
+      "all_day": true,
+      "timezone": "Asia/Dhaka",
+      "source": "https://www.uiu.ac.bd/academics/calendar/",
+      "status": "withdrawn-unverified",
+      "sequence": 1,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
+    },
+    {
+      "uid": "uiu:undergraduate:fall2026:holiday",
+      "title": "National Revolution and Solidarity Day",
+      "start": "2026-11-07",
+      "end": null,
+      "all_day": true,
+      "timezone": "Asia/Dhaka",
+      "source": "https://www.uiu.ac.bd/academics/calendar/",
+      "status": "withdrawn-unverified",
+      "sequence": 1,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
+    },
+    {
+      "uid": "uiu:undergraduate:fall2026:fydp-grades",
+      "title": "Project/thesis/internship grade submission deadline",
+      "start": "2026-11-08",
+      "end": null,
+      "all_day": true,
+      "timezone": "Asia/Dhaka",
+      "source": "https://www.uiu.ac.bd/academics/calendar/",
+      "status": "withdrawn-unverified",
+      "sequence": 1,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
+    },
+    {
+      "uid": "uiu:undergraduate:fall2026:registration-fine",
+      "title": "Last registration with fine / 50% refund deadline",
+      "start": "2026-11-09",
+      "end": null,
+      "all_day": true,
+      "timezone": "Asia/Dhaka",
+      "source": "https://www.uiu.ac.bd/academics/calendar/",
+      "status": "withdrawn-unverified",
+      "sequence": 1,
+      "reason": "Archive could not be directly retrieved; not an active academic obligation"
+    }
+  ]
 }

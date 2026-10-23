@@ -1563,6 +1563,14 @@
         ]
       },
       "resolution": "unresolved; advisor/updated curriculum confirmation required"
+    },
+    {
+      "course": "BIO3105",
+      "conflicting_credits": {
+        "course_plan": 3,
+        "course_description": 1
+      },
+      "resolution": "Use selected cohort course-plan requirement; description source is inconsistent and needs official confirmation"
     }
   ],
   "source": {
