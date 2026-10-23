@@ -89,3 +89,14 @@ Notion scoped authorization and live round-trip; complete source descriptions,
 verified equivalence/retake/FYDP allocation; timetable recurrence exceptions;
 dual-host record continuation, conflict resolution and restore proof. No milestone
 is marked complete merely because its code or UI exists.
+
+
+Deployment checkpoint: foundation commit 780da47 pushed to main and scoped files
+installed on both hosts. Notion client package 7.40.0-2 confirmed on both. Existing
+four canonical replicas registered on Homie, active replica selected and academic
+owner pinned. Existing ignore rules preserved and extended. Nine accepted UIU
+calendar events imported on Arete; repeat import reported zero changes. Daily
+source-refresh timer enabled. Actual Arete launch acknowledged ready. An
+unmanaged registered vault exposed an owner-resolution failure; it is now
+ignored without changing that vault, with a failing-then-passing regression.
+The workspace is named Noesis and anonymous access now requires sign-in.

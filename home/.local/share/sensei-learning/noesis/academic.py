@@ -107,6 +107,10 @@ def owner(home=None):
  from .scopes import locations,identity
  path=Path(home or Path.home())/'.config/noesis/academic.json'
  if not path.exists():raise ValueError('Choose the private academic owner with noesis academic configure --vault PATH')
- value=json.loads(path.read_text());matches=[p for p in locations() if identity(p)==value['vault_id']]
+ value=json.loads(path.read_text());matches=[]
+ for candidate in locations():
+  try:actual=identity(candidate)
+  except (ValueError,OSError):continue
+  if actual==value['vault_id']:matches.append(candidate)
  if len(matches)!=1:raise ValueError('Academic owner is missing or ambiguous; register its canonical local replica')
  return matches[0]

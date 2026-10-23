@@ -37,3 +37,13 @@ class Academic(unittest.TestCase):
    record(r,'assessment',dict(base,name='A'),str(uuid.uuid4()))
    with self.assertRaises(ValueError):record(r,'assessment',dict(base,name='B'),str(uuid.uuid4()))
    self.assertEqual(len(audit(r)['events']),1)
+
+ def test_owner_ignores_unmanaged_registered_vault(self):
+  from unittest.mock import patch
+  from noesis.academic import owner
+  with tempfile.TemporaryDirectory() as d:
+   home=Path(d);path=home/'.config/noesis/academic.json';path.parent.mkdir(parents=True);path.write_text(json.dumps({'vault_id':'target'}));good=home/'good';bad=home/'unmanaged'
+   def identity(p):
+    if p==bad:raise ValueError('No Noesis manifest')
+    return 'target'
+   with patch('noesis.scopes.locations',return_value={bad,good}),patch('noesis.scopes.identity',side_effect=identity):self.assertEqual(owner(home),good)
