@@ -30,17 +30,18 @@ FloatingWindow {
  implicitWidth:Math.min(controller.windowWidth,(mainScreen?.width||1920)-40)
  implicitHeight:Math.min(controller.windowHeight,(mainScreen?.height||1080)-80)
  screen:mainScreen
- Connections {target:controller;function onMainMonitorChanged(){if(win.visible)focusDelay.restart();}function onPresentationModeChanged(){win.presentationRetries=0;win.nativeStateRetries=0;win.presentationReady=false;win.applyPresentation();}function onOpenSerialChanged(){win.minimized=false;focusDelay.interval=win.windowAddress?0:300;focusDelay.restart();}function onFinished(ok){if(ok&&controller.operationVault===controller.activeVault&&controller.specialistHandoff&&controller.presentationMode!=="tiled"&&controller.returnBehavior==="hide"){if(!controller.legacyInterface)content.item.stashDraft();controller.closeForTool();}}}
+ Connections {target:controller;function onMainMonitorChanged(){if(win.visible){win.focusRequested=true;focusDelay.restart();}}function onPresentationModeChanged(){win.presentationRetries=0;win.nativeStateRetries=0;win.presentationReady=false;win.applyPresentation();}function onOpenSerialChanged(){win.focusRequested=true;win.minimized=false;focusDelay.interval=win.windowAddress?0:300;focusDelay.restart();}function onFinished(ok){if(ok&&controller.operationVault===controller.activeVault&&controller.specialistHandoff&&controller.presentationMode!=="tiled"&&controller.returnBehavior==="hide"){if(!controller.legacyInterface)content.item.stashDraft();controller.closeForTool();}}}
  NoesisStudyDesk {id:secondaryDesk;primaryWindow:!win.secondary;workspace:content.item}
  onClosed:controller.requestExit()
  property real contentReveal:0
  Timer {id:softReveal;interval:16;onTriggered:win.contentReveal=1}
- onVisibleChanged:{contentReveal=0;if(visible){NoesisController.lastWindow=secondary?win:null;softReveal.restart();presentationRetries=0;presentationReady=false;focusDelay.restart();}}
+ onVisibleChanged:{contentReveal=0;if(visible){focusRequested=true;NoesisController.lastWindow=secondary?win:null;softReveal.restart();presentationRetries=0;presentationReady=false;focusDelay.restart();}}
  onWidthChanged:if(visible&&presentationReady&&modeSteps.length===0&&controller.presentationMode==="normal"){saveGeometry.restart();}
  onHeightChanged:if(visible&&presentationReady&&modeSteps.length===0&&controller.presentationMode==="normal"){saveGeometry.restart();}
  property string monitorWorkspace:""
  property string windowAddress:""
  property real compositorScale:1
+ property bool focusRequested:false
  property bool presentationReady:false
  property var modeSteps:[]
  property int modeStep:0
@@ -66,7 +67,7 @@ FloatingWindow {
  onMainScreenChanged:if(visible)focusDelay.restart()
  Process {id:monitorLookup;command:["hyprctl","monitors","-j"];stdout:StdioCollector {onStreamFinished:{try{let screens=JSON.parse(text);let target=screens.find(m=>m.name===win.mainScreen?.name);win.monitorWorkspace=target?String(target.activeWorkspace.id):"";}catch(error){win.monitorWorkspace="";controller.error="Display routing could not be read.";}}}onExited:{win.presentationReady=false;clientLookup.running=true;}}
  Process {id:clientLookup;command:["hyprctl","clients","-j"]
-  stdout:StdioCollector {onStreamFinished:{try{let client=JSON.parse(text).find(c=>c.pid===Quickshell.processId&&c.title===win.title);if(!client){controller.error="Noesis window is not yet available to the compositor.";return;}win.windowAddress=client.address;if(!win.presentationReady)win.applyPresentation();if(client.focusHistoryID!==0)Quickshell.execDetached(["hyprctl","dispatch",'hl.dsp.focus({window="address:'+win.windowAddress+'"})']);}catch(error){controller.error="Window discovery failed: "+String(error);}}}
+  stdout:StdioCollector {onStreamFinished:{try{let client=JSON.parse(text).find(c=>c.pid===Quickshell.processId&&c.title===win.title);if(!client){controller.error="Noesis window is not yet available to the compositor.";return;}win.windowAddress=client.address;if(!win.presentationReady)win.applyPresentation();}catch(error){controller.error="Window discovery failed: "+String(error);}}}
  }
  Process {id:nativeStateCheck;command:["hyprctl","clients","-j"]
   stdout:StdioCollector {onStreamFinished:{try{let c=JSON.parse(text).find(c=>c.address===win.windowAddress);let expected=controller.presentationMode==="fullscreen"?2:controller.presentationMode==="workspace"?1:0;if(c&&c.fullscreen===expected){win.nativeStateRetries=0;win.dispatchPresentation();}else if(win.nativeStateRetries++<10){if(win.nativeStateRetries===2){nativeStateRepair.command=["hyprctl","dispatch",'hl.dsp.window.fullscreen_state({internal='+expected+',client='+expected+',action="set",window="address:'+win.windowAddress+'"})'];nativeStateRepair.running=true;}else nativeStateRetry.restart();}else controller.error="Qt's requested window state was not acknowledged by the compositor.";}catch(error){controller.error="Native window state could not be verified.";}}}
@@ -75,7 +76,7 @@ FloatingWindow {
  Timer {id:nativeStateRetry;interval:100;onTriggered:nativeStateCheck.running=true}
  Process {id:modeDispatch;onExited:code=>{if(code===0){win.modeStep++;Qt.callLater(()=>win.nextModeStep());}else{win.modeSteps=[];controller.error="Window presentation could not be applied by the compositor.";}}}
  Process {id:presentationCheck;command:["hyprctl","clients","-j"]
-  stdout:StdioCollector {onStreamFinished:{try{let c=JSON.parse(text).find(c=>c.address===win.windowAddress);let ready=c&&c.floating===(controller.presentationMode!=="tiled")&&c.fullscreen===(controller.presentationMode==="fullscreen"?2:controller.presentationMode==="workspace"?1:0);if(ready&&controller.presentationMode==="normal")ready=Math.abs(c.size[0]-win.implicitWidth)<5&&Math.abs(c.size[1]-win.implicitHeight)<5;if(ready){win.presentationReady=true;win.presentationRetries=0;}else if(win.presentationRetries++<3){presentationRetry.restart();}else{controller.error="The compositor did not apply the requested window mode.";}}catch(error){controller.error="Window mode verification failed: "+String(error);}}}
+  stdout:StdioCollector {onStreamFinished:{try{let c=JSON.parse(text).find(c=>c.address===win.windowAddress);let ready=c&&c.floating===(controller.presentationMode!=="tiled")&&c.fullscreen===(controller.presentationMode==="fullscreen"?2:controller.presentationMode==="workspace"?1:0);if(ready&&controller.presentationMode==="normal")ready=Math.abs(c.size[0]-win.implicitWidth)<5&&Math.abs(c.size[1]-win.implicitHeight)<5;if(ready&&win.monitorWorkspace)ready=String(c.workspace?.id)===win.monitorWorkspace;if(ready){win.presentationReady=true;win.presentationRetries=0;if(win.focusRequested){win.focusRequested=false;Quickshell.execDetached(["hyprctl","dispatch",'hl.dsp.focus({window="address:'+win.windowAddress+'"})']);}}else if(win.presentationRetries++<3){presentationRetry.restart();}else{controller.error="The compositor did not apply the requested window mode.";}}catch(error){controller.error="Window mode verification failed: "+String(error);}}}
  }
  Timer {id:presentationRetry;interval:250;onTriggered:win.applyPresentation()}
  Timer {id:saveGeometry;interval:600;onTriggered:if(win.presentationReady&&controller.presentationMode==="normal"){controller.windowWidth=win.width;controller.windowHeight=win.height;controller.savePreferences();}}

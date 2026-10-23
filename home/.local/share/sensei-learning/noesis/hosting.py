@@ -102,7 +102,7 @@ def launch(home,*,embedded=False,owner=None,vault_id=None,record_id=None,capture
                 time.sleep(.1)
             if not hello:raise RuntimeError('Noesis startup did not become ready; inspect '+str(state/'application.log'))
         if not hello.get('host_ready',True):raise RuntimeError('Another Noesis host owns the session; close it before selecting this host')
-        if (new or monitor) and not monitor and os.environ.get('HYPRLAND_INSTANCE_SIGNATURE'):
+        if not monitor and (new or prefs.get('placement','current')=='current') and os.environ.get('HYPRLAND_INSTANCE_SIGNATURE'):
             screens=json.loads(subprocess.check_output(['hyprctl','monitors','-j'],text=True))
             request['monitor']=next((s['name'] for s in screens if s.get('focused')),None)
         payload=base64.b64encode(json.dumps(request,separators=(',',':')).encode()).decode()
