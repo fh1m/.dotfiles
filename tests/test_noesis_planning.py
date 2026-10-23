@@ -65,3 +65,9 @@ class Planning(unittest.TestCase):
    with patch('urllib.request.urlopen',side_effect=urllib.error.HTTPError('https://api.notion.com',401,'expired',{},None)):
     with self.assertRaisesRegex(ValueError,'renewed authorization'):p.api('GET','users/me')
    self.assertEqual(len(p.pending()),1)
+
+ def test_connector_snapshot_does_not_claim_desktop_authorization(self):
+  with tempfile.TemporaryDirectory() as d:
+   p=Planner(Path(d));p.save(p.root/'workspace.json',{'root_id':'workspace','collections':{}})
+   p.save(p.root/'cache.json',{'source':'notion-connector','records':[{'id':'fixture','read_only':True}]})
+   s=p.status();self.assertEqual(s['connection'],'workspace_ready');self.assertEqual(s['cache_source'],'notion-connector');self.assertTrue(s['records'][0]['read_only'])

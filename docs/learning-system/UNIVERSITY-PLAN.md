@@ -135,3 +135,14 @@ The Notion live round trip remains blocked on a separate scoped desktop API
 connection, already requested through the private Connection field. Full source
 reconciliation remains incomplete: BIO3105 is 3 credits in the course plan versus
 1 in the description page, now recorded rather than silently harmonized.
+
+
+Connector follow-through: the connected Noesis workspace and all five schemas
+were rechecked. Two user-stated, unscheduled goals were created after verifying
+no existing goal rows: degree completion with learning evidence, and autonomous
+systems from fundamentals. Neither implies enrollment, mastery or a commitment
+to a date. The actual goals and term were projected into private mode-0600 caches
+on both hosts. These records open their Notion owner and are labelled read-only
+connector snapshots; they are not advertised as automatic API synchronization.
+No API credential was extracted from the connector. A regression checks that
+such a snapshot cannot report desktop authorization.

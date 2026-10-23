@@ -82,3 +82,10 @@ upgrade; a full desktop restart is unnecessary.
 See UNIVERSITY-PLAN.md for behavioral evidence and outstanding acceptance gates.
 Live Notion round trips require the scoped connection; no generated activity,
 completed lecture or AI-written answer awards competence.
+
+
+A chat-connector snapshot may be available before desktop authorization. It is
+explicitly dated and read-only: clicking its record opens Notion. It does not
+update automatically, and it cannot acknowledge queued edits. Enter the scoped
+connection for normal desktop round trips; API sync replaces the snapshot with
+its own fetched records. Connector credentials never leave the connected tool.
