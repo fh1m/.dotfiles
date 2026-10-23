@@ -30,7 +30,7 @@ FloatingWindow {
  implicitWidth:Math.min(controller.windowWidth,(mainScreen?.width||1920)-40)
  implicitHeight:Math.min(controller.windowHeight,(mainScreen?.height||1080)-80)
  screen:mainScreen
- Connections {target:controller;function onPresentationModeChanged(){win.presentationRetries=0;win.nativeStateRetries=0;win.presentationReady=false;win.applyPresentation();}function onOpenSerialChanged(){win.minimized=false;focusDelay.interval=win.windowAddress?0:300;focusDelay.restart();}function onFinished(ok){if(ok&&controller.operationVault===controller.activeVault&&controller.specialistHandoff&&controller.presentationMode!=="tiled"&&controller.returnBehavior==="hide"){if(!controller.legacyInterface)content.item.stashDraft();controller.closeForTool();}}}
+ Connections {target:controller;function onMainMonitorChanged(){if(win.visible)focusDelay.restart();}function onPresentationModeChanged(){win.presentationRetries=0;win.nativeStateRetries=0;win.presentationReady=false;win.applyPresentation();}function onOpenSerialChanged(){win.minimized=false;focusDelay.interval=win.windowAddress?0:300;focusDelay.restart();}function onFinished(ok){if(ok&&controller.operationVault===controller.activeVault&&controller.specialistHandoff&&controller.presentationMode!=="tiled"&&controller.returnBehavior==="hide"){if(!controller.legacyInterface)content.item.stashDraft();controller.closeForTool();}}}
  NoesisStudyDesk {id:secondaryDesk;primaryWindow:!win.secondary;workspace:content.item}
  onClosed:controller.requestExit()
  property real contentReveal:0
@@ -38,6 +38,7 @@ FloatingWindow {
  onVisibleChanged:{contentReveal=0;if(visible){NoesisController.lastWindow=secondary?win:null;softReveal.restart();presentationRetries=0;presentationReady=false;focusDelay.restart();}}
  onWidthChanged:if(visible&&presentationReady&&modeSteps.length===0&&controller.presentationMode==="normal"){saveGeometry.restart();}
  onHeightChanged:if(visible&&presentationReady&&modeSteps.length===0&&controller.presentationMode==="normal"){saveGeometry.restart();}
+ property string monitorWorkspace:""
  property string windowAddress:""
  property real compositorScale:1
  property bool presentationReady:false
@@ -55,12 +56,15 @@ FloatingWindow {
  }
  function dispatchPresentation(){
   let target='window="address:'+windowAddress+'"';
-  modeSteps=[["hyprctl","dispatch",'hl.dsp.window.float({action="'+(controller.presentationMode==="tiled"?"disable":"enable")+'",'+target+'})']];
+  modeSteps=monitorWorkspace?[["hyprctl","dispatch",'hl.dsp.window.move({workspace="'+monitorWorkspace+'",follow=false,'+target+'})']]:[];
+  modeSteps.push(["hyprctl","dispatch",'hl.dsp.window.float({action="'+(controller.presentationMode==="tiled"?"disable":"enable")+'",'+target+'})']);
   if(controller.presentationMode==="normal")modeSteps.push(["hyprctl","dispatch",'hl.dsp.window.resize({x='+Math.round(win.implicitWidth)+',y='+Math.round(win.implicitHeight)+',relative=false,'+target+'})']);
   if(controller.presentationMode==="normal")modeSteps.push(["hyprctl","dispatch",'hl.dsp.window.center({'+target+'})']);
   modeStep=0;nextModeStep();
  }
- Timer {id:focusDelay;interval:300;onTriggered:clientLookup.running=true}
+ Timer {id:focusDelay;interval:300;onTriggered:monitorLookup.running=true}
+ onMainScreenChanged:if(visible)focusDelay.restart()
+ Process {id:monitorLookup;command:["hyprctl","monitors","-j"];stdout:StdioCollector {onStreamFinished:{try{let screens=JSON.parse(text);let target=screens.find(m=>m.name===win.mainScreen?.name);win.monitorWorkspace=target?String(target.activeWorkspace.id):"";}catch(error){win.monitorWorkspace="";controller.error="Display routing could not be read.";}}}onExited:{win.presentationReady=false;clientLookup.running=true;}}
  Process {id:clientLookup;command:["hyprctl","clients","-j"]
   stdout:StdioCollector {onStreamFinished:{try{let client=JSON.parse(text).find(c=>c.pid===Quickshell.processId&&c.title===win.title);if(!client){controller.error="Noesis window is not yet available to the compositor.";return;}win.windowAddress=client.address;if(!win.presentationReady)win.applyPresentation();if(client.focusHistoryID!==0)Quickshell.execDetached(["hyprctl","dispatch",'hl.dsp.focus({window="address:'+win.windowAddress+'"})']);}catch(error){controller.error="Window discovery failed: "+String(error);}}}
  }

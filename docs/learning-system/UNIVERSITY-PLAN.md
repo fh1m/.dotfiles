@@ -100,3 +100,16 @@ source-refresh timer enabled. Actual Arete launch acknowledged ready. An
 unmanaged registered vault exposed an owner-resolution failure; it is now
 ignored without changing that vault, with a failing-then-passing regression.
 The workspace is named Noesis and anonymous access now requires sign-in.
+
+
+Live routing regression: a requested HDMI window initially landed on monitor 0
+because application workspace rules overrode Qt screen selection. Noesis now
+resolves the target display's active workspace and moves only the initiating
+window before applying presentation. Actual Hyprland clients verified requested
+HDMI-A-1 / monitor 3 → actual monitor 3. Repeatable explicit test:
+`python tests/manual/noesis_monitor_routing.py`. Secondary Study Desk IPC names
+are unique. This proves connected-monitor placement, not physical hotplug or
+relaunch restoration. Encrypted active-vault backup and disposable restore passed;
+restore snapshot receipt stays private. Syncthing reports five folders, zero
+pending files and zero conflicts. The final Python Noesis suite has 179 passing
+checks; four calendar checks and native offscreen scenarios also pass.
