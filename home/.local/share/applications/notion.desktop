@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Notion
+Comment=Noesis planning workspace · Iosevka / OLED theme
+Exec=sensei-notion %U
+Terminal=false
+Type=Application
+Icon=notion
+StartupWMClass=Notion
+Categories=Office;Education;
+MimeType=x-scheme-handler/notion;

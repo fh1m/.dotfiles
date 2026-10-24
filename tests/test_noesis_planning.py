@@ -42,6 +42,19 @@ class Planning(unittest.TestCase):
    p=Planner(Path(d));p.save(p.root/'cache.json',{'records':[{'id':'record','properties':{'When':{'date':{'start':'2026-10-27'}},'State':{'select':None},'Area':{'select':None},'Title':{'title':[{'plain_text':'Study'}]}}}]})
    rows=agenda.planning(Path(d));self.assertEqual(len(rows),1);self.assertEqual(rows[0]['category'],'Planning');self.assertTrue(rows[0]['all_day'])
 
+ def test_setup_reuses_collections_nested_in_control_room(self):
+  from noesis.planning import COLLECTIONS
+  with tempfile.TemporaryDirectory() as d:
+   p=Planner(Path(d));p.save(p.config,{'token':'fixture','root_id':'root','collections':{}})
+   def api(method,path,body=None):
+    if method=='POST':raise AssertionError('Must not duplicate existing collections')
+    if path.startswith('blocks/root/'):return {'results':[{'id':'columns','type':'column_list','has_children':True}]}
+    if path.startswith('blocks/columns/'):return {'results':[{'id':'room','type':'child_page','child_page':{'title':'Control Room'}}]}
+    if path.startswith('blocks/room/'):return {'results':[{'id':str(i),'type':'child_database','child_database':{'title':name}} for i,name in enumerate(COLLECTIONS)]}
+    if path.startswith('databases/'):return {'id':path.split('/')[1],'data_sources':[{'id':'source-'+path.split('/')[1]}]}
+    raise AssertionError(path)
+   p.api=api;self.assertEqual(len(p.setup()['collections']),5)
+
  def test_throttle_retries_bounded_and_honors_retry_after(self):
   import io,urllib.error
   from unittest.mock import patch

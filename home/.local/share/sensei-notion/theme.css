@@ -1,0 +1,21 @@
+/* Local presentation only. No scripts, external requests, hidden content or auth changes. */
+.notion-app, .notion-app [contenteditable], .notion-app input,
+.notion-app textarea, .notion-app button, .notion-app [role="button"],
+.notion-app [role="menuitem"], .notion-app [role="tab"] {
+  font-family: "Iosevka Nerd Font", "Iosevka Nerd Font Mono", "ZedMono Nerd Font", monospace !important;
+  font-variant-ligatures: contextual;
+}
+.notion-app [style*="font-family"]:not(.katex):not(.katex *) {
+  font-family: "Iosevka Nerd Font", "Iosevka Nerd Font Mono", "ZedMono Nerd Font", monospace !important;
+}
+.notion-dark-theme, body.notion-dark-theme {
+  --c-bacPri: #000000 !important;
+  --c-bacSec: #09090c !important;
+  --c-bacTer: #151218 !important;
+  --c-palUiBlu600: #ff4795 !important;
+}
+.notion-page-content { line-height: 1.65; }
+.notion-page-content h1, .notion-page-content h2, .notion-page-content h3 {
+  letter-spacing: -0.015em;
+}
+::selection { background: #702b4c; color: #fff4f9; }

@@ -54,6 +54,32 @@ class Planner:
    cursor=data.get('next_cursor')
    if not data.get('has_more'):return rows
   raise ValueError('Notion pagination limit reached; previous complete cache retained')
+ def discover_collections(self,root):
+  # Workspaces may place canonical collections inside navigation columns and a
+  # Control Room. Inspect only structural children, never every database row.
+  found={};pending=[root];seen=set()
+  while pending:
+   block=pending.pop(0)
+   if block in seen:continue
+   seen.add(block)
+   if len(seen)>256:raise ValueError('Workspace discovery limit reached; choose collection IDs explicitly before setup')
+   cursor=None
+   for _ in range(100):
+    path='blocks/'+block+'/children?page_size=100'
+    if cursor:path+='&start_cursor='+cursor
+    result=self.api('GET',path)
+    for row in result.get('results',[]):
+     name=row.get('child_database',{}).get('title')
+     if name in COLLECTIONS:
+      if name in found and found[name]['id']!=row['id']:raise ValueError('Multiple collections named '+name+'; choose the canonical ID before setup')
+      found[name]=row
+     elif row.get('type') in ('child_page','column_list','column','toggle','callout','synced_block') and (row.get('has_children') or row.get('type')=='child_page'):
+      pending.append(row['id'])
+    if not result.get('has_more'):break
+    cursor=result.get('next_cursor')
+    if not cursor:raise ValueError('Notion omitted the next discovery cursor; no collections created')
+   else:raise ValueError('Workspace discovery pagination limit reached; no collections created')
+  return found
  def setup(self):
   with lock(self.root):
    config=self.read(self.config);config.setdefault('collections',{})
@@ -64,10 +90,10 @@ class Planner:
     existing=next((r for r in children if r.get('child_page',{}).get('title')=='Noesis'),None)
     row=existing or self.api('POST','pages',{'parent':{'page_id':config['parent_id']},'properties':{'title':{'title':rich('Noesis')}}})
     config.update(root_id=row['id'],root_url=row.get('url','https://www.notion.so/'+row['id'].replace('-','')));self.save(self.config,config)
-   children=self.api('GET','blocks/'+config['root_id']+'/children?page_size=100').get('results',[])
+   discovered=self.discover_collections(config['root_id']) if any(name not in config['collections'] for name in COLLECTIONS) else {}
    for name in COLLECTIONS:
     if name in config['collections']:continue
-    existing=next((r for r in children if r.get('child_database',{}).get('title')==name),None)
+    existing=discovered.get(name)
     props={'Title':{'title':{}},'Noesis ID':{'rich_text':{}},'Area':{'select':{'options':[{'name':'Academic'},{'name':'Explore'}]}},'State':{'select':{'options':[{'name':n} for n in ('Planned','Active','Done','Parked','Abandoned')]}},'When':{'date':{}},'Noesis link':{'url':{}}}
     row=self.api('GET','databases/'+existing['id']) if existing else self.api('POST','databases',{'parent':{'type':'page_id','page_id':config['root_id']},'title':rich(name),'initial_data_source':{'properties':props}})
     sources=row.get('data_sources',[])

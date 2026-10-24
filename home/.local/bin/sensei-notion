@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+theme="${XDG_DATA_HOME:-$HOME/.local/share}/sensei-notion/main.cjs"
+if [[ ! -f "$theme" ]] || ! command -v electron43 >/dev/null; then
+    exec /usr/bin/notion-app "$@"
+fi
+if [[ "${NOESIS_NOTION_THEME:-1}" == 0 ]]; then
+    exec /usr/bin/notion-app "$@"
+fi
+# Give the app its own memory boundary instead of putting its renderers in the
+# compositor's session cgroup. A failed renderer must not log the desktop out.
+if [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]] && command -v systemd-run >/dev/null; then
+    exec systemd-run --user --scope --quiet --collect --slice=app.slice \
+        -p MemoryHigh=1536M -p MemoryMax=3G -p MemorySwapMax=1G \
+        electron43 "$theme" "$@"
+fi
+exec electron43 "$theme" "$@"
