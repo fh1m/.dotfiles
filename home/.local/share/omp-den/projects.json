@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "host_home": "@HOME@",
+  "projects": {
+    "den": {"cwd": "@HOME@/.dotfiles", "environment": "host", "ros": null},
+    "mongla": {"cwd": "@HOME@/Envs/dockers/auv-ros2/Ros_workspaces/mongla_ws", "environment": "auv-ros2", "ros": "humble"},
+    "meghdhut": {"cwd": "@HOME@/Envs/dockers/drone-ros2/meghdhut_ws", "environment": "drone-ros2", "ros": "humble"},
+    "rupsha": {"cwd": "@HOME@/tmp/rupsha_ws", "environment": "rupsha_dev", "ros": "jazzy"}
+  },
+  "aliases": {"meghdut": "meghdhut", "megdhut": "meghdhut", "auv": "mongla", "drone": "meghdhut", "dotfiles": "den"}
+}
