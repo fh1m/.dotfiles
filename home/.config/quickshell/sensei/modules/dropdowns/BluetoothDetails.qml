@@ -52,7 +52,7 @@ Column {
     Text { textFormat: Text.PlainText;width:parent.width;wrapMode:Text.WordWrap;text:'Available codecs and profiles depend on the connected device. A2DP provides stereo playback; hands-free profiles trade music quality for microphone access. Higher bitrates are not always more reliable.';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetMuted;lineHeight:1.35}
    }
    Column {width:parent.width;spacing:10;visible:root.page===2
-    Text { textFormat: Text.PlainText;width:parent.width;text:(BluetoothDesk.data.adapters?.[0]?.Address||'—')+' · '+(BluetoothDesk.data.adapters?.[0]?.PowerState||'off')+'\nDiscovery stops after 20 seconds or when this panel closes.';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetText;wrapMode:Text.WordWrap;lineHeight:1.4}
+    Text { textFormat: Text.PlainText;width:parent.width;text:(BluetoothDesk.data.adapters?.[0]?.Address||'—')+' · '+(BluetoothDesk.data.adapters?.[0]?.PowerState||'off')+'\nDiscovery stops after 60 seconds or when this panel closes.';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetText;wrapMode:Text.WordWrap;lineHeight:1.4}
     Row {width:parent.width;spacing:6
      ControlTile {width:(parent.width-12)/3;label:root.adapter?.enabled?'Power on':'Power off';glyph:'\uf011';selected:root.adapter?.enabled??false;onActivated:if(root.adapter)root.adapter.enabled=!root.adapter.enabled}
      ControlTile {width:(parent.width-12)/3;label:root.adapter?.discoverable?'Visible':'Hidden';glyph:'\uf06e';selected:root.adapter?.discoverable??false;onActivated:if(root.adapter){root.adapter.discoverableTimeout=180;root.adapter.discoverable=!root.adapter.discoverable}}

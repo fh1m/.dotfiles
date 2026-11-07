@@ -68,9 +68,11 @@ DropdownFrame {
         });
         return list;
     }
-    // Discovery is bounded and only runs while this panel is being used.
+    // Some speakers advertise only intermittently. Keep an explicitly
+    // requested scan available for up to a minute, then stop it; closing the
+    // panel always stops discovery immediately.
     Timer {
-        interval: 20000
+        interval: 60000
         running: (root.adapter?.discovering ?? false) && ShellState.dropdown === "bluetooth"
         onTriggered: { if (root.adapter) root.adapter.discovering = false; }
     }
@@ -709,7 +711,7 @@ DropdownFrame {
                     return "NO BLUETOOTH ADAPTER";
                 if (!(root.adapter?.enabled ?? false))
                     return "THE ADAPTER IS OFF";
-                return (root.adapter?.discovering ?? false) ? "SCANNING FOR NEARBY DEVICES" : "NO DEVICES    TURN DISCOVERY ON";
+                return (root.adapter?.discovering ?? false) ? "SCANNING · PUT DEVICE IN PAIRING MODE" : "NO DEVICES    ENABLE PAIRING MODE AND SCAN";
             }
         }
 
