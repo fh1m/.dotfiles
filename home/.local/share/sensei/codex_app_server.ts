@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 
 export type ProfileMeasurement = { identity: string; account: { type?: string; email?: string; planType?: string }; rateLimits?: unknown; limits?: Record<string, unknown>; fetchedAt: number; measurementAt: number; source: string };
 export async function readProfileUsage(options: { executable: string; profileDir: string; expectedIdentity?: string; identityOnly?: boolean; timeoutMs?: number; signal?: AbortSignal }): Promise<ProfileMeasurement> {
+ const timeoutMs=options.timeoutMs??12000;
  const child=spawn(options.executable,["app-server","--listen","stdio://"],{cwd:options.profileDir,env:{...process.env,CODEX_HOME:options.profileDir},stdio:["pipe","pipe","ignore"]});
  const pending=new Map<number,{resolve:(v:any)=>void;reject:(e:Error)=>void}>();
  let buffer="", nextId=0, closed=false;

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { cacheUsage, generation, getCachedUsage, monitorAccount, readAccountState, recordFailure, registerProfile, removeAccount } from "../home/.local/share/sensei/codex_account_state.ts";
+import { cacheUsage, claimUsage, generation, getCachedUsage, monitorAccount, readAccountState, recordFailure, registerProfile, removeAccount } from "../home/.local/share/sensei/codex_account_state.ts";
 
 const roots:string[]=[];
 afterEach(async()=>{for(const root of roots.splice(0))await rm(root,{recursive:true,force:true});});
@@ -17,5 +17,6 @@ describe("production account monitor state",()=>{
  test("provider failures without a good snapshot cool down without inventing measurement",async()=>{const file=await stateFile();await monitorAccount(file,"a",identity);const gen=await generation(file,"a");await recordFailure(file,"a","profile","account-a",gen,"offline",100);const cached=await getCachedUsage(file,"a","profile","account-a",105);expect(cached?.cooldown).toBe(true);expect(cached?.measurement).toBeUndefined();});
  test("only one concurrent request can claim a stale account and manual refresh remains cooldown-bound",async()=>{const file=await stateFile();await monitorAccount(file,"a",identity);const gen=await generation(file,"a");const results=await Promise.all([claimUsage(file,"a","profile","account-a",gen,100),claimUsage(file,"a","profile","account-a",gen,100)]);expect(results.filter(Boolean)).toHaveLength(1);expect(await claimUsage(file,"a","profile","account-a",gen,101)).toBe(false);expect(await claimUsage(file,"a","profile","account-a",gen,116)).toBe(true);});
  test("removal hides monitoring but leaves existing profile registration reversible",async()=>{const file=await stateFile();await registerProfile(file,{id:"a",profileDir:"/existing",identity:"account-a",email:"a@example.test",name:"A"});expect((await readAccountState(file)).monitored.a).toBeUndefined();await monitorAccount(file,"a",identity);await removeAccount(file,"a");const state=await readAccountState(file);expect(state.monitored.a).toBeUndefined();expect(state.profiles.a.identity).toBe("account-a");await monitorAccount(file,"a",identity);expect((await readAccountState(file)).monitored.a.identity).toBe("account-a");});
+ test("reclaims a lock only after the recorded process identity is gone",async()=>{const file=await stateFile();await writeFile(`${file}.lock`,`${process.pid+1000000000}:old-start\\n`);await monitorAccount(file,"a",identity);expect((await readAccountState(file)).monitored.a.identity).toBe("account-a");});
  test("atomic private write and malformed-state failure preserve file contents",async()=>{const file=await stateFile();await monitorAccount(file,"a",identity);expect((await stat(file)).mode&0o777).toBe(0o600);const original=await readFile(file,"utf8");await writeFile(file,"not-json");await expect(monitorAccount(file,"b",identity)).rejects.toThrow();expect(await readFile(file,"utf8")).toBe("not-json");expect(original).not.toBe("not-json");});
 });
