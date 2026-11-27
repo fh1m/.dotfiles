@@ -219,6 +219,7 @@ DISPLAY_IDLE_HARNESS = '''import QtQuick
 import Quickshell
 import qs.services
 ShellRoot {
+    property var displayState: ExternalDisplays.data
     Timer { interval: 1700; running: true; onTriggered: { console.log('PROOF_PASS display-idle'); Qt.quit() } }
 }
 '''
@@ -357,7 +358,7 @@ ShellRoot {
         if (Wifi.scanned.length!==1 || Wifi.scanned[0].ssid!=='old-network') { console.error('PROOF_FAIL failed scan changed network rows'); Qt.exit(2); return }
         Wifi.applyScanResult(0,Wifi.radioEpoch,'',true)
         if (Wifi.scanned.length!==0) { console.error('PROOF_FAIL valid empty scan retained prior rows'); Qt.exit(2); return }
-        console.log('PROOF_PASS wifi-scan-ownership'); Qt.quit()
+        console.log('PROOF_PASS wifi-scan-ownership'); Qt.callLater(Qt.quit)
     }
 }
 '''
