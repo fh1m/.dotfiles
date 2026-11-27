@@ -24,6 +24,13 @@ budget and why a blocked peer backup must not be advertised as current.
 The [protected SDK backup guide](PROTECTED-SDK-BACKUP.md) covers root-owned
 robotics files without changing SDK permissions or granting general root access.
 
+Cursor fallback is managed in both `~/.icons/default/index.theme` and
+`~/.local/share/icons/default/index.theme`, inheriting `Sensei-Signal`. A leftover
+legacy default can otherwise select a white cursor despite correct GTK settings.
+For an already-running session with old activation metadata, refresh the user
+manager/D-Bus cursor variables and use `hyprctl setcursor Sensei-Signal 24`;
+do not restart input sharing or the desktop to change the cursor.
+
 ## One keyboard and mouse
 
 Arete is the master. Main panel top → Homie bottom; upper external right → Homie left. Return through Homie's bottom to Arete's main panel, or left to its upper external. The ScreenPad and lower external use the laptop's normal compositor boundaries.
