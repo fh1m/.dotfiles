@@ -59,7 +59,7 @@ DropdownFrame {
        Column {x:14;y:12;spacing:10
         Text { textFormat: Text.PlainText;text:"Robotics handoff";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.title;font.bold:true;color:Theme.widgetText}
         Text { textFormat: Text.PlainText;text:"Models · transfer inbox · remote commands";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetMuted}
-        ControlTile {label:"Open Phone folders";glyph:"\uf07c";implicitWidth:240;onActivated:Quickshell.execDetached(["xdg-open","@HOME@/Phone"])}
+        ControlTile {label:"Open Phone folders";glyph:"\uf07c";implicitWidth:240;onActivated:AppLaunch.run(["xdg-open","@HOME@/Phone"])}
        }
       }
      }
@@ -93,11 +93,11 @@ DropdownFrame {
      Flow {width:parent.width;spacing:8
       ControlTile {label:"Choose file / model";glyph:"\uf093";enabled:root.ready;onActivated:root.chooseFile("kde")}
       ControlTile {label:root.state.sshMounted?"SSH files · mounted":"Mount SSH files";glyph:"\uf07c";enabled:root.state.sshKeyExists;onActivated:root.act("ssh-mount")}
-      ControlTile {label:"Open SSH files";glyph:"\uf07c";enabled:root.state.sshMounted;onActivated:Quickshell.execDetached(["xdg-open","@HOME@/Phone/Browse"])}
+      ControlTile {label:"Open SSH files";glyph:"\uf07c";enabled:root.state.sshMounted;onActivated:AppLaunch.run(["xdg-open","@HOME@/Phone/Browse"])}
       ControlTile {label:"Unmount SSH files";enabled:root.state.sshMounted;onActivated:root.act("ssh-unmount")}
       ControlTile {label:"Mount phone folders";glyph:"\uf07c";enabled:root.ready;onActivated:root.act("browse")}
       ControlTile {label:"Refresh folders";glyph:"\uf021";onActivated:PhoneBridge.refresh()}
-      ControlTile {label:"Transfer inbox";glyph:"\uf019";onActivated:Quickshell.execDetached(["xdg-open","@HOME@/Downloads"])}
+      ControlTile {label:"Transfer inbox";glyph:"\uf019";onActivated:AppLaunch.run(["xdg-open","@HOME@/Downloads"])}
      }
      Flow {width:parent.width;spacing:8
       ControlTile {label:"Send through Taildrop";glyph:"\uf0ac";implicitWidth:220;enabled:root.androidPeers.length>0;onActivated:root.chooseFile("taildrop")}
@@ -113,7 +113,7 @@ DropdownFrame {
        ControlTile {anchors.right:parent.right;anchors.rightMargin:10;y:5;label:"Cancel";implicitWidth:110;implicitHeight:28;visible:modelData.state==="running";enabled:true;onActivated:root.act("cancel-transfer",[modelData.id])}
       }
      }
-     Repeater {model:Object.entries(root.device.directories||{});ControlTile {required property var modelData;label:modelData[0];detail:modelData[1];glyph:"\uf07c";implicitWidth:440;implicitHeight:48;onActivated:Quickshell.execDetached(["xdg-open",String(modelData[1])])}}
+     Repeater {model:Object.entries(root.device.directories||{});ControlTile {required property var modelData;label:modelData[0];detail:modelData[1];glyph:"\uf07c";implicitWidth:440;implicitHeight:48;onActivated:AppLaunch.run(["xdg-open",String(modelData[1])])}}
      Text { textFormat: Text.PlainText;width:parent.width;text:Object.keys(root.device.directories||{}).length?"Browse opens the mounted folder in your file manager, with native image previews and file operations.":"Enable Filesystem expose on your A52, then select folders in Android’s file picker. Mount here and refresh. Android app-private files remain protected.";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetMuted}
      Text { textFormat: Text.PlainText;width:parent.width;text:"For repeatable model delivery, use Sync with ~/Phone/Models. For arbitrary Termux files and robotics commands, set up SSH under Control. No entire home directory is synchronized.";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetMuted}
     } } }
@@ -166,7 +166,7 @@ DropdownFrame {
     Loader { width:parent.width; active:root.page===6; visible:active; asynchronous:true; sourceComponent:Component { Column {width:parent.width;spacing:10
      Text { textFormat: Text.PlainText;width:parent.width;text:"Syncthing device ID · "+(root.state.sync?.deviceId||"Loading");wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetAccent}
      Flow {width:parent.width;spacing:8
-      ControlTile {label:"Sync settings / pair phone";glyph:"\uf021";implicitWidth:258;onActivated:Quickshell.execDetached(["xdg-open","http://127.0.0.1:8384"])}
+      ControlTile {label:"Sync settings / pair phone";glyph:"\uf021";implicitWidth:258;onActivated:AppLaunch.run(["xdg-open","http://127.0.0.1:8384"])}
       ControlTile {label:"Create Models folder";implicitWidth:220;enabled:!(root.state.sync?.folders||[]).some(f=>f.id==="sensei-phone-models");onActivated:root.act("sync-folder",["models"])}
       ControlTile {label:"Create Transfers folder";implicitWidth:220;enabled:!(root.state.sync?.folders||[]).some(f=>f.id==="sensei-phone-transfers");onActivated:root.act("sync-folder",["transfers"])}
      }
@@ -185,10 +185,10 @@ DropdownFrame {
      Text { textFormat: Text.PlainText;width:parent.width;text:"Tailscale · "+(root.state.vpn?.state||"Loading")+" · laptop "+(root.state.vpn?.ips||[]).join(" / ");wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;font.bold:true;color:Theme.widgetText}
      Flow {width:parent.width;spacing:8
       ControlTile {label:root.state.vpn?.state==="Running"?"Mesh connected":"Sign in / connect";glyph:"\uf0ac";implicitWidth:220;enabled:root.state.vpn?.state!=="Running";onActivated:root.act("vpn-login")}
-      ControlTile {label:"Open sign-in page";implicitWidth:205;enabled:(root.state.vpn?.authUrl??"").startsWith("https://");onActivated:Quickshell.execDetached(["xdg-open",root.state.vpn.authUrl])}
+      ControlTile {label:"Open sign-in page";implicitWidth:205;enabled:(root.state.vpn?.authUrl??"").startsWith("https://");onActivated:AppLaunch.run(["xdg-open",root.state.vpn.authUrl])}
       ControlTile {label:"Disconnect mesh";implicitWidth:190;enabled:root.state.vpn?.state==="Running";onActivated:root.act("vpn-disconnect")}
       ControlTile {label:"Test private tunnel";implicitWidth:190;enabled:root.androidPeers.length>0;onActivated:root.act("vpn-test")}
-      ControlTile {label:"Tailscale devices";implicitWidth:190;onActivated:Quickshell.execDetached(["xdg-open","https://login.tailscale.com/admin/machines"])}
+      ControlTile {label:"Tailscale devices";implicitWidth:190;onActivated:AppLaunch.run(["xdg-open","https://login.tailscale.com/admin/machines"])}
      }
      Repeater {model:root.androidPeers.flatMap(p=>p.ips.filter(ip=>ip.indexOf(":")<0).map(ip=>({name:p.name,ip:ip})));ControlTile {required property var modelData;label:"Add "+modelData.name+" to KDE discovery";detail:modelData.ip;implicitWidth:340;onActivated:root.act("add-address",[modelData.ip])}}
      Row {spacing:8;DeskTextField {id:phoneIp;width:440;placeholderText:"Phone’s private Tailscale IP · 100.x.x.x"}ControlTile {label:"Add phone address";implicitWidth:220;enabled:phoneIp.text!=="";onActivated:root.act("add-address",[phoneIp.text])}}
@@ -199,10 +199,10 @@ DropdownFrame {
     Loader { width:parent.width; active:root.page===8; visible:active; asynchronous:true; sourceComponent:Component { Column {width:parent.width;spacing:12
      Text {width:parent.width;text:"Sensei, finish these once on your Samsung A52:\n\n1  Pair KDE Connect and compare the verification keys.\n2  Allow notifications, SMS/contacts and selected filesystem folders as needed.\n3  Install Tailscale, sign into the laptop’s account and add both private IPs in KDE Connect.\n4  Samsung Settings → Battery → Background usage limits → Never sleeping apps: KDE Connect and Tailscale. Set both apps Battery → Unrestricted, allow background data, and enable Tailscale Always-on VPN in Android VPN settings. Keep KDE Connect included in Tailscale; avoid an exit node unless you need one.\n5  Optional screen control: enable Developer options and authorize USB debugging for this laptop.\n6  Optional robotics terminal: install Termux from its official source; install openssh, rsync and syncthing, then use SSH keys.\n\nTermux preparation:\npkg update && pkg install openssh rsync syncthing\ntermux-setup-storage\nwhoami\npasswd\nsshd\n\nThe SSH port is normally 8022. Use the username from whoami in Control. Verify the host fingerprint in Trust / shell before running widget commands. Start Syncthing on the phone and pair its device ID under Sync.";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;lineHeight:1.4;color:Theme.widgetText;wrapMode:Text.Wrap;textFormat:Text.PlainText}
      Flow {width:parent.width;spacing:8
-      ControlTile {label:"KDE Connect settings";implicitWidth:230;onActivated:Quickshell.execDetached(["kdeconnect-app"])}
-      ControlTile {label:"Termux official install";implicitWidth:230;onActivated:Quickshell.execDetached(["xdg-open","https://github.com/termux/termux-app#installation"])}
-      ControlTile {label:"Termux boot services";implicitWidth:230;onActivated:Quickshell.execDetached(["xdg-open","https://github.com/termux/termux-boot#usage"])}
-      ControlTile {label:"Android sync clients";implicitWidth:230;onActivated:Quickshell.execDetached(["xdg-open","https://docs.syncthing.net/users/contrib.html"])}
+      ControlTile {label:"KDE Connect settings";implicitWidth:230;onActivated:AppLaunch.run(["kdeconnect-app"])}
+      ControlTile {label:"Termux official install";implicitWidth:230;onActivated:AppLaunch.run(["xdg-open","https://github.com/termux/termux-app#installation"])}
+      ControlTile {label:"Termux boot services";implicitWidth:230;onActivated:AppLaunch.run(["xdg-open","https://github.com/termux/termux-boot#usage"])}
+      ControlTile {label:"Android sync clients";implicitWidth:230;onActivated:AppLaunch.run(["xdg-open","https://docs.syncthing.net/users/contrib.html"])}
      }
      Text { textFormat: Text.PlainText;text:"Laptop plugin permissions";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;font.bold:true;color:Theme.widgetAccent}
      Flow {width:parent.width;spacing:6;Repeater {model:root.device.supportedPlugins||[];ControlTile {required property string modelData;label:modelData.replace("kdeconnect_","");selected:(root.device.plugins||[]).indexOf(modelData)>=0;implicitWidth:190;implicitHeight:32;enabled:root.device.isPaired;onActivated:root.act("plugin",[modelData,String((root.device.plugins||[]).indexOf(modelData)<0)])}}}

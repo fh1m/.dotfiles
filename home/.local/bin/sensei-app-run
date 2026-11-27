@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Launch one GUI application independently of its caller's process lifetime.
+set -euo pipefail
+usage() { echo 'Usage: sensei-app-run [--cwd DIR] -- PROGRAM [ARG ...]' >&2; exit 2; }
+cwd=''
+while (($#)); do
+    case "$1" in
+        --cwd) (($# >= 2)) || usage; cwd=$2; shift 2 ;;
+        --) shift; break ;;
+        *) usage ;;
+    esac
+done
+(($#)) || usage
+command -v systemd-run >/dev/null 2>&1 || { echo 'sensei-app-run: systemd-run is unavailable; refusing unmanaged launch' >&2; exit 1; }
+# Remove only the runtime directories injected by sensei-shell's private Qt/Mesa recovery.
+# Keep every other path, including user, CUDA and ROS entries, byte-for-byte and in order.
+strip_prefixes() {
+    local value=$1 prefix out='' part sep='' rest more=1 kept=0
+    local -a prefixes=( "${HOME}/.local/opt/sensei-mesa-egl/lib" "${HOME}/.local/opt/sensei-qt-wayland/lib" "${HOME}/.local/opt/sensei-qt-wayland/plugins" "${HOME}/.local/share/sensei-qt-plugins" )
+    rest=$value
+    while ((more)); do
+        if [[ $rest == *:* ]]; then part=${rest%%:*}; rest=${rest#*:}; else part=$rest; more=0; fi
+        local discard=0
+        for prefix in "${prefixes[@]}"; do [[ $part == "$prefix" ]] && discard=1; done
+        if (( ! discard )); then out+="${sep}${part}"; sep=:; kept=$((kept+1)); fi
+    done
+    printf '%s' "$out"
+    ((kept>0))
+}
+qt_plugins_before=${QT_PLUGIN_PATH:-}
+if [[ -n ${LD_LIBRARY_PATH+x} ]]; then
+    if ld_library_after=$(strip_prefixes "$LD_LIBRARY_PATH"); then export LD_LIBRARY_PATH=$ld_library_after; else unset LD_LIBRARY_PATH; fi
+fi
+if [[ -n ${QT_PLUGIN_PATH+x} ]]; then
+    if qt_plugins_after=$(strip_prefixes "$QT_PLUGIN_PATH"); then export QT_PLUGIN_PATH=$qt_plugins_after; else unset QT_PLUGIN_PATH; fi
+fi
+# The supervisor pairs its private context plugin path with this generic-plugin
+# selection. Drop only that token when the corresponding private path was set.
+if [[ :$qt_plugins_before: == *":${HOME}/.local/share/sensei-qt-plugins:"* ]]; then
+    QT_QPA_GENERIC_PLUGINS=${QT_QPA_GENERIC_PLUGINS:-}
+    IFS=, read -r -a generic_plugins <<< "$QT_QPA_GENERIC_PLUGINS"
+    kept_plugins=()
+    for plugin in "${generic_plugins[@]}"; do [[ $plugin == sensei-context-guard ]] || kept_plugins+=("$plugin"); done
+    if ((${#kept_plugins[@]})); then export QT_QPA_GENERIC_PLUGINS="$(IFS=,; printf '%s' "${kept_plugins[*]}")"; else unset QT_QPA_GENERIC_PLUGINS; fi
+fi
+args=(--user --quiet --collect --service-type=exec --expand-environment=no
+      --working-directory="${cwd:-$PWD}")
+# Forward values through systemd-run's inherited environment, not command-line
+# values. GUI activation/CUDA/ROS survive; service-control metadata does not.
+while IFS= read -r name; do
+    [[ $name =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    case "$name" in
+        INVOCATION_ID|JOURNAL_STREAM|NOTIFY_SOCKET|MANAGERPID|SYSTEMD_EXEC_PID|WATCHDOG_*|LISTEN_*|SENSEI_SHELL_SERVICE|SENSEI_SUPERVISED) continue ;;
+    esac
+    args+=("--setenv=$name")
+done < <(compgen -e)
+exec systemd-run "${args[@]}" -- "$@"

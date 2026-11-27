@@ -17,7 +17,7 @@ DropdownFrame {
   Text {width:parent.width;text:Ethernet.details.details||Ethernet.details.error||"Reading NetworkManager…";textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:Appearance.font.telemetry;font.pixelSize:12;color:Theme.paper}
   Row {spacing:8
    ControlTile {label:"Refresh";glyph:"\uf021";onActivated:Ethernet.refresh()}
-   ControlTile {label:"Connections";glyph:"\uf1e6";onActivated:Quickshell.execDetached(["nm-connection-editor"])}
+   ControlTile {label:"Connections";glyph:"\uf1e6";onActivated:AppLaunch.run(["nm-connection-editor"])}
    ControlTile {label:"Diagnostics";glyph:"\uf201";onActivated:{DesktopExtras.networkPage=2;ShellState.systemPage=3;ShellState.toggleDropdown("system");}}
   }
   NetworkWorkbench {width:parent.width}

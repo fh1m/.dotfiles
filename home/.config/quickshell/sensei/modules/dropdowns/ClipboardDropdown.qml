@@ -51,11 +51,11 @@ DropdownFrame {
  Row {spacing:7
  ControlTile {implicitWidth:100;implicitHeight:30;label:ClipboardVault.paused?"Resume":"Pause";glyph:"\uf04c";onActivated:ClipboardVault.action("pause")}
  Repeater {model:[{label:"Copy",action:"copy",glyph:"\uf0c5"},{label:root.selected.pinned?"Unpin":"Pin snippet",action:"pin",glyph:"\uf08d"},{label:root.selected.archived?"Restore":"Archive",action:"archive",glyph:"\uf187"},{label:"Shell quote",action:"quote",glyph:"\uf120"},{label:"Format JSON",action:"pretty",glyph:"\uf121"}];ControlTile {required property var modelData;implicitWidth:127;implicitHeight:30;label:modelData.label;glyph:modelData.glyph;enabled:!!root.selected.id&&(modelData.action!=="quote"&&modelData.action!=="pretty"||root.selected.kind==="text");onActivated:ClipboardVault.action(modelData.action)}}
- ControlTile {implicitWidth:127;implicitHeight:30;label:"Open original";glyph:"\uf07c";enabled:!!root.selected.path;onActivated:Quickshell.execDetached(["xdg-open",root.selected.path])}
+ ControlTile {implicitWidth:127;implicitHeight:30;label:"Open original";glyph:"\uf07c";enabled:!!root.selected.path;onActivated:AppLaunch.run(["xdg-open",root.selected.path])}
  }
  Row {spacing:10
  NrLabel {width:805;text:ClipboardVault.error || (ClipboardVault.count+" unique items · "+ClipboardVault.events+" copies · "+(ClipboardVault.bytes/1048576).toFixed(1)+" MiB · ~/.clipboard · no automatic deletion");pixelSize:10;color:ClipboardVault.error?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}
- ControlTile {implicitWidth:180;implicitHeight:25;label:ClipboardVault.items.length>=ClipboardVault.limit?"Load more":"Archive folder";onActivated:{if(ClipboardVault.items.length>=ClipboardVault.limit){ClipboardVault.limit+=150;ClipboardVault.refresh();}else Quickshell.execDetached(["xdg-open","@HOME@/.clipboard"]);}}
+ ControlTile {implicitWidth:180;implicitHeight:25;label:ClipboardVault.items.length>=ClipboardVault.limit?"Load more":"Archive folder";onActivated:{if(ClipboardVault.items.length>=ClipboardVault.limit){ClipboardVault.limit+=150;ClipboardVault.refresh();}else AppLaunch.run(["xdg-open","@HOME@/.clipboard"]);}}
  }
  }
  Keys.onReturnPressed:ClipboardVault.action("copy")

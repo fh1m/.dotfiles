@@ -16,7 +16,7 @@ DropdownFrame {
    ControlTile {implicitWidth:95;label:'Next →';enabled:!DesktopExtras.comicLoading&&DesktopExtras.comic.num<DesktopExtras.comic.latest;onActivated:DesktopExtras.loadComic(DesktopExtras.comic.num===403?405:DesktopExtras.comic.num+1)}
    ControlTile {implicitWidth:95;label:'Latest';onActivated:DesktopExtras.loadComic('latest')}
    ControlTile {implicitWidth:95;label:'Random';onActivated:DesktopExtras.loadComic('random')}
-   ControlTile {implicitWidth:95;label:'Open web';onActivated:Quickshell.execDetached(['xdg-open',DesktopExtras.comic.url||'https://xkcd.com'])}
+   ControlTile {implicitWidth:95;label:'Open web';onActivated:AppLaunch.run(['xdg-open',DesktopExtras.comic.url||'https://xkcd.com'])}
    ControlTile {implicitWidth:95;visible:!!DesktopExtras.comic.transcript;label:root.showTranscript?'Caption':'Transcript';onActivated:root.showTranscript=!root.showTranscript}
   }
   Text {width:parent.width;textFormat:Text.PlainText;text:DesktopExtras.comicLoading?'Sensei, fetching your comic…':'#'+(DesktopExtras.comic.num||'—')+' · '+(DesktopExtras.comic.title||'')+' · '+(DesktopExtras.comic.date||'');font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;color:Theme.widgetText;wrapMode:Text.Wrap}

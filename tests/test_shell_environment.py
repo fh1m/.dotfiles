@@ -41,3 +41,26 @@ def test_environment_bootstrap_refuses_external_symlink_target(tmp_path):
     with pytest.raises(ValueError):
         installer.install_shell_environment(home, home / 'backup', True)
     assert outside.read_text() == 'preserved\n'
+
+
+@pytest.mark.parametrize('failure', ['import-environment', 'start'])
+def test_desktop_start_failure_never_falls_back_into_terminal_scope(tmp_path, failure):
+    binary = tmp_path / 'bin'
+    binary.mkdir()
+    marker = tmp_path / 'unmanaged-shell-started'
+    manager = binary / 'systemctl'
+    manager.write_text('#!/bin/sh\nif [ "$2" = "' + failure + '" ]; then exit 23; fi\nexit 0\n')
+    manager.chmod(0o755)
+    shell = binary / 'qs'
+    shell.write_text('#!/bin/sh\ntouch "' + str(marker) + '"\nexit 0\n')
+    shell.chmod(0o755)
+    env = dict(os.environ, HOME=str(tmp_path), PATH=str(binary)+':'+os.environ['PATH'],
+               WAYLAND_DISPLAY='disposable-display')
+    for name in ('SENSEI_SHELL_SERVICE', 'SENSEI_QS_ARGS', 'SENSEI_QS_BIN',
+                 'HYPRLAND_INSTANCE_SIGNATURE'):
+        env.pop(name, None)
+    result = subprocess.run(
+        ['bash', str(ROOT/'home/.config/quickshell/sensei/external/sensei-shell')],
+        env=env, capture_output=True, text=True, timeout=5)
+    assert result.returncode == 23
+    assert not marker.exists(), 'failed supervision must not start a caller-owned desktop'

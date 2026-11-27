@@ -116,7 +116,7 @@ DropdownFrame {
    Flow {width:parent.width;spacing:8
     ControlTile {label:"Export ROS profile";glyph:"\uf019";enabled:!Controllers.busy;onActivated:Controllers.action('export-ros')}
     ControlTile {label:"Copy launch command";glyph:"\uf0c5";enabled:Controllers.exportDevice===Controllers.device.id&&Controllers.exportCommand!=='';onActivated:Quickshell.execDetached(['wl-copy','--',Controllers.exportCommand])}
-    ControlTile {label:"Open exported files";glyph:"\uf07c";enabled:Controllers.exportDevice===Controllers.device.id&&Controllers.exportPath!=='';onActivated:Quickshell.execDetached(['xdg-open',Controllers.exportPath])}
+    ControlTile {label:"Open exported files";glyph:"\uf07c";enabled:Controllers.exportDevice===Controllers.device.id&&Controllers.exportPath!=='';onActivated:AppLaunch.run(['xdg-open',Controllers.exportPath])}
    }
   }
   Flow {width:parent.width;spacing:8

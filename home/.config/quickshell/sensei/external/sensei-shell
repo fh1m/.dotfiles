@@ -24,6 +24,20 @@
 # build's lock tests use it to point at a scratch copy with a test PAM stack.
 
 set -u
+# The desktop must not inherit a terminal/agent's killable cgroup. Keep custom
+# fixture argv caller-owned; normal starts are idempotent user-service requests.
+if [ "${SENSEI_SHELL_SERVICE:-0}" != 1 ] && [ -z "${SENSEI_QS_ARGS:-}" ] && [ -z "${SENSEI_QS_BIN:-}" ]; then
+    session_env=()
+    for name in WAYLAND_DISPLAY DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_RUNTIME_DIR XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP; do
+        [ -n "${!name:-}" ] && session_env+=("$name")
+    done
+    if [ "${#session_env[@]}" -gt 0 ]; then
+        systemctl --user import-environment "${session_env[@]}" || exit $?
+    fi
+    # Do not fall back into the caller's cgroup when the manager is unavailable.
+    exec systemctl --user start sensei-shell.service
+fi
+
 
 # Display-manager sessions have a minimal PATH. Widget actions and launchers
 # must resolve the same user tools that an interactive shell can see.

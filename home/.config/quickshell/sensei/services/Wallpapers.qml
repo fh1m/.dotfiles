@@ -502,7 +502,7 @@ Singleton {
         // file manager. `xdg-open` is the fallback where thunar is absent.
         // Out of the deck first, so the file manager opens on the desktop.
         Deck.leave();
-        run(`mkdir -p ${quote(folder)} ${quote(senseiFolder)} && (command -v thunar >/dev/null && exec thunar ${quote(folder)} || exec xdg-open ${quote(folder)})`);
+        AppLaunch.run([`${Quickshell.env("HOME")}/.local/bin/sensei-open-folder`, folder, senseiFolder]);
         refresh.restart();
     }
 
