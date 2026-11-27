@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 
 
 export type ProfileMeasurement = { identity: string; account: { type?: string; email?: string; planType?: string }; rateLimits?: unknown; limits?: Record<string, unknown>; fetchedAt: number; measurementAt: number; source: string };
+function record(value:unknown):value is Record<string,unknown>{return value!==null&&typeof value==="object"&&!Array.isArray(value);}
 export async function readProfileUsage(options: { executable: string; profileDir: string; expectedIdentity?: string; identityOnly?: boolean; timeoutMs?: number; signal?: AbortSignal }): Promise<ProfileMeasurement> {
  const timeoutMs=options.timeoutMs??12000;
  const child=spawn(options.executable,["app-server","--listen","stdio://"],{cwd:options.profileDir,env:{...process.env,CODEX_HOME:options.profileDir},stdio:["pipe","pipe","ignore"]});
@@ -29,7 +30,7 @@ export async function readProfileUsage(options: { executable: string; profileDir
   if(typeof identity!=="string"||(options.expectedIdentity&&identity!==options.expectedIdentity))throw new Error("Codex profile identity changed");
   const limits=usageResult?.rateLimitsByLimitId;
   const rateLimits=usageResult?.rateLimits;
-  if(!options.identityOnly&&(!usageResult||!rateLimits||(typeof rateLimits!=="object")))throw new Error("Codex profile usage unavailable");
-  return {identity,account:{type:account.type,email:account.email,planType:account.planType},rateLimits,limits:limits&&typeof limits==="object"?limits:{},fetchedAt:Date.now()/1000,measurementAt:Date.now()/1000,source:"Codex app-server account/rateLimits/read"};
+  if(!options.identityOnly&&(!usageResult||!record(rateLimits)))throw new Error("Codex profile usage unavailable");
+  return {identity,account:{type:account.type,email:account.email,planType:account.planType},rateLimits,limits:record(limits)?limits:{},fetchedAt:Date.now()/1000,measurementAt:Date.now()/1000,source:"Codex app-server account/rateLimits/read"};
  } finally {clearTimeout(timeout);if(!closed){child.kill("SIGTERM");await Promise.race([new Promise(resolve=>child.once("close",resolve)),new Promise(resolve=>setTimeout(resolve,750))]);if(!closed)child.kill("SIGKILL");} }
 }

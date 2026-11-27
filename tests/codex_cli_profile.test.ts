@@ -22,7 +22,9 @@ describe("explicit Codex CLI profiles",()=>{
   const env={...process.env,HOME:root,OMP_AGENT_DIR:path.join(root,".omp/agent"),CODEX_EXECUTABLE:fixture};
   const added=await run(cli,["add","--profile",profile,"--name","Work account"],env);expect(added.code).toBe(0);expect(JSON.parse(added.stdout).ok).toBe(true);
   const listed=await run(cli,["list"],env);expect(listed.code).toBe(0);const accounts=JSON.parse(listed.stdout).accounts;
-  expect(accounts).toContainEqual(expect.objectContaining({source:"profile",identity:"chosen-account",email:"chosen@example.test",name:"Work account",monitored:true}));
+  const selected=accounts.find((account:{source:string;identity:string})=>account.source==="profile"&&account.identity==="chosen-account");expect(selected).toEqual(expect.objectContaining({email:"chosen@example.test",name:"Work account",monitored:true}));
   expect(accounts.some((account:{identity:string})=>account.identity==="wrong-account")).toBe(false);
+  const removed=await run(cli,["remove","--account",selected.id],env);expect(removed.code).toBe(0);expect(await Bun.file(path.join(profile,"auth.json")).text()).toBe("{}");
+  const hidden=await run(cli,["list"],env),after=JSON.parse(hidden.stdout).accounts.find((account:{id:string})=>account.id===selected.id);expect(after.monitored).toBe(false);
  });
 });
