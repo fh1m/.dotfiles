@@ -11,6 +11,8 @@ STATE=Path.home()/'.local/state/sensei-phone';STATE.mkdir(parents=True,exist_ok=
 CFG=Path.home()/'.config/sensei-phone.json'
 INPUT_GATE=Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'sensei-phone-input-enabled'
 SSH_KEY=Path.home()/'.ssh/sensei_phone'
+def android_peers(status):
+    return [{'name':v.get('HostName'),'os':v.get('OS'),'online':v.get('Online'),'ips':v.get('TailscaleIPs') or [],'relay':v.get('Relay'),'address':v.get('CurAddr'),'lastSeen':v.get('LastSeen')} for v in (status.get('Peer') or {}).values()]
 def plain(x):
     if isinstance(x,dbus.Boolean):return bool(x)
     if isinstance(x,dict):return {str(k):plain(v) for k,v in x.items()}
@@ -109,11 +111,7 @@ def full():
     out['config']=config();out['remoteInput']=actual;out['remoteInputGate']=gate;out['remoteInputState']='UNKNOWN' if actual is None else 'ON' if actual and gate else 'DIVERGED' if actual!=gate else 'OFF';out['jobs']=jobs();out['sshKeyExists']=SSH_KEY.exists();out['sshMounted']=phone_mounted();out['phoneSync']=json.loads((STATE/'phone-sync.json').read_text()) if (STATE/'phone-sync.json').exists() else {'folders':[]}
     result=subprocess.run(['tailscale','status','--json'],capture_output=True,text=True,timeout=5);r={'output':result.stdout,'ok':result.returncode==0}
     try:
-        j=json.loads(r['output']);out['vpn']={'state':j.get('BackendState'),'ips':j.get('TailscaleIPs') or [],'authUrl':j.get('AuthURL') or '', 'peers':[{'name':v.get('HostName'),'os':v.get('OS'),'online':v.get('Online'),'ips':v.get('TailscaleIPs') or [],'relay':v.get('Relay'),'address':v.get('CurAddr'),'lastSeen':v.get('LastSeen')} for v in (j.get('Peer') or {}).values()]}
-        android=[ip for p in out['vpn']['peers'] if p['os']=='android' for ip in p['ips'] if ':' not in ip]
-        if android:
-            properties=iface(BASE,'org.freedesktop.DBus.Properties');existing=list(properties.Get(NAME+'.daemon','customDevices',timeout=2));merged=list(dict.fromkeys([*map(str,existing),*android]))
-            if merged!=list(map(str,existing)):properties.Set(NAME+'.daemon','customDevices',dbus.Array(merged,signature='s',variant_level=1),timeout=2);iface(BASE,NAME+'.daemon').forceOnNetworkChange(timeout=2)
+        j=json.loads(r['output']);out['vpn']={'state':j.get('BackendState'),'ips':j.get('TailscaleIPs') or [],'authUrl':j.get('AuthURL') or '', 'peers':android_peers(j)}
     except (ValueError,dbus.DBusException) as e:
         if out.get('vpn'):out['vpn']['discoveryError']=str(e)
         else:out['vpn']={'state':'Unavailable','ips':[],'peers':[],'error':str(e)}

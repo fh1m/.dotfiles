@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Seed private Git history beside the personal Work mirror, without checkout.
 
-Preview by default. Repeating --apply archives new bundles/WIP but never resets
-an existing Homie repository. Working files travel through Syncthing separately.
+Preview by default. Repeating --apply archives history and the staged index but
+never resets an existing Homie repository. Syncthing owns working files.
 """
 import argparse
 import hashlib
@@ -59,7 +59,7 @@ def main():
         if not args.receive.resolve().is_relative_to((HOME/'.local/state/den/project-handoffs').resolve()):raise ValueError('Unowned handoff')
         print(json.dumps(seed_repository(args.receive,HOME/'Den/Mirror/arete/den-work')));return
     projects=discover(ROOT)
-    if not args.apply:print(json.dumps({'repositories':len(projects),'policy':'bundle + WIP; no checkout, reset, force or automatic publication'}));return
+    if not args.apply:print(json.dumps({'repositories':len(projects),'policy':'history bundle + staged index; no checkout, reset, working-file transfer or automatic publication'}));return
     records=[]
     receiver=str(PRIVATE/'setup-den-projects.py')
     subprocess.run(['scp','-q','-F',str(PRIVATE/'client.conf'),str(Path(__file__).resolve()),'homie:'+receiver],check=True)
@@ -69,7 +69,6 @@ def main():
             stamp=time.strftime('%Y%m%dT%H%M%S');local=Path(tmp)/ident;local.mkdir()
             def git(*cmd):return subprocess.check_output(['git','-C',str(path),*cmd])
             (local/'history.bundle').write_bytes(git('bundle','create','-','--all','HEAD'))
-            (local/'working.patch').write_bytes(git('diff','HEAD','--binary'))
             (local/'index.patch').write_bytes(git('diff','--cached','--binary'))
             branch=subprocess.run(['git','-C',str(path),'symbolic-ref','--quiet','--short','HEAD'],capture_output=True,text=True).stdout.strip()
             meta={'relative':rel,'head':git('rev-parse','HEAD').decode().strip(),'branch':branch,'captured':stamp}

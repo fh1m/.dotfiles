@@ -27,4 +27,14 @@ class DeploymentTests(unittest.TestCase):
             self.assertEqual(target.stat().st_mode&0o777,0o700)
             self.assertFalse((home/'.local/share/omp-den/work.py').exists())
 
+    def test_rollback_rejects_malformed_manifest_before_any_restore(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home=Path(tmp);result=deploy.install(home,apply=True);manifest=Path(result['manifest'])
+            original=json.loads(manifest.read_text());target=home/'.local/bin/omp-work';installed=target.read_bytes()
+            malicious=dict(original);malicious['entries']=[*original['entries'],{'path':'../outside','before':False,'sha256':'0'*64}]
+            manifest.write_text(json.dumps(malicious))
+            with self.assertRaises(ValueError):deploy.rollback(manifest,apply=True)
+            self.assertEqual(target.read_bytes(),installed)
+            self.assertFalse((home.parent/'outside').exists())
+
 if __name__=='__main__':unittest.main()
