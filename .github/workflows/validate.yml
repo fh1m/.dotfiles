@@ -17,6 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install native test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            build-essential pkg-config libjson-c-dev libssl-dev \
+            restic librsvg2-bin ffmpeg
       - name: Install declared test dependencies
         run: python3 -m pip install -r tests/requirements.txt
       - name: Run repo tests
