@@ -2,12 +2,14 @@
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-QS = Path('/home/fh1m/.local/opt/sensei-quickshell/bin/quickshell')
+QS = os.environ.get('SENSEI_QS_BINARY', '')
+HAS_QS = bool(QS and Path(QS).is_file())
 SERVICES = ROOT / 'home/.config/quickshell/sensei/services'
 
 SHELL_STATE = '''pragma Singleton
@@ -77,7 +79,7 @@ def setup_services(tmp_path, *names):
 
 
 def run_native(tmp_path, harness, extra_env=None, timeout=8):
-    assert QS.is_file(), f'Native Quickshell is required at {QS}'
+    assert HAS_QS, 'Set SENSEI_QS_BINARY to the explicitly selected native Quickshell runtime'
     shell = put(tmp_path, 'shell.qml', harness)
     runtime = tmp_path / 'runtime'
     runtime.mkdir(exist_ok=True)
@@ -102,7 +104,7 @@ def run_native(tmp_path, harness, extra_env=None, timeout=8):
 
 def helper(tmp_path, name, body):
     return put(tmp_path, '.local/bin/' + name,
-               '#!/usr/bin/python3\n' + body, executable=True)
+               '#!' + sys.executable + '\n' + body, executable=True)
 
 
 USB_HELPER = r'''import json, sys, time
@@ -149,7 +151,7 @@ ShellRoot {
 '''
 
 
-@pytest.mark.skipif(not QS.is_file(), reason='Requires the installed native Quickshell runtime')
+@pytest.mark.skipif(not HAS_QS, reason='Set SENSEI_QS_BINARY to an explicit native QuickShell runtime')
 def test_usb_history_coalesces_and_rejects_stale_response(tmp_path):
     setup_services(tmp_path, 'UsbLab.qml')
     helper(tmp_path, 'sensei-usb', USB_HELPER)
@@ -194,7 +196,7 @@ ShellRoot {
 '''
 
 
-@pytest.mark.skipif(not QS.is_file(), reason='Requires the installed native Quickshell runtime')
+@pytest.mark.skipif(not HAS_QS, reason='Set SENSEI_QS_BINARY to an explicit native QuickShell runtime')
 def test_calendar_month_navigation_coalesces_and_owns_results(tmp_path):
     setup_services(tmp_path, 'CalendarDesk.qml')
     helper(tmp_path, 'sensei-calendar', CALENDAR_HELPER)
@@ -213,11 +215,18 @@ time.sleep(.02)
 print(json.dumps({'displays':[],'outputs':[]}))
 '''
 
+DISPLAY_IDLE_HARNESS = '''import QtQuick
+import Quickshell
+import qs.services
+ShellRoot {
+    Timer { interval: 1700; running: true; onTriggered: { console.log('PROOF_PASS display-idle'); Qt.quit() } }
+}
+'''
+
 DISPLAY_HARNESS = '''import QtQuick
 import Quickshell
 import qs.services
 ShellRoot {
-    id: root
     Timer { interval: 200; running: true; onTriggered: {
         ExternalDisplays.recoveryInterval=350
         ShellState.dropdown='external-display'
@@ -227,8 +236,18 @@ ShellRoot {
 '''
 
 
-@pytest.mark.skipif(not QS.is_file(), reason='Requires the installed native Quickshell runtime')
-def test_external_display_sync_is_event_driven_with_visible_recovery(tmp_path):
+@pytest.mark.skipif(not HAS_QS, reason='Set SENSEI_QS_BINARY to an explicit native QuickShell runtime')
+def test_external_display_has_no_hidden_idle_poll(tmp_path):
+    setup_services(tmp_path, 'ExternalDisplays.qml')
+    helper(tmp_path, 'sensei-displays', DISPLAY_HELPER)
+    report = run_native(tmp_path, DISPLAY_IDLE_HARNESS, timeout=8)
+    assert 'PROOF_PASS display-idle' in report, report
+    requests = [json.loads(line) for line in (tmp_path / 'display-sync.jsonl').read_text().splitlines()]
+    assert requests == [['sync']], requests
+
+
+@pytest.mark.skipif(not HAS_QS, reason='Set SENSEI_QS_BINARY to an explicit native QuickShell runtime')
+def test_external_display_visible_recovery_uses_lightweight_sync(tmp_path):
     setup_services(tmp_path, 'ExternalDisplays.qml')
     helper(tmp_path, 'sensei-displays', DISPLAY_HELPER)
     report = run_native(tmp_path, DISPLAY_HARNESS, timeout=8)
@@ -239,15 +258,18 @@ def test_external_display_sync_is_event_driven_with_visible_recovery(tmp_path):
     assert all(request == ['sync', '--no-layout', '--no-notify'] for request in requests[2:]), requests
 
 
-SPOTIFY_HELPER = r'''import json, sys, time
+SPOTIFY_HELPER = r'''import json, os, sys, time
 from pathlib import Path
 a=sys.argv[1:]
 if a and a[0]=='queue':
+    scenario=os.environ['SENSEI_SCENARIO']
     p=Path.home()/'spotify-queue-count'
     count=int(p.read_text())+1 if p.exists() else 1
     p.write_text(str(count))
     time.sleep(.36 if count==1 else .025)
-    row={'uri':'spotify:old','id':'old'} if count==1 else {'uri':'spotify:new','id':'new'}
+    if count==1: row={'uri':'spotify:old','id':'queue-1' if scenario=='mutation' else 'old'}
+    elif scenario=='mutation': row={'uri':'spotify:old','id':'queue-2'}
+    else: row={'uri':'spotify:new','id':'new'}
     print(json.dumps({'rows':[row]}))
 elif a and a[0]=='account': print(json.dumps({'service':'fixture','cachedLogin':False}))
 else: print('{}')
@@ -265,11 +287,15 @@ import Quickshell
 import qs.services
 ShellRoot {
     id: root
+    property string scenario: Quickshell.env('SENSEI_SCENARIO')
     property int phase: 0
     property int ticks: 0
     property bool staleSeen: false
+    property bool firstQueueSeen: false
     Connections { target: SpotifyDesk; function onSpotifyQueueRowsChanged() {
-        if ((SpotifyDesk.spotifyQueueRows||[]).some(r=>r.id==='old')) root.staleSeen=true
+        const rows=SpotifyDesk.spotifyQueueRows||[]
+        if (root.scenario==='track-change' && rows.some(r=>r.id==='old')) root.staleSeen=true
+        if (rows.some(r=>r.id==='queue-1')) root.firstQueueSeen=true
     }}
     Timer { interval: 120; running: true; onTriggered: {
         SpotifyDesk.spotifyState=Object.assign({},SpotifyDesk.spotifyState,{backend:'headless',
@@ -277,31 +303,38 @@ ShellRoot {
         SpotifyDesk.dispatch('queue'); root.phase=1
     }}
     Timer { interval: 190; running: true; onTriggered: {
-        SpotifyDesk.spotifyState=Object.assign({},SpotifyDesk.spotifyState,{backend:'headless',
-            track:{title:'New',artist:'Fixture',uri:'spotify:new'},eventTime:2})
+        if (root.scenario==='mutation') {
+            SpotifyDesk.spotifyState=Object.assign({},SpotifyDesk.spotifyState,{eventTime:99})
+        } else {
+            SpotifyDesk.spotifyState=Object.assign({},SpotifyDesk.spotifyState,{backend:'headless',
+                track:{title:'New',artist:'Fixture',uri:'spotify:new'},eventTime:2})
+        }
         SpotifyDesk.dispatch('queue'); root.phase=2
     }}
     Timer { interval: 20; repeat: true; running: true; onTriggered: {
         root.ticks++
         if (root.staleSeen) { console.error('PROOF_FAIL old Spotify queue replaced new track'); Qt.exit(2); return }
-        if (root.phase===2 && SpotifyDesk.spotifyQueueRows.length && SpotifyDesk.spotifyQueueRows[0].id==='new') {
-            console.log('PROOF_PASS spotify-track-queue'); Qt.quit(); return
+        const expected=root.scenario==='mutation'?'queue-2':'new'
+        if (root.phase===2 && SpotifyDesk.spotifyQueueRows.length && SpotifyDesk.spotifyQueueRows[0].id===expected) {
+            if (root.scenario==='mutation'&&!root.firstQueueSeen) { console.error('PROOF_FAIL status timestamp invalidated same-track queue'); Qt.exit(2); return }
+            console.log('PROOF_PASS spotify-'+root.scenario); Qt.quit(); return
         }
-        if (root.ticks>120) { console.error('PROOF_FAIL new Spotify queue timed out'); Qt.exit(3) }
+        if (root.ticks>120) { console.error('PROOF_FAIL Spotify queue refresh timed out',root.scenario); Qt.exit(3) }
     }}
 }
 '''
 
 
-@pytest.mark.skipif(not QS.is_file(), reason='Requires the installed native Quickshell runtime')
-def test_spotify_queue_refreshes_latest_track_and_rejects_old_result(tmp_path):
+@pytest.mark.skipif(not HAS_QS, reason='Set SENSEI_QS_BINARY to an explicit native QuickShell runtime')
+@pytest.mark.parametrize('scenario', ['mutation', 'track-change'])
+def test_spotify_queue_coalesces_mutations_and_scopes_track_results(tmp_path, scenario):
     setup_services(tmp_path, 'SpotifyDesk.qml')
     put(tmp_path, 'services/YouTubeDesk.qml', YOUTUBE_DESK)
     put(tmp_path, 'config/MachineProfile.qml', '''pragma Singleton\nimport QtQuick\nQtObject { property string primaryOutput: "TEST" }\n''')
     helper(tmp_path, 'sensei-spotify', SPOTIFY_HELPER)
     helper(tmp_path, 'sensei-spotify-control', SPOTIFY_CONTROL)
-    report = run_native(tmp_path, SPOTIFY_HARNESS, timeout=8)
-    assert 'PROOF_PASS spotify-track-queue' in report, report
+    report = run_native(tmp_path, SPOTIFY_HARNESS, {'SENSEI_SCENARIO': scenario}, timeout=8)
+    assert 'PROOF_PASS spotify-' + scenario in report, report
     assert (tmp_path / 'spotify-queue-count').read_text() == '2'
 
 
@@ -330,7 +363,7 @@ ShellRoot {
 '''
 
 
-@pytest.mark.skipif(not QS.is_file(), reason='Requires the installed native Quickshell runtime')
+@pytest.mark.skipif(not HAS_QS, reason='Set SENSEI_QS_BINARY to an explicit native QuickShell runtime')
 def test_wifi_radio_epoch_exit_code_and_empty_scan_ownership(tmp_path):
     setup_services(tmp_path, 'Wifi.qml')
     put(tmp_path, 'config/Machine.qml', '''pragma Singleton\nimport QtQuick\nQtObject { property string wifiInterface: "" }\n''')

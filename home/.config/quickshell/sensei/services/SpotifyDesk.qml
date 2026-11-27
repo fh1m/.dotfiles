@@ -46,8 +46,8 @@ Singleton {
  property var contextItem:({});property var contextRows:[];property string lyrics:"";property string error:"";property string warning:"";property bool loading:false;property bool cataloguePending:false;property int catalogueAttempts:0
  property var actionQueue:[];property var requests:[];property string op:"";property var opArgs:[];property string activeQuery:""
  property string queueRequestKey:"";property string queuePendingKey:""
- readonly property string currentQueueKey:JSON.stringify([playback.track?.uri||"",title,artist,album,playback.eventTime||0])
- function requestQueue(){if(YouTubeDesk.ownsAudio)return;const key=currentQueueKey;if(queueProc.running){if(key!==queueRequestKey)queuePendingKey=key;return;}queueRequestKey=key;queuePendingKey="";queueProc.running=true;}
+ readonly property string currentQueueKey:JSON.stringify([playback.backend||"",playback.owner||"",playback.deviceId||"",playback.device||"",playback.context?.type||"",playback.context?.uri||"",playback.track?.uri||"",title,artist,album])
+ function requestQueue(){if(YouTubeDesk.ownsAudio)return;const key=currentQueueKey;if(queueProc.running){queuePendingKey=key;return;}queueRequestKey=key;queuePendingKey="";queueProc.running=true;}
  readonly property var visibleRows:contextItem.id?contextRows:page===0?(queueRows.length?queueRows:homeRows):page===1?queueRows:page===2?playlistRows:page===3?libraryRows:page===4?(searchResults[searchKind]||[]):[]
  property bool zen:false
  property bool musicBackdrop:false
