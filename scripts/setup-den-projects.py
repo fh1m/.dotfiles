@@ -29,6 +29,15 @@ def discover(root):
         else:dirs[:]=[d for d in dirs if d not in {'node_modules','.venv','venv','build','install','log','target','__pycache__'}]
     return result
 
+def build_handoff(path,handoff,relative):
+    def git(*args):return subprocess.check_output(['git','-C',str(path),*args])
+    (handoff/'history.bundle').write_bytes(git('bundle','create','-','--all','HEAD'))
+    (handoff/'index.patch').write_bytes(git('diff','--cached','--binary'))
+    branch=subprocess.run(['git','-C',str(path),'symbolic-ref','--quiet','--short','HEAD'],capture_output=True,text=True).stdout.strip()
+    meta={'relative':relative,'head':git('rev-parse','HEAD').decode().strip(),'branch':branch,'captured':time.strftime('%Y%m%dT%H%M%S')}
+    (handoff/'record.json').write_text(json.dumps(meta,indent=2))
+    return meta
+
 
 def seed_repository(handoff,root):
     meta=json.loads((handoff/'record.json').read_text());path=root/meta['relative']
@@ -67,12 +76,7 @@ def main():
         for path in projects:
             rel=str(path.relative_to(ROOT));ident=hashlib.sha256(rel.encode()).hexdigest()[:16]
             stamp=time.strftime('%Y%m%dT%H%M%S');local=Path(tmp)/ident;local.mkdir()
-            def git(*cmd):return subprocess.check_output(['git','-C',str(path),*cmd])
-            (local/'history.bundle').write_bytes(git('bundle','create','-','--all','HEAD'))
-            (local/'index.patch').write_bytes(git('diff','--cached','--binary'))
-            branch=subprocess.run(['git','-C',str(path),'symbolic-ref','--quiet','--short','HEAD'],capture_output=True,text=True).stdout.strip()
-            meta={'relative':rel,'head':git('rev-parse','HEAD').decode().strip(),'branch':branch,'captured':stamp}
-            (local/'record.json').write_text(json.dumps(meta,indent=2))
+            meta=build_handoff(path,local,rel)
             remote_dir=str(HOME/'.local/state/den/project-handoffs'/ident/stamp)
             subprocess.run([*SSH,'mkdir -p '+shlex.quote(remote_dir)],check=True)
             subprocess.run(['scp','-q','-F',str(PRIVATE/'client.conf'),*[str(x) for x in local.iterdir()],'homie:'+remote_dir+'/'],check=True)
