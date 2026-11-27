@@ -62,7 +62,7 @@ Item {
 
         Image {
             anchors.fill: parent
-            source: root.backSource
+            source: root.width>0&&root.height>0 ? root.backSource : ""
             fillMode: root.imageFillMode
             sourceSize: Qt.size(root.width, root.height)
             // Synchronous: an async image inside a card layer never paints.
@@ -74,7 +74,7 @@ Item {
             id: front
 
             anchors.fill: parent
-            source: root.frontSource
+            source: root.width>0&&root.height>0 ? root.frontSource : ""
             fillMode: root.imageFillMode
             sourceSize: Qt.size(root.width, root.height)
             asynchronous: false
@@ -100,6 +100,7 @@ Item {
         to: 1
         duration: root.fadeDuration
         easing.type: Easing.OutCubic
+        onFinished: root.backSource=root.frontSource
     }
 
     Rectangle {

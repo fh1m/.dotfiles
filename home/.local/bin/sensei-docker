@@ -2,6 +2,8 @@
 """Docker Lab: bounded JSON inventory, explicit actions and detached task logs."""
 import os,json,sys,subprocess,time,shlex,re,signal,concurrent.futures
 from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+from job_runtime import identity,reconcile,run_bounded,policy,export_log
 os.umask(0o077)
 STATE=Path.home()/'.local/state/sensei-docker';STATE.mkdir(parents=True,exist_ok=True)
 JOBS=STATE/'jobs';JOBS.mkdir(exist_ok=True)
@@ -17,9 +19,11 @@ def tasks():
  out=[]
  for p in sorted(JOBS.glob('*.json'),key=lambda p:p.stat().st_mtime,reverse=True)[:12]:
   try:
-   d=json.loads(p.read_text());d.pop('args',None);log=Path(d.pop('log'))
-   if log.exists():
-    with log.open('rb') as f:f.seek(max(0,log.stat().st_size-5000));d['output']=f.read().decode(errors='replace')
+   original=json.loads(p.read_text());d=reconcile(original)
+   if d!=original:atomic(p,d)
+   d=dict(d);d.pop('args',None);log=Path(d.pop('log'))
+   d['privateLogAvailable']=log.exists()
+   d['output']='Private log · Open log or export a copy. '+('Output cap reached; '+str(d.get('discardedBytes',0))+' bytes discarded.' if d.get('logTruncated') else '')
    out.append(d)
   except (OSError,ValueError):pass
  return out
@@ -28,11 +32,12 @@ def job(args,label):
  subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'--job',str(p)],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  return {'ok':True,'output':label+' started; progress is in Tasks.'}
 def worker(p):
- p=Path(p);d=json.loads(p.read_text());d.update(state='running',pid=os.getpid());atomic(p,d)
+ p=Path(p);d=json.loads(p.read_text());d.update(state='running',pid=os.getpid(),worker=identity());atomic(p,d)
  try:
-  with open(d['log'],'w') as log:r=subprocess.run(d['args'],stdout=log,stderr=subprocess.STDOUT)
-  d.update(state='finished' if r.returncode==0 else 'failed',exitCode=r.returncode)
- except Exception as e:d.update(state='failed',error=str(e))
+  result=run_bounded(d['args'],d['log'],**policy('docker',d))
+  d.update(result,state='finished' if result['exitCode']==0 else 'failed')
+ except SystemExit:d.update(state='cancelled',finished=time.time());atomic(p,d);raise
+ except Exception as e:d.update(state='failed',error='Worker failed ('+type(e).__name__+'); inspect the private log.')
  d['finished']=time.time();atomic(p,d)
 def sessions():
  try:return run(['tmux','list-sessions','-F','#{session_name}']).splitlines()
@@ -54,19 +59,22 @@ def identifier(s):
  if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.:/@+-]{0,255}',s):raise ValueError('Invalid Docker identifier.')
  return s
 def inspect(kind,id):
- identifier(id);d=json.loads(run(['docker',kind,'inspect',id]))[0]
- # Config environment can contain credentials: show names rather than values.
+ identifier(id);raw=json.loads(run(['docker',kind,'inspect',id]))[0]
+ # Only diagnostic structure leaves the backend. Environments, labels,
+ # commands, mount paths and raw logs may all carry private values.
+ allowed={
+  'container':('Id','Name','Created','RestartCount','Platform'),
+  'image':('Id','Created','Architecture','Os','Size','VirtualSize'),
+  'network':('Id','Name','Driver','Scope','Internal','EnableIPv6'),
+  'volume':('Name','Driver','Scope','CreatedAt')
+ }
+ if kind not in allowed:raise ValueError('Unsupported Docker object.')
+ d={k:raw[k] for k in allowed[kind] if k in raw}
+ cfg=raw.get('Config',{})
+ if cfg:d['Config']={'Env':[str(x).split('=',1)[0]+'=•••' for x in cfg.get('Env',[])]}
  if kind=='container':
-  cfg=d.get('Config',{});cfg['Env']=[x.split('=',1)[0]+'=•••' for x in cfg.get('Env',[])];d['Config']=cfg
-  out={'inspect':d}
-  if d.get('State',{}).get('Running'):
-   for key,args in [('processes',['docker','top',id]),('stats',['docker','stats','--no-stream','--format','{{json .}}',id]),('changes',['docker','diff',id])]:
-    try:out[key]=run(args,5)[-18000:]
-    except Exception as e:out[key]=str(e)
-  try:out['logs']=run(['docker','logs','--tail','100',id],5,True)[-24000:]
-  except Exception as e:out['logs']=str(e)
-  return out
- return {'inspect':d}
+  d['State']={k:raw.get('State',{}).get(k) for k in ('Status','Running','Paused','Restarting','OOMKilled','ExitCode')}
+ return {'inspect':d,'logs':'Use the explicit Logs action for private container output.'}
 def tmux_launch(command,session,window):
  if not re.fullmatch(r'[A-Za-z0-9_-]{1,48}',session):raise ValueError('Use a simple tmux session name.')
  if session not in sessions():run(['tmux','new-session','-d','-s',session,'-n',window,shlex.join(command)])
@@ -74,6 +82,17 @@ def tmux_launch(command,session,window):
  subprocess.Popen([str(Path.home()/'.local/bin/sensei-terminal'),'--title','Robotics · '+session,'-e','tmux','attach-session','-t',session],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  return {'ok':True,'output':'Opened '+window+' in tmux session '+session+'.'}
 def action(name,a):
+ if name in ('task-log','task-export'):
+  ident=str(a[0])
+  if not re.fullmatch(r'[0-9]+',ident):raise ValueError('Invalid owned task identity')
+  log=JOBS/(ident+'.log')
+  if not log.is_file():raise ValueError('Private task log is unavailable')
+  if name=='task-export':
+   target=Path.home()/'Documents/Digital Den/Logs'/('docker-'+ident+'-'+str(time.time_ns())+'.log')
+   return {'ok':True,'output':'Private log exported to '+export_log(log,target)}
+  viewer=['lnav',str(log)] if __import__('shutil').which('lnav') else ['less','-R',str(log)]
+  subprocess.Popen([str(Path.home()/'.local/bin/sensei-terminal'),'--title','Docker · private task log','-e',*viewer],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+  return {'ok':True,'output':'Opened the private task log; no log text was added to the dashboard.'}
  if name in ['start','stop','restart','pause','unpause','kill','remove']:
   id=identifier(a[0]);verb='rm' if name=='remove' else name
   return job(['docker',verb,id],name+' '+id[:16])
@@ -107,6 +126,14 @@ def action(name,a):
  if name=='copy':
   id=identifier(a[0]);local=str(Path(a[2]).expanduser().resolve());remote=a[1]
   if not remote.startswith('/') or '\n' in remote:raise ValueError('Use an absolute container path.')
+  if a[3]=='out':
+   target=Path(a[2]).expanduser()
+   if not target.is_absolute() or '..' in target.parts or target.is_symlink() or target.exists():
+    raise ValueError('Copy-out requires a new absolute destination; existing files and symlinks are never overwritten.')
+   if any(p.is_symlink() for p in target.parents):raise ValueError('Copy-out cannot traverse symlink directories.')
+   # Reserve a new directory atomically so docker cp cannot replace an existing
+   # file. The copied object is placed inside this private destination.
+   target.mkdir(mode=0o700,parents=False,exist_ok=False)
   source,dest=(id+':'+remote,local) if a[3]=='out' else (local,id+':'+remote)
   return job(['docker','cp',source,dest],'Copy '+('from' if a[3]=='out' else 'to')+' container')
  if name=='run':
@@ -146,9 +173,11 @@ def action(name,a):
   p=JOBS/(a[0]+'.json');d=json.loads(p.read_text());pid=d.get('pid',0)
   try:live=str(p) in Path(f'/proc/{pid}/cmdline').read_text()
   except OSError:live=False
-  if d['state']!='running' or pid<=0 or not live:return {'ok':False,'output':'Task is not running.'}
-  os.killpg(pid,signal.SIGTERM);d['state']='cancelled';atomic(p,d)
-  return {'ok':True,'output':'Task cancelled.'}
+  from job_runtime import alive
+  if d['state']!='running' or type(pid) is not int or pid<=0 or not live or not alive(d) or d.get('worker',{}).get('pid')!=pid:return {'ok':False,'output':'Task is not running.'}
+  try:os.killpg(pid,signal.SIGTERM)
+  except (ProcessLookupError,PermissionError):return {'ok':False,'output':'Cancellation could not be delivered.'}
+  return {'ok':True,'output':'Cancellation requested; the worker will record its actual outcome.'}
  if name=='cli':
   args=shlex.split(a[0]);args=args[1:] if args and args[0]=='docker' else args
   if not args:raise ValueError('Enter Docker arguments; shell operators are not evaluated.')

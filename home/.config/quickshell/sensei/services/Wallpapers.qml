@@ -33,7 +33,23 @@ Singleton {
     // restart does not quietly re-attach the wallpaper to the profile.
     property string lockedFile: ""
     property var displays: ({})
-    function startupSource(output: string): url { return Paths.url(`${Paths.configDir}/startup-wallpaper-${output.replace(/[^a-zA-Z0-9_-]/g,"_")}.jpg`); }
+    FolderListModel {
+        id:startupFiles
+        folder:Paths.url(Paths.configDir)
+        nameFilters:["startup-wallpaper-*.jpg"]
+        showDirs:false;showOnlyReadable:true
+    }
+    function startupSource(output: string): url {
+        if(startupFiles.status!==FolderListModel.Ready)return "";
+        const connected=Quickshell.screens.map(s=>s.name);
+        const candidates=connected.includes(output)?[output].concat(connected.filter(name=>name!==output)):connected;
+        for(const candidate of candidates){
+            const filename="startup-wallpaper-"+candidate.replace(/[^a-zA-Z0-9_-]/g,"_")+".jpg";
+            for(let i=0;i<startupFiles.count;i++)
+                if(startupFiles.get(i,"fileName")===filename&&startupFiles.get(i,"fileSize")>0)return Paths.url(Paths.configDir+"/"+filename);
+        }
+        return "";
+    }
     function syncStartup(output: string, path: string): void {
         Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-startup-wallpaper`,path||"",output]);
     }

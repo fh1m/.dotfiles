@@ -10,8 +10,8 @@ DropdownFrame {
  implicitWidth:1040
  property int page:ShellState.monitorPage
  property string sort:"cpu"
- property var d:LiveMonitor.data
- property var gpu:RobotBench.data.gpu
+ property var d:Demo.active ? Object.assign({},LiveMonitor.data,{extra:{},ips:[],host:"Private",mounts:[],processes:[]}) : LiveMonitor.data
+ property var gpu:Demo.active?Object.assign({},RobotBench.data.gpu,{processes:[]}):RobotBench.data.gpu
  function size(v){return v===null||v===undefined?"—":v>=1073741824?(v/1073741824).toFixed(1)+" GiB":v>=1048576?(v/1048576).toFixed(1)+" MiB":v>=1024?(v/1024).toFixed(1)+" KiB":Math.round(v)+" B";}
  function sorted(){return d.processes.slice().sort((a,b)=>(b[root.sort]??-1)-(a[root.sort]??-1));}
  ListModel {id:processModel;dynamicRoles:true}
@@ -20,6 +20,7 @@ DropdownFrame {
  onSortChanged:syncProcesses()
  onPageChanged:syncProcesses()
  Component.onCompleted:syncProcesses()
+ Connections {target:Demo;function onActiveChanged(){root.processCommand="";root.syncProcesses();}}
 
  Column {
  width:parent.width;spacing:10
@@ -81,6 +82,7 @@ DropdownFrame {
  Row {spacing:8;ControlTile {label:"NVIDIA terminal";glyph:"\uf120";onActivated:Quickshell.execDetached(["@HOME@/.local/bin/sim-console"])}ControlTile {label:"nvitop";onActivated:Quickshell.execDetached(["@HOME@/.local/bin/sensei-terminal",Quickshell.env("HOME")+"/.local/bin/nvitop"])}ControlTile {label:"Robotics controls";onActivated:{ShellState.systemPage=2;ShellState.dropdown="system";}}}
  }ScrollBar.vertical:DeskScrollBar {}}
  Flickable {id:sectionEnter4Container;anchors.fill:parent;visible:root.page===3; clip:true;contentHeight:storageContent.height;Column {id:storageContent;width:parent.width;spacing:10
+ NrLabel {width:parent.width;wrapMode:Text.WordWrap;font.capitalization:Font.MixedCase;tracked:false;pixelSize:12;color:root.d.capacity?.state==="critical"?Theme.signalRed:root.d.capacity?.state==="reserve-deficit"?Theme.widgetAccent:Theme.widgetMuted;text:root.d.capacity?.known?("Root headroom · "+root.size(root.d.capacity.availableBytes)+" available / "+root.d.capacity.reserveGiB+" GiB working reserve · "+root.d.capacity.state.replace(/-/g," ")+" · advisory, no automatic cleanup"):"Root headroom · status unknown"}
  Repeater {model:root.d.mounts;Rectangle {required property var modelData;width:storageContent.width;height:76;color:Theme.alpha(Theme.widgetSurface,.6);border.color:Theme.widgetBorder
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;x:12;y:8;text:modelData.mount+"  ·  "+modelData.device+"  ·  "+modelData.fs;pixelSize:13;color:Theme.widgetAccent}
  NrLabel { font.capitalization: Font.MixedCase; tracked: false;x:12;y:30;text:root.size(modelData.used)+" used    "+root.size(modelData.free)+" available    "+root.size(modelData.total)+" total";pixelSize:12}
@@ -104,7 +106,7 @@ DropdownFrame {
  MonitorGraph {x:10;y:32;width:parent.width-20;height:52;ink:modelData.ink;values:modelData.values.map(v=>v/peak*100)}
  }}
  }
- Text {width:parent.width;text:root.page===4?"Interfaces / addresses\n"+(root.d.extra?.addresses??"")+"\n\nRouting table\n"+(root.d.extra?.routes??"")+"\n\nDNS configuration\n"+(root.d.extra?.dns??"")+"\n\nTCP / UDP sockets — user-owned process names where permitted\n"+(root.d.extra?.connections??""):root.page===5?"CPU specification\n"+(root.d.extra?.cpuInfo??"")+"\n\nTemperature sensors\n"+(root.d.extra?.sensors??[]).map(v=>v.name+": "+v.value.toFixed(1)+" °C").join("\n")+"\n\nUSB devices\n"+(root.d.extra?.usb??"")+"\n\nPCI devices / controllers\n"+(root.d.extra?.pci??""):"Battery / charge\n"+(root.d.extra?.batteries??[]).map(b=>b.manufacturer+" "+b.model_name+" · "+b.status+" · "+b.capacity+"%\nEnergy "+(Number(b.energy_now)/1000000).toFixed(2)+" Wh / "+(Number(b.energy_full)/1000000).toFixed(2)+" Wh · Design "+(Number(b.energy_full_design)/1000000).toFixed(2)+" Wh\nHealth "+(100*Number(b.energy_full)/Number(b.energy_full_design)).toFixed(1)+"% · Charge cap "+b.charge_control_end_threshold+"% · Cycles "+b.cycle_count+"\nDraw "+(Number(b.power_now)/1000000).toFixed(2)+" W · Voltage "+(Number(b.voltage_now)/1000000).toFixed(2)+" V").join("\n\n")+"\n\nOperating system\n"+(root.d.extra?.os??"")+"\n\nKernel: "+root.d.kernel+"\nUser services with failures\n"+(root.d.extra?.services??"")+"\n\nCPU power profile: "+(root.d.extra?.profile??"—")+"\n\nAudio devices / applications\n"+(root.d.extra?.audio??"")+"\n\nDisplay details\n"+(root.d.extra?.displays??"")+"\n\nGraph sampling: 0.5 seconds. Inventory refresh: 5 seconds. Sleeping GPU is not queried.";font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetText;wrapMode:Text.Wrap; textFormat:Text.PlainText}
+ Text {width:parent.width;text:root.page===4?"Interfaces / addresses\n"+(root.d.extra?.addresses??"")+"\n\nRouting table\n"+(root.d.extra?.routes??"")+"\n\nDNS configuration\n"+(root.d.extra?.dns??"")+"\n\nTCP / UDP sockets — user-owned process names where permitted\n"+(root.d.extra?.connections??""):root.page===5?"CPU specification\n"+(root.d.extra?.cpuInfo??"")+"\n\nTemperature sensors\n"+(root.d.extra?.sensors??[]).map(v=>v.name+": "+v.value.toFixed(1)+" °C").join("\n")+"\n\nUSB devices\n"+(root.d.extra?.usb??"")+"\n\nPCI devices / controllers\n"+(root.d.extra?.pci??""):"Battery / charge\n"+(root.d.extra?.batteries??[]).map(b=>b.manufacturer+" "+b.model_name+" · "+b.status+" · "+b.capacity+"%\nEnergy "+(Number(b.energy_now)/1000000).toFixed(2)+" Wh / "+(Number(b.energy_full)/1000000).toFixed(2)+" Wh · Design "+(Number(b.energy_full_design)/1000000).toFixed(2)+" Wh\nHealth "+(100*Number(b.energy_full)/Number(b.energy_full_design)).toFixed(1)+"% · Charge cap "+b.charge_control_end_threshold+"% · Cycles "+b.cycle_count+"\nDraw "+(Number(b.power_now)/1000000).toFixed(2)+" W · Voltage "+(Number(b.voltage_now)/1000000).toFixed(2)+" V").join("\n\n")+"\n\nOperating system\n"+(root.d.extra?.os??"")+"\n\nKernel: "+root.d.kernel+"\nUser services with failures\n"+(root.d.extra?.services??"")+"\n\nCPU power profile: "+(root.d.extra?.profile??"—")+"\n\nAudio devices / applications\n"+(root.d.extra?.audio??"")+"\n\nDisplay details\n"+(root.d.extra?.displays??"")+"\n\nGraph sampling: 1 second while open. Inventory refresh: 5 seconds. Sleeping GPU is not queried.";font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetText;wrapMode:Text.Wrap; textFormat:Text.PlainText}
  }
  }
 

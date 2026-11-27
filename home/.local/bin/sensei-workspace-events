@@ -6,6 +6,10 @@ from pathlib import Path
 import socket
 import subprocess
 import time
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+from child_lifetime import bind_parent
+bind_parent()
 EVENTS={'workspace','workspacev2','focusedmon','activespecial','activespecialv2','movewindow','movewindowv2','openwindow','closewindow','urgent','activewindowv2','monitoradded','monitoraddedv2','monitorremoved','configreloaded','moveworkspace','moveworkspacev2'}
 while True:
     try:
@@ -15,7 +19,7 @@ while True:
         if not current:raise OSError('No compositor')
         path=Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'hypr'/current['instance']/'.socket2.sock'
         with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as s:
-            s.connect(str(path));print('connected',flush=True)
+            s.connect(str(path));print(json.dumps({'name':'connected','data':''}),flush=True)
             with s.makefile() as stream:
                 for line in stream:
                     name=line.split('>>',1)[0]
@@ -24,4 +28,5 @@ while True:
                         data=line.split('>>',1)[1].strip() if name in ('urgent','activewindowv2','closewindow') else ''
                         print(json.dumps({'name':name,'data':data}),flush=True)
     except (OSError,ValueError,subprocess.SubprocessError):pass
+    print(json.dumps({'name':'disconnected','data':''}),flush=True)
     time.sleep(2)

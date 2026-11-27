@@ -109,10 +109,19 @@ class Headless(unittest.TestCase):
    self.assertEqual(h.remembered_playback()['queue'],saved['queue'])
    with patch.object(h,'raw_status',return_value={'stopped':True}):
     result=h.dispatch(['queue']);self.assertTrue(result['stale']);self.assertEqual(len(result['rows']),1)
- def test_recovery_is_rate_limited_across_calls(self):
-  with tempfile.TemporaryDirectory() as d,patch.object(h,'STORE',Path(d)),patch('subprocess.run') as run,patch.object(h.time,'sleep'):
-   run.return_value.returncode=0
-   self.assertTrue(h.recover_service());self.assertFalse(h.recover_service());self.assertEqual(run.call_count,1)
+ def test_network_failure_preserves_running_player_and_saved_queue(self):
+  import subprocess,urllib.error
+  saved={'stopped':False,'track':{'uri':'spotify:track:'+'1'*22},'queue':[{'uri':'spotify:track:'+'2'*22}]}
+  with tempfile.TemporaryDirectory() as d,patch.object(h,'STORE',Path(d)):
+   h.remember_playback(saved)
+   with patch('subprocess.run',return_value=subprocess.CompletedProcess([],0,'active\n','')) as run:
+    self.assertFalse(h.recover_service())
+    self.assertFalse((Path(d)/'recovery-at').exists())
+    self.assertEqual(h.remembered_playback()['queue'],saved['queue'])
+    self.assertFalse(any('restart' in call.args[0] or 'start' in call.args[0] for call in run.call_args_list))
+   with patch.object(h.HTTP,'open',side_effect=urllib.error.HTTPError(h.BASE+'/status',503,'offline',{},None)),patch.object(h,'recover_service') as recover:
+    with self.assertRaisesRegex(ValueError,'saved queue'):h.request('/status')
+    recover.assert_not_called()
  def test_uncertain_write_is_never_replayed_or_restarted(self):
   import urllib.error
   with patch.object(h.HTTP,'open',side_effect=urllib.error.URLError('offline')) as http,patch.object(h,'recover_service') as recovery:
@@ -121,4 +130,30 @@ class Headless(unittest.TestCase):
  def test_recovery_waits_for_login_without_restarting_again(self):
   with patch.object(h,'request',side_effect=[ValueError('Music needs a Spotify sign-in.'),{'stopped':True}]) as request,patch.object(h.time,'sleep'):
    self.assertEqual(h.recovered_status(),{'stopped':True});self.assertEqual(request.call_count,2)
+ def test_real_http_outage_preserves_queue_artwork_and_credentials(self):
+  import http.server,threading
+  payload={'stopped':False,'paused':True,'track':{'uri':'spotify:track:'+'1'*22,'name':'Fixture song','album_cover_url':'https://example.invalid/art'},'queue':[{'uri':'spotify:track:'+'2'*22,'track':{'uri':'spotify:track:'+'2'*22,'name':'Next fixture'}}]}
+  state={'offline':False,'writes':0}
+  class Handler(http.server.BaseHTTPRequestHandler):
+   def log_message(self,*args):pass
+   def do_GET(self):
+    self.send_response(503 if state['offline'] else 200);self.end_headers()
+    self.wfile.write(json.dumps({'error':'temporary upstream outage'} if state['offline'] else payload).encode())
+   def do_POST(self):
+    state['writes']+=1;self.send_response(500);self.end_headers()
+  server=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler)
+  worker=threading.Thread(target=server.serve_forever,kwargs={'poll_interval':.05},daemon=True);worker.start()
+  home=Path(self.store.name)/'home';credentials=home/'.config/sensei-go-spotify/state.json';credentials.parent.mkdir(parents=True)
+  credentials.write_text('{"credentials":{"username":"fixture","data":"private-fixture-only"}}');original=credentials.read_bytes()
+  try:
+   with patch.object(h,'BASE','http://127.0.0.1:'+str(server.server_port)),patch.object(Path,'home',return_value=home):
+    self.assertTrue(h.status()['ready']);self.assertEqual(h.dispatch(['queue'])['rows'][0]['title'],'Next fixture')
+    state['offline']=True
+    offline=h.status();self.assertFalse(offline['ready']);self.assertEqual(offline['track']['art'],'https://example.invalid/art')
+    queued=h.dispatch(['queue']);self.assertTrue(queued['stale']);self.assertEqual(queued['rows'][0]['title'],'Next fixture')
+    self.assertEqual(credentials.read_bytes(),original)
+    state['offline']=False
+    self.assertTrue(h.status()['ready']);self.assertFalse(h.dispatch(['queue'])['stale'])
+    self.assertEqual(state['writes'],0);self.assertEqual(credentials.read_bytes(),original)
+  finally:server.shutdown();server.server_close();worker.join(timeout=3)
 if __name__=='__main__':unittest.main()

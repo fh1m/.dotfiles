@@ -11,7 +11,7 @@ Singleton {
     property string reply:""
     property string companionActionName:""
     property string error: ""
-    readonly property bool working: action.running || companionAction.running
+    readonly property bool working:action.running||companionAction.running||modeAction.running
     readonly property bool online: data.peer?.authenticated === true
     readonly property bool inputRunning: data.input === "active"
     function refresh():void {if(!scan.running)scan.running=true;}
@@ -19,6 +19,10 @@ Singleton {
     function locate():void {execute(["locate"]);}
     function home():void {execute(["home"]);}
     function openStorage():void {execute(["storage"]);}
+    function setMode(value:string):void {
+        if(working||!["auto","away","together","homie"].includes(value))return;
+        error="";modeAction.command=[Quickshell.env("HOME")+"/.local/bin/sensei-den","mode",value];modeAction.running=true;
+    }
     function companion(name:string,value:string):void {
         if(companionAction.running)return;
         error="";companionActionName=name;
@@ -37,6 +41,10 @@ Singleton {
     }
     Process {id:companionAction;stdout:StdioCollector {onStreamFinished:if(["talk","remember","chat"].includes(root.companionActionName)){try{root.reply=JSON.parse(text).message||"";}catch(e){root.reply="Reply unavailable";}}}
         onExited:(code,status)=>{if(code!==0)root.error="Companion action unavailable";root.refresh();}}
+    Process {id:modeAction
+        stdout:StdioCollector {onStreamFinished:{try{const result=JSON.parse(text);if(result.error)root.error=result.error;}catch(e){root.error="Mode result unavailable; refresh before retrying.";}}}
+        onExited:(code,status)=>{if(code!==0&&root.error==="")root.error="Mode change failed; local controls remain available.";root.refresh();}
+    }
     Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==="system")root.refresh();}function onSystemPageChanged(){if(ShellState.dropdown==="system")root.refresh();}}
     Timer {interval:15000;repeat:true;running:ShellState.dropdown==="system"&&ShellState.systemPage===5;onTriggered:root.refresh()}
 }

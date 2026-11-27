@@ -1,0 +1,9 @@
+[Unit]
+Description=Follow authenticated Den peer discovery without fixed IP addresses
+
+[Path]
+PathChanged=@HOME@/.local/state/sensei-den/peer-address.json
+Unit=den-peer-firewall.service
+
+[Install]
+WantedBy=multi-user.target

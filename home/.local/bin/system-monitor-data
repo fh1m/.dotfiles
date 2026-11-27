@@ -1,10 +1,40 @@
 #!/usr/bin/python3
-import os,time,json,re,platform,subprocess
+import os,time,json,re,platform,subprocess,sys,fcntl,tempfile
 from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+from storage_budget import root_headroom
+
+# Keep the interpreter alive while a view subscribes. Each sample is still the
+# same one-shot implementation, with serialized delta state and no child sampler.
+if __name__ == '__main__' and '--stream' in sys.argv:
+    import runpy, select
+    pending = ''
+    while True:
+        runpy.run_path(__file__, run_name='monitor_sample')
+        sys.stdout.flush()
+        ready, _, _ = select.select([sys.stdin], [], [], 1.0)
+        if ready:
+            line = sys.stdin.readline()
+            if not line:
+                break
+            try:
+                request = json.loads(line)
+                for key, field in [('SENSEI_MONITOR_DETAIL', 'detail'),
+                                   ('SENSEI_MONITOR_INVENTORY', 'inventory'),
+                                   ('SENSEI_MONITOR_PRIVATE', 'private')]:
+                    os.environ[key] = '1' if request.get(field, False) else '0'
+            except (ValueError, TypeError):
+                pass
+    sys.exit(0)
 # Never fall back to /tmp: a predictable name there can be planted as a symlink.
 now=time.monotonic(); cache_dir=Path(os.environ.get('XDG_RUNTIME_DIR') or Path.home()/'.cache'); cache_dir.mkdir(parents=True,exist_ok=True); cache=cache_dir/'fh1m-monitor.json'
-details=os.environ.get('SENSEI_MONITOR_DETAIL')=='1'
-inventory=os.environ.get('SENSEI_MONITOR_INVENTORY')=='1'
+lock = open(cache.with_suffix('.lock'), 'a')
+os.chmod(lock.name, 0o600)
+fcntl.flock(lock, fcntl.LOCK_EX)
+now=time.monotonic()
+private = os.environ.get('SENSEI_MONITOR_PRIVATE') == '1'
+details=os.environ.get('SENSEI_MONITOR_DETAIL')=='1' and not private
+inventory=os.environ.get('SENSEI_MONITOR_INVENTORY')=='1' and not private
 try: old=json.loads(cache.read_text())
 except Exception: old={}
 dt=max(.1,now-old.get('time',now-2)); tick=os.sysconf('SC_CLK_TCK'); page=os.sysconf('SC_PAGE_SIZE')
@@ -27,7 +57,9 @@ for path in Path('/proc').iterdir():
         read=max(0,(io.get('read_bytes',0)-previous.get('read',io.get('read_bytes',0)))/dt) if same and io else None
         write=max(0,(io.get('write_bytes',0)-previous.get('write',io.get('write_bytes',0)))/dt) if same and io else None
         pids[path.name]={'start':start,'ticks':ticks,'read':io.get('read_bytes',0),'write':io.get('write_bytes',0)}
-        command=(path/'cmdline').read_bytes().replace(b'\0',b' ').decode(errors='replace').strip()
+        # Arguments can contain credentials; names provide useful diagnostics
+        # without sending an unrestricted argv to the desktop process.
+        command=name
         processes.append({'pid':pid,'name':name,'cpu':round(cpu,1),'ram':rss,'memory':round(rss/mem['MemTotal']*100,2),'read':read,'write':write,'threads':int(fields[17]),'command':command or name,'uid':path.stat().st_uid})
     except (OSError,ValueError,IndexError):pass
 mounts=[];seen=set()
@@ -62,9 +94,14 @@ old_psi=old.get('psi',{})
 io_pressure={key:round(max(0,min(100,(value-old_psi[key])/1e6/dt*100)),2)
              if value is not None and old_psi.get(key) is not None else 0
              for key,value in psi.items()}
-try:
-    addresses=json.loads(subprocess.run(['ip','-j','address'],capture_output=True,text=True,timeout=2).stdout);ips=[a['local'] for interface in addresses for a in interface.get('addr_info',[]) if a['family']=='inet' and a.get('scope')=='global']
-except Exception:ips=[]
+ips=old.get('ips',[]);addressTime=old.get('addressTime',0)
+if private:
+    ips=[]
+elif now-addressTime>=30 or 'ips' not in old:
+    try:
+        addresses=json.loads(subprocess.run(['ip','-j','address'],capture_output=True,text=True,timeout=2,check=True).stdout);ips=[a['local'] for interface in addresses for a in interface.get('addr_info',[]) if a['family']=='inet' and a.get('scope')=='global']
+        addressTime=now
+    except (OSError,ValueError,subprocess.SubprocessError):pass
 
 # Expensive inventory is refreshed at most every five seconds, while live rates remain fast.
 extra=old.get('extra',{});extraTime=old.get('extraTime',0)
@@ -97,5 +134,26 @@ if inventory and (now-extraTime>=5 or not extra):
         staticGpu+='\nPCI address: '+d.name+'\nVendor / device: '+read(d/'vendor')+' / '+read(d/'device')+'\nRuntime power: '+read(d/'power/runtime_status')+'\nPower policy: '+read(d/'power/control')
     extra['gpuDetails']=staticGpu+'\n\n'+extra['gpuDetails']
     extraTime=now
-state={'time':now,'cpus':cpus,'pids':pids,'nets':nets,'disks':disks,'psi':psi,'extra':extra,'extraTime':extraTime};tmp=cache.with_suffix('.tmp');tmp.write_text(json.dumps(state));tmp.chmod(0o600);tmp.replace(cache)
-print(json.dumps({'extra':extra if inventory else {},'cpu':usage[0], 'cores':usage[1:],'memory':{'total':mem['MemTotal'],'used':mem['MemTotal']-mem['MemAvailable'],'available':mem['MemAvailable'],'cache':mem.get('Cached',0)+mem.get('Buffers',0),'swapTotal':mem['SwapTotal'],'swapUsed':mem['SwapTotal']-mem['SwapFree']},'processes':sorted(processes,key=lambda p:p['cpu'],reverse=True),'processCount':processCount,'mounts':mounts,'network':network,'storage':storage,'ioPressure':io_pressure,'uptime':float(Path('/proc/uptime').read_text().split()[0]),'load':os.getloadavg(),'kernel':platform.release(),'host':platform.node(),'ips':ips,'sampleTime':time.time()}))
+state={'time':now,'cpus':cpus,'pids':pids,'nets':nets,'disks':disks,'psi':psi,'extra':extra,'extraTime':extraTime,'ips':ips,'addressTime':addressTime}
+if private:
+    extra={}
+    state.update(extra={},extraTime=0,ips=[],pids={})
+fd,temporary=tempfile.mkstemp(prefix=cache.name+'.',suffix='.tmp',dir=cache_dir)
+try:
+    with os.fdopen(fd,'w') as output:json.dump(state,output)
+    os.replace(temporary,cache)
+finally:
+    Path(temporary).unlink(missing_ok=True)
+    fcntl.flock(lock,fcntl.LOCK_UN)
+    lock.close()
+print(json.dumps({
+    'private':private,'extra':extra if inventory else {},'cpu':usage[0],'cores':usage[1:],
+    'capacity':root_headroom(),
+    'memory':{'total':mem['MemTotal'],'used':mem['MemTotal']-mem['MemAvailable'],'available':mem['MemAvailable'],'cache':mem.get('Cached',0)+mem.get('Buffers',0),'swapTotal':mem['SwapTotal'],'swapUsed':mem['SwapTotal']-mem['SwapFree']},
+    'processes':[] if private else sorted(processes,key=lambda p:p['cpu'],reverse=True),
+    'processCount':processCount,'mounts':[] if private else mounts,
+    'network':[dict(row,name='Interface '+str(i+1)) for i,row in enumerate(network)] if private else network,
+    'storage':[dict(row,name='Disk '+str(i+1)) for i,row in enumerate(storage)] if private else storage,
+    'ioPressure':io_pressure,'uptime':float(Path('/proc/uptime').read_text().split()[0]),'load':os.getloadavg(),
+    'kernel':platform.release(),'host':'Private' if private else platform.node(),'ips':ips,'sampleTime':time.time()
+}))

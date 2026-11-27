@@ -304,7 +304,7 @@ Item {
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
                 color: SystemStatus.breach ? Theme.accent : Theme.dim
-                text: SystemStatus.breach ? `ICE BREACH ${SystemStatus.failedUnits}` : "ICE NOMINAL"
+                text: !SystemStatus.healthKnown ? "ICE UNKNOWN" : SystemStatus.breach ? `ICE BREACH ${SystemStatus.failedUnits}` : "ICE NOMINAL"
             }
         }
 

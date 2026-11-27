@@ -17,6 +17,11 @@ The installer backs up replaced files under `~/.local/state/dotfiles-backups/` a
 
 Shared UI, shell, editor, learning tools and helpers live in `home/`. `profiles/pc/home/` overrides desktop hardware policy. `pc/` retains installation, disk preservation, firmware recovery and Den runtime source. Subject vaults and application credentials remain private.
 
+The [November repair audit](AUDIT-2026-11-27.md) records measured CPU/memory
+causes, the supported Qt/runtime boundary, behavioral regressions and acceptance
+that remains open. [Storage headroom](STORAGE-HEADROOM.md) explains the reserve
+budget and why a blocked peer backup must not be advertised as current.
+
 ## One keyboard and mouse
 
 Arete is the master. Main panel top → Homie bottom; upper external right → Homie left. Return through Homie's bottom to Arete's main panel, or left to its upper external. The ScreenPad and lower external use the laptop's normal compositor boundaries.
@@ -36,6 +41,11 @@ systemctl --user status den-input den-cursor
 ```
 
 Services start with the graphical session. `den-input` discovers the actual compositor. Missing configured outputs disable that edge. Private SSH profiles use key-only authentication, pinned host keys, keepalives and multiplexing; the PC's reverse key is forced to the Den action whitelist. LAN firewall pairing is local administration, not a public key or address list. A changed host fingerprint must be verified locally, never accepted automatically.
+
+LAN administration uses `arete.local` and `homie.local`. The scoped
+`scripts/reconcile-den-peer.py` service refreshes only the named firewall peer
+set after resolution and pinned-key authentication. Do not replace this with
+manual DHCP-address edits or automatic acceptance of a new host key.
 
 ## Clipboard and storage
 

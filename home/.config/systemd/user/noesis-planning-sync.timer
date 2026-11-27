@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh Noesis planning without an always-running sync process
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+Unit=noesis-planning-sync.service
+
+[Install]
+WantedBy=timers.target

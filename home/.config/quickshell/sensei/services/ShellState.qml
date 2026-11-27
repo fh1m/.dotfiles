@@ -115,7 +115,31 @@ Singleton {
     property int dropdownStamp: 0
     // True while the pointer is anywhere over the bar. The dropdown's focus grab
     // waits on this; see the comment there.
-    property bool barHovered: false
+    property var barHovers: ({})
+    function setBarHover(key:string,output:string,hovered:bool):void {
+        const next=Object.assign({},barHovers);
+        if(hovered)next[key]=output;else delete next[key];
+        barHovers=next;
+        if(hovered)barContext(output);
+    }
+    readonly property bool barHovered: (!cursorOwnershipKnown||cursorOwned)&&Object.keys(barHovers).length>0
+    // Cross-host capture does not always send Qt a pointer-leave event. The
+    // independent cursor broker publishes the ownership transition instead.
+    property bool cursorOwned: true
+    property bool cursorOwnershipKnown: false
+    FileView {
+        path:Quickshell.env("XDG_RUNTIME_DIR")+"/sensei-den-cursor-owner.json"
+        watchChanges:true;printErrors:false
+        onFileChanged:reload()
+        onLoadFailed:{root.cursorOwnershipKnown=false;root.cursorOwned=true;}
+        onLoaded:{
+            try {
+                const value=JSON.parse(text());
+                root.cursorOwnershipKnown=value.version===1&&typeof value.owned==="boolean";
+                root.cursorOwned=root.cursorOwnershipKnown?value.owned:true;
+            } catch(e) {root.cursorOwnershipKnown=false;root.cursorOwned=true;}
+        }
+    }
     // A moving bar surface can force both Intel-driven screens to composite at
     // full rate. Keep readings live, but spend animation frames only while the
     // bar or an overlay is being used. Music playback itself is unaffected.

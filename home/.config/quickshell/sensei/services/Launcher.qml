@@ -149,15 +149,16 @@ Singleton {
             // `Terminal=true`, so a terminal app (btop, htop, nmtui...) ran with
             // nowhere to draw and exited unseen. Those open in the
             // daily terminal (sensei-terminal, Alacritty).
-            if (chosen.entry.runInTerminal)
-                Quickshell.execDetached({
-                    command: ["@HOME@/.local/bin/sensei-terminal", "-e"].concat(Array.from(chosen.entry.command)),
-                    workingDirectory: chosen.entry.workingDirectory || Quickshell.env("HOME")
-                });
-            else
-                chosen.entry.execute();
+            launchEntry(chosen.entry);
         }
         close();
+    }
+
+    function launchEntry(entry, newWindow=false): void {
+        Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-app","--desktop",
+            JSON.stringify({id:entry.id,startupClass:entry.startupClass||"",command:Array.from(entry.command),
+                terminal:entry.runInTerminal,cwd:entry.workingDirectory||Quickshell.env("HOME"),
+                mode:newWindow?"new-window":"focus-or-launch"})]);
     }
 
     function record(id: string): void {

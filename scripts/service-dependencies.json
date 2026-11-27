@@ -1,0 +1,10 @@
+{
+  "sensei-go-spotify.service": {
+    "path": ".local/opt/go-librespot/go-librespot",
+    "provision": "python3 scripts/setup-headless-spotify.py"
+  },
+  "sensei-display-dimming.service": {
+    "path": ".local/bin/wl-gammarelay-rs",
+    "provision": "bash scripts/setup-display-dimming.sh"
+  }
+}

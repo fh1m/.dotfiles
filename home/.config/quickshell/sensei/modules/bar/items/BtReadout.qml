@@ -26,16 +26,15 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 7
 
-    // The rune stands in for the word `BT`. It goes red while a device is
-    // linked or audio is playing, grey otherwise; the label beside it says how many.
+    // Off, ready and connected are distinct; an idle controller is still usable.
     Item {
         width: 24; height: 24
         y: (readout.height - height) / 2
         InstrumentIcon {
             id:musicRune
             anchors.centerIn: parent
-            kind: root.connectedDevices.length?"bluetooth-connected":"bluetooth-off"
-            ink:root.audioPlaying?Theme.signalRed:root.connectedDevices.length?Theme.signalRed:Theme.alpha(Theme.signalRed,.55)
+            kind: !(root.adapter?.enabled ?? false) ? "bluetooth-off" : root.connectedDevices.length ? "bluetooth-connected" : "bluetooth"
+            ink: (root.adapter?.enabled ?? false) ? (root.connectedDevices.length ? Theme.signalRed : Theme.alpha(Theme.signalRed,.8)) : Theme.widgetMuted
             SequentialAnimation on scale {
                 running: ShellState.ambientMotion && root.audioPlaying && musicRune.visible
                 loops: Animation.Infinite

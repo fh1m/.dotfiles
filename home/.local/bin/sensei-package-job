@@ -81,7 +81,7 @@ def run(action,name):
         os.close(slave);os.close(master);os.close(control);fifo.unlink(missing_ok=True);lock.close();raise
     os.close(slave)
     selector=selectors.DefaultSelector();selector.register(master,selectors.EVENT_READ);selector.register(control,selectors.EVENT_READ)
-    input_buffer=b'';prompt_buffer='';last_write=0;last_prompt_notice=0
+    input_buffer=b'';prompt_buffer='';last_write=0;last_prompt_notice=0;last_output=time.monotonic();last_saved=None;child_finished_at=None
     def cancel(*_):
         # SIGINT is delegated to the package manager. Never SIGKILL a transaction.
         try:os.killpg(child.pid,signal.SIGINT)
@@ -95,6 +95,7 @@ def run(action,name):
                     try:chunk=os.read(master,65536)
                     except OSError:chunk=b''
                     if chunk:
+                        last_output=time.monotonic()
                         text=re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]','',chunk.decode(errors='replace')).replace('\r','\n')
                         data['log']=(data['log']+text)[-40000:]
                         prompt_buffer=(prompt_buffer+text)[-2000:]
@@ -116,9 +117,17 @@ def run(action,name):
                         if isinstance(answer,str) and len(answer)<=2048:
                             os.write(master,(answer+'\n').encode())
                             data['phase']='Continuing';data['prompt']='';prompt_buffer=''
-            if time.monotonic()-last_write>.4:
-                save(data);last_write=time.monotonic()
-            if child.poll() is not None and master not in selector.get_map():break
+            idle=time.monotonic()-last_output
+            if idle>300 and data['phase'] not in ('Your confirmation is needed','Cancellation requested; waiting for package manager'):
+                data['phase']='Waiting for package tool · inspect before cancelling' if action=='firmware' else 'No progress for five minutes · review or cancel'
+            data['lastOutputAgeSeconds']=int(idle)//30*30
+            if time.monotonic()-last_write>=1 and data!=last_saved:
+                save(data);last_write=time.monotonic();last_saved=dict(data)
+            if child.poll() is not None:
+                if child_finished_at is None:child_finished_at=time.monotonic()
+                # A daemonized grandchild can retain the PTY after the actual
+                # package command has exited. Drain briefly, never wait forever.
+                if master not in selector.get_map() or time.monotonic()-child_finished_at>=2:break
         code=child.wait();data.update(exitCode=code,status='done' if code==0 else 'attention',phase='Completed' if code==0 else 'Needs attention',finishedAt=time.time());save(data)
         history=STATE/'history';history.mkdir(exist_ok=True,mode=0o700)
         archive=history/(data['id']+'.json')

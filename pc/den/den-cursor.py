@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
 """Cursor locator/recovery independent of input sharing. No keystroke recording."""
-import json,os,pathlib,selectors,signal,socket,subprocess,sys,time,tomllib,ctypes,concurrent.futures
+import json,os,pathlib,selectors,signal,socket,subprocess,sys,time,tomllib,ctypes,concurrent.futures,shutil
 sys.path.insert(0,str(pathlib.Path.home()/'.local/share/sensei'))
 from den_layout import roles as display_roles
 ROOT=pathlib.Path.home()/'.local/state/homie-control'
 SOCK=ROOT/'cursor.sock'
-QS=str(pathlib.Path.home()/'.local/opt/sensei-quickshell/bin/qs')
+def graphical_binary():
+    override=os.environ.get('SENSEI_QS_BIN')
+    if override:return shutil.which(override) or override
+    prefix=pathlib.Path.home()/'.local/opt/sensei-quickshell'
+    candidate=prefix/'bin/qs'
+    try:
+        if candidate.is_file() and os.access(candidate,os.X_OK):
+            built=(prefix/'qt-version').read_text().strip()
+            current=subprocess.check_output(['/usr/lib/qt6/bin/qtpaths','--query','QT_VERSION'],text=True,timeout=3).strip()
+            if built and built==current:return str(candidate)
+    except (OSError,UnicodeError,subprocess.SubprocessError):pass
+    return shutil.which('qs') or '/usr/bin/qs'
+QS=graphical_binary()
 def hypr(*args):return subprocess.check_output(['hyprctl','-i','0',*args],timeout=3)
 def remote(command):return subprocess.check_output(['ssh','-F',str(ROOT/'client.conf'),'homie',command],timeout=4)
 def pulse(peer=False):
@@ -32,7 +44,7 @@ def daemon():
     try:SOCK.unlink()
     except FileNotFoundError:pass
     server=socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM);server.bind(str(SOCK));os.chmod(SOCK,0o600)
-    binary=QS if pathlib.Path(QS).exists() else '/usr/bin/qs'
+    binary=QS
     gui=subprocess.Popen([binary,'-p',str(ROOT/'cursor-ui'),'--no-duplicate'])
     selector=selectors.DefaultSelector();selector.register(server,selectors.EVENT_READ,'request')
     gui_pidfd=os.pidfd_open(gui.pid);selector.register(gui_pidfd,selectors.EVENT_READ,'gui-exit')
@@ -50,7 +62,20 @@ def daemon():
     watch=libc.inotify_init1(os.O_NONBLOCK|os.O_CLOEXEC)
     libc.inotify_add_watch(watch,os.fsencode(ROOT/'input'),8)
     selector.register(watch,selectors.EVENT_READ,'state')
+    ownership=pathlib.Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'sensei-den-cursor-owner.json'
+    published_output=None
     def gui_focus(name):
+        nonlocal published_output
+        if name!=published_output or not ownership.exists():
+            temporary=ownership.with_name(ownership.name+'.'+str(os.getpid())+'.tmp')
+            try:
+                temporary.write_text(json.dumps({'version':1,'owned':bool(name),'output':name}))
+                temporary.chmod(0o600);temporary.replace(ownership);published_output=name
+            except OSError as error:
+                # A failed read-model write must not disable cursor recovery.
+                print('Cursor ownership receipt unavailable: '+str(error),file=sys.stderr)
+                try:temporary.unlink(missing_ok=True)
+                except OSError:pass
         subprocess.run([binary,'-p',str(ROOT/'cursor-ui'),'ipc','call','den-cursor','focus',name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=2)
     def remote_owner(owned,version):
         if version!=owner_version:return
@@ -150,6 +175,8 @@ def daemon():
     finally:
         if ipc is not None:ipc.close()
         gui.terminate();server.close();os.close(gui_pidfd);os.close(watch);pool.shutdown(wait=False,cancel_futures=True);owner_pool.shutdown(wait=False,cancel_futures=True);SOCK.unlink(missing_ok=True)
+        try:ownership.unlink(missing_ok=True)
+        except OSError as error:print('Cursor ownership cleanup failed: '+str(error),file=sys.stderr)
         try:hypr('eval','if _G.den_ctrl_subscription then _G.den_ctrl_subscription:remove(); _G.den_ctrl_subscription=nil end')
         except (OSError,subprocess.SubprocessError):pass
 

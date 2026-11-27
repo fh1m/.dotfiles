@@ -1,6 +1,4 @@
 -- Initial placement only; manual moves remain yours. Modal/auth windows stay put.
-local helpers = "(?i)^(sensei-deck|zenity|org\\.gnome\\.Zenity|pinentry.*|.*polkit.*|xdg-desktop-portal.*)$"
-hl.window_rule({name="sensei-app-misc-default",match={class="negative:"..helpers,modal=false},workspace="7 silent"})
 local routes = {
  {1,"(?i)^(Alacritty|kitty|foot|footclient|org\\.wezfurlong\\.wezterm|wezterm|konsole|org\\.gnome\\.Terminal|com\\.mitchellh\\.ghostty)$"},
  {2,"(?i)^(Google-chrome.*|chromium.*|firefox.*|org\\.mozilla\\.firefox|brave-browser.*|Brave-browser.*|vivaldi.*|opera.*|librewolf.*|zen|zen-browser|microsoft-edge.*)$"},

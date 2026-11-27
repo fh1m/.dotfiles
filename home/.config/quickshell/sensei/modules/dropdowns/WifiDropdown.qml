@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import Quickshell.Networking
 import qs.components
 import qs.config
@@ -52,10 +53,14 @@ DropdownFrame {
         Qt.callLater(root.focusPassphrase);
     }
     onNeedsPassphraseChanged: Qt.callLater(root.focusPassphrase)
+    onEnabledChanged: Qt.callLater(root.focusPassphrase)
+    Connections {target:root.Window.window;function onVisibleChanged(){Qt.callLater(root.focusPassphrase);}function onActiveChanged(){Qt.callLater(root.focusPassphrase);}}
 
     function focusPassphrase(): void {
-        if (pending && needsPassphrase)
+        if (root.enabled && root.Window.active && root.Window.window?.visible && pending && needsPassphrase)
             input.forceActiveFocus();
+        else
+            input.focus = false;
     }
 
     function act(network: var): void {

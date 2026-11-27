@@ -14,7 +14,7 @@ import time
 import tomllib
 
 ROOT = Path(os.environ.get('DEN_CONTROL_ROOT', str(Path.home()/'.local/state/homie-control')))
-ACTIONS = {'status', 'toggle', 'start', 'stop', 'locate', 'home', 'storage', 'check'}
+ACTIONS = {'ping', 'status', 'toggle', 'start', 'stop', 'locate', 'home', 'storage', 'check'}
 
 
 def run(args, timeout=6):
@@ -63,6 +63,7 @@ def status():
     except (OSError,ValueError):companion={}
     return {'mode':prefs.get('mode','auto'),'companion':companion.get('enabled',True),
             'companionQuiet':companion.get('quiet',False),'companionReducedMotion':companion.get('reducedMotion',False),
+            'modePeerPending':prefs.get('peerPending'),'modePeerAcknowledged':prefs.get('peerAcknowledged'),
             'peer': {'host': 'homie', 'authenticated': online},
             'input': 'active' if active else 'inactive', 'captured': captured,
             'state': 'Controlling Homie' if captured else ('Ready at screen edges' if active else 'Paused'),
@@ -103,6 +104,9 @@ def start():
 
 
 def local_action(action):
+    if action == 'ping':
+        # Liveness must not recursively query the caller or launch systemctl.
+        return {'host':socket.gethostname().split('.')[0],'protocol':1}
     if action == 'status' or action == 'check':
         return status()
     if action in ('toggle', 'start', 'stop', 'home'):
@@ -128,6 +132,8 @@ def local_action(action):
 
 
 def dispatch(action):
+    if action == 'ping':
+        return local_action(action)
     if master():
         return local_action(action)
     if action == 'storage':

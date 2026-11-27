@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Render audited user dotfiles. Default: dry run; no packages or root edits."""
-import argparse, datetime, json, os, re, shutil, subprocess
+import argparse, datetime, json, os, re, shutil, subprocess, tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,6 +67,36 @@ def render(data, home, hardware):
         text = text.replace('readonly property var bottomBarScreens: screens.filter(s => s.name === "DP-2")', 'readonly property var bottomBarScreens: { const secondary=screens.find(s=>s.name==="DP-2"); return secondary?[secondary]:barScreens; }')
     return text.encode()
 
+def install_shell_environment(home, backup, apply=False):
+    """Add the silent environment include without replacing existing shell setup."""
+    path = home / '.zshenv'
+    target = path.resolve()
+    if not target.is_relative_to(home.resolve()):
+        raise ValueError('.zshenv points outside HOME; add the environment include explicitly')
+    include = '[[ -r "$HOME/.config/zsh/sensei-env.zsh" ]] && source "$HOME/.config/zsh/sensei-env.zsh"'
+    current = target.read_text() if target.exists() else ''
+    if include in current.splitlines():
+        return False
+    if apply:
+        backup.mkdir(parents=True, exist_ok=True, mode=0o700)
+        if target.exists():
+            saved = backup / '.zshenv'
+            shutil.copy2(target, saved)
+            saved.chmod(0o600)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        mode = target.stat().st_mode & 0o777 if target.exists() else 0o600
+        fd, temporary = tempfile.mkstemp(prefix='.zshenv-new-', dir=target.parent)
+        try:
+            with os.fdopen(fd, 'w') as stream:
+                stream.write('# Digital Den: shared noninteractive environment.\n' + include + '\n' + current)
+                stream.flush()
+                os.fchmod(stream.fileno(), mode)
+            os.replace(temporary, target)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+    return True
+
 def install(home, apply=False, hardware='generic'):
     home = home.resolve()
     stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
@@ -115,8 +145,13 @@ def install(home, apply=False, hardware='generic'):
         temp.write_bytes(data)
         temp.chmod(source.stat().st_mode & 0o777)
         temp.replace(dest)
+    if install_shell_environment(home, backup, apply):
+        changes.append('.zshenv (environment include)')
     links = dict(LINKS)
-    if hardware == "pc":links[".local/opt/sensei-quickshell/bin/qs"] = "/usr/bin/qs"
+    # A stamped prefix belongs to build-quickshell-local.sh, not this installer.
+    # Retain the distro alias only for PCs without a managed local build.
+    if hardware == "pc" and not (home / '.local/opt/sensei-quickshell/qt-version').is_file():
+        links[".local/opt/sensei-quickshell/bin/qs"] = "/usr/bin/qs"
     for relative, target in links.items():
         dest, source = home / relative, home / target
         if dest.is_symlink() and os.readlink(dest) == str(source):

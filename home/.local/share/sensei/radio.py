@@ -135,6 +135,8 @@ def open_receiver():
  if shutil.which('qt6ct'):env['QT_QPA_PLATFORMTHEME']='qt6ct'
  stop();subprocess.Popen(['gqrx','-c',str(gqrx_config())],env=env,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True);return {'opened':'Gqrx'}
 def watch():
+ from child_lifetime import bind_parent
+ bind_parent()
  print(json.dumps(status()),flush=True)
  p=subprocess.Popen(['udevadm','monitor','--udev','--subsystem-match=usb'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)
  try:

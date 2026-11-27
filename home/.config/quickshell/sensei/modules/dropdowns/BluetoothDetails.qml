@@ -26,7 +26,7 @@ Column {
   fillColor:Theme.widgetSurface;borderColor:Theme.widgetBorder;chamfer:6;scanlines:false
   Column {anchors.fill:parent;anchors.margins:12;spacing:10
    Text { textFormat: Text.PlainText;width:parent.width;text:root.page===0?(root.selectedDevice?.name||'Choose a device above'):root.page===1?'Music quality and routing':root.page===2?'Bluetooth controller':'Sensei, your Bluetooth toolbox';color:Theme.widgetText;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;font.bold:true;elide:Text.ElideRight}
-   Text { textFormat: Text.PlainText;width:parent.width;text:root.page===0?(root.info.Connected?'Connected · ':'Disconnected · ')+(root.info.Trusted?'trusted':'ask before reconnecting'):root.page===1?(root.codec.codec?root.codec.codec.toUpperCase()+' · '+(root.codec.formats?.[0]?.rate||'—')+' Hz · stereo':'No audio transport for this device'):root.page===2?'Intel AX200 · paired devices appear without a scan':'Diagnostics and recovery tools run only when requested.';color:Theme.widgetMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;wrapMode:Text.WordWrap}
+   Text { textFormat: Text.PlainText;width:parent.width;text:root.page===0?(root.info.Connected?'Connected · ':'Disconnected · ')+(root.info.Trusted?'trusted':'ask before reconnecting'):root.page===1?(root.codec.codec?root.codec.codec.toUpperCase()+' · '+(root.codec.formats?.[0]?.rate||'—')+' Hz · stereo':'No audio transport for this device'):root.page===2?(root.adapter ? (root.adapter.enabled ? 'Controller ready · paired devices remain listed without scanning' : 'Controller off · enable it to discover devices') : 'No Bluetooth controller detected'):'Diagnostics and recovery tools run only when requested.';color:Theme.widgetMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;wrapMode:Text.WordWrap}
    Column {width:parent.width;spacing:10;visible:root.page===0
     Text { textFormat: Text.PlainText;width:parent.width;wrapMode:Text.WordWrap;text:`Address  ${root.address||'—'}\nBattery  ${root.info.battery===null||root.info.battery===undefined?'not reported':root.info.battery+'%'}   ·   Type  ${root.info.Icon||'Bluetooth device'}\nRadio  ${root.info.RSSI===undefined?'not reported':root.info.RSSI+' dBm (last discovery)'}   ·   Services  ${(root.info.UUIDs||[]).length}`;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetText;lineHeight:1.45}
     Row {width:parent.width;spacing:6
@@ -49,12 +49,12 @@ Column {
      ControlTile {width:(parent.width-6)/2;label:Audio.muted?'Unmute':'Mute';glyph:'\uf028';enabled:root.routed;onActivated:if(Audio.sink?.audio)Audio.sink.audio.muted=!Audio.muted}
     }
     ControlSlider {visible:root.routed;title:'Headset volume';glyph:'\uf028';level:Audio.volume*100;maximum:100;onEdited:v=>{if(Audio.sink?.audio)Audio.sink.audio.volume=v/100}}
-    Text { textFormat: Text.PlainText;width:parent.width;wrapMode:Text.WordWrap;text:'Quality-first selection is enabled. This headset tested best with SBC; SBC-XQ produced packet drops. Hands-free trades stereo quality for microphone access. Bluetooth is lossy; unsupported codecs cannot be added by a setting.';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetMuted;lineHeight:1.35}
+    Text { textFormat: Text.PlainText;width:parent.width;wrapMode:Text.WordWrap;text:'Available codecs and profiles depend on the connected device. A2DP provides stereo playback; hands-free profiles trade music quality for microphone access. Higher bitrates are not always more reliable.';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetMuted;lineHeight:1.35}
    }
    Column {width:parent.width;spacing:10;visible:root.page===2
-    Text { textFormat: Text.PlainText;width:parent.width;text:(BluetoothDesk.data.adapters?.[0]?.Address||'—')+' · '+(BluetoothDesk.data.adapters?.[0]?.PowerState||'off')+'\nDiscovery stops after 20 seconds or when this panel closes.';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetText;wrapMode:Text.WordWrap;lineHeight:1.4}
+    Text { textFormat: Text.PlainText;width:parent.width;text:(BluetoothDesk.data.adapters?.[0]?.Address||'—')+' · '+(BluetoothDesk.data.adapters?.[0]?.PowerState||'off')+'\nDiscovery stops after 60 seconds or when this panel closes.';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetText;wrapMode:Text.WordWrap;lineHeight:1.4}
     Row {width:parent.width;spacing:6
-     ControlTile {width:(parent.width-12)/3;label:root.adapter?.enabled?'Power on':'Power off';glyph:'\uf011';selected:root.adapter?.enabled??false;onActivated:if(root.adapter)root.adapter.enabled=!root.adapter.enabled}
+     ControlTile {width:(parent.width-12)/3;label:root.adapter?.enabled?'Power off':'Power on';glyph:'\uf011';selected:root.adapter?.enabled??false;onActivated:if(root.adapter)root.adapter.enabled=!root.adapter.enabled}
      ControlTile {width:(parent.width-12)/3;label:root.adapter?.discoverable?'Visible':'Hidden';glyph:'\uf06e';selected:root.adapter?.discoverable??false;onActivated:if(root.adapter){root.adapter.discoverableTimeout=180;root.adapter.discoverable=!root.adapter.discoverable}}
      ControlTile {width:(parent.width-12)/3;label:root.adapter?.pairable?'Pairing on':'Pairing off';glyph:'\uf0c1';selected:root.adapter?.pairable??false;onActivated:if(root.adapter)root.adapter.pairable=!root.adapter.pairable}
     }
@@ -69,7 +69,7 @@ Column {
      ControlTile {width:(parent.width-6)/2;label:'Audio health';glyph:'\uf201';onActivated:BluetoothDesk.tool(['@HOME@/.local/bin/sensei-terminal','--title','Bluetooth audio health','pw-top'])}
      ControlTile {width:(parent.width-6)/2;label:'Refresh details';glyph:'\uf021';onActivated:BluetoothDesk.refresh()}
     }
-    Text { textFormat: Text.PlainText;width:parent.width;wrapMode:Text.WordWrap;text:'Sensei, use 5 GHz Wi-Fi for music. Your headset has a dedicated transport buffer; other devices keep their defaults. Disconnect pauses music intentionally. Pair, connect and forget controls remain in each device row.';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetMuted;lineHeight:1.4}
+    Text { textFormat: Text.PlainText;width:parent.width;wrapMode:Text.WordWrap;text:'Prefer 5 GHz Wi-Fi if 2.4 GHz interference disrupts audio. Use Pair for new devices, Link for paired ones, and Forget only to remove an existing pairing. Diagnostics run on demand.';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetMuted;lineHeight:1.4}
    }
   }
  }

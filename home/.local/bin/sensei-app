@@ -8,27 +8,42 @@ APPS={
  'files':(['org.gnome.nautilus','nautilus'],['nautilus'],['nautilus','--new-window']),
  'calculator':(['org.gnome.calculator','gnome-calculator'],['gnome-calculator'],['gnome-calculator'])}
 def main():
- app=sys.argv[1];mode=sys.argv[2] if len(sys.argv)>2 else 'focus-or-launch';dry='--dry-run' in sys.argv
- if app not in APPS or mode not in ('focus-or-launch','new-window'):raise ValueError('Unknown app/action')
- aliases,normal,new=APPS[app]
+ app=sys.argv[1]
+ if app=='--desktop':
+  request=json.loads(sys.argv[2]);mode=request.get('mode','focus-or-launch')
+  app=request['id']
+  if not isinstance(app,str) or not app or len(app)>200:raise ValueError('Invalid desktop identity')
+  normal=request['command']
+  if not isinstance(normal,list) or not normal or not all(isinstance(x,str) for x in normal):raise ValueError('Invalid command')
+  aliases=[x.lower().removesuffix('.desktop') for x in [request.get('startupClass',''),app,Path(normal[0]).name] if x]
+  new=normal
+  if request.get('terminal'):normal=[str(Path.home()/'.local/bin/sensei-terminal'),'-e',*normal];new=normal
+ else:
+  request={};mode=sys.argv[2] if len(sys.argv)>2 else 'focus-or-launch'
+  if app not in APPS:raise ValueError('Unknown app')
+  aliases,normal,new=APPS[app]
+ if mode not in ('focus-or-launch','new-window'):raise ValueError('Unknown action')
+ dry='--dry-run' in sys.argv
+ import hashlib
+ key=hashlib.sha256(app.encode()).hexdigest()[:24]
  runtime=Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))
- with (runtime/f'sensei-app-{app}.lock').open('a+') as lock:
+ with (runtime/f'sensei-app-{key}.lock').open('a+') as lock:
   fcntl.flock(lock,fcntl.LOCK_EX)
-  clients=json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True))
-  windows=[c for c in clients if c.get('class','').lower() in aliases or c.get('initialClass','').lower() in aliases]
+  clients=json.loads(subprocess.check_output(['hyprctl','clients','-j'],text=True,timeout=3))
+  windows=[c for c in clients if any(str(c.get(k,'')).lower().removesuffix('.desktop') in aliases for k in ('class','initialClass')) and c.get('mapped',True)]
   windows.sort(key=lambda c:c.get('focusHistoryID',999))
   if windows and mode=='focus-or-launch':
    address=windows[0]['address'];result={'action':'focus','app':app,'address':address,'workspace':windows[0]['workspace']['id']}
-   if not dry:subprocess.run(['hyprctl','dispatch','hl.dsp.focus({window="address:'+address+'"})'],check=True,stdout=subprocess.DEVNULL)
+   if not dry:subprocess.run(['hyprctl','dispatch','hl.dsp.focus({window='+json.dumps("address:"+address)+'})'],check=True,stdout=subprocess.DEVNULL,timeout=3)
   else:
-   stamp=runtime/f'sensei-app-{app}.pending'
+   stamp=runtime/f'sensei-app-{key}.pending'
    if mode=='focus-or-launch' and stamp.exists() and time.time()-stamp.stat().st_mtime<5:
     result={'action':'pending','app':app}
    else:
     command=new if mode=='new-window' else normal
     result={'action':'launch','app':app,'command':command}
     if not dry:
-     stamp.touch();subprocess.Popen(command,start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+     stamp.touch();subprocess.Popen(command,cwd=request.get('cwd') or str(Path.home()),start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
   print(json.dumps(result))
 if __name__=='__main__':
  try:main()

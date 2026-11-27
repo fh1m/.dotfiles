@@ -2,12 +2,21 @@
 Description=Digital Den cursor sharing
 After=graphical-session.target network-online.target
 [Service]
-Type=simple
+Type=exec
+# The marker/companion also owns multiple Wayland surfaces.
+Environment=QSG_RENDER_LOOP=basic
+ExecStartPre=/usr/bin/python3 %h/.local/state/homie-control/den-session.py ready
+TimeoutStartSec=55
 ExecStart=/usr/bin/python3 %h/.local/state/homie-control/den-session.py cursor
 Restart=always
 RestartSec=5
+RestartSteps=5
+RestartMaxDelaySec=60
 TimeoutStopSec=5
 KillMode=control-group
+# Sparse Qt/QML allocations otherwise inflate to 2 MiB pages on THP=always.
+# Scope this to the cursor/companion, never the machine or compute services.
+MemoryTHP=disable
 UMask=0077
 [Install]
 WantedBy=default.target

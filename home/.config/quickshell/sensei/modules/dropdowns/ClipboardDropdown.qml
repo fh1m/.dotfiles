@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import Quickshell
 import qs.components
@@ -11,7 +12,7 @@ DropdownFrame {
  Column {
  width:parent.width;spacing:8
  Row {spacing:8
- DeskTextField {id:search;width:270;height:32;placeholderText:"Search text, files, snippets…";text:ClipboardVault.query;onTextEdited:ClipboardVault.query=text;color:Theme.widgetText;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;selectByMouse:true}
+ DeskTextField {id:search;width:270;height:32;placeholderText:"Search text, files, snippets…";focus:root.enabled&&root.Window.active&&!!root.QsWindow.window?.visible;text:ClipboardVault.query;onTextEdited:ClipboardVault.query=text;color:Theme.widgetText;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;selectByMouse:true}
  Repeater {model:[{name:"All",key:"all"},{name:"Text / code",key:"text"},{name:"Images",key:"image"},{name:"Files",key:"files"},{name:"Pinned",key:"pinned"},{name:"Archive",key:"archived"}];ControlTile {required property var modelData;implicitWidth:112;implicitHeight:32;label:modelData.name;navigation:true;selected:ClipboardVault.filter===modelData.key;onActivated:ClipboardVault.filter=modelData.key}}
  }
  Row {
@@ -58,5 +59,4 @@ DropdownFrame {
  }
  }
  Keys.onReturnPressed:ClipboardVault.action("copy")
- Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==="clipboard")search.forceActiveFocus();}}
 }

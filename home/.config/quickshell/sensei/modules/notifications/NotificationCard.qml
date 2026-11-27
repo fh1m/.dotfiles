@@ -41,7 +41,12 @@ ChamferPanel {
 
     readonly property real padding: 14
 
-    HoverHandler { id: cardHover }
+    function pauseLifetime(hovered:bool):void {
+        if(!lifetimeAnimation.running)return;
+        if(hovered&&!lifetimeAnimation.paused)lifetimeAnimation.pause();
+        else if(!hovered&&lifetimeAnimation.paused)lifetimeAnimation.resume();
+    }
+    HoverHandler {id:cardHover;onHoveredChanged:root.pauseLifetime(hovered)}
     signal dismissed
 
     chamfer: Theme.radiusPanel
@@ -228,11 +233,12 @@ ChamferPanel {
         color: root.tone
 
         NumberAnimation on width {
+            id: lifetimeAnimation
             running: root.lifetime > 0
-            paused: cardHover.hovered
             from: drain.fullWidth
             to: 0
             duration: root.lifetime
+            onStarted:root.pauseLifetime(cardHover.hovered)
             onFinished: root.dismissed()
         }
     }

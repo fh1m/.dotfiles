@@ -10,7 +10,7 @@ import subprocess,json,uuid,shlex,time
 parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--live',action='store_true');args=parser.parse_args()
 if not args.live:parser.error('This test controls owned ROS nodes on both hosts; pass --live explicitly')
 if socket.gethostname().split('.')[0]!='arete':parser.error('Run on Arete')
-peer=str(ipaddress.IPv4Address(json.loads((Path.home()/'.config/sensei-den/access.json').read_text())['lanAddress']))
+peer=str(ipaddress.IPv4Address(socket.gethostbyname(json.loads((Path.home()/'.config/sensei-den/access.json').read_text()).get('lanHost','homie.local'))))
 with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as route:
  route.connect((peer,9));local=route.getsockname()[0]
 r=Path.home()/'.local/state/homie-control';ssh=['ssh','-F',str(r/'client.conf'),'homie'];ident=uuid.uuid4().hex[:10];topic='/den_acceptance_'+ident;name='den-ros-'+ident

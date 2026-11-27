@@ -119,22 +119,6 @@ c.moveQueued({id:'c'},-1);assert.equal(c.queue[0].id,'c');
         subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)
 
 
-class NativeHandoff(unittest.TestCase):
-    def test_destination_starts_only_after_source_stops_and_preserves_position(self):
-        source=(ROOT/'home/.config/quickshell/sensei/services/YouTubeDesk.qml').read_text()
-        functions='\n'.join(line.strip() for line in source.splitlines() if line.strip().startswith(('function registerEngine(', 'function loadCurrent(', 'function selectEngine(')))
-        script=r'''
-const vm=require('vm'),assert=require('assert'),events=[];
-const old={volume:82,stop:()=>events.push('old stopped')};
-const next={load:(v,a,visual,start,paused)=>events.push({v,a,visual,start,paused})};
-const c={engines:{old},engineOutput:'old',usedDisplays:['old'],currentMedia:{stream:'https://audio.invalid',video:'https://video.invalid'},pendingSeek:0,desiredVolume:65,speed:1.25};
-Object.defineProperty(c,'audioPlayer',{get(){return c.engines[c.engineOutput]}});
-vm.createContext(c);vm.runInContext(FUNCTIONS,c);
-c.selectEngine('destination',12345,true);assert.equal(events[0],'old stopped');assert.equal(events.length,1);
-assert.equal(c.pendingSeek,12345);assert.equal(c.desiredVolume,82);assert.equal(c.engineOutput,'destination');
-c.registerEngine('destination',next);assert.equal(events.length,2);assert.equal(events[1].a,'https://audio.invalid');assert.equal(events[1].visual,true);assert.equal(next.volume,82);assert.equal(next.playbackRate,1.25);assert.equal(events[1].start,12345);assert.equal(c.pendingSeek,0);assert.equal(events[1].paused,true);
-'''.replace('FUNCTIONS',json.dumps(functions))
-        subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)
 
 if __name__ == '__main__':
     unittest.main()

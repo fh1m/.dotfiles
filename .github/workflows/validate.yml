@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install pytest
-        run: python3 -m pip install --user pytest
+      - name: Install declared test dependencies
+        run: python3 -m pip install -r tests/requirements.txt
       - name: Run repo tests
         run: python3 -m pytest -q tests

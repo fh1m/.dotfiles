@@ -11,6 +11,15 @@ Scope {
     id: root
 
     IpcHandler {
+        target: "performance"
+        function state(): string {return JSON.stringify({ambientMotion:ShellState.ambientMotion,barHovered:ShellState.barHovered,cursorOwned:ShellState.cursorOwned,cursorOwnershipKnown:ShellState.cursorOwnershipKnown,hoveredOutput:ShellState.hoveredBarOutput,workspaceScans:Spaces.outputScanCount,workspaceObserverRunning:Spaces.observerRunning,dropdown:ShellState.dropdown,deckVisible:ShellState.deckVisible,pickerOpen:ShellState.pickerOpen,launcherOpen:ShellState.launcherOpen,powerOpen:ShellState.powerOpen,shortcutsOpen:ShellState.shortcutsOpen,glitchEnabled:Glitch.enabled,glitchBusy:Glitch.busy,visualizerActive:Cava.active,videoEngines:Object.keys(YouTubeDesk.engines).length,videoDisplays:YouTubeDesk.usedDisplays,monitorActive:LiveMonitor.active});}
+    }
+    IpcHandler {
+        target:"radio"
+        function state():string {return JSON.stringify({available:Radio.available,stale:Radio.stale,updated:Radio.lastUpdate,devices:(Radio.data.devices||[]).length});}
+    }
+
+    IpcHandler {
         target: "wifi"
         function state():string {return JSON.stringify({radioOn:Wifi.radioOn,connected:Wifi.connected,ssid:Wifi.activeSsid,linking:Wifi.linking,queued:!!Wifi.pendingConnection,error:Wifi.error});}
         function connect(ssid:string):void {Wifi.connect(ssid);}
@@ -528,7 +537,8 @@ Scope {
         target: "wallpaper"
         function choose(output: string): void { WallpaperChooser.open(output); }
         function display(output: string, path: string, mode: string): string {
-            if (["eDP-1","DP-2"].indexOf(output)<0) return "Unknown display";
+            if(!Quickshell.screens.some(screen=>screen.name===output))return "Unknown display";
+            if(output!==MachineProfile.primaryOutput&&MachineProfile.role(output)!=="screenpad")return "External displays follow the primary wallpaper; choose "+MachineProfile.primaryOutput;
             Wallpapers.setDisplay(output,path,Math.max(0,Math.min(6,parseInt(mode)||0)));
             return output;
         }
@@ -552,8 +562,9 @@ Scope {
 
         // The file the main display shows: its own choice, else the profile's.
         function current(): string {
-            return Wallpapers.displays["eDP-1"]?.file || Wallpapers.displayedPath;
+            return Wallpapers.displays[MachineProfile.primaryOutput]?.file || Wallpapers.displayedPath;
         }
+        function startup(output:string):string {return String(Wallpapers.startupSource(output));}
 
         function folder(path: string): string {
             if (path)

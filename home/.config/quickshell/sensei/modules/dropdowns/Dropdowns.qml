@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import Quickshell.Io
 import Quickshell
@@ -23,7 +24,22 @@ Variants {
         id: popup
 
         required property ShellScreen modelData
-        IpcHandler {target:'popup-'+popup.modelData.name;function state():string{return JSON.stringify({visible:popup.visible,name:popup.current,edge:popup.anchorEdge,x:popup.margins.left,y:popup.contentOriginY,width:popup.width,height:popup.height,anchor:popup.anchorX,output:popup.modelData.name});}}
+        IpcHandler {
+            target:'popup-'+popup.modelData.name
+            function state():string{return JSON.stringify({visible:popup.visible,name:popup.current,edge:popup.anchorEdge,x:popup.margins.left,y:popup.contentOriginY,width:popup.width,height:popup.height,anchor:popup.anchorX,output:popup.modelData.name});}
+            // Focus diagnostics deliberately exclude text, labels and passwords.
+            function focusState():string {
+                let fields=[];
+                function walk(item) {
+                    if(!item)return;
+                    if(typeof item.echoMode==='number'&&typeof item.selectByMouse==='boolean')
+                        fields.push({focus:item.focus,active:item.activeFocus,visible:item.visible,enabled:item.enabled,password:item.echoMode!==TextInput.Normal});
+                    for(const child of (item.children||[]))walk(child);
+                }
+                walk(content.item);
+                return JSON.stringify({visible:popup.visible,requested:popup.requestedHere,enabled:holder.enabled,windowActive:holder.Window.active,fields:fields});
+            }
+        }
 
         // Keep-off-the-edge margin, and the gap below the bar.
         readonly property real edge: 12
@@ -113,7 +129,7 @@ Variants {
         // OnDemand plus the focus grab below: the grab hands the surface the
         // keyboard while it is up, so Escape and the passphrase field get keys
         // without the surface stealing them from everything else.
-        WlrLayershell.keyboardFocus: ShellState.dropdown === popup.current ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: popup.visible && popup.requestedHere && ShellState.dropdown !== "" && ShellState.dropdown === popup.current ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
         exclusionMode: (current === "calendar" || current === "weather") ? ExclusionMode.Ignore : ExclusionMode.Normal
         exclusiveZone: 0
@@ -164,8 +180,9 @@ Variants {
             NumberAnimation { target: popup; property: "reveal"; to: 0; duration: Theme.reducedMotion ? 0 : Theme.motionDismiss; easing.type: Easing.InCubic }
             // Keep the last panel instantiated: rebuilding a large QML tree on
             // every click was costing hundreds of milliseconds.
-            ScriptAction { script: popup.surfaceReady=false }
+            ScriptAction { script: {popup.surfaceReady=false;releaseCache.restart();} }
         }
+        Timer {id:releaseCache;interval:20000;onTriggered:if(!popup.requestedHere&&!popup.visible){popup.current="";popup.cachedHeight=0;}}
 
         SequentialAnimation {
             id: swapAnim
@@ -207,7 +224,15 @@ Variants {
                 const focused=ShellState.screens.find(s=>s.name===ShellState.focusedScreenName());
                 const wantedScreen = (origin ?? focused ?? ShellState.barScreens[0])?.name;
                 const want = popup.modelData?.name === wantedScreen ? requested : "";
+                const wasRequested = popup.requestedHere;
                 popup.requestedHere = want !== "";
+                // Activity on a different output must not keep this hidden
+                // panel alive or restart its dismissal/cache deadline.
+                if (want === "" && !wasRequested) {
+                    if (popup.current !== "" && !releaseCache.running && !closeAnim.running) releaseCache.start();
+                    return;
+                }
+                releaseCache.stop();
 
                 // **The ID editor arms at once.** It is typed into the moment
                 // it opens, from a click on the bar -- and with the pointer
@@ -284,10 +309,10 @@ Variants {
 
         Timer { id: outsideClose; interval: 0; onTriggered: if (!ShellState.externalDialogOpen && popup.reveal > 0.99) ShellState.dropdown = "" }
 
-        Item {
+        FocusScope {
             id: holder
 
-            focus: true
+            focus: popup.visible && popup.requestedHere && holder.Window.active
             // Soft elevation without rendering the entire popup into another texture.
 
             anchors.left: parent.left
@@ -296,7 +321,7 @@ Variants {
             anchors.rightMargin: popup.surfaceInset
             height: popup.panelHeight
             opacity: popup.reveal
-            enabled: ShellState.dropdown === popup.current && popup.reveal > 0.85
+            enabled: popup.visible && popup.requestedHere && ShellState.dropdown === popup.current && popup.reveal > 0.85
             // Slides down into place from under the bar. Whatever is still above
             // the surface top is simply not drawn, so the bar hides it.
             y: popup.surfaceInset + (popup.bottomPanel ? 1 : -1) * popup.slide * (1 - popup.reveal)

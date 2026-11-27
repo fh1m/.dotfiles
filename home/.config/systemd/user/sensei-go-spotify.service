@@ -9,6 +9,8 @@ ExecCondition=%h/.local/bin/sensei-spotify-control headless-enabled
 ExecStart=%h/.local/opt/go-librespot/go-librespot --config_dir %h/.config/sensei-go-spotify
 Restart=on-failure
 RestartSec=30
+RestartSteps=5
+RestartMaxDelaySec=5min
 UMask=0077
 [Install]
 WantedBy=default.target
