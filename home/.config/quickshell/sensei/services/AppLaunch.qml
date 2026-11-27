@@ -6,7 +6,7 @@ import Quickshell
 Singleton {
     id: root
 
-    function run(argv: var, cwd: string = ""): void {
+    function run(argv, cwd): void {
         if (!Array.isArray(argv) || argv.length === 0 || argv.some(arg => typeof arg !== "string"))
             return;
         const command = [Quickshell.env("HOME") + "/.local/bin/sensei-app-run"];
