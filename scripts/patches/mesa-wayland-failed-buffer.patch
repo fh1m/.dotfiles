@@ -1,0 +1,64 @@
+From 3d2a7e8ad2e09bb5b9b532121bc45230a55221b2 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] egl/wayland: clear back after buffer allocation fails
+
+Upstream: https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/44569
+Merged upstream on 2026-11-18. Backported without changing its behavior to
+Mesa 26.2.4. Preserve EGL_BAD_ALLOC; release the failed back-buffer reservation
+so a subsequent render cannot treat an unallocated image as a valid buffer.
+
+--- a/src/egl/drivers/dri2/platform_wayland.c
++++ b/src/egl/drivers/dri2/platform_wayland.c
+@@ -1360,7 +1360,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf,
+    if (dri2_surf->base.ProtectedContent) {
+       /* Protected buffers can't be read from another GPU */
+       if (dri2_dpy->fd_render_gpu != dri2_dpy->fd_display_gpu)
+-         return -1;
++         goto fail;
+       use_flags |= __DRI_IMAGE_USE_PROTECTED;
+    }
+ 
+@@ -1428,7 +1428,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf,
+                         close(buffer_fds[i]);
+                   } while (--i >= 0);
+                   dri2_destroy_image(linear_copy_display_gpu_image);
+-                  return -1;
++                  goto fail;
+                }
+             }
+ 
+@@ -1441,7 +1441,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf,
+                      close(buffer_fds[i]);
+                } while (--i >= 0);
+                dri2_destroy_image(linear_copy_display_gpu_image);
+-               return -1;
++               goto fail;
+             }
+ 
+             /* The linear buffer was created in the display GPU's vram, so we
+@@ -1475,7 +1475,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf,
+       }
+ 
+       if (dri2_surf->back->linear_copy == NULL)
+-         return -1;
++         goto fail;
+    }
+ 
+    if (dri2_surf->back->dri_image == NULL) {
+@@ -1495,12 +1495,16 @@ get_back_bo(struct dri2_egl_surface *dri2_surf,
+    }
+ 
+    if (dri2_surf->back->dri_image == NULL)
+-      return -1;
++      goto fail;
+ 
+    loader_wayland_buffer_set_flow(&dri2_surf->back->wayland_buffer, flow);
+    dri2_surf->back->locked = true;
+ 
+    return 0;
++
++fail:
++   dri2_surf->back = NULL;
++   return -1;
+ }
+ 
+ /* Value chosen empirically as a compromise between avoiding frequent

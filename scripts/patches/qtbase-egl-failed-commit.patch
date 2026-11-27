@@ -1,0 +1,65 @@
+Subject: [PATCH] wayland: cancel an uncommitted frame callback after EGL_BAD_ALLOC
+
+Downstream fix for the pinned Qt 6.12.0 source; no upstream Qt commit is claimed.
+A failed EGL allocation performs no surface commit, so its pending frame callback
+will never arrive. Cancel that callback using the existing locked teardown and
+queued GUI-thread update path. Preserve the original EGL warning and do not
+recreate the window, discard its contents, or change the private class layout.
+
+diff --git a/src/plugins/platforms/wayland/plugins/hardwareintegration/wayland-egl/qwaylandglcontext.cpp b/src/plugins/platforms/wayland/plugins/hardwareintegration/wayland-egl/qwaylandglcontext.cpp
+index 28734eff..ec71635c 100644
+--- a/src/plugins/platforms/wayland/plugins/hardwareintegration/wayland-egl/qwaylandglcontext.cpp
++++ b/src/plugins/platforms/wayland/plugins/hardwareintegration/wayland-egl/qwaylandglcontext.cpp
+@@ -506,8 +506,12 @@ void QWaylandGLContext::swapBuffers(QPlatformSurface *surface)
+         window->waitForFrameSync(100);
+     }
+     window->handleUpdate();
+-    if (!eglSwapBuffers(eglDisplay(), eglSurface))
+-        qCWarning(lcQpaWayland, "eglSwapBuffers failed with %#x, surface: %p", eglGetError(), eglSurface);
++    if (!eglSwapBuffers(eglDisplay(), eglSurface)) {
++        const EGLint error = eglGetError();
++        qCWarning(lcQpaWayland, "eglSwapBuffers failed with %#x, surface: %p", error, eglSurface);
++        if (error == EGL_BAD_ALLOC)
++            window->handleUpdateFailed();
++    }
+ }
+ 
+ GLuint QWaylandGLContext::defaultFramebufferObject(QPlatformSurface *surface) const
+diff --git a/src/plugins/platforms/wayland/qwaylandwindow.cpp b/src/plugins/platforms/wayland/qwaylandwindow.cpp
+index 4279d9c2..71356ec4 100644
+--- a/src/plugins/platforms/wayland/qwaylandwindow.cpp
++++ b/src/plugins/platforms/wayland/qwaylandwindow.cpp
+@@ -852,12 +852,18 @@ const wl_callback_listener QWaylandWindow::callbackListener = {
+     }
+ };
+ 
++void QWaylandWindow::handleUpdateFailed()
++{
++    // A failed EGL commit cannot deliver its requested frame callback.
++    // Cancel it through the locked teardown and queued update-delivery path.
++    handleFrameCallback(nullptr);
++}
++
+ void QWaylandWindow::handleFrameCallback(wl_callback* callback)
+ {
+     QMutexLocker locker(&mFrameSyncMutex);
+-    if (mFrameCallback != callback) {
+-        // This means the callback is already unset by QWaylandWindow::reset.
+-        // The wl_callback object will be destroyed there too.
++    if (!mFrameCallback || (callback && mFrameCallback != callback)) {
++        // The callback was cancelled, or belongs to an older commit.
+         return;
+     }
+     wl_callback_destroy(mFrameCallback);
+diff --git a/src/plugins/platforms/wayland/qwaylandwindow_p.h b/src/plugins/platforms/wayland/qwaylandwindow_p.h
+index 9ac3f4ce..4112c398 100644
+--- a/src/plugins/platforms/wayland/qwaylandwindow_p.h
++++ b/src/plugins/platforms/wayland/qwaylandwindow_p.h
+@@ -234,6 +234,7 @@ public:
+     void timerEvent(QTimerEvent *event) override;
+     void requestUpdate() override;
+     void handleUpdate();
++    void handleUpdateFailed();
+     void deliverUpdateRequest() override;
+ 
+     void setXdgActivationToken(const QString &token);

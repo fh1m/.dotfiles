@@ -29,18 +29,11 @@ set -u
 # must resolve the same user tools that an interactive shell can see.
 export PATH="$HOME/.local/bin:$PATH"
 export QSG_RHI_BACKEND="${QSG_RHI_BACKEND:-opengl}"
-# This process owns many Wayland surfaces. Keep their render/expose/teardown
-# lifecycle on one thread: Qt's threaded swap hit a null Mesa DRI image.
-# Native multi-output lifecycle and decoded-video tests cover the basic loop.
-# This is a scoped stability policy, not a claim that the upstream bug is fixed.
+# Keep this process's many surfaces on the GUI render loop. Failed allocation
+# recovery is supplied by the reviewed Mesa/Qt pair below, not by this policy.
 export QSG_RENDER_LOOP="${QSG_RENDER_LOOP:-basic}"
 export QML_IMPORT_PATH="$HOME/.local/lib/qt6/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
 
-# Native video must not import decoder-owned DMA-BUF textures into the shell's
-# multi-output EGL contexts. A Mesa dri2_query_image crash was observed during
-# cross-output playback. Keep hardware decoding available, upload mapped frames.
-# Qt documents this diagnostic switch; leave an explicit opt-out for validation.
-export QT_DISABLE_HW_TEXTURES_CONVERSION="${QT_DISABLE_HW_TEXTURES_CONVERSION:-1}"
 
 
 read -r -a QS_ARGS <<< "${SENSEI_QS_ARGS:--c sensei}"
@@ -54,6 +47,7 @@ qt_stamp="${HOME}/.local/opt/sensei-quickshell/qt-version"
 packaged_only=0
 qs_env=()
 qt_backport="$HOME/.local/opt/sensei-qt-wayland"
+mesa_backport="$HOME/.local/opt/sensei-mesa-egl"
 select_runtime() {
     qs_bin="${SENSEI_QS_BIN:-qs}"
     qs_env=()
@@ -70,6 +64,16 @@ select_runtime() {
        [ -r "$qt_backport/qt-libraries.sha256" ] &&
        (cd "$qt_backport" && sha256sum --check --status qt-libraries.sha256); then
         qs_env=("LD_LIBRARY_PATH=$qt_backport/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}")
+        if [ -r "$qt_backport/plugins/wayland-graphics-integration-client/libqt-plugin-wayland-egl.so" ]; then
+            qs_env+=("QT_PLUGIN_PATH=$qt_backport/plugins${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}")
+            # Select the private Mesa rollback only with Qt's failed-commit
+            # recovery, and never after its installed driver ABI changes.
+            if [ -r "$mesa_backport/lib/libEGL_mesa.so.0" ] &&
+               [ -r "$mesa_backport/mesa-libraries.sha256" ] &&
+               (cd "$mesa_backport" && sha256sum --check --status mesa-libraries.sha256); then
+                qs_env[0]="LD_LIBRARY_PATH=$mesa_backport/lib:$qt_backport/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+            fi
+        fi
     fi
 }
 

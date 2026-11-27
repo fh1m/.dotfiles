@@ -54,25 +54,38 @@ def test_pc_install_preserves_stamped_local_binary_and_link(tmp_path):
     assert (prefix / 'qt-version').read_text().strip() == '6.12.0'
 
 
-@pytest.mark.parametrize('changed', ['system-library', 'backport-library', 'explicit-runtime'])
+@pytest.mark.parametrize('changed', ['system-library', 'backport-library', 'explicit-runtime', 'graphics-driver', 'graphics-backport', 'missing-egl-plugin'])
 def test_supervisor_rejects_expired_or_inapplicable_qt_backport(tmp_path, changed):
     prefix = tmp_path / '.local/opt/sensei-qt-wayland'
     (prefix / 'lib').mkdir(parents=True)
     output = prefix / 'lib/libQt6WaylandClient.so.6.12.0'
     output.write_bytes(b'compiled client fixture')
     (prefix / 'lib/libQt6WaylandClient.so.6').symlink_to(output.name)
+    plugin = prefix / 'plugins/wayland-graphics-integration-client/libqt-plugin-wayland-egl.so'
+    plugin.parent.mkdir(parents=True)
+    plugin.write_bytes(b'compiled EGL integration fixture')
     system = tmp_path / 'installed-qt-library'
     system.write_bytes(b'exact build input')
     stamp = prefix / 'qt-libraries.sha256'
     stamp.write_text(
         hashlib.sha256(system.read_bytes()).hexdigest() + '  ' + str(system) + '\n' +
-        hashlib.sha256(output.read_bytes()).hexdigest() + '  lib/' + output.name + '\n')
+        hashlib.sha256(output.read_bytes()).hexdigest() + '  lib/' + output.name + '\n' +
+        hashlib.sha256(plugin.read_bytes()).hexdigest() + '  plugins/wayland-graphics-integration-client/' + plugin.name + '\n')
+    mesa = tmp_path / '.local/opt/sensei-mesa-egl'
+    (mesa / 'lib').mkdir(parents=True)
+    egl = mesa / 'lib/libEGL_mesa.so.0'
+    egl.write_bytes(b'compiled EGL rollback fixture')
+    driver = tmp_path / 'installed-gpu-driver'
+    driver.write_bytes(b'exact driver ABI input')
+    (mesa / 'mesa-libraries.sha256').write_text(
+        hashlib.sha256(driver.read_bytes()).hexdigest() + '  ' + str(driver) + '\n' +
+        hashlib.sha256(egl.read_bytes()).hexdigest() + '  lib/' + egl.name + '\n')
     commands = tmp_path / '.local/bin'
     commands.mkdir(parents=True)
     report = tmp_path / 'launched.json'
     qs = commands / 'qs'
     qs.write_text('#!' + sys.executable + '\nimport json,os,pathlib\n'
-                  'pathlib.Path(os.environ["RUNTIME_REPORT"]).write_text(json.dumps({"libraries":os.environ.get("LD_LIBRARY_PATH","")}))\n')
+                  'pathlib.Path(os.environ["RUNTIME_REPORT"]).write_text(json.dumps({"libraries":os.environ.get("LD_LIBRARY_PATH",""),"plugins":os.environ.get("QT_PLUGIN_PATH","")}))\n')
     qs.chmod(0o755)
     hyprctl = commands / 'hyprctl'
     hyprctl.write_text('#!/bin/sh\nprintf "false\\n"\n')
@@ -81,16 +94,26 @@ def test_supervisor_rejects_expired_or_inapplicable_qt_backport(tmp_path, change
     runtime.mkdir()
     env = dict(os.environ, HOME=str(tmp_path), XDG_RUNTIME_DIR=str(runtime),
                XDG_STATE_HOME=str(tmp_path / 'state'), RUNTIME_REPORT=str(report))
-    for key in ('SENSEI_QS_BIN', 'SENSEI_QS_ARGS', 'HYPRLAND_INSTANCE_SIGNATURE', 'LD_LIBRARY_PATH'):
+    for key in ('SENSEI_QS_BIN', 'SENSEI_QS_ARGS', 'HYPRLAND_INSTANCE_SIGNATURE', 'LD_LIBRARY_PATH', 'QT_PLUGIN_PATH'):
         env.pop(key, None)
     wrapper = ROOT / 'home/.config/quickshell/sensei/external/sensei-shell'
     subprocess.run(['bash', str(wrapper)], env=env, check=True, timeout=10)
-    assert json.loads(report.read_text())['libraries'] == str(prefix / 'lib')
+    launched = json.loads(report.read_text())
+    assert launched['libraries'] == str(mesa / 'lib') + ':' + str(prefix / 'lib')
+    assert launched['plugins'] == str(prefix / 'plugins')
     if changed == 'system-library':
         system.write_bytes(b'upgraded Qt with a different private ABI')
     elif changed == 'backport-library':
         output.write_bytes(b'interrupted or corrupt rebuild')
+    elif changed == 'graphics-driver':
+        driver.write_bytes(b'upgraded GPU driver ABI')
+    elif changed == 'graphics-backport':
+        egl.write_bytes(b'interrupted graphics rebuild')
+    elif changed == 'missing-egl-plugin':
+        plugin.unlink()
     else:
         env['SENSEI_QS_BIN'] = str(qs)
     subprocess.run(['bash', str(wrapper)], env=env, check=True, timeout=10)
-    assert json.loads(report.read_text())['libraries'] == ''
+    launched = json.loads(report.read_text())
+    assert launched['libraries'] == (str(prefix / 'lib') if changed.startswith('graphics-') else '')
+    assert launched['plugins'] == (str(prefix / 'plugins') if changed.startswith('graphics-') else '')
