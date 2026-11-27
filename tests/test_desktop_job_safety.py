@@ -1,5 +1,5 @@
 """Safety transitions use disposable jobs; never touch real Docker, input or backups."""
-import importlib.machinery,importlib.util,json,os,subprocess,sys,time,types
+import importlib.machinery,importlib.util,json,os,signal,subprocess,sys,time,types
 from pathlib import Path
 from unittest.mock import patch
 import pytest
@@ -142,3 +142,65 @@ def test_late_mode_acknowledgement_cannot_erase_newer_intent(tmp_path):
   return json.dumps({'requested':'auto'})
  with patch.object(d,'remote',side_effect=acknowledge_old):d.reconcile_mode()
  assert json.loads(path.read_text())==newer
+
+def _exited_leader_program(directory, close_output):
+    child_pid=directory/'child.pid';leader_pid=directory/'leader.pid'
+    child_code=('import os,pathlib,signal,time;'
+                'signal.signal(signal.SIGTERM,signal.SIG_IGN);'
+                f'pathlib.Path({str(child_pid)!r}).write_text(str(os.getpid()));'
+                'time.sleep(60)')
+    redirects=',stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL' if close_output else ''
+    leader_code=('import os,pathlib,subprocess,sys,time;'
+                 f'pathlib.Path({str(leader_pid)!r}).write_text(str(os.getpid()));'
+                 f'subprocess.Popen([sys.executable,"-c",{child_code!r}]{redirects});'
+                 f'p=pathlib.Path({str(child_pid)!r})\n'
+                 'while not p.exists():time.sleep(.005)\n'
+                 'os._exit(7)')
+    return leader_code,child_pid,leader_pid
+
+def _kill_fixture_child(pid_file):
+    if pid_file.exists():
+        pid=int(pid_file.read_text())
+        if jobs.identity(pid) is not None:
+            os.kill(pid,signal.SIGKILL)
+
+@pytest.mark.parametrize('close_output,expected_exit',[(False,124),(True,7)])
+def test_exited_job_leader_cannot_leave_running_descendants(tmp_path,close_output,expected_exit):
+    program,child_pid,_=_exited_leader_program(tmp_path,close_output)
+    try:
+        started=time.monotonic()
+        result=jobs.run_bounded([sys.executable,'-c',program],tmp_path/'log',timeout=.25,reserve_bytes=0)
+        assert result['exitCode']==expected_exit
+        assert result['timedOut'] is (not close_output)
+        deadline=time.monotonic()+1
+        while jobs.identity(int(child_pid.read_text())) is not None and time.monotonic()<deadline:
+            time.sleep(.01)
+        assert jobs.identity(int(child_pid.read_text())) is None,'job left its descendant running'
+        assert time.monotonic()-started<5
+    finally:
+        _kill_fixture_child(child_pid)
+
+def test_cancel_after_job_leader_exit_stops_remaining_descendants(tmp_path):
+    program,child_pid,leader_pid=_exited_leader_program(tmp_path,False)
+    controller_code=('import sys;sys.path.insert(0,'+repr(str(ROOT/'home/.local/share/sensei'))+');'
+                     'import job_runtime;job_runtime.run_bounded('
+                     f'[sys.executable,"-c",{program!r}],{str(tmp_path/"log")!r},timeout=60,reserve_bytes=0)')
+    controller=subprocess.Popen([sys.executable,'-c',controller_code])
+    try:
+        deadline=time.monotonic()+5
+        while time.monotonic()<deadline:
+            if child_pid.exists() and leader_pid.exists() and jobs.identity(int(leader_pid.read_text())) is None:
+                break
+            time.sleep(.01)
+        assert child_pid.exists() and jobs.identity(int(child_pid.read_text())) is not None
+        assert jobs.identity(int(leader_pid.read_text())) is None
+        controller.terminate()
+        assert controller.wait(timeout=5)==143
+        deadline=time.monotonic()+1
+        while jobs.identity(int(child_pid.read_text())) is not None and time.monotonic()<deadline:
+            time.sleep(.01)
+        assert jobs.identity(int(child_pid.read_text())) is None,'cancelled job left its descendant running'
+    finally:
+        if controller.poll() is None:
+            controller.kill();controller.wait(timeout=5)
+        _kill_fixture_child(child_pid)

@@ -49,6 +49,24 @@ def reconcile(record):
             return dict(record,state='interrupted',finished=time.time(),error='Worker ended before recording a result')
     return record
 
+def terminate_group(process,grace=3):
+    """Stop a job's start_new_session group, including children after leader exit."""
+    deadline=time.monotonic()+grace
+    try:os.killpg(process.pid,signal.SIGTERM)
+    except ProcessLookupError:pass
+    try:process.wait(timeout=max(0,deadline-time.monotonic()))
+    except subprocess.TimeoutExpired:
+        try:os.killpg(process.pid,signal.SIGKILL)
+        except ProcessLookupError:pass
+        process.wait(timeout=1)
+        return
+    while time.monotonic()<deadline:
+        try:os.killpg(process.pid,0)
+        except ProcessLookupError:return
+        time.sleep(.02)
+    try:os.killpg(process.pid,signal.SIGKILL)
+    except ProcessLookupError:pass
+
 def run_bounded(command,log,*,cwd=None,timeout=86400,max_bytes=8*1024*1024,reserve_bytes=128*1024*1024,env=None,preflight=None):
     import selectors,shutil
     log=Path(log);log.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
@@ -76,15 +94,21 @@ def run_bounded(command,log,*,cwd=None,timeout=86400,max_bytes=8*1024*1024,reser
                         keep=data[:max(0,limit-written)] if not low_space else b''
                         if keep:output.write(keep);output.flush();written+=len(keep)
                         discarded+=len(data)-len(keep)
-                if not timed_out:p.wait(timeout=max(.1,deadline-time.monotonic()))
+                # Observe without reaping: retain the leader's PID until group
+                # cleanup signals its descendants, so the group cannot be reused.
+                while not timed_out and os.waitid(os.P_PID,p.pid,os.WEXITED|os.WNOHANG|os.WNOWAIT) is None:
+                    remaining=deadline-time.monotonic()
+                    if remaining<=0:timed_out=True;break
+                    time.sleep(min(.02,remaining))
             except subprocess.TimeoutExpired:timed_out=True
             finally:selector.close()
     finally:
-        if p is not None:
-            if p.poll() is None:
-                os.killpg(p.pid,signal.SIGTERM)
-                try:p.wait(timeout=3)
-                except subprocess.TimeoutExpired:os.killpg(p.pid,signal.SIGKILL);p.wait()
-            p.stdout.close()
-        if previous is not None:signal.signal(signal.SIGTERM,previous)
+        try:
+            if p is not None:
+                # A second cancellation must not interrupt bounded group cleanup.
+                signal.signal(signal.SIGTERM,signal.SIG_IGN)
+                try:terminate_group(p)
+                finally:p.stdout.close()
+        finally:
+            if previous is not None:signal.signal(signal.SIGTERM,previous)
     return {'exitCode':124 if timed_out else p.returncode,'logBytes':written,'logBudgetBytes':limit,'timeoutSeconds':timeout,'retention':'preserve-until-explicit-removal','discardedBytes':discarded,'logTruncated':discarded>0,'timedOut':timed_out,'lowSpace':low_space}
