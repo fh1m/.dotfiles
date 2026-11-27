@@ -29,15 +29,19 @@ def safe_parents(home,rel):
         current=current/part
         if current.is_symlink():raise ValueError('Symlink parent: '+str(current))
 
+def trusted_home(home):
+    if not home.is_absolute() or home==Path('/') or home!=home.resolve() or home.stat().st_uid!=os.getuid():raise ValueError('Untrusted home')
+
 def rollback_data(manifest):
-    manifest=manifest.resolve()
+    if Path(manifest).is_symlink():raise ValueError('Symlink manifest')
+    manifest=Path(manifest).resolve()
     data=json.loads(manifest.read_text())
     if not isinstance(data,dict) or set(data)!={'home','entries'} or not isinstance(data['home'],str) or not isinstance(data['entries'],list):raise ValueError('Invalid rollback manifest')
-    home=Path(data['home'])
-    if not home.is_absolute() or home==Path('/') or home!=home.resolve():raise ValueError('Untrusted home')
-    safe_parents(home,Path('.local/state/omp-deployments/placeholder/manifest.json'))
+    home=Path(data['home']);trusted_home(home)
+    if manifest.stat().st_uid!=os.getuid():raise ValueError('Untrusted manifest owner')
     base=home/'.local/state/omp-deployments'
     if not contained(base,manifest) or manifest.name!='manifest.json':raise ValueError('Manifest outside deployment backup')
+    safe_parents(home,manifest.relative_to(home))
     seen=set();validated=[]
     for e in data['entries']:
         if not isinstance(e,dict) or set(e)!={'path','before','sha256'} or type(e['before']) is not bool or not isinstance(e['sha256'],str) or len(e['sha256'])!=64:raise ValueError('Invalid manifest entry')
@@ -46,14 +50,15 @@ def rollback_data(manifest):
         seen.add(e['path']);safe_parents(home,rel);p=home/rel
         if p.is_symlink() or not p.is_file() or digest(p)!=e['sha256']:raise ValueError('Changed since deployment: '+str(p))
         old=manifest.parent/'files'/rel
-        if e['before'] and (not contained(manifest.parent/'files',old) or old.is_symlink() or not old.is_file()):raise ValueError('Missing or unsafe backup: '+str(old))
+        safe_parents(home,Path('.local/state/omp-deployments/'+manifest.parent.name+'/files').joinpath(rel))
+        if e['before'] and (old.is_symlink() or not old.is_file()):raise ValueError('Missing or unsafe backup: '+str(old))
         validated.append((e,p,old))
     return home,validated
 
 
 def install(home,apply=False):
-    home=home.resolve()
-    if apply and os.geteuid()==0:raise PermissionError('Refusing deployment as root')
+    home=home.resolve();trusted_home(home)
+    if os.geteuid()==0:raise PermissionError('Refusing deployment as root')
     backup=home/'.local/state/omp-deployments'/datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
     entries=[];updates=[]
     for source in sorted((ROOT/'home').rglob('*')):
@@ -82,7 +87,7 @@ def install(home,apply=False):
 
 
 def rollback(manifest,apply=False):
-    if apply and os.geteuid()==0:raise PermissionError('Refusing rollback as root')
+    if os.geteuid()==0:raise PermissionError('Refusing rollback as root')
     home,validated=rollback_data(manifest)
     if apply:
         for entry,dest,old in reversed(validated):
