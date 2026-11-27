@@ -69,15 +69,49 @@ was deleted. Preserve that explicit distinction in future changes.
 
 ## Requested subsequent phase
 
-After the current repair/PR/extended-observation work is complete, the user
-requires exactly two source-led audit subagents. Do not launch them early or
-replace current tasks. Account for every repository code file/line, and verify
-actual Arete/Homie behavior rather than trusting docs. The native todo list
-retains the complete additional scope: boot/resources, detailed visual parity
+The user clarified that background observations must not stop unrelated audit
+or implementation work. They still gate the corresponding issue closures, not
+the whole project. Systems and visual source-audit lanes are running in the
+background; a failed image-bound visual context was replaced without changing
+provider. Exact coverage is incomplete and must remain explicit.
+Account for every repository code file/line and verify actual Arete/Homie
+behavior rather than trusting docs. The native todo list retains the full scope:
+boot/resources, detailed visual parity
 (including Homie's cursor), stale/hard-coded state, multi-account Codex controls,
 current supported Claude usage, badge/Nerd Talk, drives and bidirectional file
 access, existing audio/input/clipboard/sync, justified two-host capabilities,
 Linux ecosystem research, issue-backed repairs and verified final PRs.
+GTK themes, application icons and cross-host UI/UX coherence are explicitly
+included. The broad audit has not been completed.
+
+## Account audit checkpoint
+
+A bounded source/native slice opened #61 (Codex multi-account lifecycle), #62
+(Claude quota authority/freshness) and #63 (account-response ownership).
+Unmodified production `CodeDesk.qml` reproduced `selected=second` while
+`shown=default` in an isolated native runtime with controlled external responses.
+The request-ownership fix is implemented and activated on both desktops. Seven
+native regressions cover discovery order, account switching, date ranges,
+removal, closure/reopen, provider changes and mismatched replies. The original
+source fails the discovery regression. First live discovery and screenshots were
+checked on both hosts; a synthetic invalid selection also distinguishes the
+loaded fix from the old controller.
+
+The main shell disables hot reload. Copying files was not activation: a live
+probe caught old behavior until the existing supervisors replaced only the main
+shells. Input, cursor and clipboard service identities/restart counts remained
+unchanged. Preserve the recorded observation boundary rather than calling the
+new main processes the same 24-hour cohort. `code.page` also now uses the central
+monitor-aware open route rather than assigning the global dropdown name directly.
+
+The Codex adapter currently reads one implicit app-server authentication context.
+Claude Refresh currently reads saved status-line receipts and local analytics;
+it does not fetch fresh subscription quota. Installed native Claude 2.1.319
+`auth status` JSON was verified without a model session, but that is an
+authentication observation, not quota retrieval. Verify supported provider/native
+refresh before promising live data. Never copy credentials or infer remaining
+quota from transcripts. Account lifecycle and current provider-quota work remain
+open; the request-ownership repair does not implement those features.
 
 ## Recovery
 
