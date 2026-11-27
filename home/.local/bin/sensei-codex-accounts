@@ -1,0 +1,44 @@
+#!/usr/bin/env bun
+import { createHash } from "node:crypto";
+import { homedir } from "node:os";
+import path from "node:path";
+import { openaiCodexUsageProvider } from "/home/fh1m/.bun/install/global/node_modules/@oh-my-pi/pi-ai/src/usage/openai-codex.ts";
+import { discoverAuthStorage } from "/home/fh1m/.bun/install/global/node_modules/@oh-my-pi/pi-ai/src/auth-broker/discover.ts";
+
+const home=homedir(), agentDir=process.env.OMP_AGENT_DIR || path.join(home,".omp");
+const statePath=path.join(home,".config/sensei/codex-accounts.json");
+const args=Bun.argv.slice(2), command=args[0];
+const value=(key:string)=>{const at=args.indexOf(key);return at>=0?args[at+1]:undefined};
+const hash=(s:string)=>createHash("sha256").update(s).digest("hex").slice(0,24);
+const fail=(message:string):never=>{console.error(message);process.exit(2)};
+if(!["list","usage","add","remove"].includes(command))fail("Usage: sensei-codex-accounts list|usage|add|remove [--account ID] [--profile DIR --name NAME] [--refresh]");
+const stateFile=Bun.file(statePath);
+let state:any={schema:1,monitored:{},cache:{}};
+if(await stateFile.exists()){try{state=await stateFile.json();if(state.schema!==1||typeof state.monitored!=="object"||typeof state.cache!=="object")throw Error();}catch{fail("Account monitor state is invalid");}}
+const save=async()=>{await Bun.write(statePath,JSON.stringify(state));await Bun.$`chmod 600 ${statePath}`;};
+const storage=await discoverAuthStorage({agentDir});
+try {
+ const profileDir=value("--profile");
+ const profiles:any[]=[];
+ if(profileDir){const resolved=path.resolve(profileDir);if(!await Bun.file(path.join(resolved,"auth.json")).exists())fail("Profile has no existing Codex auth.json");profiles.push({id:hash(`profile\0${resolved}`),identity:resolved,source:"profile",name:value("--name")||path.basename(resolved),profileDir:resolved});}
+ const all=[...native,...profiles];
+ if(command==="list") {console.log(JSON.stringify({accounts:all.map(a=>({id:a.id,name:a.name,source:a.source,identity:a.identity, ...(a.email?{email:a.email}:{}),monitored:Boolean(state.monitored[a.id])})),fetchedAt:Date.now()/1000}));}
+ else if(command==="add") {const id=value("--account")||profiles[0]?.id;if(!id)fail("add requires --account ID or --profile DIR");const account=all.find(a=>a.id===id);if(!account)fail("Account not discovered");state.monitored[id]={source:account.source,identity:account.identity,name:account.name};await save();console.log(JSON.stringify({ok:true,accountId:id}));}
+ else if(command==="remove") {const id=value("--account");if(!id)fail("remove requires --account ID");delete state.monitored[id];delete state.cache[id];await save();console.log(JSON.stringify({ok:true,accountId:id}));}
+ else {
+  const id=value("--account");if(!id)fail("usage requires --account ID");const account=all.find(a=>a.id===id);const monitored=state.monitored[id];if(!account||!monitored||account.identity!==monitored.identity||account.source!==monitored.source)fail("Monitored account is not currently discovered");
+  let result:any;
+  try {
+   if(account.source!=="omp")throw Error("Native app-server profile usage requires account/rateLimits/read");
+   const resolution=await storage.oauth.accessById("openai-codex",account.credentialId);
+   if(!resolution?.ok)throw Error("Native account access unavailable");
+   const report=await openaiCodexUsageProvider.fetchUsage({provider:"openai-codex",credential:{type:"oauth",accessToken:resolution.accessToken,accountId:resolution.accountId},signal:AbortSignal.timeout(10000)},{fetch:fetch});
+   if(!report)throw Error("Native usage provider returned no report");
+   const limits:any={};for(const l of report.limits){const key=l.id.endsWith(":primary")?"primary":l.id.endsWith(":secondary")?"secondary":l.id;limits[key]={usedPercent:l.amount.usedFraction===undefined?undefined:l.amount.usedFraction*100,remainingPercent:l.amount.remainingFraction===undefined?undefined:l.amount.remainingFraction*100,resetsAt:l.window?.resetsAt===undefined?undefined:l.window.resetsAt/1000,windowMinutes:l.window?.durationMs===undefined?undefined:l.window.durationMs/60000};}
+   const primary=limits.primary,secondary=limits.secondary;
+   result={provider:"codex",account:{type:"oauth",email:resolution.email,planType:report.metadata?.planType},rateLimits:{primary,secondary},limits,fetchedAt:report.fetchedAt/1000,measurementAt:report.fetchedAt/1000,source:"OMP 18.16.0 native read-only usage provider",accountId:id,state:"available"};
+   state.cache[id]={source:account.source,identity:account.identity,result};await save();
+  }catch(e){const cached=state.cache[id];result=cached?.source===account.source&&cached?.identity===account.identity?{...cached.result,stale:true,state:"stale",error:"Usage unavailable"}:{provider:"codex",accountId:id,state:"unknown",stale:true,error:"Usage unavailable"};}
+  console.log(JSON.stringify(result));
+ }
+} finally {storage.close();}
