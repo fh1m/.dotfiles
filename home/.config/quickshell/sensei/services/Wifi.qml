@@ -99,6 +99,10 @@ Singleton {
 
     property string band: ""
     property bool scanning: false
+    property int radioEpoch:0
+    property int listRequestEpoch:-1
+    property bool listRefreshPending:false
+    property string listOutput:""
 
     // --- The connected network's own settings, for the settings view --------
     // The security of the in-use network (WPA2, WPA3, 802.1X, or "OPEN"), read
@@ -171,9 +175,39 @@ Singleton {
             return;
         }
         savedProc.running = true;
-        listProc.running = true;
+        if(listProc.running)listRefreshPending=true;
+        else {listRequestEpoch=radioEpoch;listOutput="";listProc.running=true;}
         bandProc.running = true;
         activeConnProc.running = true;
+    }
+
+    function acceptScan(text:string):void {
+        const best = Object.create(null);
+        let activeSec = "";
+        for (const line of text.split("\n")) {
+            if (!line) continue;
+            const fields = root.splitTerse(line);
+            if (fields.length < 4) continue;
+            const ssid = fields.slice(3).join(":");
+            if (!ssid) continue;
+            const signal = parseInt(fields[1]) || 0;
+            const security = fields[2].trim();
+            if (fields[0].trim() === "*") activeSec = security !== "" && security !== "--" ? security : "OPEN";
+            if (best[ssid] !== undefined && best[ssid].signal >= signal) continue;
+            best[ssid] = {ssid:ssid,signal:signal,secured:security !== "" && security !== "--"};
+        }
+        scanned=Object.keys(best).map(key=>best[key]);
+        activeSecurity=activeSec;
+    }
+    function applyScanResult(exitCode:int, epoch:int, output:string, enabled:bool):void {
+        if(exitCode===0&&enabled&&epoch===radioEpoch)
+            acceptScan(output);
+    }
+    function finishScan(exitCode:int):void {
+        applyScanResult(exitCode,listRequestEpoch,listOutput,radioOn);
+        listOutput="";
+        if(listRefreshPending){listRefreshPending=false;if(radioOn)Qt.callLater(()=>refresh());}
+        else if(radioOn&&listRequestEpoch!==radioEpoch)Qt.callLater(()=>refresh());
     }
 
     function rescan(): void {
@@ -350,10 +384,14 @@ Singleton {
         onExited: root.refresh()
     }
 
-    onRadioOnChanged: {
-        if (!radioOn)
+    function radioChanged(enabled:bool):void {
+        radioEpoch++;
+        if (!enabled)
             scanned = [];
+        else
+            refresh();
     }
+    onRadioOnChanged:radioChanged(radioOn)
 
     // A failure is about one visit to the dropdown, not the session.
     onActiveChanged: {
@@ -368,46 +406,9 @@ Singleton {
 
     Process {
         id: listProc
-
-        // Render cached access points immediately. An independent rescan refreshes
-        // the cache asynchronously; opening a panel never waits for a scan.
         command: ["nmcli", "-t", "-f", "IN-USE,SIGNAL,SECURITY,SSID", "device", "wifi", "list", "--rescan", "no"]
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                // One row per access point, so several per network. Keep the
-                // strongest reading of each name and drop hidden ones. A
-                // null prototype keeps a name such as `__proto__` a plain key.
-                const best = Object.create(null);
-                let activeSec = "";
-                for (const line of text.split("\n")) {
-                    if (!line)
-                        continue;
-                    const fields = root.splitTerse(line);
-                    if (fields.length < 4)
-                        continue;
-                    const ssid = fields.slice(3).join(":");
-                    if (!ssid)
-                        continue;
-                    const signal = parseInt(fields[1]) || 0;
-                    const security = fields[2].trim();
-                    // The in-use row (IN-USE = "*") carries the security the
-                    // settings view names for the connected network.
-                    if (fields[0].trim() === "*")
-                        activeSec = security !== "" && security !== "--" ? security : "OPEN";
-                    if (best[ssid] !== undefined && best[ssid].signal >= signal)
-                        continue;
-                    best[ssid] = {
-                        ssid: ssid,
-                        signal: signal,
-                        secured: security !== "" && security !== "--"
-                    };
-                }
-                const fresh = Object.keys(best).map(key => best[key]);
-                if (fresh.length || !root.scanned.length) root.scanned = fresh;
-                root.activeSecurity = activeSec;
-            }
-        }
+        stdout: StdioCollector {onStreamFinished:root.listOutput=text}
+        onExited:(exitCode,exitStatus)=>root.finishScan(exitCode)
     }
 
     Process {
