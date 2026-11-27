@@ -2,52 +2,58 @@
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import path from "node:path";
-import { readProfileUsage } from "/home/fh1m/.local/share/sensei/codex_app_server.ts";
-import { openaiCodexUsageProvider } from "/home/fh1m/.bun/install/global/node_modules/@oh-my-pi/pi-ai/src/usage/openai-codex.ts";
-import { discoverAuthStorage } from "/home/fh1m/.bun/install/global/node_modules/@oh-my-pi/pi-ai/src/auth-broker/discover.ts";
+import { readProfileUsage } from "../share/sensei/codex_app_server.ts";
+import { cacheUsage, generation, getCachedUsage, monitorAccount, readAccountState, recordFailure, registerProfile, removeAccount } from "../share/sensei/codex_account_state.ts";
 
-const home=homedir(), agentDir=process.env.OMP_AGENT_DIR || path.join(home,".omp");
-const statePath=path.join(home,".config/sensei/codex-accounts.json");
-const args=Bun.argv.slice(2), command=args[0];
-const value=(key:string)=>{const at=args.indexOf(key);return at>=0?args[at+1]:undefined};
-const hash=(s:string)=>createHash("sha256").update(s).digest("hex").slice(0,24);
-const fail=(message:string):never=>{console.error(message);process.exit(2)};
-if(!["list","usage","add","remove"].includes(command))fail("Usage: sensei-codex-accounts list|usage|add|remove [--account ID] [--profile DIR --name NAME] [--refresh]");
-const stateFile=Bun.file(statePath);
-let state:any={schema:1,monitored:{},cache:{},profiles:{}};
-if(await stateFile.exists()){try{state=await stateFile.json();if(state.schema!==1||typeof state.monitored!=="object"||typeof state.cache!=="object")throw Error();if(!state.profiles)state.profiles={};if(typeof state.profiles!=="object")throw Error();}catch{fail("Account monitor state is invalid");}}
-const save=async()=>{await Bun.write(statePath,JSON.stringify(state));await Bun.$`chmod 600 ${statePath}`;};
-const storage=await discoverAuthStorage({agentDir});
-try {
- const native=storage.oauth.accounts("openai-codex").map((a:any)=>{const identity=a.accountId||a.email||`credential:${a.credentialId}`;return {id:hash(`omp\0${identity}\0${a.orgId||""}`),identity,source:"omp",credentialId:a.credentialId,name:a.email||a.accountId||`Codex account ${a.position+1}`,email:a.email,accountId:a.accountId};});
- const profileDir=value("--profile");
- if(command==="add"&&profileDir){const resolved=path.resolve(profileDir);if(!await Bun.file(path.join(resolved,"auth.json")).exists())fail("Profile has no existing Codex auth.json");const measured=await readProfileUsage({executable:process.env.CODEX_EXECUTABLE||path.join(home,".local/bin/codex"),profileDir:resolved}).catch(()=>null);if(!measured)fail("Could not identify existing Codex profile without changing authentication");const accountIdentity=measured.identity;const id=hash(`profile\0${resolved}\0${accountIdentity}`);state.profiles[id]={id,profileDir:resolved,identity:accountIdentity,email:measured.account.email,name:value("--name")||path.basename(resolved)};state.monitored[id]={source:"profile",identity:accountIdentity,name:state.profiles[id].name};await save();console.log(JSON.stringify({ok:true,accountId:id}));}
- const profiles=Object.values(state.profiles) as any[];
- const all=[...native,...profiles.map(p=>({id:p.id,identity:p.identity,source:"profile",name:p.name,email:p.email,profileDir:p.profileDir}))];
- if(command==="list") {console.log(JSON.stringify({accounts:all.map(a=>({id:a.id,name:a.name,source:a.source,identity:a.identity,...(a.email?{email:a.email}:{}),monitored:Boolean(state.monitored[a.id])})),fetchedAt:Date.now()/1000}));}
- else if(command==="add") {const id=value("--account");if(!id)fail("add requires --account ID or --profile DIR");const account=all.find(a=>a.id===id);if(!account)fail("Account not discovered");state.monitored[id]={source:account.source,identity:account.identity,name:account.name};await save();console.log(JSON.stringify({ok:true,accountId:id}));}
- else if(command==="remove") {const id=value("--account");if(!id)fail("remove requires --account ID");delete state.monitored[id];delete state.cache[id];await save();console.log(JSON.stringify({ok:true,accountId:id}));}
- else {
-  const id=value("--account");if(!id)fail("usage requires --account ID");const account=all.find(a=>a.id===id);const monitored=state.monitored[id];if(!account||!monitored||account.identity!==monitored.identity||account.source!==monitored.source)fail("Monitored account is not currently discovered");
-  let result:any;
-  try {
-   if(account.source==="profile"){
-    const report=await readProfileUsage({executable:process.env.CODEX_EXECUTABLE||path.join(home,".local/bin/codex"),profileDir:account.profileDir,expectedIdentity:account.identity,signal:AbortSignal.timeout(15000)});
-    result={provider:"codex",account:report.account,rateLimits:report.rateLimits,limits:report.limits,fetchedAt:report.fetchedAt,measurementAt:report.measurementAt,source:report.source,accountId:id,state:"available"};
-   } else {
-    const resolution=await storage.oauth.accessById("openai-codex",account.credentialId);
-    if(!resolution?.ok)throw Error("Native account access unavailable");
-    const report=await openaiCodexUsageProvider.fetchUsage({provider:"openai-codex",credential:{type:"oauth",accessToken:resolution.accessToken,accountId:resolution.accountId},signal:AbortSignal.timeout(10000)},{fetch:fetch});
-    if(!report)throw Error("Native usage provider returned no report");
-    const limits:any={};for(const l of report.limits){const key=l.id.endsWith(":primary")?"primary":l.id.endsWith(":secondary")?"secondary":l.id;limits[key]={usedPercent:l.amount.usedFraction===undefined?undefined:l.amount.usedFraction*100,remainingPercent:l.amount.remainingFraction===undefined?undefined:l.amount.remainingFraction*100,resetsAt:l.window?.resetsAt===undefined?undefined:l.window.resetsAt/1000,windowMinutes:l.window?.durationMs===undefined?undefined:l.window.durationMs/60000};}
-    result={provider:"codex",account:{type:"oauth",email:resolution.email,planType:report.metadata?.planType},rateLimits:{primary:limits.primary,secondary:limits.secondary},limits,fetchedAt:report.fetchedAt/1000,measurementAt:report.fetchedAt/1000,source:"OMP 18.16.0 native read-only usage provider",accountId:id,state:"available"};
-   }
-   const measuredAt=Number(result.measurementAt??result.fetchedAt),windows=result.rateLimits||{};
-   const expired=Object.values(windows).some((window:unknown)=>{if(!window||typeof window!=="object"||!("resetsAt" in window))return false;const reset=window.resetsAt;const epoch=typeof reset==="number"?(reset>1e12?reset/1000:reset):typeof reset==="string"?Date.parse(reset)/1000:NaN;return Number.isFinite(epoch)&&epoch<=Date.now()/1000;});
-   if(expired){result.state="expired";result.stale=true;}
-   if(!Number.isFinite(measuredAt)||measuredAt>Date.now()/1000+30)throw Error("Invalid native measurement timestamp");
-   state.cache[id]={source:account.source,identity:account.identity,result};await save();
-  }catch(e){const cached=state.cache[id];result=cached?.source===account.source&&cached?.identity===account.identity?{...cached.result,stale:true,state:"stale",error:"Usage unavailable"}:{provider:"codex",accountId:id,state:"unknown",stale:true,error:"Usage unavailable"};}
-  console.log(JSON.stringify(result));
+const home=homedir(),agentDir=process.env.OMP_AGENT_DIR||path.join(home,".omp/agent"),statePath=path.join(home,".config/sensei/codex-accounts.json");
+const args=Bun.argv.slice(2),command=args[0],value=(key:string)=>{const i=args.indexOf(key);return i<0?undefined:args[i+1];};
+const hash=(text:string)=>createHash("sha256").update(text).digest("hex").slice(0,24);
+const executable=process.env.CODEX_EXECUTABLE||Bun.which("codex")||path.join(home,".local/bin/codex");
+const emit=(data:unknown)=>console.log(JSON.stringify(data));
+async function nativeStorage(){
+ const packageRoot=path.join(home,".bun/install/global/node_modules/@oh-my-pi/pi-ai"),metadata=await Bun.file(path.join(packageRoot,"package.json")).json().catch(()=>null);
+ if(metadata?.version!=="18.16.0")throw Error("Pinned OMP 18.16.0 native APIs unavailable");
+ const [{discoverAuthStorage},{openaiCodexUsageProvider}]=await Promise.all([import(path.join(packageRoot,"src/auth-broker/discover.ts")),import(path.join(packageRoot,"src/usage/openai-codex.ts"))]);
+ return {storage:await discoverAuthStorage({agentDir}),provider:openaiCodexUsageProvider};
+}
+function nativeAccounts(storage:any){return storage.oauth.accounts("openai-codex").map((account:any)=>{const identity=account.accountId||account.email||`credential:${account.credentialId}`;return {id:hash(`omp\0${identity}\0${account.orgId||""}`),identity,source:"omp",credentialId:account.credentialId,name:account.email||account.accountId||`Codex account ${account.position+1}`,email:account.email};});}
+function expired(measurement:Record<string,unknown>,now:number){const windows=measurement.rateLimits;if(!windows||typeof windows!=="object")return false;return Object.values(windows).some(window=>{if(!window||typeof window!=="object"||!("resetsAt" in window))return false;const reset=window.resetsAt,epoch=typeof reset==="number"?(reset>1e12?reset/1000:reset):typeof reset==="string"?Date.parse(reset)/1000:NaN;return Number.isFinite(epoch)&&epoch<=now;});}
+async function discoverProfiles(){
+ const state=await readAccountState(statePath),paths=new Map<string,{identity?:string;email?:string;name:string}>();
+ for(const item of Object.values(state.profiles))paths.set(item.profileDir,{identity:item.identity,email:item.email,name:item.name});
+ const defaultDir=path.join(home,".codex");if(await Bun.file(path.join(defaultDir,"auth.json")).exists()&&!paths.has(defaultDir))paths.set(defaultDir,{name:"Default Codex"});
+ const results=[];
+ for(const [profileDir,saved] of paths){
+  if(!(await Bun.file(path.join(profileDir,"auth.json")).exists())){if(saved.identity){const id=hash(`profile\0${profileDir}\0${saved.identity}`);results.push({id,profileDir,identity:saved.identity,email:saved.email,name:saved.name,unavailable:true});}continue;}
+  try{const report=await readProfileUsage({executable,profileDir,expectedIdentity:saved.identity,identityOnly:true,timeoutMs:5000});const id=hash(`profile\0${profileDir}\0${report.identity}`);const item={id,profileDir,identity:report.identity,email:report.account.email,name:saved.name};await registerProfile(statePath,{...item,name:item.name});results.push(item);}
+  catch{if(saved.identity){try{const current=await readProfileUsage({executable,profileDir,identityOnly:true,timeoutMs:5000});if(current.identity!==saved.identity){const currentId=hash(`profile\0${profileDir}\0${current.identity}`),currentProfile={id:currentId,profileDir,identity:current.identity,email:current.account.email,name:saved.name};await registerProfile(statePath,{...currentProfile,name:currentProfile.name});results.push(currentProfile);}}catch{}const oldId=hash(`profile\0${profileDir}\0${saved.identity}`);results.push({id:oldId,profileDir,identity:saved.identity,email:saved.email,name:saved.name,unavailable:true});}}
+}
+async function main(){
+ if(!["list","usage","add","remove"].includes(command)){emit({error:"Usage: sensei-codex-accounts list|usage|add|remove [--account ID] [--profile DIR --name NAME] [--refresh]"});process.exitCode=2;return;}
+ if(command==="remove"){const id=value("--account");if(!id)throw Error("remove requires --account ID");await removeAccount(statePath,id);emit({ok:true,accountId:id});return;}
+ if(command==="add"&&value("--profile")){
+  const profileDir=path.resolve(value("--profile")!);if(!(await Bun.file(path.join(profileDir,"auth.json")).exists()))throw Error("Profile has no existing Codex auth.json");
+  const info=await readProfileUsage({executable,profileDir,identityOnly:true}),id=hash(`profile\0${profileDir}\0${info.identity}`),name=value("--name")||path.basename(profileDir);
+  await registerProfile(statePath,{id,profileDir,identity:info.identity,email:info.account.email,name});await monitorAccount(statePath,id,{source:"profile",identity:info.identity,name});emit({ok:true,accountId:id});return;
  }
-} finally {storage.close();}
+ if(command==="list"){
+  const {storage}=await nativeStorage();try{const native=nativeAccounts(storage),profiles=await discoverProfiles(),state=await readAccountState(statePath);emit({accounts:[...native,...profiles.map(p=>({id:p.id,name:p.name,source:"profile",identity:p.identity,...(p.email?{email:p.email}:{})}))].map(account=>({...account,monitored:Boolean(state.monitored[account.id])})),fetchedAt:Date.now()/1000});}finally{storage.close();}return;
+ }
+ if(command==="add"){
+  const id=value("--account");if(!id)throw Error("add requires --account ID or --profile DIR");const state=await readAccountState(statePath),profile=state.profiles[id];
+  if(profile){await monitorAccount(statePath,id,{source:"profile",identity:profile.identity,name:profile.name});emit({ok:true,accountId:id});return;}
+  const {storage}=await nativeStorage();try{const account=nativeAccounts(storage).find(candidate=>candidate.id===id);if(!account)throw Error("Account not discovered");await monitorAccount(statePath,id,{source:"omp",identity:account.identity,name:account.name});emit({ok:true,accountId:id});}finally{storage.close();}return;
+ }
+ const id=value("--account");if(!id)throw Error("usage requires --account ID");const state=await readAccountState(statePath),profile=state.profiles[id],monitor=state.monitored[id];
+ if(profile&&monitor?.source==="profile"&&monitor.identity===profile.identity){await usage(id,"profile",profile.identity,async()=>{if(!await Bun.file(path.join(profile.profileDir,"auth.json")).exists())throw Error("Profile unavailable");const report=await readProfileUsage({executable,profileDir:profile.profileDir,expectedIdentity:profile.identity,signal:AbortSignal.timeout(15000)});return {account:report.account,rateLimits:report.rateLimits,limits:report.limits,fetchedAt:report.fetchedAt,measurementAt:report.measurementAt,source:report.source,state:"available"};});return;}
+ const {storage,provider}=await nativeStorage();try{const account=nativeAccounts(storage).find(candidate=>candidate.id===id);if(!account||monitor?.source!=="omp"||monitor.identity!==account.identity)throw Error("Account is not monitored or its identity changed");await usage(id,"omp",account.identity,async()=>{const resolution=await storage.oauth.accessById("openai-codex",account.credentialId);if(!resolution?.ok)throw Error("Native OAuth account unavailable");if(!storage.usage.providerFor("openai-codex"))throw Error("Native Codex usage provider unavailable");const report=await provider.fetchUsage({provider:"openai-codex",credential:{type:"oauth",accessToken:resolution.accessToken,accountId:resolution.accountId},signal:AbortSignal.timeout(10000)},{fetch});if(!report)throw Error("Native Codex usage provider returned no report");const limits:Record<string,unknown>={};for(const limit of report.limits){const key=limit.id.endsWith(":primary")?"primary":limit.id.endsWith(":secondary")?"secondary":limit.id,used=limit.amount.usedFraction??(limit.amount.remainingFraction===undefined?undefined:1-limit.amount.remainingFraction);limits[key]={...(used===undefined?{}:{usedPercent:used*100}),...(limit.amount.remainingFraction===undefined?{}:{remainingPercent:limit.amount.remainingFraction*100}),...(limit.window?.resetsAt===undefined?{}:{resetsAt:limit.window.resetsAt/1000}),...(limit.window?.durationMs===undefined?{}:{windowMinutes:limit.window.durationMs/60000})};}const fetchedAt=report.fetchedAt/1000;return {account:{type:"oauth",email:resolution.email,planType:report.metadata?.planType},rateLimits:{primary:limits.primary,secondary:limits.secondary},limits,fetchedAt,measurementAt:fetchedAt,source:"OMP 18.16.0 native read-only usage provider",state:"available"};});}finally{storage.close();}
+}
+async function usage(id:string,source:string,identity:string,fetchMeasurement:()=>Promise<Record<string,unknown>>){
+ const current=(await readAccountState(statePath)).monitored[id];if(!current||current.source!==source||current.identity!==identity)throw Error("Account is not monitored");
+ const started=await generation(statePath,id),now=Date.now()/1000,refresh=args.includes("--refresh"),cached=await getCachedUsage(statePath,id,source,identity,now);
+ if(!refresh&&cached&&!cached.stale&&cached.measurement&&now-Number(cached.measurement.measurementAt)<=60){emit({provider:"codex",...cached.measurement,accountId:id});return;}
+ if(!refresh&&cached?.cooldown){if(cached.measurement)emit({provider:"codex",...cached.measurement,accountId:id,stale:true,state:"stale",error:"Usage refresh is cooling down"});else emit({provider:"codex",accountId:id,state:"unknown",stale:true,error:"Usage refresh is cooling down"});return;}
+ try{const measurement=await fetchMeasurement();if(typeof measurement.measurementAt!=="number"||!Number.isFinite(measurement.measurementAt)||measurement.measurementAt>Date.now()/1000+30)throw Error("Invalid native measurement timestamp");if(expired(measurement,Date.now()/1000)){measurement.state="expired";measurement.stale=true;}if(!await cacheUsage(statePath,id,source,identity,started,measurement)){emit({provider:"codex",accountId:id,state:"unknown",stale:true,error:"Account monitoring changed during usage request"});return;}emit({provider:"codex",...measurement,accountId:id});}
+ catch{const prior=await recordFailure(statePath,id,source,identity,started,"Usage unavailable");if(prior?.measurement)emit({provider:"codex",...prior.measurement,accountId:id,stale:true,state:"stale",error:"Usage unavailable"});else emit({provider:"codex",accountId:id,state:"unknown",stale:true,error:"Usage unavailable"});}
+}
+main().catch(error=>{emit({error:error instanceof Error?error.message:"Codex account operation failed"});process.exitCode=1;});
