@@ -1,0 +1,10 @@
+[Unit]
+Description=Weekly Digital Den backup verification
+
+[Timer]
+OnCalendar=Sun *-*-* 04:00:00
+RandomizedDelaySec=45min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

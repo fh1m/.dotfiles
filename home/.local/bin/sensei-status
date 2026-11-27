@@ -1,0 +1,121 @@
+#!/usr/bin/python3
+"""Read-only, typed status. Unknown is never reported as a healthy zero."""
+import argparse,json,subprocess,re,sys,time
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+from storage_budget import root_headroom as storage
+
+def run(args):
+    try:return subprocess.run(args,capture_output=True,text=True,timeout=20)
+    except (OSError,subprocess.TimeoutExpired):return None
+
+def failed():
+    result={}
+    for scope,flags in [('system',[]),('user',['--user'])]:
+        r=run(['systemctl',*flags,'--failed','--no-legend','--plain','--no-pager'])
+        result[scope]=len(r.stdout.splitlines()) if r is not None and r.returncode==0 else None
+    result['total']=sum(result.values()) if all(v is not None for v in result.values()) else None
+    return result
+
+def updates():
+    r=run(['checkupdates'])
+    if r is None:return {'known':False,'error':'unavailable'}
+    if r.returncode==2 and not r.stdout.strip():return {'known':True,'count':0}
+    if r.returncode!=0:return {'known':False,'error':'check-failed'}
+    lines=[l for l in r.stdout.splitlines() if l.strip()]
+    if any(' -> ' not in l or len(l.split())<4 for l in lines):return {'known':False,'error':'invalid-response'}
+    return {'known':True,'count':len(lines)}
+
+def route():
+    rows=[];known=True
+    for family in ['-4','-6']:
+        r=run(['ip','-j',family,'route','show','default'])
+        try:
+            if r is None or r.returncode:raise ValueError()
+            rows.extend(json.loads(r.stdout))
+        except (ValueError,TypeError):known=False
+    latency=None
+    gateway=next((r for r in rows if r.get('gateway')),None)
+    if gateway:
+        args=['ping','-n','-c','1','-W','1']
+        if gateway.get('dev'):args+=['-I',gateway['dev']]
+        r=run([*args,gateway['gateway']])
+        match=re.search(r'time[=<]([0-9.]+)',r.stdout) if r is not None and r.returncode==0 else None
+        if match:latency=float(match.group(1))
+    return {'known':known,'defaultRoutePresent':bool(rows),'internet':'unverified','gatewayPingMs':latency}
+
+def firewall():
+    managers=[]
+    for unit in ['nftables','iptables','ip6tables','ufw','firewalld']:
+        r=run(['systemctl','is-active',unit])
+        if r is not None and r.stdout.strip()=='active':managers.append(unit)
+    # Manager presence cannot establish effective ingress policy. No privileged
+    # rule reads or escalation are performed by background desktop telemetry.
+    return {'policy':'unknown','managers':managers}
+
+def discovery():
+    """On-demand KDE health; advertisements never establish usable pairing."""
+    deadline=time.monotonic()+8
+    def query(args):
+        remaining=deadline-time.monotonic()
+        if remaining<=0:return None
+        try:return subprocess.run(args,capture_output=True,text=True,timeout=min(2,remaining))
+        except (OSError,subprocess.TimeoutExpired):return None
+    # The CLI intentionally waits two seconds for discovery. Query the existing
+    # daemon instead: this is a snapshot, not another discovery producer.
+    peers=query(['busctl','--user','--json=short','call','org.kde.kdeconnect',
+                 '/modules/kdeconnect','org.kde.kdeconnect.daemon','devices','bb','false','false'])
+    try:
+        if peers is None or peers.returncode:raise ValueError()
+        payload=json.loads(peers.stdout);ids=payload['data'][0]
+        if payload.get('type')!='as' or not isinstance(ids,list) or not all(isinstance(value,str) for value in ids):raise ValueError()
+    except (ValueError,TypeError,KeyError,IndexError):
+        return {'known':False,'state':'unavailable','paired':None,'reachablePaired':None,
+                'guidance':'KDE Connect did not answer; preserve pairings and inspect its service.'}
+    complete=len(ids)<=16 and all(re.fullmatch(r'[A-Za-z0-9_-]+',value) for value in ids)
+    devices=[]
+    for identity in ids[:16]:
+        if not re.fullmatch(r'[A-Za-z0-9_-]+',identity):continue
+        response=query(['busctl','--user','--json=short','call','org.kde.kdeconnect',
+                        '/modules/kdeconnect/devices/'+identity,'org.freedesktop.DBus.Properties',
+                        'GetAll','s','org.kde.kdeconnect.device'])
+        try:
+            if response is None or response.returncode:raise ValueError()
+            data=json.loads(response.stdout)['data'][0]
+            paired=data['isPaired']['data'];reachable=data['isReachable']['data']
+            if not isinstance(paired,bool) or not isinstance(reachable,bool):raise ValueError()
+            category=data.get('type',{}).get('data')
+            devices.append({'type':category if category in ('phone','tablet','desktop','laptop','tv') else 'unknown',
+                            'paired':paired,'reachable':reachable})
+        except (ValueError,TypeError,KeyError,IndexError):complete=False
+    journal=query(['journalctl','--user','--no-pager','--since=-1h','--lines=500',
+                   '--output=json','--grep=Avahi: Could not resolve service','SYSLOG_IDENTIFIER=kdeconnectd'])
+    timeouts=None
+    if journal is not None and (journal.returncode==0 or
+            (journal.returncode==1 and not journal.stdout.strip() and not journal.stderr.strip())):
+        try:timeouts=len([json.loads(line) for line in journal.stdout.splitlines()])
+        except (ValueError,TypeError):pass
+    paired=sum(device['paired'] for device in devices) if complete else None
+    reachable=sum(device['paired'] and device['reachable'] for device in devices) if complete else None
+    if not complete:state='unavailable'
+    elif not paired:state='no_paired_devices'
+    elif reachable<paired:state='waiting_for_peer'
+    elif timeouts is None:state='discovery_unverified'
+    elif timeouts:state='discovery_warnings'
+    else:state='healthy'
+    guidance={
+        'unavailable':'Peer details are incomplete; do not interpret unknown as disconnected.',
+        'no_paired_devices':'No paired device is configured; advertisements are not authenticated links.',
+        'waiting_for_peer':'A paired device is unreachable; it may be asleep or offline. Preserve its trust.',
+        'discovery_unverified':'Paired devices are reachable; journal access did not verify discovery warnings.',
+        'discovery_warnings':'Paired devices are usable, but service advertisements timed out. Do not reset pairings.',
+        'healthy':'Configured paired devices are reachable; no resolver timeout was observed in the last hour.',
+    }[state]
+    return {'known':complete,'state':state,'paired':paired,'reachablePaired':reachable,
+            'devices':devices,'resolverTimeouts1h':timeouts,'timeoutCountLimited':timeouts is not None and timeouts>=500,
+            'guidance':guidance}
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('query',choices=['failed','updates','route','firewall','storage','discovery']);a=p.parse_args()
+    print(json.dumps(globals()[a.query]()))
+if __name__=='__main__':main()

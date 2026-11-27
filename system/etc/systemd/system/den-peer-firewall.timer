@@ -1,0 +1,10 @@
+[Unit]
+Description=Retry named Den peer reconciliation after boot or missed discovery
+
+[Timer]
+OnBootSec=45s
+OnUnitInactiveSec=5min
+RandomizedDelaySec=10s
+
+[Install]
+WantedBy=timers.target

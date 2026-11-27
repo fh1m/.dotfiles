@@ -68,9 +68,9 @@ DropdownFrame {
         });
         return list;
     }
-    // Discovery is bounded and only runs while this panel is being used.
+    // Explicit discovery is bounded; intermittent advertisers get a full minute.
     Timer {
-        interval: 20000
+        interval: 60000
         running: (root.adapter?.discovering ?? false) && ShellState.dropdown === "bluetooth"
         onTriggered: { if (root.adapter) root.adapter.discovering = false; }
     }
@@ -285,7 +285,9 @@ DropdownFrame {
                     }
 
                     function onPairedChanged(): void {
-                        if (forgetAction.working)
+                        if (linkAction.working && row.modelData.paired)
+                            linkAction.succeed();
+                        if (forgetAction.working && !row.modelData.paired)
                             forgetAction.succeed();
                     }
                 }
@@ -602,10 +604,11 @@ DropdownFrame {
                             visible: opacity > 0
                             opacity: row.confirming ? 0 : 1
 
-                            text: row.linked ? "UNLINK" : "LINK"
-                            verbText: row.linked ? "UNLINKING" : "LINKING"
+                            text: row.linked ? "UNLINK" : row.paired ? "LINK" : "PAIR"
+                            verbText: row.linked ? "UNLINKING" : row.paired ? "LINKING" : "PAIRING"
                             accented: true
                             action: linkAction
+                            usable: !row.modelData.pairing
 
                             Behavior on opacity {
                                 NumberAnimation {
@@ -618,8 +621,10 @@ DropdownFrame {
                                 linkAction.begin(verbText);
                                 if (row.linked)
                                     row.modelData.disconnect();
-                                else
+                                else if (row.paired)
                                     row.modelData.connect();
+                                else
+                                    row.modelData.pair();
                             }
                         }
 
@@ -700,7 +705,9 @@ DropdownFrame {
             text: {
                 if (!root.hasAdapter)
                     return "NO BLUETOOTH ADAPTER";
-                return (root.adapter?.enabled ?? false) ? "NO DEVICES    TURN DISCOVERY ON" : "THE ADAPTER IS OFF";
+                if (!(root.adapter?.enabled ?? false))
+                    return "THE ADAPTER IS OFF";
+                return (root.adapter?.discovering ?? false) ? "SCANNING · PUT DEVICE IN PAIRING MODE" : "NO DEVICES    ENABLE PAIRING MODE AND SCAN";
             }
         }
 

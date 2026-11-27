@@ -3,11 +3,15 @@ Description=Digital Den input sharing
 After=graphical-session.target network-online.target den-cursor.service
 Wants=den-cursor.service
 [Service]
-Type=simple
+Type=exec
+ExecStartPre=/usr/bin/python3 %h/.local/state/homie-control/den-session.py ready
+TimeoutStartSec=55
 ExecStart=/usr/bin/python3 %h/.local/state/homie-control/den-session.py input
 ExecStopPost=/usr/bin/python3 %h/.local/state/homie-control/den-session.py reset
 Restart=on-failure
 RestartSec=5
+RestartSteps=5
+RestartMaxDelaySec=60
 TimeoutStopSec=5
 KillMode=control-group
 UMask=0077

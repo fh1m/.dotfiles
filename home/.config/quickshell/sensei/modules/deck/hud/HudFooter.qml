@@ -75,7 +75,7 @@ Column {
                 renderType: Text.NativeRendering
                 anchors.verticalCenter: parent.verticalCenter
 
-                text: SystemStatus.breach ? `ICE${Appearance.separator}BREACH` : `ICE${Appearance.separator}NOMINAL`
+                text: !SystemStatus.healthKnown ? "ICE UNKNOWN" : SystemStatus.breach ? `ICE${Appearance.separator}BREACH` : `ICE${Appearance.separator}NOMINAL`
                 color: SystemStatus.breach ? Theme.accent : Theme.text
                 font.family: Appearance.font.data
                 font.pixelSize: Appearance.size.label
@@ -86,7 +86,7 @@ Column {
 
             NrLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                text: `${SystemStatus.failedUnits} FAILED`
+                text: SystemStatus.healthKnown ? `${SystemStatus.failedSystemUnits} SYSTEM / ${SystemStatus.failedUserUnits} USER FAILED` : "SERVICE HEALTH UNKNOWN"
             }
         }
 
@@ -122,13 +122,13 @@ Column {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             height: 11
-            count: SystemStatus.pendingUpdates
+            count: Math.max(0,SystemStatus.pendingUpdates)
         }
 
         NrLabel {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: `PKG${Appearance.separator}${SystemStatus.pendingUpdates} PENDING`
+            text: SystemStatus.updatesKnown ? `PKG${Appearance.separator}${SystemStatus.pendingUpdates} PENDING` : "PKG CHECK UNAVAILABLE"
         }
     }
 

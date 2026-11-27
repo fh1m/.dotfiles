@@ -1,0 +1,11 @@
+[Unit]
+Description=Digital Den peer checkpoint freshness reconciliation
+ConditionPathExists=%h/.config/sensei-den/backup.json
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/sensei-den backup peer-copy
+Nice=15
+IOWeight=10
+TimeoutStartSec=2h
+UMask=0077

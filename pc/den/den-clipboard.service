@@ -2,10 +2,14 @@
 Description=Digital Den clipboard sharing
 After=graphical-session.target network-online.target
 [Service]
-Type=simple
+Type=exec
+ExecStartPre=/usr/bin/python3 %h/.local/state/homie-control/den-session.py ready
+TimeoutStartSec=55
 ExecStart=/usr/bin/python3 %h/.local/state/homie-control/den-session.py clipboard
 Restart=always
 RestartSec=5
+RestartSteps=5
+RestartMaxDelaySec=60
 TimeoutStopSec=5
 KillMode=control-group
 UMask=0077

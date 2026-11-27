@@ -38,11 +38,11 @@ Scope {
     readonly property string contents: `QUEUE_DONE=${Planner.done}
 QUEUE_TOTAL=${Planner.total}
 QUEUE_ACTIVE='${activeTask}'
-VULN=${Vuln.count}
+VULN=${Vuln.available ? Vuln.count : -1}
 VULN_HIGH=${Vuln.high}
 VULN_FIXABLE=${Vuln.fixReady.length}
 ICE=${SystemStatus.failedUnits}
-PKG=${SystemStatus.pendingUpdates}
+PKG=${SystemStatus.updatesKnown ? SystemStatus.pendingUpdates : -1}
 SHIELD=${SystemStatus.shieldState === "armed" ? "ARMED" : SystemStatus.shieldState === "down" ? "DOWN" : "UNKNOWN"}
 SHIELD_FW='${SystemStatus.shieldFirewall.replace(/['\n\r]/g, "")}'
 PROFILE='${Theme.profile.replace(/['\n\r]/g, "")}'

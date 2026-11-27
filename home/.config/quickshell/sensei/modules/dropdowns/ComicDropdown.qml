@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import Quickshell
 import qs.components
@@ -7,8 +8,8 @@ import qs.services
 DropdownFrame {
  headerAccent:Theme.widgetAccent
  id:root;property bool showTranscript:false;title:'󰭹 XKCD · Sensei’s intermission';katakana:'';implicitWidth:740;fillColor:Theme.widgetGlass
- focus:true
- Component.onCompleted:{DesktopExtras.loadComic();Qt.callLater(()=>root.forceActiveFocus());}
+ focus:root.enabled&&root.Window.active&&!!root.QsWindow.window?.visible
+ Component.onCompleted:DesktopExtras.loadComic()
  Column {width:parent.width;spacing:10
   Row {spacing:8
    ControlTile {implicitWidth:95;label:'← Previous';enabled:!DesktopExtras.comicLoading&&(DesktopExtras.comic.num||1)>1;onActivated:DesktopExtras.loadComic(DesktopExtras.comic.num===405?403:DesktopExtras.comic.num-1)}

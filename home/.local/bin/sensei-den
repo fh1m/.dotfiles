@@ -63,15 +63,17 @@ def service(name):return run(['systemctl','--user','is-active',name]).stdout.str
 def connectivity():
     try:
         if host()=='arete':return remote(['hostname'],timeout=3,fresh=True).strip().split('.')[0]=='homie'
-        r=run(['ssh','-n','-F',str(PRIVATE/'master-client.conf'),'arete-den-control','den-control','status'],timeout=3)
-        return r.returncode==0
+        r=run(['ssh','-S','none','-n','-F',str(PRIVATE/'master-client.conf'),'arete-den-control','den-control','ping'],timeout=3)
+        return r.returncode==0 and json.loads(r.stdout).get('host')=='arete'
     except (OSError,ValueError,subprocess.SubprocessError):return False
 
 
 def current_mode(peer=None):
     wanted=read(CONFIG/'continuity.json').get('mode','auto')
     peer=connectivity() if peer is None else peer
-    return {'requested':wanted,'effective':('together' if peer else 'away' if host()=='arete' else 'homie') if wanted=='auto' else wanted}
+    cfg=read(CONFIG/'continuity.json')
+    return {'requested':wanted,'effective':('together' if peer else 'away' if host()=='arete' else 'homie') if wanted=='auto' else wanted,
+            'peerPending':cfg.get('peerPending'),'peerAcknowledged':cfg.get('peerAcknowledged')}
 
 
 def status():
@@ -228,20 +230,45 @@ def mode(value):
     marker=PRIVATE/'input/user-paused'
     if host()=='arete' and value in ('away','homie') and old not in ('away','homie'):
         cfg['resumeSharing']=service('den-input')=='active' and not marker.exists()
-    write(CONFIG/'continuity.json',cfg)
+    # Commit only after local capture release is acknowledged below.
     if host()=='arete' and value in ('away','homie'):
         r=run([str(HOME/'.local/bin/den-control'),'home'],timeout=10)
         if r.returncode:raise ValueError('Could not confirm capture release; use Ctrl+Alt+Esc')
+        capture=PRIVATE/'input/active'
+        if capture.exists() and capture.read_text().strip()=='1':
+            raise ValueError('Capture is still active; continuity mode was not changed')
         cfg['awayPauseStamp']=marker.stat().st_mtime_ns if marker.exists() else None
         write(CONFIG/'continuity.json',cfg)
+    cfg['generation']=time.time_ns()
     if host()=='arete':
-        try:remote([str(HOME/'.local/bin/sensei-den'),'mode','homie' if value in ('away','homie') else 'auto'])
-        except (ValueError,OSError,subprocess.SubprocessError):pass
+        cfg['peerPending']={'mode':'homie' if value in ('away','homie') else 'auto','generation':cfg['generation'],'created':time.time()}
+    write(CONFIG/'continuity.json',cfg)
+    if host()=='arete':
+        reconcile_mode()
+        cfg=read(CONFIG/'continuity.json')
         if value in ('auto','together') and old in ('away','homie'):
             if cfg.get('resumeSharing') and marker.exists() and marker.stat().st_mtime_ns==cfg.get('awayPauseStamp'):
                 marker.unlink()
             cfg.pop('resumeSharing',None);cfg.pop('awayPauseStamp',None);write(CONFIG/'continuity.json',cfg)
     return {**current_mode(),'notice':'Display inputs and USB must be physically connected to their owner; software does not move cables.'}
+
+def reconcile_mode():
+    cfg=read(CONFIG/'continuity.json');pending=cfg.get('peerPending')
+    if not pending:return
+    try:
+        acknowledgement=json.loads(remote([str(HOME/'.local/bin/sensei-den'),'mode',pending['mode']]))
+        if not isinstance(acknowledgement,dict) or acknowledgement.get('error') or acknowledgement.get('requested')!=pending['mode']:
+            raise ValueError('Peer did not acknowledge the requested mode')
+    except (ValueError,OSError,subprocess.SubprocessError) as error:
+        latest=read(CONFIG/'continuity.json')
+        if latest.get('generation')==pending['generation']:
+            latest['peerPending'].update(lastAttempt=time.time(),reason=str(error)[:180])
+            write(CONFIG/'continuity.json',latest)
+        return
+    latest=read(CONFIG/'continuity.json')
+    if latest.get('generation')==pending['generation']:
+        latest.pop('peerPending',None);latest['peerAcknowledged']={'generation':pending['generation'],'at':time.time()}
+        write(CONFIG/'continuity.json',latest)
 
 
 def sync_status():
@@ -292,54 +319,98 @@ def backup_reserve(cfg):
     return free
 
 
-def guarded_backup(command,cfg,env):
-    # Logs stay private and bounded; the capacity watchdog survives a quiet Restic.
-    import tempfile
-    backup_reserve(cfg)
-    with tempfile.TemporaryFile(mode='w+') as output,tempfile.TemporaryFile(mode='w+') as errors:
-        process=subprocess.Popen(command,stdout=output,stderr=errors,text=True,env=env)
-        try:
-            deadline=time.monotonic()+7200
-            while True:
-                try:code=process.wait(timeout=15);break
-                except subprocess.TimeoutExpired:
-                    if time.monotonic()>deadline:raise ValueError('Backup exceeded its time limit')
-                    backup_reserve(cfg)
-        except BaseException:
-            process.terminate()
-            try:process.wait(timeout=15)
-            except subprocess.TimeoutExpired:process.kill();process.wait()
-            raise
-        output.seek(0);return subprocess.CompletedProcess(command,code,output.read(), '')
+def guarded_backup(command,cfg,env,*,reserve=True,timeout=7200):
+    # One private, bounded diagnostic file; never embedded in public UI.
+    sys.path.insert(0,str(HOME/'.local/share/sensei'))
+    from job_runtime import run_bounded
+    if reserve:backup_reserve(cfg)
+    diagnostic=STATE/'backup-diagnostics.log'
+    result=run_bounded(command,diagnostic,env=env,timeout=timeout,max_bytes=8*1024*1024,
+                       preflight=(lambda:backup_reserve(cfg)) if reserve else None)
+    output=diagnostic.read_text(errors='replace')
+    write(STATE/'backup-diagnostics.json',{'at':time.time(),'exitCode':result['exitCode'],
+        'category':'success' if result['exitCode']==0 else 'restic-failed','truncated':result['logTruncated']})
+    return subprocess.CompletedProcess(command,result['exitCode'],output,'Private diagnostics: backup-diagnostics.log')
 
 
 def backup(action):
+    if action=='status':return _backup(action)
+    STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+    with (STATE/'backup-operation.lock').open('a') as lock:
+        try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:raise ValueError('Another backup operation is active; retry after it finishes')
+        try:return _backup(action)
+        except (OSError,ValueError,subprocess.SubprocessError) as error:
+            if action=='peer-copy':
+                previous=read(STATE/'peer-copy-status.json')
+                previous.update(ok=False,state='blocked',attempted=time.time(),
+                    error=str(error) if isinstance(error,ValueError) else 'Peer copy unavailable; inspect private backup diagnostics.')
+                write(STATE/'peer-copy-status.json',previous)
+            raise
+
+
+def _backup(action):
     cfg=read(CONFIG/'backup.json')
-    if not cfg:return {'configured':False,'reason':'No local backup target configured'}
+    if not cfg:return {'configured':False,'ok':action=='status','reason':'No local backup target configured'}
     repository=cfg['repository'];repo=Path(repository) if not repository.startswith('sftp:') else None;password=Path(cfg['passwordFile'])
     env=dict(os.environ,RESTIC_REPOSITORY=repository,RESTIC_PASSWORD_FILE=str(password))
     binary=shutil.which('restic')
     if not binary:raise ValueError('Restic is not installed')
-    if action=='status':return {'configured':True,'repository':repository,'last':read(STATE/'backup-status.json'),'scope':'local only'}
+    if action=='status':
+        peer=read(STATE/'peer-copy-status.json')
+        if peer.get('sourceCreated'):
+            try:
+                created=datetime.datetime.fromisoformat(peer['sourceCreated'].replace('Z','+00:00'))
+                peer['ageSeconds']=max(0,time.time()-created.timestamp())
+                if peer.get('state')=='current' and created.astimezone().date()!=datetime.datetime.now().date():
+                    peer.update(ok=False,state='awaiting-current-source')
+            except (ValueError,TypeError,AttributeError):peer.update(ok=False,state='source-check-unavailable')
+        return {'configured':True,'repository':repository,'last':read(STATE/'backup-status.json'),'integrity':read(STATE/'integrity-status.json'),'restore':read(STATE/'restore-status.json'),'peerCopy':peer,'scope':'local only'}
     base=[binary]+(['-o','sftp.command='+cfg['sftpCommand']] if cfg.get('sftpCommand') else [])
     if not password.exists():raise ValueError('Backup password file missing; do not initialize another repository')
     if action=='peer-copy':
         peer=cfg.get('peerCopy')
-        if not peer:return {'configured':False,'reason':'No peer snapshot copy configured on this host'}
+        if not peer:return {'configured':False,'ok':True,'skipped':True,'reason':'No peer snapshot copy configured on this host'}
         target=Path(peer['repository']);target.parent.mkdir(parents=True,exist_ok=True)
         guard={'repository':str(target),'minimumFreeGiB':peer.get('minimumFreeGiB',80)};backup_reserve(guard)
         copyenv=dict(os.environ,RESTIC_REPOSITORY=str(target),RESTIC_PASSWORD_FILE=peer['passwordFile'],
                      RESTIC_FROM_REPOSITORY=peer['fromRepository'],RESTIC_FROM_PASSWORD_FILE=peer['passwordFile'])
-        copybase=[binary,'-o','sftp.command='+cfg['sftpCommand']]
+        copybase=base
+        sourceenv=dict(copyenv,RESTIC_REPOSITORY=peer['fromRepository'])
+        query=run([*copybase,'snapshots','--json','--tag','digital-den','--latest','1'],env=sourceenv,timeout=90)
+        if query.returncode:raise ValueError('Source snapshot inventory unavailable; peer freshness is unknown')
+        source_rows=json.loads(query.stdout)
+        if not source_rows:raise ValueError('No source checkpoint available for peer copy')
+        source=max(source_rows,key=lambda r:r['time'])
         if not (target/'config').exists():
             r=run([*copybase,'init','--copy-chunker-params'],timeout=90,env=copyenv)
             if r.returncode:raise ValueError('Peer snapshot destination initialization failed')
-        r=guarded_backup([*copybase,'copy'],guard,copyenv)
+        r=guarded_backup([*copybase,'copy',source['id']],guard,copyenv)
         if r.returncode:raise ValueError('Peer snapshot copy failed; existing snapshots remain')
-        result={'ok':True,'finished':time.time(),'repository':str(target),'scope':'Homie snapshots copied onto Arete'}
+        copied=run([*copybase,'snapshots','--json','--tag','digital-den'],env=copyenv,timeout=90)
+        rows=json.loads(copied.stdout) if copied.returncode==0 else []
+        destination=next((row for row in rows if row.get('original')==source['id'] or row.get('id')==source['id']),None)
+        created=datetime.datetime.fromisoformat(source['time'].replace('Z','+00:00'))
+        fresh=created.astimezone().date()==datetime.datetime.now().date()
+        latest_query=run([*copybase,'snapshots','--json','--tag','digital-den','--latest','1'],env=sourceenv,timeout=90)
+        latest_rows=json.loads(latest_query.stdout) if latest_query.returncode==0 else []
+        latest=max(latest_rows,key=lambda row:row['time']) if latest_rows else None
+        current=latest is not None and latest.get('id')==source['id']
+        result={'ok':destination is not None and fresh and current,
+            'state':'copy-unverified' if destination is None else 'source-check-unavailable' if latest is None else 'current' if fresh and current else 'awaiting-current-source',
+            'finished':time.time(),'sourceSnapshot':source['id'],'sourceCreated':source['time'],
+            'latestSourceSnapshot':latest.get('id') if latest else None,
+            'copiedSnapshot':destination.get('id') if destination else None,'ageSeconds':max(0,time.time()-created.timestamp()),'scope':'Explicit latest digital-den source checkpoint'}
         write(STATE/'peer-copy-status.json',result);return result
     if action=='run':
-        paths=[str(Path(p)) for p in cfg['paths'] if Path(p).exists()]
+        paths=[];missing=[];optional=set(cfg.get('optionalPaths',[]))
+        for item in cfg['paths']:
+            source=Path(item).expanduser()
+            if source.exists():paths.append(str(source))
+            elif item not in optional:missing.append(item)
+        if missing:
+            write(STATE/'backup-status.json',{'finished':time.time(),'ok':False,'state':'incomplete-sources','covered':len(paths),'missingRequired':len(missing)})
+            raise ValueError('Required backup sources unavailable ('+str(len(missing))+'); inspect private configuration before retrying')
         if not paths:raise ValueError('No backup sources exist')
         command=[*base,'backup','--json','--tag','digital-den']
         for p in cfg.get('exclude',[]):command+=['--exclude',p]
@@ -350,7 +421,7 @@ def backup(action):
             run(['notify-send','-a','Digital Den','Backup needs attention','Existing snapshots remain available'],timeout=3)
             raise
         # Exit 3 is an incomplete backup, never a successful checkpoint.
-        result={'finished':datetime.datetime.now(datetime.timezone.utc).isoformat(),'ok':r.returncode==0,'exitCode':r.returncode}
+        result={'finished':datetime.datetime.now(datetime.timezone.utc).isoformat(),'ok':r.returncode==0,'exitCode':r.returncode,'covered':len(paths),'missingRequired':0}
         summaries=[]
         for line in r.stdout.splitlines():
             try:
@@ -372,12 +443,15 @@ def backup(action):
         if preview:result['snapshots']=json.loads(r.stdout)
         return result
     if action=='check':
-        r=run([*base,'check','--read-data-subset=10%'],timeout=3600,env=env)
-        return {'ok':r.returncode==0,'scope':'repository metadata and sampled data'}
+        r=guarded_backup([*base,'check','--read-data-subset=10%'],cfg,env,reserve=False,timeout=3600)
+        result={'ok':r.returncode==0,'checkedAt':time.time(),'exitCode':r.returncode,'scope':'repository metadata and 10% sampled data'}
+        write(STATE/'integrity-status.json',result)
+        return result
     if action=='restore-test':
         import tempfile,hashlib
-        marker=STATE/'restore-proof.txt';marker.parent.mkdir(parents=True,exist_ok=True);marker.write_text('Digital Den recovery proof\n')
-        r=run([*base,'backup','--tag','den-restore-proof',str(marker)],timeout=300,env=env)
+        backup_reserve(cfg)
+        marker=STATE/'restore-proof.txt';marker.parent.mkdir(parents=True,exist_ok=True);marker.write_text('Digital Den recovery proof '+os.urandom(32).hex()+'\n')
+        r=guarded_backup([*base,'backup','--tag','den-restore-proof',str(marker)],cfg,env,timeout=300)
         if r.returncode:raise ValueError('Recovery fixture backup failed')
         with tempfile.TemporaryDirectory(prefix='den-restore-') as d:
             r=run([*base,'restore','latest','--tag','den-restore-proof','--target',d],timeout=300,env=env)
@@ -400,18 +474,21 @@ def receive_artifact(record,destination):
 
 
 def job(args):
+    if args.host not in (None,host(),'homie'):raise ValueError('Unsupported job host; no command was sent')
     if args.host and args.host!=host():
         command=[str(HOME/'.local/bin/sensei-den'),'job',args.action]
         if args.project:command+=['--project',args.project]
         if getattr(args,'memory_mib',None):command+=['--memory-mib',str(args.memory_mib)]
         if getattr(args,'cpu_percent',None):command+=['--cpu-percent',str(args.cpu_percent)]
+        if getattr(args,'log_mib',None) is not None:command+=['--log-mib',str(args.log_mib)]
+        if getattr(args,'timeout',None) is not None:command+=['--timeout',str(args.timeout)]
         if args.id:command+=['--id',args.id]
         for item in getattr(args,'input',[]) or []:command+=['--input',item]
         for item in getattr(args,'artifact',[]) or []:command+=['--artifact',item]
         if getattr(args,'file',None):command+=['--file',args.file]
         command+=['--',*args.command] if args.command else []
         result=json.loads(remote(command,timeout=20,private=True))
-        if args.action=='fetch' and getattr(args,'output',None):return receive_artifact(result,args.output)
+        if args.action in ('fetch','export-log') and getattr(args,'output',None):return receive_artifact(result,args.output)
         return result
     directory=STATE/'jobs';directory.mkdir(parents=True,exist_ok=True,mode=0o700)
     if args.action=='run':
@@ -420,6 +497,8 @@ def job(args):
         with submission(directory):
             if getattr(args,'memory_mib',None) is not None and not 32<=args.memory_mib<=1048576:raise ValueError('Memory limit must be 32–1048576 MiB')
             if getattr(args,'cpu_percent',None) is not None and not 1<=args.cpu_percent<=10000:raise ValueError('Invalid CPU quota')
+            if getattr(args,'log_mib',None) is not None and not 1<=args.log_mib<=256:raise ValueError('Log cap must be 1–256 MiB')
+            if getattr(args,'timeout',None) is not None and not 1<=args.timeout<=604800:raise ValueError('Runtime cap must be 1–604800 seconds')
             project=Path(args.project or Path.cwd()).resolve()
             command=args.command[1:] if args.command[:1]==['--'] else args.command
             if not project.is_dir() or not command:raise ValueError('Choose an existing project and command')
@@ -427,6 +506,8 @@ def job(args):
             log=directory/(ident+'.log');meta={'id':ident,'host':host(),'unit':unit,'project':str(project),'command':command,'created':time.time(),
                 'commit':run(['git','-C',str(project),'rev-parse','HEAD']).stdout.strip(),'dirty':bool(run(['git','-C',str(project),'status','--porcelain']).stdout),
                 'schema':1,'state':'queued','requestedResources':{'memoryMiB':getattr(args,'memory_mib',None),'cpuPercent':getattr(args,'cpu_percent',None)},'inputs':[],'expectedArtifacts':getattr(args,'artifact',[]) or []}
+            if getattr(args,'log_mib',None) is not None:meta['logBudget']=args.log_mib*1024*1024
+            if getattr(args,'timeout',None) is not None:meta['timeout']=args.timeout
             sys.path.insert(0,str(HOME/'.local/share/sensei'))
             from den_job import checked_input
             for name in getattr(args,'input',[]) or []:
@@ -438,8 +519,8 @@ def job(args):
             if getattr(args,'memory_mib',None):limits+=['--property=MemoryMax='+str(args.memory_mib)+'M']
             if getattr(args,'cpu_percent',None):limits+=['--property=CPUQuota='+str(args.cpu_percent)+'%']
             r=run(['systemd-run','--user',*limits,'--unit',unit,'--property=WorkingDirectory='+str(project),
-                '--property=UMask=0077','--property=Nice=5','--property=StandardOutput=append:'+str(log),
-                '--property=StandardError=append:'+str(log),'--',sys.executable,str(HOME/'.local/share/sensei/den_job.py'),str(directory/(ident+'.json'))])
+                '--property=UMask=0077','--property=Nice=5','--property=StandardOutput=journal',
+                '--property=StandardError=journal','--',sys.executable,str(HOME/'.local/share/sensei/den_job.py'),str(directory/(ident+'.json'))])
             if r.returncode:
                 meta.update(state='start-failed');write(directory/(ident+'.json'),meta)
                 raise ValueError('Job could not start; no command was replayed')
@@ -456,6 +537,14 @@ def job(args):
     meta=read(directory/(args.id+'.json'))
     if not meta:raise ValueError('Unknown owned job')
     if args.action=='artifacts':return {'id':args.id,'artifacts':meta.get('artifacts',[]),'errors':meta.get('artifactErrors',[])}
+    if args.action=='export-log':
+        log=directory/(args.id+'.log')
+        sys.path.insert(0,str(HOME/'.local/share/sensei'))
+        from job_runtime import export_log
+        if getattr(args,'output',None):return {'path':export_log(log,Path(args.output).expanduser()),'state':meta['state']}
+        if log.stat().st_size>8*1024*1024:raise ValueError('Use explicit file transfer for logs larger than 8 MiB')
+        data=log.read_bytes()
+        return {'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'data':base64.b64encode(data).decode(),'state':meta['state']}
     if args.action=='fetch':
         sys.path.insert(0,str(HOME/'.local/share/sensei'))
         from den_job import artifact
@@ -467,13 +556,27 @@ def job(args):
         if current['bytes']>8*1024*1024:raise ValueError('Use explicit file transfer for artifacts larger than 8 MiB')
         result={**record,'data':base64.b64encode((Path(meta['project'])/name).read_bytes()).decode()}
         return receive_artifact(result,args.output) if getattr(args,'output',None) else result
-    if args.action=='logs':return {'id':args.id,'text':(directory/(args.id+'.log')).read_text(errors='replace')[-24000:]}
+    if args.action=='logs':
+        log=directory/(args.id+'.log')
+        with log.open('rb') as stream:
+            stream.seek(max(0,log.stat().st_size-24000))
+            return {'id':args.id,'text':stream.read().decode(errors='replace'),'truncated':meta.get('logTruncated',False)}
     if args.action=='cancel':
+        if meta.get('state') not in ('queued','running'):
+            return {'id':args.id,'state':meta.get('state'),'cancelled':False,'reason':'Already complete; original evidence preserved'}
+        if not meta.get('unit','').startswith('den-job-'+args.id):raise ValueError('Owned unit identity mismatch')
+        active=service(meta['unit'])
+        if active not in ('active','activating'):raise ValueError('Job is not active; refresh its recorded result')
         result=run(['systemctl','--user','stop',meta['unit']])
         if result.returncode:raise ValueError('Owned job could not be stopped')
-        meta=read(directory/(args.id+'.json'));meta.update(state='cancelled',finished=time.time())
+        # The worker may have completed while stop was being delivered.
+        meta=read(directory/(args.id+'.json'))
+        if meta.get('state') not in ('queued','running'):
+            return {'id':args.id,'state':meta.get('state'),'cancelled':meta.get('state')=='cancelled'}
+        if service(meta['unit']) in ('active','activating'):raise ValueError('Cancellation pending; worker still active')
+        meta.update(state='cancelled',finished=time.time())
         write(directory/(args.id+'.json'),meta)
-        return {'id':args.id,'state':'cancelled'}
+        return {'id':args.id,'state':'cancelled','cancelled':True}
     r=run(['systemctl','--user','show',meta['unit'],'--property=ActiveState,Result,ExecMainStatus'])
     return {**meta,'status':r.stdout.strip()}
 
@@ -661,11 +764,23 @@ def refresh_capture_routes(previous,current,active,usable):
     return True
 
 
+def publish_peer_address():
+    """A discovery hint, not an authorization: the root reconciler re-verifies SSH."""
+    hostname=read(CONFIG/'access.json').get('lanHost','homie.local')
+    try:addresses=sorted({row[4][0] for row in socket.getaddrinfo(hostname,22,socket.AF_INET,socket.SOCK_STREAM)})
+    except socket.gaierror:return
+    value={'hostname':hostname,'addresses':addresses}
+    path=STATE/'peer-address.json'
+    if read(path)!=value:write(path,value)
+
+
 def watch():
     previous=None;previous_mode=None;previous_topology=None
     while True:
         try:
             peer=connectivity();state=current_mode(peer)
+            if peer and host()=='arete':
+                publish_peer_address();reconcile_mode()
             try:companion_tick(peer and state['effective']=='together')
             except (ValueError,OSError,subprocess.SubprocessError):pass
             write(STATE/'presence.json',{'host':host(),'peer':peer,'mode':state,'time':time.time()})
@@ -699,7 +814,7 @@ def main():
     q=s.add_parser('sync');q.add_argument('action',nargs='?',default='status',choices=['status','scan','pause','resume'])
     q=s.add_parser('backup');q.add_argument('action',nargs='?',default='status',choices=['status','run','check','restore-test','retain','retain-preview','peer-copy'])
     q=s.add_parser('workbench');q.add_argument('action',nargs='?',default='open',choices=['open','start','stop','status'])
-    q=s.add_parser('job');q.add_argument('action',choices=['run','list','status','logs','cancel','artifacts','fetch']);q.add_argument('--host');q.add_argument('--project');q.add_argument('--id');q.add_argument('--input',action='append');q.add_argument('--artifact',action='append');q.add_argument('--file');q.add_argument('--output');q.add_argument('--memory-mib',type=int);q.add_argument('--cpu-percent',type=int);
+    q=s.add_parser('job');q.add_argument('action',choices=['run','list','status','logs','cancel','artifacts','fetch','export-log']);q.add_argument('--host');q.add_argument('--project');q.add_argument('--id');q.add_argument('--input',action='append');q.add_argument('--artifact',action='append');q.add_argument('--file');q.add_argument('--output');q.add_argument('--memory-mib',type=int);q.add_argument('--cpu-percent',type=int);q.add_argument('--log-mib',type=int);q.add_argument('--timeout',type=int)
     argv=sys.argv[1:];job_command=[]
     if '--' in argv:
         i=argv.index('--');job_command=argv[i+1:];argv=argv[:i]
@@ -720,6 +835,8 @@ def main():
 
 if __name__=='__main__':
     os.umask(0o077)
-    try:print(json.dumps(main(),ensure_ascii=False,indent=2))
+    try:
+        result=main();print(json.dumps(result,ensure_ascii=False,indent=2))
+        if isinstance(result,dict) and result.get('ok') is False:sys.exit(1)
     except (OSError,ValueError,KeyError,subprocess.SubprocessError) as e:
         print(json.dumps({'error':str(e) if isinstance(e,ValueError) else 'Den operation unavailable; existing data preserved'}));sys.exit(1)

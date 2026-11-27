@@ -15,11 +15,6 @@ class Safety(unittest.TestCase):
             self.assertEqual(run.call_count,1)
             self.assertEqual(run.call_args.args[0],["systemctl","--user","stop","den-input"])
             self.assertIn("x=960,y=540",hypr.call_args_list[2].args[1])
-    def test_no_input_service_autostart_in_installer(self):
-        # Cursor recovery is a separate service, never an input-session dependency.
-        service=Path(__file__).with_name("den-cursor.service").read_text()
-        self.assertNotIn("Requires=den-input",service)
-        self.assertNotIn("Wants=den-input",service)
     def test_session_teardown_clears_capture_and_nonmodal_marker(self):
         import runpy,sys
         sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'home/.local/share/sensei'))

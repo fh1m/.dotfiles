@@ -5,6 +5,8 @@ from .persistence import publish,lock
 COLLECTIONS=('Goals/Paths','Terms','Course Enrollments','Tasks','Schedule')
 VERSION='2026-03-11'
 def rich(text):return [{'type':'text','text':{'content':str(text)[:2000]}}]
+class NotionUnavailable(ValueError):pass
+class NotionAuthorizationError(ValueError):pass
 class Planner:
  def __init__(self,home=None):
   self.home=Path(home or Path.home());self.root=self.home/'.local/state/noesis-planning';self.root.mkdir(parents=True,exist_ok=True,mode=0o700);self.root.chmod(0o700)
@@ -15,12 +17,17 @@ class Planner:
   text=json.dumps(value,ensure_ascii=False,indent=2)+'\n';publish(path,text,expected=__import__('hashlib').sha256(path.read_bytes()).hexdigest() if path.exists() else None);path.chmod(0o600)
  def status(self):
   workspace=self.read(self.root/'workspace.json');config=self.read(self.config,workspace);cache=self.read(self.root/'cache.json')
-  return {'connection':'connected' if config.get('token') else 'workspace_ready' if config.get('root_id') else 'needs_connection','root_url':config.get('root_url','https://www.notion.so'),'collections':list(config.get('collections',{})),'pending':len(self.pending()),'pending_records':self.pending(),'last_sync':cache.get('updated_at'),'cache_source':cache.get('source','notion-api'),'records':cache.get('records',[]),'message':('Workspace verified through the Notion connector; unattended desktop sync needs its scoped connection' if config.get('root_id') else 'Sign in to Notion and connect a private Noesis root') if not config.get('token') else 'Notion owns plans; Noesis owns learning evidence'}
+  pending=self.pending();sync=self.read(self.root/'sync-status.json')
+  return {'connection':'connected' if config.get('token') else 'workspace_ready' if config.get('root_id') else 'needs_connection','root_url':config.get('root_url','https://www.notion.so'),'collections':list(config.get('collections',{})),'pending':len(pending),'pending_records':pending,'sync':sync,'last_sync':cache.get('updated_at'),'cache_source':cache.get('source','notion-api'),'records':cache.get('records',[]),'message':('Workspace verified through the Notion connector; unattended desktop sync needs its scoped connection' if config.get('root_id') else 'Sign in to Notion and connect a private Noesis root') if not config.get('token') else 'Notion owns plans; Noesis owns learning evidence'}
  def connect(self,token,parent):
   uuid.UUID(parent);token=token.strip()
   if not token or any(c.isspace() for c in token):raise ValueError('Use a scoped Notion connection token')
   # Validate remotely before storing credentials; never print the token.
-  self._token=token;self.api('GET','users/me');self.save(self.config,dict(self.read(self.root/'workspace.json'),version=1,token=token,parent_id=parent));del self._token
+  self._token=token;self.api('GET','users/me')
+  current=self.read(self.config);workspace=self.read(self.root/'workspace.json')
+  base=current if current.get('parent_id')==parent else workspace
+  self.save(self.config,{**base,'version':1,'token':token,'parent_id':parent});del self._token
+  self.save(self.root/'sync-status.json',{'state':'connected','next_retry':0})
   return {'connection':'connected','setup_required':True}
  def api(self,method,path,body=None):
   token=getattr(self,'_token',None) or self.read(self.config).get('token')
@@ -39,11 +46,12 @@ class Planner:
      delay=e.headers.get('Retry-After','1')
      try:delay=float(delay)
      except ValueError:delay=1
-     if delay>30:raise ValueError('Notion rate limited; queued work retained until a later sync') from None
+     if delay>30:raise NotionUnavailable('Notion rate limited; queued work retained until a later sync') from None
      time.sleep(max(.5,delay));continue
-    if e.code in (401,403):raise ValueError('Notion needs renewed authorization or access to this root; queued work retained') from None
+    if e.code in (401,403):raise NotionAuthorizationError('Notion needs renewed authorization or access to this root; queued work retained') from None
+    if e.code==429 or e.code>=500:raise NotionUnavailable('Notion temporarily unavailable; queued work retained') from None
     raise ValueError('Notion HTTP '+str(e.code)+'; inspect connection status before retrying') from None
-   except (urllib.error.URLError,TimeoutError) as e:raise ValueError('Notion unavailable; offline work retained') from None
+   except (urllib.error.URLError,TimeoutError) as e:raise NotionUnavailable('Notion unavailable; offline work retained') from None
  def query(self,source,filters=None):
   rows=[];cursor=None
   for _ in range(100):
@@ -146,4 +154,23 @@ class Planner:
    for name,source in config.get('collections',{}).items():
     all_rows.extend(dict(row,collection=name) for row in self.query(source['source_id']))
    cache={'updated_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'records':all_rows};self.save(self.root/'cache.json',cache)
+   self.save(self.root/'sync-status.json',{'state':'synced','last_success':time.time(),'failures':0,'next_retry':0})
    return {'sent':sent,'conflicts':conflicts,'records':len(all_rows)}
+ def sync_auto(self):
+  state=self.read(self.root/'sync-status.json')
+  now=time.time()
+  if state.get('next_retry',0)>now:return dict(state,attempted=False)
+  if not self.read(self.config).get('token'):
+   result={'state':'needs_connection','pending':len(self.pending()),'attempted':False}
+  else:
+   try:
+    summary=self.sync()
+    result=dict(summary,state='synced',last_success=time.time(),failures=0,next_retry=0)
+   except NotionUnavailable:
+    count=state.get('failures',0)+1
+    result={'state':'offline_queued','pending':len(self.pending()),'failures':count,
+            'last_success':state.get('last_success'),'next_retry':now+min(3600,300*2**min(count-1,4))}
+   except NotionAuthorizationError:
+    result={'state':'needs_connection','pending':len(self.pending()),'last_success':state.get('last_success'),'next_retry':now+3600}
+  self.save(self.root/'sync-status.json',result)
+  return result

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ -x /usr/bin/distrobox-host-exec && ( -f /run/.containerenv || -f /.dockerenv ) ]]; then
+    exec /usr/bin/distrobox-host-exec '@HOME@/.local/bin/omp-unified' "$@"
+fi
+export OMP_UNIFIED_HOST_HOME='@HOME@'
+exec '@HOME@/.bun/bin/bun' '@HOME@/.local/share/omp-unified/omp-unified.ts' "$@"

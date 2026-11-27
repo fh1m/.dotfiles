@@ -1,0 +1,14 @@
+[Unit]
+Description=Digital Den sampled integrity and isolated restore verification
+ConditionPathExists=%h/.config/sensei-den/backup.json
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/sensei-den backup check
+ExecStart=%h/.local/bin/sensei-den backup restore-test
+CPUWeight=10
+IOWeight=10
+Nice=15
+MemoryMax=512M
+TimeoutStartSec=90min
+UMask=0077

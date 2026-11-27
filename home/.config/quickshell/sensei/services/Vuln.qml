@@ -76,6 +76,9 @@ Singleton {
     // Set by the collector, cleared before each run: it is the one thing
     // that says the tool actually ran, whatever it then found.
     property bool _answered: false
+    property var _candidate: []
+    property bool _valid: false
+    property string error: ""
 
     Process {
         id: upgradeProc
@@ -194,6 +197,9 @@ Singleton {
                     if (!line.trim())
                         continue;
                     const parts = line.split("|");
+                    if(parts.length!==5 || !/^[A-Za-z0-9@._+:-]+$/.test(parts[0]) || !parts[1].includes("CVE-")) {
+                        root._valid=false; root._answered=true; return;
+                    }
                     const cves = (parts[1] ?? "").split(",").map(cve => cve.trim()).filter(cve => cve);
                     const type = (parts[3] ?? "").trim();
                     // arch-audit only fills the version column when an upgrade
@@ -228,11 +234,20 @@ Singleton {
                         return rank[a.severity] - rank[b.severity];
                     return a.name.localeCompare(b.name);
                 });
-                root.packages = entries;
+                root._candidate = entries;
+                root._valid = true;
                 root._answered = true;
-                root.lastSync = Date.now();
-                root._updateAge();
             }
+        }
+        onExited: (code,status) => {
+            if(code===0 && root._answered && root._valid) {
+                root.packages=root._candidate;
+                root.available=true; root.error="";
+                root.lastSync=Date.now(); root._updateAge();
+            } else {
+                root.available=false; root.error="Audit unavailable; previous findings may be stale";
+            }
+            root.scanning=false;
         }
 
         // Whatever happened -- a clean run, a non-zero exit, or a binary that
@@ -243,7 +258,7 @@ Singleton {
             if (running)
                 return;
             // The collector never ran, so neither did arch-audit.
-            root.available = root._answered;
+            if(!root._answered) {root.available=false;root.error="Audit tool unavailable";}
             root.scanning = false;
         }
     }

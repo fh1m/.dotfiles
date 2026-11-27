@@ -16,9 +16,12 @@ def revision():
 # type. Such copies are never kept: a password must not sit in history or backups.
 PASSWORD_HINT='x-kde-passwordManagerHint'
 def password_hinted():
-    try: types=subprocess.run(['wl-paste','--list-types'],capture_output=True,text=True,timeout=2).stdout.split()
-    except (OSError,subprocess.TimeoutExpired): return False
-    return PASSWORD_HINT in types
+    try:
+        result=subprocess.run(['wl-paste','--list-types'],capture_output=True,text=True,timeout=2)
+        if result.returncode:return True
+        types=result.stdout.split()
+    except (OSError,subprocess.TimeoutExpired):return True
+    return not types or PASSWORD_HINT in types or 'application/x-keepassxc-secret' in types
 def files_from(data):
     paths=[]
     for line in data.decode('utf-8',errors='replace').replace('\0','\n').splitlines():
@@ -53,10 +56,9 @@ def store(kind,data):
         ident=c.execute('insert into items(hash,kind,mime,path,content,title,created,last) values(?,?,?,?,?,?,?,?)',(digest,kind,mime,str(path),content,title,now,now)).lastrowid
         c.execute('insert into search(rowid,content) values(?,?)',(ident,content))
     c.execute('insert into events(item,time) values(?,?)',(ident,now)); c.commit(); revision()
-    backups=ROOT/'backups';backups.mkdir(exist_ok=True)
-    snapshot=backups/(time.strftime('%Y-%m-%d')+'.sqlite')
-    if not snapshot.exists():
-        target=sqlite3.connect(str(snapshot));c.backup(target);target.close()
+    # History already has SQLite WAL durability. Automatic daily plaintext
+    # duplicates retain deleted secrets indefinitely, so no new copies are made.
+    # Existing snapshots are preserved for an explicit reviewed migration.
 def item(ident):
     c.row_factory=sqlite3.Row
     row=c.execute('select * from items where id=?',(ident,)).fetchone()

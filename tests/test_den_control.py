@@ -107,3 +107,14 @@ class EngineeringGateway(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+def test_restricted_liveness_does_not_recurse_into_peer_or_require_input_config(tmp_path):
+    import json,os,subprocess,sys,socket
+    marker=tmp_path/'unexpected-network-call'
+    for name in ('ssh','systemctl'):
+        executable=tmp_path/name
+        executable.write_text('#!/bin/sh\ntouch '+str(marker)+'\nexit 1\n');executable.chmod(0o755)
+    environment=dict(os.environ,DEN_CONTROL_ROOT=str(tmp_path/'missing-config'),SSH_ORIGINAL_COMMAND='den-control ping',PATH=str(tmp_path)+':'+os.environ['PATH'])
+    result=subprocess.run([sys.executable,str(path),'--serve'],env=environment,capture_output=True,text=True,timeout=2,check=True)
+    assert json.loads(result.stdout)=={'host':socket.gethostname().split('.')[0],'protocol':1}
+    assert not marker.exists()

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Bounded, local-only desk context. No keys, clipboard, document contents or network access. Explicit Noesis/project selection only."""
-import json, os, shutil, subprocess, time
+import json, os, shutil, subprocess, time, sys
 from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+from storage_budget import root_headroom
 
 def sample(home=Path.home()):
     playing=False
@@ -27,7 +29,9 @@ def sample(home=Path.home()):
     temperature=max(temps,default=None)
     summary=f'Memory {used:.0f}% in use · home volume {free:.0f} GiB free · uptime {uptime:.1f} h.'
     warning=''
-    if free<5:warning=f'Home volume has {free:.1f} GiB free. Worth checking before a large recording.'
+    capacity=root_headroom(home)
+    if capacity.get('state')=='critical':warning=f"Root volume has {capacity['availableBytes']/2**30:.1f} GiB free, below the {capacity['criticalGiB']:g} GiB safety floor. Check storage before a large build or recording; I will not delete anything."
+    elif free<5:warning=f'Home volume has {free:.1f} GiB free. Worth checking before a large recording.'
     elif used>94:warning=f'Memory use is {used:.0f}%. A large job may need some breathing room.'
     elif temperature and temperature>90:warning=f'A thermal sensor reports {temperature:.0f} °C. Check cooling and the current workload.'
     # Warnings repeat at most once per 30 minutes, not on every telemetry sample.
@@ -59,7 +63,7 @@ def sample(home=Path.home()):
             title=next((p.get('title',p['id']) for p in projects if p['id']==selected),'')
             if title:suggestions.append("“"+title[:70]+"” is our selected project. Small baseline, inspect the evidence, then the magnificent machine.")
     except (OSError,ValueError,KeyError):pass
-    result=dict(suggestions=suggestions,playing=playing,summary=summary,warning=warning,memoryPercent=round(used),freeGiB=round(free,1),temperature=temperature,at=now)
+    result=dict(suggestions=suggestions,playing=playing,summary=summary,warning=warning,memoryPercent=round(used),freeGiB=round(free,1),capacity=capacity,temperature=temperature,at=now)
     state=home/'.local/state/sensei-den/zondo-context.json'
     state.parent.mkdir(parents=True,exist_ok=True)
     tmp=state.with_suffix('.tmp');tmp.write_text(json.dumps(result));tmp.chmod(0o600);tmp.replace(state)

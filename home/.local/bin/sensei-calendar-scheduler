@@ -4,7 +4,7 @@ import ctypes,os,select,json,sqlite3,time,datetime as D,subprocess,sys
 from pathlib import Path
 from zoneinfo import ZoneInfo
 from dateutil.rrule import rrulestr
-root=Path.home()/'.local/share/sensei-calendar';root.mkdir(parents=True,exist_ok=True)
+root=Path(os.environ.get('SENSEI_CALENDAR_DIR',Path.home()/'.local/share/sensei-calendar'));root.mkdir(parents=True,exist_ok=True)
 lib=ctypes.CDLL(None,use_errno=True)
 class TS(ctypes.Structure):_fields_=[('sec',ctypes.c_long),('nsec',ctypes.c_long)]
 class ITS(ctypes.Structure):_fields_=[('interval',TS),('value',TS)]
@@ -15,13 +15,15 @@ def deadline():
   e=dict(row);lead=e['lead']*60;zone=ZoneInfo(e.get('timezone') or 'Asia/Dhaka');start=D.datetime.fromtimestamp(e['start'],zone)
   rule=e.get('rrule') or {'daily':'FREQ=DAILY','weekly':'FREQ=WEEKLY','monthly':'FREQ=MONTHLY'}.get(e['repeat'],'')
   if rule:
-   r=rrulestr(rule,dtstart=start);nextdate=r.after(D.datetime.fromtimestamp(now+lead,zone),inc=True)
+   # An undelivered occurrence remains eligible until it begins. A failed
+   # notifier retries after 30s rather than skipping straight to tomorrow.
+   r=rrulestr(rule,dtstart=start);nextdate=r.after(D.datetime.fromtimestamp(now,zone),inc=True)
    for _ in range(366):
     if nextdate is None:break
     stamp=nextdate.timestamp()
-    if not c.execute('select 1 from exceptions where event=? and occurrence=?',(e['id'],stamp)).fetchone() and not c.execute('select 1 from delivered where event=? and occurrence=?',(e['id'],stamp)).fetchone():result=min(result,stamp-lead);break
+    if not c.execute('select 1 from exceptions where event=? and occurrence=?',(e['id'],stamp)).fetchone() and not c.execute('select 1 from delivered where event=? and occurrence=?',(e['id'],stamp)).fetchone():result=min(result,max(now+30,stamp-lead));break
     nextdate=r.after(nextdate)
-  elif e['start']>=now and not c.execute('select 1 from delivered where event=? and occurrence=?',(e['id'],e['start'])).fetchone():result=min(result,max(now+1,e['start']-lead))
+  elif e['start']>=now and not c.execute('select 1 from delivered where event=? and occurrence=?',(e['id'],e['start'])).fetchone():result=min(result,max(now+30,e['start']-lead))
  c.close();return max(now+1,result)
 if '--inspect' in sys.argv:print(json.dumps({'next':deadline(),'polling':False}));raise SystemExit
 fd=lib.inotify_init1(os.O_CLOEXEC|os.O_NONBLOCK);assert fd>=0

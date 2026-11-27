@@ -10,14 +10,18 @@ import shutil
 import socket
 import subprocess
 import time
+import sys
 
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--apply',action='store_true');args=p.parse_args()
     if os.geteuid()!=0 or socket.gethostname().split('.')[0]!='arete':raise SystemExit('Run as root on Arete only')
     home=Path(pwd.getpwnam('fh1m').pw_dir);cfg=json.loads((home/'.config/sensei-den/access.json').read_text())
-    address=ipaddress.IPv4Address(cfg['lanAddress'])
+    hostname=cfg.get('lanHost','homie.local')
+    address=ipaddress.IPv4Address(socket.gethostbyname(hostname))
     if not address.is_private or address.is_unspecified or address.is_loopback:raise SystemExit('Expected a private peer address')
+    probe=subprocess.run(['runuser','-u','fh1m','--','ssh','-S','none','-n','-F',str(home/'.local/state/homie-control/client.conf'),'-o','HostName='+str(address),'homie','hostname'],capture_output=True,text=True,timeout=8)
+    if probe.returncode or probe.stdout.strip().split('.')[0]!='homie':raise SystemExit('Named peer failed pinned SSH verification; firewall unchanged')
     if not args.apply:print('Pair one private peer: SSH, authenticated input, isolated ROS domain 83; preserve Docker tables');return
     source=Path(__file__).resolve().parents[1]/'system/etc/nftables.conf';dest=Path('/etc/nftables.conf')
     backup=home/'.local/state/homie-control/backups'/('firewall-'+str(int(time.time())));backup.mkdir(parents=True,mode=0o700)
@@ -51,6 +55,7 @@ def main():
         subprocess.run(['nft','-f',str(rollback)],check=False)
         raise
     print('Paired-peer firewall persisted; Docker tables preserved; nftables enabled for next boot')
+    subprocess.run([sys.executable,str(Path(__file__).with_name('install-den-peer-reconcile.py')),'--apply','--user','fh1m'],check=True)
 
 
 if __name__=='__main__':main()

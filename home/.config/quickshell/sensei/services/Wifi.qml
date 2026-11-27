@@ -249,17 +249,11 @@ Singleton {
     function joinHidden(ssid: string, psk: string): void {
         if (ssid === "")
             return;
-        begin(ssid);
-        // Same argv-free rule as connectWithPsk: a passphrase is fed on stdin
-        // via `--ask`, never on the command line. An open hidden network needs
-        // no secret and takes the plain path.
-        root._pendingSecret = psk;
-        connectProc.stdinEnabled = psk !== "";
-        connectProc.command = (psk !== ""
-            ? ["nmcli", "--ask", "device", "wifi", "connect", ssid]
-            : ["nmcli", "device", "wifi", "connect", ssid])
+        const command = (psk !== ""
+            ? ["nmcli", "--wait", "20", "--ask", "device", "wifi", "connect", ssid]
+            : ["nmcli", "--wait", "20", "device", "wifi", "connect", ssid])
             .concat(["ifname", Machine.wifiInterface, "hidden", "yes"]);
-        connectProc.running = true;
+        runConnection(command, psk, ssid);
     }
 
     // The connected profile's three switches. Each writes through nmcli and then

@@ -51,10 +51,20 @@ def _execute(path):
             if not source.is_file() or digest(source)!=item['sha256']:
                 raise ValueError('Queued input changed; submit a new job after review')
         usage_before=resource.getrusage(resource.RUSAGE_CHILDREN)
-        result=subprocess.run(data['command'],cwd=data['project'],env={**os.environ,'SENSEI_PARENT_JOB':data.get('id','')});code=result.returncode
+        from job_runtime import run_bounded,policy
+        previous=os.environ.get('SENSEI_PARENT_JOB')
+        os.environ['SENSEI_PARENT_JOB']=data.get('id','')
+        try:
+            result=run_bounded(data['command'],p.with_suffix('.log'),cwd=data['project'],**policy('engineering',data))
+        finally:
+            if previous is None:os.environ.pop('SENSEI_PARENT_JOB',None)
+            else:os.environ['SENSEI_PARENT_JOB']=previous
+        code=result['exitCode'];data.update(result)
         usage=resource.getrusage(resource.RUSAGE_CHILDREN)
         data['resources']={'userSeconds':usage.ru_utime-usage_before.ru_utime,'systemSeconds':usage.ru_stime-usage_before.ru_stime,'peakRssKiB':usage.ru_maxrss}
         data.update(state='succeeded' if code==0 else 'failed',exitCode=code)
+    except SystemExit:
+        data.update(state='cancelled',exitCode=143,finished=time.time());save(p,data);raise
     except Exception as error:data.update(state='failed',exitCode=127,error=str(error)[:300])
     data['finished']=time.time();data['artifacts']=[]
     if data['exitCode']!=0:

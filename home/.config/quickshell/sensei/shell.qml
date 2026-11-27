@@ -21,6 +21,9 @@ import "modules/shortcuts" as ShortcutUi
 import qs.services
 
 ShellRoot {
+    // Deploy a complete config, then reload through the supervisor. Partial
+    // file-triggered reloads have crashed IPC registration on the pinned runtime.
+    Component.onCompleted:Quickshell.watchFiles=false
     property var externalDisplayState:ExternalDisplays.data
     property bool quietMode:DesktopTools.quiet
     Background {}

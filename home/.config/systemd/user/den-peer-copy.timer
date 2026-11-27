@@ -1,0 +1,10 @@
+[Unit]
+Description=Retry peer checkpoint copying independently of daily backup order
+
+[Timer]
+OnBootSec=15min
+OnUnitInactiveSec=1h
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target

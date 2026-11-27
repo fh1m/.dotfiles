@@ -26,7 +26,8 @@ def request(path,body=None,_recover=True):
   if ex.code==204:
    if path=='/auth/code':return {}
    raise ValueError('Music is reconnecting; saved login and playback are preserved.')
-  if path=='/status' and body is None and ex.code>=500 and _recover and recover_service():return recovered_status()
+  if path=='/status' and body is None and ex.code>=500:
+   raise ValueError('Spotify is reconnecting; the running player and saved queue were preserved.') from None
   if ex.code==429:
    try:delay=max(1,int(ex.headers.get('Retry-After','60')))
    except (ValueError,TypeError):delay=60
@@ -56,12 +57,18 @@ def recover_service():
  with (STORE/'recovery.lock').open('a') as lock:
   try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
   except BlockingIOError:return False
+  try:
+   state=subprocess.run(['systemctl','--user','show','sensei-go-spotify.service','--property=ActiveState','--value'],capture_output=True,text=True,timeout=3)
+   # The service owns reconnection/backoff. A desktop status request must not
+   # restart an active/activating player and discard its in-memory queue.
+   if state.returncode or state.stdout.strip() not in ('inactive','failed'):return False
+  except (OSError,subprocess.TimeoutExpired):return False
   try:last=float((STORE/'recovery-at').read_text())
   except (OSError,ValueError):last=0
   if time.time()-last<120:return False
   (STORE/'recovery-at').write_text(str(time.time()))
   try:
-   result=subprocess.run(['systemctl','--user','restart','sensei-go-spotify.service'],capture_output=True,timeout=5)
+   result=subprocess.run(['systemctl','--user','start','sensei-go-spotify.service'],capture_output=True,timeout=5)
    if result.returncode:return False
    time.sleep(.5)
    return True
@@ -89,6 +96,7 @@ def remember_playback(d):
  STORE.mkdir(parents=True,exist_ok=True,mode=0o700)
  # Private playback metadata only. Never save login/session credentials.
  data={k:d.get(k) for k in ('track','queue','context_uri','paused','volume','volume_steps','shuffle_context','repeat_context','repeat_track')}
+ if remembered_playback()==data:return
  tmp=STORE/('playback.'+str(os.getpid())+'.tmp')
  with tmp.open('w') as f:os.chmod(tmp,0o600);json.dump(data,f)
  tmp.replace(STORE/'playback.json')
@@ -284,8 +292,12 @@ def dispatch(args):
   context=uri(a[0],a[1]);d=cache(context,lambda:listing(context),ttl=3,force=force)
   return dict(d,item={'kind':a[0],'id':a[1],'uri':context})
  if name=='queue':
-  d=raw_status();saved=d.get('buffering') or d.get('stopped');q=(remembered_playback().get('queue') if saved else d.get('queue')) or [];rows=[row(t.get('track') or {'uri':t['uri']}) for t in q]
-  return {'rows':rows,'total':len(rows),'stale':bool(saved),'warning':'Saved queue · press Play to resume' if saved and rows else 'Upcoming playback window · up to 50 tracks' if rows else ''}
+  try:d=raw_status();offline=False
+  except ValueError:d={};offline=True
+  saved=offline or d.get('buffering') or d.get('stopped')
+  q=(remembered_playback().get('queue') if saved else d.get('queue')) or [];rows=[row(t.get('track') or {'uri':t['uri']}) for t in q]
+  warning='Music is reconnecting · saved queue preserved' if offline else 'Saved queue · press Play to resume' if saved and rows else 'Upcoming playback window · up to 50 tracks' if rows else ''
+  return {'rows':rows,'total':len(rows),'stale':bool(saved),'warning':warning}
  if name=='devices':
   d=raw_status();return {'rows':[{'id':d['device_id'],'name':d['device_name'],'active':not d['stopped'],'is_active':not d['stopped'],'type':'Headless Connect','volume_percent':round(d.get('volume',0)*100/max(1,d.get('volume_steps',100)))}],'warning':'This headless player is local. Choose remote devices from a Spotify Connect controller.'}
  if name=='search':

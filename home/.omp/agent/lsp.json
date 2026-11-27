@@ -1,0 +1,13 @@
+{
+  "idleTimeoutMs": 300000,
+  "servers": {
+    "clangd": {
+      "rootMarkers": ["compile_commands.json", "CMakeLists.txt", ".clangd", ".clang-format", "Makefile", "src"]
+    },
+    "pyright": {
+      "command": "bun",
+      "args": ["@HOME@/.local/share/omp-den/tools/node_modules/pyright/langserver.index.js", "--stdio"],
+      "rootMarkers": ["pyproject.toml", "pyrightconfig.json", "setup.py", "setup.cfg", "requirements.txt", "Pipfile", "src"]
+    }
+  }
+}

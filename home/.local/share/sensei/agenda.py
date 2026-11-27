@@ -28,7 +28,7 @@ def learning(home=Path.home()):
     if any(x.get('review_plan_id')==plan['id'] and x.get('event') in ('attempt','review') and x.get('outcome') in ('failed','partial','succeeded') for x in timeline):continue
     date=datetime.datetime.fromisoformat(plan['due'].replace('Z','+00:00')).astimezone()
     record=identities[target]
-    result.append(dict(uid='noesis:'+vault+':'+plan['id'],source='noesis',title=record['title'],date=date.date().isoformat(),time=date.strftime('%H:%M'),due=date.timestamp(),vault=str(root),vault_id=vault,record_id=target,read_only=True,all_day=len(date)==10,category='Learning review'))
+    result.append(dict(uid='noesis:'+vault+':'+plan['id'],source='noesis',title=record['title'],date=date.date().isoformat(),time=date.strftime('%H:%M'),due=date.timestamp(),vault=str(root),vault_id=vault,record_id=target,read_only=True,all_day=len(str(plan['due']))==10,category='Learning review'))
   except (OSError,ValueError,TypeError,KeyError,sqlite3.Error):continue
  return [row for row in result if identities_seen[row['vault_id']]==1]
 

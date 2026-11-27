@@ -1,0 +1,13 @@
+[Unit]
+Description=Reconcile the authenticated named Digital Den peer
+ConditionPathExists=/etc/sensei-den/peer.json
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/libexec/den-peer-firewall.py --apply
+TimeoutStartSec=25
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/etc/nftables.d
+NoNewPrivileges=true

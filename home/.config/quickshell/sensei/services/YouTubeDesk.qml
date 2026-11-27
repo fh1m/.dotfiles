@@ -22,10 +22,19 @@ Singleton {
     property bool startPaused:false
     property bool loadPaused:false
     readonly property var audioPlayer:engines[engineOutput]||fallbackPlayer
-    function registerEngine(output,player){let copy=Object.assign({},engines);copy[output]=player;engines=copy;if(output===engineOutput)loadCurrent();}
-    function forgetEngine(output){let copy=Object.assign({},engines);delete copy[output];engines=copy;}
+    function registerEngine(output,player){if(output!==engineOutput)return;let copy=Object.assign({},engines);copy[output]=player;engines=copy;loadCurrent();}
+    function forgetEngine(output,player){if(engines[output]!==player)return;let copy=Object.assign({},engines);delete copy[output];engines=copy;}
     function loadCurrent(){const player=engines[engineOutput];if(!player||!currentMedia.stream)return;player.volume=desiredVolume;player.playbackRate=speed;player.load(currentMedia.video||currentMedia.stream,currentMedia.video&&!currentMedia.combined?currentMedia.stream:'',!!currentMedia.video,pendingSeek,loadPaused);pendingSeek=0;}
-    function selectEngine(output,resume,paused){loadPaused=!!paused;if(!output)return;if(engines[engineOutput]){desiredVolume=audioPlayer.volume;audioPlayer.stop();}pendingSeek=Math.max(0,resume||0);engineOutput=output;if(!usedDisplays.includes(output))usedDisplays=usedDisplays.concat([output]);else loadCurrent();}
+    function selectEngine(output,resume,paused){
+        loadPaused=!!paused;if(!output)return;
+        const reuse=!!engines[output];
+        if(engines[engineOutput]){desiredVolume=audioPlayer.volume;audioPlayer.stop();}
+        pendingSeek=Math.max(0,resume||0);engineOutput=output;
+        // Keep GL ownership output-local, but release engines on abandoned
+        // outputs instead of retaining one decoder/context per visited display.
+        usedDisplays=[output];
+        if(reuse)loadCurrent();
+    }
     function relocate(){if(ownsAudio&&nativeVideo&&currentMedia.video&&SpotifyDesk.videoWindowOutput&&engineOutput!==SpotifyDesk.videoWindowOutput)selectEngine(SpotifyDesk.videoWindowOutput,position,!playing);}
     readonly property string platform:track.kind==='twitch'?'Twitch':'YouTube'
     property bool resolving:false
@@ -93,7 +102,7 @@ Singleton {
     function removeQueued(item){queue=queue.filter(r=>r.id!==item.id);index=queue.findIndex(r=>r.id===track.id);}
     function moveQueued(item,direction){const from=queue.findIndex(r=>r.id===item.id),to=from+direction;if(from<0||to<0||to>=queue.length)return;let copy=queue.slice();copy.splice(to,0,copy.splice(from,1)[0]);queue=copy;index=queue.findIndex(r=>r.id===track.id);}
     function enqueue(item){if(!queue.some(r=>r.id===item.id))queue=queue.concat([item]);}
-    function release(){generation++;pendingSeek=0;pending={};currentMedia={};if(SpotifyDesk.videoAudioLinked)SpotifyDesk.closeVideo(true);audioPlayer.stop();audioPlayer.source='';nativeVideo=false;ownsAudio=false;error='';}
+    function release(){generation++;pendingSeek=0;pending={};currentMedia={};if(SpotifyDesk.videoAudioLinked)SpotifyDesk.closeVideo(true);audioPlayer.stop();audioPlayer.source='';nativeVideo=false;ownsAudio=false;usedDisplays=[];engineOutput='';error='';}
     function begin(){
         if(!pending.stream)return;
         nativeVideo=!!pending.video;track=pending.track;if(track.kind==='twitch'){transcriptOpen=false;captionsEnabled=false;}chapters=pending.chapters||[];captionLanguages=pending.captionLanguages||[];transcript=[];transcriptNotice="";index=queue.findIndex(r=>r.id===track.id);ownsAudio=true;

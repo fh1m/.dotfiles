@@ -33,7 +33,7 @@ Singleton {
  function fuzzy(text){const value=String(text||'').toLowerCase(),q=query.trim().toLowerCase();const normal=value.replace(/[^a-z0-9\u0400-\u04ff]/g,''),needle=q.replace(/[^a-z0-9\u0400-\u04ff]/g,'');let score=Math.max(Launcher.score(value,q),Launcher.score(normal,needle));if(score>=0&&value.includes(q))score+=80;if(score>=0&&value.startsWith(q))score+=40;return score;}
  function appScore(e){return Math.max(fuzzy(e.name),fuzzy(e.id),fuzzy(e.genericName)-10,fuzzy((e.keywords||[]).join(' '))-30);}
 
- readonly property var installed:(DesktopEntries.applications?.values??[]).filter(e=>!e.noDisplay&&appScore(e)>=0).sort((a,b)=>appScore(b)-appScore(a)||(Launcher.launches[b.id]??0)-(Launcher.launches[a.id]??0)||a.name.localeCompare(b.name))
+ readonly property var installed:!opened ? [] : (DesktopEntries.applications?.values??[]).filter(e=>!e.noDisplay&&appScore(e)>=0).sort((a,b)=>appScore(b)-appScore(a)||(Launcher.launches[b.id]??0)-(Launcher.launches[a.id]??0)||a.name.localeCompare(b.name))
  readonly property var apps:installed.slice(0,8)
  readonly property var searchResults:{if(!query.trim())return [];let results=matches.concat(installed);return results.sort((a,b)=>resultScore(b)-resultScore(a)||Number(isWindow(b))-Number(isWindow(a))||resultName(a).localeCompare(resultName(b)));}
  function isWindow(r){return !!r?.address;}
@@ -64,7 +64,7 @@ Singleton {
  function move(t,id){pinned=true;Quickshell.execDetached([Quickshell.env('HOME')+'/.local/bin/sensei-displays','move',String(id),addressFor(t)]);Qt.callLater(()=>Hyprland.refreshToplevels());}
  function floatWindow(t){pinned=true;Hyprland.dispatch('hl.dsp.window.float({action="toggle",window="address:'+addressFor(t)+'"})');}
  function launch(e){pendingSelection={kind:'app',entry:e};opened=false;}
- function executeApp(e){Launcher.record(e.id);Deck.leave();if(e.runInTerminal)Quickshell.execDetached({command:["@HOME@/.local/bin/sensei-terminal","-e"].concat(Array.from(e.command)),workingDirectory:e.workingDirectory||Quickshell.env('HOME')});else e.execute();}
+ function executeApp(e){Launcher.record(e.id);Deck.leave();Launcher.launchEntry(e);}
  function syncFocus(){let t=root.all.find(w=>w.lastIpcObject?.focusHistoryID===0);if(!t)return;const address=t.address;if(!address||address===root.lastFocusAddress)return;root.lastFocusAddress=address;mru=[address].concat(mru.filter(a=>a!==address)).slice(0,100);focusTitle=t.title||t.wayland?.appId||"Window";focusWorkspace=t.workspace?.id??1;focusScreen=t.monitor?.name??"eDP-1";focusStamp++;}
  property string newlyOpened:""
  Timer {id:groupDelay;interval:300;onTriggered:{if(autoGroup.running){restart();return;}if(!autoGroup.running){autoGroup.command=[Quickshell.env('HOME')+'/.local/bin/sensei-tabs','auto',root.newlyOpened];autoGroup.running=true;}}}

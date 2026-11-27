@@ -131,7 +131,7 @@ ChamferPanel {
 
                 Text {
                     textFormat: Text.PlainText
-                    text: SystemStatus.breach ? "ICE BREACH" : "ICE NOMINAL"
+                    text: !SystemStatus.healthKnown ? "ICE UNKNOWN" : SystemStatus.breach ? "ICE BREACH" : "ICE NOMINAL"
                     color: root.previewPalette.text
                     font.family: Appearance.font.data
                     font.pixelSize: 8

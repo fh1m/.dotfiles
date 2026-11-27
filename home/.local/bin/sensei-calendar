@@ -14,6 +14,8 @@ c.execute('create table if not exists tasks(id integer primary key,title text,da
 c.execute('create table if not exists settings(key text primary key,value text)');c.commit()
 c.execute('create table if not exists imported_events(uid text primary key,source text,sequence integer,stamp text,digest text)')
 c.execute('create table if not exists import_revisions(id integer primary key,uid text,imported_at real,previous text,incoming text)');c.commit()
+if 'source' not in [r['name'] for r in c.execute('pragma table_info(exceptions)')]:
+ c.execute("alter table exceptions add column source text default ''");c.commit()
 a=sys.argv[1:];cmd=a[0] if a else 'list';now=time.time()
 if cmd=='due':
  import fcntl
@@ -101,7 +103,7 @@ try:
   # Delete is a soft removal, preserving local calendar records.
   c.execute('update events set done=1 where id=?',(int(a[1]),));c.commit()
  elif cmd=='skip':
-  ident,stamp=a[1].split(':',1);c.execute('insert or ignore into exceptions values(?,?)',(int(ident),float(stamp)));c.commit()
+  ident,stamp=a[1].split(':',1);c.execute("insert or replace into exceptions(event,occurrence,source) values(?,?,'local')",(int(ident),float(stamp)));c.commit()
  elif cmd=='timer':
   seconds=max(1,int(a[1]));c.execute('insert into events(uid,title,start,duration,lead,repeat,location,notes,category) values(?,?,?,0,0,"none","","","Timer")',(str(uuid.uuid4())+'@sensei.local',a[2] if len(a)>2 else 'Timer finished',now+seconds));c.commit()
  elif cmd=='task-save':
@@ -197,13 +199,23 @@ try:
    if imported and (sequence<imported['sequence'] or sequence==imported['sequence'] and stamp and imported['stamp'] and stamp<imported['stamp']):continue
    if imported and imported['digest']==digest:continue
    if existing and not imported and existing['category']!='Imported':raise ValueError('Imported UID conflicts with a personal event; preserved')
+   # Recover ownership of legacy imported exceptions from the recorded source
+   # revision. Explicit local skips now have their own origin and are preserved.
+   if imported and existing:
+    revision=c.execute('select incoming from import_revisions where uid=? order by id desc limit 1',(uid,)).fetchone()
+    previous_fields=json.loads(revision[0]) if revision else {}
+    for key,value in previous_fields.items():
+     if key.startswith('EXDATE'):
+      for raw_stamp in value.split(','):
+       c.execute("update exceptions set source=? where event=? and occurrence=? and source=''",(source,existing['id'],parse_ics_date(key,raw_stamp).timestamp()))
    c.execute('insert into import_revisions(uid,imported_at,previous,incoming) values(?,?,?,?)',(uid,now,json.dumps(dict(existing)) if existing else None,json.dumps(fields)))
    c.execute('insert into events(uid,title,start,duration,lead,repeat,location,notes,category,all_day,rrule,timezone,done) values(?,?,?,?,?,?,?,?,"Imported",?,?,?,?) on conflict(uid) do update set title=excluded.title,start=excluded.start,duration=excluded.duration,lead=excluded.lead,repeat=excluded.repeat,location=excluded.location,notes=excluded.notes,all_day=excluded.all_day,rrule=excluded.rrule,timezone=excluded.timezone,done=excluded.done',(uid,title,dt.timestamp(),max(1,int(length//60)),int(lead),recurrence,unescape(fields.get('LOCATION','')),unescape(fields.get('DESCRIPTION','')),int('T' not in raw),rule,getattr(dt.tzinfo,'key','UTC'),int(fields.get('STATUS')=='CANCELLED')))
    c.execute('insert or replace into imported_events values(?,?,?,?,?)',(uid,source,sequence,stamp,digest));count+=1
    ident=c.execute('select id from events where uid=?',(uid,)).fetchone()[0]
+   c.execute('delete from exceptions where event=? and source=?',(ident,source))
    for key,value in fields.items():
     if key.startswith('EXDATE'):
-     for stamp in value.split(','):c.execute('insert or ignore into exceptions values(?,?)',(ident,parse_ics_date(key,stamp).timestamp()))
+     for stamp in value.split(','):c.execute('insert or ignore into exceptions(event,occurrence,source) values(?,?,?)',(ident,parse_ics_date(key,stamp).timestamp(),source))
   c.commit();print(json.dumps({'imported':count}))
 except (ValueError,KeyError,IndexError,OSError) as error:
  c.rollback();print('Sensei, '+str(error),file=sys.stderr);sys.exit(1)

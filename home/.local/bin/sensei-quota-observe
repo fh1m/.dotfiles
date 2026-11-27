@@ -1,0 +1,22 @@
+#!/usr/bin/python3
+"""Observe the existing exact-account harness adapter, without treating outages as quota."""
+import json,os,subprocess,time
+from pathlib import Path
+
+def observe(home=None,runner=subprocess.run):
+ root=Path(home or Path.home())/'.local/state/sensei-quota';root.mkdir(parents=True,exist_ok=True,mode=0o700);path=root/'observer.json'
+ try:old=json.loads(path.read_text())
+ except (OSError,ValueError):old={}
+ now=time.time()
+ if now<old.get('nextRetry',0):return dict(old,attempted=False)
+ try:
+  result=runner([str(Path(home or Path.home())/'.local/bin/harness'),'quota'],capture_output=True,text=True,timeout=25)
+  if result.returncode:raise ValueError()
+  json.loads(result.stdout)  # Native adapter owns account identity and quota data.
+  state={'state':'observed','lastSuccess':now,'failures':0,'nextRetry':0}
+ except (OSError,ValueError,subprocess.SubprocessError):
+  failures=old.get('failures',0)+1
+  state={'state':'unknown','reason':'quota-metadata-unavailable','lastSuccess':old.get('lastSuccess'),'failures':failures,'nextRetry':now+min(3600,300*2**min(failures-1,4))}
+ temp=path.with_name(path.name+'.'+str(os.getpid())+'.tmp');temp.write_text(json.dumps(state));temp.chmod(0o600);temp.replace(path)
+ return state
+if __name__=='__main__':print(json.dumps(observe()))

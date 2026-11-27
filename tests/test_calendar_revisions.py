@@ -41,3 +41,41 @@ class Revisions(unittest.TestCase):
    result=subprocess.run(['python',str(SCRIPT),'import',str(f)],env=env,capture_output=True)
    self.assertNotEqual(result.returncode,0)
    with sqlite3.connect(d+'/calendar/calendar.sqlite') as db:self.assertEqual(db.execute('select done from events').fetchone()[0],0)
+
+def test_removed_import_exception_does_not_remove_local_override(tmp_path):
+ env=dict(os.environ,HOME=str(tmp_path),SENSEI_CALENDAR_DIR=str(tmp_path/'calendar'));f=tmp_path/'test.ics'
+ def imported(sequence,exception):
+  f.write_text('BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:weekly-test\nSEQUENCE:'+str(sequence)+'\nDTSTART;VALUE=DATE:20261205\nRRULE:FREQ=WEEKLY\nSUMMARY:Class\n'+exception+'END:VEVENT\nEND:VCALENDAR\n')
+  subprocess.run(['python3',str(SCRIPT),'import',str(f)],env=env,capture_output=True,check=True)
+ imported(0,'EXDATE;VALUE=DATE:20261212\n')
+ with sqlite3.connect(tmp_path/'calendar/calendar.sqlite') as db:
+  ident=db.execute('select id from events').fetchone()[0]
+  db.execute("insert into exceptions(event,occurrence,source) values(?,?,?)",(ident,123456789,'local'))
+ imported(1,'')
+ with sqlite3.connect(tmp_path/'calendar/calendar.sqlite') as db:
+  assert db.execute('select occurrence,source from exceptions').fetchall()==[(123456789.0,'local')]
+
+def test_failed_recurring_notification_retries_inside_lead_window(tmp_path):
+ import datetime,sys
+ env=dict(os.environ,HOME=str(tmp_path),SENSEI_CALENDAR_DIR=str(tmp_path/'calendar'));f=tmp_path/'test.ics'
+ now=datetime.datetime(2026,6,1,6,tzinfo=datetime.timezone.utc)
+ start=now+datetime.timedelta(minutes=3)
+ f.write_text('BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:retry-test\nDTSTART:'+start.strftime('%Y%m%dT%H%M%SZ')+'\nRRULE:FREQ=DAILY\nSUMMARY:Retry\nEND:VEVENT\nEND:VCALENDAR\n')
+ subprocess.run([sys.executable,str(SCRIPT),'import',str(f)],env=env,capture_output=True,check=True)
+ with sqlite3.connect(tmp_path/'calendar/calendar.sqlite') as db:db.execute('update events set lead=15')
+ scheduler=SCRIPT.with_name('sensei-calendar-scheduler')
+ inspect_at=r'''
+import datetime,runpy,sys
+from unittest.mock import patch
+program,stamp=sys.argv[1],float(sys.argv[2])
+sys.argv=[program,'--inspect']
+class FrozenDateTime(datetime.datetime):
+ @classmethod
+ def now(cls,tz=None):return cls.fromtimestamp(stamp,tz)
+with patch('time.time',return_value=stamp),patch('datetime.datetime',FrozenDateTime):
+ runpy.run_path(program,run_name='__main__')
+'''
+ result=subprocess.run([sys.executable,'-c',inspect_at,str(scheduler),str(now.timestamp())],env=env,capture_output=True,text=True,check=True)
+ assert now.timestamp()<json.loads(result.stdout)['next']<start.timestamp()
+ # A general wake may also be a midnight rescan, not a notification delivery.
+ # Do not pin that incidental wake ordering to an already delivered event.

@@ -1,0 +1,25 @@
+Upstream: https://github.com/qt/qtbase/commit/0d4f9625f6873c82ff463ae77a97b6ec9f81ab4a
+Task: QTBUG-141475 — disable only the surface actually enabled by this input context.
+Qt source copyright and licensing are unchanged.
+
+diff --git a/src/plugins/platforms/wayland/qwaylandinputcontext.cpp b/src/plugins/platforms/wayland/qwaylandinputcontext.cpp
+index 0d9b885..528e083 100644
+--- a/src/plugins/platforms/wayland/qwaylandinputcontext.cpp
++++ b/src/plugins/platforms/wayland/qwaylandinputcontext.cpp
+@@ -193,10 +193,12 @@ void QWaylandInputContext::setFocusObject(QObject *object)
+     if (window && window->handle()) {
+         if (mCurrentWindow.data() != window) {
+             if (!inputMethodAccepted()) {
+-                auto *surface = static_cast<QWaylandWindow *>(window->handle())->wlSurface();
+-                if (surface)
+-                    inputInterface->disableSurface(surface);
+-                mCurrentWindow.clear();
++                if (mCurrentWindow) {
++                    auto *surface = static_cast<QWaylandWindow *>(mCurrentWindow->handle())->wlSurface();
++                    if (surface)
++                        inputInterface->disableSurface(surface);
++                    mCurrentWindow.clear();
++                }
+             } else {
+                 auto *surface = static_cast<QWaylandWindow *>(window->handle())->wlSurface();
+                 if (surface) {

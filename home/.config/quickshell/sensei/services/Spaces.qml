@@ -48,7 +48,14 @@ Singleton {
     property var outputState: []
     property var clientsState: []
     property bool outputRefreshPending: false
-    function refreshOutputs():void {if(outputScan.running){outputRefreshPending=true;return;}outputScan.running=true;}
+    property int outputScanCount:0
+    property bool observerConnected:false
+    readonly property bool observerRunning:sessionEvents.running&&observerConnected
+    // Counts, workspace membership, focus output and geometry—not app titles.
+    readonly property var snapshotEvents:["workspace","workspacev2","focusedmon","monitorremoved","monitoradded","monitoraddedv2","createworkspace","createworkspacev2","destroyworkspace","destroyworkspacev2","moveworkspace","moveworkspacev2","renameworkspace","activespecial","activespecialv2","openwindow","closewindow","movewindow","movewindowv2","togglegroup","moveintogroup","moveoutofgroup","configreloaded"]
+    readonly property var observedGeometry:Quickshell.screens.map(s=>[s.name,s.x,s.y,s.width,s.height,s.devicePixelRatio])
+    onObservedGeometryChanged:if(outputSettle)outputSettle.restart()
+    function refreshOutputs():void {if(outputScan.running){outputRefreshPending=true;return;}outputScanCount++;outputScan.running=true;}
     Component.onCompleted: refreshOutputs()
     Timer {id:outputSettle;interval:35;onTriggered:root.refreshOutputs()}
     Process {id:outputScan;command:[Quickshell.env("HOME")+"/.local/bin/sensei-workspace-state"]
@@ -152,16 +159,19 @@ Singleton {
             Hyprland.dispatch(`(function() local sp=hl.get_active_special_workspace(); if sp then hl.dispatch(hl.dsp.workspace.toggle_special(sp.name:gsub("^special:", ""))) end; return hl.dsp.focus({ workspace = "${slot.target}" }) end)()`);
     }
 
-    Timer { interval:3000; repeat:true; running:true; onTriggered:root.refreshOutputs() }
+    // IPC events own freshness; a slow watchdog repairs missed/disconnected IPC.
+    Timer {interval:root.observerRunning?30000:3000;repeat:true;running:true;onTriggered:root.refreshOutputs()}
     Process {id:sessionEvents;running:true;command:[Quickshell.env("HOME")+"/.local/bin/sensei-workspace-events"]
         stdout:SplitParser {onRead: data=>{
-            outputSettle.restart();
-            try {const event=JSON.parse(data);if(event.name==="urgent")root.attention(event.data);
+            try {const event=JSON.parse(data);
+                if(event.name==="connected"){root.observerConnected=true;outputSettle.restart();return;}
+                if(event.name==="disconnected"){root.observerConnected=false;return;}
+                if(root.snapshotEvents.includes(event.name))outputSettle.restart();if(event.name==="urgent")root.attention(event.data);
                 if(event.name==="activewindowv2"||event.name==="closewindow")root.acknowledge(event.data);
                 if(["workspace","workspacev2","movewindow","movewindowv2","monitoradded","monitoraddedv2","monitorremoved","configreloaded"].includes(event.name))pairSettle.restart();
             } catch(e) {}
         }}
-        onExited:eventRestart.restart()
+        onExited:{root.observerConnected=false;eventRestart.restart();}
     }
     Timer {id:eventRestart;interval:2000;onTriggered:sessionEvents.running=true}
     property bool pairRefreshPending:false
@@ -178,7 +188,7 @@ Singleton {
             if(["workspace","workspacev2","movewindow","movewindowv2","monitoradded","monitoraddedv2","monitorremoved","configreloaded"].includes(n))pairSettle.restart();
             if(n==="urgent"){root.attention(event.data);Hyprland.refreshToplevels();}
             if(n==="activewindowv2"||n==="closewindow")root.acknowledge(event.data);
-            if (["activespecial", "activespecialv2", "workspace", "workspacev2", "moveworkspace", "moveworkspacev2", "focusedmon", "monitoradded", "monitoraddedv2", "monitorremoved","movewindow","movewindowv2"].includes(n)) outputSettle.restart();
+            if(root.snapshotEvents.includes(n))outputSettle.restart();
             if (["activespecial", "workspace", "createworkspace", "destroyworkspace", "moveworkspace", "renameworkspace", "focusedmon"].includes(n)) {
                 Hyprland.refreshWorkspaces();
                 Hyprland.refreshMonitors();

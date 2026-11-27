@@ -32,8 +32,9 @@ WidgetSection {
             ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Zondo";glyph:"\uf1b0";selected:Den.data.companion!==false;onActivated:Den.companion("toggle","")}
             ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Bring here";enabled:Den.data.role!=="receiver"||!Den.online;glyph:"\uf124";onActivated:Den.companion("here","")}
             ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:"Sync files";glyph:"\uf021";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","sync","scan"])}
-            ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:Den.data.mode==="away"?"Return home":"Away mode";glyph:"\uf0b1";enabled:Den.data.role!=="receiver";onActivated:Quickshell.execDetached([Quickshell.env("HOME")+"/.local/bin/sensei-den","mode",Den.data.mode==="away"?"auto":"away"])}
+            ControlTile {implicitWidth:(parent.width-24)/4;implicitHeight:34;label:["away","homie"].includes(Den.data.mode)?"Return home":"Away mode";glyph:"\uf0b1";enabled:Den.data.role!=="receiver"&&!Den.working;onActivated:Den.setMode(["away","homie"].includes(Den.data.mode)?"auto":"away")}
         }
+        Text {width:parent.width;visible:!!Den.data.modePeerPending;text:"Mode applied locally · waiting for peer acknowledgement"+(Den.data.modePeerPending?.reason?"\n"+Den.data.modePeerPending.reason:"");wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetMuted}
         Row {
             width:parent.width;spacing:8
             ControlTile {implicitWidth:(parent.width-8)/2;implicitHeight:34;label:"Say hello";glyph:"\uf075";onActivated:Den.companion("wave","")}

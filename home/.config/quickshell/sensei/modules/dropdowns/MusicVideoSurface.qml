@@ -15,8 +15,8 @@ PanelWindow {
     readonly property bool inlineVideo:SpotifyDesk.videoMode==='youtube'&&SpotifyDesk.videoAudioLinked
     readonly property var slot:SpotifyDesk.videoSlot
     Component.onCompleted:{let copy=Object.assign({},SpotifyDesk.videoWindows);copy[output?.name]=window;SpotifyDesk.videoWindows=copy;}
-    Component.onDestruction:{if(YouTubeDesk.engines[output?.name]===engineLoader.item)YouTubeDesk.forgetEngine(output?.name);if(SpotifyDesk.videoWindows[output?.name]===window){let copy=Object.assign({},SpotifyDesk.videoWindows);delete copy[output?.name];SpotifyDesk.videoWindows=copy;}}
-    Loader {id:engineLoader;active:YouTubeDesk.usedDisplays.includes(window.output?.name);source:'../../services/MpvEngine.qml';onStatusChanged:if(status===Loader.Error&&window.output?.name===YouTubeDesk.engineOutput)YouTubeDesk.error='Native media module unavailable: run scripts/build-media-qml.sh.';onLoaded:{item.parent=video;item.width=Qt.binding(()=>video.width);item.height=Qt.binding(()=>video.height);YouTubeDesk.registerEngine(window.output?.name,item);}}
+    Component.onDestruction:{if(SpotifyDesk.videoWindows[output?.name]===window){let copy=Object.assign({},SpotifyDesk.videoWindows);delete copy[output?.name];SpotifyDesk.videoWindows=copy;}}
+    Loader {id:engineLoader;active:YouTubeDesk.usedDisplays.includes(window.output?.name);source:'../../services/MpvEngine.qml';onStatusChanged:if(status===Loader.Error&&window.output?.name===YouTubeDesk.engineOutput)YouTubeDesk.error='Native media module unavailable: run scripts/build-media-qml.sh.';onLoaded:{item.ownerOutput=window.output?.name||'';item.parent=video;item.width=Qt.binding(()=>video.width);item.height=Qt.binding(()=>video.height);YouTubeDesk.registerEngine(window.output?.name,item);}}
     readonly property bool full:SpotifyDesk.videoMode==='fullscreen'
     required property var modelData
     readonly property var output:modelData

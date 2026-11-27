@@ -84,3 +84,29 @@ class Planning(unittest.TestCase):
    p=Planner(Path(d));p.save(p.root/'workspace.json',{'root_id':'workspace','collections':{}})
    p.save(p.root/'cache.json',{'source':'notion-connector','records':[{'id':'fixture','read_only':True}]})
    s=p.status();self.assertEqual(s['connection'],'workspace_ready');self.assertEqual(s['cache_source'],'notion-connector');self.assertTrue(s['records'][0]['read_only'])
+
+def test_scheduled_outage_preserves_queue_and_manual_success_clears_warning(tmp_path):
+ from noesis.planning import NotionUnavailable
+ from unittest.mock import patch
+ p=Planner(tmp_path);p.save(p.config,{'token':'fixture','collections':{'Tasks':{'source_id':'tasks'}}})
+ operation=str(uuid.uuid4());p.enqueue('Tasks','Keep this plan',{},operation)
+ with patch.object(p,'sync',side_effect=NotionUnavailable('offline')) as request:
+  result=p.sync_auto();assert result['state']=='offline_queued'
+  p.sync_auto();assert request.call_count==1
+ assert p.pending()[0]['id']==operation and p.status()['sync']['state']=='offline_queued'
+ p.query=lambda *a,**kw:[{'id':'existing','properties':{}}]
+ p.sync()
+ assert p.status()['sync']['state']=='synced' and not p.pending()
+
+def test_renewing_auth_preserves_relations_and_resets_backoff(tmp_path):
+ from noesis.planning import NotionAuthorizationError
+ from unittest.mock import patch
+ p=Planner(tmp_path);parent=str(uuid.uuid4());collections={'Tasks':{'source_id':'tasks'}}
+ p.save(p.config,{'token':'expired-fixture','parent_id':parent,'collections':collections})
+ p.enqueue('Tasks','Keep this plan',{},str(uuid.uuid4()),remote_id='existing',base_revision='r')
+ with patch.object(p,'sync',side_effect=NotionAuthorizationError('expired')):
+  result=p.sync_auto()
+ assert result['state']=='needs_connection' and len(p.pending())==1
+ with patch.object(p,'api',return_value={}):p.connect('renewed-fixture',parent)
+ assert p.read(p.config)['collections']==collections
+ assert p.status()['sync']['next_retry']==0 and len(p.pending())==1

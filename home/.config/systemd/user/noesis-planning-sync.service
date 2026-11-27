@@ -1,0 +1,13 @@
+[Unit]
+Description=Synchronize Noesis planning with its private Notion workspace
+ConditionPathExists=%h/.config/noesis/notion.json
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/noesis planning sync_auto
+TimeoutStartSec=180
+Nice=10
+MemoryMax=256M
+NoNewPrivileges=true
+PrivateTmp=true
+

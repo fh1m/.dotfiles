@@ -3,6 +3,8 @@
 import json, os, re, sys, subprocess, time, urllib.request, xml.etree.ElementTree as ET, signal
 from pathlib import Path
 import dbus
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+from job_runtime import identity,reconcile,run_bounded,alive,policy
 
 BASE='/modules/kdeconnect'; NAME='org.kde.kdeconnect'
 STATE=Path.home()/'.local/state/sensei-phone';STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
@@ -35,23 +37,30 @@ def run(args,timeout=8,stdin=None):
     try:
         r=subprocess.run(args,capture_output=True,text=True,timeout=timeout,input=stdin);return {'ok':r.returncode==0,'output':(r.stdout+'\n'+r.stderr).strip()[-14000:]}
     except subprocess.TimeoutExpired as e:return {'ok':False,'output':((e.stdout or b'').decode() if isinstance(e.stdout,bytes) else e.stdout or '')+'\nStill waiting or timed out. Refresh status before retrying.'}
+def portal_state():
+    result=run(['systemctl','--user','is-active','hypr-kdeconnect-portal.service'])
+    state=result.get('output','').strip()
+    return True if result.get('ok') and state=='active' else False if state in ('inactive','failed') else None
 def job_start(args,label):
     folder=STATE/'jobs';folder.mkdir(exist_ok=True,mode=0o700);path=folder/(str(time.time_ns())+'.json')
     path.write_text(json.dumps({'label':label,'args':args,'state':'starting','created':time.time(),'log':str(path.with_suffix('.log'))}));path.chmod(0o600)
     subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'--job',str(path)],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     return {'ok':True,'output':label+' started. Progress and result are shown in Files; you can close Phone while it runs.'}
 def job_worker(path):
-    path=Path(path);j=json.loads(path.read_text());j.update(pid=os.getpid(),state='running');path.write_text(json.dumps(j))
+    path=Path(path);j=json.loads(path.read_text());j.update(pid=os.getpid(),state='running',worker=identity());save_json(path,j)
     try:
-        with open(j['log'],'w') as log:
-            os.chmod(j['log'],0o600);r=subprocess.run(j['args'],stdout=log,stderr=subprocess.STDOUT);j.update(state='finished' if r.returncode==0 else 'failed',exitCode=r.returncode,finished=time.time())
+        result=run_bounded(j['args'],j['log'],**policy('phone',j))
+        j.update(result,state='finished' if result['exitCode']==0 else 'failed',finished=time.time())
+    except SystemExit:j.update(state='cancelled',finished=time.time());save_json(path,j);raise
     except Exception as e:j.update(state='failed',error=str(e),finished=time.time())
-    path.write_text(json.dumps(j))
+    save_json(path,j)
 def jobs():
     out=[]
     for p in sorted((STATE/'jobs').glob('*.json'),reverse=True)[:20]:
         try:
-            j=json.loads(p.read_text());j['id']=p.name;j.pop('args',None)
+            original=json.loads(p.read_text());j=reconcile(original)
+            if j!=original:save_json(p,j)
+            j=dict(j);j['id']=p.name;j.pop('args',None)
             log=Path(j['log']);
             if log.exists():
                 with log.open('rb') as stream:
@@ -96,7 +105,8 @@ def full():
         if 'sensei-phone' not in Path(f'/proc/{pid}/cmdline').read_text():raise ValueError('Watcher stopped')
         out=cached
     except (OSError,ValueError,KeyError):out=kd()
-    out['config']=config();out['remoteInput']=INPUT_GATE.exists();out['jobs']=jobs();out['sshKeyExists']=SSH_KEY.exists();out['sshMounted']=phone_mounted();out['phoneSync']=json.loads((STATE/'phone-sync.json').read_text()) if (STATE/'phone-sync.json').exists() else {'folders':[]}
+    actual=portal_state();gate=INPUT_GATE.exists()
+    out['config']=config();out['remoteInput']=actual;out['remoteInputGate']=gate;out['remoteInputState']='UNKNOWN' if actual is None else 'ON' if actual and gate else 'DIVERGED' if actual!=gate else 'OFF';out['jobs']=jobs();out['sshKeyExists']=SSH_KEY.exists();out['sshMounted']=phone_mounted();out['phoneSync']=json.loads((STATE/'phone-sync.json').read_text()) if (STATE/'phone-sync.json').exists() else {'folders':[]}
     result=subprocess.run(['tailscale','status','--json'],capture_output=True,text=True,timeout=5);r={'output':result.stdout,'ok':result.returncode==0}
     try:
         j=json.loads(r['output']);out['vpn']={'state':j.get('BackendState'),'ips':j.get('TailscaleIPs') or [],'authUrl':j.get('AuthURL') or '', 'peers':[{'name':v.get('HostName'),'os':v.get('OS'),'online':v.get('Online'),'ips':v.get('TailscaleIPs') or [],'relay':v.get('Relay'),'address':v.get('CurAddr'),'lastSeen':v.get('LastSeen')} for v in (j.get('Peer') or {}).values()]}
@@ -163,11 +173,19 @@ def action(a,id='',args=None):
         return {'ok':True,'output':'Phone sync folder '+('paused.' if args[1]=='true' else 'resumed.')}
     if a=='refresh':return run(['kdeconnect-cli','--refresh'])
     if a=='remote-input':
-        if args[0]=='on':
+        enable=args[0]=='on'
+        had_gate=INPUT_GATE.exists()
+        if enable:
             INPUT_GATE.write_text('Explicitly enabled by Sensei in Phone\n');INPUT_GATE.chmod(0o600)
-            return run(['systemctl','--user','start','hypr-kdeconnect-portal.service'])
-        INPUT_GATE.unlink(missing_ok=True)
-        return run(['systemctl','--user','stop','hypr-kdeconnect-portal.service'])
+        else:INPUT_GATE.unlink(missing_ok=True)
+        result=run(['systemctl','--user','start' if enable else 'stop','hypr-kdeconnect-portal.service'])
+        actual=portal_state()
+        if not result['ok'] or actual is None or actual!=enable:
+            if enable and not had_gate:
+                INPUT_GATE.unlink(missing_ok=True)
+                run(['systemctl','--user','stop','hypr-kdeconnect-portal.service'])
+            return {'ok':False,'output':'Portal did not reach the requested state; input status requires attention.'}
+        return {'ok':True,'output':'Remote input '+('enabled.' if enable else 'disabled.')}
     if a in ('pair','ring','clipboard','ping','unpair','accept'):
         if a=='accept':iface(p,NAME+'.device').acceptPairing(timeout=3);return {'ok':True,'output':'Pairing accepted.'}
         flag={'pair':'--pair','ring':'--ring','clipboard':'--send-clipboard','ping':'--ping','unpair':'--unpair'}[a];return run(['kdeconnect-cli','-d',id,flag])
@@ -201,8 +219,11 @@ def action(a,id='',args=None):
         if not re.fullmatch(r'[0-9]+\.json',name):raise ValueError('Invalid transfer ID.')
         path=STATE/'jobs'/name;j=json.loads(path.read_text());pid=j.get('pid',0)
         cmd=Path('/proc')/str(pid)/'cmdline'
-        if j['state']=='running' and cmd.exists() and b'--job' in cmd.read_bytes() and str(path).encode() in cmd.read_bytes():os.killpg(pid,signal.SIGTERM);j['state']='cancelled';path.write_text(json.dumps(j))
-        return {'ok':True,'output':'Transfer cancelled.'}
+        if j['state'] not in ('starting','running'):return {'ok':False,'output':'Transfer already '+j['state']+'.'}
+        if type(pid) is not int or j.get('worker',{}).get('pid')!=pid or not alive(j) or not cmd.exists() or str(path).encode() not in cmd.read_bytes():return {'ok':False,'output':'Worker no longer running; remote outcome may be unknown.'}
+        try:os.killpg(pid,signal.SIGTERM)
+        except (ProcessLookupError,PermissionError):return {'ok':False,'output':'Cancellation could not be delivered.'}
+        return {'ok':True,'output':'Cancellation requested; refresh for the recorded result.'}
     if a=='phone-media':
         command=args[0]
         if command not in ('PlayPause','Next','Previous','Stop'):raise ValueError('Unknown media action.')
@@ -272,24 +293,31 @@ def action(a,id='',args=None):
     if a=='plugin':iface(p,NAME+'.device').setPluginEnabled(args[0],args[1]=='true',timeout=3);return {'ok':True,'output':'Laptop plugin changed. Android permissions are managed on your phone.'}
     raise ValueError('Unknown Phone action.')
 def watch():
+    sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+    from child_lifetime import bind_parent
+    bind_parent()
     from dbus.mainloop.glib import DBusGMainLoop
     from gi.repository import GLib
     DBusGMainLoop(set_as_default=True);bus=dbus.SessionBus();pending=[False];retry=[0];last_refresh=[0.0]
+    retry_delay=[15]
     def emit():
         pending[0]=False
         snapshot=kd();cache=dict(snapshot,watchPid=os.getpid());temp=STATE/('kde-snapshot-'+str(os.getpid())+'.tmp');temp.write_text(json.dumps(cache));temp.chmod(0o600);temp.replace(STATE/'kde-snapshot.json');print(json.dumps(snapshot),flush=True)
         offline=any(d.get('isPaired') and not d.get('isReachable') for d in snapshot.get('devices',[]))
-        if offline and not retry[0]:retry[0]=GLib.timeout_add_seconds(15,reconnect)
+        if offline and not retry[0]:retry[0]=GLib.timeout_add_seconds(retry_delay[0],reconnect)
+        if not offline:retry_delay[0]=15
         return False
     def reconnect():
         retry[0]=0
         if time.monotonic()-last_refresh[0]<5:return False
         last_refresh[0]=time.monotonic()
+        retry_delay[0]=min(300,retry_delay[0]*2)
         try:iface(BASE,NAME+'.daemon').forceOnNetworkChange(timeout=2)
         except dbus.DBusException:pass
         if not pending[0]:pending[0]=True;GLib.timeout_add(300,emit)
         return False
     def network_changed(*args,**kwargs):
+        retry_delay[0]=15
         if retry[0]:GLib.source_remove(retry[0]);retry[0]=0
         retry[0]=GLib.timeout_add_seconds(2,reconnect)
     system_bus=dbus.SystemBus()

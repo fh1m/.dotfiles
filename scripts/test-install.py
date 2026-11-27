@@ -21,13 +21,20 @@ with tempfile.TemporaryDirectory(prefix='dotfiles-test-') as directory:
         assert (home/relative).is_symlink() and (home/relative).resolve() == (home/target).resolve(), relative
         assert (home/target).exists(), target
     # Every file the desktop loads by path must exist after install.
-    import re
+    import re,json
+    external=json.loads((ROOT/'scripts/service-dependencies.json').read_text())
     for name in ['hyprland.lua', 'custom-setup.lua']:
         for ref in re.findall(r'dofile\("([^"]+)"\)', (home/'.config/hypr'/name).read_text()):
             assert Path(ref).is_file(), (name, ref)
     for unit in (home/'.config/systemd/user').glob('*.service'):
         for ref in re.findall(r'ExecStart=%h/(\S+)', unit.read_text()):
-            assert (home/ref).exists(), (unit.name, ref)
+            if unit.name in external:
+                dependency=external[unit.name]
+                assert ref==dependency['path'],(unit.name,ref)
+                assert (ROOT/dependency['provision'].split()[-1]).is_file()
+                print('EXTERNAL:',unit.name,'provision with',dependency['provision'])
+            else:
+                assert (home/ref).exists(), (unit.name, ref)
     # Seed wallpaper: the lockedFile the seed names must exist, and the copy must have run.
     assert (home/'.config/quickshell/sensei/assets/wallpapers/net-circuit.png').is_file()
     assert (home/'Pictures/wallpapers/sensei/net-circuit.png').is_file()
