@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 export type Measurement=Record<string,unknown>;
 export type CachedUsage={source:string;identity:string;measurement?:Measurement;attemptedAt:number;lastError?:string};
 export type AccountState={schema:1;monitored:Record<string,{source:string;identity:string;name:string}>;profiles:Record<string,{id:string;profileDir:string;identity:string;email?:string;name:string}>;cache:Record<string,CachedUsage>;generation:Record<string,number>};
-export type CacheView={measurement?:Measurement;stale:boolean;cooldown:boolean;error?:string};
+export type CacheView={measurement?:Measurement;stale:boolean;expired:boolean;cooldown:boolean;error?:string};
 const blank=():AccountState=>({schema:1,monitored:{},profiles:{},cache:{},generation:{}});
 function record(value:unknown):value is Record<string,unknown>{return value!==null&&typeof value==="object"&&!Array.isArray(value);}
 function parse(raw:string):AccountState{
@@ -31,10 +31,11 @@ export async function monitorAccount(pathname:string,id:string,account:{source:s
 export async function removeAccount(pathname:string,id:string):Promise<void>{await withLock(pathname,state=>{delete state.monitored[id];delete state.cache[id];state.generation[id]=(state.generation[id]||0)+1;});}
 export async function generation(pathname:string,id:string):Promise<number>{return (await read(pathname)).generation[id]||0;}
 export async function cacheUsage(pathname:string,id:string,source:string,identity:string,expectedGeneration:number,measurement:Measurement,now=Date.now()/1000):Promise<boolean>{return withLock(pathname,state=>{if(!state.monitored[id]||state.monitored[id].source!==source||state.monitored[id].identity!==identity||(state.generation[id]||0)!==expectedGeneration)return false;state.cache[id]={source,identity,measurement,attemptedAt:now};return true;});}
+export async function claimUsage(pathname:string,id:string,source:string,identity:string,expectedGeneration:number,now=Date.now()/1000,force=false):Promise<boolean>{return withLock(pathname,state=>{if(!state.monitored[id]||state.monitored[id].source!==source||state.monitored[id].identity!==identity||(state.generation[id]||0)!==expectedGeneration)return false;const entry=state.cache[id];if(entry&&now-entry.attemptedAt<15&&!force)return false;if(entry)entry.attemptedAt=now;else state.cache[id]={source,identity,attemptedAt:now};return true;});}
 export async function recordFailure(pathname:string,id:string,source:string,identity:string,expectedGeneration:number,error:string,now=Date.now()/1000):Promise<CachedUsage|undefined>{return withLock(pathname,state=>{if(!state.monitored[id]||state.monitored[id].source!==source||state.monitored[id].identity!==identity||(state.generation[id]||0)!==expectedGeneration)return undefined;const cached=state.cache[id];if(cached?.source===source&&cached.identity===identity){cached.attemptedAt=now;cached.lastError=error;return cached;}state.cache[id]={source,identity,attemptedAt:now,lastError:error};return undefined;});}
 export async function getCachedUsage(pathname:string,id:string,source:string,identity:string,now=Date.now()/1000,maxAge=60):Promise<CacheView|undefined>{
  const entry=(await read(pathname)).cache[id];if(entry?.source!==source||entry.identity!==identity)return;
- const measurement=entry.measurement;let stale=true;
- if(measurement){const time=measurement.measurementAt;stale=typeof time!=="number"||now-time>maxAge;const windows=measurement.rateLimits;if(record(windows))for(const item of Object.values(windows)){if(!record(item))continue;const reset=item.resetsAt,epoch=typeof reset==="number"?(reset>1e12?reset/1000:reset):typeof reset==="string"?Date.parse(reset)/1000:NaN;if(Number.isFinite(epoch)&&epoch<=now)stale=true;}}
- return {measurement,stale,cooldown:now-entry.attemptedAt<15,error:entry.lastError};
+ const measurement=entry.measurement;let stale=true,expired=false;
+ if(measurement){const time=measurement.measurementAt;stale=typeof time!=="number"||now-time>maxAge;const windows=measurement.rateLimits;if(record(windows))for(const item of Object.values(windows)){if(!record(item))continue;const reset=item.resetsAt,epoch=typeof reset==="number"?(reset>1e12?reset/1000:reset):typeof reset==="string"?Date.parse(reset)/1000:NaN;if(Number.isFinite(epoch)&&epoch<=now){expired=true;stale=true;}}}
+ return {measurement,stale:stale||Boolean(entry.lastError),expired,cooldown:now-entry.attemptedAt<15,error:entry.lastError};
 }

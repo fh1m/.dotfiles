@@ -2,8 +2,8 @@
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import path from "node:path";
-import { readProfileUsage } from "../share/sensei/codex_app_server.ts";
-import { cacheUsage, generation, getCachedUsage, monitorAccount, readAccountState, recordFailure, registerProfile, removeAccount } from "../share/sensei/codex_account_state.ts";
+import { cacheUsage, claimUsage, generation, getCachedUsage, monitorAccount, readAccountState, recordFailure, registerProfile, removeAccount } from "../share/sensei/codex_account_state.ts";
+
 
 const home=homedir(),agentDir=process.env.OMP_AGENT_DIR||path.join(home,".omp/agent"),statePath=path.join(home,".config/sensei/codex-accounts.json");
 const args=Bun.argv.slice(2),command=args[0],value=(key:string)=>{const i=args.indexOf(key);return i<0?undefined:args[i+1];};
@@ -52,8 +52,9 @@ async function usage(id:string,source:string,identity:string,fetchMeasurement:()
  const current=(await readAccountState(statePath)).monitored[id];if(!current||current.source!==source||current.identity!==identity)throw Error("Account is not monitored");
  const started=await generation(statePath,id),now=Date.now()/1000,refresh=args.includes("--refresh"),cached=await getCachedUsage(statePath,id,source,identity,now);
  if(!refresh&&cached&&!cached.stale&&cached.measurement&&now-Number(cached.measurement.measurementAt)<=60){emit({provider:"codex",...cached.measurement,accountId:id});return;}
- if(!refresh&&cached?.cooldown){if(cached.measurement)emit({provider:"codex",...cached.measurement,accountId:id,stale:true,state:"stale",error:"Usage refresh is cooling down"});else emit({provider:"codex",accountId:id,state:"unknown",stale:true,error:"Usage refresh is cooling down"});return;}
+ if(!refresh&&cached?.cooldown){if(cached.measurement)emit({provider:"codex",...cached.measurement,accountId:id,stale:true,state:cached.expired?"expired":"stale",error:"Usage refresh is cooling down"});else emit({provider:"codex",accountId:id,state:"unknown",stale:true,error:"Usage refresh is cooling down"});return;}
+ if(!await claimUsage(statePath,id,source,identity,started,now,refresh)){const latest=await getCachedUsage(statePath,id,source,identity);if(latest?.measurement)emit({provider:"codex",...latest.measurement,accountId:id,stale:true,state:latest.expired?"expired":"stale",error:"Usage refresh is cooling down"});else emit({provider:"codex",accountId:id,state:"unknown",stale:true,error:"Usage refresh is cooling down"});return;}
  try{const measurement=await fetchMeasurement();if(typeof measurement.measurementAt!=="number"||!Number.isFinite(measurement.measurementAt)||measurement.measurementAt>Date.now()/1000+30)throw Error("Invalid native measurement timestamp");if(expired(measurement,Date.now()/1000)){measurement.state="expired";measurement.stale=true;}if(!await cacheUsage(statePath,id,source,identity,started,measurement)){emit({provider:"codex",accountId:id,state:"unknown",stale:true,error:"Account monitoring changed during usage request"});return;}emit({provider:"codex",...measurement,accountId:id});}
- catch{const prior=await recordFailure(statePath,id,source,identity,started,"Usage unavailable");if(prior?.measurement)emit({provider:"codex",...prior.measurement,accountId:id,stale:true,state:"stale",error:"Usage unavailable"});else emit({provider:"codex",accountId:id,state:"unknown",stale:true,error:"Usage unavailable"});}
+ catch{const prior=await recordFailure(statePath,id,source,identity,started,"Usage unavailable"),last=await getCachedUsage(statePath,id,source,identity);if(prior?.measurement)emit({provider:"codex",...prior.measurement,accountId:id,stale:true,state:last?.expired?"expired":"stale",error:"Usage unavailable"});else emit({provider:"codex",accountId:id,state:"unknown",stale:true,error:"Usage unavailable"});}
 }
 main().catch(error=>{emit({error:error instanceof Error?error.message:"Codex account operation failed"});process.exitCode=1;});
