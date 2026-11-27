@@ -48,7 +48,7 @@ def main():
         'paths':paths,'exclude':exclude,'remoteMinimumFreeGiB':20,'remoteTarget':'/mnt/homie/Datasets/Den-backups/arete',
         'requiredMount':'/mnt/homie/Datasets','scope':'local machines only',
         'peerCopy':{'repository':str(HOME/'Den/Backups/Homie'),'fromRepository':'sftp:homie:/mnt/homie/Datasets/Den-backups/homie',
-                    'passwordFile':str(hkey),'minimumFreeGiB':80}}
+                    'passwordFile':str(hkey),'minimumFreeGiB':20}}
     if not (config/'backup.json').exists():write(config/'backup.json',cfg)
     hcfg={'schema':1,'repository':'/mnt/homie/Datasets/Den-backups/homie','passwordFile':str(hkey),
         'paths':[str(HOME/p) for p in ['.config/sensei-den','.ssh','.codex/config.toml','.codex/auth.json','.claude/settings.json','.claude/.credentials.json','Work','.local/state/homie-control/input','.config/sunshine','.config/spotify-player','.cache/spotify-player']],

@@ -21,6 +21,8 @@ The [November repair audit](AUDIT-2026-11-27.md) records measured CPU/memory
 causes, the supported Qt/runtime boundary, behavioral regressions and acceptance
 that remains open. [Storage headroom](STORAGE-HEADROOM.md) explains the reserve
 budget and why a blocked peer backup must not be advertised as current.
+The [protected SDK backup guide](PROTECTED-SDK-BACKUP.md) covers root-owned
+robotics files without changing SDK permissions or granting general root access.
 
 ## One keyboard and mouse
 

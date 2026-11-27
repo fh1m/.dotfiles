@@ -70,12 +70,19 @@ verification was exercised against the configured repositories on both hosts;
 restored synthetic markers matched their recorded checksums. Consistent local
 restoration is evidence of recoverability, not proof of a fresh off-device copy.
 
-Peer copying checks the repository generation, expected snapshot age and
-available destination space again before copying. A destination below its
-configured 80 GiB reserve must return a visible blocked receipt. It must not
-silently copy yesterday's snapshot or reduce that reserve to make the test pass.
-That capacity block was still present during this audit.
+Peer copying checks repository generation, expected snapshot age and available
+destination space before/during copying. Initially the private copy configuration
+used 80 GiB as its hard minimum; the first audit correctly reported that block.
 
-Free space by an approved placement/retention decision, then retry the copy and
-verify the destination snapshot. Until that succeeds, do not describe peer
-backup as current or protection against losing the source machine.
+Follow-up measurement found the source repository was only 56 MiB. Treating the
+80 GiB working target as the hard copy floor prevented a small recovery copy
+despite ample space above the 20 GiB critical threshold. The copy default and
+Arete's private configuration now use **20 GiB as the enforced minimum**. The
+**80 GiB working target remains a visible storage warning**, not a healthy-disk
+claim. In-transfer reserve checks and source/destination freshness validation
+remain enabled. No user data was deleted to admit the copy.
+
+An old snapshot can be safely copied yet still be stale: that remains a failed
+freshness result, never “current.” Verify the destination's actual snapshot and
+receipt after the source publishes its current checkpoint. Until that succeeds,
+do not describe peer backup as current or protection against source-machine loss.

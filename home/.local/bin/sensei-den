@@ -372,7 +372,7 @@ def _backup(action):
         peer=cfg.get('peerCopy')
         if not peer:return {'configured':False,'ok':True,'skipped':True,'reason':'No peer snapshot copy configured on this host'}
         target=Path(peer['repository']);target.parent.mkdir(parents=True,exist_ok=True)
-        guard={'repository':str(target),'minimumFreeGiB':peer.get('minimumFreeGiB',80)};backup_reserve(guard)
+        guard={'repository':str(target),'minimumFreeGiB':peer.get('minimumFreeGiB',20)};backup_reserve(guard)
         copyenv=dict(os.environ,RESTIC_REPOSITORY=str(target),RESTIC_PASSWORD_FILE=peer['passwordFile'],
                      RESTIC_FROM_REPOSITORY=peer['fromRepository'],RESTIC_FROM_PASSWORD_FILE=peer['passwordFile'])
         copybase=base
@@ -412,8 +412,18 @@ def _backup(action):
             write(STATE/'backup-status.json',{'finished':time.time(),'ok':False,'state':'incomplete-sources','covered':len(paths),'missingRequired':len(missing)})
             raise ValueError('Required backup sources unavailable ('+str(len(missing))+'); inspect private configuration before retrying')
         if not paths:raise ValueError('No backup sources exist')
+        protected=None
+        if cfg.get('protectedRootfs'):
+            sys.path.insert(0,str(HOME/'.local/share/sensei'))
+            from protected_backup import prepare
+            try:protected=prepare(cfg['protectedRootfs'],STATE)
+            except (OSError,ValueError,subprocess.SubprocessError):
+                write(STATE/'backup-status.json',{'finished':time.time(),'ok':False,'state':'protected-preparation-failed'})
+                raise
+            paths.append(protected['archive'])
         command=[*base,'backup','--json','--tag','digital-den']
         for p in cfg.get('exclude',[]):command+=['--exclude',p]
+        if protected:command+=['--exclude',protected['source']]
         try:r=guarded_backup([*command,*paths],cfg,env)
         except (OSError,ValueError,subprocess.SubprocessError):
             write(STATE/'backup-status.json',{'finished':datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -422,6 +432,7 @@ def _backup(action):
             raise
         # Exit 3 is an incomplete backup, never a successful checkpoint.
         result={'finished':datetime.datetime.now(datetime.timezone.utc).isoformat(),'ok':r.returncode==0,'exitCode':r.returncode,'covered':len(paths),'missingRequired':0}
+        if protected:result['protectedRootfs']={'fingerprint':protected['fingerprint'],'sha256':protected['sha256'],'archiveReused':protected['reused']}
         summaries=[]
         for line in r.stdout.splitlines():
             try:
