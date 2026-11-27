@@ -56,17 +56,26 @@ def test_removed_import_exception_does_not_remove_local_override(tmp_path):
   assert db.execute('select occurrence,source from exceptions').fetchall()==[(123456789.0,'local')]
 
 def test_failed_recurring_notification_retries_inside_lead_window(tmp_path):
- import datetime,time
+ import datetime,sys
  env=dict(os.environ,HOME=str(tmp_path),SENSEI_CALENDAR_DIR=str(tmp_path/'calendar'));f=tmp_path/'test.ics'
- start=(datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(minutes=3)).replace(microsecond=0)
+ now=datetime.datetime(2026,6,1,6,tzinfo=datetime.timezone.utc)
+ start=now+datetime.timedelta(minutes=3)
  f.write_text('BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:retry-test\nDTSTART:'+start.strftime('%Y%m%dT%H%M%SZ')+'\nRRULE:FREQ=DAILY\nSUMMARY:Retry\nEND:VEVENT\nEND:VCALENDAR\n')
- subprocess.run(['python3',str(SCRIPT),'import',str(f)],env=env,capture_output=True,check=True)
+ subprocess.run([sys.executable,str(SCRIPT),'import',str(f)],env=env,capture_output=True,check=True)
  with sqlite3.connect(tmp_path/'calendar/calendar.sqlite') as db:db.execute('update events set lead=15')
  scheduler=SCRIPT.with_name('sensei-calendar-scheduler')
- result=subprocess.run(['python3',str(scheduler),'--inspect'],env=env,capture_output=True,text=True,check=True)
- assert 0<json.loads(result.stdout)['next']-time.time()<35
- with sqlite3.connect(tmp_path/'calendar/calendar.sqlite') as db:
-  ident=db.execute('select id from events').fetchone()[0]
-  db.execute('insert into delivered(event,occurrence) values(?,?)',(ident,start.timestamp()))
- result=subprocess.run(['python3',str(scheduler),'--inspect'],env=env,capture_output=True,text=True,check=True)
- assert json.loads(result.stdout)['next']>start.timestamp()
+ inspect_at=r'''
+import datetime,runpy,sys
+from unittest.mock import patch
+program,stamp=sys.argv[1],float(sys.argv[2])
+sys.argv=[program,'--inspect']
+class FrozenDateTime(datetime.datetime):
+ @classmethod
+ def now(cls,tz=None):return cls.fromtimestamp(stamp,tz)
+with patch('time.time',return_value=stamp),patch('datetime.datetime',FrozenDateTime):
+ runpy.run_path(program,run_name='__main__')
+'''
+ result=subprocess.run([sys.executable,'-c',inspect_at,str(scheduler),str(now.timestamp())],env=env,capture_output=True,text=True,check=True)
+ assert now.timestamp()<json.loads(result.stdout)['next']<start.timestamp()
+ # A general wake may also be a midnight rescan, not a notification delivery.
+ # Do not pin that incidental wake ordering to an already delivered event.

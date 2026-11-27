@@ -22,8 +22,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends \
             build-essential pkg-config libjson-c-dev libssl-dev \
-            restic librsvg2-bin ffmpeg
+            restic librsvg2-bin ffmpeg python3-venv
       - name: Install declared test dependencies
-        run: python3 -m pip install -r tests/requirements.txt
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -r tests/requirements.txt
       - name: Run repo tests
-        run: python3 -m pytest -q tests
+        run: .venv/bin/python -m pytest -q tests
