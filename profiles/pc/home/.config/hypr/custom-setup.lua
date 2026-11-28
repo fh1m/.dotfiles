@@ -211,7 +211,7 @@ hl.bind("ALT + grave", hl.dsp.exec_cmd("qs -c sensei ipc call switcher cycle sam
 hl.bind("ALT + SHIFT + grave", hl.dsp.exec_cmd("qs -c sensei ipc call switcher cycle same -1"))
 
 -- Keep the former hot surfaces explicit even if another theme enables blur.
-hl.window_rule({ name = "sensei-terminal-render-headroom", match = { class = "^(kitty|Alacritty)$" }, no_blur = false })
+hl.window_rule({ name = "sensei-terminal-render-headroom", match = { class = "^(kitty|Alacritty|sensei-daily-terminal)$" }, no_blur = false })
 hl.layer_rule({ name = "sensei-bar-render-headroom", match = { namespace = "^sensei-bar$" }, blur = false })
 -- Native image/calendar choosers stay above ordinary apps.
 hl.window_rule({ name = "sensei-native-chooser", match = { class = "^(zenity|org\\.gnome\\.Zenity)$" }, float = true, center = true })

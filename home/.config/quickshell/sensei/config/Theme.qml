@@ -112,8 +112,9 @@ Singleton {
     readonly property color mute: widgetFaint
 
     // Meaning
-    readonly property color signal: semanticCyan
-    readonly property color focusBlue: semanticCyan
+    // Interactive feedback uses the active accent, not the semantic data color.
+    readonly property color signal: signalRed
+    readonly property color focusBlue: signalRed
     readonly property color accent: signalRed
     readonly property color alert: signalRed
 

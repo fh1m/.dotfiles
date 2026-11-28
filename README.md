@@ -34,6 +34,12 @@ Zondo is my illustrated deskbuddy, with a little life of his own. The desktops a
 
 Alacritty stays light. Tmux keeps the session alive. Neovim handles the source, navigation, diagnostics and review. Agents can share the workbench; independent reasoning still gets a seat.
 
+`Super+Enter` returns to the same daily tmux session; `Super+Shift+Enter` starts
+an independent one. Select a wallpaper to change desktop accents without
+recoloring the terminal background or the tmux status bar.
+
+![Quickshell's actual acknowledgement animation changes from rose to amber using two test wallpapers](docs/assets/digital-den/wallpaper-accent-feedback.gif)
+
 ## 02 / Turn “I think” into something testable
 
 ![Obsidian with a rendered calibration equation and a connected experimental Canvas](docs/assets/digital-den/arete-upper.png)
@@ -104,7 +110,7 @@ Push through the **top of the laptop** to reach Homie, or through the **right ed
 | **Ctrl + Alt + Esc** | Release native input capture immediately |
 | **System → Digital Den** | Sharing, locator, bring home, storage and status |
 
-Text and PNG clipboard travel both ways. Pairing uses private keys and pinned hosts. The receiver leaves its local keyboard usable. Slight dimming identifies the active display without keeping a blur animation running.
+Text and PNG clipboard travel both ways. Pairing uses private keys and pinned hosts. The receiver leaves its local keyboard usable. A brief edge cue identifies the focused display; it does not dim the other screens.
 
 The tiny engineer may lose a semicolon. The mouse should have an escape route.
 

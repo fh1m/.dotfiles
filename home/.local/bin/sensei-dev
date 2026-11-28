@@ -101,12 +101,10 @@ def configure(args):
 
 def tmux_open(p, argv, role, new=False):
     if not shutil.which('tmux'): raise SystemExit('tmux is required')
-    # Keep the existing daily_dev server/session convention.
-    session = subprocess.run(['tmux', 'display-message', '-p', '#{session_name}'], text=True, capture_output=True).stdout.strip() if os.environ.get('TMUX') else 'daily_dev'
-    if subprocess.run(['tmux', 'has-session', '-t', '=' + session], capture_output=True).returncode:
-        prepare = HOST / '.local/bin/sensei-tmux'
-        if prepare.exists(): subprocess.run([str(prepare), '--prepare'], check=True)
-        else: subprocess.run(['tmux', 'new-session', '-d', '-s', session], check=True)
+    inside = bool(os.environ.get('TMUX'))
+    session = subprocess.check_output(['tmux', 'display-message', '-p', '#{session_name}']
+        if inside else [str(HOST / '.local/bin/sensei-tmux'), '--daily-name'],
+        text=True, timeout=8).strip()
     identity = hashlib.sha256((p['root'] + ':' + str(p.get('container')) + ':' + role).encode()).hexdigest()[:20]
     target = None
     if not new:

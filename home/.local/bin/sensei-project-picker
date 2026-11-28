@@ -62,13 +62,13 @@ def open_project(path, data):
     data['recent'] = [path] + [p for p in data['recent'] if p != path][:29]
     write(data)
     inside = bool(os.environ.get('TMUX'))
-    if not inside and subprocess.run(['tmux', 'has-session', '-t', '=daily_dev'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
-        subprocess.run([str(HOME / '.local/bin/sensei-tmux'), '--prepare'], check=True)
-    command = ['tmux', 'new-window'] + ([] if inside else ['-t', 'daily_dev']) + ['-c', path, '-n', Path(path).name[:24]]
+    daily = '' if inside else subprocess.check_output(
+        [str(HOME / '.local/bin/sensei-tmux'), '--daily-name'], text=True, timeout=8).strip()
+    command = ['tmux', 'new-window'] + ([] if inside else ['-t', daily + ':']) + ['-c', path, '-n', Path(path).name[:24]]
     subprocess.run(command, check=True)
     if not inside:
         subprocess.Popen([str(HOME / '.local/bin/sensei-terminal'), '--title', Path(path).name,
-                          '-e', 'tmux', 'attach-session', '-t', 'daily_dev'], start_new_session=True,
+                          '-e', 'tmux', 'attach-session', '-t', '=' + daily], start_new_session=True,
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 

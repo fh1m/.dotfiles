@@ -256,9 +256,9 @@ def test_external_display_visible_recovery_uses_lightweight_sync(tmp_path):
     report = run_native(tmp_path, DISPLAY_HARNESS, timeout=8)
     assert 'PROOF_PASS display-recovery' in report, report
     requests = [json.loads(line) for line in (tmp_path / 'display-sync.jsonl').read_text().splitlines()]
-    assert requests[:2] == [['sync'], ['sync']]
+    assert requests[0] == ['sync'], requests
     assert len(requests) >= 3, requests
-    assert all(request == ['sync', '--no-layout', '--no-notify'] for request in requests[2:]), requests
+    assert all(request == ['sync', '--no-layout', '--no-notify'] for request in requests[1:]), requests
 
 
 SPOTIFY_HELPER = r'''import json, os, sys, time

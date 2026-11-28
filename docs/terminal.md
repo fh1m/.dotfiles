@@ -6,9 +6,9 @@
 
 | Same feel | Implementation |
 |---|---|
-| Iosevka Nerd Font Mono, 11.2 pt; black/red/blue palette | `~/.config/alacritty/alacritty.toml` |
-| Independent terminal tabs and panes | tmux windows/panes; `BAY-NN` clients share the persistent `Sensei` window set |
-| Closing a terminal preserves work | systemd supervises the tmux server; detached windows remain in `Sensei` |
+| Iosevka Nerd Font Mono; OLED black and wallpaper-derived accents | `~/.config/alacritty/alacritty.toml` (Homie imports `sensei-colors.toml`) |
+| Terminal tabs and panes | tmux windows and panes in the daily session; Shift creates a separate session |
+| Closing a terminal preserves work | The user service supervises the tmux server independently of Alacritty |
 | Fast image preview | `chafa image.png`; character-cell image, less fidelity than Kitty graphics |
 | URL detection / navigation | Not configured in Alacritty (no URL hints, no Vi mode). Use tmux copy mode (`Ctrl+Shift+Up`) and its history search (`/`) |
 | Clipboard | Alacritty OSC 52 + tmux `set-clipboard external` + tmux-yank / `wl-copy` |
@@ -21,8 +21,8 @@ Graphics forks exist: [ayosec/alacritty](https://github.com/ayosec/alacritty) ad
 
 | Key | Action |
 |---|---|
-| `Super+Return`, `Alt+Return`, `Super+Q` | Focus existing Alacritty, or launch one; Super+Return while it is focused opens another BAY |
-| `Super+Shift+Return` | Force a new Alacritty window |
+| `Super+Return`, `Alt+Return`, `Super+Q` | Focus the daily terminal or attach a new window to its existing session |
+| `Super+Shift+Return` | Create a separate Alacritty window and numbered tmux session |
 | `Super+'`, `Ctrl+Shift+Return` | New tmux window (Kitty-style tab) |
 | `Super+[ / ]` | Previous / next tmux window |
 | `Ctrl+Shift+N` | New OS window |
@@ -39,9 +39,17 @@ Graphics forks exist: [ayosec/alacritty](https://github.com/ayosec/alacritty) ad
 
 The tmux prefix is the backtick (`` ` ``). Five plugins are declared, each with one job: TPM loads them; copycat searches; yank copies; tmux-fzf picks windows/sessions; resurrect saves layouts. The mouse wheel is handled by root-table bindings (`WheelUpPane`/`WheelDownPane`), not a plugin; the [Mighty Scroll](https://github.com/noscript/tmux-mighty-scroll) project is the upstream reference for that behaviour. The overlapping mouse and session plugins were removed from the active configuration, but their installed files were left alone. The mouse wheel uses tmux history in Codex/Claude; `Ctrl+Shift+Up` is the predictable fallback. Scrollback is 200,000 lines (`history-limit` in `home/.tmux.conf`). `TERM=alacritty` outside, `TERM=tmux-256color` inside, with RGB and OSC 52 advertised. [tmux clipboard guide](https://github.com/tmux/tmux/wiki/Clipboard) · [Mighty Scroll behavior](https://github.com/noscript/tmux-mighty-scroll).
 
-The base session starts at login. The user service runs tmux in the foreground with restart supervision, so a successful one-shot startup cannot hide a vanished server. Each daily window gets its own `BAY-NN` view so switching windows in one terminal does not move another. On close, that view disappears; the window and its processes remain in `Sensei`. Use `` ` + s `` to revisit them. A reboot cannot keep live processes; resurrect saves layouts and supported commands on demand.
+The first ordinary terminal launch reuses the most recently attached existing
+`dev_…` session when possible, otherwise it creates `daily`. Its name is retained
+in `~/.local/state/sensei-tmux/daily-session`. New numbered sessions never replace
+that choice or close previous work. Restarting the computer cannot preserve live
+processes; resurrect restores saved layouts and supported commands on demand.
 
-The statusline is one continuous dark rail: an operator block, linked BAY, active window in muted red, quiet inactive windows, a thin neutral separator, and the current path. Prefix, copy, zoom, and synchronized panes appear only when active. It uses Iosevka Nerd Font Mono's regular/bold faces with Alacritty's native box drawing; no underline or pointy Powerline separators.
+Use the backtick prefix followed by `s` to return to any existing session, `,`
+to name a window, `|` or `-` to split in the current directory, and `/` to search
+scrollback. Keep one named window per task in the daily session; use a separate
+session when you want independent windows or another project. Wallpaper changes
+do not rewrite the tmux status bar.
 
 Task windows opened by widgets use Alacritty **without attaching to the daily tmux session**, so a package or Bluetooth command cannot take over your workbench. `sim-console` explicitly offloads its terminal to NVIDIA when training mode is off; the ordinary terminal stays on Intel. A scratch Alacritty run reported RTX 2060 OpenGL 3.3 successfully. The `.desktop` entry and `xdg-terminals.list` select the same launcher.
 

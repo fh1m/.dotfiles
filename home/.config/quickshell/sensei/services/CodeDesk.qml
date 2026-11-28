@@ -49,6 +49,7 @@ Singleton {
     property var claudeRequests: []
     property bool claudeRefreshPending: false
     function selectClaudeAccount(id: string): void {
+        if (claudeAccount === id) return;
         claudeAccount = id;
         refreshClaude(false);
     }
@@ -99,7 +100,10 @@ Singleton {
             }
             if (request.action === "claude-accounts") {
                 if (!Array.isArray(data.accounts)) throw new Error("Missing account list");
-                claudeAccounts = data;
+                // Keep the account delegates (and their keyboard focus) when
+                // only the discovery timestamp changed.
+                if (JSON.stringify(claudeAccounts.accounts) !== JSON.stringify(data.accounts))
+                    claudeAccounts = data;
                 if (!data.accounts.some(account => account.id === claudeAccount))
                     claudeAccount = data.accounts[0]?.id ?? "";
                 if (claudeAccount)

@@ -9,12 +9,17 @@ out = []
 value_options = {'--title', '-T', '--class', '--working-directory', '--directory', '--config-file', '--option', '-o'}
 i = 0
 explicit_command = False
+new_session = False
 while i < len(args):
     arg = args[i]
     if arg in ('-e', '--command'):
         explicit_command = True
         out.extend(['-e', *args[i + 1:]])
         break
+    if arg == '--new-session':
+        new_session = True
+        i += 1
+        continue
     if arg in value_options:
         if i + 1 >= len(args):
             raise SystemExit(f'{arg} needs a value')
@@ -32,12 +37,16 @@ while i < len(args):
     out.extend(['-e', *args[i:]])
     explicit_command = True
     break
-# Option-only launches create an independent persistent session. Explicit task
-# commands stay independent so a package action cannot replace daily work.
+# Task commands remain separate. Ordinary terminals attach to daily work;
+# only the explicit new-session action allocates an independent dev session.
 if not explicit_command:
     if not any(arg in ('--title', '-T') for arg in args):
         out.extend(['--title', 'Sensei · Terminal'])
+    if not new_session and not '--class' in out:
+        out.extend(['--class', 'sensei-daily-terminal'])
     out.extend(['-e', '@HOME@/.local/bin/sensei-tmux'])
+    if new_session:
+        out.append('--new')
 
 # A new terminal is outside its launcher's tmux client, even from a pane.
 os.environ.pop('TMUX',None)

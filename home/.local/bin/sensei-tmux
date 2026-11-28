@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent persistent dev sessions; resume is always an explicit action."""
+"""Resume the daily tmux session or explicitly create an independent session."""
 import argparse,fcntl,os,re,subprocess
 from pathlib import Path
 STATE=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'sensei-tmux'
@@ -20,15 +20,35 @@ def create():
         temp=counter.with_suffix('.tmp');temp.write_text(str(slot));temp.chmod(0o600);temp.replace(counter)
         return name
 
+def daily():
+    STATE.mkdir(mode=0o700,parents=True,exist_ok=True)
+    with (STATE/'daily.lock').open('a+') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX)
+        anchor=STATE/'daily-session'
+        try:name=anchor.read_text().strip()
+        except FileNotFoundError:name=''
+        if not re.fullmatch(r'daily|dev_\d+',name):
+            listing=subprocess.run(['tmux','list-sessions','-F','#{session_name} #{?session_last_attached,#{session_last_attached},0} #{session_activity}'],capture_output=True,text=True)
+            candidates=[line.split() for line in listing.stdout.splitlines()
+                        if re.fullmatch(r'dev_\d+ \d+ \d+',line)]
+            name=max(candidates,key=lambda row:(int(row[1]),int(row[2]),int(row[0][4:])),default=('daily',))[0]
+        if subprocess.run(['tmux','has-session','-t','='+name],capture_output=True).returncode:
+            tmux('new-session','-d','-s',name,'-n','Shell','-c',os.getcwd())
+        temp=anchor.with_suffix('.tmp');temp.write_text(name+'\n');temp.chmod(0o600);temp.replace(anchor)
+        return name
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--prepare',action='store_true');parser.add_argument('--create',action='store_true')
-    parser.add_argument('--attach');parser.add_argument('--list',action='store_true');args=parser.parse_args()
+    modes=parser.add_mutually_exclusive_group()
+    modes.add_argument('--prepare',action='store_true');modes.add_argument('--create',action='store_true')
+    modes.add_argument('--new',action='store_true');modes.add_argument('--attach');modes.add_argument('--daily-name',action='store_true')
+    modes.add_argument('--list',action='store_true');args=parser.parse_args()
     if args.prepare:return # The existing tmux -D service owns server lifetime.
-    if args.list:tmux('list-sessions');return
+    if args.list:print(tmux('list-sessions',capture=True).stdout,end='');return
+    if args.daily_name:print(daily());return
     name=args.attach
     if name and not re.fullmatch(r'[A-Za-z0-9_.-]+',name):raise ValueError('Choose a session by exact name')
-    if not name:name=create()
+    if not name:name=create() if args.new or args.create else daily()
     if args.create:print(name);return
     command='switch-client' if os.environ.get('TMUX') else 'attach-session'
     os.execvp('tmux',['tmux',command,'-t','='+name])

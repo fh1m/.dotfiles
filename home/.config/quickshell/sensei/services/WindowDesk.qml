@@ -33,9 +33,9 @@ Singleton {
  function fuzzy(text){const value=String(text||'').toLowerCase(),q=query.trim().toLowerCase();const normal=value.replace(/[^a-z0-9\u0400-\u04ff]/g,''),needle=q.replace(/[^a-z0-9\u0400-\u04ff]/g,'');let score=Math.max(Launcher.score(value,q),Launcher.score(normal,needle));if(score>=0&&value.includes(q))score+=80;if(score>=0&&value.startsWith(q))score+=40;return score;}
  function appScore(e){return Math.max(fuzzy(e.name),fuzzy(e.id),fuzzy(e.genericName)-10,fuzzy((e.keywords||[]).join(' '))-30);}
 
- readonly property var installed:!opened ? [] : (DesktopEntries.applications?.values??[]).filter(e=>!e.noDisplay&&appScore(e)>=0).sort((a,b)=>appScore(b)-appScore(a)||(Launcher.launches[b.id]??0)-(Launcher.launches[a.id]??0)||a.name.localeCompare(b.name))
+ readonly property var installed:!opened ? [] : (DesktopEntries.applications?.values??[]).filter(e=>!e.noDisplay).map(entry=>({entry,score:query.trim()?appScore(entry):0})).filter(row=>row.score>=0).sort((a,b)=>b.score-a.score||(Launcher.launches[b.entry.id]??0)-(Launcher.launches[a.entry.id]??0)||a.entry.name.localeCompare(b.entry.name)).map(row=>row.entry)
  readonly property var apps:installed.slice(0,8)
- readonly property var searchResults:{if(!query.trim())return [];let results=matches.concat(installed);return results.sort((a,b)=>resultScore(b)-resultScore(a)||Number(isWindow(b))-Number(isWindow(a))||resultName(a).localeCompare(resultName(b)));}
+ readonly property var searchResults:{if(!query.trim())return [];return matches.concat(installed).map(result=>({result,score:resultScore(result)})).sort((a,b)=>b.score-a.score||Number(isWindow(b.result))-Number(isWindow(a.result))||resultName(a.result).localeCompare(resultName(b.result))).map(row=>row.result);}
  function isWindow(r){return !!r?.address;}
  function desktopEntryFor(r){
   if(!isWindow(r))return r;
@@ -55,7 +55,16 @@ Singleton {
  function resultScore(r){return isWindow(r)?Math.max(fuzzy(r.title),fuzzy(r.lastIpcObject?.class)):appScore(r);}
  function selectResult(r){if(!r)return;if(isWindow(r))choose(r);else launch(r);}
 
- function open(kind,delta){if(opened){cycle(delta);return;}ShellState.closeAll();ShellState.overlayScreenName=ShellState.focusedScreenName();mode=kind;query="";pinned=true;sameClass=ActiveWindow.ipc?.class||"";snapshot=all.slice().sort((a,b)=>{let ai=mru.indexOf(a.address),bi=mru.indexOf(b.address);return (ai<0?999:ai)-(bi<0?999:bi);});selected=kind==='workspaces'?Math.max(0,root.workspaceIds.indexOf(Spaces.activeId)):0;opened=true;Hyprland.refreshToplevels();if(kind==='apps'||kind==='same')cycle(delta);}
+ function open(kind,delta){
+    if(opened&&kind===mode){cycle(delta);return;}
+    if(!opened){ShellState.closeAll();ShellState.overlayScreenName=ShellState.focusedScreenName();}
+    pendingSelection=null;mode=kind;query="";pinned=true;sameClass=ActiveWindow.ipc?.class||"";
+    const ranks=new Map(mru.map((address,index)=>[address,index]));
+    snapshot=all.slice().sort((a,b)=>(ranks.get(a.address)??999)-(ranks.get(b.address)??999));
+    selected=(kind==='workspaces'||kind==='overview')?Math.max(0,root.workspaceIds.indexOf(Spaces.activeId)):0;
+    opened=true;
+    if(kind==='apps'||kind==='same')cycle(delta);
+ }
  function cycle(delta){let count=query.trim()?searchResults.length:((mode==='workspaces'||mode==='overview')?root.workspaceIds.length:matches.length);if(count)selected=(selected+delta+count)%count;}
  function cancel(){pendingSelection=null;cancelDrag();opened=false;query="";}
  function choose(t){if(!t?.address)return;pendingSelection={kind:'window',address:addressFor(t)};opened=false;}

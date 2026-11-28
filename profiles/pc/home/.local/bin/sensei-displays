@@ -179,8 +179,11 @@ def sync(layout=True,notify=True):
             reconcile()
         outputs=monitors()
     old={d['output']:d for d in previous.get('displays',[])}
-    changed=any(name not in old or old[name].get('id')!=record['id'] or old[name].get('bus') is None for name,record in physical.items())
-    buses={name:d.get('bus') for name,d in old.items() if d.get('bus') is not None}
+    session=os.environ.get('HYPRLAND_INSTANCE_SIGNATURE','')
+    buses={name:old[name]['bus'] for name,record in physical.items()
+           if previous.get('session')==session and name in old and old[name].get('id')==record['id']
+           and old[name].get('ready') and old[name].get('bus') is not None}
+    changed=any(name not in buses for name in physical)
     if physical and changed:
         try:buses=ddc_devices(run(['ddcutil','detect','--brief'],timeout=20))
         except (OSError,subprocess.SubprocessError):buses={}

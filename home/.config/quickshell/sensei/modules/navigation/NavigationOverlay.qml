@@ -18,9 +18,9 @@ Scope {
  PanelWindow {
  id:overlay;property bool presented:false;property real reveal:0;required property ShellScreen modelData;screen:modelData;color:"transparent";visible:presented;anchors {top:true;bottom:true;left:true;right:true}mask:Region {width:WindowDesk.opened?overlay.width:0;height:overlay.height}exclusionMode:ExclusionMode.Ignore;WlrLayershell.layer:WlrLayer.Overlay;WlrLayershell.namespace:"sensei-navigation";WlrLayershell.keyboardFocus:WindowDesk.opened?WlrKeyboardFocus.Exclusive:WlrKeyboardFocus.None
 
- Timer {id:selectionHandoff;interval:45;onTriggered:WindowDesk.finishSelection()}
- NumberAnimation {id:enter;target:overlay;property:"reveal";to:1;duration:230;easing.type:Easing.OutCubic}
- SequentialAnimation {id:leave;NumberAnimation {target:overlay;property:"reveal";to:0;duration:150;easing.type:Easing.InCubic}ScriptAction {script:{overlay.presented=false;selectionHandoff.restart();}}}
+ Timer {id:selectionHandoff;interval:0;onTriggered:WindowDesk.finishSelection()}
+ NumberAnimation {id:enter;target:overlay;property:"reveal";to:1;duration:Theme.reducedMotion?0:100;easing.type:Easing.OutCubic}
+ NumberAnimation {id:leave;target:overlay;property:"reveal";to:0;duration:Theme.reducedMotion?0:90;easing.type:Easing.InCubic;onFinished:overlay.presented=false}
  Rectangle {anchors.fill:parent;opacity:overlay.reveal;color:Theme.alpha(Theme.deep,.18);MouseArea {anchors.fill:parent;onClicked:WindowDesk.cancel()}}
  ChamferPanel {id:panel;anchors.centerIn:parent;anchors.verticalCenterOffset:12*(1-overlay.reveal);opacity:overlay.reveal;enabled:WindowDesk.opened;width:Math.min(Math.max(320,(overlay.screen?.width??1920)-64),1660);height:WindowDesk.mode==='overview'||WindowDesk.mode==='workspaces'?820:730;fillColor:Theme.widgetGlass;borderColor:Theme.widgetBorder;borderWidth:1;chamfer:Appearance.chamfer.panel
  Column {anchors.fill:parent;anchors.margins:18;spacing:12
@@ -29,7 +29,7 @@ Scope {
  Item {width:parent.width;height:WindowDesk.mode==='overview'||WindowDesk.mode==='workspaces'?665:475
  Flickable {id:workspaceScroll;anchors.fill:parent;visible:!WindowDesk.query.trim()&&(WindowDesk.mode==='overview'||WindowDesk.mode==='workspaces');clip:true;contentHeight:workspaceGrid.implicitHeight;contentWidth:width;ScrollBar.vertical:ScrollBar {}
  Grid {id:workspaceGrid;width:workspaceScroll.width;columns:4;spacing:12
- Repeater {model:WindowDesk.workspaceIds;WorkspacePreview {required property int index;required property int modelData;workspace:modelData;width:(parent.width-36)/4;height:315;selected:WindowDesk.selected===index;retainFrame:overlay.visible&&WindowDesk.previewPaused;livePreview:overlay.visible&&!WindowDesk.previewPaused}}
+ Repeater {model:WindowDesk.workspaceIds;WorkspacePreview {required property int index;required property int modelData;workspace:modelData;width:(parent.width-36)/4;height:315;selected:WindowDesk.selected===index;retainFrame:WindowDesk.opened&&workspaceScroll.visible;livePreview:retainFrame&&selected&&!WindowDesk.previewPaused}}
  }
  }
  ListView {id:searchResults;anchors.fill:parent;visible:!!WindowDesk.query.trim();clip:true;spacing:7;model:WindowDesk.searchResults;currentIndex:WindowDesk.selected;onCurrentIndexChanged:positionViewAtIndex(currentIndex,ListView.Contain);ScrollBar.vertical:ScrollBar {}
@@ -50,7 +50,7 @@ Scope {
  MouseArea {anchors.fill:parent;onClicked:WindowDesk.choose(card.modelData)}
  Column {anchors.fill:parent;anchors.margins:12;spacing:10
  Row {width:parent.width;spacing:10;AppIcon {size:32;entry:card.modelData}Text { textFormat: Text.PlainText;width:parent.width-42;anchors.verticalCenter:parent.verticalCenter;text:WindowDesk.desktopEntryFor(card.modelData)?.name||card.modelData.wayland?.appId||card.modelData.lastIpcObject?.class||"Application";font.family:Appearance.font.data;font.pixelSize:15;color:Theme.signal;elide:Text.ElideRight}}
- WindowPreview {width:parent.width;height:220;window:card.modelData;frameInterval:WindowDesk.selected===card.index?33:100;retainFrame:overlay.visible&&WindowDesk.previewPaused;livePreview:overlay.visible&&!WindowDesk.previewPaused&&card.index>=windows.currentIndex-1&&card.index<=windows.currentIndex+2;MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:WindowDesk.choose(card.modelData)}}
+ WindowPreview {width:parent.width;height:220;window:card.modelData;frameInterval:140;retainFrame:WindowDesk.opened&&windows.visible&&card.x+card.width>windows.contentX&&card.x<windows.contentX+windows.width;livePreview:retainFrame&&!WindowDesk.previewPaused&&WindowDesk.selected===card.index;MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:WindowDesk.choose(card.modelData)}}
  Text { textFormat: Text.PlainText;width:parent.width;maximumLineCount:2;wrapMode:Text.Wrap;text:card.modelData.title;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.text;elide:Text.ElideRight}
  Text { textFormat: Text.PlainText;text:"Workspace "+(card.modelData.workspace?.name??"—")+" · "+(card.modelData.monitor?.name??"");font.family:Appearance.font.data;font.pixelSize:10;color:Theme.dim}
  Row {spacing:5;ControlTile {implicitWidth:105;implicitHeight:28;label:"Focus";onActivated:WindowDesk.choose(card.modelData)}ControlTile {implicitWidth:105;implicitHeight:28;label:"Float / tile";onActivated:WindowDesk.floatWindow(card.modelData)}ControlTile {implicitWidth:105;implicitHeight:28;label:"Close app";onActivated:{WindowDesk.pinned=true;card.modelData.wayland?.close();}}}
@@ -75,7 +75,7 @@ Scope {
  WindowPreview {x:5;y:5;width:250;height:125;window:WindowDesk.dragWindow;livePreview:dragGhost.visible;frameInterval:80}
  Text { textFormat: Text.PlainText;x:9;y:137;width:242;text:WindowDesk.dragTarget?'Move to '+Spaces.workspaceNames[WindowDesk.dragTarget-1]:'Drop on a workspace';elide:Text.ElideRight;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.signal}
  }
- Connections {target:WindowDesk;function onOpenedChanged(){enter.stop();leave.stop();if(WindowDesk.opened){overlay.presented=true;enter.start();Qt.callLater(()=>search.forceActiveFocus());}else leave.start();}}
+ Connections {target:WindowDesk;function onOpenedChanged(){enter.stop();leave.stop();if(WindowDesk.opened){selectionHandoff.stop();overlay.presented=true;enter.start();Qt.callLater(()=>search.forceActiveFocus());}else if(WindowDesk.pendingSelection){overlay.presented=false;overlay.reveal=0;selectionHandoff.restart();}else leave.start();}}
  }
 }
 }

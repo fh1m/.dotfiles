@@ -140,7 +140,7 @@ def main():
         if terminal.exists():
             content = terminal.read_text()
             content = replace_section(content, "colors.primary", {
-                "background": palette["ground"], "foreground": palette["text"],
+                "background": "#000000", "foreground": palette["text"],
                 "dim_foreground": palette["muted"]})
             content = replace_section(content, "colors.selection", {
                 "background": palette["primary"]})
@@ -224,16 +224,6 @@ def main():
             ',pointer:' + palette['vibrant'] + ',marker:' + palette['secondary'] + \
             ',spinner:' + palette['primary'] + ',header:' + palette['muted'] + '\n'
         write_if_changed(fzf, fzf_colors)
-        theme = home / '.config/tmux/sensei-theme.conf'
-        template = home / '.config/tmux/sensei-theme.template.conf'
-        if template.exists():
-            original = template.read_text()
-            replacements = {'@ACCENT@': palette['primary'], '@TEXT@': palette['text'],
-                            '@MUTED@': palette['muted'], '@OUTLINE@': palette['outline'], '@GROUND@': palette['ground'], '@RAISED@': palette['raised']}
-            for old, new in replacements.items():
-                original = re.sub(re.escape(old), new, original, flags=re.I)
-            if write_if_changed(theme, original):
-                subprocess.run(['tmux', 'source-file', str(theme)], capture_output=True)
         border = palette['primary'].lstrip('#') + 'FF'
         outline = palette['outline'].lstrip('#') + 'FF'
         # Group borders match the window borders, and the deck's frame sits on

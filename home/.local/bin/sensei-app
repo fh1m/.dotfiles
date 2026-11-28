@@ -3,7 +3,7 @@
 import fcntl,json,os,subprocess,sys,time
 from pathlib import Path
 APPS={
- 'terminal':(['alacritty'],[str(Path.home()/'.local/bin/sensei-terminal')],[str(Path.home()/'.local/bin/sensei-terminal')]),
+ 'terminal':(['sensei-daily-terminal'],[str(Path.home()/'.local/bin/sensei-terminal')],[str(Path.home()/'.local/bin/sensei-terminal'),'--new-session']),
  'web':(['google-chrome','google-chrome-stable','chromium'],['google-chrome-stable'],['google-chrome-stable','--new-window']),
  'files':(['org.gnome.nautilus','nautilus'],['nautilus'],['nautilus','--new-window']),
  'calculator':(['org.gnome.calculator','gnome-calculator'],['gnome-calculator'],['gnome-calculator'])}

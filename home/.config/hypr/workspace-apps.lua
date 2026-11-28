@@ -1,6 +1,6 @@
 -- Initial placement only; manual moves remain yours. Modal/auth windows stay put.
 local routes = {
- {1,"(?i)^(Alacritty|kitty|foot|footclient|org\\.wezfurlong\\.wezterm|wezterm|konsole|org\\.gnome\\.Terminal|com\\.mitchellh\\.ghostty)$"},
+ {1,"(?i)^(Alacritty|sensei-daily-terminal|kitty|foot|footclient|org\\.wezfurlong\\.wezterm|wezterm|konsole|org\\.gnome\\.Terminal|com\\.mitchellh\\.ghostty)$"},
  {2,"(?i)^(Google-chrome.*|chromium.*|firefox.*|org\\.mozilla\\.firefox|brave-browser.*|Brave-browser.*|vivaldi.*|opera.*|librewolf.*|zen|zen-browser|microsoft-edge.*)$"},
  {3,"(?i)^(Code|code-oss|VSCodium|Cursor|cursor.*|jetbrains-.*|jetbrains\\..*|QtCreator|qtcreator|neovide|nvim-qt|emacs|sublime_text|Arduino.*|STM32CubeIDE.*)$"},
  {4,"(?i)^(org\\.fh1m\\.Noesis|noesis|obsidian|md\\.obsidian\\.Obsidian|Notion|notion-app|Zotero|org\\.zotero\\.Zotero|zereto|Anki|anki|zathura|org\\.pwmt\\.zathura|sioyek|okular|org\\.kde\\.okular|org\\.gnome\\.Evince)$"},

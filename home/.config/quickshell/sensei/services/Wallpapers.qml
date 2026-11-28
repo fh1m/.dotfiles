@@ -59,10 +59,23 @@ Singleton {
     readonly property url displayed: displays[MachineProfile.primaryOutput]?.file ? Paths.url(displays[MachineProfile.primaryOutput].file) : profileImage
     function displaySource(output: string): url { const name=ShellState.isExternalOutput(output)?MachineProfile.primaryOutput:output; const path=displays[name]?.file; return path ? Paths.url(path) : profileImage; }
     function displayMode(output: string): int { const name=ShellState.isExternalOutput(output)?MachineProfile.primaryOutput:output;return displays[name]?.mode ?? Image.PreserveAspectCrop; }
-    function updatePalette(): void { Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-palette`,String(displaySource(MachineProfile.primaryOutput)).replace(/^file:\/\//,"")]); }
-    onLoadedChanged: if (loaded) updatePalette()
-    onDisplayedChanged: if (loaded && !displays[MachineProfile.primaryOutput]?.file) updatePalette()
-    function setDisplay(output: string, path: string, mode: int): void { const next=Object.assign({},displays); next[output]={file:path,mode:mode};displays=next;syncStartup(output,path);write();if(output===MachineProfile.primaryOutput)Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-palette`,path||String(displayed).replace(/^file:\/\//,"")]); }
+    // Arrow-key changes and rotations share one serialized palette writer.
+    function updatePalette(): void { if (loaded) paletteDelay.restart(); }
+    Timer { id:paletteDelay; interval:150; onTriggered:{
+        if (paletteWriter.running || Theme.previewProfile) return;
+        const source=String(root.displayed);
+        if (!source.startsWith("file:///")) return;
+        paletteWriter.requested=source;
+        paletteWriter.command=[`${Paths.home}/.local/bin/sensei-palette`,decodeURIComponent(source.slice(7))];
+        paletteWriter.running=true;
+    }}
+    Process { id:paletteWriter; property string requested:""
+        onExited: if (requested!==String(root.displayed)) root.updatePalette()
+    }
+    Connections { target:Theme; function onPreviewProfileChanged(){if(!Theme.previewProfile)root.updatePalette();} }
+    onLoadedChanged: updatePalette()
+    onDisplayedChanged: updatePalette()
+    function setDisplay(output: string, path: string, mode: int): void { const next=Object.assign({},displays); next[output]={file:path,mode:mode};displays=next;syncStartup(output,path);write(); }
 
     // name -> { mode, every, fade, items: [{ file, on, star }] }
     property var pools: ({})
