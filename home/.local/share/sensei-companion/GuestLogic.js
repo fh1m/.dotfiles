@@ -31,8 +31,8 @@ var lenses=[
 function entries(guest) {
     var result=(guest.quotes||[]).slice();
     (guest.topics||[]).forEach(function(t){
-        result.push({id:t.id+'-story',kind:'story',title:t.title,text:t.story,question:t.question,context:t.task,source:t.source});
-        lenses.forEach(function(l){result.push({id:t.id+'-'+l.id,kind:'workshop',title:t.title+' · '+l.name,text:l.lead+t.task+l.tail,question:l.question,context:t.story,source:t.source});});
+        result.push({id:t.id+'-story',topic:t.id,kind:'story',title:t.title,text:t.story,question:t.question,context:t.task,source:t.source});
+        lenses.forEach(function(l){result.push({id:t.id+'-'+l.id,topic:t.id,kind:'workshop',title:t.title+' · '+l.name,text:l.lead+t.task+l.tail,question:l.question,context:t.story,source:t.source});});
     });
     return result;
 }
@@ -50,37 +50,46 @@ function pages(guest, quote) {
     } else {
         add(quote.text,guest.name,'quotation',quote.source);
         add(quote.context,'Reading together','context · our reading',quote.source);
-        add(guest.story,'About '+guest.name,'life & work · summary',guest.storySource||quote.source);
     }
     add(quote.question,'Zondo','a question for us',quote.source);
     return out;
 }
-function choose(guests, history, requested, random, mode) {
+function familyOf(q) {return q.kind==='story'?'stories':q.kind==='workshop'?'workshop':'quotes';}
+function inFamily(q,mode) {return ['quotes','stories','workshop'].indexOf(mode)<0||mode===familyOf(q);}
+function choose(guests, history, requested, draw, mode) {
     var candidates=guests.map(function(g,i){return i;});
-    if(requested){candidates=candidates.filter(function(i){return guests[i].id===requested;});if(!candidates.length)return null;}
+    if(requested)candidates=candidates.filter(function(i){return guests[i].id===requested;});
     else if(candidates.length>1)candidates=candidates.filter(function(i){return guests[i].id!==history.guest;});
     if(!candidates.length)return null;
-    var g=candidates[Math.min(candidates.length-1,Math.floor(Math.max(0,random)*candidates.length))];
-    var qs=entries(guests[g]), old=history.quotes||[];
-    var family=['quotes','stories','workshop'].indexOf(mode)>=0?mode:(random<0.32?'quotes':random<0.72?'stories':'workshop');
-    var pool=qs.map(function(q,i){return i;}).filter(function(i){return family==='quotes'?!qs[i].kind:family==='stories'?qs[i].kind==='story':qs[i].kind==='workshop';});
-    if(!pool.length)pool=qs.map(function(q,i){return i;});
-    var available=pool.filter(function(i){return old.indexOf(qs[i].id)<0;});
-    if(!available.length) {
-        var last;
-        for(var j=old.length-1;j>=0;j--)if(pool.some(function(i){return qs[i].id===old[j];})){last=old[j];break;}
-        available=pool.filter(function(i){return pool.length===1||qs[i].id!==last;});
+    function pick(items){return items[Math.min(items.length-1,Math.floor(draw()*items.length))];}
+    var g=pick(candidates), qs=entries(guests[g]), old=history.quotes||[], seen=new Set(old);
+    var pool=qs.map(function(q,i){return i;}).filter(function(i){return inFamily(qs[i],mode);});
+    if(!pool.length)return null;
+    var available=pool.filter(function(i){return !seen.has(qs[i].id);});
+    if(!available.length)available=pool;
+    var lookup=new Map(qs.map(function(q){return [q.id,q];}));
+    var recent=new Set();
+    for(var j=old.length-1;j>=0&&recent.size<4;j--) {
+        var prior=lookup.get(old[j]);
+        if(prior)recent.add(prior.topic||prior.id);
     }
-    if(!available.length)return null;
-    return {guest:g,quote:available[Math.min(available.length-1,Math.floor(Math.max(0,random)*available.length))]};
+    var fresh=available.filter(function(i){return !recent.has(qs[i].topic||qs[i].id);});
+    if(fresh.length)available=fresh;
+    else {
+        // A small pool may exhaust its topic cooldown. Avoid its latest topic
+        // if possible, without restarting the unseen-card rotation early.
+        var previous=recent.values().next().value;
+        fresh=available.filter(function(i){return (qs[i].topic||qs[i].id)!==previous;});
+        if(fresh.length)available=fresh;
+    }
+    var families=['quotes','stories','workshop'].filter(function(f){return available.some(function(i){return familyOf(qs[i])===f;});});
+    var family=pick(families);
+    return {guest:g,quote:pick(available.filter(function(i){return familyOf(qs[i])===family;}))};
 }
-function remember(guest, selection, previous) {
-    var family=selection.kind||'quote';
-    var ids=entries(guest).filter(function(q){return(q.kind||'quote')===family;}).map(function(q){return q.id;});
-    var seen=(previous||[]).filter(function(id){return id!==selection.id;});
-    if (ids.every(function(id){return (previous||[]).indexOf(id)>=0;}))
-        seen=seen.filter(function(id){return ids.indexOf(id)<0;});
-    return seen.concat([selection.id]);
+function remember(guest, selection, previous, mode) {
+    var ids=new Set(entries(guest).filter(function(q){return inFamily(q,mode);}).map(function(q){return q.id;}));
+    var seen=new Set(previous||[]), reset=Array.from(ids).every(function(id){return seen.has(id);});
+    return (previous||[]).filter(function(id){return id!==selection.id&&(!reset||!ids.has(id));}).concat([selection.id]);
 }
 function duration(page) {
     return Math.max(7000,Math.min(22000,3500+String(page.text||'').split(/\s+/).length*300));

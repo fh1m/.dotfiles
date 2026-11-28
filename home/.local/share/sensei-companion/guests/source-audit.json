@@ -1,12 +1,61 @@
 {
-  "guests": 10,
-  "quotations": 110,
-  "curatedStories": 110,
-  "originalWorkshopVariants": 990,
-  "sources": 51,
-  "excerptSources": 40,
+  "guests": 12,
+  "quotations": 126,
+  "curatedStories": 144,
+  "originalWorkshopVariants": 1296,
+  "sources": 57,
+  "excerptSources": 46,
   "maxQuotedWordsPerSource": 25,
   "sourceMatches": [
+    {
+      "id": "bourdain-dishes",
+      "source": "bourdain-freshair",
+      "sourceSha256": "127438b1116c208a74e332854f33c75c9777b4e6c7db7ba1a88b39cbc1d54144",
+      "excerptSha256": "559e7ffdcc00880ef5e2741ea83feed2cef81069d07312668e16bf2dfeb92218",
+      "normalizedOffset": 7363
+    },
+    {
+      "id": "bourdain-team-crashes",
+      "source": "bourdain-freshair",
+      "sourceSha256": "127438b1116c208a74e332854f33c75c9777b4e6c7db7ba1a88b39cbc1d54144",
+      "excerptSha256": "64b2a7defd44054d228a2f64db5768799452079756f5c2cd27ef3c4edd2e6946",
+      "normalizedOffset": 8355
+    },
+    {
+      "id": "bourdain-learning",
+      "source": "bourdain-freshair",
+      "sourceSha256": "127438b1116c208a74e332854f33c75c9777b4e6c7db7ba1a88b39cbc1d54144",
+      "excerptSha256": "77b7c6482508a4134048ce9a060242cba1d965ec05037c84170c1649be839c31",
+      "normalizedOffset": 7966
+    },
+    {
+      "id": "shannon-chess-wedge",
+      "source": "shannon-chess",
+      "sourceSha256": "af74d2bdbfabc27f75ec4a6c9b94f6cc8a6faaeaa3f30513256606bfa07d9d79",
+      "excerptSha256": "4cb908a2c93e5997b66d995fa5580df76e0afc383627e69308cc583f5e84095a",
+      "normalizedOffset": 529
+    },
+    {
+      "id": "shannon-semantic-aspects",
+      "source": "shannon-communication",
+      "sourceSha256": "52084779899dd99823087a1eb1f634b7ac2381ecd0e477564fd36121409044e4",
+      "excerptSha256": "9aa2c4939f13c12a96dba765b4bd2401d11f927e8abc8475d808a99a22bf391e",
+      "normalizedOffset": 1048
+    },
+    {
+      "id": "shannon-chess-quality",
+      "source": "shannon-chess",
+      "sourceSha256": "af74d2bdbfabc27f75ec4a6c9b94f6cc8a6faaeaa3f30513256606bfa07d9d79",
+      "excerptSha256": "9fe40397939ba239eec20ac6f4b272d7844e4b8ae70c7e73337984b0c64cc2c5",
+      "normalizedOffset": 2026
+    },
+    {
+      "id": "feynman-reality-first",
+      "source": "feynman-challenger",
+      "sourceSha256": "4f2c4f4dd0e5457f7c769af363baa9b8c8c219313e1c86d540d150ef7556197b",
+      "excerptSha256": "bd6e6bed277dc5a4d76e3975814a9f219ec88d60e9bfcd72911310cbb0c27bea",
+      "normalizedOffset": 31865
+    },
     {
       "id": "feynman-01",
       "source": "feynman-cargo",
@@ -83,6 +132,13 @@
       "sourceSha256": "4f2c4f4dd0e5457f7c769af363baa9b8c8c219313e1c86d540d150ef7556197b",
       "excerptSha256": "24fa9b8c5f29f702c2d601fba61d5fe3793f90be09fe034fa6af464f52ea4a2b",
       "normalizedOffset": 31865
+    },
+    {
+      "id": "carmack-doom-existing-tree",
+      "source": "carmack-doom",
+      "sourceSha256": "8ba968d15c0b316ecf9b9996bbd846aea2b9c538e00dddf4b4051038b5909fdf",
+      "excerptSha256": "8ede12f39e593475728de8cdfc4c4fb54a19208e790399d33bf9984c58ba84b5",
+      "normalizedOffset": 1955
     },
     {
       "id": "carmack-01",
@@ -162,6 +218,13 @@
       "normalizedOffset": 1890
     },
     {
+      "id": "karpathy-tiny-engine",
+      "source": "karpathy-micrograd",
+      "sourceSha256": "337151742e95f140b02a1c09547046b4525528b23caf16d3f31467e880274f4d",
+      "excerptSha256": "ec03c8d937fbcf46f828881efac17e0f5c43cdeff27934480b4107d8a1d8d22d",
+      "normalizedOffset": 3010
+    },
+    {
       "id": "karpathy-01",
       "source": "karpathy-recipe",
       "sourceSha256": "d3c48db7854610ac7a266f6b1253d103686f0606a9ca46bd207514e020432d18",
@@ -237,6 +300,13 @@
       "sourceSha256": "e40d501987ae73c7b563d698bd01acb83e4b8dd5be27c99b54a912300cffd21d",
       "excerptSha256": "889d8ec734b73b52305b7dd18df10de9e309740462f977e784ae67c544b7c16a",
       "normalizedOffset": 6248
+    },
+    {
+      "id": "lattner-llvm-multistage",
+      "source": "lattner-thesis",
+      "sourceSha256": "b1f23f4527f79ab781c7a5c60b6cf1a5833b02d8bc150303b3bfd813d751f3d2",
+      "excerptSha256": "c4ee740819e6303dd8c2ff2ec89406114cca7bd1cb63e402409e3837ec5e1dd3",
+      "normalizedOffset": 714
     },
     {
       "id": "lattner-01",
@@ -316,6 +386,13 @@
       "normalizedOffset": 917
     },
     {
+      "id": "graham-curiosity-rudder",
+      "source": "graham-great",
+      "sourceSha256": "bc978f2a6c3396ce910a214ff52d0a5636c9942483454b1ef8af68cb3876eb28",
+      "excerptSha256": "9b1f32227897dd6e8af0022dfe9e188d8b22c61bfb6b56ab9105b72f7544cdbb",
+      "normalizedOffset": 2238
+    },
+    {
       "id": "graham-01",
       "source": "graham-ideas",
       "sourceSha256": "8c207d442b6ee684627c09b07849215b4ee7d2f43b43323acf832460af2d862a",
@@ -391,6 +468,13 @@
       "sourceSha256": "ef12e1d4f85493e9eb07de13d5bd19f1d73fae8dad817fd6a7de713f0610d55e",
       "excerptSha256": "3dc99ca46793fa1cf0e7985ab5619e8cd01421184faf4a0bf6bbe22fabc0d430",
       "normalizedOffset": 4684
+    },
+    {
+      "id": "urban-precious-weeks",
+      "source": "urban-weeks",
+      "sourceSha256": "8790d9d3e64a3e1c6744f1a6db3d5a056478ccc09445ae6330166abaacd53593",
+      "excerptSha256": "2d0df6e84aafd55cc933d301f798db23064c109ccd905e4a8a6b3139909fe14a",
+      "normalizedOffset": 1205
     },
     {
       "id": "urban-01",
@@ -470,6 +554,13 @@
       "normalizedOffset": 1205
     },
     {
+      "id": "west-calm-studio",
+      "source": "west-vf2015",
+      "sourceSha256": "0027494d492807ca989ccd8dd2bf1c230b44f71492abacd47caa03ca388079d8",
+      "excerptSha256": "288169c8161ed551301ae4f49f1d09616ee2565d9a0e1fee8b1c56b9c03bd0c5",
+      "normalizedOffset": 1901
+    },
+    {
       "id": "west-01",
       "source": "west-fader",
       "sourceSha256": "9d1cfb5c58419c78a28cf23b07091d25d6bcf13e8f98439250f9eef5cf958446",
@@ -545,6 +636,13 @@
       "sourceSha256": "0027494d492807ca989ccd8dd2bf1c230b44f71492abacd47caa03ca388079d8",
       "excerptSha256": "59cd2ec7a748e42b7fefd91f3ae4eca270a26cf0357a32676d271a0e86d1a6df",
       "normalizedOffset": 1970
+    },
+    {
+      "id": "rubin-original-scene",
+      "source": "rubin-onbeing",
+      "sourceSha256": "d8dda389d6706165289a98c2b17780b87f0cb129d9a3bc644b7067059eff4ebe",
+      "excerptSha256": "1c496e698fd0fdb0b463997fefbd94bd06ae297794b3854610c0ccda07494f45",
+      "normalizedOffset": 8812
     },
     {
       "id": "rubin-01",
@@ -624,6 +722,13 @@
       "normalizedOffset": 3215
     },
     {
+      "id": "hotz-search-formulation",
+      "source": "hotz-win",
+      "sourceSha256": "274cf3427430f70dbbf6d51ad7ca612fc36aaf4e0ad2af9174c1918678754d2e",
+      "excerptSha256": "d9cb0ceb26edb77e54ada875b4397cd2310b781d617f66b0f5de7a399c679462",
+      "normalizedOffset": 3199
+    },
+    {
       "id": "hotz-01",
       "source": "hotz-latent",
       "sourceSha256": "8ffb3bb8f1efd042685e6442b4fd85350521f0dd669517a57f2f9a975340a18c",
@@ -699,6 +804,13 @@
       "sourceSha256": "f9bbfc8230b75b5227ea545f9ef1956193abc2e7b94ef7f3e66e1f31990550fc",
       "excerptSha256": "cfecf20bfba846a51bb0a4712ed0d28a2bf2f3ae3aa1ecdd3a371716a2035f8b",
       "normalizedOffset": 4425
+    },
+    {
+      "id": "keller-make-room",
+      "source": "keller-hdsr",
+      "sourceSha256": "c47c054f79a2c2ba71aff0230aa960cf0805a4abf7efd6a8bfb08307c004e4b9",
+      "excerptSha256": "351ea41422152834d3e8668aa8ca3efe0984de91ac4eb2355749b218dd78a61e",
+      "normalizedOffset": 6590
     },
     {
       "id": "keller-01",

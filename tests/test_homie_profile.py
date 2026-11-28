@@ -32,6 +32,15 @@ class HomieProfile(unittest.TestCase):
   with patch.object(m,'role_for',side_effect=lambda name,*a:'main' if name=='DP-3' else 'lower'),patch.object(m,'monitors',return_value=rows),patch.object(m,'known_workspaces',return_value=[]),patch.object(m,'workspace_slots',return_value={'DP-2':1}),patch.object(m,'dispatch') as call:
    m.workspace(2,'DP-2');command=call.call_args.args[0]
    self.assertIn('workspace="102"',command);self.assertIn('monitor="DP-2"',command)
+ def test_misc_survives_reconciliation_with_connected_external(self):
+  m=module()
+  rows=[{'id':1,'name':'DP-3','focused':True,'activeWorkspace':{'id':7}},
+        {'id':2,'name':'HDMI-A-1','focused':False,'activeWorkspace':{'id':107}}]
+  clients=[{'monitor':2,'address':'0x1','workspace':{'id':107,'name':'Misc · Lower'}}]
+  m._role_monitors=rows
+  with patch.object(m,'monitors',return_value=rows),patch.object(m,'clients',return_value=clients),patch.object(m,'known_workspaces',return_value=[]),patch.object(m,'workspace_slots',return_value={'HDMI-A-1':1}),patch.object(m,'read_state',return_value={'outputs':['HDMI-A-1']}),patch.object(m,'dispatch') as call:
+   m.reconcile()
+  call.assert_not_called()
 
  def test_failed_cached_ddc_bus_is_rediscovered_before_readback(self):
   for relative in ('home/.local/bin/sensei-displays','profiles/pc/home/.local/bin/sensei-displays'):

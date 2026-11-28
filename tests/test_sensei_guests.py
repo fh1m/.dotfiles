@@ -10,22 +10,22 @@ class Guests(unittest.TestCase):
  def test_paginate_preserves_words_and_bounds(self):
   self.assertTrue(self.js("(()=>{let s=Array(80).fill('mechanism').join(' '),p=paginate(s,120);return p.join(' ')===s&&p.every(x=>x.length<=120);})()"))
  def test_introduction_is_explicitly_staged_and_quote_is_distinct(self):
-  self.assertTrue(self.js("(()=>{let p=pages({name:'A',story:'Made a tool.'},{text:'Check the data.',context:'Inspect before training.',question:'What did we actually inspect?',source:'a'});return p[0].text==='Zondo as Sensei of fh1m, I have a message for Him'&&p[0].kind==='staged dialogue'&&p.some(x=>x.kind==='quotation'&&x.source==='a')&&p[p.length-1].speaker==='Zondo'&&p[p.length-1].text.endsWith('?');})()"))
+  self.assertTrue(self.js("(()=>{let p=pages({name:'A'},{text:'Check the data.',context:'Inspect before training.',question:'What did we actually inspect?',source:'a'});return p[0].speaker==='Zondo'&&p[0].kind==='staged dialogue'&&p.filter(x=>x.kind==='quotation').every(x=>x.speaker==='A'&&x.source==='a')&&p.some(x=>x.kind==='quotation')&&p.at(-1).speaker==='Zondo';})()"))
  def test_last_guest_and_recent_quotes_do_not_repeat(self):
-  self.assertEqual(self.js("choose([{id:'a',quotes:[{id:'a1'}]},{id:'b',quotes:[{id:'b1'},{id:'b2'}]}],{guest:'a',quotes:['b1']},'',0)"),{'guest':1,'quote':1})
+  self.assertEqual(self.js("choose([{id:'a',quotes:[{id:'a1'}]},{id:'b',quotes:[{id:'b1'},{id:'b2'}]}],{guest:'a',quotes:['b1']},'',()=>0)"),{'guest':1,'quote':1})
  def test_invalid_requested_guest_is_not_randomly_substituted(self):
-  self.assertIsNone(self.js("choose([{id:'a',quotes:[{id:'a1'}]}],{},'unknown',0)"))
+  self.assertIsNone(self.js("choose([{id:'a',quotes:[{id:'a1'}]}],{},'unknown',()=>0)"))
  def test_rotation_finishes_the_family_before_repeating_and_keeps_other_guests_history(self):
   self.assertTrue(self.js(r"""(()=>{
     let g={id:'a',quotes:Array.from({length:80},(_,i)=>({id:'q'+i}))};
     let history={quotes:['other-guest']}, visited=new Set(), last;
     for(let i=0;i<80;i++){
-      const choice=choose([g],history,'a',0,'quotes'), item=entries(g)[choice.quote];
+      const choice=choose([g],history,'a',()=>0,'quotes'), item=entries(g)[choice.quote];
       if(visited.has(item.id))return false;
       visited.add(item.id);last=item.id;
       history.quotes=remember(g,item,history.quotes);
     }
-    const next=entries(g)[choose([g],history,'a',0,'quotes').quote];
+    const next=entries(g)[choose([g],history,'a',()=>0,'quotes').quote];
     return next.id!==last&&remember(g,next,history.quotes).join(',')==='other-guest,'+next.id;
   })()"""))
  def test_whole_scene_avoids_windows_on_all_display_sizes(self):
@@ -52,8 +52,20 @@ class Guests(unittest.TestCase):
  def test_explicit_family_selection_is_honored(self):
   guest={'id':'a','quotes':[{'id':'q'}],'topics':[{'id':'t','title':'Topic','source':'s','story':'Fact','task':'Try it.','question':'Why?'}]}
   for mode,kind in [('quotes',None),('stories','story'),('workshop','workshop')]:
-   expression='(()=>{let g='+json.dumps(guest)+';let c=choose([g],{},"a",0.9,"'+mode+'");return entries(g)[c.quote].kind||null;})()'
+   expression='(()=>{let g='+json.dumps(guest)+';let c=choose([g],{},"a",()=>0.9,"'+mode+'");return entries(g)[c.quote].kind||null;})()'
    self.assertEqual(self.js(expression),kind)
+ def test_mixed_rotation_uses_distinct_topics_before_repeating_one(self):
+  self.assertTrue(self.js(r"""(()=>{
+    let g={id:'a',quotes:[{id:'q1'},{id:'q2'}],
+           topics:Array.from({length:8},(_,i)=>({id:'t'+i}))};
+    let old=[], topics=[], items=entries(g), visited=new Set();
+    for(let i=0;i<items.length;i++){
+      const q=items[choose([g],{quotes:old},'a',()=>0).quote];
+      if(visited.has(q.id)||(i<10&&topics.includes(q.topic||q.id)))return false;
+      visited.add(q.id);topics.push(q.topic||q.id);old=remember(g,q,old);
+    }
+    return visited.size===items.length;
+  })()"""))
  def test_every_generated_visit_paginates_and_ends_with_zondo_question(self):
   data=json.loads((JS.parent/'guests/catalog.json').read_text())
   for guest in data['guests']:

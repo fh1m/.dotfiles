@@ -49,14 +49,15 @@ Item {
     }
     function start(id,manual):bool {
         if(!permitted||!targetScreen||!historyReady||!catalog.guests.length||(!manual&&busy))return false;
-        const chosen=Policy.choose(catalog.guests,history,id||'',Math.random(),preferences.guestMode||'mixed');
+        const mode=preferences.guestMode||'mixed';
+        const chosen=Policy.choose(catalog.guests,history,id||'',Math.random,mode);
         if(!chosen)return false;
         const pos=Policy.place(targetScreen.width,targetScreen.height,scene.implicitWidth,scene.implicitHeight,obstacles,chosen.guest);
         if(!pos.available)return false;
         guestIndex=chosen.guest;quoteIndex=chosen.quote;pageIndex=0;frame=0;paused=false;placement=pos;
         const selection=Policy.entries(guest)[quoteIndex];cards=Policy.pages(guest,selection);
         if(manual)seenRequest=Math.max(seenRequest,Number(preferences.guestRequest?.at||0));
-        history={requestAt:seenRequest,guest:guest.id,quotes:Policy.remember(guest,selection,history.quotes).slice(-4096),lastAt:Date.now()};
+        history={requestAt:seenRequest,guest:guest.id,quotes:Policy.remember(guest,selection,history.quotes,mode).slice(-4096),lastAt:Date.now()};
         memory.setText(JSON.stringify(history)+'\n');active=true;began();arrival.restart();pageClock.restart();return true;
     }
     function finish():void {if(!active)return;active=false;pageClock.stop();ended();}

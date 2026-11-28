@@ -1,249 +1,106 @@
 <div align="center">
-
-<sub>FH1M / FIELD R-01 / A WORKBENCH WITH A HOME ADDRESS</sub>
-
 <h1>Digital Den</h1>
-
-<p>Arete goes out. Homie holds the fort. The robot still needs debugging.</p>
-
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/digital-den/den-layout.png"><img src="docs/assets/digital-den/den-layout.gif" alt="The actual desk arrangement: two Arete external displays stacked at left, Homie at upper right, laptop and ScreenPad below. Real code, browser, Obsidian, calendar and telemetry; animated pink input routes and a typing fh1m avatar." width="100%"></picture>
-
-<sub>TWO HOSTS · FIVE PANELS · ONE KEYBOARD · <a href="docs/assets/digital-den/den-layout.png">FULL-SIZE STILL</a></sub>
-
-[![Hyprland](https://img.shields.io/badge/Hyprland-0.56%2B-f23d70?style=flat-square)](docs/installation.md) [![Quickshell](https://img.shields.io/badge/Quickshell-0.3-f23d70?style=flat-square)](home/.config/quickshell/sensei) [![Displays](https://img.shields.io/badge/displays-5_docked-17131a?style=flat-square)](docs/hardware-and-boot.md) [![GPUs](https://img.shields.io/badge/GPUs-RTX_2060_%2B_GTX_1660_SUPER-f23d70?style=flat-square)](docs/gpu-and-chrome.md) [![Lab](https://img.shields.io/badge/lab-ARM_%2B_CUDA-17131a?style=flat-square)](docs/robotics.md) [![License](https://img.shields.io/badge/license-GPL--3.0-f23d70?style=flat-square)](LICENSE)
-
-[Gallery](docs/gallery.md) · [Install](docs/installation.md) · [Digital Den](docs/digital-den/README.md) · [Keybinds](docs/keybindings.md) · [Robotics](docs/robotics.md) · [Development](docs/development.md) · [Recovery](docs/operations.md)
-
+<p>A workstation for things that have to work outside the workstation.</p>
+<img src="docs/assets/digital-den/den-after-dark.webp" alt="An illustrated robotics desk with pink canopy wallpapers, a dual-screen laptop, three external monitors and a tiny Zondo figurine" width="100%">
+<sub>After dark · original Codex ImageGen illustration. The captures and connector map below show the real desktop.</sub>
+<p><a href="#operate-the-den">Controls</a> · <a href="#after-hours--still-building">After hours</a> · <a href="docs/installation.md">Install</a> · <a href="docs/digital-den/VALIDATION.md">Verification</a></p>
 </div>
 
-## Welcome to my slightly overqualified desk
+I'm **fh1m**. I build underwater robots and use this desk to trace their behavior from a sensor sample to a moving vehicle. **Arete** is the laptop; **Homie** is the machine that holds the drives and runs the longer jobs. CachyOS, Hyprland, Quickshell, Alacritty, tmux and Neovim make them feel like the same place without pretending they’re the same hardware.
 
-I'm **fh1m**. I build underwater robots and work through the software, sensors, electronics and mathematics that make them move. This is the daily driver behind that work: CachyOS, Hyprland, a custom Quickshell desktop, Neovim, persistent tmux sessions, and a lot of hot pink.
+## Five screens, two computers
 
-**Arete** is the laptop that comes along. **Homie** is the home PC with the storage and a dedicated display GPU. Docked, they become one place to read, derive, code, test, and occasionally remember to eat.
+<picture>
+  <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/digital-den/den-screen-map.webp">
+  <img src="docs/assets/digital-den/den-screen-map.gif" alt="Current screen topology: Arete's HDMI left of the OLED and its ScreenPad below; Homie's HDMI left of its DisplayPort monitor. The signal between hosts is illustrative." width="100%">
+</picture>
 
-Zondo is my illustrated deskbuddy, with a little life of his own. The desktops are real.
+The map shows **current connector ownership**, not the way a room photograph would look. Each host has its own coordinate system; the gap between them is illustrative. Screens can move between hosts. The OLED supplies Arete’s wallpaper palette; Homie’s primary does the same for Homie. The terminal background stays black. [Hardware and displays](docs/digital-den/HARDWARE.md) · [Previous setups and capture provenance](docs/digital-den/GALLERY.md)
 
-## 01 / Open the code. Keep the context.
-
-![Neovim and tmux beside Mongla's public GitHub repository, in floating windows on Arete](docs/assets/digital-den/arete-main.gif)
-
-<sub>MAIN // NEOVIM + TMUX + GITHUB · [Native-size image](docs/assets/digital-den/arete-main.png) · [Terminal guide](docs/terminal.md)</sub>
-
-[Mongla](https://github.com/fh1m/mongla_ws) is my ROS 2 underwater-autonomy stack. Here, the editor holds a real numerical check against its optical-flow calibration code; the browser keeps the repository within reach. Room for both. Room for the wallpaper too.
-
-Alacritty stays light. Tmux keeps the session alive. Neovim handles the source, navigation, diagnostics and review. Agents can share the workbench; independent reasoning still gets a seat.
-
-`Super+Enter` returns to the same daily tmux session; `Super+Shift+Enter` starts
-an independent one. The OLED on Arete and Homie’s primary monitor each drive
-their host’s wallpaper-derived accent. Alacritty stays black and tmux keeps
-its existing arrangement; only its colors change. GTK and Qt apps that
-cache their theme pick up the new accents when reopened.
-
-![Quickshell's actual acknowledgement animation changes from rose to amber using two test wallpapers](docs/assets/digital-den/wallpaper-accent-feedback.gif)
-
-## 02 / Turn “I think” into something testable
-
-![Obsidian with a rendered calibration equation and a connected experimental Canvas](docs/assets/digital-den/arete-upper.png)
-
-<sub>UPPER // OBSIDIAN + MATHJAX + CANVAS · [Open full size](docs/assets/digital-den/arete-upper.png) · [Public study example](examples/den-study/Calibration%20lab.md)</sub>
-
-A small model, a prediction, a held-out test. The note and Canvas connect angular rates, alignment, rotational flow and residuals. Code belongs in the repository; the reasoning can breathe beside it.
-
-This example actually ran on **both** hosts, using the hash-pinned numerical function from [Mongla's calibration source](https://github.com/fh1m/mongla_ws/blob/c67a0805206b88a25e541a5fe0c3a95afb168b40/tools/flow_derot_calibrate.py).
-
-| Synthetic check | Arete | Homie |
-|---|---:|---:|
-| Recovered gain, expected 0.8 | 0.799351 | 0.799351 |
-| Held-out RMS, noise σ = 0.02 | 0.020161 | 0.020161 |
-| Null-model RMS | 0.797713 | 0.797713 |
-| Numerical checks | 4 / 4 | 4 / 4 |
-
-<sub>Seeded, dimensionless test data. A reproducible sanity check, not a claim about sensor accuracy. [Run it yourself](docs/digital-den/GALLERY.md#reproduce-the-numerical-check).</sub>
-
-## 03 / Meanwhile, on the other screen
-
-![ROS documentation beside the native Calendar and Weather panels, with wallpaper visible](docs/assets/digital-den/arete-lower.gif)
-
-<sub>LOWER // REFERENCE + THE REST OF THE DAY · [Native-size image](docs/assets/digital-den/arete-lower.png)</sub>
-
-ROS docs stay open. Calendar and weather slide into the day without replacing it. The desktop has jobs beyond being a terminal stand.
-
-![Spotify's native panel with album artwork, playback controls and queue](docs/assets/music-panel.png)
-
-<sub>SOUNDTRACK // QUEUE · LIBRARY · DEVICES · LYRICS · [Audio guide](docs/audio-and-spotify.md)</sub>
-
-Music gets album art and proper controls. The queue is allowed to have a personality. So is the desk.
-
-![The Den media center: native 16:9 lecture playback beside public video search results](docs/assets/digital-den/media-center.png)
-
-[One badge, three rabbit holes](docs/digital-den/MEDIA-CENTER.md): Spotify, YouTube and Twitch, with native video, transcripts and a roaming mini-player. The browser gets a night off.
-
-## 04 / Big brother holds the fort
-
-![Homie with real code and NVIDIA documentation, moving between live Monitor, System and the unobstructed desktop](docs/assets/digital-den/homie-live.gif)
-
-<sub>HOMIE // GPU + STORAGE + THE SAME DESKTOP LANGUAGE · [System](docs/assets/digital-den/homie-system.png) · [Monitor](docs/assets/digital-den/homie-monitor.png) · [Code](docs/assets/digital-den/homie-code.png)</sub>
-
-Same shell, same tools, same visual language. Desktop-specific graphics, display, power and storage policy. Homie keeps the native NVIDIA work and larger files at home; Arete can reach the designated shared storage over SSHFS.
-
-In **Code → Agents → Codex**, each meter belongs to the named account on that
-host. An older reading is labeled **Last seen**; a passed reset is not a new
-measurement. Only current readings fill the bars.
-
-| | Arete · portable lab | Homie · home base |
-|---|---|---|
-| CPU | i7-9750H · 6 cores / 12 threads | Ryzen 5 3600X · 6 cores / 12 threads |
-| Memory | 16 GiB | 16 GiB |
-| Graphics | Intel display + RTX 2060 | GTX 1660 SUPER · 6 GiB |
-| Displays | 4K main + ScreenPad; two 1080p / 100 Hz externals | LG 1080p / 75 Hz |
-| Storage role | Active projects and portable work | Five drives; six preserved, readable volumes |
-
-[Hardware and drives](docs/digital-den/HARDWARE.md) · [Homie setup and boot recovery](pc/README.md)
-
-## 05 / One mouse. A known way home.
-
-Push through the **top of the laptop** to reach Homie, or through the **right edge of the upper external**. Come back through Homie's bottom or left edge. The animated pink wires in the header trace those routes.
-
-| Gesture / control | What it does |
+| Surface | What I keep there |
 |---|---|
-| **Ctrl × 2** | Light up the cursor |
-| **Ctrl × 3** | Pause sharing and bring it home; repeat to resume |
-| **Ctrl + Alt + Esc** | Release native input capture immediately |
-| **System → Digital Den** | Sharing, locator, bring home, storage and status |
+| Arete OLED | Neovim, tmux, live diffs and traces. Set the clock in your logging pipeline before trusting the plot. |
+| Arete HDMI | Reference material and the second view of the same workspace. |
+| ScreenPad | The utility workspace: a meter, a short checklist, a picker, or a tiny status panel that doesn't take over the editor. |
+| Homie primary | Native NVIDIA work, builds, tests, logs and the drives. |
+| Homie HDMI | The result or supporting material while the main view is busy. |
 
-Text and PNG clipboard travel both ways. Pairing uses private keys and pinned hosts. The receiver leaves its local keyboard usable. A brief edge cue identifies the focused display; it does not dim the other screens.
+## Workbench
 
-The tiny engineer may lose a semicolon. The mouse should have an escape route.
+![Real Arete desktop: an isolated Alacritty optical-flow demonstration over the current wallpaper](docs/assets/digital-den/den-oled-live.webp)
 
-[Input, clipboard, storage and recovery details](docs/digital-den/README.md)
+The terminal above is a disposable public fixture, not a shot of my private editor. [Mongla](https://github.com/fh1m/mongla_ws) is real: a ROS 2 autonomy stack for underwater vehicles. In the [frame-age experiment](https://fh1m.github.io/notes/the-frame-age-problem), consuming the latest frame mattered more than the throughput counter. The diagram stopped being a diagram when the queue started lying.
 
-## 06 / The small screen earns its keep
+- **Code:** Alacritty is the surface; tmux owns the session. Neovim handles LSP, debugging and review. Closing the terminal does not end the workload. [Terminal](docs/terminal.md) · [Editor and development](docs/development.md)
+- **Robotics:** RobotBench, USB identities, named simulation environments, and explicit Arete/Homie jobs. Results name the source revision and artifacts; an exit code is not a successful experiment. [Workbench](docs/digital-den/ENGINEERING.md) · [Robotics environments](docs/robotics.md)
+- **Study:** Noesis can bring a question, a notebook and a result back to the same place. A checked task is not proof of understanding. [Learning system](docs/learning-system/README.md)
+- **Agents:** the Code badge distinguishes providers, accounts and stale readings. Usage bars represent observed limits, not a promise that the next run will fit. [Code badge](docs/learning-system/DESKTOP-CODE.md)
 
-![ScreenPad with the actual examples folder and the executed numerical-check summary](docs/assets/digital-den/arete-screenpad.gif)
+## Operate the Den
 
-<sub>SCREENPAD // FILES + QUICK RESULTS · [Full-size image](docs/assets/digital-den/arete-screenpad.png)</sub>
+<table><tr><td width="47%"><img src="docs/assets/digital-den/den-system-live.webp" alt="Live Arete System panel with quick actions, hardware and Den tabs, audio and display levels"></td><td width="53%"><img src="docs/assets/digital-den/den-monitor-live.webp" alt="Live Homie telemetry: CPU, memory, GTX 1660 SUPER, and pressure overview; network footer excluded"></td></tr></table>
 
-A file picker, a result, a monitor, USB diagnostics. Small jobs belong here; the main screen stays available for the hard part.
+| To do this | Start here |
+|---|---|
+| Get back to the daily shell | **Super+Enter** focuses or opens it. **Super+Shift+Enter** starts an independent session. |
+| Find work across displays | **Super+Tab** opens the workspace switcher. **F6** changes the display filter. Pause live previews if stills are enough. |
+| Bring the mouse home | **Ctrl × 3** brings it home and pauses sharing; repeat to resume. **Ctrl+Alt+Esc** releases capture. |
+| Check what's using the machine | **Monitor** in the bar. Look at memory pressure and available memory, not just the size of file cache. |
+| Find the shortcut I forgot | **Super+F2** opens the Field Guide. It reads the available desktop, terminal, tmux and editor bindings. |
+| Diagnose a cross-host problem | **System → Den** for status; use the known recovery route before experimenting with focus or shared input. |
 
-The switcher fits the display it opens on, including the ScreenPad. Pick a display
-or press **F6** to filter windows and switch workspaces on that display. Visible
-workspace cards share a bounded live-capture clock; pause previews to stop
-refreshes. Closing the switcher releases the previews.
+[All shortcuts](docs/keybindings.md) · [Den operations and input sharing](docs/digital-den/README.md) · [Performance notes](docs/performance.md) · [Recovery](docs/operations.md)
 
-The primary display on each machine drives the theme. The picker groups nearby
-hues so a textured area can outweigh one flat swatch, and keeps the terminal
-background black. Rapid wallpaper changes finish the current crossfade and skip
-superseded choices.
+## After hours / still building
 
-## 07 / Unplug. The lab comes along.
+<picture>
+  <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/digital-den/zondo-field-reading.webp">
+  <img src="docs/assets/digital-den/zondo-field-reading.gif" alt="Illustrated reading reel: Shannon and frame freshness, Bourdain and clean handoffs, West and a calmer room, with Zondo's own margin notes" width="100%">
+</picture>
 
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/duo-hero.png"><img src="docs/assets/duo-hero.gif" alt="Arete's main display and ScreenPad arranged as a real two-screen portable workbench" width="100%"></picture>
+Zondo lives in the desktop, not in a chat tab. He reads, sketches, roams when there’s a place to put him, and has the good sense to get out of the way during fullscreen work. He has a stronger opinion about missing receipts than about where you put your taskbar. [Companion controls and privacy](docs/digital-den/ZONDO.md)
 
-<sub>PORTABLE MODE // MAIN + SCREENPAD · [Still](docs/assets/duo-hero.png) · [MP4](docs/assets/duo-hero.mp4)</sub>
+<details>
+<summary>When the guests stop by</summary>
 
-![Robotics lab panel on the main display, paired with Monitor and USB tools below](docs/assets/duo-lab.gif)
+Shannon is good company when the metrics look suspiciously healthy. Bourdain’s accounts of kitchen work make a good lens for team handoffs: someone needs to leave the next person a clean bench. West’s account of a calmer studio on a demanding second show suggests a useful design question: can the room ask less of us while the work asks more?
 
-<sub>LAB // DOCKER · COMPOSE · ARM THROUGH QEMU · NVIDIA CDI · TMUX · EXPERIMENT TASKS · [MP4](docs/assets/duo-lab.mp4) · [Lab guide](docs/robotics.md)</sub>
-
-Ubuntu-based robotics environments live in containers. The host remains the daily driver. Serial devices, GPU tooling and project sessions have a place in the same workflow. ARM emulation still runs on the CPU; two GPUs do not magically become one pool of VRAM.
-
-<details><summary>Homie can hear the invisible neighbourhood, too.</summary>
-
-![Live radio spectrum and waterfall on Homie](docs/assets/digital-den/radio-lab.png)
-
-RTL-SDR → FM, spectrum, sensor experiments and reproducible IQ captures.
-[Radio bench](docs/digital-den/RADIO.md). No background scanning.
+The reel is authored commentary, not quotations or a recording of those people. The live reader has **12 guests, 126 source-matched excerpts and 144 sourced readings**, plus separately labeled workshop variations. Zondo’s links to public robotics work are his margin notes, not advice invented in someone else’s voice. [Read the sources and how rotation works](docs/digital-den/SENSEI-GUESTS.md)
 
 </details>
 
-## 08 / A little less solemn
+<details>
+<summary>Volume up; noise down</summary>
 
+![Real ScreenPad Sound studio with the enlarged controls and device tabs](docs/assets/digital-den/den-sound-live.webp)
 
-He escaped the README.
+The Sound studio separates outputs, microphones, app streams, meeting controls and the Den route. Homie can play through the laptop’s selected output without requiring both desktops to be in the same app. The listening room makes space for artwork and lyrics; it can move to another display. No spectrum analyzer gets to do background cardio just because the song has a chorus. [Audio routes](docs/audio-and-spotify.md) · [Listening room](docs/digital-den/MUSIC-LISTENING-ROOM.md) · [Media Center](docs/digital-den/MEDIA-CENTER.md)
 
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/digital-den/companion-local-travel.png"><img src="docs/assets/digital-den/companion-local-travel.gif" alt="The actual desktop companion waves, walks gently and offers a short text bubble over Arete's wallpaper" width="572"></picture>
+</details>
 
-Zondo, the Den’s deskbuddy, finds a free corner, types, wanders a little, and occasionally has opinions about coordinate frames. Useful tips, small jokes, no sound. Applications always win the space; quiet and reduced-motion controls are one command away. **System → Digital Den → Tour displays / Desk tip.** Try `:DenTip` inside Neovim. [Companion controls](docs/digital-den/README.md#the-little-engineer).
+<details>
+<summary>Small things I miss on other machines</summary>
 
-The capture shows local travel; separate live checks verified an exclusive handoff to Homie and return to Arete. [Current implementation and checks](docs/digital-den/NEXT-PASS-IMPLEMENTATION.md).
+- **A known way back:** double-tap Ctrl to locate the cursor. Triple-tap to bring it home. The screens should never be better at hide-and-seek than Zondo.
+- **A dedicated little screen:** a meter and shortlist are useful. A full-size dashboard crammed into the ScreenPad is just a new reason to squint.
+- **A task can outlive its window:** persistent tmux sessions, owned job receipts and retrievable logs. Let the terminal go away. Keep the work.
+- **Clipboard history stays useful:** text and PNG can travel across the paired Den; sensitive offers are excluded. [Clipboard and recovery](docs/digital-den/README.md)
+- **One knob for attention:** dismiss a guest, pause previews, use quiet mode, or keep a still. The desktop should answer an action, not continually audition for your focus.
+- **Even a negative result has a home:** save the test, the wrong prediction and the artifact. The bug will not sign your notebook, so leave it enough evidence to testify later.
 
-Native tabs keep Alacritty and Obsidian together. The identity deck has developer tools and a Nerd Talk corner. XKCD is a right-click research break. The palette takes itself seriously enough for the rest of us.
+</details>
 
-![Native themed tab strip with Alacritty and Obsidian](docs/assets/signal-ledger/tabs-v2.webp)
-
-[Comic break](docs/assets/comic.png) · [Every panel, larger](docs/gallery.md) · [Phone bridge](docs/phone.md) · [Keybindings](docs/keybindings.md)
-
-## 09 / Numbers before adjectives
-
-| Measured on Arete | Result |
-|---|---|
-| Same animated terminal workload | **22.6% → 6.6%** Intel render share after switching to Alacritty |
-| Unused ScreenPad touch-controller interrupts | **286/s → 0/s**, with display and brightness retained |
-| NVMe busy during an apparent I/O stall | **0.225%**; the investigation pointed to Intel display fences |
-
-*Workload samples, not universal benchmarks.* [Methods and limitations](docs/performance.md).
-
-For the Den baseline: **12 real cross-host cursor routes** exercised with keyboard, clicks and scrolling in an owned test window; text and PNG clipboard checked in both directions; both installers checked for a second run with no changes. [Validation record](docs/digital-den/REPOSITORY-AUDIT.md).
-
-The continuity pass adds **11 mirrored folders**, encrypted restore checks on **both hosts**, seven private Git-history handoffs, and the same small CUDA/autograd check on both GPUs. Homie's desktop streams privately on demand; its Docker engine is one explicit context away. [What was actually tested](docs/digital-den/VALIDATION.md).
-
-## Bring your own workbench
+## Install and verify
 
 ```sh
 git clone https://github.com/fh1m/.dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
-python3 scripts/install.py --hardware zenbook         # preview; use pc on Homie
-python3 scripts/install.py --hardware zenbook --apply # backs up replaced files
+python3 scripts/install.py --hardware zenbook         # preview; use pc for Homie
+python3 scripts/install.py --hardware zenbook --apply  # backup before replacing
 bash scripts/build-native.sh
 python3 scripts/doctor.py
 ```
 
-**One development branch: `main`.** Shared configuration lives in `home/`; Homie's hardware overlays live in `profiles/pc/home/`. Former branch tips are preserved with archive tags. Notes, browser profiles, credentials, pairing keys and actual datasets stay private.
+Shared source lives in `home/`; hardware-specific settings are in `profiles/`. Do not copy auth tokens, pairing keys, real clipboard history or private study records. [Install guide](docs/installation.md) · [Observed verification and limits](docs/digital-den/VALIDATION.md) · [Homie cold-boot gate](pc/BOOT-EXPERIENCE.md) · [Historical gallery](docs/gallery.md)
 
-[Install guide](docs/installation.md) · [Development](docs/development.md) · [Operations](docs/operations.md) · [Known Homie cold-boot gate](pc/BOOT-EXPERIENCE.md)
-
-<div align="center">
-
-<sub>BUILT BY FH1M / FOR THE NEXT THING THAT DOESN'T WORK YET</sub>
-
-<sub>The shell started with <a href="https://github.com/bowenbride/wrayth">Wrayth by bowenbride</a>. Original notices are preserved. <a href="THIRD_PARTY.md">Credits</a> · <a href="docs/digital-den/GALLERY.md">Capture notes and illustration provenance</a></sub>
-
-</div>
-
-## After hours / still building
-
-<img src="docs/assets/digital-den/den-signal-v3.svg" alt="Slow animated pink signals connecting the five panels of the Den" width="100%">
-
-
-<sub>A bespoke illustration, not a screenshot. The live desktop captures above show what actually runs.</sub>
-
-![The live artwork-only listening room, with cover-derived color and a display chooser](docs/assets/digital-den/music-focus-v3.png)
-
-<sub>ACTUAL UI // FOCUS · MOVE BETWEEN DISPLAYS · BACKDROP BEHIND YOUR WORK</sub>
-
-Some nights call for a derivation. Some call for an album and a notebook. The Den has room for both.
-
-- **Listening room:** artwork, lyrics and queue together. Focus strips it back to the cover and song. Move it to another display, or put it behind your work with Backdrop.
-- **Engineering within reach:** reviewed project actions, explicit Arete/Homie jobs, unitful experiment comparisons and stable hardware passports. Pin the useful bit to ScreenPad. [Open the workbench](docs/digital-den/ENGINEERING.md).
-- **Zondo, desk-sized troublemaker:** reading, stargazing, gardening, robot wrangling—and dancing when Spotify plays. Project-history callbacks, local repetition memory and notification counts without reading private message bodies. Busy screen? He finds free space or hides instead of sitting on the code.
-- **The old tmux buttons are home:** sessions, windows, panes and directory at a glance. No session needs to die for a cosmetic change.
-- **The editor has receipts:** a disposable Python fixture checks snippets, parsing, formatting, debugger configuration and real LSP hover on the host and ROS container. The field guide includes the editor’s live mappings and attached-language shortcuts.
-
-> Tiny engineer. Big coordinate-frame problem. We’ll take it one function at a time.
-
-[Music controls](docs/digital-den/MUSIC-LISTENING-ROOM.md) · [Development](docs/development.md) · [This polish pass](docs/digital-den/DEN-POLISH-V3.md)
-
-<details>
-<summary>Meet Zondo / a tiny off-duty engineer</summary>
-
-
-Twenty-four new activities. Tiny engineering receipts. A tea break that never files a timesheet.
-
-
-
-
-
-Original illustrated sprites used by the live desktop. He climbs familiar rooftops, explores exposed wallpaper across Arete and Homie, takes a bar perch when the desk is busy, and never sits on your code. Talk offers lightweight offline replies; Remember keeps only the words you explicitly save. No online model is running. “More like this” and “Retire this line” keep his repertoire yours. [Controls and privacy](docs/digital-den/ZONDO.md).
-
-</details>
+The original shell drew inspiration from [Wrayth by bowenbride](https://github.com/bowenbride/wrayth). [Third-party credits and licenses](THIRD_PARTY.md).

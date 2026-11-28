@@ -18,7 +18,7 @@ The target is a smooth useful machine, not an empty task manager screenshot. A b
 | Wallpapers / theme picker | Expensive picker constructed on demand |
 | Wallpaper startup | A small cached JPEG of each chosen display image loads first; the full-resolution image follows after settings load. The bundled preset never flashes over a custom choice. |
 | Monitor | Live graph samples while visible; process scans only on Processes, hardware inventory only on detail tabs |
-| Switcher | Captures only while open; selected previews faster; optional preview pause |
+| Switcher | Visible workspace cards share a bounded live-capture clock; pause stops captures, and close releases them |
 
 On this laptop, a complete 417-process monitor sample took about 125 ms and a hardware-inventory sample about 375 ms. The graph-only path measured about 63–76 ms after separating those jobs. These are local wall-clock samples, not a guarantee under load.
 
@@ -36,6 +36,35 @@ systemd-cgtop
 # Read-only setup summary, omitting account tokens and personal data:
 python3 scripts/doctor.py
 ```
+
+### 28 November 2026: swap and per-host rendering
+
+Arete had about 2.3 GiB available during the first sample and 1.6 GiB during a
+later sample; zram alone used about 7 GiB of physical RAM. That is real headroom
+to recover if the policy change does not worsen swap-in stalls.
+
+The same CachyOS kernel ran a 24.09 MiB fixture in an isolated KVM guest with
+one CPU and 256 MiB RAM. Two trials per codec used identical source-code,
+executable and incompressible pages. All six readbacks matched the fixture's
+SHA-256. The table reports zram's allocated memory (`mm_stat`), not just
+compressed bytes.
+
+| Policy | Allocated memory | Cost in this fixture |
+|---|---:|---|
+| LZ4 | 19.31 MiB | Initial writes: 50–60 ms |
+| Zstd | 17.51 MiB | Initial writes: 130 ms |
+| LZ4, then recompress deliberately marked idle pages with Zstd | 17.73 MiB | LZ4 initial writes, then a 100–110 ms pass |
+
+The best first host candidate is selective cold-page recompression. This
+isolated test does not establish speed or RAM savings for real swapped desktop
+pages. Compare memory PSI, storage swap I/O, and interactive frame pacing in
+repeated matched runs before enabling a policy. Do not reset in-use swap.
+
+Live readback found `render:new_render_scheduling=false` on multi-GPU Arete and
+`true` on Homie. Both reported `render:direct_scanout=2` (fullscreen only).
+These are independent policies. Compare them on each host with the same
+outputs and workloads; don't use Homie's result to override Arete's freeze
+history.
 
 ## Rendering is not free
 

@@ -169,7 +169,7 @@ Private screenshots were inspected locally and were not added to the public repo
 New terminals now own independent numbered `dev_NNN` sessions. App focus never
 creates another terminal just because it is already focused; Shift explicitly
 creates another. Existing sessions and processes are preserved. See the
-[terminal workflow](../terminal-workflow.md) for bindings and primary references.
+[terminal workflow](../terminal.md) for current bindings and primary references.
 
 The update question bridge recognizes default/yes/no/provider/exclusion prompts,
 including prompts split across output chunks. The widget shows the latest question,

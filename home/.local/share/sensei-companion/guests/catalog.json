@@ -467,6 +467,14 @@
           "excerpt": true
         },
         {
+          "id": "bourdain-team-crashes",
+          "source": "bourdain-freshair",
+          "text": "if you let the team down, everybody crashes.",
+          "context": "Bourdain is describing the kitchen brigade. The robotics parallel is Zondo's: the next person depends on a clear, timely handoff, even when no single person owns the whole run.",
+          "question": "What do we hand the next person before we leave the bench?",
+          "excerpt": true
+        },
+        {
           "id": "bourdain-learning",
           "source": "bourdain-freshair",
           "text": "the bottom of a steep learning curve",
@@ -563,6 +571,14 @@
           "story": "The chapter index includes his research process and what it meant to return to cities he had filmed before.",
           "task": "Before visiting a lab or street market, write one question you cannot answer from a desk.",
           "question": "What would make the trip worth it without a photograph?"
+        },
+        {
+          "id": "bourdain-topic-12",
+          "title": "Ask before judging the cook",
+          "source": "bourdain-freshair",
+          "story": "Bourdain describes using food and travel to encounter people and places on their own terms. The meal is a way into somebody's world, not a score assigned to it.",
+          "task": "Before proposing a fix for a teammate's rover workflow, ask them to walk you through how they actually use it. Write down one constraint you could not see from the code.",
+          "question": "What would I misunderstand about their work if I only looked at the finished thing?"
         }
       ]
     },
@@ -580,6 +596,14 @@
           "text": "a wedge in attacking other problems",
           "context": "A well-posed game can serve as a prototype for a family of problems.",
           "question": "What is the smallest testbed that still contains our hard problem?",
+          "excerpt": true
+        },
+        {
+          "id": "shannon-semantic-aspects",
+          "source": "shannon-communication",
+          "text": "These semantic aspects of communication are irrelevant to the engineering problem.",
+          "context": "The problem he defines here is message reproduction, not proving meaning. Zondo's parallel: a delivered ROS message says nothing by itself about the age or validity of the observation.",
+          "question": "Which healthy counter could hide a stale observation?",
           "excerpt": true
         },
         {
@@ -679,6 +703,14 @@
           "story": "The Library of Congress finding aid preserves papers recording both formal investigations and builds.",
           "task": "Make a one-page lab record for a playful device that actually behaves in an interesting way.",
           "question": "What could another person reproduce from your record alone?"
+        },
+        {
+          "id": "shannon-topic-12",
+          "title": "A good channel can carry the wrong thing",
+          "source": "shannon-communication",
+          "story": "Shannon separates the engineering problem of reproducing a message from the meaning of that message. Successful transmission therefore cannot by itself establish that the receiving application has the right information.",
+          "task": "Mongla's frame-age experiment is a useful parallel. Put frame rate and age at consumption beside each other, then sketch a delayed pipeline that reports a perfectly healthy rate.",
+          "question": "What can the downstream consumer know that the channel's own counters cannot?"
         }
       ]
     },
@@ -690,6 +722,14 @@
       "storySource": "feynman-cargo",
       "atlas": "feynman-v3.png",
       "quotes": [
+        {
+          "id": "feynman-reality-first",
+          "source": "feynman-challenger",
+          "text": "reality must take precedence over public relations, for nature cannot be fooled.",
+          "context": "Feynman ends his Challenger appendix with this distinction. On our bench, it means naming what a test actually measured before describing what we hope it proves.",
+          "question": "What limitation belongs beside the strongest number?",
+          "excerpt": true
+        },
         {
           "id": "feynman-01",
           "source": "feynman-cargo",
@@ -867,6 +907,14 @@
           "story": "His Challenger appendix contrasts management confidence with engineers' estimates, examines component evidence and argues against treating an absence of failures as proof of adequate margin.",
           "task": "Write a reliability claim with its evidence, uncertainty and operating conditions; do not substitute a reassuring number.",
           "question": "What evidence supports this margin when the environment changes?"
+        },
+        {
+          "id": "feynman-topic-12",
+          "title": "The measurement that would ruin the story",
+          "source": "feynman-cargo",
+          "story": "Feynman's Caltech address asks experimenters to supply information that could make others doubt a conclusion. That is a stronger obligation than simply avoiding a false statement.",
+          "task": "Put the air-only, three-slide limitation beside the camera-motion result in a mock report. Then propose a measurement that would actually earn an underwater claim.",
+          "question": "What would a reader need to see to disagree with our strongest claim?"
         }
       ]
     },
@@ -878,6 +926,14 @@
       "storySource": "carmack-latency",
       "atlas": "carmack-v3.png",
       "quotes": [
+        {
+          "id": "carmack-doom-existing-tree",
+          "source": "carmack-doom",
+          "text": "I used the BSP tree for rendering things",
+          "context": "Carmack is introducing a missed reuse opportunity in DOOM, not celebrating the code. Before building another tracker, identify what the system already knows.",
+          "question": "What existing representation already holds half the answer?",
+          "excerpt": true
+        },
         {
           "id": "carmack-01",
           "source": "carmack-latency",
@@ -1055,6 +1111,14 @@
           "story": "In the DOOM source-release notes, he looks back at messy movement and sight tests and observes that the BSP tree already used for rendering could have supported a simpler solution. A shipped achievement still contained things he would improve.",
           "task": "Find a representation already present in your project that could remove a second, fragile implementation.",
           "question": "Have we already built the thing that could simplify this?"
+        },
+        {
+          "id": "carmack-topic-12",
+          "title": "Time one trip, not the whole highway",
+          "source": "carmack-latency",
+          "story": "Carmack's discussion of interactive latency follows delays between action and a visible response. A system can keep producing frames while still taking too long to show the result of a new action.",
+          "task": "Pair Mongla's latest-frame experiment with a scratch trace from capture through callback to displayed annotation. Mark the oldest data that can reach each stage.",
+          "question": "Which delay would remain even if the neural network itself took zero time?"
         }
       ]
     },
@@ -1066,6 +1130,14 @@
       "storySource": "karpathy-recipe",
       "atlas": "karpathy-v4.png",
       "quotes": [
+        {
+          "id": "karpathy-tiny-engine",
+          "source": "karpathy-micrograd",
+          "text": "A tiny Autograd engine (with a bite! :)).",
+          "context": "The README opens with a deliberately small implementation. For a Noesis exercise, explain one node's backward pass before celebrating end-to-end training.",
+          "question": "Can we predict one gradient without running the whole engine?",
+          "excerpt": true
+        },
         {
           "id": "karpathy-01",
           "source": "karpathy-recipe",
@@ -1243,6 +1315,14 @@
           "story": "His Pong tutorial follows a two-layer policy network from pixels and sampled actions to a policy-gradient update. It makes a working learning loop inspectable rather than relying on the impressive appearance of a game-playing agent.",
           "task": "Trace one action, its eventual reward and the update that changes that action's probability.",
           "question": "Where exactly did the reward turn into a change in behavior?"
+        },
+        {
+          "id": "karpathy-topic-12",
+          "title": "Make a tiny dataset impossible to fail silently",
+          "source": "karpathy-recipe",
+          "story": "Karpathy's training recipe uses progressively stronger sanity checks, including deliberately overfitting a tiny subset. That exercise tests whether the training path can fit known examples, not whether the result will generalize.",
+          "task": "For the underwater detector, pick a tiny set of reviewed labels. Write down what a failure to fit reveals and what even a perfect fit cannot tell you about murky water.",
+          "question": "Which wiring mistake could this catch before we spend another night tuning?"
         }
       ]
     },
@@ -1254,6 +1334,14 @@
       "storySource": "lattner-llvm",
       "atlas": "lattner-v3.png",
       "quotes": [
+        {
+          "id": "lattner-llvm-multistage",
+          "source": "lattner-thesis",
+          "text": "a unique multi-stage optimization system",
+          "context": "The thesis frames LLVM around optimization at more than one stage. In a robotics stack, the analogous task is keeping enough timing and frame information intact for later stages to reason from.",
+          "question": "What fact would a future stage be unable to recover?",
+          "excerpt": true
+        },
         {
           "id": "lattner-01",
           "source": "lattner-llvm",
@@ -1431,6 +1519,14 @@
           "story": "His master's thesis presents LLVM as infrastructure for optimization at several stages. The intermediate representation connects those stages; the architecture is more than one clever optimization pass.",
           "task": "Draw the representation that lets two stages of your pipeline cooperate without sharing every implementation detail.",
           "question": "What information must survive the boundary for the next stage to reason correctly?"
+        },
+        {
+          "id": "lattner-topic-12",
+          "title": "An interface with a useful afterlife",
+          "source": "lattner-llvm",
+          "story": "The LLVM architecture uses an intermediate representation across tooling stages. A shared representation lets separate components optimize, inspect or transform a program without sharing each stage's internal data structures.",
+          "task": "Draw a ROS message boundary for a camera-derived velocity observation. Include its timestamp, frame and uncertainty; then identify which fields should outlive the current detector.",
+          "question": "Which invariant belongs in the interface rather than in every consumer's private knowledge?"
         }
       ]
     },
@@ -1442,6 +1538,14 @@
       "storySource": "graham-ideas",
       "atlas": "graham-v3.png",
       "quotes": [
+        {
+          "id": "graham-curiosity-rudder",
+          "source": "graham-great",
+          "text": "both the engine and the rudder of great work",
+          "context": "Graham describes curiosity as something that both motivates and steers. That fits a first-principles study path where an honest gap can change the next exercise.",
+          "question": "Which question would we still pursue if it did not count toward a milestone?",
+          "excerpt": true
+        },
         {
           "id": "graham-01",
           "source": "graham-ideas",
@@ -1619,6 +1723,14 @@
           "story": "Taste for Makers connects simplicity across different crafts and considers how difficult constraints can force more elegant solutions. This is an argument about making good work, not a claim that all minimal-looking work is good.",
           "task": "Remove one decorative or structural element and check whether the result becomes clearer, weaker or merely emptier.",
           "question": "Did we simplify the experience or just delete something useful?"
+        },
+        {
+          "id": "graham-topic-12",
+          "title": "Protect a long stretch of reasoning",
+          "source": "graham-schedule",
+          "story": "Graham distinguishes schedules organized around meetings from schedules in which one interruption can break a larger block of making. The conflict comes from the granularity of work, not from meetings being universally bad.",
+          "task": "Schedule one uninterrupted Noesis proof or calibration block. Batch the routine questions separately and leave the exact restart point before stepping away.",
+          "question": "How long does this particular problem take to reload into working memory?"
         }
       ]
     },
@@ -1630,6 +1742,14 @@
       "storySource": "urban-chef",
       "atlas": "urban-v3.png",
       "quotes": [
+        {
+          "id": "urban-precious-weeks",
+          "source": "urban-weeks",
+          "text": "the only appropriate word to describe your weeks is precious.",
+          "context": "The life-in-weeks grid is a change of scale, not a weekly output target. A good week can include a stubborn proof, a meal, and some aimless looking out the window.",
+          "question": "What would make this week worth remembering even if nothing shipped?",
+          "excerpt": true
+        },
         {
           "id": "urban-01",
           "source": "urban-chef",
@@ -1807,6 +1927,14 @@
           "story": "Your Life in Weeks turns a lifespan into a visible grid and considers both enjoying weeks and improving other weeks. Its small diamonds are a metaphor for attention and life, not an obligation to maximize every hour.",
           "task": "Choose one small thing that makes this week worth living, alongside the work you want to finish.",
           "question": "What belongs in a good week besides completed tasks?"
+        },
+        {
+          "id": "urban-topic-12",
+          "title": "Recognize a borrowed assumption",
+          "source": "urban-chef",
+          "story": "Urban's cook-and-chef contrast distinguishes following established recipes from understanding ingredients deeply enough to depart from them. It is a metaphor for when independent reasoning changes what is possible.",
+          "task": "For the learning path from transistor to program, choose an abstraction you use confidently and explain which part of the underlying mechanism you have never tested.",
+          "question": "Which familiar instruction stops being useful if the material or constraint changes?"
         }
       ]
     },
@@ -1818,6 +1946,14 @@
       "storySource": "west-fader",
       "atlas": "west-v3.png",
       "quotes": [
+        {
+          "id": "west-calm-studio",
+          "source": "west-vf2015",
+          "text": "we just wanted to have a really Zen vibe in the studio",
+          "context": "He is talking about the setting for a demanding second collection. For the Den, the parallel is an ambitious project with a quieter place to do the work.",
+          "question": "What can the desktop stop demanding from us during a hard task?",
+          "excerpt": true
+        },
         {
           "id": "west-01",
           "source": "west-fader",
@@ -1995,6 +2131,14 @@
           "story": "In the Yeezy Season 2 interview, he describes a calmer studio and backstage atmosphere after the team had worked together longer, while acknowledging that the preparation still took substantial effort.",
           "task": "Improve one collaboration ritual so difficult work can happen with less avoidable friction.",
           "question": "Could the room get calmer without the work becoming less ambitious?"
+        },
+        {
+          "id": "west-topic-12",
+          "title": "Let divergent sketches survive the first review",
+          "source": "west-fader2008",
+          "story": "The FADER's complete interview documents West discussing collaborators and musical taste in making his work. It gives a view of how influences coexist rather than a universal recipe for good design.",
+          "task": "Prototype two Den popup layouts from the same controls: one leaving the current overview dominant, the other prioritizing the next action. Compare them using a real task, not a beauty vote.",
+          "question": "Which direction makes the work easier without sanding away its personality?"
         }
       ]
     },
@@ -2006,6 +2150,14 @@
       "storySource": "rubin-tim",
       "atlas": "rubin-v3.png",
       "quotes": [
+        {
+          "id": "rubin-original-scene",
+          "source": "rubin-onbeing",
+          "text": "I decided to start making records only as a fan",
+          "context": "Rubin recalls trying to capture what he heard in clubs. When tuning the Den, start from an experience worth preserving rather than a list of features an impressive setup should have.",
+          "question": "Which part of the experience would we keep if nobody ever saw the screenshot?",
+          "excerpt": true
+        },
         {
           "id": "rubin-01",
           "source": "rubin-tim",
@@ -2183,6 +2335,14 @@
           "story": "In the On Being conversation, he connects the things people make with the selves they bring to them. The discussion ranges beyond professional music into everyday creative acts.",
           "task": "Put one personally meaningful detail into a small artifact without explaining it to everyone.",
           "question": "Which detail would make this feel like our place even without a nameplate?"
+        },
+        {
+          "id": "rubin-topic-12",
+          "title": "Listen before touching the controls",
+          "source": "rubin-listening",
+          "story": "Rubin's published Listening excerpt directs attention toward receiving and noticing. Treat that as a practice of observing before changing, not as a claim that observation is sufficient.",
+          "task": "For a scratch copy of a Den audio setup, write down what a quiet voice actually sounds like before inspecting levels. Then record which signal measure agrees and which does not.",
+          "question": "What had I explained away before I stopped to listen?"
         }
       ]
     },
@@ -2194,6 +2354,14 @@
       "storySource": "hotz-latent",
       "atlas": "hotz-v3.png",
       "quotes": [
+        {
+          "id": "hotz-search-formulation",
+          "source": "hotz-win",
+          "text": "Make sure your formulation is simple and complete.",
+          "context": "Hotz is describing search over a well-defined problem. For a controller or estimator, simpler is useful only if the model still contains the state and constraints that matter.",
+          "question": "Which missing state would let a neat solution win the wrong problem?",
+          "excerpt": true
+        },
         {
           "id": "hotz-01",
           "source": "hotz-latent",
@@ -2371,6 +2539,14 @@
           "story": "His 2021 land-project essay imagines robots maintaining a self-sustaining place, but also explains shelving the project because the human management arrangement was not working. The robots are an aspiration in this account.",
           "task": "Give one ambitious project an honest maintenance budget and identify who will actually do the recurring work.",
           "question": "Who maintains paradise on an ordinary Tuesday?"
+        },
+        {
+          "id": "hotz-topic-12",
+          "title": "Follow one layer boundary in both directions",
+          "source": "hotz-lex",
+          "story": "In the interview, Hotz discusses building and understanding systems across abstraction layers. The useful lesson is not to avoid abstractions, but to retain a route through them when behavior surprises you.",
+          "task": "Take one failing sensor reading and trace it from physical input to parsed bytes to ROS topic to estimator. Then trace the expectation back in the opposite direction.",
+          "question": "At what boundary did a convenient assumption first become false?"
         }
       ]
     },
@@ -2382,6 +2558,14 @@
       "storySource": "keller-oral",
       "atlas": "keller-v3.png",
       "quotes": [
+        {
+          "id": "keller-make-room",
+          "source": "keller-hdsr",
+          "text": "you had to acknowledge their idea three times",
+          "context": "Keller is recounting a DEC team practice, not giving a universal rule. A fair rover design review can begin by describing the proposal well enough that its author recognizes it.",
+          "question": "Can we make the idea stronger before trying to disprove it?",
+          "excerpt": true
+        },
         {
           "id": "keller-01",
           "source": "keller-oral",
@@ -2559,6 +2743,14 @@
           "story": "In the Harvard fireside chat, he recalls a DEC team learning to acknowledge an idea before arguing against it. The story concerns preserving room for young engineers to contribute, not suspending technical scrutiny.",
           "task": "Restate a collaborator's proposal so they recognize it before explaining the failure you see.",
           "question": "Can we protect the person's willingness to think while testing the idea hard?"
+        },
+        {
+          "id": "keller-topic-12",
+          "title": "Draw the route, then count the work",
+          "source": "keller-laws",
+          "story": "Keller's discussion of compute revisits constraints on how useful work gets done. Faster arithmetic does not make moving and supplying data free.",
+          "task": "Sketch the frame journey to Mongla's accelerator before proposing a second network. Separate observations from guesses about where capture, copying and inference spend time.",
+          "question": "If compute was suddenly free, what cost would still control throughput or frame age?"
         }
       ]
     }

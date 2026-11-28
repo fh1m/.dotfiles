@@ -1,8 +1,25 @@
 # The Den, as a real workspace
 
-The header follows the physical desk: Arete's two external monitors stacked at
-left, Homie's display at upper right, laptop main below it, then ScreenPad.
-The room photo is neither published nor embedded.
+## Current README · November 2026
+
+The current connector map comes from live Hyprland inventory: Arete has the OLED
+and ScreenPad with HDMI to their left; Homie has HDMI to the left of DisplayPort.
+Inter-host spacing and the moving signal are illustrative, not a floor plan or
+a trace of cursor events. The room photo is neither published nor embedded.
+
+`den-after-dark.webp` is original OpenAI Codex ImageGen artwork
+(`gpt-image-2-codex`), not a photograph. `den-oled-live.webp` is a real screenshot
+of a disposable Alacritty fixture; the Sound, System and Monitor images are
+current live crops. The Monitor network footer is excluded. No personal
+windows were used. The `zondo-field-reading` reel uses the shipped guest
+atlases with original captions; it is neither historical footage nor dialogue
+attributed to the guests. Both animated plates have static reduced-motion
+alternatives. The older capture sets remain available as dated examples below.
+
+## Earlier desk arrangement
+
+Arete's two external monitors were stacked at left, with Homie at upper right
+and the laptop and ScreenPad below.
 
 ## Screens and motion
 

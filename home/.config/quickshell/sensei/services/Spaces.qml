@@ -168,12 +168,15 @@ Singleton {
                 if(event.name==="disconnected"){root.observerConnected=false;return;}
                 if(root.snapshotEvents.includes(event.name))outputSettle.restart();if(event.name==="urgent")root.attention(event.data);
                 if(event.name==="activewindowv2"||event.name==="closewindow")root.acknowledge(event.data);
-                if(["workspace","workspacev2","movewindow","movewindowv2","monitoradded","monitoraddedv2","monitorremoved","configreloaded"].includes(event.name))pairSettle.restart();
+                // A workspace activation can deliberately target just one display.
+                // Only structural changes need to move windows and repair pairing.
+                if(root.pairEvents.includes(event.name))pairSettle.restart();
             } catch(e) {}
         }}
         onExited:{root.observerConnected=false;eventRestart.restart();}
     }
     Timer {id:eventRestart;interval:2000;onTriggered:sessionEvents.running=true}
+    readonly property var pairEvents:["movewindow","movewindowv2","monitoradded","monitoraddedv2","monitorremoved","configreloaded"]
     property bool pairRefreshPending:false
     Timer {id:pairSettle;interval:140;onTriggered:{if(pairSync.running)root.pairRefreshPending=true;else pairSync.running=true;}}
     Process {id:pairSync;command:[Quickshell.env("HOME")+"/.local/bin/sensei-displays","reconcile"]
@@ -185,7 +188,7 @@ Singleton {
 
         function onRawEvent(event: HyprlandEvent): void {
             const n = event.name;
-            if(["workspace","workspacev2","movewindow","movewindowv2","monitoradded","monitoraddedv2","monitorremoved","configreloaded"].includes(n))pairSettle.restart();
+            if(root.pairEvents.includes(n))pairSettle.restart();
             if(n==="urgent"){root.attention(event.data);Hyprland.refreshToplevels();}
             if(n==="activewindowv2"||n==="closewindow")root.acknowledge(event.data);
             if(root.snapshotEvents.includes(n))outputSettle.restart();

@@ -33,20 +33,18 @@ summaries **life & work**, and invented introductions **staged dialogue**.
 Zondo's questions are authored for this desktop, not historical quotations.
 No song lyrics or purported private conversations are reproduced.
 
-The expanded deck has **121 selectable entries per guest**: eleven real excerpts,
-eleven curated source-backed topic stories, and ninety-nine original workshop variants
-(nine learning lenses for each topic). Across the roster: **110 excerpts, 110
-stories, 990 workshop variants**, with 51 source records. These are not 1,210 independent historical
-quotations or 990 hand-researched anecdotes. The workshop is explicitly our
-writing, combining a specific topic/task with prediction, sketching, teaching,
-limits, transfer and return prompts. It is intentionally inspectable rather
-than an online generator inventing advice in a real person's voice.
+The deck has **126 short excerpts, 144 sourced topic stories and 1,296 original
+workshop variations** across 12 guests. Each guest has 12 stories. A workshop
+variation is an exercise written for the Den, not another historical anecdote.
+Selected examples connect the reading to public work such as Mongla's frame-age
+experiment. No live project, app, or private note is inspected for these cards.
 
-In the guest picker, choose **Mixed**, **Real excerpts**, **Stories**, or
-**Original workshop**. Mixed selection favors the real excerpts (60%, with 20%
-for each other family); an explicit mode takes precedence. This keeps the larger
-practice deck from drowning out the actual voices. Every visit still ends with
-Zondo's own question.
+Choose **Mixed**, **Real excerpts**, **Stories**, or **Original workshop**.
+Mixed chooses between the available families independently of the guest and
+avoids already seen cards until the guest's mixed rotation is exhausted. In
+explicit modes the chosen family rotates on its own. Both prefer ideas outside
+the last four distinct ideas for that guest when the selection allows. A visit
+ends with Zondo's own question, not a claim that the guest said it.
 
 ```sh
 sensei-den companion guest-mode stories
