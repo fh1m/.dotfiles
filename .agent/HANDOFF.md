@@ -200,3 +200,9 @@ Two Homie-only Bluetooth commits are preserved at
 `refs/remotes/homie-reviewed/main`; their full three-component delta is already
 retained by canonical source, with its additional corrected power-action label.
 Reconcile history without resetting Homie's checkout or including unrelated WIP.
+
+PR #65's first CI run found nine Qt-query fixture timeouts on the clean runner.
+The supervisor now discovers `qtpaths6`, Arch's explicit Qt6 path, then `qtpaths`;
+fixtures model the query protocol independently. Thirteen selection cases passed.
+Both actual supervisors completed version-mode smoke at Qt 6.12.0 after scoped
+deployment without main-shell restarts. The original ABI safeguards remain.

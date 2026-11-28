@@ -34,6 +34,13 @@ def owned_build(home, version):
         (prefix / 'qt-version').write_text(version + '\n')
     return prefix
 
+def qt_query_tool(commands):
+    """Model the installed Qt query protocol independently of the runner's Qt."""
+    path = commands / 'qtpaths6'
+    path.write_text('#!/bin/sh\n[ "$1" = "--query" ] && [ "$2" = "QT_VERSION" ] || exit 2\nprintf "6.12.0\\n"\n')
+    path.chmod(0o755)
+
+
 
 @pytest.mark.parametrize('built,installed,local', [('6.12.0', '6.12.0', True), ('6.11.2', '6.12.0', False), (None, '6.12.0', False)])
 def test_cursor_rejects_incompatible_or_unstamped_private_runtime(tmp_path, monkeypatch, built, installed, local):
@@ -83,6 +90,7 @@ def test_supervisor_rejects_expired_or_inapplicable_qt_backport(tmp_path, change
     commands = tmp_path / '.local/bin'
     commands.mkdir(parents=True)
     report = tmp_path / 'launched.json'
+    qt_query_tool(commands)
     qs = commands / 'qs'
     qs.write_text('#!' + sys.executable + '\nimport json,os,pathlib,sys\n'
                   'if "--version" in sys.argv:\n print("Qt: 6.12.0 (built against 6.12.0)");sys.exit(0)\n'
@@ -131,6 +139,7 @@ def test_supervisor_never_escapes_configuration_errors_into_an_incompatible_runt
     prefix = owned_build(tmp_path, '6.12.0')
     commands = tmp_path / '.local/bin'
     commands.mkdir(parents=True)
+    qt_query_tool(commands)
     launcher = '''#!{python}
 import json,os,pathlib,sys
 if "--version" in sys.argv:

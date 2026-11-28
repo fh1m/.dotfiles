@@ -62,6 +62,18 @@ packaged_only=0
 qs_env=()
 qt_backport="$HOME/.local/opt/sensei-qt-wayland"
 mesa_backport="$HOME/.local/opt/sensei-mesa-egl"
+qt_version() {
+    local query
+    # Prefer the explicitly Qt6 tool; Arch keeps its unversioned tool outside PATH.
+    if command -v qtpaths6 >/dev/null 2>&1; then
+        query=qtpaths6
+    elif [ -x /usr/lib/qt6/bin/qtpaths ]; then
+        query=/usr/lib/qt6/bin/qtpaths
+    else
+        query=qtpaths
+    fi
+    "$query" --query QT_VERSION 2>/dev/null || true
+}
 runtime_compatible() {
     local info
     info="$(timeout 5 "$1" --version -v 2>&1)" || return 1
@@ -76,7 +88,7 @@ runtime_compatible() {
 select_runtime() {
     qs_bin="${SENSEI_QS_BIN:-qs}"
     qs_env=()
-    current_qt="$(/usr/lib/qt6/bin/qtpaths --query QT_VERSION 2>/dev/null || true)"
+    current_qt="$(qt_version)"
     if [ "$packaged_only" -eq 0 ] && [ -z "${SENSEI_QS_BIN:-}" ] && [ -x "$local_qs" ] && [ -r "$qt_stamp" ]; then
         if [ -n "$current_qt" ] && [ "$(cat "$qt_stamp")" = "$current_qt" ]; then
             qs_bin="$local_qs"
@@ -111,7 +123,7 @@ select_runtime() {
 # Filter only the invalid synthesized context-menu event, keeping mouse actions.
 # Public Qt API plugin; rebuild after Qt updates instead of loading stale code.
 qt_plugins="$HOME/.local/share/sensei-qt-plugins"
-current_qt="$(/usr/lib/qt6/bin/qtpaths --query QT_VERSION 2>/dev/null || true)"
+current_qt="$(qt_version)"
 if [ -f "$qt_plugins/generic/libsensei_context_guard.so" ] && [ -r "$qt_plugins/qt-version" ] && [ "$(cat "$qt_plugins/qt-version")" = "$current_qt" ]; then
     export QT_PLUGIN_PATH="$qt_plugins${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
     export QT_QPA_GENERIC_PLUGINS="sensei-context-guard${QT_QPA_GENERIC_PLUGINS:+,$QT_QPA_GENERIC_PLUGINS}"
