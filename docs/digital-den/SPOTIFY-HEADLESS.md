@@ -33,6 +33,11 @@ otherwise Account → Sign in pairs the device. Spotify Premium is required.
   cached for ten minutes; saved-library matching remains usable after failure.
 - Play/pause, single-step skip, seek, shuffle/repeat, volume, upcoming queue,
   enqueue, save/remove liked tracks and add to a selected existing playlist.
+  The queue refreshes when the playing track or context changes, including
+  changes from Spotify Connect. During a transition or outage, the widget marks
+  the remaining rows **Last known** instead of treating an incomplete response
+  as an empty queue. Selecting a live queued song advances inside the current
+  context; it does not start Liked Songs or rebuild the playlist.
 - Existing artwork, timed lyrics, fullscreen and distraction-free views.
 - **Save moment / Resume moment** retain the latest twenty explicit bookmarks,
   including context and position. **Surprise me** samples the full Liked library.
