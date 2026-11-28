@@ -80,9 +80,10 @@ hl.config({
     },
 
     misc = {
-        -- sensei draws the wallpaper; Hyprland's own would flash first.
-        force_default_wallpaper = 0,
-        disable_hyprland_logo   = true,
+        -- Only the Den owns wallpaper. Keep a neutral frame before its surface maps.
+        disable_hyprland_logo  = true,
+        disable_splash_rendering = true,
+        background_color = 0xff000000,
     },
 
     input = {
