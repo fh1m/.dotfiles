@@ -2,22 +2,28 @@
 import subprocess,json,sys
 
 def fetch(what):
- try:return json.loads(subprocess.run(['pactl','-f','json','list']+([what] if what else []),capture_output=True,text=True,timeout=3).stdout)
- except Exception:return []
+ command=['pactl','-f','json']+(['info'] if what=='info' else ['list']+([what] if what else []))
+ result=subprocess.run(command,capture_output=True,text=True,timeout=3)
+ if result.returncode:raise RuntimeError('Audio server query failed')
+ data=json.loads(result.stdout)
+ if not isinstance(data,dict):raise ValueError('Invalid audio inventory')
+ return data
 a=sys.argv[1:]
 if not a or a[0]=='list':
- all_nodes=fetch('')
- data={k:all_nodes.get(k.replace('-','_'),[]) for k in ['sinks','sources','sink-inputs','source-outputs','cards']} if isinstance(all_nodes,dict) else {k:[] for k in ['sinks','sources','sink-inputs','source-outputs','cards']};
- info={}
- try:info=json.loads(subprocess.run(['pactl','-f','json','info'],capture_output=True,text=True,timeout=3).stdout)
- except Exception:pass
- data['defaultSink']=info.get('default_sink_name','');data['defaultSource']=info.get('default_source_name','')
- for kind in ('sinks','sources','cards'):
-  for node in data[kind]:
-   node['_source']=kind=='sources'
-   for field in ('ports','profiles'):
-    if isinstance(node.get(field),list):node[field]={v['name']:v for v in node[field]}
- print(json.dumps(data))
+ try:
+  all_nodes=fetch('')
+  data={k:all_nodes.get(k.replace('-','_'),[]) for k in ['sinks','sources','sink-inputs','source-outputs','cards']}
+  info=fetch('info')
+  data['defaultSink']=info.get('default_sink_name','');data['defaultSource']=info.get('default_source_name','')
+  for kind in ('sinks','sources','cards'):
+   for node in data[kind]:
+    node['_source']=kind=='sources'
+    for field in ('ports','profiles'):
+     if isinstance(node.get(field),list):node[field]={v['name']:v for v in node[field]}
+  print(json.dumps(data))
+ except (OSError,ValueError,KeyError,TypeError,RuntimeError,subprocess.SubprocessError):
+  print(json.dumps({'error':'Audio server unavailable or its device inventory could not be read. Refresh after PipeWire reconnects.'}))
+  sys.exit(1)
 else:
  commands={'output':['set-default-sink'],'input':['set-default-source'],'mute':['set-sink-mute'],'micmute':['set-source-mute'],'volume':['set-sink-volume'],'micvolume':['set-source-volume'],'appvolume':['set-sink-input-volume'],'appmute':['set-sink-input-mute'],'capturevolume':['set-source-output-volume'],'capturemute':['set-source-output-mute'],'route':['move-sink-input'],'capture-route':['move-source-output'],'port':['set-sink-port'],'inputport':['set-source-port'],'profile':['set-card-profile']}
  if a[0] not in commands:raise SystemExit('Unknown audio action')
