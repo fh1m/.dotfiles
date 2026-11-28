@@ -33,7 +33,7 @@ if a.action == 'claude-accounts':
     counter.write_text(str(count))
     time.sleep(0.03)
     names = ['default'] if scenario == 'removed' and count > 1 else ['second', 'default']
-    print(json.dumps({'accounts': [{'id': name, 'name': name, 'identity': {'signedIn': True}} for name in names]}), flush=True)
+    print(json.dumps({'fetchedAt': count, 'accounts': [{'id': name, 'name': name, 'identity': {'signedIn': True}} for name in names]}), flush=True)
 elif a.action == 'claude':
     account = a.account or 'default'
     time.sleep(0.35 if account == 'default' and a.days == 30 else 0.03)
@@ -54,6 +54,7 @@ ShellRoot {
     property int ticks: 0
     property int phase: 0
     property int changedAt: 0
+    property var initialAccounts
     function check(condition, message) {
         if (!condition) { console.error("PROOF_FAIL", message); Qt.exit(2); return false; }
         return true;
@@ -81,6 +82,7 @@ ShellRoot {
         if (root.phase === 0) {
             if (root.scenario === "refresh") {
                 if (shown.account !== "default") return;
+                root.initialAccounts = CodeDesk.claudeAccounts.accounts;
                 CodeDesk.refreshClaude(false);
                 if (!root.check(CodeDesk.claudeUsage.account === "default" && CodeDesk.loading,
                                 "background refresh erased the current measurement or hid its busy state")) return;
@@ -104,8 +106,9 @@ ShellRoot {
         }
         if (root.ticks - root.changedAt < 35) return;
         if (root.scenario === "refresh") {
-            if (root.check(shown.account === "default" && !CodeDesk.loading,
-                           "background refresh did not settle on its original account")) root.done();
+            if (root.check(shown.account === "default" && !CodeDesk.loading
+                           && CodeDesk.claudeAccounts.accounts === root.initialAccounts,
+                           "background refresh reloaded the account rows or lost the measurement")) root.done();
             return;
         }
         if (root.scenario === "switch") {

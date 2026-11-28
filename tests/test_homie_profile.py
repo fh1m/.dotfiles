@@ -32,3 +32,19 @@ class HomieProfile(unittest.TestCase):
   with patch.object(m,'role_for',side_effect=lambda name,*a:'main' if name=='DP-3' else 'lower'),patch.object(m,'monitors',return_value=rows),patch.object(m,'known_workspaces',return_value=[]),patch.object(m,'workspace_slots',return_value={'DP-2':1}),patch.object(m,'dispatch') as call:
    m.workspace(2,'DP-2');command=call.call_args.args[0]
    self.assertIn('workspace="102"',command);self.assertIn('monitor="DP-2"',command)
+
+ def test_failed_cached_ddc_bus_is_rediscovered_before_readback(self):
+  for relative in ('home/.local/bin/sensei-displays','profiles/pc/home/.local/bin/sensei-displays'):
+   with self.subTest(relative=relative):
+    loader=importlib.machinery.SourceFileLoader('display_fixture',str(ROOT/relative))
+    spec=importlib.util.spec_from_loader(loader.name,loader)
+    m=importlib.util.module_from_spec(spec);loader.exec_module(m)
+    physical={'HDMI-A-1':{'id':'monitor','label':'Fixture monitor'}}
+    previous={'displays':[{'output':'HDMI-A-1','id':'monitor','bus':12,'ready':False}]}
+    def readback(bus):
+     if bus!=1:raise ValueError('Stale DDC bus')
+     return {'level':63,'raw':63,'maximum':100}
+    with patch.object(m,'read_state',return_value=previous),patch.object(m,'connected',return_value=physical),patch.object(m,'monitors',return_value=[]),patch.object(m,'workspace_slots',return_value={}),patch.object(m,'run',return_value='Display 1\n I2C bus: /dev/i2c-1\n DRM connector: card1-HDMI-A-1\n'),patch.object(m,'brightness',side_effect=readback),patch.object(m,'write_state'),patch.object(m,'bar_edge',return_value='bottom'):
+     row=m.sync(layout=False,notify=False)['displays'][0]
+     self.assertTrue(row['ready'])
+     self.assertEqual(row['level'],63)
