@@ -96,7 +96,6 @@ Singleton {
 
     // Called by an absolute path: ~/.local/bin is not necessarily on the PATH
     // the shell was started with, and execDetached fails silently when it is not.
-    readonly property string profileScript: `${home}/.local/bin/sensei-profile`
     readonly property string deckResetScript: `${home}/.local/bin/sensei-deck-reset`
     readonly property string deckRefreshScript: `${home}/.local/bin/sensei-deck-refresh`
     readonly property string daemonScript: `${home}/.local/bin/sensei-daemon`

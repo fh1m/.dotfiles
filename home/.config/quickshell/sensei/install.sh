@@ -437,11 +437,6 @@ step "4. Helpers and configs"
 for s in "${BIN_SCRIPTS[@]}"; do link_to "$BIN/$s" "$SRC/external/$s" "bin/$s"; done
 link_to "$CONFIG/sensei/fastfetch.jsonc"     "$SRC/external/fastfetch.jsonc"     "fastfetch.jsonc"
 link_to "$CONFIG/sensei/emblem-fallback.txt" "$SRC/external/emblem-fallback.txt" "emblem-fallback.txt"
-# The deck terminal is Alacritty now; its recoloured distro logo must exist
-# before the deck terminal first opens, so it is made here once.
-if [ ! -s "$CACHE_DIR/emblem.raw" ]; then
-    "$BIN/sensei-profile" -n Circuit >/dev/null 2>&1 && did set "terminal colours and logo"
-fi
 
 step "5. Font and wallpapers"
 mkdir -p "$FONTDIR"

@@ -3,14 +3,9 @@
 #
 #   sensei-profile              print the active profile and the six names
 #   sensei-profile <Name>       apply one (case-insensitive)
-#   sensei-profile -n <Name>    the same, without writing the profile file --
-#                                  what the shell uses, since it has just
-#                                  written the file itself and would otherwise
-#                                  be told about its own change
 #
-# Writes ~/.config/sensei/profile, which the shell watches and follows, then
-# hands colours to sensei-palette. Colours come from the main wallpaper; the
-# profile only names the shell's preset.
+# Only changes the preset. The wallpaper shown on the leader display drives
+# the palette; the desktop reapplies it when that actual image changes.
 #
 # The palette below is a second copy of the one in config/Profiles.qml. It has
 # to be, because this script must work with the shell stopped. Change one and
@@ -122,12 +117,6 @@ current() {
     resolve "${c:-Circuit}" || printf 'Circuit'
 }
 
-write_profile=1
-if [ "${1:-}" = "-n" ] || [ "${1:-}" = "--no-write" ]; then
-    write_profile=0
-    shift
-fi
-
 if [ $# -eq 0 ]; then
     printf 'active: %s\n' "$(current)"
     printf 'profiles: %s\n' "$(all_names)"
@@ -147,17 +136,6 @@ read -r ground deep text bright dim mute accent signal alert hair <<< "$(palette
     exit 1
 }
 
-# 1. The profile file. The shell watches this and recolours itself.
-if [ "$write_profile" -eq 1 ]; then
-    mkdir -p "$(dirname "$PROFILE_FILE")"
-    printf '%s\n' "$name" > "$PROFILE_FILE"
-fi
-
-# 2. Colours are not the profile's. sensei-palette owns Alacritty, tmux, the
-#    Hyprland borders and the deck frame, from the main wallpaper, so a profile
-#    switch cannot repaint them. The palette below still checks that the profile
-#    has usable values.
+mkdir -p "$(dirname "$PROFILE_FILE")"
+printf '%s\n' "$name" > "$PROFILE_FILE"
 printf '%s\n' "$name"
-if [ -x "$HOME/.local/bin/sensei-palette" ]; then
-    "$HOME/.local/bin/sensei-palette" >/dev/null 2>&1 || true
-fi

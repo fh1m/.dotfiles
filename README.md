@@ -35,8 +35,10 @@ Zondo is my illustrated deskbuddy, with a little life of his own. The desktops a
 Alacritty stays light. Tmux keeps the session alive. Neovim handles the source, navigation, diagnostics and review. Agents can share the workbench; independent reasoning still gets a seat.
 
 `Super+Enter` returns to the same daily tmux session; `Super+Shift+Enter` starts
-an independent one. Select a wallpaper to change desktop accents without
-recoloring the terminal background or the tmux status bar.
+an independent one. The OLED on Arete and Homie’s primary monitor each drive
+their host’s wallpaper-derived accent. Alacritty stays black and tmux keeps
+its existing arrangement; only its colors change. GTK and Qt apps that
+cache their theme pick up the new accents when reopened.
 
 ![Quickshell's actual acknowledgement animation changes from rose to amber using two test wallpapers](docs/assets/digital-den/wallpaper-accent-feedback.gif)
 

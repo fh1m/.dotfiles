@@ -2,7 +2,6 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Io
 import qs.config
 
@@ -175,67 +174,6 @@ Singleton {
     function clearPreview(): void {
         previewProfile = "";
     }
-
-    // Whenever the profile changes -- picker, launcher, or a hand edit of the
-    // file -- the helper script brings Alacritty and Hyprland along. `-n` stops it
-    // rewriting the file the shell has just read, which would come straight
-    // back as another change.
-    // The command is set here rather than bound: a binding on `command` has not
-    // necessarily re-evaluated by the time this handler runs, and the script
-    // was being called with the profile before last.
-    // **A second sync while the first is running is remembered, not dropped.**
-    // `Process.running = true` on a process that is already running is a
-    // no-op, so two profile changes inside the script's own runtime left
-    // Alacritty and the Hyprland borders on the first of them while the shell
-    // wore the second. It could not be reproduced from a session -- the
-    // FileView coalesces and the script is quick -- but the mechanism is
-    // plain, and "the colours are one profile behind and nobody can say why"
-    // is exactly the shape of bug that survives a QA pass.
-    property bool syncPending: false
-
-    function syncExternal(): void {
-        if (syncProc.running) {
-            root.syncPending = true;
-            return;
-        }
-        root.syncPending = false;
-        syncProc.command = [Paths.profileScript, "-n", activeProfile];
-        syncProc.running = true;
-    }
-
-    onActiveProfileChanged: syncExternal()
-
-    Process {
-        id: syncProc
-
-        // `running` falling covers a clean exit and a script that could not
-        // be started at all, which emits nothing else.
-        onRunningChanged: if (!running && root.syncPending) root.syncExternal()
-    }
-
-    // A fresh start loads the profile it already had, so nothing changes and
-    // nothing syncs -- yet the Hyprland borders can still hold whatever the last
-    // session left. Sync once on the way up. This also (re)makes the deck terminal's
-    // emblem, so a missing one is made at every start; sensei-emblem renames
-    // it into place, so the deck terminal printing its greeting at the same
-    // moment never reads a half-written file.
-    Timer {
-        interval: 1200
-        running: true
-        onTriggered: root.syncExternal()
-    }
-
-    // A Hyprland reload re-reads the static border colours in its config, which
-    // puts those back. Ours go on again afterwards.
-    Connections {
-        target: Hyprland
-
-        function onRawEvent(event: HyprlandEvent): void {
-            if (event.name === "configreloaded")
-                root.syncExternal();
-        }
-    }
-
     FileView {
         id: profileFile
 
