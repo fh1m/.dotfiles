@@ -21,6 +21,8 @@ def test_parked_remote_cursor_and_overlapping_bars(tmp_path):
     shutil.copy2(ROOT / "home/.config/quickshell/sensei/services/ShellState.qml", services / "ShellState.qml")
     # Isolate unrelated hardware/theme discovery, not the state under test.
     (services / "DesktopTools.qml").write_text("pragma Singleton\nimport QtQuick\nQtObject {property bool quiet:false}\n")
+    (services / "Spaces.qml").write_text('pragma Singleton\nimport QtQuick\nQtObject {property var focusedMonitor:({name:"DP-detached"})}\n')
+    (services / "SpotifyDesk.qml").write_text('pragma Singleton\nimport QtQuick\nQtObject {property bool fullscreen:false}\n')
     (config / "MachineProfile.qml").write_text('pragma Singleton\nimport QtQuick\nQtObject {property bool desktop:false;property string primaryOutput:"fixture-a";function role(name:string):string{return "main";}}\n')
     (config / "Appearance.qml").write_text("pragma Singleton\nimport QtQuick\nQtObject {property var metrics:({barHeight:30})}\n")
     shutil.copy2(ROOT / "tests/fixtures/bar-hover.qml", tmp_path / "shell.qml")
@@ -41,3 +43,4 @@ def test_parked_remote_cursor_and_overlapping_bars(tmp_path):
     report = result.stdout + result.stderr
     assert result.returncode == 0, report
     assert "PROOF_PASS parked hover" in report, report
+    assert "PROOF_PASS disconnected popup fallback" in report, report

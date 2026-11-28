@@ -97,6 +97,9 @@ released control and a complete subsequent run passed. Its cause remains unknown
 Physical display transfer, unattended boot/Windows return, off-site operation and
 phone-controlled Spotify soak remain unverified. Private evidence stays local.
 
+A popup toggle falls back to a connected output if its invoking display has
+disconnected. With no outputs available, it leaves popup state unchanged.
+
 ## 20 October — audio, pen, media and popup repair
 
 Arete: 444 repository tests passed after the backend/gateway fixes. Actual YouTube A/V playback passed all four local outputs, with matching audio/video progression, advancing frames, pause/resume and measured instantaneous A/V difference below 0.02 ms in that fixture. This is a short playback test, not a guarantee about all videos or networks.
