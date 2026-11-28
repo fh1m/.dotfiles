@@ -202,17 +202,24 @@ Singleton {
     property string instrumentKind:"engineering"
     property bool instrumentPinned:false
     property var instrumentPrevious:({name:"",output:""})
+    function dropdownOutput(output:string):var {
+        const focused = focusedScreenName();
+        for (const candidate of [output, focused, MachineProfile.primaryOutput]) {
+            if (screens.some(screen => screen.name === candidate)) return candidate;
+        }
+        return barScreens[0]?.name ?? null;
+    }
     function openDropdownOn(name:string,output:string):void {
-        if(!screens.some(s=>s.name===output))output=focusedScreenName();
-        if(!screens.some(s=>s.name===output))output=MachineProfile.primaryOutput;
-        if(!screens.some(s=>s.name===output))return;
-        SpotifyDesk.fullscreen=false;dropdownOriginScreen=output;dropdownEdge=edgeFor(name,output);dropdownAnchorX=anchorFor(name);dropdown=name;dropdownStamp++;
+        const target = dropdownOutput(output);
+        if (target === null) return;
+        SpotifyDesk.fullscreen=false;dropdownOriginScreen=target;dropdownEdge=edgeFor(name,target);dropdownAnchorX=anchorFor(name);dropdown=name;dropdownStamp++;
     }
     function toggleDropdownOn(name:string,output:string):void {
-        if(!screens.some(s=>s.name===output)){toggleDropdown(name);return;}
-        const close=dropdown===name&&dropdownOriginScreen===output;
+        const target = dropdownOutput(output);
+        if (target === null) return;
+        const close=dropdown===name&&dropdownOriginScreen===target;
         if(close){dropdown="";dropdownStamp++;return;}
-        openDropdownOn(name,output);
+        openDropdownOn(name,target);
     }
     function pinInstrument(kind:string):void {
         const pad=screens.find(s=>MachineProfile.role(s.name)==="screenpad");if(!pad)return;

@@ -22,6 +22,15 @@ ShellRoot {
                 if(ShellState.barHovered||Object.keys(ShellState.barHovers).length!==1){fail("ownership transition did not disqualify stale hover");return;}
                 ShellState.setBarHover("bottom","fixture-b",false);
                 if(Object.keys(ShellState.barHovers).length!==0){fail("destroyed bar retained hover state");return;}
+                const output = ShellState.barScreens[0]?.name;
+                if (output === undefined) { fail("fixture has no fallback output"); return; }
+                ShellState.toggleDropdownOn("system", "DP-detached");
+                if (ShellState.dropdown !== "system" || ShellState.dropdownOriginScreen !== output) {
+                    fail("popup did not open on the surviving output"); return;
+                }
+                ShellState.toggleDropdownOn("system", "DP-detached");
+                if (ShellState.dropdown !== "") { fail("second toggle did not close the popup"); return; }
+                console.log("PROOF_PASS disconnected popup fallback");
                 console.log("PROOF_PASS parked hover -> local ownership -> overlapping bars -> remote ownership -> cleanup");Qt.quit();
             }
         }
