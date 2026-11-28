@@ -47,6 +47,17 @@ with tempfile.TemporaryDirectory(prefix='dotfiles-test-') as directory:
     phone.write_text('live phone address\n')
     m.install(home, True, 'generic')
     assert phone.read_text() == 'live phone address\n'
+    # A live GTK3 palette keeps its color but loses the prior incompatible GTK4 block.
+    gtk = home/'.config/gtk-3.0/colors.css'
+    current = '@define-color accent_bg_color #4499aa;\n'
+    legacy = current + '\n/*\n adw-gtk-theme colors\n Generated with Matugen\n\n GTK 4.16+\n url\n*/\n\n:root {\n    --accent-bg-color: @accent_bg_color;\n}\n'
+    gtk.write_text(legacy)
+    preview = m.install(home)
+    assert str(gtk.relative_to(home)) in preview['changed'] and gtk.read_text() == legacy
+    migrated = m.install(home, True)
+    assert gtk.read_text().strip() == current.strip()
+    assert (Path(migrated['backup'])/gtk.relative_to(home)).read_text() == legacy
+    assert not m.install(home)['changed']
     # A live symlink must be replaced by a link, never written through.
     live = Path(tempfile.mkdtemp(prefix='dotfiles-live-'))
     other = live/'elsewhere.conf'; other.write_text('keep me\n')

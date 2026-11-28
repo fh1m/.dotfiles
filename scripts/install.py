@@ -119,11 +119,22 @@ def install(home, apply=False, hardware='generic'):
         # A live directory link (e.g. ~/.config/nvim -> the repo) makes dest the source itself.
         if dest.exists() and dest.resolve() == source.resolve():
             continue
+        data = None
         if relative.as_posix() in SEED_ONLY and (dest.exists() or dest.is_symlink()):
-            continue
-        overlay = ROOT / 'profiles' / hardware / 'home' / relative
-        selected = overlay if overlay.is_file() else source
-        data = render(selected.read_bytes(), home, hardware)
+            if relative.as_posix() != '.config/gtk-3.0/colors.css' or dest.is_symlink() or not dest.is_file():
+                continue
+            # Old releases shipped a GTK4 variable block at the end of this
+            # generated GTK3 file. Preserve the live palette, without importing
+            # the exact incompatible block into GTK3.
+            current = dest.read_bytes()
+            data = re.sub(
+                rb'\n/\*\n adw-gtk-theme colors\n Generated with Matugen\n\n GTK 4\.16\+\n[^*]*\*/\n\n:root \{[^}]*\}\n?',
+                b'\n', current, count=1,
+            )
+        if data is None:
+            overlay = ROOT / 'profiles' / hardware / 'home' / relative
+            selected = overlay if overlay.is_file() else source
+            data = render(selected.read_bytes(), home, hardware)
         if relative.as_posix() == '.config/sensei/machine.json' and hardware == 'zenbook':
             data = b'{"profile":"zenbook","primaryOutput":"eDP-1","gpuPolicy":"hybrid"}\n'
         # A symlink whose target already holds these bytes is not a change. Without
