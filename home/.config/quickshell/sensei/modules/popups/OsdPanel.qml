@@ -27,7 +27,7 @@ ChamferPanel {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: root.padding
-        height: 18
+        height: 24
 
         Row {
             anchors.left: parent.left
@@ -37,7 +37,7 @@ ChamferPanel {
             Text {
                 textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.volume ? "VOL" : "BRI"
+                text: root.volume ? "Volume" : "Brightness"
                 color: Theme.bright
                 font.family: Appearance.font.display
                 font.pixelSize: 14
@@ -45,21 +45,12 @@ ChamferPanel {
                 renderType: Text.NativeRendering
             }
 
-            NrLabel {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.volume ? Audio.deviceName : Brightness.outputName
-            }
-
             Text {
-                textFormat: Text.PlainText
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.volume ? "ЗВУК" : "ЯРКОСТЬ"
-                color: Theme.signal
-                font.family: Appearance.font.accent
-                font.letterSpacing: 0
-                font.pixelSize: Appearance.size.katakana
-                font.weight: Appearance.font.weightMedium
-                renderType: Text.NativeRendering
+                anchors.verticalCenter:parent.verticalCenter
+                width:Math.max(0,line.width-198)
+                text:root.volume?Audio.deviceName:Brightness.outputName
+                textFormat:Text.PlainText;elide:Text.ElideRight
+                font.family:Appearance.font.reading;font.pixelSize:13;color:Theme.paperMuted
             }
         }
 
@@ -93,7 +84,7 @@ ChamferPanel {
         segments: 20
         spacing: 3
         segmentWidth: (width - (segments - 1) * spacing) / segments
-        segmentHeight: 10
+        segmentHeight: 16
         value: root.level
         litColor: root.muted ? Theme.mute : Theme.accent
         animate: false

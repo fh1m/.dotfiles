@@ -12,17 +12,30 @@ def query(device):
  fields=['GENERAL.CONNECTION','GENERAL.HWADDR','GENERAL.MTU','IP4.ADDRESS','IP4.GATEWAY','IP4.DNS','IP6.ADDRESS','IP6.GATEWAY']
  r=subprocess.run(['nmcli','-f',','.join(fields),'device','show',device],text=True,capture_output=True,timeout=3)
  return {'device':device,'speedMbps':read('speed'),'duplex':read('duplex'),'mtu':read('mtu'),'carrier':read('carrier'),'mac':read('address'),'details':'\n'.join(line for line in r.stdout.strip().splitlines() if line),'error':r.stderr.strip() if r.returncode else ''}
+
+def wired_carriers(root=Path('/sys/class/net')):
+ links=[]
+ for p in sorted(root.iterdir()):
+  try:
+   if (p/'device').exists() and not (p/'wireless').exists() and not (p/'phy80211').exists() and (p/'type').read_text().strip()=='1' and (p/'carrier').read_text().strip()=='1':
+    links.append({'name':p.name})
+  except OSError:pass
+ return links
+
 def watch():
  import sys
  sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"share/sensei"))
  from child_lifetime import bind_parent
  bind_parent()
- import signal,select,time
- process=subprocess.Popen(['stdbuf','-oL','nmcli','monitor'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True,env={**__import__('os').environ,'LC_ALL':'C'})
+ import signal
+ process=subprocess.Popen(['stdbuf','-oL','ip','-o','monitor','link'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)
+ previous=None
  def emit():
-  out=subprocess.check_output(['nmcli','-t','-f','DEVICE,TYPE,STATE','device','status'],text=True,timeout=3,env={**__import__('os').environ,'LC_ALL':'C'})
-  links=[{'name':x.split(':')[0]} for x in out.splitlines() if ':ethernet:connected' in x]
-  print(json.dumps({'links':links}),flush=True)
+  nonlocal previous
+  links=wired_carriers()
+  if links!=previous:
+   print(json.dumps({'links':links}),flush=True)
+   previous=links
  def stop(*_):raise SystemExit(0)
  signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop)
  try:

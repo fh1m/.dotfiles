@@ -396,6 +396,24 @@
     "detail": "Move the room without stopping music. Backdrop puts it behind applications; restore with the bar music control."
   },
   {
+    "key": "F6",
+    "title": "Filter the switcher by display",
+    "group": "Window switcher",
+    "detail": "Cycles All displays and each connected output. Enter switches the highlighted workspace; click a live thumbnail to focus its window."
+  },
+  {
+    "key": "Pause previews",
+    "title": "Pause workspace captures",
+    "group": "Window switcher",
+    "detail": "Stops frame requests without closing the switcher. Closing it releases the preview surfaces."
+  },
+  {
+    "key": "Super+G / Super+Shift+G",
+    "title": "Remove or restore compact window gaps",
+    "group": "Desktop",
+    "detail": "Super+G removes tiling gaps; add Shift to restore compact gaps. Reloading Hyprland restores the regular spacing."
+  },
+  {
     "key": "Alt+Shift+h/j/k/l",
     "title": "Move code without losing selection",
     "group": "Neovim",

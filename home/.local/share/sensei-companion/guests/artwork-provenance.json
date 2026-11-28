@@ -3,6 +3,8 @@
   "date": "2026-10-20",
   "style": "natural adult proportions; individual likeness based on portrait and speaking references",
   "outputs": {
+    "bourdain": {"file":"bourdain-den.png","model":"gpt-image-2-codex","date":"2026-11-28","notes":"Original four-pose generated illustration; alpha cleaned and cropped locally."},
+    "shannon": {"file":"shannon-den.png","model":"gpt-image-2-codex","date":"2026-11-28","notes":"Original four-pose generated illustration; alpha cleaned and cropped locally."},
     "feynman": {
       "file": "feynman-v3.png",
       "references": [

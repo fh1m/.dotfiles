@@ -18,7 +18,7 @@ Item {
  Timer {id:settle;interval:1800;onTriggered:root.pendingLevel=-1}
  signal edited(real percent)
  width:parent.width
- implicitHeight:46;height:implicitHeight
+ implicitHeight:54;height:implicitHeight
  Dial {
   id:knob;width:42;height:42;anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter
   from:0;to:root.maximum;stepSize:1;inputMode:Dial.Vertical;wheelEnabled:true
@@ -39,14 +39,14 @@ Item {
  Text { textFormat: Text.PlainText;x:54;y:5;width:parent.width-118;elide:Text.ElideRight;text:root.title;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;font.weight:Font.DemiBold;color:Theme.widgetText}
  Text { textFormat: Text.PlainText;anchors.right:parent.right;y:5;text:root.valueText||Math.round(root.displayed)+'%';font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.section;font.weight:Font.DemiBold;color:root.accentColor}
  Slider {
-  id:trim;x:54;y:25;width:Math.max(30,parent.width-54);height:18
+  id:trim;x:54;y:24;width:Math.max(30,parent.width-54);height:28
   from:0;to:root.maximum;stepSize:1
   Accessible.name:root.title+' fine adjustment'
   Binding {target:trim;property:'value';value:root.shownLevel;when:!trim.pressed;restoreMode:Binding.RestoreNone}
   onMoved:root.adjust(value)
-  background:Rectangle {x:trim.leftPadding;y:trim.topPadding+trim.availableHeight/2-1;width:trim.availableWidth;height:2;radius:1;color:Theme.widgetBorder
-   Rectangle {width:trim.visualPosition*parent.width;height:2;radius:1;color:Theme.alpha(root.accentColor,.72)}
+  background:Rectangle {x:trim.leftPadding;y:trim.topPadding+(trim.availableHeight-height)/2;width:trim.availableWidth;height:8;radius:4;color:Theme.widgetBorder
+   Rectangle {width:trim.visualPosition*parent.width;height:parent.height;radius:parent.radius;color:Theme.alpha(root.accentColor,.76)}
   }
-  handle:Rectangle {x:trim.leftPadding+trim.visualPosition*(trim.availableWidth-width);y:trim.topPadding+trim.availableHeight/2-height/2;width:trim.pressed?7:5;height:trim.pressed?7:5;radius:4;color:root.accentColor;Behavior on width {NumberAnimation {duration:90}}Behavior on height {NumberAnimation {duration:90}}}
+  handle:Rectangle {x:trim.leftPadding+trim.visualPosition*(trim.availableWidth-width);y:trim.topPadding+(trim.availableHeight-height)/2;width:14;height:14;radius:7;color:root.accentColor;border.width:trim.activeFocus?2:1;border.color:Theme.widgetText}
  }
 }

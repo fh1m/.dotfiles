@@ -32,7 +32,7 @@ Column {
  }
  Row {width:parent.width;spacing:8
   Repeater {model:[{minutes:5,label:"Often · 5 min"},{minutes:10,label:"Regular · 10 min"},{minutes:30,label:"Occasional · 30 min"}]
-   ControlTile {required property var modelData;implicitWidth:(root.width-16)/3;label:modelData.label;selected:Number(root.settings.guestMinutes||10)===modelData.minutes;onActivated:{Den.companion("guest-frequency",String(modelData.minutes));root.feedback="Visits every "+modelData.minutes+" minutes when there's room. Quiet mode and fullscreen still take priority."}}
+  ControlTile {required property var modelData;implicitWidth:(root.width-16)/3;label:modelData.label;selected:Number(root.settings.guestMinutes||5)===modelData.minutes;onActivated:{Den.companion("guest-frequency",String(modelData.minutes));root.feedback="Visits every "+modelData.minutes+" minutes when there's room. Quiet mode and fullscreen still take priority."}}
   }
  }
  Text {visible:root.showFeedback;width:parent.width;text:root.feedback;wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paperMuted}

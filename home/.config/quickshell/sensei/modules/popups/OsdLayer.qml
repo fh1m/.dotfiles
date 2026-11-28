@@ -21,8 +21,8 @@ Variants {
         // Faded by the compositor, see the layer rule in hypr-sensei.lua.
         visible: shown
 
-        implicitWidth: 400
-        implicitHeight: 74
+        implicitWidth: Math.min(460, modelData.width-24)
+        implicitHeight: 82
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "sensei-popup"

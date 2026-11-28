@@ -15,6 +15,19 @@ class Guests(unittest.TestCase):
   self.assertEqual(self.js("choose([{id:'a',quotes:[{id:'a1'}]},{id:'b',quotes:[{id:'b1'},{id:'b2'}]}],{guest:'a',quotes:['b1']},'',0)"),{'guest':1,'quote':1})
  def test_invalid_requested_guest_is_not_randomly_substituted(self):
   self.assertIsNone(self.js("choose([{id:'a',quotes:[{id:'a1'}]}],{},'unknown',0)"))
+ def test_rotation_finishes_the_family_before_repeating_and_keeps_other_guests_history(self):
+  self.assertTrue(self.js(r"""(()=>{
+    let g={id:'a',quotes:Array.from({length:80},(_,i)=>({id:'q'+i}))};
+    let history={quotes:['other-guest']}, visited=new Set(), last;
+    for(let i=0;i<80;i++){
+      const choice=choose([g],history,'a',0,'quotes'), item=entries(g)[choice.quote];
+      if(visited.has(item.id))return false;
+      visited.add(item.id);last=item.id;
+      history.quotes=remember(g,item,history.quotes);
+    }
+    const next=entries(g)[choose([g],history,'a',0,'quotes').quote];
+    return next.id!==last&&remember(g,next,history.quotes).join(',')==='other-guest,'+next.id;
+  })()"""))
  def test_whole_scene_avoids_windows_on_all_display_sizes(self):
   self.assertTrue(self.js("(()=>{for(let [w,h] of [[1920,1080],[1280,720],[1920,550],[960,540]]){let obstacles=[{x:0,y:0,w:w/2,h:h}];let p=place(w,h,420,390,obstacles,0);if(p.available&&(p.x<12||p.y<52||p.x+420>w-12||p.y+390>h-48||intersects({...p,w:420,h:390},obstacles[0])))return false;}return !place(300,300,420,390,[],0).available;})()"))
  def test_fullscreen_has_no_place(self):

@@ -109,6 +109,7 @@ def main():
     for name,provider in [('Desktop',desktop),('Alacritty',terminal),('tmux',multiplexer),('Neovim',editor)]:
         try:rows.extend(provider())
         except (OSError,ValueError,StopIteration,subprocess.SubprocessError) as error:warnings.append(name+' inventory unavailable; curated guide remains')
+    rows=list({(r['group'],r['key'],r['title']):r for r in rows}.values())
     print(json.dumps({'rows':rows,'warnings':warnings,'scope':'Live desktop/tmux and configured terminal/editor keys. Application-native defaults stay in each application help.'}))
 
 if __name__=='__main__':main()

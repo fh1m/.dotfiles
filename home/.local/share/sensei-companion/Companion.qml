@@ -72,8 +72,15 @@ Item {
     property var personal:[]
     property var memory:({recent:[],turn:0})
     property bool memoryLoaded:false
-    property string lastMode:""
+    property real lastPresenceEvent:0
     property bool presenceLoaded:false
+    readonly property string compositorSession:Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")||""
+    FileView {
+        id:sessionWelcome
+        path:root.compositorSession ? Quickshell.env("XDG_RUNTIME_DIR")+"/sensei-welcome-"+root.compositorSession : ""
+        printErrors:false
+        onLoadFailed:if(path&&root.compositorSession) {setText("shown\n");root.welcome("WELCOME HOME, FH1M");}
+    }
     property string welcomeText:""
     property bool welcoming:false
     property real lastWelcome:0
@@ -259,10 +266,13 @@ Item {
             if(root.preferences.tipAt && root.preferences.tipAt!==root.seenTip && Date.now()/1000-root.preferences.tipAt<8){root.seenTip=root.preferences.tipAt;root.greet(true);}
         }catch(e){}}}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/presence.json";watchChanges:true;printErrors:false
-        onFileChanged:reload();onLoaded:{try{const p=JSON.parse(text()),mode=p.mode?.effective||"";
-            if(root.presenceLoaded && mode!==root.lastMode)root.welcome(mode==="together"?"THE DEN IS TOGETHER":p.host==="homie"?"HOMIE HOLDS THE FORT":"ARETE, ON THE MOVE");
-            if(!root.presenceLoaded)root.welcome("WELCOME HOME, FH1M");
-            root.presenceLoaded=true;root.lastMode=mode;root.presence=p;}catch(e){}}}
+        onFileChanged:reload();onLoaded:{try{
+            const p=JSON.parse(text()), display=p.presentation||{}, event=Number(display.eventAt||0);
+            if(root.presenceLoaded&&event>root.lastPresenceEvent&&Math.abs(Date.now()/1000-event)<45&&root.allowed&&!root.denDnd&&root.preferences.welcome!==false&&root.preferences.quiet!==true)
+                root.say(display.joined?"The Den is together.":"The other desk is unavailable. Local work is still here.","Den status");
+            root.lastPresenceEvent=Math.max(root.lastPresenceEvent,event);
+            root.presenceLoaded=true;root.presence=p;
+        }catch(e){}}}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/backup-status.json";watchChanges:true;printErrors:false
         onFileChanged:reload();onLoaded:{try{const x=JSON.parse(text());
             if(root.backupLoaded && x.finished && x.finished!==root.seenBackup && root.allowed && root.preferences.chatter!==false)
@@ -270,7 +280,6 @@ Item {
             root.seenBackup=x.finished??"";root.backupLoaded=true;
         }catch(e){}}}
     Connections {target:Hyprland;function onRawEvent(event){
-        if(event.name==="monitoradded")dockHello.restart();
         if(["fullscreen","workspace","workspacev2","focusedmon","monitoradded","monitorremoved","activewindow","activewindowv2","openwindow","closewindow","movewindow","movewindowv2","changefloatingmode","windowtitle","configreloaded"].includes(event.name))root.refresh();
     }}
     Timer {id:query;interval:100;onTriggered:{Hyprland.refreshMonitors();Hyprland.refreshWorkspaces();Hyprland.refreshToplevels();settle.restart();}}
@@ -278,7 +287,6 @@ Item {
     Timer {interval:15000;repeat:true;running:root.eligible;onTriggered:root.refresh()}
     // Keep the clock independent of 45–90 s travel leases and available wallpaper.
     Timer {interval:Math.max(25000,Math.min(600000,(root.preferences.chatterSeconds??45)*1000));repeat:true;running:root.preferences.enabled!==false&&root.preferences.chatter!==false&&root.preferences.quiet!==true;onTriggered:root.greet()}
-    Timer {id:dockHello;interval:1600;onTriggered:root.welcome("MORE ROOM TO BUILD")}
     Timer {id:arrivalHello;interval:5500;onTriggered:if(!root.speaking)root.greet()}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-notifications.json";watchChanges:true;printErrors:false
         onFileChanged:reload();onLoaded:{try{const n=JSON.parse(text());if(root.noticeLoaded&&((n.event&&n.event!==root.notices.event)||n.unread>root.seenUnread)&&!n.dnd)noticeDelay.restart();if(root.noticeLoaded&&root.notices.dnd&&!n.dnd&&n.unread>0)noticeDelay.restart();root.seenUnread=n.unread||0;root.notices=n;root.noticeLoaded=true;}catch(e){}}

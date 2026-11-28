@@ -3,6 +3,42 @@
   "rosterSource": "https://fh1m.github.io/mongla_ws/",
   "disclaimer": "Illustrated tribute visits. Introductions and Zondo replies are staged; only quotation cards reproduce sourced words. Context and life/work cards are our summaries.",
   "sources": {
+    "bourdain-freshair": {
+      "url": "https://freshairarchive.org/segments/fresh-air-terry-gross-16",
+      "title": "Fresh Air interview, October 2016",
+      "kind": "published interview transcript",
+      "author": "Anthony Bourdain"
+    },
+    "bourdain-academy": {
+      "url": "https://interviews.televisionacademy.com/interviews/anthony-bourdain",
+      "title": "Television Academy interview, August 2015",
+      "kind": "recorded interview and chapter index",
+      "author": "Anthony Bourdain"
+    },
+    "shannon-chess": {
+      "url": "https://s3data.computerhistory.org/chess/programming-a-computer-for-playing-chess.shannon.062303002.pdf",
+      "title": "Programming a Computer for Playing Chess, 1950",
+      "kind": "original paper",
+      "author": "Claude Shannon"
+    },
+    "shannon-oral": {
+      "url": "https://ethw.org/Oral-History:Claude_E._Shannon",
+      "title": "IEEE oral history, July 1982",
+      "kind": "interview, summarized only",
+      "author": "Claude Shannon"
+    },
+    "shannon-collection": {
+      "url": "https://findingaids.loc.gov/repositories/19/resources/2035",
+      "title": "Claude Elwood Shannon Papers",
+      "kind": "Library of Congress finding aid",
+      "author": "Library of Congress"
+    },
+    "shannon-communication": {
+      "url": "https://reach.ieee.org/primary-sources/a-mathematical-theory-of-communication",
+      "title": "A Mathematical Theory of Communication, 1948",
+      "kind": "original paper",
+      "author": "Claude Shannon"
+    },
     "feynman-cargo": {
       "url": "https://calteches.library.caltech.edu/51/2/CargoCult.htm",
       "title": "Cargo Cult Science · 1974",
@@ -414,6 +450,238 @@
     }
   },
   "guests": [
+    {
+      "id": "bourdain",
+      "name": "Anthony Bourdain",
+      "role": "Cook, writer and field observer",
+      "story": "Bourdain brought the perspective of a working cook to television. His best field questions were often about the people at the table rather than the meal itself.",
+      "storySource": "bourdain-academy",
+      "atlas": "bourdain-den.png",
+      "quotes": [
+        {
+          "id": "bourdain-dishes",
+          "source": "bourdain-freshair",
+          "text": "I was a happy dishwasher",
+          "context": "He describes the kitchen brigade as a place where effort earned trust.",
+          "question": "Who does the quiet work in our own lab?",
+          "excerpt": true
+        },
+        {
+          "id": "bourdain-learning",
+          "source": "bourdain-freshair",
+          "text": "the bottom of a steep learning curve",
+          "context": "He recalls taking satisfaction in being a beginner.",
+          "question": "What skill could we start again as beginners?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "bourdain-topic-01",
+          "title": "The dishwasher station",
+          "source": "bourdain-freshair",
+          "story": "Bourdain describes washing dishes as his first experience of wanting the respect of a working team.",
+          "task": "Take one recurring cleanup task and make its handoff unmistakable.",
+          "question": "Who saves the rest of us time without making a show of it?"
+        },
+        {
+          "id": "bourdain-topic-02",
+          "title": "Consistency under pressure",
+          "source": "bourdain-freshair",
+          "story": "He distinguishes the romantic image of restaurant work from delivering the same result on time.",
+          "task": "Run one procedure twice, once while rushed, and write down the first point of drift.",
+          "question": "Which preparation made the difference?"
+        },
+        {
+          "id": "bourdain-topic-03",
+          "title": "Write for the people who do it",
+          "source": "bourdain-freshair",
+          "story": "He says he initially wrote for working cooks who would recognize their own world.",
+          "task": "Explain an annoying bug to the person who will be on call for it next.",
+          "question": "What would they want you to leave out?"
+        },
+        {
+          "id": "bourdain-topic-04",
+          "title": "The hour before the shift",
+          "source": "bourdain-freshair",
+          "story": "His account of early-morning writing ties the finished book to limited time and an ordinary day job.",
+          "task": "Spend one uninterrupted block on one unfinished paragraph, drawing or derivation.",
+          "question": "Does a smaller slot make starting easier?"
+        },
+        {
+          "id": "bourdain-topic-05",
+          "title": "Go back and look again",
+          "source": "bourdain-freshair",
+          "story": "He describes revisiting a longhouse in Borneo a decade later and wanting to see what had changed.",
+          "task": "Revisit an old notebook or place and record what is different before guessing why.",
+          "question": "Which change surprised the person who was there before?"
+        },
+        {
+          "id": "bourdain-topic-06",
+          "title": "The camera changes the room",
+          "source": "bourdain-freshair",
+          "story": "He discusses how broadcasting a tiny local bar could change its clientele and the place itself.",
+          "task": "Write down what broadcasting a detail would change for someone already there.",
+          "question": "What should we deliberately leave out of the public write-up?"
+        },
+        {
+          "id": "bourdain-topic-07",
+          "title": "A meal without a score",
+          "source": "bourdain-freshair",
+          "story": "He distinguishes his emotional response to a familiar bowl of noodles from reviewing it critically.",
+          "task": "Return to one familiar place just to enjoy it, without taking notes.",
+          "question": "Which experiences are better left ungraded?"
+        },
+        {
+          "id": "bourdain-topic-08",
+          "title": "The table is not the whole story",
+          "source": "bourdain-academy",
+          "story": "The interview includes producing episodes in people's homes and eating with hosts, not just reviewing restaurants.",
+          "task": "Ask someone what a routine dish means to them before describing how it tastes.",
+          "question": "What does the host know that a visitor cannot see?"
+        },
+        {
+          "id": "bourdain-topic-09",
+          "title": "The people behind the episode",
+          "source": "bourdain-academy",
+          "story": "The interview has a dedicated segment on his technical crew and how the series was made.",
+          "task": "In the next project demo, credit one decision made by a collaborator who normally stays off camera.",
+          "question": "Whose judgment is hidden in the finished result?"
+        },
+        {
+          "id": "bourdain-topic-10",
+          "title": "Change medium, keep an ear",
+          "source": "bourdain-academy",
+          "story": "He moved between cookbooks, travel television and writing for the drama Treme.",
+          "task": "Turn one technical explanation into a two-person dialogue with a skeptical listener.",
+          "question": "What became obvious only when somebody had to say it aloud?"
+        },
+        {
+          "id": "bourdain-topic-11",
+          "title": "A working trip",
+          "source": "bourdain-academy",
+          "story": "The chapter index includes his research process and what it meant to return to cities he had filmed before.",
+          "task": "Before visiting a lab or street market, write one question you cannot answer from a desk.",
+          "question": "What would make the trip worth it without a photograph?"
+        }
+      ]
+    },
+    {
+      "id": "shannon",
+      "name": "Claude Shannon",
+      "role": "Information theorist and playful builder",
+      "story": "Shannon treated puzzles and small machines as serious opportunities to make ideas testable. His chess paper moves from the rules of a familiar game to state, evaluation, and search.",
+      "storySource": "shannon-chess",
+      "atlas": "shannon-den.png",
+      "quotes": [
+        {
+          "id": "shannon-chess-wedge",
+          "source": "shannon-chess",
+          "text": "a wedge in attacking other problems",
+          "context": "A well-posed game can serve as a prototype for a family of problems.",
+          "question": "What is the smallest testbed that still contains our hard problem?",
+          "excerpt": true
+        },
+        {
+          "id": "shannon-chess-quality",
+          "source": "shannon-chess",
+          "text": "from the best down to the worst",
+          "context": "He explicitly distinguishes between binary correctness and the quality of a feasible answer.",
+          "question": "What matters among several solutions that all pass?",
+          "excerpt": true
+        }
+      ],
+      "topics": [
+        {
+          "id": "shannon-topic-01",
+          "title": "A puzzle worth keeping",
+          "source": "shannon-chess",
+          "story": "Shannon chose chess in part because it is sharply defined without being trivial or intractable as an experiment.",
+          "task": "Make a toy case whose success condition is clear and whose hard part still resembles the real task.",
+          "question": "Which simplifying assumption would make the toy dishonest?"
+        },
+        {
+          "id": "shannon-topic-02",
+          "title": "State is more than a picture",
+          "source": "shannon-chess",
+          "story": "His definition of a position includes information about past moves, such as whether castling is still legal.",
+          "task": "List the unseen history your controller or planner currently assumes.",
+          "question": "What two identical-looking observations require different actions?"
+        },
+        {
+          "id": "shannon-topic-03",
+          "title": "A grade rather than a verdict",
+          "source": "shannon-chess",
+          "story": "He distinguishes the quality of a solution from merely obeying the rules.",
+          "task": "Take three legal plans and rank them using criteria written down before looking at their outputs.",
+          "question": "Do the criteria agree when resources get tight?"
+        },
+        {
+          "id": "shannon-topic-04",
+          "title": "A constrained search budget",
+          "source": "shannon-chess",
+          "story": "The paper uses chess to contrast searching many lines with concentrating on promising moves.",
+          "task": "Compare full and selective search on a tiny decision tree with a known answer.",
+          "question": "Where does the selective rule miss something important?"
+        },
+        {
+          "id": "shannon-topic-05",
+          "title": "Don't confuse a bound with an algorithm",
+          "source": "shannon-chess",
+          "story": "The paper separates the existence of a theoretical result from a practical way to find it.",
+          "task": "Mark which parts of a proof establish possibility and which produce a runnable procedure.",
+          "question": "What still has to be constructed?"
+        },
+        {
+          "id": "shannon-topic-06",
+          "title": "Different messages, one channel",
+          "source": "shannon-communication",
+          "story": "His communication framework separates the message source, transmitter, channel, receiver and destination.",
+          "task": "Draw those five roles for a timestamped sensor stream before choosing a transport.",
+          "question": "Where can the measurement go wrong without the packet being lost?"
+        },
+        {
+          "id": "shannon-topic-07",
+          "title": "The surprise in a source",
+          "source": "shannon-communication",
+          "story": "The 1948 paper builds a quantitative notion of uncertainty from the probabilities of possible messages.",
+          "task": "Compare a balanced and a biased coin using the same number of observations.",
+          "question": "Why is a rare outcome more informative than an expected one?"
+        },
+        {
+          "id": "shannon-topic-08",
+          "title": "Useful redundancy",
+          "source": "shannon-communication",
+          "story": "He distinguishes constraints on source messages from mechanisms that protect transmission against noise.",
+          "task": "Take a toy byte stream, compress its obvious repetition, and then add one integrity check.",
+          "question": "Why can removing redundancy and adding it both be useful?"
+        },
+        {
+          "id": "shannon-topic-09",
+          "title": "A relay as a statement",
+          "source": "shannon-oral",
+          "story": "The oral history links his work on switching to Boolean algebra.",
+          "task": "Draw a two-input relay circuit and write the proposition it realizes.",
+          "question": "Which variable changes meaning if the contacts are normally closed?"
+        },
+        {
+          "id": "shannon-topic-10",
+          "title": "A serious side project",
+          "source": "shannon-oral",
+          "story": "He recalls exploring an additional switching-circuit question alongside an assigned relay problem.",
+          "task": "Keep an evidence-only branch for one question raised by your current project.",
+          "question": "What could that branch teach even if it never ships?"
+        },
+        {
+          "id": "shannon-topic-11",
+          "title": "Toys belong in the record",
+          "source": "shannon-collection",
+          "story": "The Library of Congress finding aid preserves papers recording both formal investigations and builds.",
+          "task": "Make a one-page lab record for a playful device that actually behaves in an interesting way.",
+          "question": "What could another person reproduce from your record alone?"
+        }
+      ]
+    },
     {
       "id": "feynman",
       "name": "Richard Feynman",

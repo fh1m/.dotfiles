@@ -127,9 +127,9 @@ The tiny engineer may lose a semicolon. The mouse should have an escape route.
 A file picker, a result, a monitor, USB diagnostics. Small jobs belong here; the main screen stays available for the hard part.
 
 The switcher fits the display it opens on, including the ScreenPad. Pick a display
-or press **F6** to filter windows and switch workspaces on that display. Only the
-selected app window uses live capture; the workspace overview lists windows without
-capturing them.
+or press **F6** to filter windows and switch workspaces on that display. Visible
+workspace cards share a bounded live-capture clock; pause previews to stop
+refreshes. Closing the switcher releases the previews.
 
 The primary display on each machine drives the theme. The picker groups nearby
 hues so a textured area can outweigh one flat swatch, and keeps the terminal

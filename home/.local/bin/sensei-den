@@ -230,7 +230,7 @@ def companion(action,value=None):
         catalog=read(HOME/'.local/share/sensei-companion/guests/catalog.json',{'guests':[]})
         ids=[g['id'] for g in catalog['guests']]
         if action=='guests':
-            if value not in ('on','off'):return {'enabled':cfg.get('guestsEnabled',True),'people':ids,'frequencyMinutes':cfg.get('guestMinutes',10),'mode':cfg.get('guestMode','mixed'),'entriesPerGuest':{g['id']:len(g.get('quotes',[]))+10*len(g.get('topics',[])) for g in catalog['guests']}}
+            if value not in ('on','off'):return {'enabled':cfg.get('guestsEnabled',True),'people':ids,'frequencyMinutes':cfg.get('guestMinutes',5),'mode':cfg.get('guestMode','mixed'),'entriesPerGuest':{g['id']:len(g.get('quotes',[]))+10*len(g.get('topics',[])) for g in catalog['guests']}}
             cfg['guestsEnabled']=value=='on'
         else:
             if value and value not in ids:raise ValueError('Choose a guest: '+', '.join(ids))
@@ -877,8 +877,24 @@ def publish_peer_address():
     write(path,value)
 
 
+def presentation_presence(sample, old, now):
+    """Debounce visible status only; input safety still uses each live probe."""
+    state = dict(old or {})
+    if sample is None:
+        return {key: value for key, value in state.items() if key not in ('pending', 'since')}
+    if 'joined' not in state:
+        return {'joined': sample}
+    if sample == state['joined']:
+        return {key: value for key, value in state.items() if key not in ('pending', 'since')}
+    if sample != state.get('pending') or not 0 <= now - state.get('since', now) <= 75:
+        return dict(state, pending=sample, since=now)
+    if now - state['since'] >= 30:
+        return {'joined': sample, 'eventAt': now}
+    return state
+
+
 def watch():
-    previous=None;previous_mode=None;previous_topology=None
+    previous_mode=None;previous_topology=None;presentation={}
     while True:
         try:
             peer=connectivity();state=current_mode(peer)
@@ -886,7 +902,12 @@ def watch():
                 publish_peer_address();reconcile_mode()
             try:companion_tick(peer and state['effective']=='together')
             except (ValueError,OSError,subprocess.SubprocessError):pass
-            write(STATE/'presence.json',{'host':host(),'peer':peer,'mode':state,'time':time.time()})
+            now=time.time()
+            # A healthy peer with temporarily missing LAN routing evidence is
+            # not a departure. An explicit away/standalone request is different.
+            joined=True if peer and state['effective']=='together' else False if not peer or state['requested']!='auto' else None
+            presentation=presentation_presence(joined,presentation,now)
+            write(STATE/'presence.json',{'host':host(),'peer':peer,'mode':state,'time':now,'presentation':presentation})
             if host()=='arete':
                 active=service('den-input')=='active';paused=(PRIVATE/'input/user-paused').exists()
                 usable=peer and state['effective']=='together'
@@ -902,9 +923,6 @@ def watch():
             elif previous_mode=='homie' and state['effective']=='together':
                 with socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM) as s:s.sendto(b'owner-off',str(PRIVATE/'cursor.sock'))
             previous_mode=state['effective']
-            if previous is not None and peer!=previous:
-                run(['notify-send','-a','Digital Den','Homie connected' if peer else 'Den peer unavailable','Local work remains available'],timeout=3)
-            previous=peer
         except (OSError,ValueError,subprocess.SubprocessError):pass
         time.sleep(15)
 

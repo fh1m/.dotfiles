@@ -9,7 +9,7 @@ TERM = "alacritty"
 
 [window]
 decorations = "None"
-opacity = 0.94
+opacity = 0.90
 padding = { x = 14, y = 8 }
 dynamic_padding = true
 resize_increments = true

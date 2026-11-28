@@ -1,5 +1,10 @@
 // Pure local guest policy. No generated dialogue is attributed as a real quotation.
-var introduction='Zondo as Sensei of fh1m, I have a message for Him';
+var introductions=[
+ 'Zondo as Sensei of fh1m, I have a message for Him',
+ 'Pull up a chair. We brought something worth arguing about.',
+ 'Leave the unfinished work where it is. This might give it a better question.',
+ 'Zondo booked us a table by the workbench.'
+];
 function paginate(text, limit) {
     var words=String(text||'').trim().split(/\s+/),out=[],line='';
     words.forEach(function(word){
@@ -32,7 +37,8 @@ function entries(guest) {
     return result;
 }
 function pages(guest, quote) {
-    var out=[{speaker:guest.name,kind:'staged dialogue',text:introduction,source:''}];
+    var index=Array.from(String(quote.id||'')).reduce(function(n,c){return (n*31+c.charCodeAt(0))%introductions.length;},0);
+    var out=[{speaker:'Zondo',kind:'staged dialogue',text:introductions[index],source:''}];
     function add(text,speaker,kind,source){paginate(text,220).forEach(function(t){out.push({speaker:speaker,kind:kind,text:t,source:source||''});});}
     if(quote.kind==='story') {
         add(quote.title,'About '+guest.name,'reading trail · title',quote.source);
@@ -55,14 +61,26 @@ function choose(guests, history, requested, random, mode) {
     else if(candidates.length>1)candidates=candidates.filter(function(i){return guests[i].id!==history.guest;});
     if(!candidates.length)return null;
     var g=candidates[Math.min(candidates.length-1,Math.floor(Math.max(0,random)*candidates.length))];
-    var recent=history.quotes||[],qs=entries(guests[g]);
-    var family=['quotes','stories','workshop'].indexOf(mode)>=0?mode:(random<0.60?'quotes':random<0.80?'stories':'workshop');
+    var qs=entries(guests[g]), old=history.quotes||[];
+    var family=['quotes','stories','workshop'].indexOf(mode)>=0?mode:(random<0.32?'quotes':random<0.72?'stories':'workshop');
     var pool=qs.map(function(q,i){return i;}).filter(function(i){return family==='quotes'?!qs[i].kind:family==='stories'?qs[i].kind==='story':qs[i].kind==='workshop';});
     if(!pool.length)pool=qs.map(function(q,i){return i;});
-    var available=pool.filter(function(i){return recent.indexOf(qs[i].id)<0;});
-    if(!available.length)available=pool.filter(function(i){return pool.length===1||qs[i].id!==recent[recent.length-1];});
+    var available=pool.filter(function(i){return old.indexOf(qs[i].id)<0;});
+    if(!available.length) {
+        var last;
+        for(var j=old.length-1;j>=0;j--)if(pool.some(function(i){return qs[i].id===old[j];})){last=old[j];break;}
+        available=pool.filter(function(i){return pool.length===1||qs[i].id!==last;});
+    }
     if(!available.length)return null;
     return {guest:g,quote:available[Math.min(available.length-1,Math.floor(Math.max(0,random)*available.length))]};
+}
+function remember(guest, selection, previous) {
+    var family=selection.kind||'quote';
+    var ids=entries(guest).filter(function(q){return(q.kind||'quote')===family;}).map(function(q){return q.id;});
+    var seen=(previous||[]).filter(function(id){return id!==selection.id;});
+    if (ids.every(function(id){return (previous||[]).indexOf(id)>=0;}))
+        seen=seen.filter(function(id){return ids.indexOf(id)<0;});
+    return seen.concat([selection.id]);
 }
 function duration(page) {
     return Math.max(7000,Math.min(22000,3500+String(page.text||'').split(/\s+/).length*300));

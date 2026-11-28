@@ -7,6 +7,9 @@ ChamferPanel {
     id: root
     property int workspace: 1
     property bool selected: false
+    property bool inViewport: false
+    readonly property int slots: Math.min(3, windows.length)
+    readonly property bool showPreviews: height >= 118 && slots > 0
     readonly property var windows: WindowDesk.scopedWindows.filter(w => Spaces.logicalId(Spaces.windowWorkspace(w)) === workspace)
     readonly property var activeDisplays: WindowDesk.displays.filter(m => (!WindowDesk.displayFilter || m.name === WindowDesk.displayFilter) && Spaces.logicalId(m.activeWorkspace?.id) === workspace)
     fillColor: selected ? Theme.widgetRaised : Theme.widgetSurface
@@ -14,6 +17,7 @@ ChamferPanel {
     borderWidth: 1
     chamfer: 10
     clip: true
+    readonly property int rowCount: Math.max(1,Math.floor((root.height-96-(root.showPreviews?captures.height+7:0))/31))
     Component.onCompleted: WindowDesk.workspaceCards = WindowDesk.workspaceCards.concat([root])
     Component.onDestruction: WindowDesk.workspaceCards = WindowDesk.workspaceCards.filter(card => card !== root)
 
@@ -33,8 +37,28 @@ ChamferPanel {
             font.family: Appearance.font.reading; font.pixelSize: 12; color: Theme.dim
         }
         Rectangle { width: parent.width; height: 1; color: Theme.widgetBorder }
+        Row {
+            id: captures
+            width: parent.width
+            height: root.showPreviews ? Math.max(42,Math.min(150,root.height-110)) : 0
+            visible: height>0
+            spacing: 5
+            Repeater {
+                model:root.showPreviews?root.windows.slice(0,root.slots):[]
+                WindowPreview {
+                    required property var modelData
+                    width:(captures.width-(root.slots-1)*captures.spacing)/root.slots
+                    height:captures.height
+                    window:modelData
+                    sharedClock:true
+                    livePreview:root.inViewport&&WindowDesk.opened&&!WindowDesk.previewPaused
+                    retainFrame:root.inViewport&&WindowDesk.opened
+                    MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:WindowDesk.choose(parent.window)}
+                }
+            }
+        }
         Repeater {
-            model: root.windows.slice(0, Math.max(1, Math.floor((root.height - 96) / 31)))
+            model: root.windows.slice(0, root.rowCount)
             Rectangle {
                 id: slot
                 required property var modelData
@@ -74,7 +98,7 @@ ChamferPanel {
             }
         }
         Text {
-            readonly property int hidden: Math.max(0, root.windows.length - Math.max(1, Math.floor((root.height - 96) / 31)))
+            readonly property int hidden: Math.max(0, root.windows.length-root.rowCount)
             visible: hidden > 0
             text: "+" + hidden + " more in Applications"; textFormat: Text.PlainText
             font.family: Appearance.font.reading; font.pixelSize: 11; color: Theme.dim

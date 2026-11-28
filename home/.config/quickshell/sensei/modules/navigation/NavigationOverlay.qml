@@ -27,10 +27,10 @@ Scope {
  ChamferPanel {id:panel;anchors.centerIn:parent;anchors.verticalCenterOffset:12*(1-overlay.reveal);opacity:overlay.reveal;enabled:WindowDesk.opened;width:Math.min(Math.max(0,overlay.width-32),1660);height:Math.min(Math.max(0,overlay.height-32),overlay.workspaceMode?820:730);fillColor:Theme.widgetGlass;borderColor:Theme.widgetBorder;borderWidth:1;chamfer:Appearance.chamfer.panel
  Column {anchors.fill:parent;anchors.margins:18;spacing:12
  Flow {id:toolbar;width:parent.width;spacing:8
- Text { textFormat:Text.PlainText;width:toolbar.width>=930?toolbar.width-508:toolbar.width;height:29;verticalAlignment:Text.AlignVCenter;elide:Text.ElideRight;text:overlay.workspaceMode?"Choose a workspace":WindowDesk.mode==="same"?"Switch within this app":"Choose a window";font.family:Appearance.font.data;font.pixelSize:18;color:Theme.signal}
+ Text { textFormat:Text.PlainText;width:toolbar.width>=880?toolbar.width-552:toolbar.width;height:32;verticalAlignment:Text.AlignVCenter;elide:Text.ElideRight;text:overlay.workspaceMode?"Choose a workspace":WindowDesk.mode==="same"?"Switch within this app":"Choose a window";font.family:Appearance.font.data;font.pixelSize:18;color:Theme.signal}
  ControlTile {implicitWidth:128;implicitHeight:29;label:"Applications";selected:WindowDesk.mode==="apps";onActivated:WindowDesk.open("apps",0)}
  ControlTile {implicitWidth:128;implicitHeight:29;label:"Workspaces";selected:overlay.workspaceMode;onActivated:WindowDesk.open("overview",0)}
- ControlTile {visible:!overlay.workspaceMode;implicitWidth:112;implicitHeight:29;label:WindowDesk.previewPaused?"Still":"Live";glyph:"\uf03d";selected:!WindowDesk.previewPaused;onActivated:WindowDesk.previewPaused=!WindowDesk.previewPaused}
+ ControlTile {implicitWidth:148;implicitHeight:32;label:WindowDesk.previewPaused?"Resume previews":"Pause previews";selected:!WindowDesk.previewPaused;onActivated:WindowDesk.previewPaused=!WindowDesk.previewPaused}
  ControlTile {implicitWidth:108;implicitHeight:29;label:"Close";glyph:"\uf00d";onActivated:WindowDesk.cancel()}
  }
  DeskTextField {id:search;width:parent.width;height:37;placeholderText:"Find a window or launch an app";text:WindowDesk.query;onTextEdited:{WindowDesk.query=text;WindowDesk.selected=0;WindowDesk.pinned=true;}font.family:Appearance.font.reading;font.pixelSize:15;color:Theme.text;Keys.onPressed:e=>{if(e.key===Qt.Key_F6){WindowDesk.cycleDisplay();e.accepted=true;}else if(e.key===Qt.Key_Tab){WindowDesk.cycle(e.modifiers&Qt.ShiftModifier?-1:1);e.accepted=true;}else if(e.key===Qt.Key_Return||e.key===Qt.Key_Enter){WindowDesk.commit();e.accepted=true;}else if(e.key===Qt.Key_Escape){WindowDesk.cancel();e.accepted=true;}else if(e.key===Qt.Key_Left||e.key===Qt.Key_Up){WindowDesk.cycle(-1);e.accepted=true;}else if(e.key===Qt.Key_Right||e.key===Qt.Key_Down){WindowDesk.cycle(1);e.accepted=true;}}}
@@ -46,7 +46,7 @@ Scope {
         }
     }
  }
- Item {width:parent.width;height:Math.max(0,parent.height-toolbar.height-search.height-outputs.height-footer.height-(quickApps.visible?quickApps.height:0)-parent.spacing*(quickApps.visible?5:4))
+ Item {width:parent.width;height:Math.max(0,parent.height-toolbar.height-search.height-outputs.height-footer.height-(quickApps.visible?quickApps.height+parent.spacing:0)-(actions.visible?actions.height+parent.spacing:0)-parent.spacing*4)
  Flickable {id:workspaceScroll;anchors.fill:parent;visible:!WindowDesk.query.trim()&&overlay.workspaceMode;clip:true;contentHeight:workspaceGrid.implicitHeight;contentWidth:width;ScrollBar.vertical:ScrollBar {}
      function revealSelected(){
          if(!visible)return;
@@ -59,7 +59,11 @@ Scope {
  Grid {id:workspaceGrid;width:workspaceScroll.width;columns:Math.max(1,Math.min(4,Math.floor((width+spacing)/250)));spacing:12
      readonly property real cardHeight:Math.min(315,Math.max(132,Math.floor((workspaceScroll.height-spacing)/2)))
  Repeater {model:WindowDesk.opened&&workspaceScroll.visible?WindowDesk.displayedWorkspaceIds:[]
-     WorkspacePreview {required property int index;required property int modelData;workspace:modelData;width:(workspaceGrid.width-workspaceGrid.spacing*(workspaceGrid.columns-1))/workspaceGrid.columns;height:workspaceGrid.cardHeight;selected:WindowDesk.selected===index}
+     WorkspacePreview {
+        required property int index;required property int modelData
+        workspace:modelData;width:(workspaceGrid.width-workspaceGrid.spacing*(workspaceGrid.columns-1))/workspaceGrid.columns;height:workspaceGrid.cardHeight;selected:WindowDesk.selected===index
+        inViewport:workspaceScroll.visible&&y+height>workspaceScroll.contentY&&y<workspaceScroll.contentY+workspaceScroll.height
+     }
  }
  }
  }
@@ -85,8 +89,6 @@ Scope {
  WindowPreview {width:parent.width;height:Math.min(220,Math.max(76,card.height-188));window:card.modelData;frameInterval:150;retainFrame:WindowDesk.opened&&windows.visible&&WindowDesk.selected===card.index;livePreview:retainFrame&&!WindowDesk.previewPaused;MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:WindowDesk.choose(card.modelData)}}
  Text { textFormat: Text.PlainText;width:parent.width;maximumLineCount:2;wrapMode:Text.Wrap;text:card.modelData.title;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.text;elide:Text.ElideRight}
  Text {textFormat:Text.PlainText;width:parent.width;elide:Text.ElideRight;text:WindowDesk.displayLabel(WindowDesk.displayOf(card.modelData))+"  ·  "+WindowDesk.workspaceTitle(Spaces.logicalId(Spaces.windowWorkspace(card.modelData)));font.family:Appearance.font.data;font.pixelSize:12;color:Theme.dim}
- Row {spacing:5;ControlTile {implicitWidth:105;implicitHeight:28;label:"Focus";onActivated:WindowDesk.choose(card.modelData)}ControlTile {implicitWidth:105;implicitHeight:28;label:"Float / tile";onActivated:WindowDesk.floatWindow(card.modelData)}ControlTile {implicitWidth:105;implicitHeight:28;label:"Close app";onActivated:{WindowDesk.pinned=true;card.modelData.wayland?.close();}}}
- DeskComboBox {width:parent.width;height:29;model:Spaces.workspaceIds.map(id=>Spaces.workspaceNames[id-1]);currentIndex:Math.max(0,Spaces.workspaceIds.indexOf(Spaces.logicalId(card.modelData.workspace?.id??1)));onActivated:WindowDesk.move(card.modelData,Spaces.workspaceIds[currentIndex]);font.family:Appearance.font.data;font.pixelSize:11}
  }
 
  }
@@ -100,11 +102,20 @@ Scope {
  MouseArea {id:quickHover;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:WindowDesk.launch(quickCard.modelData)}
  }}
  }
+ Flow {
+    id:actions;width:parent.width;spacing:6
+    readonly property var target:WindowDesk.matches[WindowDesk.selected]
+    visible:!overlay.workspaceMode&&!WindowDesk.query.trim()&&!!target
+    ControlTile {implicitWidth:112;implicitHeight:32;label:"Focus";onActivated:WindowDesk.choose(actions.target)}
+    ControlTile {implicitWidth:124;implicitHeight:32;label:"Float / tile";onActivated:WindowDesk.floatWindow(actions.target)}
+    ControlTile {implicitWidth:112;implicitHeight:32;label:"Close app";onActivated:{WindowDesk.pinned=true;actions.target?.wayland?.close();}}
+    DeskComboBox {width:Math.min(216,parent.width);height:32;model:Spaces.workspaceIds.map(id=>Spaces.workspaceNames[id-1]);currentIndex:actions.target?Math.max(0,Spaces.workspaceIds.indexOf(Spaces.logicalId(actions.target.workspace?.id??1))):0;onActivated:if(actions.target)WindowDesk.move(actions.target,Spaces.workspaceIds[currentIndex]);font.family:Appearance.font.reading;font.pixelSize:12}
+ }
  Text {id:footer;textFormat:Text.PlainText;width:parent.width;text:overlay.workspaceMode?"F6 changes display · Enter switches workspace · Drag to move a window · Esc closes":"F6 changes display · Arrows select · Enter opens · Esc closes";font.family:Appearance.font.reading;font.pixelSize:12;color:Theme.dim;wrapMode:Text.Wrap}
  }
  }
  ChamferPanel {id:dragGhost;z:999;visible:WindowDesk.dragWindow!==null;x:WindowDesk.dragX-130;y:WindowDesk.dragY-70;width:260;height:166;fillColor:Theme.widgetGlass;borderColor:Theme.widgetAccent;borderWidth:2;chamfer:10;opacity:.95
- WindowPreview {x:5;y:5;width:250;height:125;window:WindowDesk.dragWindow;livePreview:dragGhost.visible;frameInterval:80}
+ Text {anchors.centerIn:parent;text:WindowDesk.resultName(WindowDesk.dragWindow);width:parent.width-20;textFormat:Text.PlainText;horizontalAlignment:Text.AlignHCenter;elide:Text.ElideRight;font.family:Appearance.font.reading;font.pixelSize:16;color:Theme.text}
  Text { textFormat: Text.PlainText;x:9;y:137;width:242;text:WindowDesk.dragTarget?'Move to '+Spaces.workspaceNames[WindowDesk.dragTarget-1]:'Drop on a workspace';elide:Text.ElideRight;font.family:Appearance.font.data;font.pixelSize:12;color:Theme.signal}
  }
  Connections {target:WindowDesk;function onOpenedChanged(){enter.stop();leave.stop();if(WindowDesk.opened)overlay.present();else if(WindowDesk.pendingSelection){overlay.presented=false;overlay.reveal=0;Qt.callLater(WindowDesk.finishSelection);}else leave.start();}}

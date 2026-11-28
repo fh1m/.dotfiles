@@ -122,3 +122,17 @@ def test_noninteractive_peer_shell_needs_no_user_path_setup(peer, monkeypatch):
     behavior.write_text(json.dumps({'homie': True, 'homie-remote': True, 'executeProbe': True}))
     assert den.connectivity()
     assert not (root / 'effects').exists()
+
+
+def test_presence_ignores_transient_and_unknown_links_then_reports_one_transition():
+    step = den.presentation_presence
+    state = step(True, {}, 0)
+    state = step(False, state, 15)
+    state = step(None, state, 30)
+    assert state == {'joined': True}
+    state = step(False, state, 45)
+    assert step(False, state, 60)['joined']
+    state = step(False, state, 76)
+    assert state == {'joined': False, 'eventAt': 76}
+    assert step(False, state, 90) == state
+    assert step(True, step(True, state, 105), 136) == {'joined': True, 'eventAt': 136}

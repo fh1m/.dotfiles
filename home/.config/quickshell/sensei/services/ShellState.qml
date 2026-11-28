@@ -210,11 +210,13 @@ Singleton {
         return barScreens[0]?.name ?? null;
     }
     function openDropdownOn(name:string,output:string):void {
+        if(name==="ethernet"&&!Ethernet.connected)return;
         const target = dropdownOutput(output);
         if (target === null) return;
         SpotifyDesk.fullscreen=false;dropdownOriginScreen=target;dropdownEdge=edgeFor(name,target);dropdownAnchorX=anchorFor(name);dropdown=name;dropdownStamp++;
     }
     function toggleDropdownOn(name:string,output:string):void {
+        if(name==="ethernet"&&!Ethernet.connected)return;
         const target = dropdownOutput(output);
         if (target === null) return;
         const close=dropdown===name&&dropdownOriginScreen===target;

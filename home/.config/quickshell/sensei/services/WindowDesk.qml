@@ -12,6 +12,16 @@ Singleton {
  // Freezes the previews while the overlay is open. Global, not per screen: the
  // navigationview IPC answers for the whole shell.
  property bool previewPaused:false
+ readonly property var workspaceCaptures: opened&&!previewPaused ? previews.filter(p=>p?.scheduled) : []
+ Timer {
+    property int cursor:0
+    interval:90;repeat:true;running:root.workspaceCaptures.length>0
+    onTriggered:{
+      const active=root.workspaceCaptures;
+      if(active.length)active[cursor++%active.length].requestFrame();
+    }
+    onRunningChanged:if(!running)cursor=0
+ }
  readonly property var all:Hyprland.toplevels.values.filter(t=>(!Demo.active||!showcaseHidden.includes(root.addressFor(t)))&&t.wayland?.appId!=="sensei-deck"&&t.workspace?.name!=="special:deck"&&t.workspace?.name!=="deck")
  readonly property var workspaceIds: Spaces.workspaceIds.concat(Array.from(new Set(all.map(t=>t.workspace?.id).filter(id=>Number.isInteger(id)&&id<0))).sort((a,b)=>b-a))
  property string displayFilter:""

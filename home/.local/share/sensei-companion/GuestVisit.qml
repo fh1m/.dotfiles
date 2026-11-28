@@ -45,7 +45,7 @@ Item {
     }
     FileView {id:memory;path:Quickshell.env('HOME')+'/.local/state/sensei-den/zondo-guests.json';printErrors:false
         onLoadFailed:root.historyReady=true
-        onLoaded:{try{const d=JSON.parse(text());root.history={guest:String(d.guest||''),quotes:Array.isArray(d.quotes)?d.quotes.slice(-60):[],lastAt:Number(d.lastAt)||0,requestAt:Number(d.requestAt)||0};root.seenRequest=root.history.requestAt;}catch(e){}root.historyReady=true;}
+        onLoaded:{try{const d=JSON.parse(text());root.history={guest:String(d.guest||''),quotes:Array.isArray(d.quotes)?d.quotes.slice(-4096):[],lastAt:Number(d.lastAt)||0,requestAt:Number(d.requestAt)||0};root.seenRequest=root.history.requestAt;}catch(e){}root.historyReady=true;}
     }
     function start(id,manual):bool {
         if(!permitted||!targetScreen||!historyReady||!catalog.guests.length||(!manual&&busy))return false;
@@ -56,7 +56,7 @@ Item {
         guestIndex=chosen.guest;quoteIndex=chosen.quote;pageIndex=0;frame=0;paused=false;placement=pos;
         const selection=Policy.entries(guest)[quoteIndex];cards=Policy.pages(guest,selection);
         if(manual)seenRequest=Math.max(seenRequest,Number(preferences.guestRequest?.at||0));
-        history={requestAt:seenRequest,guest:guest.id,quotes:(history.quotes||[]).concat([selection.id]).slice(-60),lastAt:Date.now()};
+        history={requestAt:seenRequest,guest:guest.id,quotes:Policy.remember(guest,selection,history.quotes).slice(-4096),lastAt:Date.now()};
         memory.setText(JSON.stringify(history)+'\n');active=true;began();arrival.restart();pageClock.restart();return true;
     }
     function finish():void {if(!active)return;active=false;pageClock.stop();ended();}
@@ -81,7 +81,7 @@ Item {
     onPausedChanged:{if(paused){visibleCharacters=textLength;pageClock.stop();}else if(active)pageClock.restart();}
     Timer {interval:1500;repeat:true;running:root.permitted&&Number(root.preferences.guestRequest?.at||0)>root.seenRequest;onTriggered:{if(Date.now()/1000-Number(root.preferences.guestRequest?.at||0)>=300)stop();else root.tryRequest();}}
     Timer {interval:15000;repeat:true;running:root.permitted&&root.preferences.guestsEnabled!==false
-        onTriggered:if(!root.active&&Date.now()-root.history.lastAt>=Math.max(3,Math.min(120,Number(root.preferences.guestMinutes)||10))*60000)root.start('',false)
+        onTriggered:if(!root.active&&Date.now()-root.history.lastAt>=Math.max(3,Math.min(120,Number(root.preferences.guestMinutes)||5))*60000)root.start('',false)
     }
     Timer {id:pageClock;interval:Policy.duration(root.card)+(root.reducedMotion?0:Math.ceil(root.textLength/2)*30);onTriggered:root.next()}
     Timer {interval:1100;repeat:true;running:root.active&&!root.reducedMotion;onTriggered:root.frame=(root.frame+1)%4}
