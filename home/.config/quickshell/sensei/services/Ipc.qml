@@ -238,7 +238,7 @@ Scope {
         target: "clipboard"
         function select(id: string): void { ClipboardVault.select(parseInt(id)); ShellState.openDropdown("clipboard"); }
         function filter(kind: string): void { ClipboardVault.filter = kind; ShellState.openDropdown("clipboard"); }
-        function state(): string { return JSON.stringify({count:ClipboardVault.count,selected:ClipboardVault.selected,kind:ClipboardVault.detail.kind??"",ready:!!ClipboardVault.detail.id,error:ClipboardVault.error}); }
+        function state(): string { return JSON.stringify({count:ClipboardVault.count,rows:ClipboardVault.items.length,filter:ClipboardVault.filter,loading:ClipboardVault.loading,selected:ClipboardVault.selected,kind:ClipboardVault.detail.kind??"",ready:!!ClipboardVault.detail.id,error:ClipboardVault.listError||ClipboardVault.error}); }
     }
     IpcHandler {
         target: "switcher"
@@ -568,7 +568,6 @@ Scope {
         function current(): string {
             return Wallpapers.displays[MachineProfile.primaryOutput]?.file || Wallpapers.displayedPath;
         }
-        function startup(output:string):string {return String(Wallpapers.startupSource(output));}
 
         function folder(path: string): string {
             if (path)

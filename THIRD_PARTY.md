@@ -16,7 +16,7 @@ The shell began with **[Wrayth](https://github.com/bowenbride/wrayth)** by **bow
 | Chakra Petch | Bundled accent font | OFL; bundled `OFL.txt` |
 | Zed Mono, Iosevka / Nerd Fonts | Text and glyphs | Installed separately; retain upstream font licenses |
 
-Desktop screenshots show fh1m’s actual setup. Wallpaper references: [main](https://wallhaven.cc/w/w5q8px), [ScreenPad](https://wallhaven.cc/w/6lqvql). Original artwork belongs to its creators; the original wallpaper files are not redistributed here. Bundled Wrayth-generated wallpapers retain their original provenance.
+Desktop screenshots show fh1m’s actual setup. Wallpaper references: [main](https://wallhaven.cc/w/w5q8px), [ScreenPad](https://wallhaven.cc/w/6lqvql). The original artwork belongs to its creators and is not redistributed here. Inherited wallpapers have been removed from the current distribution. The optional Digital Den signal field is generated locally from the selected profile colors.
 
 The custom setup, experiments and documentation were developed by fh1m with coding assistance. Hardware findings are observations on Arete and Homie, not upstream promises. Original source notices are retained rather than replaced.
 

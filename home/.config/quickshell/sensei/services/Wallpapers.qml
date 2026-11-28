@@ -34,26 +34,6 @@ Singleton {
     // restart does not quietly re-attach the wallpaper to the profile.
     property string lockedFile: ""
     property var displays: ({})
-    FolderListModel {
-        id:startupFiles
-        folder:Paths.url(Paths.configDir)
-        nameFilters:["startup-wallpaper-*.jpg"]
-        showDirs:false;showOnlyReadable:true
-    }
-    function startupSource(output: string): url {
-        if(startupFiles.status!==FolderListModel.Ready)return "";
-        const connected=Quickshell.screens.map(s=>s.name);
-        const candidates=connected.includes(output)?[output].concat(connected.filter(name=>name!==output)):connected;
-        for(const candidate of candidates){
-            const filename="startup-wallpaper-"+candidate.replace(/[^a-zA-Z0-9_-]/g,"_")+".jpg";
-            for(let i=0;i<startupFiles.count;i++)
-                if(startupFiles.get(i,"fileName")===filename&&startupFiles.get(i,"fileSize")>0)return Paths.url(Paths.configDir+"/"+filename);
-        }
-        return "";
-    }
-    function syncStartup(output: string, path: string): void {
-        Quickshell.execDetached([`${Paths.home}/.local/bin/sensei-startup-wallpaper`,path||"",output]);
-    }
     // The main display's own file when one is chosen, else the profile's image. Every
     // default `Wallpaper` takes this, so a surface with no explicit source (the power
     // menu, the EFFECTS tiles) shows the same image as the picker and the lock.
@@ -80,7 +60,7 @@ Singleton {
     Connections { target:Hyprland; function onRawEvent(event){if(event.name==="configreloaded")root.updatePalette();} }
     onLoadedChanged: updatePalette()
     onDisplayedChanged: updatePalette()
-    function setDisplay(output: string, path: string, mode: int): void { const next=Object.assign({},displays); next[output]={file:path,mode:mode};displays=next;syncStartup(output,path);write(); }
+    function setDisplay(output: string, path: string, mode: int): void { const next=Object.assign({},displays); next[output]={file:path,mode:mode};displays=next;write(); }
 
     // name -> { mode, every, fade, items: [{ file, on, star }] }
     property var pools: ({})
@@ -112,16 +92,6 @@ Singleton {
         return `sensei/${root.generatedName(name)}`;
     }
 
-    // **The bundled first-run wallpaper for a preset profile.** The six presets
-    // each ship a pre-generated PNG inside the shell (assets/wallpapers/), so a
-    // fresh install shows the right image before the user has picked a wallpaper
-    // folder or generation has run. Returns "" for a custom profile -- those
-    // render on the solid Theme.deep until they are generated.
-    function presetAsset(name: string): url {
-        if (Profiles.presetNames.indexOf(name) < 0)
-            return "";
-        return Paths.url(Quickshell.shellPath(`assets/wallpapers/${root.generatedName(name)}`));
-    }
 
     // Every profile has a pool whether or not the file has one: the default is
     // its own wallpaper, ticked and starred, which is what the shell did before
@@ -223,20 +193,11 @@ Singleton {
     // so a preview moves the wallpaper with it for free -- and only when
     // `dynamic` is on, which is exactly what the switch promises.
     readonly property string displayedPath: dynamic ? root.absolute(root.currentFile(Theme.profile)) : lockedFile
-    // An empty url rather than `file:///` when nothing is set yet: the folder
-    // is not known until the first-run probe answers, and an Image handed a
-    // bare scheme logs an error for a directory it was never asked to open.
-    // When the library file is not available yet (no folder on a fresh install,
-    // or the PNG not generated), a preset profile falls back to its bundled
-    // wallpaper so first boot is never a flat colour; a custom profile stays
-    // empty and shows the solid Theme.deep.
-    // The main display's image as the profile would have it, for an output with no
-    // image of its own (DP-2 "Follows theme").
+    // Unconfigured displays use the neutral desktop surface.
     readonly property url profileImage: {
         if (!root.dynamic)
-            return lockedFile ? Paths.url(lockedFile) : root.presetAsset(Theme.profile);
-        const own = root.imageOf(root.currentFile(Theme.profile));
-        return String(own) !== "" ? own : root.presetAsset(Theme.profile);
+            return lockedFile ? Paths.url(lockedFile) : "";
+        return root.imageOf(root.currentFile(Theme.profile));
     }
 
     // The crossfade length is the active pool's, so a slow shuffle can be set
@@ -561,12 +522,12 @@ Singleton {
         if (!palette)
             return;
         const out = `${senseiFolder}/${generatedName(name)}`;
-        let source = [Paths.baseRender, "#FF3B45", "#4FC3C9"];
+        let command=`mkdir -p ${quote(senseiFolder)} && ${quote(Paths.wallpaperScript)} --out ${quote(out)} --accent ${quote(String(palette.accent))} --signal ${quote(String(palette.signal))}`;
         if (from) {
             const fromPalette = Profiles.palettes[from.name];
-            source = [absolute(from.file), String(fromPalette.accent), String(fromPalette.signal)];
+            command+=` --src ${quote(absolute(from.file))} --src-accent ${quote(String(fromPalette.accent))} --src-signal ${quote(String(fromPalette.signal))}`;
         }
-        run(`mkdir -p ${quote(senseiFolder)} && ${quote(Paths.wallpaperScript)} --out ${quote(out)} --accent ${quote(String(palette.accent))} --signal ${quote(String(palette.signal))} --src ${quote(source[0])} --src-accent ${quote(source[1])} --src-signal ${quote(source[2])}`);
+        run(command);
         refresh.restart();
     }
 
@@ -633,7 +594,6 @@ Singleton {
             dynamic = typeof parsed.dynamic === "boolean" ? parsed.dynamic : true;
             folder = typeof parsed.folder === "string" ? parsed.folder : "";
             displays = parsed.displays && typeof parsed.displays === "object" ? parsed.displays : ({});
-            for(const output of Object.keys(displays)) syncStartup(output,displays[output]?.file??"");
             lockedFile = typeof parsed.lockedFile === "string" ? parsed.lockedFile : "";
             pools = parsed.pools && typeof parsed.pools === "object" && !Array.isArray(parsed.pools) ? parsed.pools : ({});
             loaded = true;

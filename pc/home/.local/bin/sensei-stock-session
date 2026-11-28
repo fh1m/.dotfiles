@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-set -eu
-recovery="$HOME/.local/share/sensei-stock-recovery/config"
-[[ -r "$recovery/hypr/hyprland.lua" ]] || { echo "Stock recovery configuration is not prepared" >&2; exit 1; }
-export XDG_CONFIG_HOME="$recovery"
-exec /usr/bin/start-hyprland

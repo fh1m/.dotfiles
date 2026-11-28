@@ -92,7 +92,6 @@ Variants {
         property int stableFrames: 0
         property bool surfaceReady: false
         property real firstHeight: 0
-        property double presentStartedAt: 0
         readonly property real desiredHeight: Math.max(1, Math.min((modelData?.height ?? 1080) - topInset - bottomInset - 2 * gap, Math.round(panelHeight + 2 * surfaceInset)))
 
         // Hyprland refocuses the pointer the moment a focus grab starts. When
@@ -166,15 +165,19 @@ Variants {
             interval: 16
             onTriggered: {
                 if (!popup.requestedHere || popup.current === "" || ShellState.dropdown !== popup.current || content.status !== Loader.Ready) return;
-                // The cold mixer inventory changes the size substantially.
-                // Wait briefly for it, without blocking on a hung audio server.
-                if(popup.current==="sound"&&!SoundDesk.initialInventorySettled&&Date.now()-popup.presentStartedAt<850){restart();return;}
-                // Wait for the compositor to acknowledge the newly sized surface.
                 if (popup.panelHeight <= 0) { restart(); return; }
-                const h = Math.round(popup.panelHeight);
-                if (h !== popup.measuredHeight) { popup.measuredHeight=h; popup.stableFrames=0; restart(); return; }
-                if (++popup.stableFrames < 2) { restart(); return; }
-                if (!popup.surfaceReady) { popup.firstHeight=popup.desiredHeight; popup.surfaceReady=true; restart(); return; }
+                if (!popup.surfaceReady) {
+                    const measured = Math.round(popup.panelHeight);
+                    if (popup.measuredHeight !== measured) {
+                        popup.measuredHeight=measured;
+                        restart();
+                        return;
+                    }
+                    popup.firstHeight=popup.desiredHeight;
+                    popup.surfaceReady=true;
+                    restart();
+                    return;
+                }
                 // A late data/layout change must not resize a mapping layer.
                 if (Math.round(popup.width) !== Math.round(popup.implicitWidth) || Math.round(popup.height) !== Math.round(popup.implicitHeight)) { restart(); return; }
                 openAnim.start();
@@ -252,7 +255,6 @@ Variants {
                 outsideClose.stop();
                 popup.stableFrames=0; popup.measuredHeight=0;
                 presentTimer.stop();
-                popup.presentStartedAt=Date.now();
                 openAnim.stop();
                 swapAnim.stop();
                 closeAnim.stop();

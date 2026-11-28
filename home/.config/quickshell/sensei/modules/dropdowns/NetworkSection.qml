@@ -9,11 +9,11 @@ Column {
  id:root;width:parent.width;spacing:10
  readonly property int page:DesktopExtras.networkPage
  function action(name,value=''){Quickshell.execDetached(['@HOME@/.local/bin/sensei-terminal','--title','Sensei · Network','@HOME@/.local/bin/sensei-network-action',name,value]);}
- Component.onCompleted:DesktopExtras.loadNetwork()
+ Component.onCompleted:if(root.page===1)DesktopExtras.loadNetwork()
  Row {spacing:7
   ControlTile {implicitWidth:170;label:'Wi-Fi';navigation:true;selected:DesktopExtras.networkPage===0;onActivated:DesktopExtras.networkPage=0}
-  ControlTile {implicitWidth:170;label:'Connections / SSH';navigation:true;selected:DesktopExtras.networkPage===1;onActivated:DesktopExtras.networkPage=1}
-  ControlTile {implicitWidth:170;label:'Diagnostics';navigation:true;selected:DesktopExtras.networkPage===2;onActivated:{DesktopExtras.networkPage=2;DesktopExtras.loadNetwork();}}
+  ControlTile {implicitWidth:170;label:'Connections / SSH';navigation:true;selected:root.page===1;onActivated:{DesktopExtras.networkPage=1;DesktopExtras.loadNetwork();}}
+  ControlTile {implicitWidth:170;label:'Diagnostics';navigation:true;selected:root.page===2;onActivated:DesktopExtras.networkPage=2}
  }
  Text { textFormat: Text.PlainText;width:parent.width;text:(Wifi.activeSsid|| (Wifi.wired?'Ethernet':'Disconnected'))+' ['+SysInfo.netInterfaces+']'+'  ·  ↑ '+Fmt.rateLong(SysInfo.netTxRate)+'  ↓ '+Fmt.rateLong(SysInfo.netRxRate);font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetAccent;elide:Text.ElideRight}
  ScrollView {width:parent.width;height:Math.min(550,wifiPanel.implicitHeight);clip:true;visible:DesktopExtras.networkPage===0
@@ -39,9 +39,6 @@ Column {
   ScrollView {width:parent.width;height:240;clip:true
    TextArea {readOnly:true;wrapMode:Text.Wrap;textFormat:TextEdit.PlainText;text:'Active connections\n'+(DesktopExtras.network.connections||'None')+'\n\nInterfaces\n'+(DesktopExtras.network.addresses||'');font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetText;background:ChamferPanel {fillColor:Theme.widgetSurface;chamfer:6;scanlines:false}}
   }
- }
- ScrollView {width:parent.width;height:550;clip:true;visible:DesktopExtras.networkPage===2
-  TextArea {readOnly:true;wrapMode:Text.Wrap;textFormat:TextEdit.PlainText;text:'Routes\n'+(DesktopExtras.network.routes||'')+'\n\nDNS\n'+(DesktopExtras.network.dns||'')+'\n\nListening ports\n'+(DesktopExtras.network.listeners||'');font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetText;background:ChamferPanel {fillColor:Theme.widgetSurface;chamfer:6;scanlines:false}}
  }
  Loader {width:parent.width;active:DesktopExtras.networkPage===2;visible:active;sourceComponent:Component {NetworkWorkbench {width:parent.width}}}
 }

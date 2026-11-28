@@ -102,15 +102,6 @@ Singleton {
     readonly property string wallpaperScript: `${home}/.local/bin/sensei-wallpaper`
     readonly property string unreadScript: `${home}/.local/bin/sensei-unread`
 
-    // The render every generated wallpaper is mapped from. It is inside the
-    // shell rather than in the user's library, because the pools screen offers
-    // to delete the library's files and generation must survive that.
-    //
-    // It is the shipped Circuit preset itself. A separate `assets/net-base.png`
-    // used to sit beside it, pixel for pixel the same image (checked), which
-    // was 3.9 MB of the repo carrying nothing; the mapping's source colours
-    // (`#FF3B45` / `#4FC3C9`) are Circuit's either way.
-    readonly property string baseRender: Quickshell.shellPath("assets/wallpapers/net-circuit.png")
 
     // Path -> file:// url, for Image.source and friends. Each segment is
     // percent-encoded: a raw `#` starts a fragment and a raw `%` is read as an

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Render audited user dotfiles. Default: dry run; no packages or root edits."""
-import argparse, datetime, json, os, re, shutil, subprocess, tempfile
+import argparse, datetime, hashlib, json, os, re, shutil, subprocess, tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -97,11 +97,40 @@ def install_shell_environment(home, backup, apply=False):
                 os.unlink(temporary)
     return True
 
+
+RETIRED_WALLPAPERS = {
+    'net-circuit.png': 'f470e5e8054be7ed06f56a493ea7686219725fdf86b69a0056e4f2b72d635716',
+    'net-cobalt.png': '89fa1f7e6a7c8d3b38f0345694948793c2d1960e3a4492ab0a6fa4d0aa4286ce',
+    'net-oxide.png': '1830795f669ebb38745430a939aadb9fe10b44a7e0f0614faac4e951cb4a2fba',
+    'net-prism.png': '27af16c1f595b676f22a259439ed84006801e2afb0b469213c2f50e2e15ae771',
+    'net-redline.png': '59e434c918031f8d36f540d1ff5601d80bf0a4c30cef433dd63644a606e5fc8f',
+    'net-sodium.png': '4a10ce38cb8715a5def0c19bd79d3fa281c6b2b37b5edb9d17eef80d93e5c0fa',
+}
+
+
+def retire_wallpapers(home, backup, apply=False):
+    """Archive only byte-identical shipped copies; never touch altered art."""
+    changes = []
+    for directory in ('.config/quickshell/sensei/assets/wallpapers', 'Pictures/wallpapers/sensei'):
+        for filename, expected in RETIRED_WALLPAPERS.items():
+            relative = Path(directory) / filename
+            asset = home / relative
+            if asset.resolve() != asset or not asset.is_file():
+                continue
+            if hashlib.sha256(asset.read_bytes()).hexdigest() != expected:
+                continue
+            changes.append(str(relative))
+            if apply:
+                dest = backup / relative
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                asset.rename(dest)
+    return changes
+
 def install(home, apply=False, hardware='generic'):
     home = home.resolve()
     stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
     backup = home / '.local/state/dotfiles-backups' / stamp
-    changes = []
+    changes = retire_wallpapers(home, backup, apply)
     # sensei helpers are linked from the checkout below, not copied. A tracked
     # copy in home/.local/bin would be replaced by that link on every run and
     # show up as a change each time, so it is skipped here.
@@ -198,10 +227,6 @@ def install(home, apply=False, hardware='generic'):
                          'Pictures/wallpapers/sensei', 'Pictures/Screenshots',
                          'Videos/Screencasts', 'Phone/Transfers', 'Phone/Models']:
             (home / relative).mkdir(parents=True, exist_ok=True)
-        wallpapers = home / '.config/quickshell/sensei/assets/wallpapers'
-        for source in wallpapers.glob('*.png'):
-            dest = home / 'Pictures/wallpapers/sensei' / source.name
-            if not dest.exists(): shutil.copy2(source, dest)
         fontdir = home / '.local/share/fonts/chakra-petch'
         shutil.copytree(home / '.config/quickshell/sensei/assets/fonts/chakra-petch', fontdir, dirs_exist_ok=True)
         if home == Path.home().resolve():

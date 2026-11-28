@@ -20,20 +20,20 @@ DropdownFrame {
  ChamferPanel {width:300;height:parent.height;fillColor:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.08);chamfer:8;scanlines:false
  ListView {id:list;anchors.fill:parent;anchors.margins:5;clip:true;spacing:4;model:ClipboardVault.items;ScrollBar.vertical:DeskScrollBar {}
  delegate:ChamferPanel {required property var modelData;width:list.width-10;height:57;chamfer:5;scanlines:false;fillColor:ClipboardVault.selected===modelData.id?Theme.blend(Theme.widgetRaised,Theme.widgetAccent,.13):pointer.containsMouse?Theme.widgetRaised:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.07)
- Image {x:6;y:7;width:43;height:43;source:modelData.kind==="image"?"file://"+modelData.path:"";visible:modelData.kind==="image";fillMode:Image.PreserveAspectFit;sourceSize.width:100;asynchronous:true}
+ Image {x:6;y:7;width:43;height:43;source:modelData.kind==="image"?Paths.url(modelData.path):"";visible:modelData.kind==="image";fillMode:Image.PreserveAspectFit;sourceSize.width:100;asynchronous:true}
  NrLabel {x:15;y:18;visible:modelData.kind!=="image";text:modelData.pinned?"\uf08d":modelData.kind==="files"?"\uf15b":"\uf121";pixelSize:20;color:Theme.widgetAccent}
  NrLabel {x:58;y:8;width:parent.width-65;text:modelData.title;pixelSize:13;elide:Text.ElideRight;maximumLineCount:1;tracked:false;font.capitalization:Font.MixedCase;font.family:Appearance.font.reading;color:Theme.widgetText}
  NrLabel {x:58;y:32;width:parent.width-65;text:Qt.formatDateTime(new Date(modelData.last*1000),"MMM d · hh:mm AP")+" · ×"+modelData.copies;pixelSize:11;color:Theme.widgetMuted;elide:Text.ElideRight;tracked:false;font.capitalization:Font.MixedCase;font.family:Appearance.font.reading}
  MouseArea {id:pointer;anchors.fill:parent;hoverEnabled:true;cursorShape:Qt.PointingHandCursor;onClicked:{ClipboardVault.select(modelData.id);ClipboardVault.action("copy",modelData.id);}}
  }
  }
- NrLabel {anchors.centerIn:parent;visible:ClipboardVault.items.length===0;text:"No matching entries";pixelSize:12;color:Theme.widgetMuted}
+ NrLabel {anchors.centerIn:parent;visible:ClipboardVault.items.length===0;text:ClipboardVault.loading?"Loading history…":ClipboardVault.listError?"History unavailable":ClipboardVault.query?"No matching entries":"Nothing in this view";pixelSize:12;color:Theme.widgetMuted}
  }
  ChamferPanel {width:parent.width-312;height:parent.height;fillColor:Theme.widgetSurface;borderColor:Theme.alpha(Theme.widgetText,.08);chamfer:8;scanlines:false
  Column {anchors.fill:parent;anchors.margins:10;spacing:6
  Row {spacing:8;NrLabel {width:480;tracked:false;font.capitalization:Font.MixedCase;font.family:Appearance.font.heading;font.weight:Font.DemiBold;text:root.selected.kind==="image"?"Image preview":root.selected.kind==="files"?"Files · "+(root.selected.fileCount??0):(root.selected.lexer??"Text preview");pixelSize:14;color:Theme.widgetAccent;elide:Text.ElideRight}NrLabel {text:root.selected.pinned?"\uf08d PINNED":"";pixelSize:11;color:Theme.widgetAccent}}
  Flickable {id:preview;width:parent.width;height:222;clip:true;contentWidth:width;contentHeight:root.selected.kind==="files"?Math.max(height,filePreview.implicitHeight):root.selected.kind==="image"?height:code.height;boundsBehavior:Flickable.StopAtBounds;ScrollBar.vertical:DeskScrollBar {}
- Image {id:imagePreview;anchors.fill:parent;visible:root.selected.kind==="image";source:visible&&root.selected.path?"file://"+root.selected.path:"";fillMode:Image.PreserveAspectFit;sourceSize.width:1100;asynchronous:true}
+ Image {id:imagePreview;anchors.fill:parent;visible:root.selected.kind==="image";source:visible&&root.selected.path?Paths.url(root.selected.path):"";fillMode:Image.PreserveAspectFit;sourceSize.width:1100;asynchronous:true}
  NrLabel {anchors.centerIn:parent;visible:root.selected.kind==="image"&&imagePreview.status===Image.Error;text:"Preview unavailable · open original";pixelSize:12;color:Theme.widgetMuted}
  Text {id:code;width:parent.width;visible:root.selected.kind==="text";textFormat:Text.PlainText;text:root.selected.preview??"";font.family:Appearance.font.data;font.pixelSize:12;color:Theme.widgetText;wrapMode:Text.WrapAnywhere;onLinkActivated:()=>{} }
  Column {id:filePreview;width:parent.width;spacing:4;visible:root.selected.kind==="files"
@@ -54,7 +54,7 @@ DropdownFrame {
  ControlTile {implicitWidth:127;implicitHeight:30;label:"Open original";glyph:"\uf07c";enabled:!!root.selected.path;onActivated:AppLaunch.run(["xdg-open",root.selected.path])}
  }
  Row {spacing:10
- NrLabel {width:805;text:ClipboardVault.error || (ClipboardVault.count+" unique items · "+ClipboardVault.events+" copies · "+(ClipboardVault.bytes/1048576).toFixed(1)+" MiB · ~/.clipboard · no automatic deletion");pixelSize:10;color:ClipboardVault.error?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}
+ NrLabel {width:805;text:ClipboardVault.listError || ClipboardVault.error || (ClipboardVault.count+" unique items · "+ClipboardVault.events+" copies · "+(ClipboardVault.bytes/1048576).toFixed(1)+" MiB · ~/.clipboard · no automatic deletion");pixelSize:10;color:(ClipboardVault.listError||ClipboardVault.error)?Theme.widgetAccent:Theme.widgetMuted;elide:Text.ElideRight}
  ControlTile {implicitWidth:180;implicitHeight:25;label:ClipboardVault.items.length>=ClipboardVault.limit?"Load more":"Archive folder";onActivated:{if(ClipboardVault.items.length>=ClipboardVault.limit){ClipboardVault.limit+=150;ClipboardVault.refresh();}else AppLaunch.run(["xdg-open","@HOME@/.clipboard"]);}}
  }
  }

@@ -32,9 +32,8 @@ Variants {
         Wallpaper {
             visible:!wallpaperWindow.story
             decodeInBackground: true
-            // The saved per-display choices arrive asynchronously. Never show
-            // a bundled theme wallpaper in the gap before that file is read.
-            source: Wallpapers.loaded ? Wallpapers.displaySource((modelData?.name ?? (MachineProfile.primaryOutput||"DP-3"))) : Wallpapers.startupSource(ShellState.isExternalOutput(modelData?.name ?? (MachineProfile.primaryOutput||"DP-3"))?(MachineProfile.primaryOutput||"DP-3"):(modelData?.name ?? (MachineProfile.primaryOutput||"DP-3")))
+            // A previous login's thumbnail must not take over before settings load.
+            source: Wallpapers.loaded ? Wallpapers.displaySource(modelData.name) : ""
             imageFillMode: Wallpapers.displayMode((modelData?.name ?? (MachineProfile.primaryOutput||"DP-3")))
             anchors.fill: parent
 

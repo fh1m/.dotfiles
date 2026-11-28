@@ -116,7 +116,7 @@ elif cmd=='detail':
         paths=files_from(Path(row['path']).read_bytes())
         row['files']=[{'name':p.name,'path':str(p),'exists':p.exists(),'image':p.suffix.lower() in ('.png','.jpg','.jpeg','.webp','.gif','.bmp','.svg')} for p in paths[:100]]
         row['fileCount']=len(paths)
-    if row['kind']=='text':
+    if row['kind']=='text' and a[2:]!=['--plain']:
         from pygments import highlight
         from pygments.lexers import guess_lexer, get_lexer_by_name
         from pygments.formatters import HtmlFormatter

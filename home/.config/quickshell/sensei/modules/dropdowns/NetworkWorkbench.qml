@@ -4,45 +4,135 @@ import Quickshell
 import Quickshell.Io
 import qs.components
 import qs.config
+import qs.services
+import qs.utils
+
 Column {
- id:root;spacing:12;property var snapshot:({interfaces:[],neighbors:[],routes:[]});property var prepared:({});property string phase:"inventory";property string report:"Routes, observed neighbors and owned sockets. Explicit scans stay within your selected private LAN.";property var deferred:[]
- readonly property string gateway:root.snapshot.routes.find(r=>r.dst==="default"&&r.dev===interfaces.model[interfaces.currentIndex]?.ifname)?.gateway||""
- property string diagnosticText:""
- property bool showTechnical:false
- function diagnose(action){if(tool.running||worker.running)return;tool.command=[Quickshell.env("HOME")+"/.local/bin/sensei-network",action];if(['health','link'].includes(action))tool.command=tool.command.concat(['--interface',interfaces.model[interfaces.currentIndex]?.ifname||'']);if(['resolve','trace'].includes(action))tool.command=tool.command.concat(['--target',diagnosticHost.text.trim()||'example.com']);tool.running=true;}
- function present(d){if(d.error)return d.error;let lines=[d.kind];if(d.data)lines=lines.concat(Object.entries(d.data).filter(x=>x[1]).map(x=>x[0]+': '+x[1]));if(d.addresses)lines.push(d.host+' → '+d.addresses.join(' · ')+' · '+d.elapsedMs+' ms');if(d.checks)lines=lines.concat(d.checks.map(c=>c.name+' / '+c.state+'\n'+(typeof c.detail==='object'?JSON.stringify(c.detail):c.detail)));if(d.links)lines=lines.concat(d.links.map(l=>l.ifname+' · '+l.operstate+' · MTU '+l.mtu+'\nRX '+JSON.stringify(l.stats64?.rx||{})+'\nTX '+JSON.stringify(l.stats64?.tx||{})));if(d.physical)lines.push(d.physical);if(d.result)lines.push(d.result);if(d.note)lines.push(d.note);return lines.join('\n\n');}
- function request(args,op){if(worker.running)return;phase=op;worker.command=[Quickshell.env("HOME")+"/.local/bin/sensei-actions"].concat(args);worker.running=true;}
- function action(name,params){prepared={};request(["prepare",name,"--params",JSON.stringify(params)],"prepare");}
- Component.onCompleted:request(["run","network.inspect"],"inventory")
- Text {text:"NETWORK WORKBENCH";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;font.letterSpacing:1;color:Theme.widgetAccent}
- DeskComboBox {id:interfaces;width:parent.width;model:root.snapshot.interfaces.filter(r=>r.operstate==="UP"&&r.ifname!=="lo");textRole:"ifname";enabled:!worker.running;onActivated:root.prepared={}}
- Text {width:parent.width;text:"LINK → GATEWAY → DNS → INTERNET";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
- DeskTextField {id:diagnosticHost;width:parent.width;placeholderText:"DNS / path target · example.com";maximumLength:253}
- Flow {width:parent.width;spacing:8
-  Repeater {model:[{id:'health',name:'Connection test'},{id:'link',name:'Link / errors'},{id:'resolve',name:'Resolve DNS'},{id:'trace',name:'Trace route'},{id:'public',name:'Public IP / ISP'}]
-   ControlTile {required property var modelData;label:modelData.name;enabled:!tool.running&&!worker.running&&(interfaces.currentIndex>=0||!['health','link'].includes(modelData.id));onActivated:root.diagnose(modelData.id)}
-  }
- }
- Text {width:parent.width;text:tool.running?'Checking… bounded diagnostics; no connection settings are changed':'ISP lookup contacts ipinfo.io only when clicked. VPN egress can differ from the physical ISP.';wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
- ScrollView {visible:root.diagnosticText!=='';width:parent.width;height:Math.min(300,diagnosticView.implicitHeight+20);contentWidth:availableWidth;clip:true
-  TextArea {id:diagnosticView;readOnly:true;text:root.diagnosticText;textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.paper;background:Rectangle {color:Theme.surfaceOne;radius:5;border.color:Theme.rule}}
- }
- Process {id:tool;stdout:StdioCollector {onStreamFinished:{try{root.diagnosticText=root.present(JSON.parse(text));}catch(e){root.diagnosticText='The diagnostic returned an unreadable response; no action was repeated.';}}}}
- Flow {width:parent.width;spacing:8
-  ControlTile {label:"Routes / sockets";enabled:!worker.running;onActivated:root.request(["run","network.inspect"],"inventory")}
-  ControlTile {label:"Gateway admin";glyph:"\uf013";enabled:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(root.gateway);onActivated:AppLaunch.run(["xdg-open","http://"+root.gateway+"/"])}
-  ControlTile {label:"Discover LAN…";enabled:!worker.running&&interfaces.currentIndex>=0;onActivated:root.action("network.discover",{interface:interfaces.model[interfaces.currentIndex].ifname})}
- }
- Repeater {model:root.snapshot.neighbors
-  Text {required property var modelData;width:parent.width;text:modelData.dst+" · "+(modelData.lladdr||"unresolved MAC")+" · "+modelData.dev+" · "+(modelData.state||[]).join(" / ");wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetText}
- }
- DeskTextField {id:target;width:parent.width;placeholderText:"Owned LAN host IPv4, e.g. Homie’s address";maximumLength:15}
- ControlTile {label:"Inspect TCP ports…";enabled:!worker.running&&target.text.trim()!==""&&interfaces.currentIndex>=0;onActivated:root.action("network.ports",{interface:interfaces.model[interfaces.currentIndex].ifname,target:target.text.trim()})}
- Row {width:parent.width;spacing:8;visible:!!root.prepared.confirmation
-  ControlTile {label:"Confirm probe";enabled:!worker.running;onActivated:root.request(["run",root.prepared.plan.action,"--params",JSON.stringify(root.prepared.plan.params),"--confirmation",root.prepared.confirmation],"result")}
-  ControlTile {label:"Cancel";onActivated:root.prepared={}}
- }
- ControlTile {label:root.showTechnical?"Hide technical snapshot":"Routes, DNS and socket snapshot";onActivated:root.showTechnical=!root.showTechnical}
- Text {visible:root.showTechnical||root.phase!=="inventory";width:parent.width;text:root.report;wrapMode:Text.Wrap;textFormat:Text.PlainText;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetMuted}
- Process {id:worker;onExited:if(root.deferred.length){let next=root.deferred;root.deferred=[];root.request(next,"result");}stdout:StdioCollector {onStreamFinished:{try{const row=JSON.parse(text);if(row.error){root.report=row.error;return;}if(root.phase==="inventory"){root.snapshot=row;root.report=row.note+"\n"+row.interfaces.map(i=>i.ifname+" · MTU "+i.mtu+" · "+i.operstate+"\n"+(i.addr_info||[]).map(a=>a.local+"/"+a.prefixlen).join(" · ")).join("\n")+"\n\n"+row.routes.map(r=>(r.dst||"default")+" via "+(r.gateway||"direct")+" · "+r.dev).join("\n")+"\n\nDNS\n"+(row.dns||"Use system resolver controls")+"\n\nSOCKETS\n"+(row.sockets||"").slice(-6000);}else if(root.phase==="prepare"){root.prepared=row;root.report=JSON.stringify(row.plan,null,2);}else{root.prepared={};root.report=JSON.stringify(row,null,2);}}catch(e){root.report="Network tools unavailable; no scan was repeated.";}}}}
+    id: root
+    spacing: 10
+    property string preferredInterface: ""
+    property var snapshot: ({interfaces:[], neighbors:[], routes:[]})
+    property var result: ({})
+    property string details: ""
+    property string expanded: ""
+    property string error: ""
+    readonly property var link: interfaces.model[interfaces.currentIndex] ?? {}
+    readonly property string gateway: snapshot.routes.find(r => r.dst === "default" && r.dev === link.ifname)?.gateway ?? ""
+    readonly property var neighbors: snapshot.neighbors.filter(n => n.dev === link.ifname)
+    readonly property bool busy: inventory.running || probe.running
+    function refresh() {
+        if (!busy) { error=""; inventory.running=true; }
+    }
+    function diagnose(name) {
+        if (busy) return;
+        result={}; error="";
+        probe.command=[Paths.home+"/.local/bin/sensei-network",name];
+        if (["health","link"].includes(name)) probe.command=probe.command.concat(["--interface",link.ifname]);
+        if (name==="resolve") probe.command=probe.command.concat(["--target",host.text.trim()||"example.com"]);
+        probe.running=true;
+    }
+    function inspect() {
+        expanded=expanded==="technical"?"":"technical";
+        if(expanded && !details && !technical.running) technical.running=true;
+    }
+    Component.onCompleted: refresh()
+
+    Row {
+        width: parent.width; spacing: 8
+        DeskComboBox {
+            id: interfaces; width: parent.width-124; height:36
+            model: root.snapshot.interfaces.filter(i=>i.ifname!=="lo")
+            textRole: "ifname"; enabled: !root.busy
+            onActivated: {root.result={};root.expanded="";}
+        }
+        ControlTile { implicitWidth:116; implicitHeight:36; label:"Refresh"; enabled:!root.busy; onActivated:root.refresh() }
+    }
+    Text {
+        width:parent.width; textFormat:Text.PlainText; wrapMode:Text.Wrap
+        text: root.link.ifname ? (root.link.flags?.includes("LOWER_UP") ? "Carrier detected" : "No carrier") + (root.gateway ? "  /  Gateway " + root.gateway : "  /  No IPv4 default route") : inventory.running ? "Reading interfaces…" : "No interfaces reported"
+        font.family:Appearance.font.reading; font.pixelSize:Appearance.textSize.body; color:Theme.widgetText
+    }
+    ChamferPanel {
+        width:parent.width; height:99; chamfer:7; scanlines:false; fillColor:Theme.widgetSurface; borderColor:Theme.widgetBorder
+        Text {x:11;y:8;text:"Host traffic   ↓ "+Fmt.rateLong(SysInfo.netRxRate)+"   ↑ "+Fmt.rateLong(SysInfo.netTxRate);font.family:Appearance.font.telemetry;font.pixelSize:13;color:Theme.widgetText}
+        Sparkline { x:10;y:31;width:parent.width-20;height:57;points:16;floorValue:1024;downValues:SysInfo.netRxHistory;upValues:SysInfo.netTxHistory;downColor:Theme.widgetAccent;upColor:Theme.widgetMuted;strokeWidth:1.5 }
+        Text {anchors.centerIn:parent;anchors.verticalCenterOffset:8;visible:SysInfo.netRxHistory.length<2;text:"Collecting traffic samples…";font.family:Appearance.font.reading;color:Theme.widgetMuted}
+    }
+    Flow {
+        width:parent.width;spacing:7
+        ControlTile {label:"Test connection";enabled:!!root.link.ifname&&!root.busy;onActivated:root.diagnose("health")}
+        ControlTile {label:"Link speed";enabled:!!root.link.ifname&&!root.busy;onActivated:root.diagnose("link")}
+        ControlTile {label:"Profiles";onActivated:AppLaunch.run(["nm-connection-editor"])}
+        ControlTile {label:"Gateway settings";enabled:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(root.gateway);onActivated:AppLaunch.run(["xdg-open","http://"+root.gateway+"/"])}
+    }
+    Row {
+        width:parent.width;spacing:8
+        DeskTextField {id:host;width:parent.width-122;height:32;placeholderText:"DNS name (example.com)";maximumLength:253;onAccepted:root.diagnose("resolve")}
+        ControlTile {implicitWidth:114;implicitHeight:32;label:"Resolve";enabled:!root.busy;onActivated:root.diagnose("resolve")}
+    }
+    Flow {
+        width:parent.width;spacing:7
+        Repeater {
+            model:root.result.checks??[]
+            ControlTile {
+                required property var modelData
+                label:modelData.name+": "+modelData.state
+                selected:root.expanded===modelData.name
+                onActivated:root.expanded=selected?"":modelData.name
+            }
+        }
+    }
+    Text {
+        width:parent.width;visible:!!text;textFormat:Text.PlainText;wrapMode:Text.Wrap
+        text:root.error||(probe.running?"Checking…":root.result.addresses?root.result.addresses.join(", ")+"  /  "+root.result.elapsedMs+" ms":root.result.result||root.result.note||"")
+        font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:root.error?Theme.uiWarning:Theme.widgetText
+    }
+    Flow {
+        width:parent.width;spacing:7
+        ControlTile {label:"Neighbors ("+root.neighbors.length+")";selected:root.expanded==="neighbors";onActivated:root.expanded=selected?"":"neighbors"}
+        ControlTile {label:"Technical details";selected:root.expanded==="technical";onActivated:root.inspect()}
+        ControlTile {label:"Driver counters";visible:!!root.result.links;selected:root.expanded==="driver";onActivated:root.expanded=selected?"":"driver"}
+    }
+    Loader {
+        width:parent.width
+        active:root.expanded!==""
+        asynchronous:true
+        sourceComponent:ScrollView {
+        height:Math.min(230,log.implicitHeight+12);contentWidth:availableWidth;clip:true
+        TextArea {
+            id:log;readOnly:true;textFormat:TextEdit.PlainText;wrapMode:TextEdit.Wrap
+            text:{
+                if(root.expanded==="neighbors")return root.neighbors.map(n=>n.dst+"  /  "+(n.state||[]).join(", ")).join("\n")||"No neighbors observed on this interface.";
+                if(root.expanded==="technical")return root.details||"Reading details…";
+                if(root.expanded==="driver")return root.result.physical||"No driver report available.";
+                const check=root.result.checks?.find(c=>c.name===root.expanded)?.detail;
+                return typeof check==="object"?(check.addresses||[]).join(", "):check||"";
+            }
+            font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetText
+            background:Rectangle {color:Theme.widgetSurface;border.color:Theme.widgetBorder}
+        }
+        }
+    }
+    Process {
+        id:inventory;command:[Paths.home+"/.local/bin/sensei-network","summary"]
+        stdout:StdioCollector {onStreamFinished:{
+            try {
+                const data=JSON.parse(text);if(data.error)throw new Error(data.error);
+                const keep=root.link.ifname||root.preferredInterface||data.routes.find(r=>r.dst==="default")?.dev;
+                root.snapshot=data;root.details="";
+                interfaces.currentIndex=Math.max(0,interfaces.model.findIndex(i=>i.ifname===keep));
+            }catch(e){root.error="Network interfaces unavailable.";}
+        }}
+    }
+    Process {
+        id:probe
+        stdout:StdioCollector {onStreamFinished:{try{const d=JSON.parse(text);root.error=d.error||"";root.result=d.error?{}:d;root.expanded="";}catch(e){root.error="Could not read this check result.";}}}
+    }
+    Process {
+        id:technical;command:[Paths.home+"/.local/bin/sensei-network","inventory"]
+        stdout:StdioCollector {onStreamFinished:{try{
+            const d=JSON.parse(text);if(d.error)throw new Error(d.error);
+            root.details=[d.routes.map(r=>(r.dst||"default")+" via "+(r.gateway||"direct")+" / "+r.dev).join("\n"),d.dns,d.sockets].filter(Boolean).join("\n\n");
+        }catch(e){root.details="Network details unavailable. Refresh links and retry.";}}}
+    }
 }

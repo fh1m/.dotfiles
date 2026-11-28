@@ -23,6 +23,22 @@ with tempfile.TemporaryDirectory(prefix='dotfiles-test-') as directory:
     # Every file the desktop loads by path must exist after install.
     import re,json
     external=json.loads((ROOT/'scripts/service-dependencies.json').read_text())
+    assert json.loads((home/'.config/sensei/wallpapers.json').read_text())['lockedFile'] == ''
+    assert not list((home/'Pictures/wallpapers/sensei').glob('*.png'))
+    # Retire the known stock copy, but never a user's same-named art.
+    from hashlib import sha256
+    stock = home/'Pictures/wallpapers/sensei/net-circuit.png'
+    stock.write_bytes(b'fixture-stock-art')
+    original = home/'.config/quickshell/sensei/assets/wallpapers/net-circuit.png'
+    original.parent.mkdir(parents=True, exist_ok=True)
+    original.write_bytes(b'user replacement')
+    expected = m.RETIRED_WALLPAPERS[stock.name]
+    m.RETIRED_WALLPAPERS[stock.name] = sha256(stock.read_bytes()).hexdigest()
+    assert str(stock.relative_to(home)) in m.install(home)['changed'] and stock.is_file()
+    retired = m.install(home, True)
+    assert not stock.exists() and (Path(retired['backup'])/stock.relative_to(home)).read_bytes() == b'fixture-stock-art'
+    assert original.read_bytes() == b'user replacement' and not m.install(home, True)['changed']
+    m.RETIRED_WALLPAPERS[stock.name] = expected
     for name in ['hyprland.lua', 'custom-setup.lua']:
         for ref in re.findall(r'dofile\("([^"]+)"\)', (home/'.config/hypr'/name).read_text()):
             assert Path(ref).is_file(), (name, ref)
@@ -35,9 +51,6 @@ with tempfile.TemporaryDirectory(prefix='dotfiles-test-') as directory:
                 print('EXTERNAL:',unit.name,'provision with',dependency['provision'])
             else:
                 assert (home/ref).exists(), (unit.name, ref)
-    # Seed wallpaper: the lockedFile the seed names must exist, and the copy must have run.
-    assert (home/'.config/quickshell/sensei/assets/wallpapers/net-circuit.png').is_file()
-    assert (home/'Pictures/wallpapers/sensei/net-circuit.png').is_file()
     # A live directory link into the repo must not be rendered back over the repo source.
     linked = Path(tempfile.mkdtemp(prefix='dotfiles-dirlink-'))
     (linked/'.config').mkdir(); (linked/'.config/nvim').symlink_to(ROOT/'home/.config/nvim')

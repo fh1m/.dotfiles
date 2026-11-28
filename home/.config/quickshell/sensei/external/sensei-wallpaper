@@ -5,23 +5,8 @@
                         [--src FILE] [--src-accent '#RRGGBB']
                         [--src-signal '#RRGGBB']
 
-The render is a two-hue image: one hue carries the profile's `accent` and the
-other its `signal`, over neutral darks. Recolouring it is therefore a *colour
-mapping*, not a generation -- every pixel keeps its lightness and its place in
-its own hue's spread, and only the hue and the saturation move. There is no
-model and no network call; the six shipped wallpapers were drawn by hand and
-this reproduces the relationship between them, nothing more.
-
-`--src` defaults to the base render shipped inside the shell. The pools screen
-can hand it any surviving `net-*.png` instead, with that profile's own accent
-and signal as `--src-accent` / `--src-signal`, which is how a deleted wallpaper
-is restored when the base is not the one to hand.
-
-The mapping is applied as a 33^3 lookup table rather than pixel by pixel:
-Pillow interpolates a LUT in C, and a 1920x1080 image takes about a tenth of
-the time a Python loop over two million pixels does. It also smooths the seam
-between the two hue regions for free, which is what the render's gradients
-want anyway.
+Without --src, draw an original Digital Den signal field. With --src,
+recolour a user-selected image using Pillow's interpolated colour LUT.
 """
 
 import argparse
@@ -29,7 +14,7 @@ import colorsys
 import os
 import sys
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 # The base render's own two colours. It is Circuit's own wallpaper, so these
 # are Circuit's.
@@ -115,31 +100,50 @@ def build_lut(mapper, grid=GRID):
     return ImageFilter.Color3DLUT(grid, table)
 
 
-def main(argv=None):
-    here = os.path.dirname(os.path.realpath(__file__))
-    # The shipped Circuit preset is the base render (the separate net-base.png
-    # was the same image, pixel for pixel, and is gone).
-    default_src = os.path.join(os.path.dirname(here), "assets", "wallpapers",
-                               "net-circuit.png")
+def signal_field(accent, signal):
+    """Quiet station-keeping plot: a point, an orbit and a datum."""
+    width, height = 1920, 1080
+    ground = (8, 9, 12)
+    image = Image.new("RGB", (width, height), ground)
+    draw = ImageDraw.Draw(image)
+    def tint(color, amount):
+        return tuple(round(base * (1 - amount) + channel * 255 * amount)
+                     for base, channel in zip(ground, color))
+    cx, cy = 1330, 520
+    for x in range(34, width, 44):
+        for y in range(36, height, 44):
+            draw.point((x, y), fill=(25, 27, 32))
+    for radius in (103, 184, 285):
+        box = (cx-radius, cy-radius, cx+radius, cy+radius)
+        draw.ellipse(box, outline=tint(signal, .25), width=1)
+    draw.line((cx-330, cy, cx+330, cy), fill=tint(signal, .31))
+    draw.line((cx, cy-330, cx, cy+330), fill=tint(signal, .31))
+    draw.arc((cx-285, cy-285, cx+285, cy+285), 194, 289, fill=tint(accent, .72), width=4)
+    draw.ellipse((cx-5, cy-5, cx+5, cy+5), fill=tint(accent, .85))
+    return image
 
+
+def main(argv=None):
     ap = argparse.ArgumentParser(add_help=True, description=__doc__)
     ap.add_argument("--out", required=True, help="PNG to write")
     ap.add_argument("--accent", required=True, type=parse_hex)
     ap.add_argument("--signal", required=True, type=parse_hex)
-    ap.add_argument("--src", default=default_src)
+    ap.add_argument("--src", help="Optional source image to recolour")
     ap.add_argument("--src-accent", default=BASE_ACCENT, type=parse_hex)
     ap.add_argument("--src-signal", default=BASE_SIGNAL, type=parse_hex)
     args = ap.parse_args(argv)
 
-    if not os.path.exists(args.src):
-        print(f"sensei-wallpaper: no source render at {args.src}",
-              file=sys.stderr)
-        return 2
-
-    image = Image.open(args.src).convert("RGB")
-    lut = build_lut(make_mapper(
-        args.src_accent, args.src_signal, args.accent, args.signal))
-    out = image.filter(lut)
+    if args.src:
+        if not os.path.isfile(args.src):
+            print(f"sensei-wallpaper: no source render at {args.src}", file=sys.stderr)
+            return 2
+        with Image.open(args.src) as source:
+            image = source.convert("RGB")
+        lut = build_lut(make_mapper(
+            args.src_accent, args.src_signal, args.accent, args.signal))
+        out = image.filter(lut)
+    else:
+        out = signal_field(args.accent, args.signal)
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)) or ".",
                 exist_ok=True)

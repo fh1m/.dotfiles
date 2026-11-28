@@ -22,12 +22,14 @@ def target(interface,address,addresses=None):
  network=ipaddress.ip_network(scope(interface,addresses));addr=ipaddress.ip_address(address)
  if addr.version!=4 or addr not in network or addr in (network.network_address,network.broadcast_address):raise ValueError('Target must be a host in the selected private LAN segment')
  return str(addr)
-def inventory():
+def inventory(technical=True):
+ data={'interfaces':json.loads(command(['ip','-j','address','show'])),'routes':json.loads(command(['ip','-j','route','show'])),'neighbors':json.loads(command(['ip','-j','neigh','show'])),'note':'Neighbor cache is observed evidence, not a complete router client list.'}
+ if not technical:return data
  dns=''
  if shutil.which('resolvectl'):
   try:dns=command(['resolvectl','status'])[-12000:]
   except (ValueError,subprocess.SubprocessError):dns='Resolver status unavailable'
- return {'interfaces':json.loads(command(['ip','-j','address','show'])),'routes':json.loads(command(['ip','-j','route','show'])),'neighbors':json.loads(command(['ip','-j','neigh','show'])),'sockets':command(['ss','-tunap'])[-16000:],'dns':dns,'note':'Neighbor cache is observed evidence, not a complete router client list. Scans never run during refresh.'}
+ return dict(data,sockets=command(['ss','-tunap'])[-16000:],dns=dns)
 def scan(interface,address=None):
  cidr=scope(interface);host=target(interface,address) if address else None
  argv=['nmap','-n','--max-retries','1','--host-timeout','12s','-oX','-']

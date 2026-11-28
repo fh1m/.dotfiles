@@ -641,3 +641,41 @@ ShellRoot {
     }
 }'''
     assert "PROOF_PASS wallpaper-coalesced" in run_native(tmp_path, harness)
+
+
+@pytest.mark.skipif(not HAS_QS, reason="Explicit native Quickshell runtime required")
+def test_clipboard_cold_all_shows_mixed_history_and_survives_fast_filter_changes(tmp_path):
+    setup_services(tmp_path, "ClipboardVault.qml")
+    put(tmp_path, "services/ShellState.qml", SHELL_STATE.replace('dropdown: ""', 'dropdown: "clipboard"'))
+    helper(tmp_path, "clipboard-vault", '''
+import sys, json, time
+rows=[{"id":1,"kind":"text"},{"id":2,"kind":"image"},{"id":3,"kind":"files"}]
+if sys.argv[1]=="list":
+    mode=sys.argv[3]
+    if mode=="text":time.sleep(.16)
+    print(json.dumps(dict(items=[r for r in rows if mode in ("all", r["kind"])],
+                          count=3,events=3,bytes=42)))
+else:
+    print(json.dumps(rows[int(sys.argv[2])-1]))
+''')
+    qml = '''import QtQuick
+import Quickshell
+import qs.services
+ShellRoot {
+    property var vault: ClipboardVault
+    Timer { id: goBack; interval:45; onTriggered:ClipboardVault.filter="all" }
+    Timer {
+        property int step: 0
+        interval:20;repeat:true;running:true
+        onTriggered:{
+            if(step===0 && ClipboardVault.items.map(r=>r.kind).join(",")==="text,image,files"){
+                step=1;ClipboardVault.filter="text";goBack.start();
+            }else if(step===1 && goBack.running===false && !ClipboardVault.loading){
+                if(ClipboardVault.items.map(r=>r.kind).join(",")!=="text,image,files")
+                    throw new Error("Old text-only response replaced All");
+                console.log("PROOF_PASS mixed-clipboard");Qt.quit();
+            }
+        }
+    }
+}'''
+    assert "PROOF_PASS mixed-clipboard" in run_native(tmp_path, qml)
