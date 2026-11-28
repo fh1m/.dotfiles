@@ -7,23 +7,19 @@ The laptop's base home/ and system/ sources retain their own policy. The pc over
 Use the complete checkout, not a pc-only sparse checkout:
 
 ```sh
-cd "$HOME/.dotfiles-pc"
-git sparse-checkout disable  # only if sparse checkout is enabled
+cd "$HOME/.dotfiles"
 python3 scripts/install.py --hardware pc
 python3 scripts/test-install.py
 python3 scripts/install.py --hardware pc --apply
-sensei-palette "$HOME/Pictures/wallpapers/wallhaven-1q2p3v.png"
 ```
 
-Preview and apply produce JSON listing changed paths. Each apply stores a private manifest under ~/.local/state/dotfiles-backups. To undo a particular apply, pass its exact backup directory to `python3 scripts/install.py --restore /absolute/backup/path`. Several incremental applies require reversing their manifests newest first. Do not treat root Snapper snapshots as home backups: @home is separate. Never put private manifests, wallpaper artwork or home copies in Git.
+Preview and apply list changed paths. The installer preserves replaced files under `~/.local/state/dotfiles-backups`; recover the specific file from the exact backup rather than copying another machine's configuration. Keep backups and personal artwork outside Git.
 
-Machine facts come from sensei-machine and pc/home/.config/sensei/machine.json. This desktop has one direct NVIDIA GPU, DP-3, scale 1, no Intel GPU, no battery and no ScreenPad. The advertised LG mode is 1920x1080 at 74.97 Hz. Rediscover output names before reusing this profile on different hardware.
+Read the active machine profile with `sensei-machine`; the PC overlay lives under `profiles/pc/home/`. Rediscover connectors before reusing its direct-NVIDIA display policy on different hardware.
 
 ## Desktop behavior
 
-Wrayth retains the personal workspace, switcher, media and robotics UI. Desktop overlays enable animations, two-pass blur, shadows, glass and translucent terminals. Inter handles interface text; JetBrains Mono Nerd Font handles terminals and aligned data. Starship supplies the new zsh prompt. Existing shells need a new shell to load it; do not kill running work to refresh a prompt. The persistent tmux server uses the existing backtick prefix.
-
-The supplied pink-building wallpaper is downloaded privately from wallhaven 1q2p3v. `sensei-palette` coordinates the shell, terminal, prompt and tmux. Artwork is not bundled. Reapplying templates can reset generated colors, so republish the chosen palette afterward.
+Digital Den owns the desktop wallpaper. On Homie, `sudo python3 scripts/setup-homie-greeter-wallpaper.py --apply` keeps the existing Noctalia login screen but replaces its wallpaper fallback with black. Hyprland also shows black until Quickshell loads the saved photo. This does not restart the active session or change authentication. The greeter setup prints its exact backup path.
 
 `sensei-chrome` is the default browser launcher. Native Wayland renders on NVIDIA. Experimental decoder settings are used only while the saved kernel/driver/browser fingerprint matches the actual successful local test; updates automatically fall back to standard rendering until retested. No browser sandbox is disabled. mpv uses the desktop NVDEC path; screen recording first tries NVENC and retains software fallback.
 
