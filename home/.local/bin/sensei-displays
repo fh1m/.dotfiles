@@ -250,7 +250,7 @@ def main_display(outputs):
     return display_roles(outputs).get('main') if role_for else next((m for m in outputs if not external(m['name'])), next(iter(outputs),None))
 
 
-def workspace(number,output=None):
+def workspace(number,output=None,only=False):
     if number not in range(1,8):raise ValueError('Workspace must be 1–7')
     outputs=monitors()
     current=next((m for m in outputs if m.get('focused')),outputs[0] if outputs else None)
@@ -259,13 +259,14 @@ def workspace(number,output=None):
     if not target:raise ValueError('Display is not connected')
     main=main_display(outputs)
     if role_for and role_for(name,outputs)=='screenpad':
+        if only:raise ValueError('ScreenPad keeps its utility workspace')
         name=main['name'] if main else name
     joined=[m for m in outputs if external(m['name']) or (main and m['name']==main['name'])]
     if not joined:joined=[target]
     existing={w['id']:w for w in known_workspaces()}
     slots=workspace_slots(joined)
     actions=[]
-    for monitor in joined:
+    for monitor in (m for m in joined if not only or m['name']==name):
         output_name=monitor['name'];wid=physical(number,output_name,slots)
         if monitor.get('activeWorkspace',{}).get('id')==wid and not monitor.get('specialWorkspace',{}).get('name'):continue
         if wid in existing and existing[wid].get('monitor')!=output_name:
@@ -333,7 +334,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
     status=sub.add_parser('sync');status.add_argument('--no-layout',action='store_true');status.add_argument('--no-notify',action='store_true')
     control=sub.add_parser('brightness');control.add_argument('output');control.add_argument('percent',type=float)
-    focus=sub.add_parser('workspace');focus.add_argument('number',type=int);focus.add_argument('output',nargs='?')
+    focus=sub.add_parser('workspace');focus.add_argument('number',type=int);focus.add_argument('output',nargs='?');focus.add_argument('--only',action='store_true')
     sub.add_parser('reconcile')
     move=sub.add_parser('move');move.add_argument('number',type=int);move.add_argument('address',nargs='?')
     args=parser.parse_args()
@@ -342,7 +343,7 @@ def main():
         STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
         with (STATE/'workspace.lock').open('w') as lock:
             fcntl.flock(lock,fcntl.LOCK_EX)
-            if args.command=='workspace':workspace(args.number,args.output)
+            if args.command=='workspace':workspace(args.number,args.output,args.only)
             elif args.command=='move':move_window(args.number,args.address)
             else:reconcile()
         return

@@ -67,7 +67,7 @@ def palette_from_image(image):
     with Image.open(image) as source:
         source.thumbnail((160, 160))
         picture = source.convert("RGB")
-    quantised = picture.quantize(colors=12, method=Image.Quantize.MEDIANCUT)
+    quantised = picture.quantize(colors=40, method=Image.Quantize.MEDIANCUT)
     raw = quantised.getpalette()
     counts = quantised.getcolors()
     total = sum(count for count, _ in counts) or 1
@@ -80,14 +80,20 @@ def palette_from_image(image):
     usable = [item for item in swatches if item[3] >= 0.18 and 0.055 <= item[2] <= 0.92]
     if not usable:
         return dict(NEUTRAL)
-    weight = lambda item: item[0] * item[3] * (1 - abs(item[2] - 0.55))
-    accent = max(usable, key=weight)
+    # Quantization often assigns a smooth sky one large swatch and splits
+    # textured leaves across shades. Rank their combined hue families first.
+    def support(candidate):
+        return sum(fraction * (0.65 + 0.35 * saturation)
+                   * max(0, 1 - _hue_gap(candidate[1], hue) / 0.10)
+                   for fraction, hue, _, saturation in usable)
+
+    accent = max(usable, key=support)
     hue = accent[1]
     raised = _hex(hue, 0.10, 0.20)
     primary = readable_accent(hue, _clamp(accent[2], 0.54, 0.66), max(accent[3], 0.75), raised)
     others = [item for item in usable if _hue_gap(item[1], hue) >= 0.12]
     if others:
-        other = max(others, key=lambda item: item[0] * item[3])
+        other = max(others, key=support)
         secondary = _hex(other[1], 0.64, max(other[3], 0.45))
     else:
         secondary = _hex(hue + 0.5, 0.64, 0.45)
@@ -133,7 +139,7 @@ def main():
             raise ValueError("Pass the actual leader wallpaper path")
         image = Path(sys.argv[1]).expanduser()
         info = image.stat()
-        fingerprint = [str(image), info.st_mtime_ns, info.st_size, "wallpaper-derived-3"]
+        fingerprint = [str(image), info.st_mtime_ns, info.st_size, "wallpaper-derived-4"]
         try:
             cached = json.loads(out.read_text())
         except (OSError, ValueError):

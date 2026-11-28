@@ -591,3 +591,53 @@ ShellRoot {
     }}
 }'''
     assert "PROOF_PASS effect-timing-metadata" in run_native(tmp_path, harness)
+
+
+@pytest.mark.skipif(not HAS_QS, reason="Explicit native Quickshell runtime required")
+def test_rapid_wallpaper_selection_finishes_current_fade_then_shows_latest(tmp_path):
+    image = pytest.importorskip("PIL.Image")
+    source = ROOT / "home/.config/quickshell/sensei/components/Wallpaper.qml"
+    put(tmp_path, "components/Wallpaper.qml", source.read_text())
+    put(tmp_path, "config/Theme.qml", "pragma Singleton\nimport QtQuick\nQtObject { property bool reducedMotion: false }")
+    put(tmp_path, "config/Appearance.qml", "pragma Singleton\nimport QtQuick\nQtObject { property var duration: ({panel: 80}) }")
+    put(tmp_path, "services/Wallpapers.qml", "pragma Singleton\nimport QtQuick\nQtObject { property url displayed; property int fadeDuration: 220 }")
+    for name, color in [("old", "pink"), ("first", "blue"), ("skipped", "green"), ("last", "orange")]:
+        image.new("RGB", (80, 60), color).save(tmp_path / f"{name}.png")
+    harness = r'''import QtQuick
+import Quickshell
+import qs.components
+ShellRoot {
+    FloatingWindow {
+        implicitWidth: 80
+        implicitHeight: 60
+        Wallpaper {
+            id: wall
+            anchors.fill: parent
+            source: Qt.resolvedUrl("old.png")
+            decodeInBackground: true
+        }
+        Timer {
+            property int step: 0
+            interval: 10; repeat: true; running: true
+            onTriggered: {
+                if (step === 0) {
+                    wall.source = Qt.resolvedUrl("first.png");
+                    step = 1;
+                } else if (step === 1 && wall.mix > 0 && wall.mix < 0.95) {
+                    const blend = wall.mix;
+                    wall.source = Qt.resolvedUrl("skipped.png");
+                    wall.source = Qt.resolvedUrl("last.png");
+                    if (wall.mix !== blend || !String(wall.frontSource).endsWith("/first.png"))
+                        throw new Error("Selection restarted the fade in progress");
+                    step = 2;
+                } else if (step === 2 && wall.mix === 1 && String(wall.frontSource).endsWith("/last.png")) {
+                    console.log("PROOF_PASS wallpaper-coalesced");
+                    Qt.quit();
+                }
+                if (String(wall.frontSource).endsWith("/skipped.png"))
+                    throw new Error("A superseded wallpaper was rendered");
+            }
+        }
+    }
+}'''
+    assert "PROOF_PASS wallpaper-coalesced" in run_native(tmp_path, harness)

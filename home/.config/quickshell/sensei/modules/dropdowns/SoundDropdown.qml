@@ -7,6 +7,8 @@ import qs.services
 DropdownFrame {
  headerAccent:Theme.widgetAccent
  id:root;title:"\uf028 Sound studio";katakana:"ЗВУК";implicitWidth:920;fillColor:Theme.widgetGlass
+ // Device inventory can change after mapping. Scroll within a stable viewport.
+ readonly property real surfaceHeight: 760
  headerRight:ControlTile {implicitWidth:118;implicitHeight:30;label:"Feedback";glyph:"\uf028";selected:Osd.feedbackEnabled;onActivated:Osd.toggleFeedback()}
  property int page:SoundDesk.page
  onPageChanged:SoundDesk.page=page

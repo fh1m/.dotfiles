@@ -244,6 +244,10 @@ Scope {
         target: "switcher"
         function cycle(mode: string, direction: string): void { WindowDesk.open(mode, parseInt(direction)||1); }
         function overview(): void { if(WindowDesk.opened && WindowDesk.mode==="overview")WindowDesk.cancel();else WindowDesk.open("overview",0); }
+        function display(output: string): void { WindowDesk.selectDisplay(output); }
+        function displayState(): string {
+            return JSON.stringify({filter:WindowDesk.displayFilter, displays:WindowDesk.displays.map(m=>({output:m.name,label:WindowDesk.displayLabel(m.name),workspace:Spaces.logicalId(m.activeWorkspace?.id??0)})), windows:WindowDesk.scopedWindows.map(t=>({output:WindowDesk.displayOf(t),workspace:Spaces.logicalId(Spaces.windowWorkspace(t))}))});
+        }
         function close(): void { WindowDesk.cancel(); }
         function search(text: string): string { if(!WindowDesk.opened)WindowDesk.open("apps",0);WindowDesk.query=text;WindowDesk.selected=0;WindowDesk.pinned=true;return JSON.stringify(WindowDesk.searchResults.map(r=>({name:WindowDesk.resultName(r),running:WindowDesk.isWindow(r),score:WindowDesk.resultScore(r)}))); }
         function select(index: string): void { WindowDesk.selected=parseInt(index)||0; }

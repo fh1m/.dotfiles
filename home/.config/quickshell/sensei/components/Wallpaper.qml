@@ -15,6 +15,7 @@ Item {
 
     property url source: Wallpapers.displayed
     property int imageFillMode: Image.PreserveAspectCrop
+    property bool decodeInBackground: false
 
     // 0 = full brightness, 0.58 gives the spec's "about 42% brightness".
     property real dim: 0
@@ -35,15 +36,13 @@ Item {
     property url backSource: source
     property real mix: 1
 
-    onSourceChanged: {
-        if (source === frontSource)
+    onSourceChanged: root.swapIfIdle()
+
+    function swapIfIdle(): void {
+        // Keep the currently visible blend intact. Rapid choices coalesce
+        // to the most recent source when this transition settles.
+        if (source === frontSource || mix < 1)
             return;
-        // **Nothing may leave the new wallpaper hidden under the old one.** The
-        // old image moves to the back first, then `mix` drops, and only then
-        // does the front take the new source: a cached image can report Ready
-        // during that assignment, and the fade below starts only while `mix`
-        // is below 1. A cached image can also be Ready with no status change
-        // at all, so the fade is checked once more after the change settles.
         backSource = frontSource;
         mix = 0;
         frontSource = source;
@@ -51,8 +50,8 @@ Item {
     }
 
     function startFadeIfReady(): void {
-        if (root.mix < 1 && (front.status === Image.Ready || front.status === Image.Error) && !fade.running)
-            fade.restart();
+        if (root.mix < 1 && (front.status === Image.Ready || front.status === Image.Error || front.status === Image.Null) && !fade.running)
+            fade.start();
     }
 
     Item {
@@ -62,6 +61,7 @@ Item {
 
         Image {
             anchors.fill: parent
+            visible: root.mix < 1
             source: root.width>0&&root.height>0 ? root.backSource : ""
             fillMode: root.imageFillMode
             sourceSize: Qt.size(root.width, root.height)
@@ -77,7 +77,7 @@ Item {
             source: root.width>0&&root.height>0 ? root.frontSource : ""
             fillMode: root.imageFillMode
             sourceSize: Qt.size(root.width, root.height)
-            asynchronous: false
+            asynchronous: root.decodeInBackground
             cache: true
             opacity: root.mix
 
@@ -85,10 +85,7 @@ Item {
             // so a swap never flashes the layer underneath.
             // A file that fails to load fades in too, so the old wallpaper
             // never stays on screen for a profile it no longer belongs to.
-            onStatusChanged: {
-                if ((status === Image.Ready || status === Image.Error) && root.mix < 1)
-                    fade.restart();
-            }
+            onStatusChanged: Qt.callLater(root.startFadeIfReady)
         }
     }
 
@@ -98,9 +95,12 @@ Item {
         target: root
         property: "mix"
         to: 1
-        duration: root.fadeDuration
+        duration: Theme.reducedMotion ? 0 : root.fadeDuration
         easing.type: Easing.OutCubic
-        onFinished: root.backSource=root.frontSource
+        onFinished: {
+            root.backSource = root.frontSource;
+            Qt.callLater(root.swapIfIdle);
+        }
     }
 
     Rectangle {

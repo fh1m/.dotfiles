@@ -356,7 +356,7 @@ def dispatch(args):
   request('/player/repeat_context',{'repeat_context':nxt=='context'});request('/player/repeat_track',{'repeat_track':nxt=='track'})
  elif name in ('play-track','play-context','play-context-track','play-list','liked-play'):
   if name=='play-track':body={'uri':uri('track',a[0])}
-  elif name=='liked-play':body={'uri':'spotify:collection:tracks','skip_to_uri':uri('track',a[0])} if a else {'uri':'spotify:collection:tracks'}
+  elif name=='liked-play':body={'uri':'spotify:collection:tracks'};body.update({'skip_to_uri':uri('track',a[0])} if a else {})
   elif name in ('play-context','play-context-track'):body={'uri':uri(a[0],a[1])};body.update({'skip_to_uri':uri('track',a[2].rsplit(':',1)[-1])} if len(a)>2 else {})
   else:
    payload=json.loads(a[0]);values=payload.get('uris',[]) if isinstance(payload,dict) else payload
@@ -366,6 +366,9 @@ def dispatch(args):
    if type(offset) is not int or not 0<=offset<len(values):raise ValueError('Invalid queue offset')
    values=values[offset:];request('/player/play',{'uri':values[0],'queued':values[1:]})
    return {'ok':True,'backend':'headless'}
+  # An explicit Liked Songs selection starts that collection's order. Omitting
+  # queued would let the Connect engine prepend the previous explicit queue.
+  if body['uri']=='spotify:collection:tracks':body['queued']=[]
   before=raw_status();request('/player/play',body);mark_intent(before,'start',body['uri'])
  else:raise ValueError('This operation is not available in the headless backend. Your library was not modified.')
  return {'ok':True,'backend':'headless'}

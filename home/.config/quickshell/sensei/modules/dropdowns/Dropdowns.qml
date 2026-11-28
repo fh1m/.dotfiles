@@ -58,7 +58,6 @@ Variants {
         // swap teleport the outgoing panel to the incoming readout first.
         property string current: ""
         property bool requestedHere: false
-        property real cachedHeight: 0
         property real anchorX: ShellState.dropdownAnchorX
         // The surface is sized to the panel, but a panel that animates its own
         // height between two inner views exposes a stable `surfaceHeight` (the
@@ -92,6 +91,9 @@ Variants {
         property real measuredHeight: 0
         property int stableFrames: 0
         property bool surfaceReady: false
+        property real firstHeight: 0
+        property double presentStartedAt: 0
+        readonly property real desiredHeight: Math.max(1, Math.min((modelData?.height ?? 1080) - topInset - bottomInset - 2 * gap, Math.round(panelHeight + 2 * surfaceInset)))
 
         // Hyprland refocuses the pointer the moment a focus grab starts. When
         // that lands with the pointer still on the bar, the bar loses its hover
@@ -122,7 +124,7 @@ Variants {
         // Fixed to the panel. Animating this instead would reconfigure the layer
         // surface on every frame, which Hyprland cannot keep up with — that is
         // what made the slide stutter.
-        implicitHeight: Math.max(1, Math.min((modelData?.height ?? 1080) - topInset - bottomInset - 2 * gap, Math.round(panelHeight + 2 * surfaceInset)))
+        implicitHeight: firstHeight > 0 ? firstHeight : desiredHeight
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "sensei-popup"
@@ -156,7 +158,7 @@ Variants {
             to: 1
             duration: Theme.reducedMotion ? 0 : Theme.motionReveal
             easing.type: Easing.OutCubic
-            onFinished: popup.cachedHeight = popup.panelHeight
+            onFinished: popup.firstHeight = 0
         }
 
         Timer {
@@ -164,12 +166,16 @@ Variants {
             interval: 16
             onTriggered: {
                 if (!popup.requestedHere || popup.current === "" || ShellState.dropdown !== popup.current || content.status !== Loader.Ready) return;
+                // The cold mixer inventory changes the size substantially.
+                // Wait briefly for it, without blocking on a hung audio server.
+                if(popup.current==="sound"&&!SoundDesk.initialInventorySettled&&Date.now()-popup.presentStartedAt<850){restart();return;}
                 // Wait for the compositor to acknowledge the newly sized surface.
                 if (popup.panelHeight <= 0) { restart(); return; }
                 const h = Math.round(popup.panelHeight);
                 if (h !== popup.measuredHeight) { popup.measuredHeight=h; popup.stableFrames=0; restart(); return; }
                 if (++popup.stableFrames < 2) { restart(); return; }
-                if (!popup.surfaceReady) { popup.surfaceReady=true; restart(); return; }
+                if (!popup.surfaceReady) { popup.firstHeight=popup.desiredHeight; popup.surfaceReady=true; restart(); return; }
+                // A late data/layout change must not resize a mapping layer.
                 if (Math.round(popup.width) !== Math.round(popup.implicitWidth) || Math.round(popup.height) !== Math.round(popup.implicitHeight)) { restart(); return; }
                 openAnim.start();
             }
@@ -180,9 +186,9 @@ Variants {
             NumberAnimation { target: popup; property: "reveal"; to: 0; duration: Theme.reducedMotion ? 0 : Theme.motionDismiss; easing.type: Easing.InCubic }
             // Keep the last panel instantiated: rebuilding a large QML tree on
             // every click was costing hundreds of milliseconds.
-            ScriptAction { script: {popup.surfaceReady=false;releaseCache.restart();} }
+            ScriptAction { script: {popup.surfaceReady=false;popup.firstHeight=0;releaseCache.restart();} }
         }
-        Timer {id:releaseCache;interval:20000;onTriggered:if(!popup.requestedHere&&!popup.visible){popup.current="";popup.cachedHeight=0;}}
+        Timer {id:releaseCache;interval:20000;onTriggered:if(!popup.requestedHere&&!popup.visible)popup.current="";}
 
         SequentialAnimation {
             id: swapAnim
@@ -203,7 +209,7 @@ Variants {
                 script: {
                     popup.anchorX = swapAnim.nextX;
                     popup.surfaceReady=false;
-                    popup.cachedHeight=0;
+                    popup.firstHeight=0;
                     popup.current = swapAnim.next;
                 }
             }
@@ -246,6 +252,7 @@ Variants {
                 outsideClose.stop();
                 popup.stableFrames=0; popup.measuredHeight=0;
                 presentTimer.stop();
+                popup.presentStartedAt=Date.now();
                 openAnim.stop();
                 swapAnim.stop();
                 closeAnim.stop();
@@ -253,17 +260,9 @@ Variants {
                 if (want === "") {
                     // Complete the content transition before unmapping its surface.
                     if (popup.current !== "") closeAnim.start();
-                } else if (popup.current === want && !popup.surfaceReady && popup.cachedHeight > 0 && Math.abs(popup.panelHeight - popup.cachedHeight) < 1) {
-                    // The cached panel already has geometry. Map it and start
-                    // moving on the next scene-graph turn instead of loading it.
-                    popup.anchorX = ShellState.dropdownAnchorX;
-                    popup.reveal = 0;
-                    popup.surfaceReady = true;
-                    presentTimer.restart();
                 } else if (popup.current === "" || popup.current === want || !popup.surfaceReady) {
                     // Nothing showing, or the same panel caught mid-close.
                     popup.anchorX = ShellState.dropdownAnchorX;
-                    if (popup.current !== want) popup.cachedHeight = 0;
                     if (popup.current === "" || !popup.surfaceReady) {popup.reveal = 0; popup.surfaceReady=false;}
                     popup.current = want;
                     // Let the new surface and loader acquire their final size first.
@@ -380,7 +379,7 @@ Variants {
                 opacity: status === Loader.Ready ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: Theme.reducedMotion ? 0 : Theme.motionAck; easing.type: Easing.OutCubic } }
 
-                width: parent.width
+                width: Math.max(1,popup.implicitWidth-2*popup.surfaceInset)
                 active: popup.current !== ""
 
                 sourceComponent: {

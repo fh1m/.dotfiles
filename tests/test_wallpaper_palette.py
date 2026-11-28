@@ -66,3 +66,28 @@ def test_wallpaper_colors_reach_terminal_and_toolkits_without_rearranging_tmux(t
         snapshot.append(palette['primary'])
     assert len(set(snapshot)) == 4
     assert len({snapshot[-1][i:i+2] for i in (1, 3, 5)}) == 1
+
+
+@pytest.mark.parametrize('textured_hue,solid_hue', [(.91, .57), (.57, .91)])
+def test_textured_majority_beats_a_single_large_contrasting_swatch(tmp_path, monkeypatch, textured_hue, solid_hue):
+    Image = pytest.importorskip('PIL.Image')
+    import colorsys
+    from runpy import run_path
+
+    monkeypatch.setenv('HOME', str(tmp_path))
+    extract = run_path(str(ROOT / 'home/.local/bin/sensei-palette'))['palette_from_image']
+    solid = tuple(round(v * 255) for v in colorsys.hls_to_rgb(solid_hue, .41, 1))
+    image = Image.new('RGB', (100, 48), solid)
+    for x in range(64):
+        for y in range(48):
+            hue = (textured_hue - .028 + .055 * x / 63) % 1
+            lightness = .19 + .55 * y / 47
+            rgb = colorsys.hls_to_rgb(hue, lightness, .65)
+            image.putpixel((x, y), tuple(round(v * 255) for v in rgb))
+    path = tmp_path / 'branches and sky.png'
+    image.save(path)
+    result = extract(path)
+    def hue(hex_color):
+        return colorsys.rgb_to_hls(*(int(hex_color[i:i+2], 16) / 255 for i in (1, 3, 5)))[0]
+    assert abs(hue(result['primary']) - textured_hue) < .045
+    assert abs(hue(result['secondary']) - solid_hue) < .045
