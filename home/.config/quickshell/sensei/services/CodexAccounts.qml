@@ -16,6 +16,34 @@ Singleton {
     property bool refreshPending: false
     property var usageQueue: []
     readonly property bool busy: requests.length > 0
+    property double observedAt: Date.now()
+
+    function resetEpoch(window): double {
+        const value = window?.resetsAt;
+        if (typeof value === "number") return value * (value > 1e12 ? 1 : 1000);
+        return Date.parse(value || "");
+    }
+    function measurementState(snapshot, now): string {
+        const captured = snapshot?.measurementAt;
+        if (!Number.isFinite(captured) || captured <= 0 || captured * 1000 > now + 30000)
+            return "unknown";
+        // A reset affects its own window, not another meter on the same account.
+        if (snapshot.error || snapshot.state === "unknown" || now - captured * 1000 > 90000
+            || (snapshot.stale && snapshot.state !== "expired"))
+            return "historical";
+        return "current";
+    }
+    function quotaWindow(snapshot, key, now): var {
+        const window = snapshot?.rateLimits?.[key];
+        const reset = resetEpoch(window);
+        const ageState = measurementState(snapshot, now);
+        if (!window || ageState === "unknown") return {state: "unknown"};
+        if (Number.isFinite(reset) && reset <= now) return {state: "expired"};
+        const left = Number.isFinite(window.remainingPercent) ? window.remainingPercent
+            : Number.isFinite(window.usedPercent) ? 100 - window.usedPercent : NaN;
+        if (!Number.isFinite(left) || left < 0 || left > 100) return {state: "unknown"};
+        return {state: ageState, left: left};
+    }
 
     function cancel(): void {
         generation++;
@@ -85,7 +113,12 @@ Singleton {
         if (!active || request.generation !== generation) return;
         try {
             const data = JSON.parse(line);
-            if (data.error && !data.accountId) { error = data.error; return; }
+            if (data.error && !data.accountId) {
+                if (request.action !== "usage") { error = data.error; return; }
+                // A failed identity/reconnect check does not certify a prior limit.
+                data.accountId = request.account;
+                data.state = "unknown";
+            }
             if (request.action === "list") {
                 if (!Array.isArray(data.accounts)) throw new Error("Missing account list");
                 accounts = data.accounts;
@@ -94,8 +127,13 @@ Singleton {
                     selected = accounts.find(account => account.monitored)?.id || "";
                     usage = {};
                 }
-                if (selected && usage.accountId !== selected)
-                    usage = accounts.find(account => account.id === selected)?.snapshot || {};
+                if (selected) {
+                    const listed = accounts.find(account => account.id === selected);
+                    if (listed?.unavailable) usage = {accountId: selected, state: "unknown",
+                        error: "Sign-in changed or is unavailable on this host"};
+                    else if (listed?.snapshot || usage.accountId !== selected)
+                        usage = listed?.snapshot || {};
+                }
                 queueUsage(request.forceRefresh);
             } else if (request.action === "usage") {
                 if (data.accountId !== request.account) throw new Error("Account identity did not match the request");
@@ -117,7 +155,8 @@ Singleton {
         nextQueued();
         if (!busy && refreshPending && active) { refreshPending = false; refresh(true); }
     }
-    onActiveChanged: { if (active) refresh(false); else cancel(); }
+    onActiveChanged: { if (active) { observedAt = Date.now(); refresh(false); } else cancel(); }
+    Timer { interval: 10000; repeat: true; running: root.active; onTriggered: root.observedAt = Date.now() }
     Timer { interval: 60000; repeat: true; running: root.active; onTriggered: root.refresh(false) }
     Component {
         id: requestComponent

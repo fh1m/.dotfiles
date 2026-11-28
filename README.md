@@ -79,6 +79,10 @@ Music gets album art and proper controls. The queue is allowed to have a persona
 
 Same shell, same tools, same visual language. Desktop-specific graphics, display, power and storage policy. Homie keeps the native NVIDIA work and larger files at home; Arete can reach the designated shared storage over SSHFS.
 
+In **Code → Agents → Codex**, each meter belongs to the named account on that
+host. An older reading is labeled **Last seen**; a passed reset is not a new
+measurement. Only current readings fill the bars.
+
 | | Arete · portable lab | Homie · home base |
 |---|---|---|
 | CPU | i7-9750H · 6 cores / 12 threads | Ryzen 5 3600X · 6 cores / 12 threads |
