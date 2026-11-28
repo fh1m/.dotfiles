@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 // One cached atlas, two clipped samples for a brief pose crossfade. No IO per frame.
 Item {
     id:root
@@ -21,10 +22,13 @@ Item {
     NumberAnimation {id:fade;target:root;property:'blend';to:1;duration:160;easing.type:Easing.InOutQuad}
     Item {anchors.centerIn:parent;width:root.cellW*root.factor;height:root.cellH*root.factor;clip:true
         Image {source:root.source;asynchronous:true;cache:true;retainWhileLoading:true;smooth:true;opacity:1-root.blend
+            // Bound the 2x2 sheet to physical display pixels, not the full artwork.
+            sourceSize:Qt.size(Math.max(2,Math.ceil(root.width*2*Screen.devicePixelRatio)),Math.max(2,Math.ceil(root.height*2*Screen.devicePixelRatio)))
             width:implicitWidth*root.factor;height:implicitHeight*root.factor
             x:-(root.previous%2)*root.cellW*root.factor;y:-Math.floor(root.previous/2)*root.cellH*root.factor
         }
         Image {id:atlas;source:root.source;asynchronous:true;cache:true;retainWhileLoading:true;smooth:true;opacity:root.blend
+            sourceSize:Qt.size(Math.max(2,Math.ceil(root.width*2*Screen.devicePixelRatio)),Math.max(2,Math.ceil(root.height*2*Screen.devicePixelRatio)))
             width:implicitWidth*root.factor;height:implicitHeight*root.factor
             x:-(root.shown%2)*root.cellW*root.factor;y:-Math.floor(root.shown/2)*root.cellH*root.factor
         }
