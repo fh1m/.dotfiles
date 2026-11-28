@@ -67,6 +67,9 @@ there is no background discovery polling. Account playback explicitly uses the
 selected Chrome session for the next stream through yt-dlp’s cookie jar. It does
 not forward an OAuth header to video CDNs. Public playback remains the default. A channel can be offline normally.
 
+You can switch tabs or submit another search while Twitch is loading. Only the
+latest request can populate the list; bookmark actions apply to the current list.
+
 Account checks the selected Chrome session and reports actual permissions. The
 session tested on Arete is valid but lacks `user:read:follows`, `chat:read` and
 `chat:edit`. The followed-channel website query was also denied. These are real
