@@ -41,13 +41,63 @@ Singleton {
  property string loginUrl:""
  property bool authorizationPending:false
  property int page:0;property string libraryKind:"liked";property string searchKind:"tracks";property string query:""
- property string nextPage:"";property int totalRows:0;property var homeRows:[];property var libraryRows:[];property var playlistRows:[];property var spotifyQueueRows:[];readonly property var queueRows:YouTubeDesk.ownsAudio?YouTubeDesk.queue:spotifyQueueRows;property var devices:[];property var searchResults:({tracks:[],albums:[],artists:[],playlists:[]})
+ property string nextPage:"";property int totalRows:0;property var homeRows:[];property var libraryRows:[];property var playlistRows:[];property var spotifyQueueRows:[];readonly property var queueRows:YouTubeDesk.ownsAudio?YouTubeDesk.queue:queueBackend&&spotifyState.backend!==queueBackend?[]:spotifyQueueRows;property var devices:[];property var searchResults:({tracks:[],albums:[],artists:[],playlists:[]})
  property var libraryCache:({})
  property var contextItem:({});property var contextRows:[];property string lyrics:"";property string error:"";property string warning:"";property bool loading:false;property bool cataloguePending:false;property int catalogueAttempts:0
  property var actionQueue:[];property var requests:[];property string op:"";property var opArgs:[];property string activeQuery:""
  property string queueRequestKey:"";property string queuePendingKey:""
- readonly property string currentQueueKey:JSON.stringify([playback.backend||"",playback.owner||"",playback.deviceId||"",playback.device||"",playback.context?.type||"",playback.context?.uri||"",playback.track?.uri||"",title,artist,album])
+ property string queueNotice:""
+ property bool queueKnown:false
+ property string queueBackend:""
+ property int queueRetries:0
+ readonly property bool queueVisible:!YouTubeDesk.ownsAudio&&musicVisible&&(fullscreen||page===0||page===1)
+ readonly property string queueContext:typeof playback.context==="string"?playback.context:(playback.context?.uri||"")
+ readonly property string currentQueueKey:JSON.stringify([playback.backend||"",playback.deviceId||"",queueContext,playback.track?.uri||""])
+ onCurrentQueueKeyChanged:{queueRetries=0;if(queueBackend&&queueBackend!==spotifyState.backend){queueKnown=false;queueNotice="";}else if(queueKnown)queueNotice="Queue updating";if(queueVisible){queueRefresh.interval=180;queueRefresh.restart();}}
+ onQueueVisibleChanged:if(queueVisible){queueRetries=0;queueRefresh.restart();}else queueRefresh.stop();
  function requestQueue(){if(YouTubeDesk.ownsAudio)return;const key=currentQueueKey;if(queueProc.running){queuePendingKey=key;return;}queueRequestKey=key;queuePendingKey="";queueProc.running=true;}
+ function retryQueue(){
+    if(queueVisible&&queueRetries<3){queueRetries++;queueRefresh.interval=600*queueRetries;queueRefresh.restart();}
+ }
+ function acceptQueue(d){
+    if(!Array.isArray(d.rows)||d.error){
+        queueNotice=spotifyQueueRows.length?"Queue unavailable. Showing the last known songs.":"Queue unavailable. Try refreshing.";
+        return;
+    }
+    const current=d.current?.uri||"";
+    const track=spotifyState.track?.uri||"";
+    const wrongOwner=(d.backend&&d.backend!==spotifyState.backend)||(d.deviceId&&spotifyState.deviceId&&d.deviceId!==spotifyState.deviceId);
+    const wrongContext=typeof d.context==="string"&&d.context!==queueContext;
+    if(wrongOwner||!d.stale&&((current&&track&&current!==track)||wrongContext)){
+        queueNotice="Waiting for the current queue";
+        dispatch("status");retryQueue();return;
+    }
+    if(!d.stale){
+        if(!same(spotifyQueueRows,d.rows))spotifyQueueRows=d.rows;
+        queueBackend=spotifyState.backend;queueKnown=true;queueNotice="";queueRetries=0;
+    }else{
+        if(!queueKnown&&d.rows.length){queueBackend=spotifyState.backend;spotifyQueueRows=d.rows;}
+        queueNotice=d.warning||"Showing the last known queue";
+        if(d.state==="waiting")retryQueue();
+    }
+ }
+ function queueEmptyText(){
+    if(YouTubeDesk.ownsAudio)return "Nothing queued. Add a video to play next.";
+    if(queueNotice)return queueNotice;
+    if(queueProc.running||!queueKnown)return "Loading the queue…";
+    return "Nothing queued. Add a song to play next.";
+ }
+ function queueTitle(){
+    if(!YouTubeDesk.ownsAudio&&queueNotice)return queueRows.length?"Up next · "+queueRows.length+" · Last known":"Up next";
+    return "Up next · "+queueRows.length+" songs";
+ }
+ function playQueued(item){
+    if(['youtube','twitch'].includes(item.kind)){play(item);return;}
+    if(spotifyState.backend==='headless'){
+        if(queueNotice){error="Wait for Spotify to refresh this queue before choosing a song.";return;}
+        action('queue-play',[item.uri]);
+    }else play(item,queueRows);
+ }
  readonly property var visibleRows:contextItem.id?contextRows:page===0?(queueRows.length?queueRows:homeRows):page===1?queueRows:page===2?playlistRows:page===3?libraryRows:page===4?(searchResults[searchKind]||[]):[]
  property bool zen:false
  property bool musicBackdrop:false
@@ -157,9 +207,20 @@ Singleton {
  onQueryChanged:if(page===4){if(query.trim().length<3){searchDelay.stop();searchResults={tracks:[],albums:[],artists:[],playlists:[]};}else searchDelay.restart();}
  function loadArt(){if(YouTubeDesk.ownsAudio){albumArt=artSource;return;}if(!artSource||art.running)return;activeArtSource=artSource;art.command=["@HOME@/.local/bin/sensei-spotify-transport","art",artSource];art.running=true;}
  onArtSourceChanged:{if(artSource)loadArt();}
- Connections {target:root.player;ignoreUnknownSignals:true;function onVolumeChanged(){root.dispatch("status");}function onPositionChanged(){root.lyricPosition=root.positionMs;}function onTrackTitleChanged(){root.dispatch('status');if(root.musicVisible&&(root.fullscreen||root.page===0||root.page===1))root.dispatch('queue');}function onIsPlayingChanged(){if(root.pendingPlaying===(root.actualPlaying?1:0))root.pendingPlaying=-1;root.dispatch('status');}}
+ Connections {target:root.player;ignoreUnknownSignals:true;function onVolumeChanged(){root.dispatch("status");}function onPositionChanged(){root.lyricPosition=root.positionMs;}function onTrackTitleChanged(){root.dispatch('status');}function onIsPlayingChanged(){if(root.pendingPlaying===(root.actualPlaying?1:0))root.pendingPlaying=-1;root.dispatch('status');}}
  Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==='spotify'){root.dispatch('status');if(!root.contextItem.id)root.refresh(false);else if(!root.contextRows.length)root.dispatch('context',[root.contextItem.kind,root.contextItem.id]);if(root.lyricsOpen)lyricsDelay.restart();}else if(!root.fullscreen){root.videosOpen=false;if(root.videoMode==='inline')root.videoSource='';}}}
- Process {id:queueProc;command:["@HOME@/.local/bin/sensei-spotify","queue"];stdout:StdioCollector {onStreamFinished:{if(root.queueRequestKey!==root.currentQueueKey)return;try{root.accept("queue",JSON.parse(text));}catch(e){}}}onExited:{if(root.queuePendingKey!==""&&root.queuePendingKey===root.currentQueueKey&&!YouTubeDesk.ownsAudio){root.queuePendingKey="";Qt.callLater(()=>root.requestQueue());}else if(root.queueRequestKey!==root.currentQueueKey&&!YouTubeDesk.ownsAudio){root.queuePendingKey="";Qt.callLater(()=>root.requestQueue());}else root.queuePendingKey="";}}
+ Timer {id:queueRefresh;interval:180;onTriggered:{interval=180;root.requestQueue();}}
+ Process {id:queueProc;command:["@HOME@/.local/bin/sensei-spotify","queue"]
+    stdout:StdioCollector {onStreamFinished:{
+        if(YouTubeDesk.ownsAudio||root.queueRequestKey!==root.currentQueueKey)return;
+        try{root.acceptQueue(JSON.parse(text));}catch(e){root.acceptQueue({error:true});}
+    }}
+    onExited:{
+        const again=root.queuePendingKey===root.currentQueueKey || root.queueVisible&&root.queueRequestKey!==root.currentQueueKey;
+        root.queuePendingKey="";
+        if(again&&!YouTubeDesk.ownsAudio)Qt.callLater(()=>root.requestQueue());
+    }
+ }
  Process {id:statusProc;command:["@HOME@/.local/bin/sensei-spotify-control","status"];stdout:StdioCollector {onStreamFinished:{try{let d=JSON.parse(text);root.statusError=YouTubeDesk.ownsAudio?'':d.error||'';if(d.error)root.spotifyState=Object.assign({},root.spotifyState,{ready:false,playing:false,loading:false});if(!d.error){if((d.backend!==root.spotifyState.backend)||(d.localReleased&&!root.playback.localReleased)){root.transportQueue=[];root.pendingPlaying=-1;root.pendingVolume=-1;root.sliderAction=[];sliderDelay.stop();volumeDelay.stop();root.skipPending='';skipTimeout.stop();}root.spotifyState=d;root.statusAt=Date.now();root.positionClock=root.statusAt;if(root.skipPending&&!transport.running&&!d.loading&&d.eventTime>root.skipEventTime&&(d.eventUri!==root.skipUri||(root.skipPending==="previous"&&d.progress<1000))){root.skipPending="";skipTimeout.stop();}if(root.pendingVolume>=0&&Math.abs(d.volume-root.pendingVolume)<=1)root.pendingVolume=-1;if(root.pendingPlaying===(root.actualPlaying?1:0))root.pendingPlaying=-1;}}catch(e){}}}}
  Timer {id:reconcile;interval:2200;onTriggered:{root.pendingPlaying=-1;root.dispatch('status');}}
  Process {id:fetch;stdout:StdioCollector {onStreamFinished:{try{root.accept(root.op,JSON.parse(text));}catch(e){root.error='Sensei, Spotify returned an unreadable response.';}}}onExited:{root.loading=false;if(root.requests.length){let j=root.requests[0];root.requests=root.requests.slice(1);Qt.callLater(()=>root.dispatch(j[0],j.slice(1)));}}}

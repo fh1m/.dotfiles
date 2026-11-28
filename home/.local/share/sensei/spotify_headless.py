@@ -92,10 +92,10 @@ def remembered_playback():
  except (OSError,ValueError):return {}
 
 def remember_playback(d):
- if d.get('stopped',True) or d.get('buffering') or not (d.get('track') or {}).get('uri'):return
+ if d.get('stopped',True) or d.get('buffering') or not (d.get('track') or {}).get('uri') or transitioning(d,consume=False):return
  STORE.mkdir(parents=True,exist_ok=True,mode=0o700)
  # Private playback metadata only. Never save login/session credentials.
- data={k:d.get(k) for k in ('track','queue','context_uri','paused','volume','volume_steps','shuffle_context','repeat_context','repeat_track')}
+ data={k:d.get(k) for k in ('track','queue','context_uri','device_id','device_name','paused','volume','volume_steps','shuffle_context','repeat_context','repeat_track')}
  if remembered_playback()==data:return
  tmp=STORE/('playback.'+str(os.getpid())+'.tmp')
  with tmp.open('w') as f:os.chmod(tmp,0o600);json.dump(data,f)
@@ -139,14 +139,15 @@ def mark_intent(before,action,context=None,position=0):
  with temp.open('w') as f:os.chmod(temp,0o600);json.dump({'before':(before.get('track') or {}).get('uri'),'action':action,'context':context,'position':position,'at':time.time()},f)
  temp.replace(STORE/'intent.json')
 
-def transitioning(d):
+def transitioning(d,*,consume=True):
  try:p=json.loads((STORE/'intent.json').read_text())
  except (OSError,ValueError):return False
  if time.time()-p.get('at',0)>12:return False
  t=d.get('track') or {};changed=bool(t.get('uri')) and (t['uri']!=p.get('before') or (p.get('action') in ('previous','start') and abs(t.get('position',99999)-p.get('position',0))<5000))
  if p.get('context') and d.get('context_uri')!=p['context']:changed=False
  if changed and not d.get('buffering'):
-  (STORE/'intent.json').unlink(missing_ok=True);return False
+  if consume:(STORE/'intent.json').unlink(missing_ok=True)
+  return False
  return True
 
 def status():
@@ -294,10 +295,15 @@ def dispatch(args):
  if name=='queue':
   try:d=raw_status();offline=False
   except ValueError:d={};offline=True
-  saved=offline or d.get('buffering') or d.get('stopped')
-  q=(remembered_playback().get('queue') if saved else d.get('queue')) or [];rows=[row(t.get('track') or {'uri':t['uri']}) for t in q]
-  warning='Music is reconnecting · saved queue preserved' if offline else 'Saved queue · press Play to resume' if saved and rows else 'Upcoming playback window · up to 50 tracks' if rows else ''
-  return {'rows':rows,'total':len(rows),'stale':bool(saved),'warning':warning}
+  saved=offline or d.get('stopped',True) or d.get('buffering') or not (d.get('track') or {}).get('uri') or transitioning(d,consume=False)
+  snapshot=remembered_playback() if saved else d
+  q=snapshot.get('queue') or []
+  rows=[row(t.get('track') or {'uri':t['uri']}) for t in q]
+  notice='Showing the last known queue while Spotify reconnects' if offline else 'Queue updating' if saved and not d.get('stopped') else 'Saved queue' if saved and rows else ''
+  return {'backend':'headless','rows':rows,'total':len(rows),'stale':bool(saved),
+          'state':'waiting' if offline or saved and not d.get('stopped') else 'saved' if saved else 'live',
+          'warning':notice,'current':row(snapshot['track']) if snapshot.get('track') else {},
+          'context':snapshot.get('context_uri') or '', 'deviceId':snapshot.get('device_id') or ''}
  if name=='devices':
   d=raw_status();return {'rows':[{'id':d['device_id'],'name':d['device_name'],'active':not d['stopped'],'is_active':not d['stopped'],'type':'Headless Connect','volume_percent':round(d.get('volume',0)*100/max(1,d.get('volume_steps',100)))}],'warning':'This headless player is local. Choose remote devices from a Spotify Connect controller.'}
  if name=='search':
@@ -328,6 +334,13 @@ def dispatch(args):
   u=a[0] if a[0].startswith('spotify:') else uri('track',a[0]);request('/library/liked',{'uris':[u],'liked':name=='like'})
  elif name in ('queue-add','enqueue'):
   u=a[0] if a[0].startswith('spotify:') else uri('track',a[0]);request('/player/add_to_queue',{'uri':u})
+ elif name=='queue-play':
+  target=uri('track',a[0].rsplit(':',1)[-1])
+  before=raw_status()
+  if before.get('stopped',True) or before.get('buffering') or transitioning(before,consume=False) or not any(t.get('uri')==target for t in before.get('queue') or []):
+   raise ValueError('That song is no longer in the live queue. Refresh before choosing it again.')
+  request('/player/next',{'uri':target})
+  mark_intent(before,'next')
  elif name=='playlist-add':request('/library/playlists/add_tracks',{'playlist_uri':uri('playlist',a[0]),'uris':[a[1] if a[1].startswith('spotify:') else uri('track',a[1])]})
  elif name in ('play','pause','toggle','next','previous'):
   before=raw_status()

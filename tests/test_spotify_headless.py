@@ -109,6 +109,38 @@ class Headless(unittest.TestCase):
    self.assertEqual(h.remembered_playback()['queue'],saved['queue'])
    with patch.object(h,'raw_status',return_value={'stopped':True}):
     result=h.dispatch(['queue']);self.assertTrue(result['stale']);self.assertEqual(len(result['rows']),1)
+ def test_pending_context_rejects_an_incomplete_snapshot_then_accepts_real_empty_queue(self):
+  current='spotify:track:'+'1'*22
+  next_uri='spotify:track:'+'2'*22
+  target='spotify:track:'+'3'*22
+  old_context='spotify:playlist:'+'4'*22
+  new_context='spotify:playlist:'+'5'*22
+  first={'stopped':False,'track':{'uri':current},'context_uri':old_context,'queue':[{'uri':next_uri}],'device_id':'fixture'}
+  self.assertEqual(first['queue'][0]['uri'],next_uri)
+  h.remember_playback(first)
+  h.mark_intent(first,'start',new_context)
+  with patch.object(h,'request',return_value={**first,'context_uri':new_context,'queue':[]}):
+   waiting=h.dispatch(['queue'])
+  self.assertTrue(waiting['stale'])
+  self.assertEqual([r['uri'] for r in waiting['rows']],[next_uri])
+  self.assertEqual(waiting['context'],old_context)
+  with patch.object(h,'request',return_value={**first,'context_uri':new_context,'track':{'uri':target},'queue':[]}):
+   settled=h.dispatch(['queue'])
+  self.assertFalse(settled['stale'])
+  self.assertEqual(settled['rows'],[])
+  self.assertEqual(settled['current']['uri'],target)
+  self.assertEqual(h.remembered_playback()['queue'],[])
+ def test_queue_selection_preserves_the_player_context_and_refuses_removed_rows(self):
+  current='spotify:track:'+'1'*22
+  target='spotify:track:'+'2'*22
+  before={'stopped':False,'track':{'uri':current},'queue':[{'uri':target}]}
+  with patch.object(h,'raw_status',return_value=before),patch.object(h,'request',return_value={}) as request:
+   h.dispatch(['queue-play',target])
+   request.assert_called_once_with('/player/next',{'uri':target})
+  with patch.object(h,'raw_status',return_value={**before,'queue':[]}),patch.object(h,'request') as request:
+   with self.assertRaisesRegex(ValueError,'no longer in the live queue'):
+    h.dispatch(['queue-play',target])
+   request.assert_not_called()
  def test_network_failure_preserves_running_player_and_saved_queue(self):
   import subprocess,urllib.error
   saved={'stopped':False,'track':{'uri':'spotify:track:'+'1'*22},'queue':[{'uri':'spotify:track:'+'2'*22}]}

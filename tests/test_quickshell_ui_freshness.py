@@ -340,6 +340,47 @@ def test_spotify_queue_coalesces_mutations_and_scopes_track_results(tmp_path, sc
     assert 'PROOF_PASS spotify-' + scenario in report, report
     assert (tmp_path / 'spotify-queue-count').read_text() == '2'
 
+@pytest.mark.skipif(not HAS_QS, reason='Set SENSEI_QS_BINARY to an explicit native QuickShell runtime')
+def test_spotify_queue_retains_rows_through_unavailable_snapshots_and_refreshes_on_context_change(tmp_path):
+    setup_services(tmp_path, 'SpotifyDesk.qml')
+    put(tmp_path, 'services/YouTubeDesk.qml', YOUTUBE_DESK)
+    put(tmp_path, 'config/MachineProfile.qml', '''pragma Singleton\nimport QtQuick\nQtObject { property string primaryOutput: "TEST" }\n''')
+    helper(tmp_path, 'sensei-spotify-control', SPOTIFY_CONTROL.replace("'ready':True", "'ready':True,'context':'first'"))
+    helper(tmp_path, 'sensei-spotify', r'''import json, os, sys
+if sys.argv[1]=='queue':
+    print(json.dumps({'backend':'headless','context':'second' if os.path.exists(os.path.expanduser('~/second')) else 'first',
+                      'current':{'uri':'spotify:old'},'rows':[{'id':'follow-up'}] if os.path.exists(os.path.expanduser('~/second')) else [{'id':'original'}]}))
+elif sys.argv[1]=='art': print('{}')
+else: print('{}')
+''')
+    harness = '''import QtQuick
+import Quickshell
+import Quickshell.Io
+import qs.services
+ShellRoot {
+    id: root
+    property int phase: 0
+    property int ticks: 0
+    FileView { id: fixture; path: Quickshell.env("HOME")+"/second"; printErrors: false }
+    Timer { running:true;repeat:true;interval:30;onTriggered:{
+        const rows=SpotifyDesk.queueRows;
+        if(++root.ticks>160){ console.error("PROOF_FAIL queue did not follow the context");Qt.exit(2);return; }
+        if(root.phase===0&&SpotifyDesk.spotifyState.context==="first"){
+            root.phase=1;SpotifyDesk.page=1;ShellState.dropdown="spotify";
+        } else if(root.phase===1&&rows[0]?.id==="original"){
+            SpotifyDesk.acceptQueue({stale:true,state:"waiting",rows:[]});
+            if(SpotifyDesk.queueRows[0]?.id!=="original"){console.error("PROOF_FAIL incomplete response dropped songs");Qt.exit(3);return;}
+            root.phase=2;fixture.setText("ready");
+            SpotifyDesk.spotifyState=Object.assign({},SpotifyDesk.spotifyState,{context:"second"});
+        } else if(root.phase===2&&rows[0]?.id==="follow-up"){
+            console.log("PROOF_PASS live-queue-context");Qt.quit();
+        }
+    }}
+}
+'''
+    report = run_native(tmp_path, harness, timeout=8)
+    assert 'PROOF_PASS live-queue-context' in report, report
+
 
 WIFI_HARNESS = '''import QtQuick
 import Quickshell
