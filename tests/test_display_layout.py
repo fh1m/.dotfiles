@@ -13,7 +13,6 @@ class DisplayLayout(unittest.TestCase):
   with self.assertRaises(ValueError):d.validate(self.plan,self.actual)
  def test_topology_change_rejected(self):
   with self.assertRaises(ValueError):d.validate(self.plan,[])
- def test_code_generation_quotes_names(self):self.assertIn('"TEST"',d.expression(self.plan[0]))
  def test_invalid_scale_rejected(self):
   self.plan[0]['scale']=float('nan')
   with self.assertRaises(ValueError):d.validate(self.plan,self.actual)

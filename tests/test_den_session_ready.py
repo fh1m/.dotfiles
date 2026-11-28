@@ -65,3 +65,52 @@ def test_typo_cannot_start_input_capture():
     module = launcher()
     with pytest.raises(ValueError, match="Choose reset"):
         module.main("raedy")
+
+
+def operator_backend(tmp_path, monkeypatch):
+    commands = tmp_path / 'bin'
+    commands.mkdir()
+    binary = commands / 'hyprctl'
+    binary.write_text('#!' + sys.executable + r'''
+import json,os,sys
+from pathlib import Path
+a=sys.argv[1:]
+if a==['instances','-j']:
+ print(os.environ['TEST_INSTANCES']);raise SystemExit
+selected=os.environ.get('HYPRLAND_INSTANCE_SIGNATURE','0')
+if '-i' in a:selected=a[a.index('-i')+1]
+if selected=='0':selected='first'
+Path(os.environ['TEST_DESKTOP_QUERY']).write_text(selected)
+if 'clients' in a:print('[]')
+else:print(json.dumps([{'name':selected,'width':1920,'height':1080,'scale':1,'x':0,'y':0,'activeWorkspace':{'id':1}}]))
+''')
+    binary.chmod(0o700)
+    monkeypatch.setenv('PATH', str(commands) + os.pathsep + os.environ['PATH'])
+    monkeypatch.setenv('TEST_DESKTOP_QUERY', str(tmp_path / 'queried-session'))
+    loader = importlib.machinery.SourceFileLoader('den_operator_session', str(ROOT / 'home/.local/bin/sensei-den'))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    return module
+
+
+def test_operator_ambiguous(tmp_path, monkeypatch):
+    module = operator_backend(tmp_path, monkeypatch)
+    first, one = endpoints(tmp_path, 'first', True)
+    second, two = endpoints(tmp_path, 'second', True)
+    monkeypatch.setenv('XDG_RUNTIME_DIR', str(tmp_path))
+    monkeypatch.setenv('TEST_INSTANCES', json.dumps([first, second]))
+    monkeypatch.delenv('HYPRLAND_INSTANCE_SIGNATURE', raising=False)
+    try:
+        with pytest.raises(ValueError, match='Desktop session unavailable or ambiguous'):
+            module.run(['hyprctl', 'monitors', '-j'], timeout=2)
+        assert not (tmp_path / 'queried-session').exists()
+    finally:
+        for server in one + two:
+            server.close()
+
+
+def test_companion_selected_session(tmp_path, monkeypatch):
+    module = operator_backend(tmp_path, monkeypatch)
+    monkeypatch.setenv('HYPRLAND_INSTANCE_SIGNATURE', 'second')
+    assert module.companion_available() == ['second']

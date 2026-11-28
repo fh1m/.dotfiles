@@ -20,10 +20,20 @@ HOME=Path.home()
 STATE=HOME/'.local/state/sensei-den'
 CONFIG=HOME/'.config/sensei-den'
 PRIVATE=HOME/'.local/state/homie-control'
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'share/sensei'))
+from desktop_session import wait_for_session
 
 
 def run(args,timeout=10,**kw):
-    if args[0]=='hyprctl' and not os.environ.get('HYPRLAND_INSTANCE_SIGNATURE'):args=[args[0],'-i','0',*args[1:]]
+    environment=kw.get('env',os.environ)
+    if args[0]=='hyprctl' and not environment.get('HYPRLAND_INSTANCE_SIGNATURE') and not any(a in ('-i','--instance') for a in args[1:]):
+        began=time.monotonic()
+        try:instance,runtime=wait_for_session(timeout=min(3,timeout),environ=environment)
+        except (OSError,TimeoutError,RuntimeError) as error:
+            raise ValueError('Desktop session unavailable or ambiguous; select the intended graphical session') from error
+        environment=dict(environment,HYPRLAND_INSTANCE_SIGNATURE=instance['instance'],WAYLAND_DISPLAY=instance['wl_socket'],XDG_RUNTIME_DIR=str(runtime))
+        kw['env']=environment
+        timeout=max(.001,timeout-(time.monotonic()-began))
     return subprocess.run(args,capture_output=True,text=True,timeout=timeout,**kw)
 
 
@@ -170,8 +180,8 @@ def companion_memory():
 
 def companion_available():
     """Only output names leave this geometry query; no titles or application text."""
-    monitors=json.loads(run(['hyprctl','-i','0','monitors','-j']).stdout)
-    clients=json.loads(run(['hyprctl','-i','0','clients','-j']).stdout)
+    monitors=json.loads(run(['hyprctl','monitors','-j']).stdout)
+    clients=json.loads(run(['hyprctl','clients','-j']).stdout)
     out=[]
     for m in monitors:
         if m['name'].startswith('SENSEI-'):continue
