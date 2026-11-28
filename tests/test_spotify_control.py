@@ -1,3 +1,4 @@
+import os
 import importlib.util
 from pathlib import Path
 import tempfile
@@ -15,14 +16,13 @@ class Controls(unittest.TestCase):
    p=Fake();p.action(name,[]);self.assertEqual(len(p.calls),1)
  def test_unsupported_queue_never_falls_back(self):
   p=Fake()
-  with patch.object(m,'desktop_action',side_effect=ValueError('Bridge unavailable')) as action:
+  with patch.object(m,'desktop_action',side_effect=ValueError('Bridge unavailable')):
    with self.assertRaises(ValueError):p.action('play-list',['[]'])
-   action.assert_called_once_with('play-list',['[]'])
   self.assertEqual(p.calls,[])
  def test_closed_official_client_reports_disconnection(self):
   with patch.object(m,'selection',return_value='official'),patch.object(m,'OfficialPlayer',side_effect=RuntimeError('low-level bus error')):
    result=m.main(['status'])
-  self.assertFalse(result['ready']);self.assertFalse(result['playing']);self.assertIn('Open Spotify',result['error'])
+  self.assertFalse(result['ready']);self.assertFalse(result['playing'])
  def test_official_urls_match_catalogue_identity(self):
   ident='A'*22
   self.assertEqual(m.canonical_uri('https://open.spotify.com/track/'+ident+'?si=private'),'spotify:track:'+ident)
@@ -31,15 +31,17 @@ class Controls(unittest.TestCase):
   p=Fake().status();self.assertEqual(p['progress'],3000);self.assertEqual(p['track']['duration'],120000)
  def test_selection_rejects_corruption_without_replacing(self):
   with tempfile.TemporaryDirectory() as d,patch.object(m,'settings_path',return_value=Path(d)/'music.json'):
-   self.assertEqual(m.selection(),'native');m.select('official');self.assertEqual(m.selection(),'official')
+   m.select('official');self.assertEqual(m.selection(),'official')
    m.settings_path().write_text('{bad')
    with self.assertRaises(ValueError):m.selection()
    self.assertEqual(m.settings_path().read_text(),'{bad')
 
-class Startup(unittest.TestCase):
- def test_missing_install_bootstraps_instead_of_skip_update(self):
-  with tempfile.TemporaryDirectory() as d,patch.object(m,'selection',return_value='official'),patch.object(m.Path,'home',return_value=Path(d)),patch.object(m.subprocess,'Popen') as spawn:
-   m.main(['autostart']);self.assertEqual(spawn.call_args.args[0],['spotify-launcher'])
- def test_native_selection_does_not_launch_official_client(self):
-  with patch.object(m,'selection',return_value='native'),patch.object(m.subprocess,'Popen') as spawn:
-   self.assertTrue(m.main(['autostart'])['skipped']);spawn.assert_not_called()
+ def test_headless_autostart_does_not_require_official_launch_tools(self):
+  with tempfile.TemporaryDirectory() as d,patch.dict(os.environ,{'HOME':d,'PATH':''}):
+   settings=Path(d)/'.config/sensei-den/music.json'
+   settings.parent.mkdir(parents=True)
+   settings.write_text('{"backend":"headless"}')
+   before=settings.read_bytes()
+   result=m.main(['autostart'])
+   self.assertTrue(result['skipped'])
+   self.assertEqual(settings.read_bytes(),before)

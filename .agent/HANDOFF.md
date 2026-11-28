@@ -287,3 +287,18 @@ compositor pixels, not only timers. Small dark click-through probes took under
 nine seconds; neither used swap or grabbed input. Production render-loop and
 effect preferences stayed unchanged. This is not a completed 24-hour soak.
 
+## Remaining official-player launch path
+
+#73 found a missed direct `Popen` in `spotify_control.py`, despite earlier launch
+migration work. It now uses `sensei-app-run`, with explicit launch failure and no
+unmanaged fallback. Real kernel/user-manager regression failed before (stopping
+caller killed stand-in client), passed after on BOTH hosts. No actual client or
+credentials used. Eleven related cases passed on each; full intended native
+suite779passed/57subtests/0skip,160.23s,1.1GiBpeak/no swap.
+
+Only the backend Python module was hot-deployed; do not restart renderers or
+interrupt the current final observations for it. Original Noesis/Notion work
+remains separate. Current paused-music resume smoke advanced actual playback,
+restored exact paused position and retained queue/player service identity.
+Its sub-second sample did NOT prove Zondo dancing/singing; that remains to test.
+

@@ -118,7 +118,10 @@ def main(args):
     if name=='autostart' and selection()!='official':return {'ok':True,'skipped':True}
     if name in ('launch','autostart'):
         installed=Path(os.environ.get('XDG_DATA_HOME',str(Path.home()/'.local/share')))/'spotify-launcher/install/usr/bin/spotify'
-        subprocess.Popen(['spotify-launcher']+(['--skip-update'] if installed.exists() and (name=='autostart' or (Path.home()/'.config/sensei-den/spotify-bridge.json').exists()) else []),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+        command=[str(Path.home()/'.local/bin/sensei-app-run'),'--','spotify-launcher']+(['--skip-update'] if installed.exists() and (name=='autostart' or (Path.home()/'.config/sensei-den/spotify-bridge.json').exists()) else [])
+        launched=subprocess.run(command,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,timeout=15)
+        if launched.returncode:
+            raise ValueError(launched.stderr.strip()[:300] or 'Spotify could not start independently of its caller')
         return {'ok':True}
     backend=selection()
     if backend=='headless':
