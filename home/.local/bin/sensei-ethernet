@@ -13,11 +13,21 @@ def query(device):
  r=subprocess.run(['nmcli','-f',','.join(fields),'device','show',device],text=True,capture_output=True,timeout=3)
  return {'device':device,'speedMbps':read('speed'),'duplex':read('duplex'),'mtu':read('mtu'),'carrier':read('carrier'),'mac':read('address'),'details':'\n'.join(line for line in r.stdout.strip().splitlines() if line),'error':r.stderr.strip() if r.returncode else ''}
 
+def jetson_usb_gadget(device):
+ # A Jetson exposes both RNDIS and CDC NCM under this USB device ID.
+ # Do not exclude either driver in general: USB LAN adapters also use CDC.
+ usb_device=device.resolve().parent
+ try:
+  return (usb_device/'idVendor').read_text().strip()=='0955' and (usb_device/'idProduct').read_text().strip()=='7020'
+ except FileNotFoundError:
+  return False
+
 def wired_carriers(root=Path('/sys/class/net')):
  links=[]
  for p in sorted(root.iterdir()):
   try:
-   if (p/'device').exists() and not (p/'wireless').exists() and not (p/'phy80211').exists() and (p/'type').read_text().strip()=='1' and (p/'carrier').read_text().strip()=='1':
+   device=p/'device'
+   if device.exists() and not (p/'wireless').exists() and not (p/'phy80211').exists() and (p/'type').read_text().strip()=='1' and (p/'carrier').read_text().strip()=='1' and not jetson_usb_gadget(device):
     links.append({'name':p.name})
   except OSError:pass
  return links

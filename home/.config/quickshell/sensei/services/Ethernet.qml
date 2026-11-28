@@ -15,7 +15,12 @@ Singleton {
  function rate(v){return v>=1048576?(v/1048576).toFixed(1)+" MiB/s":v>=1024?(v/1024).toFixed(1)+" KiB/s":Math.round(v)+" B/s";}
  property var details:({})
  function refresh(){if(device&&!scan.running){scan.command=[Quickshell.env("HOME")+"/.local/bin/sensei-ethernet",device];scan.running=true;}}
- onDeviceChanged:{details={};if(!device&&ShellState.dropdown==="ethernet")ShellState.dropdown="";if(device)refresh();}
+ onDeviceChanged:{
+    details={};
+    if(device){refresh();return;}
+    if(ShellState.dropdown==="ethernet")ShellState.dropdown="";
+    if(ShellState.systemPage===3)ShellState.systemPage=0;
+ }
  Process {id:scan;stdout:StdioCollector {onStreamFinished:{try{const d=JSON.parse(text);if(d.device===root.device)root.details=d;}catch(e){}}}onExited:if(root.device&&command[1]!==root.device)Qt.callLater(root.refresh)}
  Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==="ethernet")root.refresh();}}
  Timer {interval:10000;repeat:true;running:ShellState.dropdown==="ethernet";onTriggered:root.refresh()}

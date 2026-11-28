@@ -17,6 +17,11 @@ Neither computer bridges its LAN interfaces. Docker bridges have no physical
 ports. A short packet sample found no storm; this does not rule out intermittent
 loops elsewhere. Wi-Fi plus Ethernet alone does not form a bridge loop.
 
+The Ethernet bar button and System → Network appear only while a cabled LAN
+interface reports carrier. The Jetson's USB networking interfaces do not count
+and remain usable. If Ethernet drops while System → Network is open, System
+returns to Quick. The Wi-Fi toggle remains available on Wi-Fi-equipped hosts.
+
 ## Verified on Arete and Homie · 22 October 2026
 
 - Arete's USB adapter is Realtek RTL8152, physically limited to 10/100 Ethernet.
