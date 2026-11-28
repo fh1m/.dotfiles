@@ -14,7 +14,15 @@ DropdownFrame {
  function kind(){return page===0?"sinks":page===1?"sources":page===2?"sink-inputs":"source-outputs";}
  function nodes(){return page===0?SoundDesk.data.sinks:page===1?SoundDesk.data.sources.filter(n=>!n.name.endsWith('.monitor')):page===2?SoundDesk.data['sink-inputs']:SoundDesk.data['source-outputs'];}
  Column {width:parent.width;spacing:16
- Row {width:parent.width;spacing:8;Repeater {model:["Outputs","Mics","Apps","Capture","Devices","Balance","Den","Meeting"];ControlTile {required property string modelData;required property int index;implicitWidth:(parent.width-56)/8;implicitHeight:36;label:modelData;navigation:true;selected:root.page===index;onActivated:root.page=index}}}
+ Row {width:parent.width;spacing:8;Repeater {model:["Outputs","Mics","Apps","Capture","Devices","Balance","Den","Meeting"];ControlTile {required property string modelData;required property int index;implicitWidth:(parent.width-56)/8;implicitHeight:36;label:modelData;glyph:["\uf028","\uf130","\uf009","\uf192","\uf2db","\uf1de","\uf0e8","\uf03d"][index];navigation:true;selected:root.page===index;onActivated:root.page=index}}}
+ Column {width:parent.width;spacing:8;visible:!!SoundDesk.error
+  Text {textFormat:Text.PlainText;width:parent.width;text:SoundDesk.error;wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetAccent}
+  Text {textFormat:Text.PlainText;width:parent.width;visible:!!SoundDesk.queryError;text:"Showing the last known devices. Device controls are paused until a fresh inventory arrives.";wrapMode:Text.Wrap;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetMuted}
+  Row {spacing:8
+   ControlTile {label:"Refresh devices";glyph:"\uf021";onActivated:SoundDesk.refresh()}
+   ControlTile {visible:!!SoundDesk.actionError&&!SoundDesk.queryError;label:"Dismiss";glyph:"\uf00d";onActivated:SoundDesk.actionError=""}
+  }
+ }
  MeetingCheck {visible:root.page===7;width:parent.width}
  DenAudioPanel {visible:root.page===6;width:parent.width}
  DenAudioPanel {visible:root.page<6;width:parent.width;compact:true;onExpandRequested:root.page=6}
@@ -25,7 +33,7 @@ DropdownFrame {
  }
  }}
  Flickable {visible:root.page<6;width:parent.width;height:Math.max(88,Math.min(500,audioRows.height));clip:true;contentHeight:audioRows.height;ScrollBar.vertical:DeskScrollBar {}
- Column {id:audioRows;width:parent.width;spacing:10
+ Column {id:audioRows;width:parent.width;spacing:10;enabled:!SoundDesk.queryError
  Repeater {model:root.page<4?SoundDesk.ids[root.kind()]:[]
  ChamferPanel {id:nodeRow;required property int modelData;property var node:SoundDesk.node(root.kind(),modelData);property bool stream:root.page>=2;property bool source:root.page===1||root.page===3;readonly property bool isDefault:!stream&&node.name===(source?SoundDesk.data.defaultSource:SoundDesk.data.defaultSink);property string volAction:stream?(source?"capturevolume":"appvolume"):(source?"micvolume":"volume");width:audioRows.width;height:164;fillColor:Theme.alpha(Theme.widgetSurface,.6);borderColor:Theme.widgetBorder;chamfer:6;scanlines:false
  Column {anchors.fill:parent;anchors.margins:12;spacing:8
@@ -63,6 +71,6 @@ DropdownFrame {
  Text { textFormat: Text.PlainText;visible:root.page>=2&&root.page<4&&root.nodes().length===0;text:"Sensei, no applications are using this audio direction right now.";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;color:Theme.widgetMuted}
  }
  }
- Text { textFormat: Text.PlainText;width:parent.width;text:SoundDesk.error||"Sensei, wheel the sound badge to adjust volume; right-click it to mute. 100% is unity gain. Boost up to 200% is available; strong recordings can distort.";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:SoundDesk.error?Theme.widgetAccent:Theme.widgetMuted;wrapMode:Text.Wrap}
+ Text {textFormat:Text.PlainText;width:parent.width;text:"Wheel the sound badge to adjust volume; right-click it to mute. 100% is unity gain. Boost up to 200% is available; strong recordings can distort.";font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.secondary;color:Theme.widgetMuted;wrapMode:Text.Wrap}
  }
 }
