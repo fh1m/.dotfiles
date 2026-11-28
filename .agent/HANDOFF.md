@@ -302,3 +302,15 @@ remains separate. Current paused-music resume smoke advanced actual playback,
 restored exact paused position and retained queue/player service identity.
 Its sub-second sample did NOT prove Zondo dancing/singing; that remains to test.
 
+Subsequent bounded real-music verification DID observe one actor transition
+into dance mode. Private audio-free native video158frames/2.93s,96×96 and its
+inspected frame grid show sprite/rotation changes. Original pause/position,
+ordered queue and player service/restart count restored. No broad-FPS or
+physical-input acceptance claim.
+
+#75 follows actual Node20 warnings in both PR74 hosted workflows. Checkout is
+pinned to verified officialv7.0.1 SHA3d3c42e5aac5ba805825da76410c181273ba90b1,
+whose action.yml usesNode24. Standard push/PR triggers only; contentsread,
+persist-credentialsfalse, no unsafe-fork override. Validate in the real hosted
+workflows, not source-wiring assertions. No local runtime restart required.
+
