@@ -269,11 +269,10 @@ Singleton {
 
     // -1 for anything that is not a number, so a hand-edited `"abc"` leaves
     // the field where it was rather than silently becoming 2 seconds.
-    function clampSeconds(value: int): int {
-        const n = Number(value);
-        if (!isFinite(n))
+    function clampSeconds(value: var): int {
+        if (typeof value !== "number" || !isFinite(value))
             return -1;
-        return Math.max(root.minSeconds, Math.min(root.maxSeconds, Math.round(n)));
+        return Math.max(root.minSeconds, Math.min(root.maxSeconds, Math.round(value)));
     }
 
     // The next interval, in milliseconds. Read fresh on every tick, so a change

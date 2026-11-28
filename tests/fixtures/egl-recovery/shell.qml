@@ -17,7 +17,7 @@ ShellRoot {
         implicitWidth: 192
         implicitHeight: 128
         visible: true
-        color: root.generation % 2 ? "#00cc88" : "#6633cc"
+        color: root.generation % 2 ? "#29232a" : "#19161c"
         exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
         WlrLayershell.layer: WlrLayer.Overlay

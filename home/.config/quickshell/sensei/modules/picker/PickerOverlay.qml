@@ -280,7 +280,6 @@ Variants {
 
             Wallpaper {
                 anchors.fill: parent
-                source: Wallpapers.displaySource("eDP-1")
                 dim: 0.62
             }
 

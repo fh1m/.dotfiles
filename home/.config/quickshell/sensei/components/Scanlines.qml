@@ -70,8 +70,8 @@ Item {
         return Effects.scanlinesOnPanels;
     }
 
-    readonly property bool bandWanted: root.active && root.treatment.band && Effects.scanlinesOn && (root.previewing || root.screenSurface)
-    readonly property bool vignetteWanted: root.active && root.treatment.vignette && Effects.scanlinesOn && (root.previewing || root.screenSurface)
+    readonly property bool bandWanted: root.active && root.treatment.band && (root.previewing || (Effects.scanlinesOn && root.screenSurface))
+    readonly property bool vignetteWanted: root.active && root.treatment.vignette && (root.previewing || (Effects.scanlinesOn && root.screenSurface))
 
     readonly property bool wanted: root.linesWanted || root.bandWanted || root.vignetteWanted
 
@@ -127,10 +127,25 @@ Item {
         visible: root.bandWanted
         y: Effects.bandPhase * travel - height
 
-        // The shared clock only runs while something is drawing a band.
-        onVisibleChanged: Effects.holdBand(visible)
-        Component.onCompleted: if (visible) Effects.holdBand(true)
-        Component.onDestruction: if (visible) Effects.holdBand(false)
+        // Each surface owns one clock hold, only while its window is visible.
+        property bool clockHeld: false
+        readonly property bool clockVisible: visible && (root.Window.window?.visible ?? false)
+
+        function syncClock(): void {
+            if (clockHeld === clockVisible)
+                return;
+            clockHeld = clockVisible;
+            Effects.holdBand(clockHeld);
+        }
+
+        onClockVisibleChanged: syncClock()
+        Component.onCompleted: syncClock()
+        Component.onDestruction: {
+            if (clockHeld) {
+                clockHeld = false;
+                Effects.holdBand(false);
+            }
+        }
 
         Rectangle {
             anchors.fill: parent
