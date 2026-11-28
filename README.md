@@ -124,6 +124,10 @@ The tiny engineer may lose a semicolon. The mouse should have an escape route.
 
 A file picker, a result, a monitor, USB diagnostics. Small jobs belong here; the main screen stays available for the hard part.
 
+The window and workspace switcher fits the display it opens on, including the
+short ScreenPad. Arrow keys keep the selected workspace visible. Only the selected
+window or workspace refreshes live; use **Live** to switch to still previews.
+
 ## 07 / Unplug. The lab comes along.
 
 <picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/duo-hero.png"><img src="docs/assets/duo-hero.gif" alt="Arete's main display and ScreenPad arranged as a real two-screen portable workbench" width="100%"></picture>

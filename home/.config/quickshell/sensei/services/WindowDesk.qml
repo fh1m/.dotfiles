@@ -15,7 +15,19 @@ Singleton {
  readonly property var workspaceIds: Spaces.workspaceIds.concat(Array.from(new Set(all.map(t=>t.workspace?.id).filter(id=>Number.isInteger(id)&&id<0))).sort((a,b)=>b-a))
  function workspaceTitle(id){if(id>0)return Spaces.workspaceNames[Spaces.logicalId(id)-1]||String(id);const name=all.find(t=>t.workspace?.id===id)?.workspace?.name||"Special";return Spaces.labelFor(name.replace(/^special:/,""));}
  property var pendingSelection:null
- function finishSelection(){const p=pendingSelection;pendingSelection=null;if(!p)return;if(p.kind==='window')Hyprland.dispatch('hl.dsp.focus({window='+JSON.stringify('address:'+p.address)+'})');else if(p.kind==='workspace'){if(p.id>0)Quickshell.execDetached([Quickshell.env('HOME')+'/.local/bin/sensei-displays','workspace',String(p.id),ShellState.overlayScreenName]);else{const t=all.find(w=>w.workspace?.id===p.id);if(t)Hyprland.dispatch('hl.dsp.focus({window='+JSON.stringify('address:'+addressFor(t))+'})');}}else if(p.kind==='app')executeApp(p.entry);}
+ function finishSelection(){
+    const p=pendingSelection;pendingSelection=null;if(!p)return;
+    if(p.kind==='window'){Hyprland.dispatch('hl.dsp.focus({window='+JSON.stringify('address:'+p.address)+'})');return;}
+    if(p.kind==='app'){executeApp(p.entry);return;}
+    if(p.kind!=='workspace')return;
+    if(p.id>0){
+        const output=ShellState.overlayScreens[0]?.name||ShellState.focusedScreenName();
+        if(output)Quickshell.execDetached([Quickshell.env('HOME')+'/.local/bin/sensei-displays','workspace',String(p.id),output]);
+    }else{
+        const t=all.find(w=>w.workspace?.id===p.id);
+        if(t)Hyprland.dispatch('hl.dsp.focus({window='+JSON.stringify('address:'+addressFor(t))+'})');
+    }
+ }
  property var workspaceCards:[]
  property var dragWindow:null
  property real dragX:0
@@ -56,7 +68,7 @@ Singleton {
  function selectResult(r){if(!r)return;if(isWindow(r))choose(r);else launch(r);}
 
  function open(kind,delta){
-    if(opened&&kind===mode){cycle(delta);return;}
+    if(opened&&kind===mode){if(delta)cycle(delta);return;}
     if(!opened){ShellState.closeAll();ShellState.overlayScreenName=ShellState.focusedScreenName();}
     pendingSelection=null;mode=kind;query="";pinned=true;sameClass=ActiveWindow.ipc?.class||"";
     const ranks=new Map(mru.map((address,index)=>[address,index]));
