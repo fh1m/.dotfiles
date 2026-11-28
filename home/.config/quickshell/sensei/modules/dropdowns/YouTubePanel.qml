@@ -16,17 +16,43 @@ Column {
     property var results:[]
     property var saved:[]
     property int nextPage:-1
-    property bool appendPage:false
+    property int requestSerial:0
+    property var activeRequest:null
+    property var pendingRequest:null
+    property string resultsKey:""
     property bool privateCollection:false
     readonly property var collections:['playlists','watchlater','subscriptions','channels','history']
-    function openLibrary(index,more){if(searcher.running)return;if(!more){section=index;results=[];nextPage=-1;}appendPage=!!more;searcher.command=['@HOME@/.local/bin/sensei-spotify','youtube-library',collections[index-3],String(more?nextPage:0)];searcher.running=true;}
+    function requestKey(){return JSON.stringify([section,section===0?query.trim():"",section===0?privateCollection:false]);}
+    function requestCurrent(request){return !!request&&request.serial===requestSerial&&request.key===requestKey();}
+    function pumpSearch(){
+        if(searcher.running||!pendingRequest)return;
+        const request=pendingRequest;pendingRequest=null;
+        if(!requestCurrent(request))return;
+        activeRequest=request;searcher.command=request.command;searcher.running=true;
+    }
+    function enqueueRequest(command,append){
+        pendingRequest={serial:++requestSerial,key:requestKey(),command:command,append:append};
+        if(!append){results=[];nextPage=-1;resultsKey="";}
+        pumpSearch();
+    }
+    function openLibrary(index,more){
+        if(index<3||index>=collections.length+3)return;
+        section=index;
+        const append=!!more&&resultsKey===requestKey()&&nextPage>=0;
+        enqueueRequest(['@HOME@/.local/bin/sensei-spotify','youtube-library',collections[index-3],String(append?nextPage:0)],append);
+    }
     function activate(item,watch){if(item.kind==='twitch'){YouTubeDesk.watch(item);return;}if(item.kind!=='youtube'){query=item.url;privateCollection=!!item.private;root.search(false,false);return;}if(watch)YouTubeDesk.watch(item);else YouTubeDesk.play(item);}
 
     property string notice:"Search videos, music and lectures, or paste a public playlist."
     readonly property var rows:section===1?saved:section===2?YouTubeDesk.queue:results
     readonly property bool watching:YouTubeDesk.platform==='YouTube'&&SpotifyDesk.videoAudioLinked&&SpotifyDesk.videoSource!==''
     IpcHandler {enabled:root.visible&&!!root.hostWindow?.visible&&ShellState.dropdownOriginScreen===root.hostWindow?.screen?.name;target:'youtube-panel';function search(text:string):void{root.query=text;root.search(false);}function state():string{return JSON.stringify({results:root.results.length,saved:root.saved.length,queue:YouTubeDesk.queue.length,loading:searcher.running,watching:root.watching,notice:root.notice});}}
-    function search(refresh,more){if(searcher.running||query.trim().length<2)return;section=0;appendPage=!!more;if(!more){results=[];nextPage=-1;}searcher.command=['@HOME@/.local/bin/sensei-spotify','youtube-search',query].concat(refresh?['refresh']:[]).concat(privateCollection?['private']:[]).concat(more?['offset='+nextPage]:[]);searcher.running=true;}
+    function search(refresh,more){
+        if(query.trim().length<2)return;
+        section=0;
+        const append=!!more&&resultsKey===requestKey()&&nextPage>=0;
+        enqueueRequest(['@HOME@/.local/bin/sensei-spotify','youtube-search',query].concat(refresh?['refresh']:[]).concat(privateCollection?['private']:[]).concat(append?['offset='+nextPage]:[]),append);
+    }
     function attachVideo(){
         if(!visible||!root.watching||SpotifyDesk.videoMode!=='youtube'||!hostWindow)return;
         const point=video.mapToItem(null,0,0),top=hostWindow.contentOriginY;
@@ -38,7 +64,18 @@ Column {
     onVisibleChanged:attachVideo()
     Connections {target:SpotifyDesk;function onVideoModeChanged(){root.attachVideo();}function onVideoSourceChanged(){root.attachVideo();}}
     FileView {id:library;path:'@HOME@/.local/share/sensei-spotify/youtube-library.json';watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.saved=JSON.parse(text()).rows||[];}catch(e){root.saved=[];}}}
-    Process {id:searcher;stdout:StdioCollector {onStreamFinished:{try{const d=JSON.parse(text);if(!d.error)root.results=root.appendPage?root.results.concat(d.rows||[]):d.rows||[];root.nextPage=d.next??-1;root.appendPage=false;root.notice=d.error||d.warning||'';}catch(e){root.notice='YouTube could not be reached. Saved items are still available.';}}}}
+    Process {
+        id:searcher
+        stdout:StdioCollector {onStreamFinished:{
+            if(!root.requestCurrent(root.activeRequest))return;
+            try{
+                const d=JSON.parse(text);
+                if(!d.error){root.results=root.activeRequest.append?root.results.concat(d.rows||[]):d.rows||[];root.resultsKey=root.activeRequest.key;}
+                root.nextPage=d.next??-1;root.notice=d.error||d.warning||'';
+            }catch(e){root.notice='YouTube could not be reached. Saved items are still available.';}
+        }}
+        onExited:Qt.callLater(root.pumpSearch)
+    }
     Row {visible:!root.watching;width:parent.width;spacing:8
         Text {width:parent.width-300;text:'YouTube / the den media center';font.family:Appearance.font.heading;font.pixelSize:19;color:Theme.paper;elide:Text.ElideRight;anchors.verticalCenter:parent.verticalCenter}
         MusicButton {implicitWidth:170;implicitHeight:32;label:'Listening room';glyph:'\uf065';enabled:YouTubeDesk.ownsAudio;onActivated:SpotifyDesk.expand()}
@@ -47,7 +84,7 @@ Column {
     MediaTransport {width:parent.width}
     Row {width:parent.width;spacing:8
         DeskTextField {width:parent.width-116;height:38;placeholderText:'Videos, music, robotics, lectures or a YouTube link…';text:root.query;onTextEdited:{root.query=text;root.privateCollection=false;}onAccepted:root.search(false)}
-        MusicButton {implicitWidth:108;implicitHeight:38;label:'Search';enabled:!searcher.running&&root.query.trim().length>=2;onActivated:root.search(false)}
+        MusicButton {implicitWidth:108;implicitHeight:38;label:'Search';enabled:root.query.trim().length>=2;onActivated:root.search(false)}
     }
     Row {spacing:8
         Repeater {model:['Results','Saved','Queue','My playlists','Watch Later','Subscriptions','Channels','History'];MusicButton {required property string modelData;required property int index;implicitWidth:Math.max(92,modelData.length*8+26);implicitHeight:30;textSize:12;glyph:'';label:modelData;selected:root.section===index;onActivated:{if(index>=3)root.openLibrary(index,false);else root.section=index;}}}
