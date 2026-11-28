@@ -529,12 +529,12 @@ Item {
 
         Text {
             textFormat: Text.PlainText
-            // A measure a reader can follow: the full span is ~190 characters a line.
-            width: Math.min(parent.width, 900)
-            text: "The lines are one tiled texture per surface and measured inside the run-to-run spread on a test laptop: 15.6% of a core with them off against 16.1% with them on everything. The rolling band adds a second layer with an animation behind it, and the vignette a third, and both are paid on every surface they are drawn on -- so FINE + ROLLING BAND and FULL CRT cost more than the three above them, and EVERYTHING costs more than PANELS ONLY."
+            width: Math.min(parent.width, 560)
+            text: "Static lines reuse a tiled texture. Rolling treatments animate only while visible; CRT adds a vignette. Keep coverage on panels for less screen area to draw. Actual cost depends on the GPU, display size and refresh rate."
             color: Theme.text
             font.family: Appearance.font.data
-            font.pixelSize: 11
+            font.pixelSize: 12
+            lineHeight: 1.35
             wrapMode: Text.Wrap
             renderType: Text.NativeRendering
         }

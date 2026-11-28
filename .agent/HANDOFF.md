@@ -209,9 +209,9 @@ deployment without main-shell restarts. The original ABI safeguards remain.
 
 ## Post-merge companion/session follow-up
 
-PR #65 merged at `3bd55db`; #68 merged at `35cf5aa`. Issues #61/#66/#67 are closed.
-Both checkouts reached that `main` baseline without reset. The current owned
-audio follow-up remains separate from original unstaged Noesis/Notion work.
+PR #65 merged at `3bd55db`; #68 at `35cf5aa`; #70 at `11bf9cc`.
+Issues #61/#66/#67/#69 are closed. The effects follow-up (#71) remains separate
+from original unstaged Noesis/Notion work.
 
 New reproduced issues: #66 reaction-round counters survived restart; #67
 companion queries forced compositor index zero even with a selected session.
@@ -232,16 +232,16 @@ hashes/source commit, explicit 1 CPU/512 MiB/60s/1 MiB-log bounds. Both checksum
 JUnit artifacts were fetched privately and parsed. This is not a GPU benchmark.
 
 The games/session export passed 767 tests, 57 subtests and three skips in
-156.87s, peak1GiB/no swap. The later audio activation now has main PIDs
-Arete3328113 and Homie3526986. Protected input/clipboard/cursor state and PIDs
-stayed identical. Both native mixer screenshots retain coherent fonts/icons.
+156.87s, peak1GiB/no swap. Later shell-only activations preserved the protected
+input/clipboard/cursor service identities. Native mixer screenshots retain
+coherent fonts/icons.
 An actual 74-frame/2.43s audio-free native recording captured open/close/reopen;
 observed readiness0.490/0.195/0.484s is not a percentile or global-FPS guarantee.
 
-The sole final finite collector on each host is
-`den-audit-ui-final-20261128-19f24781.service`. Superseded owned collectors were
-stopped, not erased or declared passed. Never poll collectors or close #2/#3/#6
-from a short sample. Physical input remains unavailable to the current Wayland
+One final finite collector per host follows the effects activation. Its identity
+and process boundary are recorded in the private final-observation manifest.
+Superseded files are retained, not passed. Never poll collectors or close
+#2/#3/#6 from a short sample. Physical input remains unavailable to this Wayland
 harness; no actual pointer/gameplay/keyboard-traversal claim.
 
 ## Audio recovery follow-up
@@ -255,3 +255,35 @@ peak1GiB/swap392KiB. Actual healthy metadata and native UI were checked on both
 hosts. All audio defaults/gains/mutes/ports/profiles stayed identical; the stopped
 Den route remains off. No microphone/conversation recording or audio-server
 restart occurred. Protected physical-control identities remain unchanged.
+
+## Effects and audit-memory follow-up
+
+The audit itself retained two completed source-export buffers. Measured release
+reduced current Eval PSS319.0→52.1MiB and swap281.5→21.5MiB; source/evidence files
+remain. This does not identify the earlier OOM's individual allocator. Export
+fixed test trees through a private index and native `checkout-index --prefix`,
+not retained whole tar/BytesIO buffers. The repository index and original work
+must remain independent.
+
+#71 reproduces independent-preview gating, stolen clock ownership and malformed
+timing coercion. Actual native pages on both hosts now animate two preview bands
+while shown and hold zero after close. Saved preferences are byte-identical.
+The picker shares the primary wallpaper fallback, and stale benchmark prose is
+removed. On-demand performance IPC exposes band count/phase; no idle poll added.
+
+Pinned suite771pass/57subtests/8skip; installed-native suite774/57/5skip,
+157.37s, peak765.5MiB/swap163.5MiB. Separate opt-in app-lifetime batch3passed.
+Do not aggregate duplicate cases or call these exhaustive source coverage.
+Actual screenshots include a settled Homie capture, not just its entry fade.
+
+Homie's native Claude folder-approval terminal is open. The user must approve
+it interactively; no native trust was accepted or copied. Fresh Homie provider
+usage and #62 remain gated. Input remains user-paused on Arete; never clear that
+marker or restart input/clipboard/cursor as a side effect of shell deployment.
+
+Separate real EGL fault acceptance: Arete3passed (allocator plus basic/threaded
+swap recovery); Homie2passed/1explicitNVIDIA-DRI-skip. These checked resumed
+compositor pixels, not only timers. Small dark click-through probes took under
+nine seconds; neither used swap or grabbed input. Production render-loop and
+effect preferences stayed unchanged. This is not a completed 24-hour soak.
+

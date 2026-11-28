@@ -1,8 +1,10 @@
 """Native regressions for async QuickShell service ownership and refresh cadence."""
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -81,22 +83,22 @@ def setup_services(tmp_path, *names):
 def run_native(tmp_path, harness, extra_env=None, timeout=8):
     assert HAS_QS, 'Set SENSEI_QS_BINARY to the explicitly selected native Quickshell runtime'
     shell = put(tmp_path, 'shell.qml', harness)
-    runtime = tmp_path / 'runtime'
-    runtime.mkdir(exist_ok=True)
-    env = dict(os.environ)
-    env.update({
-        'HOME': str(tmp_path),
-        'XDG_RUNTIME_DIR': str(runtime),
-        'XDG_CONFIG_HOME': str(tmp_path / 'config'),
-        'XDG_STATE_HOME': str(tmp_path / 'state'),
-        'XDG_CACHE_HOME': str(tmp_path / 'cache'),
-        'DBUS_SESSION_BUS_ADDRESS': 'unix:path=' + str(runtime / 'no-bus'),
-    })
-    env.update(NATIVE_ENV)
-    if extra_env:
-        env.update(extra_env)
-    result = subprocess.run([str(QS), '-p', str(shell)], env=env,
-                            capture_output=True, text=True, timeout=timeout)
+    # Keep native IPC socket paths bounded even under long pytest test names.
+    with tempfile.TemporaryDirectory(prefix="den-qml-") as runtime:
+        env = dict(os.environ)
+        env.update({
+            'HOME': str(tmp_path),
+            'XDG_RUNTIME_DIR': runtime,
+            'XDG_CONFIG_HOME': str(tmp_path / 'config'),
+            'XDG_STATE_HOME': str(tmp_path / 'state'),
+            'XDG_CACHE_HOME': str(tmp_path / 'cache'),
+            'DBUS_SESSION_BUS_ADDRESS': 'unix:path=' + runtime + '/no-bus',
+        })
+        env.update(NATIVE_ENV)
+        if extra_env:
+            env.update(extra_env)
+        result = subprocess.run([str(QS), '-p', str(shell)], env=env,
+                                capture_output=True, text=True, timeout=timeout)
     report = result.stdout + result.stderr
     assert result.returncode == 0, report
     return report
@@ -401,3 +403,150 @@ ShellRoot {
     }}
 }'''
     assert 'PROOF_PASS' in run_native(tmp_path,harness)
+
+
+SCANLINE_HARNESS = r'''import QtQuick
+import Quickshell
+import qs.components
+import qs.services
+ShellRoot {
+    id: root
+    property string scenario: Quickshell.env("SENSEI_SCENARIO")
+    property var actor: null
+    property var passive: null
+    property int phase: 0
+    property int ticks: 0
+    property real previousPhase: 0
+    Window {
+        id: canvas
+        visible: true
+        width: 320
+        height: 200
+        Item { id: host; anchors.fill: parent }
+    }
+    Component { id: surface; Scanlines {} }
+    function fail(message) {
+        console.error("PROOF_FAIL", scenario, phase, message);
+        Qt.exit(2);
+    }
+    function held(expected) {
+        if (Effects.bandUsers !== expected) {
+            fail("Visible rolling-band ownership: expected " + expected + ", got " + Effects.bandUsers);
+            return false;
+        }
+        return true;
+    }
+    Timer {
+        interval: 20
+        repeat: true
+        running: true
+        onTriggered: {
+            if (++root.ticks > 150) { root.fail("Animation lifecycle timed out"); return; }
+            if (!Effects.loaded) return;
+            if (root.phase === 0) {
+                Effects.scanlines = root.scenario === "preview" ? "NONE" : "ROLLING";
+                root.actor = surface.createObject(host, root.scenario === "preview"
+                    ? {forced: "CRT"} : {surface: "wallpaper"});
+                root.phase = 1;
+            } else if (root.phase === 1) {
+                if (!root.actor.bandWanted || (root.scenario === "preview" && !root.actor.vignetteWanted)) {
+                    root.fail("A treatment preview must work independently of the selected treatment");
+                    return;
+                }
+                if (!root.held(1)) return;
+                root.previousPhase = Effects.bandPhase;
+                root.phase = 2;
+            } else if (root.phase === 2) {
+                if (Effects.bandPhase === root.previousPhase) return;
+                root.passive = surface.createObject(host, {active: false});
+                root.phase = 3;
+            } else if (root.phase === 3) {
+                if (!root.held(1)) return;
+                root.passive.destroy();
+                root.passive = null;
+                root.phase = 4;
+            } else if (root.phase === 4) {
+                if (!root.held(1)) return;
+                host.visible = false;
+                root.phase = 5;
+            } else if (root.phase === 5) {
+                if (!root.held(0)) return;
+                host.visible = true;
+                root.phase = 6;
+            } else if (root.phase === 6) {
+                if (!root.held(1)) return;
+                canvas.visible = false;
+                root.phase = 7;
+            } else if (root.phase === 7) {
+                if (!root.held(0)) return;
+                canvas.visible = true;
+                root.phase = 8;
+            } else if (root.phase === 8) {
+                if (!root.held(1)) return;
+                root.actor.destroy();
+                root.actor = null;
+                root.phase = 9;
+            } else {
+                if (!root.held(0)) return;
+                console.log("PROOF_PASS scanline-" + root.scenario);
+                Qt.quit();
+            }
+        }
+    }
+}
+'''
+
+
+@pytest.mark.skipif(not HAS_QS, reason="Explicit native Quickshell runtime required")
+@pytest.mark.parametrize("scenario", ["preview", "wallpaper"])
+def test_scanline_clock_lifecycle(tmp_path, scenario):
+    service(tmp_path, "Effects.qml")
+    for name in ("scanline.png", "scanline-wide.png", "vignette.png"):
+        target = tmp_path / "assets" / name
+        target.parent.mkdir(exist_ok=True)
+        shutil.copy2(ROOT / "home/.config/quickshell/sensei/assets" / name, target)
+    target = tmp_path / "components/Scanlines.qml"
+    target.parent.mkdir()
+    shutil.copy2(ROOT / "home/.config/quickshell/sensei/components/Scanlines.qml", target)
+    put(tmp_path, "config/Paths.qml", '''pragma Singleton
+import QtQuick
+QtObject {
+    property string effectsFile: ''' + json.dumps(str(tmp_path / "effects.json")) + '''
+    function url(path) { return "file://" + path; }
+}
+''')
+    put(tmp_path, "config/Demo.qml", 'pragma Singleton\nimport QtQuick\nQtObject {property string scanlines:""}\n')
+    put(tmp_path, "config/Appearance.qml", 'pragma Singleton\nimport QtQuick\nQtObject {property var duration:({enter:0,exit:0})}\n')
+    report = run_native(tmp_path, SCANLINE_HARNESS, {"SENSEI_SCENARIO": scenario})
+    assert "PROOF_PASS scanline-" + scenario in report, report
+
+
+@pytest.mark.skipif(not HAS_QS, reason="Explicit native Quickshell runtime required")
+def test_effect_timing_rejects_malformed_metadata_without_speeding_up_glitches(tmp_path):
+    service(tmp_path, "Effects.qml")
+    put(tmp_path, "config/Paths.qml", 'pragma Singleton\nimport QtQuick\nQtObject {property string effectsFile:' + json.dumps(str(tmp_path / "effects.json")) + '}\n')
+    put(tmp_path, "config/Demo.qml", 'pragma Singleton\nimport QtQuick\nQtObject {property string scanlines:""}\n')
+    harness = r'''import QtQuick
+import Quickshell
+import qs.services
+ShellRoot {
+    property var effects: Effects
+    Timer {interval:50;running:true;onTriggered:{
+        Effects.glitchFrom=40;
+        Effects.glitchTo=80;
+        Effects.glitchEvery=60;
+        const unchanged=()=>Effects.glitchFrom===40&&Effects.glitchTo===80&&Effects.glitchEvery===60;
+        for (const invalid of ["abc","",null,true,[],{}]) {
+            Effects.adopt(JSON.stringify({glitchFrom:invalid,glitchTo:invalid,glitchEvery:invalid}));
+            if (!unchanged()) throw new Error("Malformed timing replaced the saved schedule");
+        }
+        Effects.adopt('{"glitchFrom":1e309,"glitchTo":1e309,"glitchEvery":1e309}');
+        if (!unchanged()) throw new Error("Non-finite timing replaced the saved schedule");
+        Effects.adopt('{"glitchFrom":3.6,"glitchTo":1e4,"glitchEvery":0}');
+        if (Effects.glitchFrom!==4||Effects.glitchTo!==Effects.maxSeconds||Effects.glitchEvery!==Effects.minSeconds)
+            throw new Error("Valid timing bounds or rounding were lost");
+        console.log("PROOF_PASS effect-timing-metadata");
+        Qt.quit();
+    }}
+}'''
+    assert "PROOF_PASS effect-timing-metadata" in run_native(tmp_path, harness)

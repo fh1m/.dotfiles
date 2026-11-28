@@ -12,7 +12,7 @@ Scope {
 
     IpcHandler {
         target: "performance"
-        function state(): string {return JSON.stringify({ambientMotion:ShellState.ambientMotion,barHovered:ShellState.barHovered,cursorOwned:ShellState.cursorOwned,cursorOwnershipKnown:ShellState.cursorOwnershipKnown,hoveredOutput:ShellState.hoveredBarOutput,workspaceScans:Spaces.outputScanCount,workspaceObserverRunning:Spaces.observerRunning,dropdown:ShellState.dropdown,deckVisible:ShellState.deckVisible,pickerOpen:ShellState.pickerOpen,launcherOpen:ShellState.launcherOpen,powerOpen:ShellState.powerOpen,shortcutsOpen:ShellState.shortcutsOpen,glitchEnabled:Glitch.enabled,glitchBusy:Glitch.busy,visualizerActive:Cava.active,videoEngines:Object.keys(YouTubeDesk.engines).length,videoDisplays:YouTubeDesk.usedDisplays,monitorActive:LiveMonitor.active});}
+        function state(): string {return JSON.stringify({ambientMotion:ShellState.ambientMotion,barHovered:ShellState.barHovered,cursorOwned:ShellState.cursorOwned,cursorOwnershipKnown:ShellState.cursorOwnershipKnown,hoveredOutput:ShellState.hoveredBarOutput,workspaceScans:Spaces.outputScanCount,workspaceObserverRunning:Spaces.observerRunning,dropdown:ShellState.dropdown,deckVisible:ShellState.deckVisible,pickerOpen:ShellState.pickerOpen,launcherOpen:ShellState.launcherOpen,powerOpen:ShellState.powerOpen,shortcutsOpen:ShellState.shortcutsOpen,glitchEnabled:Glitch.enabled,glitchBusy:Glitch.busy,effectsBandUsers:Effects.bandUsers,effectsBandPhase:Effects.bandPhase,visualizerActive:Cava.active,videoEngines:Object.keys(YouTubeDesk.engines).length,videoDisplays:YouTubeDesk.usedDisplays,monitorActive:LiveMonitor.active});}
     }
     IpcHandler {
         target:"radio"
