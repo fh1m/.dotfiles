@@ -38,24 +38,25 @@ DropdownFrame {
             ? "Measured "+new Date(limits.measurementAt*1000).toLocaleString(Qt.locale(),"ddd d MMM · hh:mm AP")+(limits.stale?" · Stale":"")+(limits.sourceHost?" · "+limits.sourceHost:"")
             : "Waiting for a native account measurement");
     }
-    function codexResetEpoch(window) {
-        const reset = window?.resetsAt;
-        return typeof reset === "number" ? reset * (reset > 1e12 ? 1 : 1000) : Date.parse(reset || "");
+    readonly property var selectedCodex: CodexAccounts.accounts.find(account => account.id === CodexAccounts.selected)
+    function codexWindow(snapshot, key) {
+        return CodexAccounts.quotaWindow(snapshot, key, CodexAccounts.observedAt);
     }
-    function codexRemaining(window) {
-        if (!window || !Number.isFinite(window.usedPercent)) return "Not reported";
-        if (root.codexResetEpoch(window) <= Date.now()) return "Reset passed";
-        return Math.max(0, 100 - window.usedPercent).toFixed(0) + "% remaining";
-    }
-    function codexFill(window) {
-        return !window || !Number.isFinite(window.usedPercent) || root.codexResetEpoch(window) <= Date.now()
-            ? 0 : Math.max(0, Math.min(1, (100 - window.usedPercent) / 100));
+    function codexRemaining(view) {
+        if (view.state === "expired") return "Reset passed";
+        if (view.state === "unknown") return "Not reported";
+        const value = view.left > 0 && view.left < 1 ? "<1%" : view.left.toFixed(0) + "%";
+        return view.state === "historical" ? "Last seen " + value : value + " remaining";
     }
     function codexStamp() {
         const usage = CodexAccounts.usage;
-        return CodexAccounts.error || usage.error || (usage.measurementAt
-            ? "Measured " + new Date(usage.measurementAt * 1000).toLocaleString(Qt.locale(), "ddd d MMM · hh:mm AP") + (usage.stale ? " · Stale" : "")
-            : CodexAccounts.busy ? "Reading account information…" : "Monitor an account to read its limits");
+        const now = CodexAccounts.observedAt;
+        const state = CodexAccounts.measurementState(usage, now);
+        const captured = state !== "unknown"
+            ? "Measured " + new Date(usage.measurementAt * 1000).toLocaleString(Qt.locale(), "ddd d MMM · hh:mm AP")
+                + (state === "historical" ? " · Older reading" : "") : "";
+        const message = [CodexAccounts.error || usage.error || usage.notice, captured].filter(Boolean).join(" · ");
+        return message || (CodexAccounts.busy ? "Reading account information…" : "No account measurement");
     }
     function peakDaily(days) {return (days??[]).reduce((m,d)=>Math.max(m,d.tokens),0);}
     function pushDate(value) {return value?new Date(value).toLocaleDateString(Qt.locale(),"d MMM yyyy"):"Unknown";}
@@ -257,8 +258,8 @@ DropdownFrame {
                                 x:12;y:10;width:parent.width-24;spacing:6
                                 NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;elide:Text.ElideRight;text:modelData.name;pixelSize:Appearance.textSize.control;color:Theme.paper}
                                 NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;elide:Text.ElideRight;text:(modelData.source==="omp"?"OMP account":"Codex profile")+(modelData.snapshot?.account?.planType?" · "+modelData.snapshot.account.planType:"")+(modelData.scopeLabel?" · "+modelData.scopeLabel:"")+(modelData.unavailable?" · Sign-in changed or unavailable":"")+(modelData.snapshot?.stale?" · Stale":"");pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
-                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"Current   "+root.codexRemaining(modelData.snapshot?.rateLimits?.primary);pixelSize:Appearance.textSize.caption;color:Theme.signalRed}
-                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"Longer    "+root.codexRemaining(modelData.snapshot?.rateLimits?.secondary);pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"Short    "+root.codexRemaining(root.codexWindow(modelData.snapshot, "primary"));pixelSize:Appearance.textSize.caption;color:Theme.signalRed}
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"Long     "+root.codexRemaining(root.codexWindow(modelData.snapshot, "secondary"));pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
                                 ControlTile {label:modelData.monitored?"Remove monitor":"Monitor account";glyph:modelData.monitored?"\uf068":"\uf067";implicitWidth:170;implicitHeight:32;danger:false;onActivated:CodexAccounts.monitor(modelData.id,!modelData.monitored)}
                             }
                         }
@@ -268,23 +269,26 @@ DropdownFrame {
                 NrLabel {visible:!!CodexAccounts.discoveryWarning;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:CodexAccounts.discoveryWarning;wrapMode:Text.WordWrap;pixelSize:Appearance.textSize.secondary;color:Theme.semanticAmber}
                 Column {
                     width:parent.width;spacing:14;visible:!!CodexAccounts.usage.accountId
-                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"Codex / "+(CodexAccounts.usage.account?.planType||"Plan not reported");pixelSize:Appearance.textSize.section;color:Theme.paper}
+                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;elide:Text.ElideRight;text:(root.selectedCodex?.name||"Selected Codex account")+" · "+(CodexAccounts.usage.account?.planType||"Plan not reported");pixelSize:Appearance.textSize.section;color:Theme.paper}
                     Row {
                         width:parent.width;spacing:28
-                        Repeater {model:[{name:"Current window",value:CodexAccounts.usage.rateLimits?.primary},{name:"Longer window",value:CodexAccounts.usage.rateLimits?.secondary}]
+                        Repeater {model:[{name:"Short window",key:"primary"},{name:"Long window",key:"secondary"}]
                             Column {required property var modelData;width:(parent.width-28)/2;spacing:8
+                                readonly property var limit: CodexAccounts.usage.rateLimits?.[modelData.key]
+                                readonly property var quota: root.codexWindow(CodexAccounts.usage, modelData.key)
+                                readonly property double reset: CodexAccounts.resetEpoch(limit)
                                 Item {width:parent.width;height:20
-                                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:modelData.name+(modelData.value?" · "+root.duration(modelData.value.windowDurationMins||modelData.value.windowMinutes):"");pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
-                                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;anchors.right:parent.right;text:root.codexRemaining(modelData.value);pixelSize:Appearance.textSize.control;color:Theme.signalRed}
+                                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:modelData.name+(limit?" · "+root.duration(limit.windowDurationMins||limit.windowMinutes):"");pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
+                                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;anchors.right:parent.right;text:root.codexRemaining(quota);pixelSize:Appearance.textSize.control;color:quota.state==="current"?Theme.signalRed:Theme.paperMuted}
                                 }
                                 Rectangle {width:parent.width;height:3;radius:1;color:Theme.surfaceTwo
-                                    Rectangle {width:parent.width*root.codexFill(modelData.value);height:3;radius:1;color:Theme.signalRed}
+                                    Rectangle {width:quota.state==="current"?parent.width*quota.left/100:0;height:3;radius:1;color:Theme.signalRed}
                                 }
-                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:Number.isFinite(root.codexResetEpoch(modelData.value))?"Resets "+new Date(root.codexResetEpoch(modelData.value)).toLocaleString(Qt.locale(),"ddd d MMM · hh:mm AP"):"Reset not reported";pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:Number.isFinite(reset)?(reset<=CodexAccounts.observedAt?"Reset was ":"Resets ")+new Date(reset).toLocaleString(Qt.locale(),"ddd d MMM · hh:mm AP"):"Reset not reported";pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
                             }
                         }
                     }
-                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:(CodexAccounts.usage.source||"")+(CodexAccounts.usage.stale?" · Stale":"");wrapMode:Text.WordWrap;pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
+                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:CodexAccounts.usage.source||"";wrapMode:Text.WordWrap;pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
                 }
                 Row {
                     spacing:8
