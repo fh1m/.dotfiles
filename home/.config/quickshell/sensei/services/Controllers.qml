@@ -21,7 +21,7 @@ Singleton {
  readonly property var device:data.controllers.find(c=>c.id===selected)||data.controllers[0]||({})
  function accept(line){try{const d=JSON.parse(line);if(Array.isArray(d.controllers))root.data=d;else if(d.error)root.report=d.error;}catch(e){root.report="Controller response unavailable; refresh to retry.";}}
  function refresh(){if(!scan.running)scan.running=true;}
- function action(name,value){if(worker.running||!device.id)return;if(name.startsWith("ros-"))exportDevice="";worker.command=[Quickshell.env('HOME')+'/.local/bin/sensei-controllers',name,device.id].concat(value!==undefined?[String(value)]:[]);worker.running=true;}
+ function action(name,value){if(worker.running||!device.id)return;worker.controllerId=device.id;if(name.startsWith("ros-"))exportDevice="";worker.command=[Quickshell.env('HOME')+'/.local/bin/sensei-controllers',name,worker.controllerId].concat(value!==undefined?[String(value)]:[]);worker.running=true;}
  Component.onCompleted:refresh()
  onActiveChanged:if(active)refresh()
  Timer {interval:10000;repeat:true;running:!root.active;onTriggered:root.refresh()}
@@ -29,5 +29,5 @@ Singleton {
  Timer {id:watchRetry;interval:1000;onTriggered:if(root.active&&!worker.running)watch.running=true}
  Process {id:watch;onExited:if(root.active&&!worker.running)watchRetry.restart();running:root.active&&!worker.running;command:[Quickshell.env('HOME')+'/.local/bin/sensei-controllers','watch'];stdout:SplitParser {onRead:line=>root.accept(line)}}
  readonly property bool busy:worker.running
- Process {id:worker;onExited:root.refresh();stdout:SplitParser {onRead:line=>{try{const d=JSON.parse(line);if(d.path&&d.command){root.exportPath=d.path;root.exportCommand=d.command;root.exportDevice=root.device.id;}root.report=d.error||d.note||(d.phase?d.phase+' · '+d.remaining+'s':d.saved?'Saved '+d.saved:line);}catch(e){root.report='Controller tool returned an unreadable response';}}}}
+ Process {id:worker;property string controllerId:"";onExited:root.refresh();stdout:SplitParser {onRead:line=>{try{const d=JSON.parse(line);if(d.path&&d.command){root.exportPath=d.path;root.exportCommand=d.command;root.exportDevice=worker.controllerId;}root.report=d.error||d.note||(d.phase?d.phase+' · '+d.remaining+'s':d.saved?'Saved '+d.saved:line);}catch(e){root.report='Controller tool returned an unreadable response';}}}}
 }
