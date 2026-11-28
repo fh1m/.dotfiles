@@ -39,14 +39,21 @@ def test_wallpaper_colors_reach_terminal_and_toolkits_without_rearranging_tmux(t
     template = (ROOT / 'home/.config/tmux/sensei-theme.template.conf').read_text()
     tmux.with_name('sensei-theme.template.conf').write_text(template)
     normalized = lambda t: re.sub(r'#[0-9a-fA-F]{6}|@[A-Z]+@', 'color', t)
+    def luminance(color):
+        rgb = [int(color[i:i+2], 16) / 255 for i in (1, 3, 5)]
+        return sum((v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055)**2.4) * w
+                   for v, w in zip(rgb, (0.2126, 0.7152, 0.0722)))
+
     snapshot = []
-    for name, rgb in [('rose.png', (238, 22, 109)), ('amber 100% #2.png', (243, 157, 22)), ('mono.png', (48, 48, 48))]:
+    for name, rgb in [('rose.png', (238, 22, 109)), ('amber 100% #2.png', (243, 157, 22)),
+                      ('deep blue.png', (5, 20, 207)), ('mono.png', (48, 48, 48))]:
         image = tmp_path / name
         Image.new('RGB', (32, 32), rgb).save(image)
         subprocess.run([sys.executable, str(ROOT / 'home/.local/bin/sensei-palette'), str(image)],
                        check=True, capture_output=True, timeout=10)
         palette = json.loads((config / 'sensei/wallpaper-palette.json').read_text())
         assert palette['wallpaper'] == str(image)
+        assert (luminance(palette['primary']) + 0.05) / (luminance(palette['raised']) + 0.05) >= 4.5
         colors = tomllib.loads(terminal.read_text())['colors']
         assert colors['primary']['background'] == '#000000'
         assert colors['selection']['background'] == palette['primary']
@@ -57,5 +64,5 @@ def test_wallpaper_colors_reach_terminal_and_toolkits_without_rearranging_tmux(t
             assert f"@define-color accent_bg_color {palette['primary']};" in (config / version / 'colors.css').read_text()
         assert palette['primary'] in qt.read_text()
         snapshot.append(palette['primary'])
-    assert len(set(snapshot)) == 3
+    assert len(set(snapshot)) == 4
     assert len({snapshot[-1][i:i+2] for i in (1, 3, 5)}) == 1
