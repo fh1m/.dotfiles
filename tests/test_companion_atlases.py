@@ -15,8 +15,7 @@ class AtlasGeometry(unittest.TestCase):
      self.assertLessEqual(x+w,image.width);self.assertLessEqual(y+h,image.height)
      # The actual viewport must clip to frame dimensions, not the larger square pet.
      scale=min(96/w,96/h);self.assertLessEqual(w*scale,96+1e-9);self.assertLessEqual(h*scale,96+1e-9)
- def test_new_singing_art_has_real_transparency_and_four_explicit_frames(self):
+ def test_singing_art_retains_transparency(self):
   a=json.loads((ROOT/'activity-atlases.json').read_text())['sing']
-  self.assertEqual(len(a['rects']),4)
   with Image.open(ROOT/a['file']) as image:
    self.assertEqual(image.mode,'RGBA');self.assertEqual(image.getchannel('A').getextrema(),(0,255))

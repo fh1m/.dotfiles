@@ -206,3 +206,42 @@ The supervisor now discovers `qtpaths6`, Arch's explicit Qt6 path, then `qtpaths
 fixtures model the query protocol independently. Thirteen selection cases passed.
 Both actual supervisors completed version-mode smoke at Qt 6.12.0 after scoped
 deployment without main-shell restarts. The original ABI safeguards remain.
+
+## Post-merge companion/session follow-up
+
+PR #65 merged at `3bd55db`; issue #61 is closed. Both checkouts now use `main`
+at that baseline. Homie's clean checkout fast-forwarded without reset; Arete's
+original Noesis/Notion WIP remains separate and unstaged.
+
+New reproduced issues: #66 reaction-round counters survived restart; #67
+companion queries forced compositor index zero even with a selected session.
+The reaction initializer is shared. The existing socket-validated selector moved
+to `desktop_session.py` and is reused by the launcher/operator. Two session
+regressions failed before; 62 related cases pass after. Both native context-free
+protocol probes work. Backend deployment restarted only `den-watch`.
+
+The games UI now defers guest configuration behind an explicit control; a native
+before screenshot showed it hiding all games below the viewport. QML deployment
+alone does NOT activate this: `shell.qml` disables unsafe file-triggered reloads.
+Both shell cgroups have been inspected: only supervisors/renderers and owned
+observers, no user GUI applications. A controlled shell-only activation and
+fresh native screenshots/recording are still required. Do not restart input,
+clipboard or cursor services, or clear the user's input-pause marker.
+
+Real layout-test jobs passed on both hosts: four tests each, matching input
+hashes/source commit, explicit 1 CPU/512 MiB/60s/1 MiB-log bounds. Both checksummed
+JUnit artifacts were fetched privately and parsed. This is not a GPU benchmark.
+
+The exact follow-up export passed 767 tests, 57 subtests and three skips in
+156.87s, peak1GiB/no swap. Both shell-only activations are now complete:
+Arete main3300167, Homie main3513620. Protected input/clipboard/cursor state and
+PIDs stayed identical. Fresh screenshots on both hosts verify games-first UI.
+An actual 74-frame/2.43s audio-free native recording captured open/close/reopen;
+observed readiness0.490/0.195/0.484s is not a percentile or global-FPS guarantee.
+
+Fresh finite post-activation observers run as
+`den-audit-final-20261128-deffb11b.service` on both hosts. Existing observations
+were not stopped or erased; their deliberate process boundary makes them
+insufficient for 24h-continuous claims about the new mains. Never poll observers
+or close #2/#3/#6 from a short sample. Physical input remains unavailable to the
+current Wayland harness; no actual pointer/gameplay/keyboard-traversal claim.
