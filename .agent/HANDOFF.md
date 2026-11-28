@@ -314,3 +314,24 @@ whose action.yml usesNode24. Standard push/PR triggers only; contentsread,
 persist-credentialsfalse, no unsafe-fork override. Validate in the real hosted
 workflows, not source-wiring assertions. No local runtime restart required.
 
+PR76 merged atbbed4413443c6545abe2e95755833187f7bfb21c. Push/PR workflows both
+passed; all four hosted jobs have zero annotations. Both checkoutsmain match.
+
+#77: native reproduction showed engineering receipts consumed before the card
+could present. Guard now checks allowed actor, card space, guest ownership and
+Den-wide DND before acknowledgement. Four native blocker/recovery/persisted-ID
+cases pass on each host, isolated from actual receipts and physical input.
+Only Companion.qml deployed with CAS/preimages. Existing Loader reload activated
+both without restarting cursor/input, changing focus or clearing user pause.
+Activation used the existing exact-config `ipc --any-display` route. The initial
+test sender omitted DISPLAY/QT_QPA_PLATFORM; copying the full native graphical
+environment also makes filtered IPC work. This was not a proved daemon defect;
+do not restart a healthy cursor renderer to repair an incomplete sender context.
+Private manifest records component activation times; long cohorts were not
+rearmed. Account for that operation when interpreting resource results.
+
+Full intended-source native acceptance for #77:788passed/57subtests/0skip,
+182.17s; bounded independent test service1GiBpeak/0swap. Original WIP excluded;
+the snapshot was exported through a private Git index, not retained tar bytes.
+Do not confuse test-worker memory with a desktop improvement measurement.
+

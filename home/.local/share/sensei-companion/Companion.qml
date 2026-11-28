@@ -174,7 +174,7 @@ Item {
     }
     Timer {interval:2000;repeat:true;running:root.eligible&&root.engineeringEvents.length>0
         onTriggered:{
-            if(!root.engineeringMemoryLoaded||root.notices.dnd||root.preferences.quiet||root.speaking||Date.now()-root.engineeringLastShown<60000)return;
+            if(!root.engineeringMemoryLoaded||!root.allowed||!speechWindow.bubblePlace.available||senseiGuests.active||root.denDnd||root.speaking||Date.now()-root.engineeringLastShown<60000)return;
             const now=Date.now()/1000;
             const event=root.engineeringEvents.filter(e=>now-e.at<120&&now-e.at>=0&&!root.engineeringSeen.includes(e.id)&&["project.launch","job.submitted","job.completed","experiment.completed","hardware.disconnected","hardware.returned","hardware.ambiguous"].includes(e.kind)).sort((a,b)=>(b.data?.repeatFailures||0)-(a.data?.repeatFailures||0)||b.at-a.at)[0];
             if(!event)return;
