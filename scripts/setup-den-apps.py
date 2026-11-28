@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Private one-time application parity through the already pinned operator SSH.
-
-Does not publish data or continuously synchronize refresh tokens. Existing Codex
-credentials are preserved; Claude's cache is copied only when missing. Private
-backups precede changes. Native binaries stay outside the public repository.
-"""
+"""Transfer allowlisted Spotify presentation preferences; sign in natively."""
 import argparse
 import io
 import json
@@ -13,9 +8,10 @@ from pathlib import Path
 import shlex
 import subprocess
 import tarfile
-import time
+import tomllib
 
 HOME=Path.home();SSH=['ssh','-F',str(HOME/'.local/state/homie-control/client.conf'),'homie']
+PREFERENCES={'theme','playback_format','playback_metadata_fields','notify_timeout_in_secs','notify_transient','tracks_playback_limit','page_size_in_rows','play_icon','pause_icon','liked_icon','explicit_icon','border_type','progress_bar_type','progress_bar_position','genre_num','cover_img_length','cover_img_width','cover_img_scale','enable_media_control','enable_audio_visualization','enable_notify','enable_cover_image_cache','notify_streaming_only','seek_duration_secs','sort_artist_albums_by_type','volume_scroll_step','enable_mouse_scroll_volume','pause_on_startup','custom_queue'}
 
 
 def peer(code,data=None):
@@ -23,57 +19,47 @@ def peer(code,data=None):
     return p.stdout
 
 
+def config_payload(home):
+    source=home/'.config/spotify-player/app.toml'
+    if not source.is_file():return {}
+    values=tomllib.loads(source.read_text())
+    safe={key:value for key,value in values.items() if key in PREFERENCES and (isinstance(value,(str,int,float,bool)) or isinstance(value,list) and all(isinstance(item,(str,int,float,bool)) for item in value))}
+    if not safe:return {}
+    data=''.join(f'{key} = {json.dumps(value,ensure_ascii=False)}\n' for key,value in sorted(safe.items()))
+    return {'.config/spotify-player/app.toml':data.encode()}
+
+
+def receiver_code():
+    return '''from pathlib import Path
+import sys,tarfile,io,os,json
+os.umask(0o077);home=Path.home();changed=[];allowed={'.config/spotify-player/app.toml'}
+with tarfile.open(fileobj=io.BytesIO(sys.stdin.buffer.read()),mode='r:gz') as tar:
+ members=tar.getmembers();seen=set()
+ for member in members:
+  rel=Path(member.name)
+  if member.issym() or member.islnk() or not member.isfile() or rel.is_absolute() or '..' in rel.parts or rel.as_posix() not in allowed or rel.as_posix() in seen:raise ValueError('Unexpected configuration archive member')
+  seen.add(rel.as_posix());current=home
+  for part in rel.parts[:-1]:
+   current=current/part
+   if current.is_symlink():raise ValueError('Symlink parent is not allowed')
+ for member in members:
+  rel=Path(member.name);dest=home/rel
+  if dest.exists() or dest.is_symlink():continue
+  dest.parent.mkdir(parents=True,exist_ok=True,mode=0o700);dest.write_bytes(tar.extractfile(member).read());dest.chmod(0o600);changed.append(member.name)
+print(json.dumps({'installedMissingFiles':len(changed),'existingFilesPreserved':True,'credentialsCopied':False,'nativeSignInRequired':True}))
+'''
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--apply',action='store_true');a=p.parse_args()
-    files=['.config/spotify-player/app.toml','.claude/settings.json','.claude/.credentials.json','.codex/AGENTS.md']
-    for n in (HOME/'.cache/spotify-player').glob('*_token.json'):files.append(str(n.relative_to(HOME)))
-    for n in ['.cache/spotify-player/credentials.json']:
-        if (HOME/n).is_file():files.append(n)
-    for root in ['.claude/skills','.codex/skills']:
-        if (HOME/root).is_dir():
-            files.extend(str(x.relative_to(HOME)) for x in (HOME/root).rglob('*') if x.is_file() and not x.is_symlink() and '__pycache__' not in x.parts)
-    files=[n for n in files if (HOME/n).is_file()]
-    if not a.apply:print(json.dumps({'files':len(files),'claudeVersion':'2.1.300','policy':'preserve existing auth; missing files only; distinct music device'}));return
+    config=config_payload(HOME)
+    if not a.apply:
+        print(json.dumps({'files':len(config),'policy':'allowlisted Spotify preferences only; destination files preserved; native sign-in required; no credentials, skills, or approval settings copied'}));return
     stream=io.BytesIO()
     with tarfile.open(fileobj=stream,mode='w:gz') as tar:
-        for n in files:tar.add(HOME/n,arcname=n,recursive=False)
-    code='''from pathlib import Path
-import sys,tarfile,io,os,time,json,shutil
-os.umask(0o077);home=Path.home();backup=home/'.local/state/homie-control/backups'/('apps-'+str(int(time.time())));backup.mkdir(parents=True,exist_ok=True)
-changed=[]
-with tarfile.open(fileobj=io.BytesIO(sys.stdin.buffer.read()),mode='r:gz') as tar:
- for member in tar.getmembers():
-  rel=Path(member.name)
-  if member.islnk() or member.issym() or not member.isfile() or rel.is_absolute() or '..' in rel.parts:raise ValueError('Unsafe archive')
-  dest=home/rel
-  if dest.exists():
-   # A seeded Spotify config without its token is not a working destination account.
-   if member.name=='.config/spotify-player/app.toml':
-    import tomllib
-    try:c=tomllib.loads(dest.read_text());ready=(home/'.cache/spotify-player'/(c.get('client_id','')+'_token.json')).is_file()
-    except (ValueError,OSError):ready=True
-    if ready:continue
-    shutil.copy2(dest,backup/'spotify-before-client-alignment.toml')
-   else:continue
-  dest.parent.mkdir(parents=True,exist_ok=True,mode=0o700);dest.write_bytes(tar.extractfile(member).read());dest.chmod(0o600);changed.append(member.name)
-# Device identity must never claim the laptop's name.
-p=home/'.config/spotify-player/app.toml'
-if p.exists():
- import re
- shutil.copy2(p,backup/'spotify-app.toml')
- s=p.read_text();s=re.sub(r'^default_device\\s*=.*$', 'default_device = "Homie · fh1m"',s,flags=re.M)
- s=re.sub(r'(\\[device\\][\\s\\S]*?^name\\s*=).*$',r'\\1 "Homie · fh1m"',s,count=1,flags=re.M)
- p.write_text(s);p.chmod(0o600)
-print(json.dumps({'installedMissingFiles':len(changed),'existingCredentialsPreserved':True}))
-'''
-    print(peer(code,stream.getvalue()).decode().strip())
-    # The CLI's native distribution is installed at its versioned user path.
-    source=HOME/'.local/share/claude/versions/2.1.300'
-    if source.is_file():
-        target='.local/share/claude/versions/2.1.300'
-        peer("from pathlib import Path;p=Path.home()/'.local/share/claude/versions';p.mkdir(parents=True,exist_ok=True)")
-        subprocess.run(['scp','-q','-F',str(HOME/'.local/state/homie-control/client.conf'),str(source),'homie:'+target+'.next'],check=True)
-        peer("from pathlib import Path;h=Path.home();p=h/'.local/share/claude/versions/2.1.300';n=p.with_name(p.name+'.next');n.chmod(0o755);n.replace(p);b=h/'.local/bin/claude';b.parent.mkdir(parents=True,exist_ok=True);b.symlink_to(p) if not b.exists() else None")
+        for name,data in config.items():
+            info=tarfile.TarInfo(name);info.size=len(data);tar.addfile(info,io.BytesIO(data))
+    print(peer(receiver_code(),stream.getvalue()).decode().strip())
 
 
 if __name__=='__main__':

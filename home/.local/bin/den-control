@@ -106,7 +106,9 @@ def start():
 def local_action(action):
     if action == 'ping':
         # Liveness must not recursively query the caller or launch systemctl.
-        return {'host':socket.gethostname().split('.')[0],'protocol':1}
+        connection = os.environ.get('SSH_CONNECTION', '').split()
+        return {'host':socket.gethostname().split('.')[0],'protocol':1,
+                'serverAddress':connection[2] if len(connection)==4 else None}
     if action == 'status' or action == 'check':
         return status()
     if action in ('toggle', 'start', 'stop', 'home'):
@@ -126,7 +128,7 @@ def local_action(action):
             result = run(['systemctl', '--user', 'start', 'den-storage'])
             if result.returncode or not os.path.ismount(path):
                 raise RuntimeError('Home storage is unavailable; existing files are preserved.')
-        subprocess.Popen(['xdg-open', str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.Popen([str(Path.home()/'.local/bin/sensei-app-run'), '--', 'xdg-open', str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {'ok': True}
     raise ValueError('Unsupported Den action')
 
@@ -137,7 +139,7 @@ def dispatch(action):
     if master():
         return local_action(action)
     if action == 'storage':
-        subprocess.Popen(['xdg-open', str(Path.home()/'Drives')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.Popen([str(Path.home()/'.local/bin/sensei-app-run'), '--', 'xdg-open', str(Path.home()/'Drives')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {'ok': True}
     result = run(['ssh', '-n', '-F', str(ROOT/'master-client.conf'), 'arete-den-control', 'den-control', action], timeout=12)
     if result.returncode:

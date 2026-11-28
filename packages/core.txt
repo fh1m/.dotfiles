@@ -32,6 +32,7 @@ python-pillow
 python-gobject
 python-dbus
 python-pyudev
+python-tomlkit
 fontconfig
 noto-fonts
 noto-fonts-cjk
@@ -47,10 +48,12 @@ bat
 jq
 git
 curl
+socat
 ffmpeg
 mpv
 libnotify
 gnome-keyring
+gnome-themes-extra
 libsecret
 base-devel
 rust
@@ -58,6 +61,9 @@ json-c
 openssl
 libpulse
 dbus
+
+# Account-aware Codex quota adapters use the native Bun runtime, not a daemon.
+bun
 
 # Used by the workstation scripts; installed on the reference machine.
 lsd

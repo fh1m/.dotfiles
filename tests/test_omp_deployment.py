@@ -18,13 +18,34 @@ class DeploymentTests(unittest.TestCase):
             manifest=Path(result['manifest'])
             self.assertEqual(deploy.install(home,apply=True)['changed'],[])
             target.write_text('new user work after deployment\n')
-            with self.assertRaises(ValueError):deploy.rollback(manifest,apply=True)
+            with self.assertRaises(ValueError):deploy.rollback(manifest,apply=True,expected_home=home)
             self.assertEqual(target.read_text(),'new user work after deployment\n')
             installed=(ROOT/'home/.local/bin/omp-work').read_text().replace('@HOME@',str(home)).replace('/home/fh1m',str(home))
             target.write_text(installed)
-            deploy.rollback(manifest,apply=True)
+            deploy.rollback(manifest,apply=True,expected_home=home)
             self.assertEqual(target.read_text(),'previous user launcher\n')
             self.assertEqual(target.stat().st_mode&0o777,0o700)
             self.assertFalse((home/'.local/share/omp-den/work.py').exists())
+
+    def test_rollback_recovers_interrupted_install_with_targets_already_at_preimage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home=Path(tmp);target=home/'.local/bin/omp-work';target.parent.mkdir(parents=True);target.write_text('old launcher\n')
+            result=deploy.install(home,apply=True);manifest=Path(result['manifest'])
+            old=manifest.parent/'files/.local/bin/omp-work'
+            target.write_bytes(old.read_bytes());target.chmod(old.stat().st_mode&0o777)
+            deploy.rollback(manifest,apply=True,expected_home=home)
+            self.assertEqual(target.read_text(),'old launcher\n')
+            self.assertFalse((home/'.local/bin/omp-unified').exists())
+
+    def test_rollback_rejects_malformed_manifest_before_any_restore(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home=Path(tmp);result=deploy.install(home,apply=True);manifest=Path(result['manifest'])
+            original=json.loads(manifest.read_text());target=home/'.local/bin/omp-work';installed=target.read_bytes()
+            with self.assertRaises(ValueError):deploy.rollback(manifest,apply=True,expected_home=home.parent)
+            malicious=dict(original);malicious['entries']=[*original['entries'],{'path':'../outside','before':False,'sha256':'0'*64}]
+            manifest.write_text(json.dumps(malicious))
+            with self.assertRaises(ValueError):deploy.rollback(manifest,apply=True,expected_home=home)
+            self.assertEqual(target.read_bytes(),installed)
+            self.assertFalse((home.parent/'outside').exists())
 
 if __name__=='__main__':unittest.main()

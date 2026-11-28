@@ -30,7 +30,7 @@ Column {
  Process {id:tool;stdout:StdioCollector {onStreamFinished:{try{root.diagnosticText=root.present(JSON.parse(text));}catch(e){root.diagnosticText='The diagnostic returned an unreadable response; no action was repeated.';}}}}
  Flow {width:parent.width;spacing:8
   ControlTile {label:"Routes / sockets";enabled:!worker.running;onActivated:root.request(["run","network.inspect"],"inventory")}
-  ControlTile {label:"Gateway admin";glyph:"\uf013";enabled:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(root.gateway);onActivated:Quickshell.execDetached(["xdg-open","http://"+root.gateway+"/"])}
+  ControlTile {label:"Gateway admin";glyph:"\uf013";enabled:/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(root.gateway);onActivated:AppLaunch.run(["xdg-open","http://"+root.gateway+"/"])}
   ControlTile {label:"Discover LAN…";enabled:!worker.running&&interfaces.currentIndex>=0;onActivated:root.action("network.discover",{interface:interfaces.model[interfaces.currentIndex].ifname})}
  }
  Repeater {model:root.snapshot.neighbors

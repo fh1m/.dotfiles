@@ -12,11 +12,15 @@ class CompanionPolicy(unittest.TestCase):
     def js(self, expression):
         code="const vm=require('vm'),fs=require('fs');let c={};vm.createContext(c);vm.runInContext(fs.readFileSync(process.argv[1],'utf8'),c);c.notes=JSON.parse(fs.readFileSync(process.argv[1].replace('ZondoLogic.js','notes.json'),'utf8'));console.log(JSON.stringify(vm.runInContext(process.argv[2],c)));"
         return json.loads(subprocess.check_output(['node','-e',code,str(JS),expression],text=True))
-    def test_singing_only_uses_fresh_playing_short_nonrepeated_lyrics(self):
-        self.assertEqual(self.js("singLine({playing:true,at:1000,line:'one two three four five six seven eight nine'},2000,'',.1)"), 'one two three four five six seven eight nine')
-        for receipt, now, last, random in [({'playing':False,'at':1000,'line':'hello'},2000,'',.1), ({'playing':True,'at':1000,'line':'hello'},32000,'',.1), ({'playing':True,'at':3000,'line':'hello'},2000,'',.1), ({'playing':True,'at':1000,'line':'hello'},2000,'hello',.1), ({'playing':True,'at':1000,'line':'hello'},2000,'',.8)]:
+    def test_singing_uses_fresh_current_lyric_not_playback_heartbeat(self):
+        self.assertEqual(self.js("singLine({playing:true,at:1000,until:5000,line:'one two three four five six seven eight nine'},2000,'',.1)"), 'one two three four five six seven eight nine')
+        for receipt, now, last, random in [({'playing':False,'at':1000,'until':5000,'line':'hello'},2000,'',.1), ({'playing':True,'at':1000,'until':5000,'line':'hello'},32000,'',.1), ({'playing':True,'at':3000,'until':5000,'line':'hello'},2000,'',.1), ({'playing':True,'at':1000,'until':5000,'line':'hello'},2000,'hello',.1), ({'playing':True,'at':1000,'until':5000,'line':'hello'},2000,'',.8)]:
             self.assertEqual(self.js(f'singLine({json.dumps(receipt)},{now},{json.dumps(last)},{random})'), '')
-    def test_expired_current_line_cannot_be_sung_from_a_recent_receipt(self):
+    def test_playback_remains_true_after_lyric_expiry_but_stale_or_paused_receipts_do_not(self):
+        self.assertTrue(self.js("receiptFresh({playing:true,at:1000,until:1500,line:'hello'},1600)"))
+        for receipt, now in [({'playing':False,'at':1000,'until':9000,'line':'hello'},2000), ({'playing':True,'at':1000,'until':9000,'line':'hello'},32001), ({'playing':True,'at':3000,'until':9000,'line':'hello'},2000)]:
+            self.assertFalse(self.js(f'receiptFresh({json.dumps(receipt)},{now})'))
+    def test_expired_current_line_cannot_be_sung_from_a_fresh_playback_receipt(self):
         self.assertEqual(self.js("singLine({playing:true,at:1000,until:1500,line:'hello'},1600,'',0)"), '')
         self.assertEqual(self.js("singLine({playing:true,at:1000,until:2500,line:'hello'},1600,'',0)"), 'hello')
     def test_notification_content_is_not_repeated_or_prefixed_by_app(self):

@@ -4,6 +4,9 @@ ConditionPathExists=/etc/sensei-den/peer.json
 
 [Service]
 Type=oneshot
+RuntimeDirectory=sensei-den
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
 ExecStart=/usr/bin/python3 /usr/local/libexec/den-peer-firewall.py --apply
 TimeoutStartSec=25
 PrivateTmp=true

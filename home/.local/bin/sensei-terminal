@@ -2,6 +2,7 @@
 """Launch the daily Alacritty terminal, preserving the common terminal caller CLI."""
 import os
 import sys
+from pathlib import Path
 
 args = sys.argv[1:]
 out = []
@@ -41,4 +42,13 @@ if not explicit_command:
 # A new terminal is outside its launcher's tmux client, even from a pane.
 os.environ.pop('TMUX',None)
 os.environ.pop('TMUX_PANE',None)
-os.execvp('alacritty', ['alacritty', *out])
+cwd=''
+for index,arg in enumerate(out[:-1]):
+    if arg=='--working-directory':
+        cwd=out[index+1]
+        break
+command=[str(Path.home()/'.local/bin/sensei-app-run')]
+if cwd:
+    command.extend(['--cwd',cwd])
+command.extend(['--','alacritty',*out])
+os.execv(command[0],command)

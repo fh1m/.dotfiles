@@ -40,7 +40,6 @@ tooltip { border-radius: 6px; }
 @define-color popover_bg_color #000000;
 @define-color headerbar_backdrop_color #000000;
 @define-color headerbar_shade_color transparent;
-:root { --sidebar-bg-color:#000000; --sidebar-backdrop-color:#000000; --secondary-sidebar-bg-color:#000000; --card-bg-color:#000000; --popover-bg-color:#000000; --headerbar-backdrop-color:#000000; --headerbar-shade-color:transparent; --shade-color:transparent; }
 .navigation-sidebar, .sidebar, .background, .view, toolbarview, .top-bar, .bottom-bar,
 headerbar, headerbar:backdrop, .toolbar, .toolbar:backdrop, tabbar, .path-bar, .location-bar,
 .nautilus-window .top-bar, .nautilus-window .view, popover > contents {

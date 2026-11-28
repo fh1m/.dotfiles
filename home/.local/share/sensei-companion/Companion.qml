@@ -41,15 +41,24 @@ Item {
     property string activity: "read"
     property var lyricReceipt:({})
     property string lastSungLine:''
-    FileView {path:Quickshell.env('HOME')+'/.local/state/sensei-den/zondo-music.json';watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.lyricReceipt=JSON.parse(text());}catch(e){root.lyricReceipt=({});}}}
     property real lastSingAt:0
-    readonly property var currentLyric:leased&&journey.musicLine?.at>Number(lyricReceipt.at||0)?journey.musicLine:lyricReceipt
+    FileView {path:Quickshell.env('HOME')+'/.local/state/sensei-den/zondo-music.json';watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.lyricReceipt=JSON.parse(text());}catch(e){root.lyricReceipt=({});}}}
+    property real musicClock:Date.now()
+    readonly property var currentLyric:{
+        const local=Logic.receiptFresh(lyricReceipt,musicClock)?lyricReceipt:null;
+        const remote=leased&&Logic.receiptFresh(journey.musicLine,musicClock)?journey.musicLine:null;
+        return remote&&(!local||Number(remote.at)>Number(local.at))?remote:local||({});
+    }
     onCurrentLyricChanged:{
         if(speaking&&messageKind==='singing along'){
             const fresh=Logic.singLine(currentLyric,Date.now(),'',0);
             if(fresh){message='♪ '+fresh;lastLyricAt=Date.now();}else message='♪';
         }else maybeSing();
     }
+    Timer {interval:1000;repeat:true;running:root.preferences.enabled!==false;onTriggered:root.musicClock=Date.now()}
+    readonly property bool musicPlaying:Logic.receiptFresh(currentLyric,musicClock)
+    readonly property bool denMusic:musicPlaying||(leased&&journey.musicPlaying===true)
+    onDenMusicChanged:{if(denMusic){activity="dance";frame=0;poseExpiry.stop();}else vary()}
     function maybeSing():void {
         if(senseiGuests.active||!allowed||!speechWindow.bubblePlace.available||!denMusic||denDnd||speaking||preferences.chatter===false||Date.now()-lastSingAt<120000)return;
         const line=Logic.singLine(currentLyric,Date.now(),lastSungLine,0);
@@ -58,9 +67,6 @@ Item {
     // Follows actual lyric transitions; a bounded fallback survives output changes.
     Timer {interval:15000;repeat:true;running:root.preferences.chatter!==false&&root.preferences.enabled!==false;onTriggered:root.maybeSing()}
     Timer {interval:250;repeat:true;running:root.speaking&&root.messageKind==='singing along';onTriggered:{const line=Logic.singLine(root.currentLyric,Date.now(),'',0);if(line){root.lastLyricAt=Date.now();root.message='♪ '+line;}else root.message='♪';if(!Logic.singingContinues(root.denMusic,root.denDnd,Date.now(),root.singEndAt,root.lastLyricAt))root.speaking=false;}}
-    property bool musicPlaying:false
-    readonly property bool denMusic:musicPlaying||(leased&&journey.musicPlaying===true)
-    onDenMusicChanged:{if(denMusic){activity="dance";frame=0;poseExpiry.stop();}else vary();}
     property var telemetry:({})
     property string lastDeskWarning:""
     property var personal:[]
@@ -231,8 +237,8 @@ Item {
         if(!Logic.canTravel(old,placement,pet.width,pet.height,occupied)){deliberateTravel=false;return;}
         walkingRight=placement.x>old.x;activity=placement.scene?"climb":placement.y!==old.y?"plane":"walk";frame=0;poseExpiry.restart();
     }
-    onTargetChanged:{publish();deliberateTravel=false;placement={available:false,x:18,y:56};landing=false;refresh();arrivalHello.restart();}
-    onEligibleChanged:{publish();if(eligible)refresh()}
+    onTargetChanged:{speaking=false;publish();deliberateTravel=false;placement={available:false,x:18,y:56};landing=false;refresh();arrivalHello.restart();}
+    onEligibleChanged:{if(!eligible)speaking=false;publish();if(eligible)refresh()}
     Timer {interval:1000;repeat:true;running:root.managed;onTriggered:root.journeyClock=Date.now()/1000}
     FileView {path:Quickshell.env("HOME")+"/.local/state/sensei-den/companion-travel.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.journey=JSON.parse(text());root.engineeringSeen=Array.from(new Set(root.engineeringSeen.concat(root.journey.engineeringAcks||[]))).slice(-128);root.journeyClock=Date.now()/1000;}catch(e){}}}
     FileView {path:Quickshell.env("HOME")+"/.config/sensei-den/zondo-personal.json";watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{root.personal=JSON.parse(text()).notes||[];}catch(e){}}}
@@ -300,8 +306,8 @@ Item {
 
 
     Timer {interval:Math.max(15000,Math.min(120000,(root.preferences.activitySeconds??27)*1000));repeat:true;running:root.eligible&&!root.reduced&&!root.speaking;onTriggered:root.vary()}
-    Process {id:deskSample;command:[Quickshell.env("HOME")+"/.local/bin/sensei-zondo-context"];stdout:StdioCollector {onStreamFinished:{try{const x=JSON.parse(text);root.telemetry=x;const changed=root.musicPlaying!==x.playing;root.musicPlaying=x.playing;if(changed)root.vary();if(!x.warning)root.lastDeskWarning="";if(x.warning&&root.eligible&&!root.denDnd&&!root.speaking&&x.warning!==root.lastDeskWarning){root.lastDeskWarning=x.warning;root.say(x.warning,"measured, not guessed");}}catch(e){}}}}
-    Timer {interval:20000;repeat:true;running:root.preferences.enabled!==false;triggeredOnStart:true;onTriggered:if(!deskSample.running)deskSample.running=true}
+    Process {id:deskSample;command:[Quickshell.env("HOME")+"/.local/bin/sensei-zondo-context"];stdout:StdioCollector {onStreamFinished:{try{const x=JSON.parse(text);root.telemetry=x;if(!x.warning)root.lastDeskWarning="";if(x.warning&&root.eligible&&!root.denDnd&&!root.speaking&&x.warning!==root.lastDeskWarning){root.lastDeskWarning=x.warning;root.say(x.warning,"measured, not guessed");}}catch(e){}}}}
+    Timer {interval:20000;repeat:true;running:root.eligible&&!root.denDnd;triggeredOnStart:true;onTriggered:if(!deskSample.running)deskSample.running=true}
     Timer {interval:24000;repeat:true;running:root.allowed&&!root.reduced&&!root.speaking;onTriggered:root.walk()}
     Timer {interval:18000;repeat:true;running:root.allowed&&!root.reduced&&root.activity==="typing";onTriggered:{root.typingBurst=true;burstExpiry.restart();}}
     Timer {id:burstExpiry;interval:1320;onTriggered:{root.typingBurst=false;if(root.activity==="typing")root.frame=0;}}
@@ -410,8 +416,8 @@ Item {
     Timer {id:welcomeExpiry;interval:4200;onTriggered:welcomeFadeOut.restart()}
     PanelWindow {
         id:arrival
-        screen:Quickshell.screens.find(s=>s.name===(root.presence.host==="homie"?root.preferences.output:"eDP-1"))??Quickshell.screens[0]
-        visible:root.welcoming
+        screen:Quickshell.screens.find(s=>s.name===root.target)??Quickshell.screens[0]
+        visible:root.welcoming&&root.eligible
         anchors {left:true;right:true;top:true;bottom:true}
         color:"transparent"
         exclusionMode:ExclusionMode.Ignore

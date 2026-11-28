@@ -1,0 +1,14 @@
+[Unit]
+Description=Digital Den desktop shell supervisor
+PartOf=graphical-session.target
+
+[Service]
+Type=exec
+Environment=SENSEI_SHELL_SERVICE=1
+ExecStart=%h/.local/bin/sensei-shell
+Restart=on-failure
+RestartSec=2
+KillMode=control-group
+TimeoutStopSec=10
+
+# Started by Hyprland's existing sensei-shell entrypoint, not before a display.

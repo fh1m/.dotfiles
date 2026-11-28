@@ -29,6 +29,22 @@ class ProjectHandoff(unittest.TestCase):
             self.assertFalse(m.seed_repository(handoff,mirror)['seeded'])
             self.assertEqual((target/'control.py').read_text(),'gain = 3 # independent work\n')
 
+    def test_production_handoff_seeds_staged_state_but_not_unstaged_work(self):
+        with tempfile.TemporaryDirectory() as directory:
+            d=Path(directory);source=d/'source';source.mkdir();handoff=d/'handoff';handoff.mkdir();mirror=d/'mirror'
+            def git(*args):return subprocess.check_output(['git','-C',str(source),*args],stderr=subprocess.DEVNULL)
+            git('init','-q','-b','main');git('config','user.name','Den fixture');git('config','user.email','fixture@example.invalid')
+            (source/'control.py').write_text('baseline\n');git('add','.');git('commit','-qm','base')
+            (source/'control.py').write_text('staged sentinel\n');git('add','control.py')
+            (source/'control.py').write_text('unstaged sentinel\n')
+            m.build_handoff(source,handoff,'robot')
+            self.assertFalse((handoff/'working.patch').exists())
+            self.assertEqual((source/'control.py').read_text(),'unstaged sentinel\n')
+            target=mirror/'robot';target.mkdir(parents=True);(target/'control.py').write_text('Syncthing-owned working sentinel\n')
+            self.assertTrue(m.seed_repository(handoff,mirror)['seeded'])
+            self.assertEqual(subprocess.check_output(['git','-C',str(target),'show',':control.py']),b'staged sentinel\n')
+            self.assertEqual((target/'control.py').read_text(),'Syncthing-owned working sentinel\n')
+
     def test_path_escape_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             d=Path(directory);(d/'record.json').write_text(json.dumps({'relative':'../escape'}))

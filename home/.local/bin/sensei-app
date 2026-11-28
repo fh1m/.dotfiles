@@ -41,9 +41,14 @@ def main():
     result={'action':'pending','app':app}
    else:
     command=new if mode=='new-window' else normal
-    result={'action':'launch','app':app,'command':command}
     if not dry:
-     stamp.touch();subprocess.Popen(command,cwd=request.get('cwd') or str(Path.home()),start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+     stamp.touch()
+     try:
+      subprocess.run([str(Path.home()/'.local/bin/sensei-app-run'),'--cwd',request.get('cwd') or str(Path.home()),'--',*command],check=True,stdout=subprocess.DEVNULL,timeout=15)
+     except BaseException:
+      stamp.unlink(missing_ok=True)
+      raise
+    result={'action':'launch','app':app,'command':command}
   print(json.dumps(result))
 if __name__=='__main__':
  try:main()

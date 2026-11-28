@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Create the wallpaper folders on demand, then open the requested folder in a file manager.
+set -euo pipefail
+(($# == 2)) || { echo 'Usage: sensei-open-folder FOLDER SENSEI-FOLDER' >&2; exit 2; }
+mkdir -p -- "$1" "$2"
+if command -v thunar >/dev/null 2>&1; then
+    exec thunar "$1"
+fi
+exec xdg-open "$1"

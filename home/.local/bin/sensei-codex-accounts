@@ -1,0 +1,649 @@
+#!/usr/bin/env bun
+import { createHash } from "node:crypto";
+import { homedir } from "node:os";
+import path from "node:path";
+import { readProfileUsage } from "../share/sensei/codex_app_server.ts";
+import {
+  cacheUsage,
+  cachedUsageView,
+  claimUsage,
+  generation,
+  getCachedUsage,
+  monitorAccount,
+  readAccountState,
+  recordFailure,
+  registerProfile,
+  removeAccount,
+} from "../share/sensei/codex_account_state.ts";
+
+function emit(value: unknown): void {
+  console.log(JSON.stringify(value));
+}
+
+const home = homedir(),
+  agentDir = process.env.OMP_AGENT_DIR || path.join(home, ".omp/agent"),
+  statePath = path.join(home, ".config/sensei/codex-accounts.json");
+const args = Bun.argv.slice(2),
+  command = args[0],
+  value = (key: string) => {
+    const i = args.indexOf(key);
+    return i < 0 ? undefined : args[i + 1];
+  };
+const hash = (text: string) =>
+  createHash("sha256").update(text).digest("hex").slice(0, 24);
+const executable =
+  process.env.CODEX_EXECUTABLE ||
+  Bun.which("codex") ||
+  path.join(home, ".local/bin/codex");
+const operationAbort = new AbortController(),
+  operationSignal = operationAbort.signal;
+for (const name of ["SIGTERM", "SIGINT"] as const)
+  process.once(name, () => {
+    process.exitCode = 130;
+    operationAbort.abort(new Error("CLI cancelled"));
+  });
+const requestSignal = (timeout: number) =>
+  AbortSignal.any([operationSignal, AbortSignal.timeout(timeout)]);
+async function nativeStorage() {
+  const packageRoot = path.join(
+      home,
+      ".bun/install/global/node_modules/@oh-my-pi/pi-ai",
+    ),
+    metadata = await Bun.file(path.join(packageRoot, "package.json"))
+      .json()
+      .catch(() => null);
+  if (metadata?.version !== "18.16.0")
+    throw Error("Pinned OMP 18.16.0 native APIs unavailable");
+  const [{ discoverAuthStorage }, { openaiCodexUsageProvider }] =
+    await Promise.all([
+      import(path.join(packageRoot, "src/auth-broker/discover.ts")),
+      import(path.join(packageRoot, "src/usage/openai-codex.ts")),
+    ]);
+  return {
+    storage: await discoverAuthStorage({ agentDir }),
+    provider: openaiCodexUsageProvider,
+  };
+}
+function nativeAccounts(storage: any) {
+  return storage.oauth.accounts("openai-codex").map((account: any) => {
+    const identity =
+      account.accountId ||
+      account.email ||
+      `credential:${account.credentialId}`;
+    return {
+      id: hash(
+        `omp\0${account.credentialId}\0${identity}\0${account.orgId || ""}`,
+      ),
+      identity,
+      source: "omp",
+      credentialId: account.credentialId,
+      name:
+        account.email ||
+        account.accountId ||
+        `Codex account ${account.position + 1}`,
+      email: account.email,
+      accountId: account.accountId,
+      orgId: account.orgId,
+    };
+  });
+}
+function expired(measurement: Record<string, unknown>, now: number) {
+  const windows = measurement.rateLimits;
+  if (!windows || typeof windows !== "object") return false;
+  return Object.values(windows).some((window) => {
+    if (!window || typeof window !== "object" || !("resetsAt" in window))
+      return false;
+    const reset = window.resetsAt,
+      epoch =
+        typeof reset === "number"
+          ? reset > 1e12
+            ? reset / 1000
+            : reset
+          : typeof reset === "string"
+            ? Date.parse(reset) / 1000
+            : NaN;
+    return Number.isFinite(epoch) && epoch <= now;
+  });
+}
+async function discoverProfiles(signal: AbortSignal) {
+  const state = await readAccountState(statePath),
+    paths = new Map<
+      string,
+      { identity?: string; email?: string; name: string }
+    >();
+  for (const item of Object.values(state.profiles))
+    paths.set(item.profileDir, {
+      identity: item.identity,
+      email: item.email,
+      name: item.name,
+    });
+  const defaultDir = path.join(home, ".codex");
+  if (
+    (await Bun.file(path.join(defaultDir, "auth.json")).exists()) &&
+    !paths.has(defaultDir)
+  )
+    paths.set(defaultDir, { name: "Default Codex" });
+  const results = [];
+  for (const [profileDir, saved] of paths) {
+    if (!(await Bun.file(path.join(profileDir, "auth.json")).exists())) {
+      if (saved.identity) {
+        const id = hash(`profile\0${profileDir}\0${saved.identity}`);
+        results.push({
+          id,
+          profileDir,
+          identity: saved.identity,
+          email: saved.email,
+          name: saved.name,
+          unavailable: true,
+        });
+      }
+      continue;
+    }
+    try {
+      const report = await readProfileUsage({
+        executable,
+        profileDir,
+        expectedIdentity: saved.identity,
+        identityOnly: true,
+        timeoutMs: 5000,
+        signal,
+      });
+      const id = hash(`profile\0${profileDir}\0${report.identity}`);
+      const item = {
+        id,
+        profileDir,
+        identity: report.identity,
+        email: report.account.email,
+        name: saved.name,
+      };
+      signal.throwIfAborted();
+      await registerProfile(statePath, { ...item, name: item.name }, signal);
+      results.push(item);
+    } catch (error) {
+      if (signal.aborted) throw error;
+      if (saved.identity) {
+        try {
+          const current = await readProfileUsage({
+            executable,
+            profileDir,
+            identityOnly: true,
+            timeoutMs: 5000,
+            signal,
+          });
+          if (current.identity !== saved.identity) {
+            const currentId = hash(
+                `profile\0${profileDir}\0${current.identity}`,
+              ),
+              currentProfile = {
+                id: currentId,
+                profileDir,
+                identity: current.identity,
+                email: current.account.email,
+                name: saved.name,
+              };
+            await registerProfile(
+              statePath,
+              { ...currentProfile, name: currentProfile.name },
+              signal,
+            );
+            results.push(currentProfile);
+          }
+        } catch (error) {
+          if (signal.aborted) throw error;
+        }
+        const oldId = hash(`profile\0${profileDir}\0${saved.identity}`);
+        results.push({
+          id: oldId,
+          profileDir,
+          identity: saved.identity,
+          email: saved.email,
+          name: saved.name,
+          unavailable: true,
+        });
+      }
+    }
+  }
+  return results;
+}
+async function main() {
+  if (!["list", "usage", "add", "remove"].includes(command)) {
+    emit({
+      error:
+        "Usage: sensei-codex-accounts list|usage|add|remove [--account ID] [--profile DIR --name NAME] [--refresh]",
+    });
+    process.exitCode = 2;
+    return;
+  }
+  if (command === "remove") {
+    const id = value("--account");
+    if (!id) throw Error("remove requires --account ID");
+    await removeAccount(statePath, id);
+    emit({ ok: true, accountId: id });
+    return;
+  }
+  if (command === "add" && value("--profile")) {
+    const profileDir = path.resolve(value("--profile")!);
+    if (!(await Bun.file(path.join(profileDir, "auth.json")).exists()))
+      throw Error("Profile has no existing Codex auth.json");
+    const info = await readProfileUsage({
+        executable,
+        profileDir,
+        identityOnly: true,
+        signal: operationSignal,
+      }),
+      id = hash(`profile\0${profileDir}\0${info.identity}`),
+      name = value("--name") || path.basename(profileDir);
+    operationSignal.throwIfAborted();
+    await registerProfile(
+      statePath,
+      {
+        id,
+        profileDir,
+        identity: info.identity,
+        email: info.account.email,
+        name,
+      },
+      operationSignal,
+    );
+    await monitorAccount(
+      statePath,
+      id,
+      { source: "profile", identity: info.identity, name },
+      operationSignal,
+    );
+    operationSignal.throwIfAborted();
+    emit({ ok: true, accountId: id });
+    return;
+  }
+  if (command === "list") {
+    let native: ReturnType<typeof nativeAccounts> = [],
+      warning: unknown;
+    try {
+      const { storage } = await nativeStorage();
+      try {
+        native = nativeAccounts(storage);
+      } finally {
+        storage.close();
+      }
+    } catch {
+      warning = {
+        source: "omp",
+        error: "Native OMP account storage unavailable",
+      };
+    }
+    const profiles = await discoverProfiles(operationSignal);
+    operationSignal.throwIfAborted();
+    const state = await readAccountState(statePath);
+    const accounts = [
+      ...native,
+      ...profiles.map((p) => ({ ...p, source: "profile" })),
+    ].map((account) => {
+      const monitored = state.monitored[account.id],
+        snapshot = cachedUsageView(
+          state.cache[account.id],
+          account.source,
+          account.identity,
+        );
+      return {
+        id: account.id,
+        name: account.name,
+        source: account.source,
+        identity: account.identity,
+        email: account.email,
+        scopeLabel:
+          "orgId" in account && account.orgId
+            ? "Organization …" + String(account.orgId).slice(-6)
+            : "accountId" in account && account.accountId
+              ? "Account …" + String(account.accountId).slice(-6)
+              : "",
+        ...("unavailable" in account
+          ? { unavailable: account.unavailable }
+          : {}),
+        monitored:
+          monitored?.source === account.source &&
+          monitored.identity === account.identity,
+        ...(snapshot?.measurement
+          ? {
+              snapshot: {
+                ...snapshot.measurement,
+                accountId: account.id,
+                stale: snapshot.stale,
+                ...(snapshot.expired ? { state: "expired" } : {}),
+                ...(snapshot.error ? { error: snapshot.error } : {}),
+              },
+            }
+          : {}),
+      };
+    });
+    operationSignal.throwIfAborted();
+    emit({
+      accounts,
+      fetchedAt: Date.now() / 1000,
+      ...(warning ? { warnings: [warning] } : {}),
+    });
+    return;
+  }
+  if (command === "add") {
+    const id = value("--account");
+    if (!id) throw Error("add requires --account ID or --profile DIR");
+    const state = await readAccountState(statePath),
+      profile = state.profiles[id];
+    if (profile) {
+      await monitorAccount(
+        statePath,
+        id,
+        { source: "profile", identity: profile.identity, name: profile.name },
+        operationSignal,
+      );
+      operationSignal.throwIfAborted();
+      emit({ ok: true, accountId: id });
+      return;
+    }
+    const { storage } = await nativeStorage();
+    try {
+      const account = nativeAccounts(storage).find(
+        (candidate) => candidate.id === id,
+      );
+      if (!account) throw Error("Account not discovered");
+      operationSignal.throwIfAborted();
+      await monitorAccount(
+        statePath,
+        id,
+        { source: "omp", identity: account.identity, name: account.name },
+        operationSignal,
+      );
+      operationSignal.throwIfAborted();
+      emit({ ok: true, accountId: id });
+    } finally {
+      storage.close();
+    }
+    return;
+  }
+  const id = value("--account");
+  if (!id) throw Error("usage requires --account ID");
+  const state = await readAccountState(statePath),
+    profile = state.profiles[id],
+    monitor = state.monitored[id];
+  if (
+    profile &&
+    monitor?.source === "profile" &&
+    monitor.identity === profile.identity
+  ) {
+    await usage(id, "profile", profile.identity, async () => {
+      if (
+        !(await Bun.file(path.join(profile.profileDir, "auth.json")).exists())
+      )
+        throw Error("Profile unavailable");
+      const report = await readProfileUsage({
+        executable,
+        profileDir: profile.profileDir,
+        expectedIdentity: profile.identity,
+        signal: requestSignal(15000),
+      });
+      return {
+        account: report.account,
+        rateLimits: report.rateLimits,
+        limits: report.limits,
+        fetchedAt: report.fetchedAt,
+        measurementAt: report.measurementAt,
+        source: report.source,
+        state: "available",
+      };
+    });
+    return;
+  }
+  const { storage, provider } = await nativeStorage();
+  try {
+    const account = nativeAccounts(storage).find(
+      (candidate) => candidate.id === id,
+    );
+    if (
+      !account ||
+      monitor?.source !== "omp" ||
+      monitor.identity !== account.identity
+    )
+      throw Error("Account is not monitored or its identity changed");
+    if (!storage.usage.providerFor("openai-codex"))
+      throw Error("Native Codex usage provider unavailable");
+    await usage(id, "omp", account.identity, async () => {
+      const resolution = await storage.oauth.accessById(
+        "openai-codex",
+        account.credentialId,
+        { signal: requestSignal(10000) },
+      );
+      if (!resolution?.ok) throw Error("Native OAuth account unavailable");
+      const identityMatches = account.accountId
+        ? resolution.accountId === account.accountId
+        : account.email
+          ? resolution.email === account.email
+          : false;
+      if (
+        !identityMatches ||
+        (account.orgId && resolution.orgId !== account.orgId)
+      )
+        throw Error("Native OAuth account identity changed");
+      const report = await provider.fetchUsage(
+        {
+          provider: "openai-codex",
+          credential: {
+            type: "oauth",
+            accessToken: resolution.accessToken,
+            accountId: resolution.accountId,
+            email: resolution.email,
+          },
+          signal: requestSignal(10000),
+        },
+        { fetch },
+      );
+      if (!report)
+        throw Error("Native Codex usage provider returned no report");
+      const limits: Record<string, unknown> = {};
+      for (const limit of report.limits) {
+        const key =
+            limit.id === "openai-codex:primary"
+              ? "primary"
+              : limit.id === "openai-codex:secondary"
+                ? "secondary"
+                : limit.id,
+          used =
+            limit.amount.usedFraction ??
+            (limit.amount.remainingFraction === undefined
+              ? undefined
+              : 1 - limit.amount.remainingFraction),
+          reset = limit.window?.resetsAt;
+        limits[key] = {
+          ...(used === undefined
+            ? {}
+            : { percent: used * 100, usedPercent: used * 100 }),
+          ...(limit.amount.remainingFraction === undefined
+            ? {}
+            : { remainingPercent: limit.amount.remainingFraction * 100 }),
+          ...(reset === undefined
+            ? {}
+            : { resetsAt: new Date(reset).toISOString() }),
+          ...(limit.window?.durationMs === undefined
+            ? {}
+            : { windowMinutes: limit.window.durationMs / 60000 }),
+        };
+      }
+      const fetchedAt = report.fetchedAt / 1000;
+      return {
+        account: {
+          type: "oauth",
+          email: resolution.email,
+          planType: report.metadata?.planType,
+        },
+        rateLimits: { primary: limits.primary, secondary: limits.secondary },
+        limits,
+        fetchedAt,
+        measurementAt: fetchedAt,
+        source: "OMP 18.16.0 native read-only usage provider",
+        state: "available",
+      };
+    });
+  } finally {
+    storage.close();
+  }
+}
+async function usage(
+  id: string,
+  source: string,
+  identity: string,
+  fetchMeasurement: () => Promise<Record<string, unknown>>,
+) {
+  const current = (await readAccountState(statePath)).monitored[id];
+  operationSignal.throwIfAborted();
+  if (!current || current.source !== source || current.identity !== identity)
+    throw Error("Account is not monitored");
+  const started = await generation(statePath, id),
+    now = Date.now() / 1000,
+    refresh = args.includes("--refresh"),
+    cached = await getCachedUsage(statePath, id, source, identity, now);
+  operationSignal.throwIfAborted();
+  if (
+    !refresh &&
+    cached &&
+    !cached.stale &&
+    cached.measurement &&
+    now - Number(cached.measurement.measurementAt) <= 60
+  ) {
+    emit({ provider: "codex", ...cached.measurement, accountId: id });
+    return;
+  }
+  if (!refresh && cached?.cooldown) {
+    if (cached.measurement)
+      emit({
+        provider: "codex",
+        ...cached.measurement,
+        accountId: id,
+        stale: cached.stale,
+        state: cached.expired ? "expired" : cached.stale ? "stale" : "available",
+        refreshDeferred: true,
+        notice: "Refresh already running or cooling down",
+        error: cached.error,
+      });
+    else
+      emit({
+        provider: "codex",
+        accountId: id,
+        state: "unknown",
+        stale: true,
+        refreshDeferred: true,
+        notice: "Refresh already running or cooling down",
+        error: cached.error,
+      });
+    return;
+  }
+  if (
+    !(await claimUsage(
+      statePath,
+      id,
+      source,
+      identity,
+      started,
+      now,
+      operationSignal,
+    ))
+  ) {
+    operationSignal.throwIfAborted();
+    const latest = await getCachedUsage(statePath, id, source, identity);
+    operationSignal.throwIfAborted();
+    if (latest?.measurement)
+      emit({
+        provider: "codex",
+        ...latest.measurement,
+        accountId: id,
+        stale: latest.stale,
+        state: latest.expired ? "expired" : latest.stale ? "stale" : "available",
+        refreshDeferred: true,
+        notice: "Refresh already running or cooling down",
+        error: latest.error,
+      });
+    else
+      emit({
+        provider: "codex",
+        accountId: id,
+        state: "unknown",
+        stale: true,
+        refreshDeferred: true,
+        notice: "Refresh already running or cooling down",
+        error: latest?.error,
+      });
+    return;
+  }
+  try {
+    const measurement = await fetchMeasurement();
+    operationSignal.throwIfAborted();
+    if (
+      typeof measurement.measurementAt !== "number" ||
+      !Number.isFinite(measurement.measurementAt) ||
+      measurement.measurementAt > Date.now() / 1000 + 30
+    )
+      throw Error("Invalid native measurement timestamp");
+    if (expired(measurement, Date.now() / 1000)) {
+      measurement.state = "expired";
+      measurement.stale = true;
+    }
+    if (
+      !(await cacheUsage(
+        statePath,
+        id,
+        source,
+        identity,
+        started,
+        measurement,
+        Date.now() / 1000,
+        operationSignal,
+      ))
+    ) {
+      emit({
+        provider: "codex",
+        accountId: id,
+        state: "unknown",
+        stale: true,
+        error: "Account monitoring changed during usage request",
+      });
+      return;
+    }
+    operationSignal.throwIfAborted();
+    emit({ provider: "codex", ...measurement, accountId: id });
+  } catch {
+    if (operationSignal.aborted) return;
+    const prior = await recordFailure(
+        statePath,
+        id,
+        source,
+        identity,
+        started,
+        "Usage unavailable",
+        Date.now() / 1000,
+        operationSignal,
+      ),
+      last = await getCachedUsage(statePath, id, source, identity);
+    if (prior?.measurement)
+      emit({
+        provider: "codex",
+        ...prior.measurement,
+        accountId: id,
+        stale: true,
+        state: last?.expired ? "expired" : "stale",
+        error: "Usage unavailable",
+      });
+    else
+      emit({
+        provider: "codex",
+        accountId: id,
+        state: "unknown",
+        stale: true,
+        error: "Usage unavailable",
+      });
+  }
+}
+main().catch((error) => {
+  if (operationSignal.aborted) return;
+  emit({
+    error:
+      error instanceof Error ? error.message : "Codex account operation failed",
+  });
+  process.exitCode = 1;
+});

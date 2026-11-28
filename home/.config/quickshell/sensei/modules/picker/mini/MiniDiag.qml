@@ -46,22 +46,17 @@ ChamferPanel {
             color: root.previewPalette.hair
         }
 
-        // CPU: one bar per thread group, rising from the bottom, and accent
-        // above 70% -- the HUD's own rule, which is why the panel is worth
-        // showing at all.
+        // Actual logical-thread group averages from the existing /proc/stat
+        // sample. Compact grouping changes resolution, never the observations.
         Row {
             spacing: 3
 
             Repeater {
-                model: 8
+                model: SysInfo.threadGroups(8)
 
                 Item {
-                    required property int index
-
-                    // A fixed spread around the live figure, so the bars read
-                    // as a load profile rather than eight copies of one
-                    // number. The average is the real one.
-                    readonly property real value: Math.max(0.04, Math.min(1, SysInfo.cpuPercent / 100 + [0.22, -0.1, 0.05, -0.18, 0.3, -0.05, 0.12, -0.24][index]))
+                    required property real modelData
+                    readonly property real value: Math.max(0,Math.min(1,modelData/100))
 
                     width: 7
                     height: 24

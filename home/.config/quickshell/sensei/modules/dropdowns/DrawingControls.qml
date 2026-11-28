@@ -18,7 +18,7 @@ Column {
    ControlTile {implicitWidth:(parent.width-16)/3;label:"Learning sketch";glyph:"\uf040";onActivated:root.run(["learn"])}
    ControlTile {implicitWidth:(parent.width-16)/3;label:"Typed capture";glyph:"\uf11c";onActivated:root.run(["typed"])}
    ControlTile {implicitWidth:(parent.width-16)/3;label:"Attach to Noesis";detail:"Current saved sheet";glyph:"\uf0c1";onActivated:root.run(["attach"])}
-   ControlTile {implicitWidth:(parent.width-16)/3;label:"Art studio";glyph:"\uf1fc";onActivated:Quickshell.execDetached(["krita"])}
+   ControlTile {implicitWidth:(parent.width-16)/3;label:"Art studio";glyph:"\uf1fc";onActivated:AppLaunch.run(["krita"])}
   }
  }
  WidgetSection {width:parent.width;visible:root.snapshot.connected===true;title:"Tablet mapping";subtitle:root.snapshot.driver?(root.snapshot.mappedOutput+(root.snapshot.fallback?" · Upper absent, using Main":" · Artist Mode")):"Driver unavailable";glyph:"\uf26c"

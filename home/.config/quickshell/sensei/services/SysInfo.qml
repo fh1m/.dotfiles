@@ -60,7 +60,8 @@ Singleton {
             // user nice system idle iowait irq softirq steal ...
             const idle = (nums[3] || 0) + (nums[4] || 0);
             let total = 0;
-            for (const n of nums)
+            // guest and guest_nice are already included in user/nice.
+            for (const n of nums.slice(0,8))
                 total += n || 0;
             rows.push({
                 idle,
@@ -83,6 +84,20 @@ Singleton {
             cpuThreads = usage.slice(1);
         }
         _cpuPrev = rows;
+    }
+    // Equal contiguous groups of measured logical threads for tiny previews.
+    // These are not physical-core/topology claims and never synthesize load.
+    function threadGroups(maximum: int): var {
+        const count=Math.max(0,Math.min(maximum,cpuThreads.length));
+        const groups=[];
+        for(let group=0;group<count;group++){
+            const first=Math.floor(group*cpuThreads.length/count);
+            const last=Math.floor((group+1)*cpuThreads.length/count);
+            let total=0;
+            for(let index=first;index<last;index++)total+=cpuThreads[index];
+            groups.push(total/(last-first));
+        }
+        return groups;
     }
 
     // --- Memory -------------------------------------------------------------
