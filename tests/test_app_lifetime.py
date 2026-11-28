@@ -5,6 +5,7 @@ import tempfile
 import unittest
 import json
 import sys
+import shutil
 import time
 import uuid
 
@@ -87,5 +88,51 @@ Path(sys.argv[3]).touch()
                 self.assertNotEqual(state,'Z','Application was already killed')
             finally:
                 if unit:subprocess.run(['systemctl','--user','stop',unit],capture_output=True,text=True,timeout=10)
+
+    @unittest.skipUnless(os.environ.get('SENSEI_TEST_USER_MANAGER')=='1','Explicit opt-in required for disposable native user units')
+    def test_spotify_client_survives_stopping_its_control_caller(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home=Path(tmp);receipt=home/'spotify-child.json'
+            helper=home/'.local/bin/sensei-app-run'
+            helper.parent.mkdir(parents=True)
+            shutil.copy2(RUNNER,helper)
+            launcher=home/'bin/spotify-launcher'
+            launcher.parent.mkdir()
+            launcher.write_text('#!'+sys.executable+'\n'
+                'import json,os,signal\nfrom pathlib import Path\n'
+                'Path(os.environ["DEN_SPOTIFY_TEST_RECEIPT"]).write_text(json.dumps({'
+                '"pid":os.getpid(),"cgroup":Path("/proc/self/cgroup").read_text()}))\n'
+                'signal.pause()\n')
+            launcher.chmod(0o700)
+            caller='den-spotify-launch-test-'+uuid.uuid4().hex
+            program='import sys;sys.path.insert(0,sys.argv[1]);import spotify_control;spotify_control.main(["launch"])'
+            env=dict(os.environ,HOME=str(home),PATH=str(launcher.parent)+':'+os.environ['PATH'],
+                     DEN_SPOTIFY_TEST_RECEIPT=str(receipt))
+            started=subprocess.run(['systemd-run','--user','--collect','--remain-after-exit',
+                '--expand-environment=no','--setenv=HOME','--setenv=PATH',
+                '--setenv=DEN_SPOTIFY_TEST_RECEIPT','--unit='+caller,sys.executable,
+                '-c',program,str(ROOT/'home/.local/share/sensei')],
+                env=env,capture_output=True,text=True,timeout=10)
+            self.assertEqual(started.returncode,0,started.stderr)
+            try:
+                deadline=time.monotonic()+10
+                while not receipt.exists() and time.monotonic()<deadline:time.sleep(.02)
+                self.assertTrue(receipt.exists(),'The stand-in official client did not start')
+                child=json.loads(receipt.read_text())
+                stopped=subprocess.run(['systemctl','--user','stop',caller],
+                    capture_output=True,text=True,timeout=10)
+                self.assertEqual(stopped.returncode,0,stopped.stderr)
+                try:
+                    state=(Path('/proc')/str(child['pid'])/'stat').read_text().rsplit(') ',1)[1].split()[0]
+                except FileNotFoundError:
+                    state=None
+                self.assertNotIn(state,(None,'Z'),'Stopping Spotify control killed its launched client')
+                self.assertNotIn(caller,child['cgroup'])
+            finally:
+                subprocess.run(['systemctl','--user','stop',caller],capture_output=True,text=True,timeout=10)
+                if receipt.exists():
+                    unit=json.loads(receipt.read_text())['cgroup'].strip().rsplit('/',1)[-1]
+                    if unit.startswith('run-') and unit.endswith('.service'):
+                        subprocess.run(['systemctl','--user','stop',unit],capture_output=True,text=True,timeout=10)
 
 if __name__ == '__main__': unittest.main()
