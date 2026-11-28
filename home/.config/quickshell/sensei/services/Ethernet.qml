@@ -22,6 +22,5 @@ Singleton {
     if(ShellState.systemPage===3)ShellState.systemPage=0;
  }
  Process {id:scan;stdout:StdioCollector {onStreamFinished:{try{const d=JSON.parse(text);if(d.device===root.device)root.details=d;}catch(e){}}}onExited:if(root.device&&command[1]!==root.device)Qt.callLater(root.refresh)}
- Connections {target:ShellState;function onDropdownChanged(){if(ShellState.dropdown==="ethernet")root.refresh();}}
  Timer {interval:10000;repeat:true;running:ShellState.dropdown==="ethernet";onTriggered:root.refresh()}
 }

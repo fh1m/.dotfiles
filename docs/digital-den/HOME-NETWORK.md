@@ -21,6 +21,9 @@ The Ethernet bar button and System → Network appear only while a cabled LAN
 interface reports carrier. The Jetson's USB networking interfaces do not count
 and remain usable. If Ethernet drops while System → Network is open, System
 returns to Quick. The Wi-Fi toggle remains available on Wi-Fi-equipped hosts.
+Opening the Ethernet panel loads its network summary without separately
+refreshing the bar's link details. Those details refresh when the selected
+wired device changes and every ten seconds while the Ethernet panel is open.
 
 ## Verified on Arete and Homie · 22 October 2026
 

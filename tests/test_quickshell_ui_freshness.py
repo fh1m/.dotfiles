@@ -418,6 +418,53 @@ def test_wifi_radio_epoch_exit_code_and_empty_scan_ownership(tmp_path):
 
 
 @pytest.mark.skipif(not HAS_QS, reason="Explicit native Quickshell runtime required")
+def test_ethernet_reopen_does_not_resample_bar_link_details(tmp_path):
+    setup_services(tmp_path, 'Ethernet.qml')
+    helper(tmp_path, 'sensei-ethernet', '''import json, sys, time
+from pathlib import Path
+device = sys.argv[1]
+if device == 'watch':
+    time.sleep(30)
+else:
+    with (Path.home() / 'link-reads').open('a') as log:
+        log.write(device + '\\n')
+    print(json.dumps({'device':device, 'speedMbps':'1000'}))
+''')
+    report = run_native(tmp_path, '''import QtQuick
+import Quickshell
+import qs.services
+ShellRoot {
+    id: root
+    property int step: 0
+    Component.onCompleted: Ethernet.links = [{name:"wired-a"}]
+    Timer { interval: 50; running: true; repeat: true; onTriggered: {
+        if (root.step === 0 && Ethernet.details.device === "wired-a") {
+            ShellState.dropdown = "ethernet"
+            root.step++
+        } else if (root.step === 1) {
+            ShellState.dropdown = ""
+            root.step++
+        } else if (root.step === 2) {
+            ShellState.dropdown = "ethernet"
+            root.step++
+        } else if (root.step === 3) {
+            Ethernet.links = [{name:"wired-b"}]
+            root.step++
+        } else if (root.step === 4 && Ethernet.details.device === "wired-b") {
+            Ethernet.links = []
+            root.step++
+        } else if (root.step === 5 && !Ethernet.connected && ShellState.dropdown === "") {
+            console.log("PROOF_PASS ethernet-carrier-transitions")
+            Qt.quit()
+        }
+    }}
+}
+''')
+    assert 'PROOF_PASS ethernet-carrier-transitions' in report
+    assert (tmp_path / 'link-reads').read_text().splitlines() == ['wired-a', 'wired-b']
+
+
+@pytest.mark.skipif(not HAS_QS, reason="Explicit native Quickshell runtime required")
 def test_cpu_guest_time_is_not_double_counted_and_small_graph_uses_real_groups(tmp_path):
     setup_services(tmp_path, 'SysInfo.qml')
     put(tmp_path, 'config/Machine.qml', 'pragma Singleton\nimport QtQuick\nQtObject {property string netInterface:""}\n')
