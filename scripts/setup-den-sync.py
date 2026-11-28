@@ -57,8 +57,22 @@ def write(path,value):
     p=path.with_suffix('.tmp');p.write_text(json.dumps(value,indent=2));p.chmod(0o600);p.replace(path)
 
 
+def peer_folder_path(folder, registered):
+    """Preserve an explicitly registered placement, including a separate data disk."""
+    paths = [row['path'] for row in registered if row['id'] == folder['id']]
+    if len(paths) > 1:
+        raise ValueError('Duplicate private folder registration; preserved')
+    return paths[0] if paths else str(HOME/'Den/Mirror/arete'/folder['id'])
+
+
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--apply',action='store_true');a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--apply',action='store_true')
+    p.add_argument('--local-floor-gib',type=int,default=20)
+    p.add_argument('--peer-floor-gib',type=int,default=20)
+    a=p.parse_args()
+    if min(a.local_floor_gib,a.peer_floor_gib)<1:
+        p.error('Free-space reserves must be at least 1 GiB')
     folders=[{'label':n,'path':str(HOME/n),'id':'den-'+n.lower()} for n in ['Documents','Pictures','Music','Videos','Downloads','Work'] if (HOME/n).is_dir()]
     # Existing registered vaults are additional folders only when not already inside a shared tree.
     reg=HOME/'.config/obsidian/obsidian.json'
@@ -71,15 +85,17 @@ def main():
         # Ignore disposable showcase vaults and temporary/test homes.
         if path.is_relative_to(HOME/'.local/state') or str(path).startswith('/tmp/'):continue
         folders.append({'label':path.name,'path':str(path),'id':'den-vault-'+hashlib.sha256(str(path).encode()).hexdigest()[:12]})
-    inventory={'folders':folders,'policy':'Broad personal mirror; existing paths preserved; archives and runtime state excluded','floorGiB':80}
+    inventory={'folders':folders,'policy':'Broad personal mirror; existing paths preserved; archives and runtime state excluded','localFloorGiB':a.local_floor_gib,'peerFloorGiB':a.peer_floor_gib}
     if not a.apply:print(json.dumps(inventory,indent=2));return
-    if shutil.disk_usage(HOME).free<80*2**30:raise ValueError('Laptop reserve below 80 GiB')
+    if shutil.disk_usage(HOME).free<a.local_floor_gib*2**30:raise ValueError('Laptop reserve reached')
     peer(['systemctl','--user','enable','--now','syncthing'])
     for _ in range(40):
         try:remote_id=api('GET','system/status',remote=True)['myID'];break
         except (OSError,ValueError,subprocess.CalledProcessError):time.sleep(.5)
     else:raise ValueError('Homie Syncthing did not start')
     local_id=api('GET','system/status')['myID'];cfgs=[api('GET','config'),api('GET','config',remote=True)]
+    peer_settings=json.loads(peer(['python3','-c',"import json;from pathlib import Path;p=Path.home()/'.config/sensei-den/sync.json';print(p.read_text() if p.exists() else '{}')"],text=True).stdout)
+    peer_folders=[dict(f,path=peer_folder_path(f,peer_settings.get('folders',[]))) for f in folders]
     private_address=None
     try:
         tail=json.loads(subprocess.check_output(['tailscale','status','--json']))
@@ -93,26 +109,29 @@ def main():
         addresses=['tcp://homie.local:22000']+(['tcp://'+private_address+':22000'] if private_address else [])
         device.update(name='Homie' if index==0 else 'Arete',addresses=addresses if index==0 else ['dynamic'],autoAcceptFolders=False)
         for f in folders:
-            target=f['path'] if index==0 else str(HOME/'Den/Mirror/arete'/f['id'])
+            target=f['path'] if index==0 else peer_folders[folders.index(f)]['path']
             existing=next((x for x in cfg['folders'] if x['id']==f['id']),None)
             if existing and existing['path']!=target:raise ValueError('Existing folder ID maps elsewhere; preserved')
             if existing is None:existing=dict(cfg['defaults']['folder']);existing.update(id=f['id'],path=target,label=f['label']);cfg['folders'].append(existing)
             ids={d['deviceID'] for d in existing.get('devices',[])}
             existing['devices']=[{'deviceID':d} for d in sorted(ids|{local_id,remote_id})]
             existing.update(type='sendreceive',paused=False,fsWatcherEnabled=True,rescanIntervalS=3600,
-                minDiskFree={'value':80 if index==0 else 60,'unit':'GiB'},ignorePerms=True)
+                minDiskFree={'value':a.local_floor_gib if index==0 else a.peer_floor_gib,'unit':'GiB'},ignorePerms=True)
             existing['versioning']={'type':'staggered','params':{'maxAge':'2592000','cleanInterval':'3600'},'cleanupIntervalS':3600,'fsPath':'','fsType':'basic'}
         # These are private snapshots containing Syncthing configuration/API keys.
         if index==0:write(PRIVATE/('backups/syncthing-'+time.strftime('%Y%m%dT%H%M%S')+'.json'),api('GET','config'))
         else:peer(['python3','-c',"from pathlib import Path;import shutil,datetime;p=Path.home()/'.local/state/syncthing/config.xml';d=Path.home()/'.local/state/homie-control/backups';d.mkdir(parents=True,exist_ok=True);shutil.copy2(p,d/('syncthing-'+datetime.datetime.now().strftime('%Y%m%dT%H%M%S')+'.xml'))"])
         api('PUT','config',cfg,remote=index==1)
-    ignores=['.git','.obsidian/workspace*','.obsidian/cache','node_modules','__pycache__','.venv','venv','.Trash-*','*.tmp','*.crdownload','.DS_Store']
+    # Vendor OS trees contain privileged files and generated disk images, not
+    # personal working notes. Keep them on disk; transfer explicitly when needed.
+    ignores=['.git','.obsidian/workspace*','.obsidian/cache','node_modules','__pycache__','.venv','venv','.Trash-*','*.tmp','*.crdownload','.DS_Store',
+             '**/Linux_for_Tegra/rootfs','**/Linux_for_Tegra/bootloader/system.img','**/Linux_for_Tegra/bootloader/system.img.raw']
     for f in folders:
         for remote in (False,True):
             prior=api('GET','db/ignores?folder='+f['id'],remote=remote).get('ignore') or []
             api('POST','db/ignores?folder='+f['id'],{'ignore':list(dict.fromkeys([*prior,*ignores]))},remote=remote)
-    write(HOME/'.config/sensei-den/sync.json',{'schema':1,'folders':[dict(f,floorGiB=80) for f in folders]})
-    data={'schema':1,'folders':[dict(f,path=str(HOME/'Den/Mirror/arete'/f['id']),floorGiB=60) for f in folders]}
+    write(HOME/'.config/sensei-den/sync.json',{'schema':1,'folders':[dict(f,floorGiB=a.local_floor_gib) for f in folders]})
+    data={'schema':1,'folders':[dict(f,floorGiB=a.peer_floor_gib) for f in peer_folders]}
     for source,target in zip(folders,data['folders']):
         target['alias']=source['label'] if sum(f['label']==source['label'] for f in folders)==1 else source['label']+' — '+Path(source['path']).parent.name
     peer(['python3','-c',"import sys,json,os;from pathlib import Path;p=Path.home()/'.config/sensei-den/sync.json';p.parent.mkdir(parents=True,exist_ok=True);p.write_text(sys.stdin.read());p.chmod(0o600)"],input=json.dumps(data),text=True)

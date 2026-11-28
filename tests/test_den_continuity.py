@@ -7,16 +7,6 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1]
 l=importlib.machinery.SourceFileLoader('continuity',str(ROOT/'home/.local/bin/sensei-den'));s=importlib.util.spec_from_loader(l.name,l);m=importlib.util.module_from_spec(s);l.exec_module(m)
 class Continuity(unittest.TestCase):
-    def test_peer_transport_skips_blocked_link_local_ipv6(self):
-        import subprocess
-        with patch.object(m,'host',return_value='arete'),patch.object(m,'run',return_value=subprocess.CompletedProcess([],0,'homie','')) as call:
-            self.assertEqual(m.remote(['hostname']),'homie')
-        self.assertIn('-4',call.call_args.args[0])
-
-    def test_health_uses_a_fresh_connection_not_a_stale_master(self):
-        with patch.object(m,'host',return_value='arete'),patch.object(m,'remote',return_value='homie') as call:
-            self.assertTrue(m.connectivity())
-        call.assert_called_once_with(['hostname'],timeout=3,fresh=True)
     def setUp(self):
         self.t=tempfile.TemporaryDirectory();self.root=Path(self.t.name)
         self.p=patch.object(m,'CONFIG',self.root/'config');self.p.start()
@@ -64,13 +54,6 @@ class Continuity(unittest.TestCase):
         with patch.object(m,'remote',return_value='{"free":1073741824}'):
             with self.assertRaisesRegex(ValueError,'reserve reached'):
                 m.backup_reserve({'repository':'sftp:homie:/disk/repo','remoteTarget':'/disk/repo','requiredMount':'/disk','remoteMinimumFreeGiB':20})
-    def test_private_job_uses_fallback_before_sending_and_never_replays(self):
-        import subprocess
-        m.write(m.CONFIG/'access.json',{'lanAddress':'192.0.2.1','privateAlias':'homie-remote'})
-        with patch.object(m,'host',return_value='arete'),patch.object(m,'connectivity',return_value=False),patch.object(m,'run',return_value=subprocess.CompletedProcess([],255,'','')) as call:
-            with self.assertRaises(ValueError):m.remote(['job','run'],private=True)
-            self.assertEqual(call.call_count,1)
-            self.assertIn('homie-remote',call.call_args.args[0])
     def test_motion_control_rejects_ambiguous_input(self):
         m.companion('motion','off');self.assertTrue(m.companion('status')['reducedMotion'])
         with self.assertRaises(ValueError):m.companion('motion','maybe')

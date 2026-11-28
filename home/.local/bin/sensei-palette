@@ -113,7 +113,14 @@ def replace_section(text, section, changes):
 def main():
     try:
         config = json.loads(wallpapers.read_text())
-        image = Path(sys.argv[1] if len(sys.argv) > 1 else config["displays"]["eDP-1"]["file"]).expanduser()
+        machine_path = state / "machine.json"
+        machine = json.loads(machine_path.read_text()) if machine_path.exists() else {}
+        displays = config.get("displays", {})
+        selected = displays.get(machine.get("primaryOutput"), {}).get("file")
+        selected = selected or next((entry.get("file") for entry in displays.values() if entry.get("file")), None)
+        if not selected and len(sys.argv) < 2:
+            raise ValueError("no configured wallpaper; choose one before generating the palette")
+        image = Path(sys.argv[1] if len(sys.argv) > 1 else selected).expanduser()
         if not image.is_file():
             raise ValueError(f"main wallpaper unavailable: {image}")
         fingerprint = [str(image), image.stat().st_mtime_ns, image.stat().st_size, 8, "wallpaper-derived-1"]
@@ -151,7 +158,7 @@ def main():
             settings = home / ".config" / gtk / "settings.ini"
             if settings.exists():
                 write_if_changed(settings, re.sub(r'(?m)^gtk-font-name=.*$',
-                                                  'gtk-font-name=JetBrainsMono Nerd Font Propo 11', settings.read_text()))
+                                                  'gtk-font-name=Zed Mono 11', settings.read_text()))
             css = home / ".config" / gtk / "colors.css"
             if not css.exists():
                 continue
@@ -186,9 +193,23 @@ def main():
             config = home / '.config' / qt / (qt + '.conf')
             if config.exists():
                 content = re.sub(r'(?m)^(general|fixed)="[^,]+,',
-                                 lambda m: m.group(1) + '="' + ('JetBrainsMono Nerd Font Propo' if m.group(1) == 'general' else 'JetBrainsMono Nerd Font Mono') + ',',
+                                 lambda m: m.group(1) + '="' + ('Zed Mono' if m.group(1) == 'general' else 'Iosevka') + ',',
                                  config.read_text())
                 write_if_changed(config, content)
+        # libadwaita/portal clients also read dconf; settings.ini alone leaves
+        # their font on the old desktop default.
+        for key,value in (("font-name","Zed Mono 11"),
+                          ("document-font-name","Iosevka 11"),
+                          ("monospace-font-name","Iosevka 11"),
+                          ("icon-theme","kora"),
+                          ("gtk-theme","Adwaita-dark"),
+                          ("color-scheme","prefer-dark"),
+                          ("cursor-theme","Sensei-Signal"),
+                          ("cursor-size","24")):
+            subprocess.run(["gsettings","set","org.gnome.desktop.interface",key,value],
+                           capture_output=True,timeout=3,check=True)
+        subprocess.run(["gsettings","set","org.gnome.desktop.wm.preferences","titlebar-font","Zed Mono Bold 11"],
+                       capture_output=True,timeout=3,check=True)
         # Shells and tmux read these tiny generated files; wallpaper changes
         # never rerun a heavy prompt command or refresh the entire terminal.
         prompt = home / ".config/zsh/sensei-palette.zsh"
@@ -225,13 +246,13 @@ def main():
         # Group borders match the window borders, and the deck's frame sits on
         # the outline colour whether it is focused or not. The profile script
         # no longer writes borders, so this is the only place they are set.
-        subprocess.run(['hyprctl','--instance','0','eval',
+        subprocess.run(['hyprctl','eval',
                         'hl.config({["general.col.active_border"]="rgba(' + border +
                         ')",["general.col.inactive_border"]="rgba(' + outline + ')",'
                         '["group.col.border_active"]="rgba(' + border + ')",'
                         '["group.col.border_inactive"]="rgba(' + outline + ')"})'],
                        capture_output=True,timeout=2)
-        subprocess.run(['hyprctl','--instance','0','eval',
+        subprocess.run(['hyprctl','eval',
                         'hl.window_rule({name="sensei-deck-border",match={class="sensei-deck"},'
                         'border_color="rgba(' + outline + ') rgba(' + outline + ')"})'],
                        capture_output=True,timeout=2)

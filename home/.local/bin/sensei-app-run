@@ -43,8 +43,10 @@ if [[ :$qt_plugins_before: == *":${HOME}/.local/share/sensei-qt-plugins:"* ]]; t
     for plugin in "${generic_plugins[@]}"; do [[ $plugin == sensei-context-guard ]] || kept_plugins+=("$plugin"); done
     if ((${#kept_plugins[@]})); then export QT_QPA_GENERIC_PLUGINS="$(IFS=,; printf '%s' "${kept_plugins[*]}")"; else unset QT_QPA_GENERIC_PLUGINS; fi
 fi
+# Some desktop entrypoints fork and exit successfully before their window does.
+# Track the complete application cgroup, not just that initial launcher PID.
 args=(--user --quiet --collect --service-type=exec --expand-environment=no
-      --working-directory="${cwd:-$PWD}")
+      --property=ExitType=cgroup --working-directory="${cwd:-$PWD}")
 # Forward values through systemd-run's inherited environment, not command-line
 # values. GUI activation/CUDA/ROS survive; service-control metadata does not.
 while IFS= read -r name; do

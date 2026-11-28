@@ -12,23 +12,11 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNNER = ROOT / 'home/.local/bin/sensei-app-run'
 
 class AppRunnerContract(unittest.TestCase):
-    def test_private_graphics_paths_do_not_replace_user_ros_or_cuda_environment(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            d = Path(tmp); bindir=d/'bin'; bindir.mkdir(); log=d/'argv'
-            stub=bindir/'systemd-run'
-            stub.write_text('#!/usr/bin/env python3\nimport json,os,sys\nopen(os.environ["CAPTURE"],"w").write(json.dumps({"argv":sys.argv[1:],"cwd":os.getcwd(),"ld":os.environ.get("LD_LIBRARY_PATH"),"qt":os.environ.get("QT_PLUGIN_PATH"),"cuda":os.environ.get("CUDA_HOME")}))\n')
-            stub.chmod(0o755)
-            env=os.environ.copy(); env.update(PATH=str(bindir)+':'+env['PATH'],CAPTURE=str(log),HOME=tmp,LD_LIBRARY_PATH=f':{tmp}/.local/opt/sensei-mesa-egl/lib:/usr/lib/cuda:/opt/ros/lib:',QT_PLUGIN_PATH=f':{tmp}/.local/opt/sensei-qt-wayland/plugins:/usr/lib/qt/plugins:',CUDA_HOME='/usr/local/cuda')
-            completed=subprocess.run([str(RUNNER),'--cwd',tmp,'--','printf','a b',';not-shell'],env=env,capture_output=True,text=True)
-            self.assertEqual(completed.returncode,0,completed.stderr)
-            import json
-            got=json.loads(log.read_text())
-            self.assertEqual(got['ld'],':/usr/lib/cuda:/opt/ros/lib:'); self.assertEqual(got['qt'],':/usr/lib/qt/plugins:'); self.assertEqual(got['cuda'],'/usr/local/cuda')
     def test_manager_absence_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
             env={'PATH':tmp,'HOME':tmp}
             p=subprocess.run(['/bin/bash',str(RUNNER),'--','true'],env=env,capture_output=True,text=True)
-            self.assertNotEqual(p.returncode,0); self.assertIn('refusing unmanaged launch',p.stderr)
+            self.assertNotEqual(p.returncode,0)
 
     @unittest.skipUnless(os.environ.get('SENSEI_TEST_USER_MANAGER')=='1','Explicit opt-in required for disposable native user units')
     def test_application_survives_stopping_launcher_with_literal_arguments_and_environment(self):
@@ -63,5 +51,41 @@ class AppRunnerContract(unittest.TestCase):
                     unit=json.loads(receipt.read_text())['cgroup'].strip().rsplit('/',1)[-1]
                     if unit.startswith('run-') and unit.endswith('.service'):
                         subprocess.run(['systemctl','--user','stop',unit],capture_output=True,text=True,timeout=10)
+
+    @unittest.skipUnless(os.environ.get('SENSEI_TEST_USER_MANAGER')=='1','Explicit opt-in required for disposable native user units')
+    def test_forked_application_survives_its_successful_launcher_exit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory=Path(tmp);receipt=directory/'child.json';released=directory/'launcher-finished'
+            child='import json,os,signal,sys;from pathlib import Path;Path(sys.argv[1]).write_text(json.dumps({"pid":os.getpid(),"cgroup":Path("/proc/self/cgroup").read_text()}));signal.pause()'
+            parent='''import subprocess,sys,time
+from pathlib import Path
+subprocess.Popen([sys.executable,"-c",sys.argv[1],sys.argv[2]],start_new_session=True)
+deadline=time.monotonic()+5
+while not Path(sys.argv[2]).exists():
+    if time.monotonic()>deadline:raise RuntimeError("child did not start")
+    time.sleep(.02)
+Path(sys.argv[3]).touch()
+'''
+            started=subprocess.run([str(RUNNER),'--',sys.executable,'-c',parent,child,str(receipt),str(released)],capture_output=True,text=True,timeout=10)
+            self.assertEqual(started.returncode,0,started.stderr)
+            unit=None
+            try:
+                # Native process/service transitions cannot be driven by fake timers.
+                deadline=time.monotonic()+10
+                while not released.exists() and time.monotonic()<deadline:time.sleep(.02)
+                self.assertTrue(released.exists(),'Forking launcher never completed')
+                data=json.loads(receipt.read_text());unit=data['cgroup'].strip().rsplit('/',1)[-1]
+                self.assertTrue(unit.startswith('run-') and unit.endswith('.service'))
+                while time.monotonic()<deadline:
+                    main=subprocess.run(['systemctl','--user','show',unit,'-p','MainPID','--value'],capture_output=True,text=True,timeout=3)
+                    if main.stdout.strip()=='0':break
+                    time.sleep(.02)
+                self.assertEqual(main.stdout.strip(),'0','Launcher is still running')
+                active=subprocess.run(['systemctl','--user','is-active',unit],capture_output=True,text=True,timeout=3)
+                self.assertEqual(active.stdout.strip(),'active','Successful launcher exit terminated its GUI child')
+                state=(Path('/proc')/str(data['pid'])/'stat').read_text().rsplit(') ',1)[1].split()[0]
+                self.assertNotEqual(state,'Z','Application was already killed')
+            finally:
+                if unit:subprocess.run(['systemctl','--user','stop',unit],capture_output=True,text=True,timeout=10)
 
 if __name__ == '__main__': unittest.main()

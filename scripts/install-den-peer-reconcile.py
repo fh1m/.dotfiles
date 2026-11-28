@@ -11,12 +11,15 @@ def main():
  known=home/'.local/state/homie-control/known_hosts'
  pins=[line for line in known.read_text().splitlines() if line.split() and 'homie-den' in line.split()[0].split(',')]
  if not pins:raise ValueError('Existing verified homie-den host-key pin is required')
- address=ipaddress.IPv4Address(socket.gethostbyname('homie.local'))
+ try:address=ipaddress.IPv4Address(socket.gethostbyname('homie.local'))
+ except socket.gaierror:
+  discovered=subprocess.run(['runuser','-u',args.user,'--',str(home/'.local/bin/den-peer-connect'),'homie','22','--resolve'],capture_output=True,text=True,check=True,timeout=10)
+  address=ipaddress.IPv4Address(discovered.stdout.strip())
  routes=json.loads(subprocess.check_output(['ip','-j','-4','route','show','scope','link'],text=True))
  networks=[ipaddress.IPv4Network(row['dst']) for row in routes if row.get('dst') and row['dst']!='default' and address in ipaddress.IPv4Network(row['dst'])]
  if not networks:raise ValueError('The paired hostname has no directly connected LAN route')
  network=max(networks,key=lambda n:n.prefixlen)
- cfg={'hostname':'homie.local','expectedHost':'homie','network':str(network),'user':args.user,'identityFile':str(home/'.local/state/homie-control/operator_ed25519'),'hostKeyAlias':'homie-den','knownHostsFile':'/usr/local/share/sensei-den/known_hosts'}
+ cfg={'hostname':'homie.local','expectedHost':'homie','network':str(network),'user':args.user,'identityFile':str(home/'.local/state/homie-control/operator_ed25519'),'hostKeyAlias':'homie-den','knownHostsFile':'/usr/local/share/sensei-den/known_hosts','hintFile':str(home/'.local/state/sensei-den/peer-address.json')}
  if not args.apply:print(json.dumps({'ready':True,'peer':cfg['hostname'],'scope':'Existing Den set only; host-key verified DHCP updates'}));return
  backup=Path('/var/backups/sensei-den-peer')/str(time.time_ns());backup.mkdir(parents=True,mode=0o700)
  def install(target,data,mode):

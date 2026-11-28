@@ -84,7 +84,8 @@ def test_supervisor_rejects_expired_or_inapplicable_qt_backport(tmp_path, change
     commands.mkdir(parents=True)
     report = tmp_path / 'launched.json'
     qs = commands / 'qs'
-    qs.write_text('#!' + sys.executable + '\nimport json,os,pathlib\n'
+    qs.write_text('#!' + sys.executable + '\nimport json,os,pathlib,sys\n'
+                  'if "--version" in sys.argv:\n print("Qt: 6.12.0 (built against 6.12.0)");sys.exit(0)\n'
                   'pathlib.Path(os.environ["RUNTIME_REPORT"]).write_text(json.dumps({"libraries":os.environ.get("LD_LIBRARY_PATH",""),"plugins":os.environ.get("QT_PLUGIN_PATH","")}))\n')
     qs.chmod(0o755)
     hyprctl = commands / 'hyprctl'
@@ -93,7 +94,8 @@ def test_supervisor_rejects_expired_or_inapplicable_qt_backport(tmp_path, change
     runtime = tmp_path / 'runtime'
     runtime.mkdir()
     env = dict(os.environ, HOME=str(tmp_path), XDG_RUNTIME_DIR=str(runtime),
-               XDG_STATE_HOME=str(tmp_path / 'state'), RUNTIME_REPORT=str(report))
+               XDG_STATE_HOME=str(tmp_path / 'state'), RUNTIME_REPORT=str(report),
+               SENSEI_SHELL_SERVICE='1')
     for key in ('SENSEI_QS_BIN', 'SENSEI_QS_ARGS', 'HYPRLAND_INSTANCE_SIGNATURE', 'LD_LIBRARY_PATH', 'QT_PLUGIN_PATH'):
         env.pop(key, None)
     wrapper = ROOT / 'home/.config/quickshell/sensei/external/sensei-shell'
@@ -117,3 +119,47 @@ def test_supervisor_rejects_expired_or_inapplicable_qt_backport(tmp_path, change
     launched = json.loads(report.read_text())
     assert launched['libraries'] == (str(prefix / 'lib') if changed.startswith('graphics-') else '')
     assert launched['plugins'] == (str(prefix / 'plugins') if changed.startswith('graphics-') else '')
+
+
+@pytest.mark.parametrize('failure,packaged_built,expected', [
+    (255, '6.12.0', ['local'] * 7),
+    (139, '6.11.2', ['local'] * 7),
+    (139, '6.12.0', ['local'] * 6 + ['packaged']),
+])
+def test_supervisor_never_escapes_configuration_errors_into_an_incompatible_runtime(
+        tmp_path, failure, packaged_built, expected):
+    prefix = owned_build(tmp_path, '6.12.0')
+    commands = tmp_path / '.local/bin'
+    commands.mkdir(parents=True)
+    launcher = '''#!{python}
+import json,os,pathlib,sys
+if "--version" in sys.argv:
+ print("Qt: 6.12.0 (built against {built})");sys.exit(0)
+if "ipc" in sys.argv:sys.exit(1)
+path=pathlib.Path(os.environ["RUNTIME_REPORT"])
+launches=json.loads(path.read_text()) if path.exists() else []
+launches.append("{kind}")
+path.write_text(json.dumps(launches))
+sys.exit({failure} if "{kind}" == "local" and len(launches) < 7 else 0)
+'''
+    for path, kind, built in [
+            (prefix / 'bin/quickshell', 'local', '6.12.0'),
+            (commands / 'qs', 'packaged', packaged_built)]:
+        path.write_text(launcher.format(python=sys.executable, built=built, kind=kind, failure=failure))
+        path.chmod(0o755)
+    for name, body in [('hyprctl', 'printf "false\\n"'), ('sleep', ':')]:
+        path = commands / name
+        path.write_text('#!/bin/sh\n' + body + '\n')
+        path.chmod(0o755)
+    runtime = tmp_path / 'runtime'
+    runtime.mkdir()
+    report = tmp_path / 'launches.json'
+    env = dict(os.environ, HOME=str(tmp_path), XDG_RUNTIME_DIR=str(runtime),
+               XDG_STATE_HOME=str(tmp_path / 'state'), RUNTIME_REPORT=str(report),
+               SENSEI_SHELL_SERVICE='1')
+    for key in ('SENSEI_QS_BIN', 'SENSEI_QS_ARGS', 'HYPRLAND_INSTANCE_SIGNATURE',
+                'LD_LIBRARY_PATH', 'QT_PLUGIN_PATH'):
+        env.pop(key, None)
+    subprocess.run(['bash', str(ROOT / 'home/.config/quickshell/sensei/external/sensei-shell')],
+                   env=env, check=True, timeout=10)
+    assert json.loads(report.read_text()) == expected

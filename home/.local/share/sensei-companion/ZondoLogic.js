@@ -73,9 +73,12 @@ function worldPlace(view,world,width,height,w,h,windows,variant) {
  return null;
 }
 
-// A short, fresh line from the existing media widget, never a new lyrics request.
+// Playback freshness is independent of the current lyric's own expiry.
+function receiptFresh(receipt, now) {
+    return !!receipt&&receipt.playing===true&&Number.isFinite(receipt.at)&&now>=receipt.at&&now-receipt.at<=30000;
+}
 function singLine(receipt, now, last, random) {
-    if(!receipt||!receipt.playing||(Number.isFinite(receipt.until)&&now>=receipt.until)||!Number.isFinite(receipt.at)||now-receipt.at<0||now-receipt.at>30000||random>.4)return '';
+    if(!receiptFresh(receipt,now)||!Number.isFinite(receipt.until)||now>=receipt.until||random>.4)return '';
     var line=String(receipt.line||'').trim().slice(0,320);
     return !line||line===last?'':line;
 }

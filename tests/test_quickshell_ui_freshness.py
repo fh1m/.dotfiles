@@ -372,3 +372,32 @@ def test_wifi_radio_epoch_exit_code_and_empty_scan_ownership(tmp_path):
     put(tmp_path, 'services/Ethernet.qml', '''pragma Singleton\nimport QtQuick\nQtObject { property bool connected:false }\n''')
     report = run_native(tmp_path, WIFI_HARNESS, timeout=8)
     assert 'PROOF_PASS wifi-scan-ownership' in report, report
+
+
+@pytest.mark.skipif(not HAS_QS, reason="Explicit native Quickshell runtime required")
+def test_cpu_guest_time_is_not_double_counted_and_small_graph_uses_real_groups(tmp_path):
+    setup_services(tmp_path, 'SysInfo.qml')
+    put(tmp_path, 'config/Machine.qml', 'pragma Singleton\nimport QtQuick\nQtObject {property string netInterface:""}\n')
+    helper(tmp_path, 'sensei-net-sampler', '')
+    harness = r'''import QtQuick
+import Quickshell
+import qs.services
+ShellRoot {
+    property var counters:SysInfo
+    Timer {interval:100;running:true;onTriggered:{
+        SysInfo._cpuPrev=[];
+        SysInfo._readCpu("cpu 100 0 0 100 0 0 0 0 40 0\ncpu0 100 0 0 100 0 0 0 0 40 0\n");
+        SysInfo._readCpu("cpu 200 0 0 200 0 0 0 0 140 0\ncpu0 200 0 0 200 0 0 0 0 140 0\n");
+        if(Math.abs(SysInfo.cpuPercent-50)>.001 || Math.abs(SysInfo.cpuThreads[0]-50)>.001)
+            throw new Error("Guest CPU time was counted twice");
+        SysInfo.cpuThreads=[0,50,100,25,75];
+        if(JSON.stringify(SysInfo.threadGroups(3))!=="[0,75,50]")
+            throw new Error("Compact CPU groups are not measured averages");
+        if(JSON.stringify(SysInfo.threadGroups(8))!=="[0,50,100,25,75]")
+            throw new Error("Small CPU topology lost observations");
+        SysInfo.cpuThreads=[];
+        if(SysInfo.threadGroups(8).length)throw new Error("Missing CPU samples became fake load");
+        console.log("PROOF_PASS");Qt.quit();
+    }}
+}'''
+    assert 'PROOF_PASS' in run_native(tmp_path,harness)

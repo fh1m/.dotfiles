@@ -42,18 +42,73 @@ def write(path,value):
 
 def host():return socket.gethostname().split('.')[0]
 
+def _peer_transport():
+    if host()=='arete':
+        return 'homie',PRIVATE/'client.conf','homie',[str(HOME/'.local/bin/den-control'),'ping']
+    if host()=='homie':
+        return 'arete',PRIVATE/'master-client.conf','arete-den-control',['den-control','ping']
+    raise ValueError('No desktop peer configured for this host')
+
+def _direct_peer_address(value):
+    import ipaddress
+    try:
+        address=ipaddress.IPv4Address(value)
+        if not address.is_private or address.is_loopback or address.is_link_local:return None
+        result=run(['ip','-j','-4','route','get',str(address)],timeout=3)
+        if result.returncode:return None
+        routes=json.loads(result.stdout)
+        if not routes:return None
+        route=routes[0];device=route.get('dev','')
+        if route.get('gateway') or device in ('','lo','tailscale0') or device.startswith(('docker','veth','br-')):return None
+        return str(address)
+    except (OSError,ValueError,TypeError,subprocess.SubprocessError):return None
+
+
+
+def _peer_alias(fresh=False,prefer_private=False):
+    """Probe identity before selecting a route; never retry an actual operation."""
+    expected,config,lan,query=_peer_transport()
+    private=read(CONFIG/'access.json').get('privateAlias')
+    if private and (not isinstance(private,str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',private)):
+        raise ValueError('Invalid private SSH alias')
+    aliases=list(dict.fromkeys([a for a in ([private,lan] if prefer_private else [lan,private]) if a]))
+    receipt=STATE/'peer-route.json'
+    try:cached=read(receipt)
+    except ValueError:cached={}
+    if not isinstance(cached,dict):cached={}
+    measured=cached.get('at',0)
+    age=time.time()-measured if isinstance(measured,(int,float)) else -1
+    current=(cached.get('peer')==expected and cached.get('privateAlias')==private
+             and cached.get('available') is True and cached.get('alias') in aliases and 0<=age<=30)
+    if current:
+        if not fresh:return cached['alias']
+        aliases=[cached['alias']]+[a for a in aliases if a!=cached['alias']]
+    for alias in aliases:
+        try:
+            probe=run(['ssh','-4','-S','none','-n','-F',str(config),alias,shlex.join(query)],timeout=5)
+            if probe.returncode:continue
+            data=json.loads(probe.stdout)
+            if not isinstance(data,dict) or data.get('host')!=expected:continue
+        except (OSError,ValueError,subprocess.SubprocessError):
+            continue
+        address=_direct_peer_address(data.get('serverAddress'))
+        write(receipt,{'peer':expected,'alias':alias,'privateAlias':private,'at':time.time(),
+                       'transport':'lan' if address else 'private','lanAddress':address,'available':True})
+        return alias
+    write(receipt,{'peer':expected,'privateAlias':private,'at':0,'checkedAt':time.time(),'available':False})
+    return None
+
+
 
 def remote(args,timeout=10,private=False,fresh=False):
     if host()!='arete':raise ValueError('Run cross-host administration from Arete')
-    alias='homie'
-    if private:
-        access=read(CONFIG/'access.json')
-        # Another network may reuse our LAN address. Verify the pinned peer with
-        # a read-only preflight instead of trusting an open TCP port.
-        if access.get('privateAlias') and not connectivity():alias=access['privateAlias']
-    # Select a route before sending a command. Never replay a job after an SSH error.
+    alias=_peer_alias(fresh=fresh,prefer_private=private)
+    if not alias:raise ValueError('Homie unavailable; no authenticated route')
+    # A failed command may already have acted. Invalidate discovery, never replay it.
     r=run(['ssh','-4']+(['-S','none'] if fresh else [])+['-n','-F',str(PRIVATE/'client.conf'),alias,shlex.join([str(x) for x in args])],timeout=timeout)
-    if r.returncode:raise ValueError('Homie unavailable or command failed; existing work is preserved')
+    if r.returncode:
+        write(STATE/'peer-route.json',{'at':0,'available':False,'failedAt':time.time()})
+        raise ValueError('Homie command failed or disconnected; inspect its receipt before retrying')
     return r.stdout
 
 
@@ -61,18 +116,33 @@ def service(name):return run(['systemctl','--user','is-active',name]).stdout.str
 
 
 def connectivity():
-    try:
-        if host()=='arete':return remote(['hostname'],timeout=3,fresh=True).strip().split('.')[0]=='homie'
-        r=run(['ssh','-S','none','-n','-F',str(PRIVATE/'master-client.conf'),'arete-den-control','den-control','ping'],timeout=3)
-        return r.returncode==0 and json.loads(r.stdout).get('host')=='arete'
+    try:return _peer_alias(fresh=True) is not None
     except (OSError,ValueError,subprocess.SubprocessError):return False
+
+def _lan_peer_receipt():
+    import ipaddress
+    try:
+        expected,_,_,_=_peer_transport()
+        receipt=read(STATE/'peer-route.json')
+        if not isinstance(receipt,dict):return {}
+        measured=receipt.get('at',0)
+        age=time.time()-measured if isinstance(measured,(int,float)) else -1
+        address=ipaddress.IPv4Address(receipt.get('lanAddress'))
+        if (receipt.get('peer')==expected and receipt.get('available') is True
+                and 0<=age<=30 and address.is_private and not address.is_loopback
+                and not address.is_link_local and not address.is_unspecified):
+            return receipt
+    except (OSError,ValueError,TypeError):pass
+    return {}
+
 
 
 def current_mode(peer=None):
     wanted=read(CONFIG/'continuity.json').get('mode','auto')
     peer=connectivity() if peer is None else peer
     cfg=read(CONFIG/'continuity.json')
-    return {'requested':wanted,'effective':('together' if peer else 'away' if host()=='arete' else 'homie') if wanted=='auto' else wanted,
+    usable=peer and wanted=='auto' and bool(_lan_peer_receipt())
+    return {'requested':wanted,'effective':('together' if usable else 'away' if host()=='arete' else 'homie') if wanted=='auto' else wanted,
             'peerPending':cfg.get('peerPending'),'peerAcknowledged':cfg.get('peerAcknowledged')}
 
 
@@ -180,10 +250,9 @@ def companion(action,value=None):
     elif action=='roam':
         if value not in ('on','off'):raise ValueError('Use roam on or off')
         cfg['roaming']=value=='on';cfg['anchorManual']=value!='on'
-        if value=='on':cfg['reducedMotion']=False
-    elif action=='hide-seek':cfg.update(seeking=True,tourAt=time.time(),roaming=True,reducedMotion=False,anchorManual=False,message='Find me on an available patch of wallpaper. Follow the pink engineering trail across the Den.',messageAt=time.time())
+    elif action=='hide-seek':cfg.update(seeking=True,tourAt=time.time(),roaming=True,anchorManual=False,message='Find me on an available patch of wallpaper. Follow the pink engineering trail across the Den.',messageAt=time.time())
     elif action=='found':cfg.update(seeking=False,message='Found! Your reward is a tiny engineer with excellent hiding intentions.',messageAt=time.time(),pose='wave',poseAt=time.time())
-    elif action=='tour':cfg.update(tourAt=time.time(),roaming=True,reducedMotion=False,anchorManual=False)
+    elif action=='tour':cfg.update(tourAt=time.time(),roaming=True,anchorManual=False)
     elif action=='pulse':
         # Legacy command now controls the stationary marker; no flashing mode.
         cfg['focusMarker']=value=='on' if value else not cfg.get('focusMarker',True)
@@ -283,8 +352,11 @@ def sync_status():
         for f in cfg['folders']:
             d=sync_api('GET','db/status?'+urlencode({'folder':f['id']}))
             api.append({'label':f['label'],'state':d.get('state'),'neededFiles':d.get('needFiles'),
-                        'neededBytes':d.get('needBytes'),'localFiles':d.get('localFiles')})
-    return {'folders':result,'service':service('syncthing'),'completion':api,'contentPolicy':'Personal files mirrored; Git repositories and application state use separate handoffs.'}
+                        'neededBytes':d.get('needBytes'),'localFiles':d.get('localFiles'),
+                        'pullErrors':d.get('pullErrors',0)})
+    return {'folders':result,'service':service('syncthing'),'completion':api,
+            'healthy':service('syncthing')=='active' and all(row['state']=='idle' and row['pullErrors']==0 and row['neededFiles']==0 for row in api),
+            'contentPolicy':'Personal files mirrored; Git repositories and application state use separate handoffs.'}
 
 
 def sync_api(method,path,body=None):
@@ -709,8 +781,11 @@ def _companion_tick(peer):
             sys.path.insert(0,str(HOME/'.local/share/sensei'))
             from companion_roam import newer_memory
             repertoire=newer_memory(repertoire,capability.get('memory',{}))
-            if capability.get('schema')==1 and capability.get('leases') and capability.get('enabled') and not capability.get('quiet') and not capability.get('suspended') and not capability.get('reducedMotion'):
-                destinations += [('homie',m['name']) for m in json.loads(remote(['hyprctl','-i','0','monitors','-j'],timeout=4)) if m['name'] in capability.get('availableOutputs',[])]
+            # Reduced motion changes presentation, not which host may participate.
+            outputs=capability.get('availableOutputs',[])
+            if not isinstance(outputs,list):outputs=[]
+            if capability.get('schema')==1 and capability.get('leases') and capability.get('enabled') and not capability.get('quiet') and not capability.get('suspended'):
+                destinations += [('homie',name) for name in outputs if isinstance(name,str) and name]
         except (ValueError,OSError,subprocess.SubprocessError):pass
     if not destinations:return
     capability=locals().get('capability',{})
@@ -762,7 +837,8 @@ def _companion_tick(peer):
 
 def topology_signature():
     rows=json.loads(run(['hyprctl','monitors','-j']).stdout)
-    return sorted((m['name'],m.get('x'),m.get('y'),m.get('width'),m.get('height'),m.get('scale')) for m in rows)
+    displays=sorted((m['name'],m.get('x'),m.get('y'),m.get('width'),m.get('height'),m.get('scale')) for m in rows)
+    return displays+[('peer-address',_lan_peer_receipt().get('lanAddress'))]
 
 def refresh_capture_routes(previous,current,active,usable):
     if previous is None or previous==current or not active:return False
@@ -777,12 +853,18 @@ def refresh_capture_routes(previous,current,active,usable):
 
 def publish_peer_address():
     """A discovery hint, not an authorization: the root reconciler re-verifies SSH."""
+    receipt=_lan_peer_receipt()
+    if not receipt:return
     hostname=read(CONFIG/'access.json').get('lanHost','homie.local')
-    try:addresses=sorted({row[4][0] for row in socket.getaddrinfo(hostname,22,socket.AF_INET,socket.SOCK_STREAM)})
-    except socket.gaierror:return
-    value={'hostname':hostname,'addresses':addresses}
+    value={'hostname':hostname,'addresses':[receipt['lanAddress']],'verifiedAt':receipt['at']}
     path=STATE/'peer-address.json'
-    if read(path)!=value:write(path,value)
+    try:previous=read(path)
+    except ValueError:previous={}
+    if not isinstance(previous,dict):previous={}
+    measured=previous.get('verifiedAt',0)
+    age=time.time()-measured if isinstance(measured,(int,float)) else -1
+    if previous.get('hostname')==hostname and previous.get('addresses')==value['addresses'] and 0<=age<60:return
+    write(path,value)
 
 
 def watch():

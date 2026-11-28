@@ -35,7 +35,7 @@ def wait_for_session(timeout=45):
     raise TimeoutError(f'Den unavailable: no live graphical socket within {timeout:g} seconds')
 
 def main(mode):
-    if mode not in ('reset','ready','cursor','clipboard','input'):raise ValueError('Choose reset, ready, cursor, clipboard or input')
+    if mode not in ('reset','ready','input-ready','cursor','clipboard','input'):raise ValueError('Choose reset, ready, input-ready, cursor, clipboard or input')
     if mode=="reset":
         for name in ("active","return-armed","running"):
             (state/"input"/name).write_text("0")
@@ -43,6 +43,10 @@ def main(mode):
     instance,runtime=wait_for_session()
     os.environ.update(HYPRLAND_INSTANCE_SIGNATURE=instance["instance"],WAYLAND_DISPLAY=instance["wl_socket"],XDG_RUNTIME_DIR=str(runtime))
     if mode=="ready":return
+    if mode=="input-ready":
+        from den_input_config import refresh as refresh_input_config
+        refresh_input_config(state/"input/config.toml",require_policy=True)
+        return
     if mode=="cursor":
         os.execv(sys.executable,[sys.executable,str(state/"den-cursor.py"),"daemon"])
     if mode=="clipboard":
@@ -51,9 +55,13 @@ def main(mode):
     binary=state/"bin/lan-mouse"
     if not binary.exists():binary=pathlib.Path("/usr/bin/lan-mouse")
     (state/"input/active").write_text("0")
-    (state/"input/running").write_text("1")
+    (state/"input/running").write_text("0")
     config=tomllib.loads((state/"input/config.toml").read_text())
     if config.get("clients"):
+        # Resolve and pin-check before creating any capture surface. Keep logical
+        # hostnames and user pairings; only derived address hints may change.
+        from den_input_config import refresh as refresh_input_config
+        refresh_input_config(state/"input/config.toml",require_policy=True)
         outputs=display_roles(json.loads(subprocess.check_output(["hyprctl","monitors","-j"])))
         edges=[]
         if "main" in outputs:edges.append("top="+outputs["main"]["name"])
@@ -77,7 +85,12 @@ def main(mode):
         os.environ["DEN_RETURN_WATCH"]="1"
         (state/"input/return-armed").write_text("0")
         os.environ["DEN_RETURN_ARMED"]=str(state/"input/return-armed")
-    os.execv(str(binary),[str(binary),"-c",str(state/"input/config.toml"),"--cert-path",str(state/"input/cert.pem"),"--capture-backend","layer-shell","--emulation-backend","wlroots","daemon"])
+    (state/"input/running").write_text("1")
+    try:
+        os.execv(str(binary),[str(binary),"-c",str(state/"input/config.toml"),"--cert-path",str(state/"input/cert.pem"),"--capture-backend","layer-shell","--emulation-backend","wlroots","daemon"])
+    except OSError:
+        (state/"input/running").write_text("0")
+        raise
 
 if __name__=="__main__":
     try:

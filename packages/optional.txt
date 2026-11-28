@@ -14,3 +14,6 @@ ufw
 
 # Optional desktop-session Spotify library bridge (AUR; signed-in official client).
 spicetify-cli
+
+# Full application/file icons used by both GTK and Qt; Kora is optional on vanilla Arch.
+kora-icon-theme

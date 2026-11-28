@@ -10,6 +10,7 @@ DropdownFrame {
     id: root
     property Item searchInput:null
     property string contributionInfo:""
+    property bool showCodexProfile: false
     title: "fh1m / Code"
     katakana: CodeDesk.tab === 0 ? "GITHUB" : CodeDesk.tab===1 ? "AGENTS" : CodeDesk.tab===2 ? "NERD TALK" : CodeDesk.tab===4 ? "SENSEI GUESTS" : "RABBIT HOLES"
     implicitWidth: 1100
@@ -27,11 +28,36 @@ DropdownFrame {
         if(number>=1000)return (number/1000).toFixed(1)+"k";
         return text;
     }
-    // A recorded window: what is left, the bar's fill, and when it resets. Missing means none recorded.
-    function windowLeft(w) {if(w?.resets_at&&Date.parse(w.resets_at)<=Date.now())return "Window ended · awaiting update";return w&&w.used_percentage!=null?Math.max(0,100-w.used_percentage).toFixed(0)+"% remaining":"No window recorded";}
-    function fillOf(w) {return w&&w.used_percentage!=null?Math.max(0,Math.min(1,(100-w.used_percentage)/100)):0;}
-    function resetText(iso) {if(!iso)return "No reset recorded";const t=new Date(iso);return t<new Date()?"Reset passed · open Claude to record":"Resets "+t.toLocaleString(Qt.locale(),"ddd d MMM · hh:mm AP");}
-    function peakDaily(days) {return (days??[]).reduce((m,d)=>Math.max(m,d.tokens),1);}
+    // A measurement keeps its actual capture time; reading a cache is not a provider refresh.
+    function windowLeft(w) {if(w?.resets_at&&Date.parse(w.resets_at)<=Date.now())return "Reset passed · refresh";return w&&w.used_percentage!=null?Math.max(0,100-w.used_percentage).toFixed(0)+"% remaining":"Not reported";}
+    function fillOf(w) {return w&&w.used_percentage!=null&&!(w.resets_at&&Date.parse(w.resets_at)<=Date.now())?Math.max(0,Math.min(1,(100-w.used_percentage)/100)):0;}
+    function resetText(iso) {if(!iso)return "Reset not reported";const t=new Date(iso);return t<new Date()?"Reset passed · refresh limits":"Resets "+t.toLocaleString(Qt.locale(),"ddd d MMM · hh:mm AP");}
+    function claudeStamp() {
+        const usage=CodeDesk.claudeUsage,limits=usage.limits;
+        return usage.error || (limits?.measurementAt
+            ? "Measured "+new Date(limits.measurementAt*1000).toLocaleString(Qt.locale(),"ddd d MMM · hh:mm AP")+(limits.stale?" · Stale":"")+(limits.sourceHost?" · "+limits.sourceHost:"")
+            : "Waiting for a native account measurement");
+    }
+    function codexResetEpoch(window) {
+        const reset = window?.resetsAt;
+        return typeof reset === "number" ? reset * (reset > 1e12 ? 1 : 1000) : Date.parse(reset || "");
+    }
+    function codexRemaining(window) {
+        if (!window || !Number.isFinite(window.usedPercent)) return "Not reported";
+        if (root.codexResetEpoch(window) <= Date.now()) return "Reset passed";
+        return Math.max(0, 100 - window.usedPercent).toFixed(0) + "% remaining";
+    }
+    function codexFill(window) {
+        return !window || !Number.isFinite(window.usedPercent) || root.codexResetEpoch(window) <= Date.now()
+            ? 0 : Math.max(0, Math.min(1, (100 - window.usedPercent) / 100));
+    }
+    function codexStamp() {
+        const usage = CodexAccounts.usage;
+        return CodexAccounts.error || usage.error || (usage.measurementAt
+            ? "Measured " + new Date(usage.measurementAt * 1000).toLocaleString(Qt.locale(), "ddd d MMM · hh:mm AP") + (usage.stale ? " · Stale" : "")
+            : CodexAccounts.busy ? "Reading account information…" : "Monitor an account to read its limits");
+    }
+    function peakDaily(days) {return (days??[]).reduce((m,d)=>Math.max(m,d.tokens),0);}
     function pushDate(value) {return value?new Date(value).toLocaleDateString(Qt.locale(),"d MMM yyyy"):"Unknown";}
     Column {
         width: parent.width
@@ -45,7 +71,7 @@ DropdownFrame {
             ControlTile {label:"Hacker News";glyph:"\uf074";selected:CodeDesk.tab===3;implicitWidth:140;onActivated:CodeDesk.tab=3}
             ControlTile {visible:CodeDesk.tab!==4;label:"Refresh";glyph:"\uf021";implicitWidth:120;enabled:!CodeDesk.loading;onActivated:CodeDesk.refresh(true)}
         }
-        NrLabel {textFormat:Text.PlainText;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:CodeDesk.tab===0?(CodeDesk.error || (CodeDesk.loading?"Refreshing GitHub…":root.ago(CodeDesk.data.fetchedAt)+(CodeDesk.data.stale?" · Cached":""))):(CodeDesk.tab===4?"A visit, a source, a question · local and quiet-aware":CodeDesk.tab>=2?root.ago((CodeDesk.tab===3?CodeDesk.curiosity:CodeDesk.nerd).fetchedAt):CodeDesk.provider===1?root.ago(CodeDesk.openCodeUsage.fetchedAt):CodeDesk.provider===2?(CodeDesk.claudeUsage.error||root.ago(CodeDesk.claudeUsage.fetchedAt)):(CodeDesk.usage.error||root.ago(CodeDesk.usage.fetchedAt)));color:CodeDesk.error?Theme.semanticAmber:Theme.paperMuted;pixelSize:12}
+        NrLabel {textFormat:Text.PlainText;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:CodeDesk.tab===0?(CodeDesk.error || (CodeDesk.loading?"Refreshing GitHub…":root.ago(CodeDesk.data.fetchedAt)+(CodeDesk.data.stale?" · Cached":""))):(CodeDesk.tab===4?"A visit, a source, a question · local and quiet-aware":CodeDesk.tab>=2?root.ago((CodeDesk.tab===3?CodeDesk.curiosity:CodeDesk.nerd).fetchedAt):CodeDesk.provider===1?root.ago(CodeDesk.openCodeUsage.fetchedAt):CodeDesk.provider===2?root.claudeStamp():root.codexStamp());color:CodeDesk.error?Theme.semanticAmber:Theme.paperMuted;pixelSize:Appearance.textSize.secondary}
         Loader {
             width:parent.width
             sourceComponent:CodeDesk.tab===0?codePage:CodeDesk.tab===1?subscriptionPage:CodeDesk.tab===2?nerdPage:CodeDesk.tab===4?guestPage:curiosityPage
@@ -127,7 +153,7 @@ DropdownFrame {
                 NrLabel {textFormat:Text.PlainText;tracked:false;font.capitalization:Font.MixedCase;text:"@"+(CodeDesk.data.login||"fh1m");pixelSize:16;color:Theme.signalRed}
                 NrLabel {textFormat:Text.PlainText;tracked:false;font.capitalization:Font.MixedCase;text:(CodeDesk.data.repositoryCount?.totalCount??"—")+" repositories · "+(CodeDesk.data.followers?.totalCount??"—")+" followers · "+(CodeDesk.data.starredRepositories?.totalCount??"—")+" starred · "+(CodeDesk.data.contributionsCollection?.contributionCalendar?.totalContributions??"—")+" contributions / year";pixelSize:12}
             }
-            NrLabel {tracked:false;font.capitalization:Font.MixedCase;pixelSize:11;color:Theme.paperMuted;text:(CodeDesk.data.prs?.total_count??0)+" open PRs   ·   "+(CodeDesk.data.reviews?.total_count??0)+" review requests   ·   "+(CodeDesk.data.issues?.total_count??0)+" issues   ·   "+(CodeDesk.data.following?.totalCount??0)+" following"}
+            NrLabel {tracked:false;font.capitalization:Font.MixedCase;pixelSize:11;color:Theme.paperMuted;text:(CodeDesk.data.prs?.total_count??"—")+" open PRs   ·   "+(CodeDesk.data.reviews?.total_count??"—")+" review requests   ·   "+(CodeDesk.data.issues?.total_count??"—")+" issues   ·   "+(CodeDesk.data.following?.totalCount??"—")+" following"}
             Row {
                 spacing:3
                 Repeater {
@@ -210,29 +236,72 @@ DropdownFrame {
                 ControlTile {label:"Claude Code";glyph:"\uf0e7";implicitWidth:168;selected:CodeDesk.provider===2;onActivated:CodeDesk.provider=2}
             }
             Column {
-                width:parent.width;spacing:14;visible:CodeDesk.provider===0
-                Row {spacing:18
-                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:"Codex / "+(CodeDesk.usage.account?.planType||CodeDesk.usage.rateLimits?.planType||"Awaiting account");pixelSize:16;color:Theme.paper}
-                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:CodeDesk.usage.state?.label||"Connecting…";pixelSize:12;color:CodeDesk.usage.state?.kind==="exhausted"?Theme.signalRed:Theme.paperMuted}
-                }
-                Row {
-                    width:parent.width;spacing:28
-                    Repeater {model:[{name:"Current window",value:CodeDesk.usage.rateLimits?.primary},{name:"Longer window",value:CodeDesk.usage.rateLimits?.secondary}]
-                        Column {required property var modelData;width:(parent.width-28)/2;spacing:8
-                            Item {width:parent.width;height:20
-                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:modelData.name+(modelData.value?" · "+root.duration(modelData.value.windowDurationMins):"");pixelSize:11;color:Theme.paperMuted}
-                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;anchors.right:parent.right;text:modelData.value?Math.max(0,100-modelData.value.usedPercent)+"% remaining":"—";pixelSize:13;color:Theme.signalRed}
+                width:parent.width;spacing:16;visible:CodeDesk.provider===0
+                Flow {
+                    width:parent.width;spacing:10
+                    Repeater {
+                        model:CodexAccounts.accounts
+                        Rectangle {
+                            required property var modelData
+                            readonly property bool selected:CodexAccounts.selected===modelData.id
+                            width:Math.min(320,parent.width);height:150;color:selected?Theme.surfaceTwo:"transparent"
+                            border.width:Appearance.metrics.hairline;border.color:selected||activeFocus?Theme.signalRed:Theme.rule
+                            activeFocusOnTab:modelData.monitored
+                            Accessible.role:Accessible.RadioButton
+                            Accessible.name:modelData.name+(modelData.scopeLabel?" · "+modelData.scopeLabel:"")
+                            Accessible.checked:selected
+                            Accessible.onPressAction:CodexAccounts.selectAccount(modelData.id)
+                            Keys.onPressed:event=>{if(event.key===Qt.Key_Return||event.key===Qt.Key_Enter||event.key===Qt.Key_Space){CodexAccounts.selectAccount(modelData.id);event.accepted=true;}}
+                            MouseArea {anchors.fill:parent;enabled:parent.modelData.monitored;cursorShape:Qt.PointingHandCursor;onClicked:{parent.forceActiveFocus();CodexAccounts.selectAccount(modelData.id);}}
+                            Column {
+                                x:12;y:10;width:parent.width-24;spacing:6
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;elide:Text.ElideRight;text:modelData.name;pixelSize:Appearance.textSize.control;color:Theme.paper}
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;elide:Text.ElideRight;text:(modelData.source==="omp"?"OMP account":"Codex profile")+(modelData.snapshot?.account?.planType?" · "+modelData.snapshot.account.planType:"")+(modelData.scopeLabel?" · "+modelData.scopeLabel:"")+(modelData.unavailable?" · Sign-in changed or unavailable":"")+(modelData.snapshot?.stale?" · Stale":"");pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"Current   "+root.codexRemaining(modelData.snapshot?.rateLimits?.primary);pixelSize:Appearance.textSize.caption;color:Theme.signalRed}
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"Longer    "+root.codexRemaining(modelData.snapshot?.rateLimits?.secondary);pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
+                                ControlTile {label:modelData.monitored?"Remove monitor":"Monitor account";glyph:modelData.monitored?"\uf068":"\uf067";implicitWidth:170;implicitHeight:32;danger:false;onActivated:CodexAccounts.monitor(modelData.id,!modelData.monitored)}
                             }
-                            Rectangle {width:parent.width;height:3;radius:1;color:Theme.surfaceTwo
-                                Rectangle {width:parent.width*Math.max(0,Math.min(1,(100-(modelData.value?.usedPercent??100))/100));height:3;radius:1;color:Theme.signalRed}
-                            }
-                            NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:modelData.value?"Resets "+new Date(modelData.value.resetsAt*1000).toLocaleString(Qt.locale(),"ddd, d MMM · hh:mm AP"):"No quota reported";pixelSize:11;color:Theme.paperMuted}
                         }
                     }
                 }
-                NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:"Credits "+(CodeDesk.usage.rateLimits?.credits?.unlimited?"Unlimited":CodeDesk.usage.rateLimits?.credits?.balance??"Unavailable")+"    ·    Available resets "+(CodeDesk.usage.resetCredits??"Unavailable")+"    ·    Auth "+(CodeDesk.usage.account?.type||"Not signed in");pixelSize:11;color:Theme.paperMuted}
-                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"Exhausted usage resets on the reported schedule. A Free plan offers an upgrade; billing expiry is not exposed by Codex.";wrapMode:Text.WordWrap;pixelSize:11;color:Theme.paperMuted}
-                ControlTile {label:CodeDesk.usage.state?.kind==="free"?"Renew paid access":"Usage and billing";glyph:"\uf013";onActivated:Quickshell.execDetached(["xdg-open","https://chatgpt.com/codex/settings/usage"])}
+                NrLabel {visible:CodexAccounts.accounts.length===0&&!CodexAccounts.busy;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"No signed-in Codex context found. Sign in through OMP or Codex, then refresh.";wrapMode:Text.WordWrap;pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
+                NrLabel {visible:!!CodexAccounts.discoveryWarning;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:CodexAccounts.discoveryWarning;wrapMode:Text.WordWrap;pixelSize:Appearance.textSize.secondary;color:Theme.semanticAmber}
+                Column {
+                    width:parent.width;spacing:14;visible:!!CodexAccounts.usage.accountId
+                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"Codex / "+(CodexAccounts.usage.account?.planType||"Plan not reported");pixelSize:Appearance.textSize.section;color:Theme.paper}
+                    Row {
+                        width:parent.width;spacing:28
+                        Repeater {model:[{name:"Current window",value:CodexAccounts.usage.rateLimits?.primary},{name:"Longer window",value:CodexAccounts.usage.rateLimits?.secondary}]
+                            Column {required property var modelData;width:(parent.width-28)/2;spacing:8
+                                Item {width:parent.width;height:20
+                                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:modelData.name+(modelData.value?" · "+root.duration(modelData.value.windowDurationMins||modelData.value.windowMinutes):"");pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
+                                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;anchors.right:parent.right;text:root.codexRemaining(modelData.value);pixelSize:Appearance.textSize.control;color:Theme.signalRed}
+                                }
+                                Rectangle {width:parent.width;height:3;radius:1;color:Theme.surfaceTwo
+                                    Rectangle {width:parent.width*root.codexFill(modelData.value);height:3;radius:1;color:Theme.signalRed}
+                                }
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:Number.isFinite(root.codexResetEpoch(modelData.value))?"Resets "+new Date(root.codexResetEpoch(modelData.value)).toLocaleString(Qt.locale(),"ddd d MMM · hh:mm AP"):"Reset not reported";pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
+                            }
+                        }
+                    }
+                    NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:(CodexAccounts.usage.source||"")+(CodexAccounts.usage.stale?" · Stale":"");wrapMode:Text.WordWrap;pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
+                }
+                Row {
+                    spacing:8
+                    ControlTile {label:CodexAccounts.busy?"Reading accounts…":"Refresh accounts";glyph:"\uf021";enabled:!CodexAccounts.busy;onActivated:CodexAccounts.refresh(true)}
+                    ControlTile {visible:CodexAccounts.busy;label:"Stop refresh";glyph:"\uf04d";onActivated:CodexAccounts.cancel()}
+                    ControlTile {label:"Add existing profile";glyph:"\uf067";selected:root.showCodexProfile;onActivated:root.showCodexProfile=!root.showCodexProfile}
+                    ControlTile {label:CodexAccounts.usage.account?.planType==="free"?"Upgrade free plan":"Usage and billing";glyph:"\uf013";onActivated:CodeDesk.browse("https://chatgpt.com/codex/settings/usage")}
+                }
+                Column {
+                    width:parent.width;spacing:8;visible:root.showCodexProfile
+                    TextField {id:codexProfileDirectory;width:parent.width;placeholderText:"Existing CODEX_HOME directory";color:Theme.paper;placeholderTextColor:Theme.paperMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;background:Rectangle{color:Theme.surfaceOne;border.color:Theme.rule;radius:3}}
+                    Row {spacing:8
+                        TextField {id:codexProfileName;width:300;placeholderText:"Profile name";color:Theme.paper;placeholderTextColor:Theme.paperMuted;font.family:Appearance.font.reading;font.pixelSize:Appearance.textSize.body;background:Rectangle{color:Theme.surfaceOne;border.color:Theme.rule;radius:3}}
+                        ControlTile {label:"Add profile";glyph:"\uf067";enabled:!!codexProfileDirectory.text.trim()&&!CodexAccounts.busy;onActivated:CodexAccounts.addProfile(codexProfileDirectory.text,codexProfileName.text)}
+                    }
+                }
+                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:Math.min(parent.width,480);text:"Monitoring does not switch your active account. Remove keeps sign-in credentials. Codex does not report subscription expiry.";wrapMode:Text.WordWrap;pixelSize:Appearance.textSize.secondary;color:Theme.paperMuted}
             }
             Column {width:parent.width;spacing:14;visible:CodeDesk.provider===1
                 NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:"OpenCode / "+(CodeDesk.openCodeUsage.state||"Loading local statistics…");pixelSize:16}
@@ -252,7 +321,7 @@ DropdownFrame {
                     ControlTile {label:CodeDesk.connectingOpenCode?"Awaiting browser":"Connect account";glyph:"\uf084";enabled:!CodeDesk.connectingOpenCode;onActivated:CodeDesk.connectOpenCode()}
                     ControlTile {visible:CodeDesk.openCodeConnection.state==="connected";label:"Disconnect";glyph:"\uf127";onActivated:CodeDesk.disconnectOpenCode()}
                     ControlTile {label:"Refresh usage";glyph:"\uf021";onActivated:CodeDesk.refresh(true)}
-                    ControlTile {label:"Billing / renewal";glyph:"\uf013";onActivated:Quickshell.execDetached(["xdg-open","https://opencode.ai/console/"])}
+                    ControlTile {label:"Billing / renewal";glyph:"\uf013";onActivated:CodeDesk.browse("https://opencode.ai/console/")}
                 }
                 NrLabel {visible:!!CodeDesk.openCodeConnection.message;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:(CodeDesk.openCodeConnection.code?"Code "+CodeDesk.openCodeConnection.code+" · ":"")+(CodeDesk.openCodeConnection.message||"");wrapMode:Text.WordWrap;pixelSize:11;color:Theme.paperMuted}
                 Row {spacing:8
@@ -287,7 +356,7 @@ DropdownFrame {
             }
             Column {
                 width:parent.width;spacing:16;visible:CodeDesk.provider===2
-                // One card per config dir. Click a card to make that account the one below.
+                // Compact, keyboard-accessible native profile selection.
                 Flow {
                     width:parent.width;spacing:10
                     Repeater {
@@ -295,14 +364,16 @@ DropdownFrame {
                         Rectangle {
                             required property var modelData
                             readonly property bool active:CodeDesk.claudeAccount===modelData.id
-                            width:252;height:118;color:active?Theme.surfaceTwo:"transparent";border.width:Appearance.metrics.hairline;border.color:active?Theme.signalRed:Theme.rule
-                            MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:CodeDesk.selectClaudeAccount(modelData.id)}
+                            width:Math.min(320,parent.width);height:96;color:active?Theme.surfaceTwo:"transparent";border.width:Appearance.metrics.hairline;border.color:active||activeFocus?Theme.signalRed:Theme.rule
+                            activeFocusOnTab:true
+                            Keys.onPressed:event=>{if(event.key===Qt.Key_Return||event.key===Qt.Key_Enter||event.key===Qt.Key_Space){CodeDesk.selectClaudeAccount(modelData.id);event.accepted=true;}}
+                            MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:{parent.forceActiveFocus();CodeDesk.selectClaudeAccount(modelData.id);}}
                             Column {
                                 x:12;y:10;width:parent.width-24;spacing:6
-                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;elide:Text.ElideRight;text:modelData.name+(modelData.identity?.plan?" · "+modelData.identity.plan:"");pixelSize:13;color:Theme.paper}
-                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;elide:Text.ElideRight;text:modelData.identity?.signedIn?modelData.identity.email:"Not signed in";pixelSize:10;color:Theme.paperMuted}
-                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"5-hour "+root.windowLeft(modelData.limits?.fiveHour);pixelSize:11;color:Theme.signalRed}
-                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"7 days · "+root.metric(modelData.totals?.responses??0)+" responses · "+root.metric(modelData.totals?.output??0)+" out";pixelSize:10;color:Theme.paperMuted}
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;elide:Text.ElideRight;text:modelData.name+(modelData.identity?.plan?" · "+modelData.identity.plan:"");pixelSize:Appearance.textSize.control;color:Theme.paper}
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;elide:Text.ElideRight;text:modelData.identity?.signedIn?modelData.identity.email:modelData.identity?.state||"Sign-in required";pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"5 hours   "+root.windowLeft(modelData.limits?.fiveHour);pixelSize:Appearance.textSize.caption;color:Theme.signalRed}
+                                NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"Weekly    "+root.windowLeft(modelData.limits?.sevenDay);pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
                             }
                         }
                     }
@@ -310,9 +381,15 @@ DropdownFrame {
                 NrLabel {visible:(CodeDesk.claudeAccounts.accounts??[]).length===0;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:"No Claude Code config found. Sign in once with claude, or list config dirs in ~/.config/sensei/claude-accounts.json.";wrapMode:Text.WordWrap;pixelSize:11;color:Theme.paperMuted}
                 NrLabel {visible:!!CodeDesk.claudeUsage.error;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;wrapMode:Text.WordWrap;text:CodeDesk.claudeUsage.error||"";pixelSize:11;color:Theme.signalRed}
                 Column {
-                    width:parent.width;spacing:14;visible:!!CodeDesk.claudeUsage.totals
+                    width:parent.width;spacing:14;visible:!!CodeDesk.claudeUsage.identity
                     NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;elide:Text.ElideRight;text:"Claude Code / "+(CodeDesk.claudeUsage.accountName||"")+" · "+(CodeDesk.claudeUsage.identity?.plan||"Plan unknown");pixelSize:16;color:Theme.paper}
                     NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;text:(CodeDesk.claudeUsage.identity?.email||"Not signed in")+(CodeDesk.claudeUsage.identity?.organization?" · "+CodeDesk.claudeUsage.identity.organization:"")+"   ·   "+(CodeDesk.claudeUsage.state||"");wrapMode:Text.WordWrap;pixelSize:11;color:Theme.paperMuted}
+                    NrLabel {visible:!!CodeDesk.claudeUsage.limits?.error;tracked:false;font.capitalization:Font.MixedCase;width:parent.width;wrapMode:Text.WordWrap;text:CodeDesk.claudeUsage.limits?.error||"";pixelSize:Appearance.textSize.secondary;color:Theme.semanticAmber}
+                    Row {
+                        spacing:8
+                        ControlTile {visible:!!CodeDesk.claudeUsage.directory;label:CodeDesk.claudeActivity?"Hide local activity":"Load local activity";glyph:"\uf1da";selected:CodeDesk.claudeActivity;onActivated:CodeDesk.toggleClaudeActivity()}
+                        NrLabel {anchors.verticalCenter:parent.verticalCenter;tracked:false;font.capitalization:Font.MixedCase;text:"Local history is separate from subscription limits.";pixelSize:Appearance.textSize.caption;color:Theme.paperMuted}
+                    }
                     Row {
                         width:parent.width;spacing:28
                         Repeater {
@@ -332,19 +409,19 @@ DropdownFrame {
                         }
                     }
                     Flow {
-                        width:parent.width;spacing:18
+                        width:parent.width;spacing:18;visible:!!CodeDesk.claudeUsage.totals
                         Repeater {
                             model:[{label:"Sessions",value:CodeDesk.claudeUsage.totals?.sessions},{label:"Responses",value:CodeDesk.claudeUsage.totals?.responses},{label:"Input",value:CodeDesk.claudeUsage.totals?.input},{label:"Output",value:CodeDesk.claudeUsage.totals?.output},{label:"Cache read",value:CodeDesk.claudeUsage.totals?.cacheRead},{label:"Cache hit",value:CodeDesk.claudeUsage.totals?.cacheHitPercent==null?"—":CodeDesk.claudeUsage.totals.cacheHitPercent+"%"}]
                             Column {
                                 required property var modelData
                                 width:150;spacing:4
                                 NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:modelData.label;pixelSize:11;color:Theme.paperMuted}
-                                NrLabel {tracked:false;text:typeof modelData.value==="string"?modelData.value:root.metric(modelData.value??0);pixelSize:14;color:Theme.signalRed}
+                                NrLabel {tracked:false;text:typeof modelData.value==="string"?modelData.value:root.metric(modelData.value);pixelSize:14;color:Theme.signalRed}
                             }
                         }
                     }
                     Column {
-                        width:parent.width;spacing:6
+                        width:parent.width;spacing:6;visible:!!CodeDesk.claudeUsage.totals
                         NrLabel {tracked:false;font.capitalization:Font.MixedCase;text:"Output and input tokens per day · last 14 days";pixelSize:11;color:Theme.paperMuted}
                         Row {
                             width:parent.width;spacing:4;height:44
@@ -353,7 +430,7 @@ DropdownFrame {
                                 Item {
                                     required property var modelData
                                     width:(parent.width-4*13)/14;height:parent.height
-                                    Rectangle {anchors.bottom:parent.bottom;width:parent.width;height:Math.max(2,parent.height*modelData.tokens/root.peakDaily(CodeDesk.claudeUsage.daily));color:modelData.tokens>0?Theme.signalRed:Theme.surfaceTwo}
+                                    Rectangle {anchors.bottom:parent.bottom;width:parent.width;height:Math.max(2,parent.height*modelData.tokens/Math.max(1,root.peakDaily(CodeDesk.claudeUsage.daily)));color:modelData.tokens>0?Theme.signalRed:Theme.surfaceTwo}
                                 }
                             }
                         }
@@ -376,12 +453,11 @@ DropdownFrame {
                     Row {
                         spacing:8
                         Repeater {
-                            model:[7,30,0]
+                            model:CodeDesk.claudeActivity?[7,30,0]:[]
                             ControlTile {required property int modelData;label:modelData===0?"All time":modelData+" days";selected:CodeDesk.claudeDays===modelData;onActivated:CodeDesk.setClaudeDays(modelData)}
                         }
                         ControlTile {visible:CodeDesk.tab!==4;label:"Refresh";glyph:"";onActivated:CodeDesk.refreshClaude(true)}
-                        // The default account keeps its login in ~/.claude.json, so it runs without CLAUDE_CONFIG_DIR.
-                        ControlTile {label:"Open Claude here";glyph:"";onActivated:Quickshell.execDetached(["alacritty","-e","bash","-c","if [ \"$1\" = \"$HOME/.claude\" ]; then exec claude; else CLAUDE_CONFIG_DIR=\"$1\" exec claude; fi","claude",CodeDesk.claudeUsage.directory||""])}
+                        ControlTile {visible:!!CodeDesk.claudeUsage.directory;label:"Open Claude here";glyph:"";onActivated:CodeDesk.openClaudeProfile()}
                     }
                     NrLabel {tracked:false;font.capitalization:Font.MixedCase;width:parent.width;wrapMode:Text.WordWrap;pixelSize:10;color:Theme.paperMuted;text:(CodeDesk.claudeUsage.limits?.sourceHost ? "Quota receipt: "+CodeDesk.claudeUsage.limits.sourceHost+" · "+CodeDesk.claudeUsage.limits.updatedAt+". " : "")+(CodeDesk.claudeUsage.quotaNote||"")}
                 }

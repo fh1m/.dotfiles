@@ -39,6 +39,8 @@ elif a.action == 'claude':
     time.sleep(0.35 if account == 'default' and a.days == 30 else 0.03)
     shown = 'default' if scenario == 'mismatch' else account
     print(json.dumps({'account': shown, 'days': a.days, 'totals': {'responses': 3}}), flush=True)
+    if scenario == 'removed':
+        time.sleep(0.12)  # A response can arrive before the child has exited.
 else:
     print('{}', flush=True)
 '''
@@ -77,6 +79,15 @@ ShellRoot {
             return;
         }
         if (root.phase === 0) {
+            if (root.scenario === "refresh") {
+                if (shown.account !== "default") return;
+                CodeDesk.refreshClaude(false);
+                if (!root.check(CodeDesk.claudeUsage.account === "default" && CodeDesk.loading,
+                                "background refresh erased the current measurement or hid its busy state")) return;
+                root.changedAt = root.ticks;
+                root.phase = 1;
+                return;
+            }
             if (root.scenario === "removed") {
                 if (shown.account !== "second") return;
                 CodeDesk.refreshClaude(false);
@@ -92,6 +103,11 @@ ShellRoot {
             return;
         }
         if (root.ticks - root.changedAt < 35) return;
+        if (root.scenario === "refresh") {
+            if (root.check(shown.account === "default" && !CodeDesk.loading,
+                           "background refresh did not settle on its original account")) root.done();
+            return;
+        }
         if (root.scenario === "switch") {
             if (root.check(CodeDesk.claudeAccount === "second" && shown.account === "second", "old account reply replaced the selected account")) root.done();
         } else if (root.scenario === "days") {
@@ -114,11 +130,12 @@ ShellRoot {
 
 
 @pytest.mark.skipif(not os.environ.get('SENSEI_QS_BINARY'), reason='Requires an explicitly selected native Quickshell runtime')
-@pytest.mark.parametrize('scenario', ['initial', 'switch', 'days', 'removed', 'close', 'provider', 'mismatch'])
+@pytest.mark.parametrize('scenario', ['initial', 'switch', 'days', 'removed', 'close', 'provider', 'mismatch', 'refresh'])
 def test_claude_selection_owns_displayed_usage(tmp_path, scenario):
     services = tmp_path / 'services'
     services.mkdir()
     shutil.copy2(SERVICE, services / 'CodeDesk.qml')
+    shutil.copy2(ROOT / 'home/.config/quickshell/sensei/services/CodexAccounts.qml', services / 'CodexAccounts.qml')
     (services / 'ShellState.qml').write_text('''pragma Singleton
 import QtQuick
 QtObject {
@@ -131,6 +148,9 @@ QtObject {
     binary.parent.mkdir(parents=True)
     binary.write_text(BACKEND)
     binary.chmod(0o700)
+    codex = tmp_path / '.local/bin/sensei-codex-accounts'
+    codex.write_text('#!/bin/sh\nprintf \'{"accounts": []}\\n\'\n')
+    codex.chmod(0o700)
     (tmp_path / 'shell.qml').write_text(HARNESS)
     with tempfile.TemporaryDirectory(prefix='den-account-runtime-') as runtime:
         env = dict(os.environ, HOME=str(tmp_path), ACCOUNT_SCENARIO=scenario,

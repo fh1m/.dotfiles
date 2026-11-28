@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: "1.4.4"
       - name: Install native test dependencies
         run: |
           sudo apt-get update
@@ -29,3 +32,5 @@ jobs:
           .venv/bin/python -m pip install -r tests/requirements.txt
       - name: Run repo tests
         run: .venv/bin/python -m pytest -q tests
+      - name: Test native account adapters without provider credentials
+        run: bun test tests/codex_account_state.test.ts tests/codex_app_server.test.ts tests/codex_cli_cancellation.test.ts tests/codex_cli_discovery.test.ts tests/codex_cli_profile.test.ts tests/codex_cli_provider.test.ts

@@ -104,6 +104,7 @@ Singleton {
  function publishLyric(){const now=Date.now();const line=lyricsData?.synced&&lyricIndex>=0?lyricsData.lines[lyricIndex]?.text||'':'';const next=Number(lyricsData?.lines?.[lyricIndex+1]?.time)||Number(playback.track?.duration)||lyricPosition+4000;zondoMusic.setText(JSON.stringify({at:now,until:now+Math.max(0,Math.min(30000,next-lyricPosition-lyricOffset)),playing:playing,title:title,line:line.trim().slice(0,320)}));}
  onLyricIndexChanged:publishLyric()
  onPlayingChanged:publishLyric()
+ Timer {interval:10000;repeat:true;running:root.zondoLyricsEnabled&&root.playing;onTriggered:root.publishLyric()}
  property bool zondoLyricsEnabled:false
  FileView {path:Quickshell.env('HOME')+'/.config/sensei-den/companion.json';watchChanges:true;printErrors:false;onFileChanged:reload();onLoaded:{try{const c=JSON.parse(text());root.zondoLyricsEnabled=c.enabled!==false&&c.chatter!==false&&c.quiet!==true;}catch(e){root.zondoLyricsEnabled=false;}}}
  readonly property bool wantsLyrics:lyricsVisible||(zondoLyricsEnabled&&playing&&title!=='Spotify')
@@ -122,7 +123,7 @@ Singleton {
  function adjustLyrics(delta){lyricOffset=Math.max(-60000,Math.min(60000,lyricOffset+delta));action('lyric-offset',[JSON.stringify(lyricTrack()),String(lyricOffset)]);}
  function loadLyrics(refresh){if(!wantsLyrics||lyricsFetch.running||title==='Spotify')return;activeLyricsKey=lyricsKey;lyricPosition=positionMs;lyricsLoading=true;lyricsError='';const track={title:title,artist:artist,album:album,duration:playback.track?.duration||player?.length*1000||0};lyricsFetch.command=['@HOME@/.local/bin/sensei-spotify','synced-lyrics',JSON.stringify(track)].concat(refresh?['refresh']:[]);lyricsFetch.running=true;}
  onLyricsOpenChanged:if(lyricsOpen){lyricsData={lines:[],plain:'',synced:false};lyricsDelay.restart();}
- onLyricsKeyChanged:{videoData={rows:[]};videosOpen=false;lyricsData={lines:[],plain:'',synced:false};lyricOffset=0;if(wantsLyrics)lyricsDelay.restart();}
+ onLyricsKeyChanged:{videoData={rows:[]};videosOpen=false;lyricsData={lines:[],plain:'',synced:false};lyricOffset=0;publishLyric();if(wantsLyrics)lyricsDelay.restart();}
  Timer {id:lyricsDelay;interval:250;onTriggered:root.loadLyrics()}
  Process {id:lyricsFetch;stdout:StdioCollector {onStreamFinished:{if(root.activeLyricsKey!==root.lyricsKey)return;try{const d=JSON.parse(text);root.lyricsError=d.error||'';if(!d.error){root.lyricsData=d;root.lyricOffset=d.offset||0;}}catch(e){root.lyricsError='Sensei, lyrics could not be loaded.';}}}onExited:{root.lyricsLoading=false;if(root.wantsLyrics&&root.activeLyricsKey!==root.lyricsKey)lyricsDelay.restart();}}
  Timer {interval:root.lyricsVisible?250:1000;repeat:true;running:(root.lyricsVisible||root.lyricsData.synced)&&root.playing;triggeredOnStart:true;onTriggered:{root.positionClock=Date.now();root.lyricPosition=root.positionMs;}}

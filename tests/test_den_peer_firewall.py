@@ -41,3 +41,47 @@ def test_failed_kernel_update_restores_persistent_pairing(tmp_path):
   return subprocess.CompletedProcess(command,0 if '-c' in command else 1,'','')
  with pytest.raises(ValueError,match='persistent policy restored'):peer.reconcile(cfg,runner=run,resolver=resolver,apply=True,peers=path)
  assert path.read_bytes()==original
+
+
+def test_fresh_hint_breaks_dns_firewall_discovery_dependency(tmp_path):
+ import time
+ cfg,path,_=fixture(tmp_path)
+ hint=tmp_path/'hint.json'
+ hint.write_text(json.dumps({'hostname':'homie.local','addresses':['192.0.2.18'],'verifiedAt':time.time()}))
+ cfg['hintFile']=str(hint)
+ def unavailable(*args):raise socket.gaierror('multicast return unavailable')
+ def run(command):
+  if command[:3]==['nft','-j','list']:return subprocess.CompletedProcess(command,0,'{"nftables":[{"set":{"elem":["192.0.2.4"]}}]}','')
+  if command[0]=='runuser':return subprocess.CompletedProcess(command,0,'homie\n','')
+  return subprocess.CompletedProcess(command,0,'','')
+ result=peer.reconcile(cfg,runner=run,resolver=unavailable,apply=True,peers=path)
+ assert result['state']=='updated'
+ assert result['address']=='192.0.2.18'
+ assert result['identityVerified']
+
+
+def test_unchanged_address_does_not_imply_the_peer_is_still_verified(tmp_path):
+ cfg,path,_=fixture(tmp_path)
+ original=path.read_bytes()
+ def resolver(*args):return [(socket.AF_INET,socket.SOCK_STREAM,6,'',('192.0.2.4',22))]
+ def run(command):
+  if command[:3]==['nft','-j','list']:return subprocess.CompletedProcess(command,0,'{"nftables":[{"set":{"elem":["192.0.2.4"]}}]}','')
+  if command[0]=='runuser':return subprocess.CompletedProcess(command,0,'another-host\n','')
+  raise AssertionError('Identity failure attempted policy mutation')
+ with pytest.raises(peer.PeerUnavailable):peer.reconcile(cfg,runner=run,resolver=resolver,apply=True,peers=path)
+ assert path.read_bytes()==original
+
+
+@pytest.mark.parametrize('change',[
+ {'hostname':'unpaired.local'}, {'addresses':['198.51.100.9']},
+ {'addresses':['192.0.2.18']*9}, {'verifiedAt':0},
+])
+def test_invalid_hint_cannot_trigger_a_privileged_probe(tmp_path,change):
+ import time
+ cfg,path,_=fixture(tmp_path)
+ hint=tmp_path/'hint.json'
+ hint.write_text(json.dumps(dict({'hostname':'homie.local','addresses':['192.0.2.18'],'verifiedAt':time.time()},**change)))
+ cfg['hintFile']=str(hint)
+ def unavailable(*args):raise socket.gaierror('no authoritative LAN discovery')
+ def forbidden(command):raise AssertionError('Rejected hint reached a privileged operation')
+ with pytest.raises(peer.PeerUnavailable):peer.reconcile(cfg,runner=forbidden,resolver=unavailable,apply=True,peers=path)

@@ -5,3 +5,4 @@ evdev==1.9.2
 python-dateutil==2.9.0.post0
 PyYAML==6.0.3
 numpy==2.5.4
+tomlkit==0.15.3

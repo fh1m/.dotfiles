@@ -25,7 +25,7 @@ hl.config({
             blur = false,
             gradients = true,
             render_titles = true,
-            font_family = "JetBrainsMono Nerd Font Propo",
+            font_family = "Zed Mono",
             font_size = 12,
             font_weight_active = 700,
             font_weight_inactive = 600,
